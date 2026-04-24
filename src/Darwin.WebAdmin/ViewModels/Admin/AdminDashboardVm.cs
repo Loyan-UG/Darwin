@@ -127,10 +127,18 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         public int OpenInvitationCount { get; set; }
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }
+        public int FailedInvitationCount { get; set; }
+        public int FailedActivationCount { get; set; }
+        public int FailedPasswordResetCount { get; set; }
+        public int FailedAdminTestCount { get; set; }
         public int SelectedBusinessPendingInvitationCount { get; set; }
         public int SelectedBusinessOpenInvitationCount { get; set; }
         public int SelectedBusinessPendingActivationCount { get; set; }
         public int SelectedBusinessLockedMemberCount { get; set; }
+        public int SelectedBusinessFailedInvitationCount { get; set; }
+        public int SelectedBusinessFailedActivationCount { get; set; }
+        public int SelectedBusinessFailedPasswordResetCount { get; set; }
+        public int SelectedBusinessFailedAdminTestCount { get; set; }
     }
 
     /// <summary>
@@ -148,5 +156,9 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         public int MissingSupportEmailCount { get; set; }
         public int MissingSenderIdentityCount { get; set; }
         public int BusinessesRequiringEmailSetupCount { get; set; }
+        public int FailedInvitationCount { get; set; }
+        public int FailedActivationCount { get; set; }
+        public int FailedPasswordResetCount { get; set; }
+        public int FailedAdminTestCount { get; set; }
     }
 }

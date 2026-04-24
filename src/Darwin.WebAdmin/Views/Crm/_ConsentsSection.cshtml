@@ -2,7 +2,9 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
 @functions {
+    System.Globalization.CultureInfo CrmCulture => System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeConsentType(object? type) => type is null ? "-" : T.T(type.ToString() ?? string.Empty);
+    string CrmDateTimeText(DateTime? utc) => utc?.ToString("g", CrmCulture) ?? "-";
 }
 
 <div hx-boost="true"
@@ -32,8 +34,8 @@
                         <tr>
                             <td>@LocalizeConsentType(item.Type)</td>
                             <td>@(item.Granted ? T.T("Granted") : T.T("Revoked"))</td>
-                            <td>@item.GrantedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                            <td>@(item.RevokedAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                            <td>@CrmDateTimeText(item.GrantedAtUtc)</td>
+                            <td>@CrmDateTimeText(item.RevokedAtUtc)</td>
                         </tr>
                     }
                 }

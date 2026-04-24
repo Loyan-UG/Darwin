@@ -1,7 +1,15 @@
+@using System.Globalization
 @model Darwin.WebAdmin.ViewModels.Billing.BillingPlansListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BillingPlansTitle");
+    string BillingPlanOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string BillingPlanOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var billingPlanAttentionCount = Model.Summary.InactiveCount
+        + Model.Summary.TrialCount
+        + Model.Summary.MissingFeaturesCount;
 }
 
 <div id="billing-plans-workspace-shell">
@@ -26,6 +34,155 @@
     <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BillingPlansTrial")</div><div class="fs-4 fw-semibold">@Model.Summary.TrialCount</div></div></div>
     <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BillingPlansMissingFeatures")</div><div class="fs-4 fw-semibold">@Model.Summary.MissingFeaturesCount</div></div></div>
     <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BillingPlansInUse")</div><div class="fs-4 fw-semibold">@Model.Summary.InUseCount</div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h2 class="h5 mb-0">@T.T("GoLiveReadiness")</h2>
+                    <span class="@BillingPlanOpsHealthBadgeClass(billingPlanAttentionCount == 0)">@BillingPlanOpsHealthBadgeText(billingPlanAttentionCount == 0)</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    @T.T("BillingPlansIntro")
+                    @if (billingPlanAttentionCount > 0)
+                    {
+                        <span class="ms-1">@T.T("NeedsAttention"): @billingPlanAttentionCount</span>
+                    }
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="CreatePlan"
+                   class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("CreatePlan", "Billing")"
+                   hx-target="#billing-plans-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-plus"></i> @T.T("BillingPlansCreatePlan")
+                </a>
+                <a asp-action="Payments"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Payments", "Billing")"
+                   hx-target="#billing-plans-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">
+                    <i class="fa-solid fa-credit-card"></i> @T.T("PaymentsLabel")
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("BillingPlansInactive")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@BillingPlanOpsHealthBadgeClass(Model.Summary.InactiveCount == 0)">@Model.Summary.InactiveCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("BillingPlansPlaybookActiveAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="Plans"
+                           asp-route-queue="Inactive"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive })"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BillingPlansInactive")</a>
+                        <a asp-action="CreatePlan"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("CreatePlan", "Billing")"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BillingPlansCreatePlan")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("BillingPlansTrial")</div>
+                            <div class="small text-muted mt-1">@T.T("BillingPlansPlaybookTrialScope")</div>
+                        </div>
+                        <span class="@BillingPlanOpsHealthBadgeClass(Model.Summary.TrialCount == 0)">@Model.Summary.TrialCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("BillingPlansPlaybookTrialAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="Plans"
+                           asp-route-queue="Trial"
+                           class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial })"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BillingPlansTrial")</a>
+                        <a asp-action="Payments"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("PaymentsLabel")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("BillingPlansMissingFeatures")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@BillingPlanOpsHealthBadgeClass(Model.Summary.MissingFeaturesCount == 0)">@Model.Summary.MissingFeaturesCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("BillingPlansPlaybookActiveDependency")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="Plans"
+                           asp-route-queue="MissingFeatures"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures })"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BillingPlansMissingFeatures")</a>
+                        <a asp-action="CreatePlan"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("CreatePlan", "Billing")"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BillingPlansCreatePlan")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("BillingPlansInUse")</div>
+                            <div class="small text-muted mt-1">@T.T("QueueScope")</div>
+                        </div>
+                        <span class="@BillingPlanOpsHealthBadgeClass(Model.Summary.InUseCount > 0)">@Model.Summary.InUseCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("BillingPlansPlaybookActiveScope")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="Plans"
+                           asp-route-queue="InUse"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("Plans", "Billing", new { queue = Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse })"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BillingPlansInUse")</a>
+                        <a asp-action="Payments"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-target="#billing-plans-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("PaymentsLabel")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="card mb-3">
@@ -170,7 +327,7 @@
                             <div><span class="badge text-bg-warning mt-1">@T.T("BillingPlansMissingFeatures")</span></div>
                         }
                     </td>
-                    <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td>@(item.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")</td>
                     <td class="text-end">
                         <a asp-action="EditPlan" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
                            hx-get="@Url.Action("EditPlan", "Billing", new { id = item.Id })"

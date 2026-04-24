@@ -55,6 +55,10 @@ namespace Darwin.WebAdmin.ViewModels.Mobile
         public string Title { get; set; } = string.Empty;
         public string ScopeNote { get; set; } = string.Empty;
         public string OperatorAction { get; set; } = string.Empty;
+        public string QueueActionLabel { get; set; } = string.Empty;
+        public string QueueActionUrl { get; set; } = string.Empty;
+        public string FollowUpLabel { get; set; } = string.Empty;
+        public string FollowUpUrl { get; set; } = string.Empty;
     }
 
     public sealed class MobileAppVersionSnapshotVm

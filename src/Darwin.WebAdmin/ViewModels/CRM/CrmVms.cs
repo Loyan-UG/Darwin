@@ -482,6 +482,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public Darwin.Application.CRM.DTOs.InvoiceQueueFilter Filter { get; set; }
     }
 
     public sealed class InvoiceOpsSummaryVm

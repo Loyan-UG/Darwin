@@ -98,6 +98,16 @@
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small">@T.T("UsersSummaryInactive")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div>
+                <div class="mt-2">
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive })"
+                       hx-target="#users-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("UsersFilterInactive")</a>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
@@ -266,7 +276,7 @@
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("UsersLifecycleLockedBadge")</a>
                                 </div>
-                                <div class="small text-muted">@u.LockoutEndUtc?.ToString("yyyy-MM-dd HH:mm")</div>
+                                <div class="small text-muted">@u.LockoutEndUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture)</div>
                             }
                             @if (u.MobileDeviceCount > 0)
                             {
@@ -279,6 +289,24 @@
                                        hx-target="#users-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@string.Format(T.T("UsersLifecycleMobileBadge"), u.MobileDeviceCount)</a>
+                                </div>
+                            }
+                            @if (!u.IsActive)
+                            {
+                                <div>
+                                    <a asp-controller="Users"
+                                       asp-action="Edit"
+                                       asp-route-id="@u.Id"
+                                       asp-route-returnToIndex="true"
+                                       asp-route-q="@Model.Query"
+                                       asp-route-filter="@Model.Filter"
+                                       asp-route-page="@Model.Page"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       class="badge text-bg-secondary text-decoration-none"
+                                       hx-get="@Url.Action("Edit", "Users", new { id = u.Id, returnToIndex = true, q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                                       hx-target="#users-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("UsersLifecycleInactiveBadge")</a>
                                 </div>
                             }
                         </td>
@@ -414,7 +442,44 @@
                                         <i class="fa fa-paper-plane"></i> @T.T("UsersActivationAction")
                                     </button>
                                 </form>
+                                <form asp-controller="Users"
+                                      asp-action="ConfirmEmail"
+                                      method="post"
+                                      class="d-inline"
+                                      hx-post="@Url.Action("ConfirmEmail", "Users")"
+                                      hx-target="#users-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <input type="hidden" name="returnToIndex" value="true" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fa fa-check-circle"></i> @T.T("UsersConfirmEmailAction")
+                                    </button>
+                                </form>
                             }
+
+                            <form asp-controller="Users"
+                                  asp-action="SendPasswordReset"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@Url.Action("SendPasswordReset", "Users")"
+                                  hx-target="#users-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <input type="hidden" name="returnToIndex" value="true" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="filter" value="@Model.Filter" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                    <i class="fa fa-paper-plane"></i> @T.T("UserSendResetEmailAction")
+                                </button>
+                            </form>
 
                             @if (u.IsLockedOut)
                             {
@@ -455,6 +520,49 @@
                                     <input type="hidden" name="pageSize" value="@Model.PageSize" />
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">
                                         <i class="fa fa-lock"></i> @T.T("UsersLockAction")
+                                    </button>
+                                </form>
+                            }
+
+                            @if (u.IsActive)
+                            {
+                                <form asp-controller="Users"
+                                      asp-action="Deactivate"
+                                      method="post"
+                                      class="d-inline"
+                                      hx-post="@Url.Action("Deactivate", "Users")"
+                                      hx-target="#users-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <input type="hidden" name="returnToIndex" value="true" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fa fa-user-slash"></i> @T.T("UsersDeactivateAction")
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-controller="Users"
+                                      asp-action="Activate"
+                                      method="post"
+                                      class="d-inline"
+                                      hx-post="@Url.Action("Activate", "Users")"
+                                      hx-target="#users-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <input type="hidden" name="returnToIndex" value="true" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fa fa-user-check"></i> @T.T("UsersActivateAction")
                                     </button>
                                 </form>
                             }

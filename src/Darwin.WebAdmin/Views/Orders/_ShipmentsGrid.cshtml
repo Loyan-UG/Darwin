@@ -1,7 +1,18 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderShipmentsPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
+    var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeShipmentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
+    string OrderShipmentOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string OrderShipmentOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var orderShipmentAwaitingHandoffCount = Model.Items.Count(item => item.AwaitingHandoff);
+    var orderShipmentTrackingOverdueCount = Model.Items.Count(item => item.TrackingOverdue);
+    var orderShipmentCarrierReviewCount = Model.Items.Count(item => item.NeedsCarrierReview);
+    var orderShipmentReturnFollowUpCount = Model.Items.Count(item => item.NeedsReturnFollowUp || item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned);
+    var orderShipmentAttentionCount = orderShipmentAwaitingHandoffCount + orderShipmentTrackingOverdueCount + orderShipmentCarrierReviewCount + orderShipmentReturnFollowUpCount;
 }
 
 <div id="shipments-grid-content"
@@ -9,6 +20,114 @@
      hx-target="this"
      hx-swap="outerHTML"
      hx-push-url="false">
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div class="fw-semibold">@T.T("ShipmentsQueue")</div>
+                        <span class="@OrderShipmentOpsHealthBadgeClass(orderShipmentAttentionCount == 0)">@OrderShipmentOpsHealthBadgeText(orderShipmentAttentionCount == 0)</span>
+                    </div>
+                    <div class="small text-muted mt-2">
+                        @T.T("CarrierReviewQueue")
+                        @if (orderShipmentAttentionCount > 0)
+                        {
+                            <span class="ms-1">@T.T("NeedsAttention"): @orderShipmentAttentionCount</span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a asp-controller="Orders"
+                       asp-action="AddShipment"
+                       asp-route-orderId="@Model.OrderId"
+                       class="btn btn-sm btn-outline-primary"
+                       hx-get="@Url.Action("AddShipment", "Orders", new { orderId = Model.OrderId })"
+                       hx-target="#order-operation-shell"
+                       hx-swap="innerHTML"
+                       hx-push-url="false">@T.T("AddShipment")</a>
+                    <a asp-controller="Orders"
+                       asp-action="Refunds"
+                       asp-route-orderId="@Model.OrderId"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Refunds", "Orders", new { orderId = Model.OrderId })"
+                       hx-target="#order-operation-shell"
+                       hx-swap="innerHTML"
+                       hx-push-url="false">@T.T("ReviewRefunds")</a>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("AwaitingHandoff")</div>
+                                <div class="small text-muted mt-1">@T.T("PendingPacked")</div>
+                            </div>
+                            <span class="@OrderShipmentOpsHealthBadgeClass(orderShipmentAwaitingHandoffCount == 0)">@orderShipmentAwaitingHandoffCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("ShippingSettings")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="AwaitingHandoff" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.AwaitingHandoff ? "btn-danger" : "btn-outline-danger")">@T.T("AwaitingHandoff")</a>
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-shipping" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ShippingSettings")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("TrackingOverdue")</div>
+                                <div class="small text-muted mt-1">@T.T("Tracking")</div>
+                            </div>
+                            <span class="@OrderShipmentOpsHealthBadgeClass(orderShipmentTrackingOverdueCount == 0)">@orderShipmentTrackingOverdueCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("Open")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="TrackingOverdue" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.TrackingOverdue ? "btn-danger" : "btn-outline-danger")">@T.T("TrackingOverdue")</a>
+                            <a asp-controller="ShippingMethods" asp-action="Index" asp-route-filter="Dhl" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ShippingMethods")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("CarrierReview")</div>
+                                <div class="small text-muted mt-1">@T.T("CarrierReviewQueue")</div>
+                            </div>
+                            <span class="@OrderShipmentOpsHealthBadgeClass(orderShipmentCarrierReviewCount == 0)">@orderShipmentCarrierReviewCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("ReviewRefunds")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="CarrierReview" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">@T.T("CarrierReview")</a>
+                            <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Refunds", "Orders", new { orderId = Model.OrderId })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ReviewRefunds")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("ReturnFollowUp")</div>
+                                <div class="small text-muted mt-1">@T.T("Returned")</div>
+                            </div>
+                            <span class="@OrderShipmentOpsHealthBadgeClass(orderShipmentReturnFollowUpCount == 0)">@orderShipmentReturnFollowUpCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("StartRefund")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="ReturnFollowUp" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.ReturnFollowUp ? "btn-dark" : "btn-outline-dark")">@T.T("ReturnFollowUp")</a>
+                            @if (Model.DefaultRefundPaymentId.HasValue)
+                            {
+                                <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId" asp-route-paymentId="@Model.DefaultRefundPaymentId" class="btn btn-sm btn-outline-danger" hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("StartRefund")</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <form asp-controller="Orders" asp-action="Shipments" method="get" class="d-flex gap-2 mb-3">
         <input type="hidden" name="orderId" value="@Model.OrderId" />
         <select name="filter" asp-items="Model.FilterItems" class="form-select form-select-sm"></select>
@@ -114,10 +233,10 @@
                                 }
                             </td>
                             <td>
-                                <div>@s.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</div>
+                                <div>@OrderDateTimeText(s.CreatedAtUtc)</div>
                                 @if (s.LastCarrierEventAtUtc.HasValue)
                                 {
-                                    <div class="small text-muted mt-1">@T.T("LastEvent") @s.LastCarrierEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                    <div class="small text-muted mt-1">@T.T("LastEvent") @OrderDateTimeText(s.LastCarrierEventAtUtc)</div>
                                 }
                                 @if (s.RecentCarrierEvents.Count > 0)
                                 {
@@ -125,7 +244,7 @@
                                         @foreach (var carrierEvent in s.RecentCarrierEvents)
                                         {
                                             <div class="mt-1">
-                                                <span>@carrierEvent.OccurredAtUtc.ToString("MM-dd HH:mm")</span>
+                                                <span>@OrderDateTimeText(carrierEvent.OccurredAtUtc)</span>
                                                 <code>@carrierEvent.CarrierEventKey</code>
                                                 @if (!string.IsNullOrWhiteSpace(carrierEvent.ProviderStatus))
                                                 {

@@ -2,7 +2,16 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("OrdersTitle");
+    var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeOrderStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string OrderDateTimeText(DateTime utc) => utc.ToString("g", orderCulture);
+    string OrderQueueOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string OrderQueueOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var paymentIssueCount = Model.Items.Count(o => o.FailedPaymentCount > 0);
+    var fulfillmentAttentionCount = Model.Items.Count(o => o.Status == Darwin.Domain.Enums.OrderStatus.Paid && o.ShipmentCount == 0);
+    var invoiceReadyCount = Model.Items.Count(o => o.PaymentCount > 0);
+    var activeOrderCount = Model.Items.Count(o => o.Status != Darwin.Domain.Enums.OrderStatus.Completed && o.Status != Darwin.Domain.Enums.OrderStatus.Cancelled);
+    var orderQueueAttentionCount = paymentIssueCount + fulfillmentAttentionCount;
 }
 
 <div id="orders-workspace-shell">
@@ -25,6 +34,125 @@
 </div>
 
 <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge @OrderQueueOpsHealthBadgeClass(orderQueueAttentionCount == 0)">@OrderQueueOpsHealthBadgeText(orderQueueAttentionCount == 0)</span>
+                    <span class="badge @OrderQueueOpsHealthBadgeClass(Model.Items.Count > 0)">@T.T("OpenQueue")</span>
+                </div>
+                <h2 class="h5 mb-1">@T.T("OrdersTitle")</h2>
+                <p class="text-muted mb-0">@T.T("ClearQueueFilters")</p>
+            </div>
+            <div class="text-md-end">
+                <div class="small text-muted">@T.T("NeedsAttention")</div>
+                <div class="fs-4 fw-semibold">@orderQueueAttentionCount</div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("OpenQueue")</span>
+                        <span class="badge @OrderQueueOpsHealthBadgeClass(activeOrderCount == 0)">@activeOrderCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("OrdersTitle")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="Open"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "Open" })"
+                           hx-target="#orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-action="ShipmentsQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+                           hx-target="#orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ShipmentsQueue")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("PaymentIssues")</span>
+                        <span class="badge @OrderQueueOpsHealthBadgeClass(paymentIssueCount == 0)">@paymentIssueCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("Payments") / @T.T("Invoice")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="PaymentIssues"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "PaymentIssues" })"
+                           hx-target="#orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="Billing"
+                           asp-action="Payments"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-target="#orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Payments")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("FulfillmentAttention")</span>
+                        <span class="badge @OrderQueueOpsHealthBadgeClass(fulfillmentAttentionCount == 0)">@fulfillmentAttentionCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("Shipment") / @T.T("ShipmentsQueue")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="FulfillmentAttention"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Index", "Orders", new { query = Model.Query, filter = "FulfillmentAttention" })"
+                           hx-target="#orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-action="ReturnsQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ReturnsQueue", "Orders")"
+                           hx-target="#orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ReturnsQueueTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("Invoice")</span>
+                        <span class="badge @OrderQueueOpsHealthBadgeClass(invoiceReadyCount == 0)">@invoiceReadyCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("CreateInvoice") / @T.T("ReturnsQueueTitle")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-controller="Crm"
+                           asp-action="Invoices"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Invoices", "Crm")"
+                           hx-target="#orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Invoice")</a>
+                        <a asp-controller="Billing"
+                           asp-action="Refunds"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Refunds", "Billing")"
+                           hx-target="#orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Refunds")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <form asp-action="Index" method="get" class="d-flex gap-2 mb-3"
       hx-get="@Url.Action("Index", "Orders")"
@@ -78,7 +206,7 @@
                                 <span>@T.T("ShipmentsCount"): @o.ShipmentCount</span>
                             </div>
                         </td>
-                        <td>@o.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>@OrderDateTimeText(o.CreatedAtUtc)</td>
                         <td class="text-end">
                             @if (o.FailedPaymentCount > 0 || Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues)
                             {

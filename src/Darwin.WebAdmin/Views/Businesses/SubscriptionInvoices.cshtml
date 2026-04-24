@@ -1,4 +1,5 @@
 @using Darwin.Application.Billing
+@using System.Globalization
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoicesListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
@@ -105,7 +106,7 @@ string InvoiceTableActionsClass() => "text-end";
     string InvoiceExternalRel() => "noopener noreferrer";
     string InvoiceToolbarIconGlyphClass(string iconName) => $"fa-solid {iconName}";
     string InvoiceAmountText(string currency, long totalMinor) => $"{currency} {(totalMinor / 100M).ToString("0.00")}";
-    string InvoiceTimestampText(DateTime? timestampUtc) => timestampUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-";
+    string InvoiceTimestampText(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-";
     string InvoiceIssuedTimelineText(DateTime? timestampUtc) => string.Format(T.T("CommonIssuedAt"), InvoiceTimestampText(timestampUtc));
     string InvoiceDueTimelineText(DateTime? timestampUtc) => string.Format(T.T("CommonDueAt"), InvoiceTimestampText(timestampUtc));
     string InvoicePaidTimelineText(DateTime? timestampUtc) => string.Format(T.T("CommonPaidAt"), InvoiceTimestampText(timestampUtc));

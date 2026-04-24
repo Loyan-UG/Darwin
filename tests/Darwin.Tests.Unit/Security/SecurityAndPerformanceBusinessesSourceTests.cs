@@ -938,7 +938,11 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("PendingInvitationCount = summary.PendingInvitationCount,");
         controllerSource.Should().Contain("OpenInvitationCount = summary.OpenInvitationCount,");
         controllerSource.Should().Contain("PendingActivationMemberCount = summary.PendingActivationMemberCount,");
-        controllerSource.Should().Contain("LockedMemberCount = summary.LockedMemberCount");
+        controllerSource.Should().Contain("LockedMemberCount = summary.LockedMemberCount,");
+        controllerSource.Should().Contain("FailedInvitationCount = summary.FailedInvitationCount,");
+        controllerSource.Should().Contain("FailedActivationCount = summary.FailedActivationCount,");
+        controllerSource.Should().Contain("FailedPasswordResetCount = summary.FailedPasswordResetCount,");
+        controllerSource.Should().Contain("FailedAdminTestCount = summary.FailedAdminTestCount");
     }
 
 
@@ -1648,7 +1652,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("vm.CategoryOptions = Enum.GetValues<BusinessCategoryKind>()");
         controllerSource.Should().Contain(".Select(x => new SelectListItem(T(x.ToString()), x.ToString(), vm.Category == x))");
         controllerSource.Should().Contain("vm.OwnerUserOptions = await _referenceData.GetUserOptionsAsync(vm.OwnerUserId, includeEmpty: true, ct);");
-        controllerSource.Should().Contain("vm.CommunicationReadiness = await BuildBusinessCommunicationReadinessAsync(ct);");
+        controllerSource.Should().Contain("vm.CommunicationReadiness = await BuildBusinessCommunicationReadinessAsync(vm.Id, ct);");
         controllerSource.Should().Contain("vm.Subscription = await BuildBusinessSubscriptionSnapshotAsync(vm.Id, ct);");
     }
 
@@ -1683,7 +1687,12 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("private async Task<BusinessCommunicationReadinessVm> BuildBusinessCommunicationReadinessAsync(CancellationToken ct)");
+        controllerSource.Should().Contain("private async Task<BusinessCommunicationReadinessVm> BuildBusinessCommunicationReadinessAsync(Guid businessId, CancellationToken ct)");
+        controllerSource.Should().Contain("Where(x => x.BusinessId == businessId && x.Status == \"Failed\")");
+        controllerSource.Should().Contain("FailedInvitationCount = failedInvitationCount,");
+        controllerSource.Should().Contain("FailedActivationCount = failedActivationCount,");
+        controllerSource.Should().Contain("FailedPasswordResetCount = failedPasswordResetCount,");
+        controllerSource.Should().Contain("FailedAdminTestCount = failedAdminTestCount");
         controllerSource.Should().Contain("var settings = await _siteSettingCache.GetAsync(ct);");
         controllerSource.Should().Contain("var emailConfigured = settings.SmtpEnabled &&");
         controllerSource.Should().Contain("!string.IsNullOrWhiteSpace(settings.SmtpHost) &&");

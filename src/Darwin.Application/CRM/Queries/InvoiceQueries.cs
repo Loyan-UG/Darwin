@@ -19,6 +19,7 @@ namespace Darwin.Application.CRM.Queries
             int page,
             int pageSize,
             string? query = null,
+            InvoiceQueueFilter filter = InvoiceQueueFilter.All,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -34,6 +35,17 @@ namespace Darwin.Application.CRM.Queries
                     (x.OrderId.HasValue && x.OrderId.Value.ToString().Contains(q)) ||
                     (x.PaymentId.HasValue && x.PaymentId.Value.ToString().Contains(q)));
             }
+
+            var dueSoonThresholdUtc = DateTime.UtcNow.Date.AddDays(7);
+            baseQuery = filter switch
+            {
+                InvoiceQueueFilter.Draft => baseQuery.Where(x => x.Status == InvoiceStatus.Draft),
+                InvoiceQueueFilter.DueSoon => baseQuery.Where(x => x.Status != InvoiceStatus.Paid && x.DueDateUtc >= DateTime.UtcNow.Date && x.DueDateUtc <= dueSoonThresholdUtc),
+                InvoiceQueueFilter.Overdue => baseQuery.Where(x => x.Status != InvoiceStatus.Paid && x.DueDateUtc < DateTime.UtcNow.Date),
+                InvoiceQueueFilter.MissingVatId => baseQuery.Where(x => x.CustomerId.HasValue && _db.Set<Customer>().Any(customer => customer.Id == x.CustomerId.Value && customer.TaxProfileType == CustomerTaxProfileType.Business && (customer.VatId == null || customer.VatId == string.Empty))),
+                InvoiceQueueFilter.Refunded => baseQuery.Where(x => x.PaymentId.HasValue && _db.Set<Refund>().Any(refund => refund.PaymentId == x.PaymentId.Value && refund.Status == RefundStatus.Completed)),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
             var items = await baseQuery

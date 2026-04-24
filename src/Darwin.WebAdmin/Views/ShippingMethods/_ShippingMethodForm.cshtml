@@ -1,9 +1,150 @@
 @model Darwin.WebAdmin.ViewModels.Shipping.ShippingMethodEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    string ShippingMethodFormOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    var shippingMethodFormMissingRates = Model.Rates.Count == 0;
+    var shippingMethodFormDhl = string.Equals(Model.Carrier, "DHL", StringComparison.OrdinalIgnoreCase);
+    var shippingMethodFormGlobalCoverage = string.IsNullOrWhiteSpace(Model.CountriesCsv);
+    var shippingMethodFormMissingCurrency = string.IsNullOrWhiteSpace(Model.Currency);
+    var shippingMethodFormInactive = !Model.IsActive;
+    var shippingMethodFormAttentionCount =
+        (shippingMethodFormMissingRates ? 1 : 0) +
+        (shippingMethodFormMissingCurrency ? 1 : 0) +
+        (shippingMethodFormInactive ? 1 : 0);
+}
 
 <input type="hidden" asp-for="Id" />
 <input type="hidden" asp-for="RowVersion" />
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge @ShippingMethodFormOpsHealthBadgeClass(shippingMethodFormAttentionCount == 0)">@T.T("NeedsAttention"): @shippingMethodFormAttentionCount</span>
+                    <span class="badge @ShippingMethodFormOpsHealthBadgeClass(!shippingMethodFormMissingRates)">@T.T("MissingRates")</span>
+                    <span class="badge @ShippingMethodFormOpsHealthBadgeClass(!shippingMethodFormMissingCurrency)">@T.T("Currency")</span>
+                    <span class="badge @ShippingMethodFormOpsHealthBadgeClass(!shippingMethodFormInactive)">@T.T("Inactive")</span>
+                    @if (shippingMethodFormDhl)
+                    {
+                        <span class="badge text-bg-primary">@T.T("DhlMethods")</span>
+                    }
+                    @if (shippingMethodFormGlobalCoverage)
+                    {
+                        <span class="badge text-bg-info">@T.T("GlobalCoverage")</span>
+                    }
+                </div>
+                <h2 class="h5 mb-1">@T.T("ShippingMethods")</h2>
+                <p class="text-muted mb-0">@T.T("ShippingMethodEditorIntro")</p>
+            </div>
+            <div class="text-md-end">
+                <div class="small text-muted">@T.T("NeedsAttention")</div>
+                <div class="fs-4 fw-semibold">@shippingMethodFormAttentionCount</div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("MissingRates")</span>
+                        <span class="badge @ShippingMethodFormOpsHealthBadgeClass(!shippingMethodFormMissingRates)">@(shippingMethodFormMissingRates ? 1 : 0)</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="MissingRates"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="Orders"
+                           asp-action="ShipmentsQueue"
+                           asp-route-filter="MissingService"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "MissingService" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ShipmentsQueue")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("DhlMethods")</span>
+                        <span class="badge @ShippingMethodFormOpsHealthBadgeClass(shippingMethodFormDhl)">@(shippingMethodFormDhl ? 1 : 0)</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="Dhl"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="SiteSettings"
+                           asp-action="Edit"
+                           asp-fragment="site-settings-shipping"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ShippingSettings")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("GlobalCoverage")</span>
+                        <span class="badge @ShippingMethodFormOpsHealthBadgeClass(shippingMethodFormGlobalCoverage)">@(shippingMethodFormGlobalCoverage ? 1 : 0)</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="GlobalCoverage"
+                           class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "GlobalCoverage" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="Orders"
+                           asp-action="ShipmentsQueue"
+                           asp-route-filter="CarrierReview"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "CarrierReview" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ShipmentsQueue")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("Inactive")</span>
+                        <span class="badge @ShippingMethodFormOpsHealthBadgeClass(!shippingMethodFormInactive)">@(shippingMethodFormInactive ? 1 : 0)</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="Inactive"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Inactive" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-action="Create"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Create", "ShippingMethods")"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("CreateMethod")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="card mb-4">
     <div class="card-header">@T.T("MethodDetails")</div>
@@ -51,6 +192,18 @@
         </button>
     </div>
     <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="badge @ShippingMethodFormOpsHealthBadgeClass(!shippingMethodFormMissingRates)">@T.T("MissingRates"): @(shippingMethodFormMissingRates ? 1 : 0)</span>
+            <span class="badge @ShippingMethodFormOpsHealthBadgeClass(!shippingMethodFormMissingCurrency)">@T.T("Currency"): @(shippingMethodFormMissingCurrency ? 1 : 0)</span>
+            @if (shippingMethodFormDhl)
+            {
+                <span class="badge text-bg-primary">@T.T("DhlMethods")</span>
+            }
+            @if (shippingMethodFormGlobalCoverage)
+            {
+                <span class="badge text-bg-info">@T.T("GlobalCoverage")</span>
+            }
+        </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle" id="shipping-rates-table">
                 <thead>

@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.EmailDispatchAuditsListVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("EmailDeliveryAudits");
@@ -63,9 +64,18 @@
             : string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase)
                 ? Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention
                 : null;
+    string EmailAuditHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string EmailAuditHealthBadgeText(bool healthy) => healthy ? T.T("Configured") : T.T("NeedsAttention");
+    var retryEscalationCount = Model.Summary.RetryReadyCount + Model.Summary.RetryBlockedCount;
+    var followUpBacklogCount = Model.Summary.NeedsOperatorFollowUpCount + Model.Summary.RepeatedFailureCount;
+    var chainAttentionCount = Model.Summary.HighChainVolumeCount + Model.Summary.StalePendingCount;
+    var exactChainActive = !string.IsNullOrWhiteSpace(Model.RecipientEmail);
 }
 
 <div id="business-communication-audits-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-envelope-open-text me-2"></i>@T.T("EmailDeliveryAudits")</h1>
@@ -77,6 +87,152 @@
            hx-target="#business-communication-audits-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BackToCommunications")</a>
+</div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+            <div>
+                <div class="text-muted text-uppercase small fw-semibold">@T.T("GoLiveReadiness")</div>
+                <h2 class="h5 mb-1">@T.T("EmailDeliveryAudits")</h2>
+                <p class="text-muted mb-0">@T.T("RecentSmtpAttempts")</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-controller="Businesses"
+                   asp-action="SupportQueue"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-target="#business-communication-audits-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                <a asp-controller="SiteSettings"
+                   asp-action="Edit"
+                   asp-fragment="site-settings-communications-policy"
+                   class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                   hx-target="#business-communication-audits-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("OpenPolicyAction")</a>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("RetryReady")</div>
+                        <span class="@EmailAuditHealthBadgeClass(Model.Summary.RetryReadyCount == 0)">@EmailAuditHealthBadgeText(Model.Summary.RetryReadyCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@retryEscalationCount</div>
+                    <div class="small text-muted">@string.Format("{0} / {1}", Model.Summary.RetryReadyCount, Model.Summary.RetryBlockedCount)</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="EmailAudits"
+                           asp-route-retryReadyOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-success"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryReadyOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-audits-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("RetryReady")</a>
+                        <a asp-action="EmailAudits"
+                           asp-route-retryBlockedOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryBlockedOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-audits-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("RetryBlocked")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("NeedsFollowUp")</div>
+                        <span class="@EmailAuditHealthBadgeClass(followUpBacklogCount == 0)">@EmailAuditHealthBadgeText(followUpBacklogCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@followUpBacklogCount</div>
+                    <div class="small text-muted">@T.T("CommunicationRepeatedFailureChainsNote")</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="EmailAudits"
+                           asp-route-repeatedFailuresOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { repeatedFailuresOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-audits-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("RepeatedFailures")</a>
+                        <a asp-action="EmailAudits"
+                           asp-route-priorSuccessOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { priorSuccessOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-audits-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("PriorSuccessContext")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("HeavyChains")</div>
+                        <span class="@EmailAuditHealthBadgeClass(chainAttentionCount == 0)">@EmailAuditHealthBadgeText(chainAttentionCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@chainAttentionCount</div>
+                    <div class="small text-muted">@T.T("EmailAuditsHeavyChainsOnlyLabel")</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="EmailAudits"
+                           asp-route-highChainVolumeOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { highChainVolumeOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-audits-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("HeavyChains")</a>
+                        <a asp-action="EmailAudits"
+                           asp-route-stalePendingOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-audits-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StalePending")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("ExactChainMode")</div>
+                        <span class="@EmailAuditHealthBadgeClass(!exactChainActive)">@EmailAuditHealthBadgeText(!exactChainActive)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@(exactChainActive ? 1 : 0)</div>
+                    <div class="small text-muted">@(exactChainActive ? Model.RecipientEmail : T.T("LeaveExactChain"))</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="EmailAudits"
+                           asp-route-chainFollowUpOnly="true"
+                           asp-route-recipientEmail="@Model.RecipientEmail"
+                           asp-route-flowKey="@Model.FlowKey"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { chainFollowUpOnly = true, recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-audits-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("NeedsFollowUp")</a>
+                        <a asp-action="EmailAudits"
+                           asp-route-recipientEmail="@Model.RecipientEmail"
+                           asp-route-flowKey="@Model.FlowKey"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-audits-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("WholeChain")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -362,12 +518,12 @@
         <div class="alert alert-secondary mb-4">
             <strong>@T.T("EmailAuditChainTimelineLabel"):</strong>
             @T.T("ChannelAuditFirstAttemptLabel")
-            <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>,
+            <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture)</code>,
             @T.T("ChannelAuditLatestAttemptLabel")
-            <code>@Model.ChainSummary.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>
+            <code>@Model.ChainSummary.LastAttemptAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture)</code>
             @if (Model.ChainSummary.LastSuccessfulAttemptAtUtc.HasValue)
             {
-                <span>, @T.T("EmailAuditLastSuccessLabel") <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+                <span>, @T.T("EmailAuditLastSuccessLabel") <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture)</code></span>
             }
             else
             {
@@ -398,7 +554,7 @@
                             @foreach (var history in Model.ChainSummary.RecentHistory)
                             {
                                 <tr>
-                                    <td>@history.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@history.AttemptedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
                                     <td>
                                         @if (string.Equals(history.Status, "Sent", StringComparison.OrdinalIgnoreCase))
                                         {
@@ -422,7 +578,7 @@
                                         }
                                         else if (history.CompletedAtUtc.HasValue)
                                         {
-                                            <span class="text-muted small">@string.Format(T.T("CommunicationCompletedAt"), history.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</span>
+                                            <span class="text-muted small">@string.Format(T.T("CommunicationCompletedAt"), history.CompletedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</span>
                                         }
                                         else
                                         {
@@ -670,8 +826,11 @@
         {
             foreach (var item in Model.Items)
             {
+                var needsRetryBlockedFollowUp = !item.CanRetryNow && !string.IsNullOrWhiteSpace(item.RetryPolicyState);
+                var needsChainFollowUp = item.NeedsOperatorFollowUp || item.PriorFailureCount > 0 || item.RecentAttemptCount24h > 1;
+                var needsBusinessSupportFollowUp = item.BusinessId.HasValue && (item.NeedsOperatorFollowUp || string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase));
                 <tr>
-                    <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@item.AttemptedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
                     <td>
                         <div>@LogicalRecipientEmail(item)</div>
                         @if (HasRecipientOverride(item))
@@ -763,7 +922,7 @@
                         }
                         @if (item.LastSuccessfulAttemptAtUtc.HasValue)
                         {
-                            <div class="small text-muted">@string.Format(T.T("CommunicationLastSuccessAt"), item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                            <div class="small text-muted">@string.Format(T.T("CommunicationLastSuccessAt"), item.LastSuccessfulAttemptAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                         }
                         @if (!string.IsNullOrWhiteSpace(item.RetryPolicyState))
                         {
@@ -807,7 +966,7 @@
                         }
                         else if (item.CompletedAtUtc.HasValue)
                         {
-                            <div class="small text-muted mt-1">@string.Format(T.T("CommunicationCompletedAt"), item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                            <div class="small text-muted mt-1">@string.Format(T.T("CommunicationCompletedAt"), item.CompletedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                         }
                         else
                         {
@@ -819,7 +978,7 @@
                         }
                         @if (item.RetryAvailableAtUtc.HasValue)
                         {
-                            <div class="small text-muted">@string.Format(T.T("EmailAuditsRetryAvailableAtUtc"), item.RetryAvailableAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                            <div class="small text-muted">@string.Format(T.T("EmailAuditsRetryAvailableAtUtc"), item.RetryAvailableAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                         }
                         @if (item.CanRetryNow)
                         {
@@ -851,6 +1010,53 @@
                                     }
                                     <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("RetryNowAction")</button>
                                 </form>
+                            </div>
+                        }
+                        else if (needsRetryBlockedFollowUp)
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-action="EmailAudits"
+                                   asp-route-retryBlockedOnly="true"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { retryBlockedOnly = true, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("RetryBlocked")</a>
+                                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
+                                @if (string.Equals(item.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <a asp-action="ChannelAudits"
+                                       asp-route-businessId="@item.BusinessId"
+                                       asp-route-phoneVerificationOnly="true"
+                                       class="btn btn-sm btn-outline-dark"
+                                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = item.BusinessId, phoneVerificationOnly = true })"
+                                       hx-target="#business-communication-audits-workspace-shell"
+                                       hx-swap="outerHTML">@T.T("PhoneVerification")</a>
+                                }
+                            </div>
+                        }
+                        @if (needsChainFollowUp)
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-action="EmailAudits"
+                                   asp-route-chainFollowUpOnly="true"
+                                   asp-route-recipientEmail="@LogicalRecipientEmail(item)"
+                                   asp-route-flowKey="@item.FlowKey"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { chainFollowUpOnly = true, recipientEmail = LogicalRecipientEmail(item), flowKey = item.FlowKey, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("NeedsFollowUp")</a>
+                                <a asp-action="EmailAudits"
+                                   asp-route-repeatedFailuresOnly="true"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { repeatedFailuresOnly = true, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("RepeatedFailures")</a>
                             </div>
                         }
                         @if (!string.IsNullOrWhiteSpace(item.FlowKey))
@@ -924,6 +1130,27 @@
                                    hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
                             </div>
                         }
+                        else if (string.Equals(item.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-action="ChannelAudits"
+                                   asp-route-businessId="@item.BusinessId"
+                                   asp-route-phoneVerificationOnly="true"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = item.BusinessId, phoneVerificationOnly = true })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("PhoneVerification")</a>
+                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@LogicalRecipientEmail(item)" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = LogicalRecipientEmail(item) })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
+                            </div>
+                        }
                         else if (string.Equals(item.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
                         {
                             <div class="mt-2 d-flex flex-wrap gap-2">
@@ -945,6 +1172,19 @@
                                         <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunEmailTestAction")</button>
                                     </form>
                                 }
+                            </div>
+                        }
+                        else if (needsBusinessSupportFollowUp)
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("SupportQueue")</a>
+                                <a asp-action="Details" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("BusinessCommunicationInspectBusinessAction")</a>
                             </div>
                         }
                     </td>

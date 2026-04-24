@@ -5,6 +5,13 @@
 
 @{
     ViewData["Title"] = T.T("InventoryLedger");
+    var inventoryCulture = System.Globalization.CultureInfo.CurrentCulture;
+    string InventoryDateTimeText(DateTime utc) => utc.ToString("g", inventoryCulture);
+    string InventoryLedgerOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string InventoryLedgerOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var inventoryLedgerAttentionCount = Model.Summary.OutboundCount + Model.Summary.ReservationCount;
 }
 
 <div id="inventory-ledger-workspace-shell">
@@ -15,6 +22,113 @@
     <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Inbound")</div><div class="fs-4 fw-semibold">@Model.Summary.InboundCount</div></div></div>
     <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Outbound")</div><div class="fs-4 fw-semibold">@Model.Summary.OutboundCount</div></div></div>
     <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Reservations")</div><div class="fs-4 fw-semibold">@Model.Summary.ReservationCount</div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h2 class="h5 mb-0">@T.T("GoLiveReadiness")</h2>
+                    <span class="@InventoryLedgerOpsHealthBadgeClass(inventoryLedgerAttentionCount == 0)">@InventoryLedgerOpsHealthBadgeText(inventoryLedgerAttentionCount == 0)</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    @T.T("LedgerOpsPlaybooks")
+                    @if (inventoryLedgerAttentionCount > 0)
+                    {
+                        <span class="ms-1">@T.T("NeedsAttention"): @inventoryLedgerAttentionCount</span>
+                    }
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId })"
+                   hx-target="#inventory-ledger-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("InventoryLedger")</a>
+                <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("StockLevels", "Inventory", new { warehouseId = Model.WarehouseId })"
+                   hx-target="#inventory-ledger-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("StockLevels")</a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Inbound")</div>
+                            <div class="small text-muted mt-1">@T.T("Queue")</div>
+                        </div>
+                        <span class="@InventoryLedgerOpsHealthBadgeClass(Model.Summary.InboundCount > 0)">@Model.Summary.InboundCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryLedgerPlaybookInboundAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Inbound" class="btn btn-sm btn-outline-success"
+                           hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Inbound" })"
+                           hx-target="#inventory-ledger-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Inbound")</a>
+                        <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("StockLevels", "Inventory", new { warehouseId = Model.WarehouseId })"
+                           hx-target="#inventory-ledger-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StockLevels")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Outbound")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@InventoryLedgerOpsHealthBadgeClass(Model.Summary.OutboundCount == 0)">@Model.Summary.OutboundCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryLedgerPlaybookOutboundAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Outbound" class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Outbound" })"
+                           hx-target="#inventory-ledger-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Outbound")</a>
+                        <a asp-action="StockTransfers" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("StockTransfers", "Inventory", new { warehouseId = Model.WarehouseId })"
+                           hx-target="#inventory-ledger-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StockTransfersTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Reservations")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@InventoryLedgerOpsHealthBadgeClass(Model.Summary.ReservationCount == 0)">@Model.Summary.ReservationCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryLedgerPlaybookOutboundScope")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reservations" class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Reservations" })"
+                           hx-target="#inventory-ledger-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Reservations")</a>
+                        <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("StockLevels", "Inventory", new { warehouseId = Model.WarehouseId })"
+                           hx-target="#inventory-ledger-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StockLevels")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="card mb-3">
@@ -100,7 +214,7 @@
                 foreach (var r in Model.Items)
                 {
                     <tr>
-                        <td>@r.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>@InventoryDateTimeText(r.CreatedAtUtc)</td>
                         <td>@r.WarehouseName</td>
                         <td class="text-end">@r.QuantityDelta</td>
                         <td>@r.Reason</td>

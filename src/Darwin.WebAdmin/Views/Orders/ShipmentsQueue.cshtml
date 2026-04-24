@@ -3,7 +3,17 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Shipments");
+    var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeShipmentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
+    string ShipmentQueueOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string ShipmentQueueOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var shipmentQueueAttentionCount = Model.Summary.AwaitingHandoffCount + Model.Summary.TrackingOverdueCount + Model.Summary.CarrierReviewCount + Model.Summary.ReturnFollowUpCount;
+    var shipmentQueueSettingsReady = Model.Dhl.Enabled
+        && Model.Dhl.ApiBaseUrlConfigured
+        && Model.Dhl.ApiCredentialsConfigured
+        && Model.Dhl.AccountNumberConfigured
+        && Model.Dhl.ShipperIdentityConfigured;
 }
 
 <div id="shipments-queue-workspace-shell">
@@ -34,6 +44,122 @@
            hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("CarrierReview")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="ReturnFollowUp" class="btn btn-outline-dark btn-sm"
            hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.ReturnFollowUp })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("ReturnFollowUp")</a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge @ShipmentQueueOpsHealthBadgeClass(shipmentQueueAttentionCount == 0)">@ShipmentQueueOpsHealthBadgeText(shipmentQueueAttentionCount == 0)</span>
+                    <span class="badge @ShipmentQueueOpsHealthBadgeClass(shipmentQueueSettingsReady)">@ShipmentQueueOpsHealthBadgeText(shipmentQueueSettingsReady)</span>
+                </div>
+                <h2 class="h5 mb-1">@T.T("ShipmentQueueTitle")</h2>
+                <p class="text-muted mb-0">@T.T("DhlExceptionFollowUp")</p>
+            </div>
+            <div class="text-md-end">
+                <div class="small text-muted">@T.T("NeedsAttention")</div>
+                <div class="fs-4 fw-semibold">@shipmentQueueAttentionCount</div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("AwaitingHandoff")</span>
+                        <span class="badge @ShipmentQueueOpsHealthBadgeClass(Model.Summary.AwaitingHandoffCount == 0)">@Model.Summary.AwaitingHandoffCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("OlderThanThreshold") @Model.Dhl.ShipmentAttentionDelayHours h</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="ShipmentsQueue"
+                           asp-route-filter="@ShipmentQueueFilter.AwaitingHandoff"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.AwaitingHandoff })"
+                           hx-target="#shipments-queue-workspace-shell"
+                           hx-swap="outerHTML">@T.T("Open")</a>
+                        <a asp-controller="Orders"
+                           asp-action="Index"
+                           asp-route-filter="Fulfillment"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Index", "Orders", new { filter = "Fulfillment" })"
+                           hx-target="#shipments-queue-workspace-shell"
+                           hx-swap="outerHTML">@T.T("OrdersTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("TrackingOverdue")</span>
+                        <span class="badge @ShipmentQueueOpsHealthBadgeClass(Model.Summary.TrackingOverdueCount == 0)">@Model.Summary.TrackingOverdueCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("MissingTrackingBeyondGrace") @Model.Dhl.ShipmentTrackingGraceHours h</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="ShipmentsQueue"
+                           asp-route-filter="@ShipmentQueueFilter.TrackingOverdue"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.TrackingOverdue })"
+                           hx-target="#shipments-queue-workspace-shell"
+                           hx-swap="outerHTML">@T.T("Open")</a>
+                        <a asp-controller="SiteSettings"
+                           asp-action="Edit"
+                           asp-fragment="site-settings-shipping"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                           hx-target="#shipments-queue-workspace-shell"
+                           hx-swap="outerHTML">@T.T("ShippingSettings")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("CarrierReview")</span>
+                        <span class="badge @ShipmentQueueOpsHealthBadgeClass(Model.Summary.CarrierReviewCount == 0)">@Model.Summary.CarrierReviewCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("ProviderShipmentReference") / @T.T("ShippingMethods")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="ShipmentsQueue"
+                           asp-route-filter="@ShipmentQueueFilter.CarrierReview"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })"
+                           hx-target="#shipments-queue-workspace-shell"
+                           hx-swap="outerHTML">@T.T("Open")</a>
+                        <a asp-controller="ShippingMethods"
+                           asp-action="Index"
+                           asp-route-filter="Dhl"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                           hx-target="#shipments-queue-workspace-shell"
+                           hx-swap="outerHTML">@T.T("ShippingMethods")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("ReturnFollowUp")</span>
+                        <span class="badge @ShipmentQueueOpsHealthBadgeClass(Model.Summary.ReturnFollowUpCount == 0)">@Model.Summary.ReturnFollowUpCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("ReturnedParcelsNeedFollowUp")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="ShipmentsQueue"
+                           asp-route-filter="@ShipmentQueueFilter.ReturnFollowUp"
+                           class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.ReturnFollowUp })"
+                           hx-target="#shipments-queue-workspace-shell"
+                           hx-swap="outerHTML">@T.T("Open")</a>
+                        <a asp-controller="Orders"
+                           asp-action="ReturnsQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ReturnsQueue", "Orders")"
+                           hx-target="#shipments-queue-workspace-shell"
+                           hx-swap="outerHTML">@T.T("ReturnsQueueTitle")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -239,10 +365,13 @@
             {
                 var needsServiceResolution = string.IsNullOrWhiteSpace(item.Service);
                 var needsThresholdReview = item.AwaitingHandoff || item.TrackingOverdue;
+                var needsCarrierQueueFollowUp = item.NeedsCarrierReview || item.ProviderOperationFailed;
+                var needsTrackingQueueFollowUp = item.TrackingOverdue || string.IsNullOrWhiteSpace(item.TrackingNumber);
+                var needsReturnedQueueFollowUp = item.NeedsReturnFollowUp || item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned;
                 <tr>
                     <td>
                         <div class="fw-semibold">@item.OrderNumber</div>
-                        <div class="small text-muted">@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="small text-muted">@OrderDateTimeText(item.CreatedAtUtc)</div>
                     </td>
                     <td>
                         @item.Carrier / @(string.IsNullOrWhiteSpace(item.Service) ? "-" : item.Service)
@@ -312,11 +441,11 @@
                     <td>
                         @if (item.DeliveredAtUtc.HasValue)
                         {
-                            <span>@T.T("Delivered") @item.DeliveredAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                            <span>@T.T("Delivered") @OrderDateTimeText(item.DeliveredAtUtc)</span>
                         }
                         else if (item.ShippedAtUtc.HasValue)
                         {
-                            <span>@T.T("Shipped") @item.ShippedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                            <span>@T.T("Shipped") @OrderDateTimeText(item.ShippedAtUtc)</span>
                         }
                         else
                         {
@@ -333,7 +462,7 @@
                         }
                         @if (item.LastCarrierEventAtUtc.HasValue)
                         {
-                            <div class="small text-muted mt-1">@T.T("LastEvent") @item.LastCarrierEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div class="small text-muted mt-1">@T.T("LastEvent") @OrderDateTimeText(item.LastCarrierEventAtUtc)</div>
                         }
                         @if (item.RecentCarrierEvents.Count > 0)
                         {
@@ -341,7 +470,7 @@
                                 @foreach (var carrierEvent in item.RecentCarrierEvents)
                                 {
                                     <div class="mt-1">
-                                        <span>@carrierEvent.OccurredAtUtc.ToString("MM-dd HH:mm")</span>
+                                        <span>@OrderDateTimeText(carrierEvent.OccurredAtUtc)</span>
                                         <code>@carrierEvent.CarrierEventKey</code>
                                         @if (!string.IsNullOrWhiteSpace(carrierEvent.ProviderStatus))
                                         {
@@ -447,6 +576,39 @@
                                     <i class="fa-solid fa-triangle-exclamation"></i> @T.T("CarrierReviewQueue")
                                 </a>
                             }
+                            @if (needsCarrierQueueFollowUp)
+                            {
+                                <a asp-action="ShipmentsQueue"
+                                   asp-route-filter="@ShipmentQueueFilter.CarrierReview"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> @T.T("CarrierReview")
+                                </a>
+                            }
+                            @if (item.AwaitingHandoff)
+                            {
+                                <a asp-action="ShipmentsQueue"
+                                   asp-route-filter="@ShipmentQueueFilter.AwaitingHandoff"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.AwaitingHandoff })"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-hourglass-half"></i> @T.T("AwaitingHandoff")
+                                </a>
+                            }
+                            @if (needsTrackingQueueFollowUp)
+                            {
+                                <a asp-action="ShipmentsQueue"
+                                   asp-route-filter="@ShipmentQueueFilter.TrackingOverdue"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.TrackingOverdue })"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-location-crosshairs"></i> @T.T("TrackingOverdue")
+                                </a>
+                            }
                             @if (needsServiceResolution)
                             {
                                 <a asp-controller="ShippingMethods"
@@ -457,6 +619,15 @@
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-box"></i> @T.T("ShippingMethods")
+                                </a>
+                                <a asp-controller="ShippingMethods"
+                                   asp-action="Index"
+                                   asp-route-filter="MissingRates"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-scale-balanced"></i> @T.T("MissingRates")
                                 </a>
                             }
                             @if (needsThresholdReview)
@@ -469,6 +640,17 @@
                                    hx-target="#shipments-queue-workspace-shell"
                                    hx-swap="outerHTML">
                                     <i class="fa-solid fa-sliders"></i> @T.T("ShippingSettings")
+                                </a>
+                            }
+                            @if (needsReturnedQueueFollowUp)
+                            {
+                                <a asp-controller="Orders"
+                                   asp-action="ReturnsQueue"
+                                   class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("ReturnsQueue", "Orders")"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i> @T.T("ReturnsQueueTitle")
                                 </a>
                             }
                             @if (item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned && item.DefaultRefundPaymentId.HasValue)

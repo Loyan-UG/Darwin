@@ -124,6 +124,19 @@
                     </a>
                     @if (!Model.EmailConfirmed)
                     {
+                        <a asp-controller="BusinessCommunications"
+                           asp-action="EmailAudits"
+                           asp-route-businessId="@Model.BusinessId"
+                           asp-route-status="Failed"
+                           asp-route-flowKey="AccountActivation"
+                           asp-route-recipientEmail="@Model.UserEmail"
+                           class="btn btn-outline-secondary"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.BusinessId, status = "Failed", flowKey = "AccountActivation", recipientEmail = Model.UserEmail })"
+                           hx-target="#business-member-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa-solid fa-envelope-circle-check"></i> @T.T("OpenFailedActivationEmails")
+                        </a>
                         <form asp-action="SendMemberActivationEmail"
                               method="post"
                               hx-post="@Url.Action("SendMemberActivationEmail", "Businesses")"
@@ -179,6 +192,19 @@
                             <i class="fa-solid fa-key"></i> @T.T("BusinessMemberSendResetAction")
                         </button>
                     </form>
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-businessId="@Model.BusinessId"
+                       asp-route-status="Failed"
+                       asp-route-flowKey="PasswordReset"
+                       asp-route-recipientEmail="@Model.UserEmail"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.BusinessId, status = "Failed", flowKey = "PasswordReset", recipientEmail = Model.UserEmail })"
+                       hx-target="#business-member-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa-solid fa-triangle-exclamation"></i> @T.T("OpenFailedPasswordResets")
+                    </a>
                     @if (Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow)
                     {
                         <form asp-action="UnlockMemberUser"

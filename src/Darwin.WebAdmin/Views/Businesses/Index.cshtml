@@ -269,6 +269,57 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+        <span>@T.T("TaxComplianceTitle")</span>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="Billing"
+               asp-action="TaxCompliance"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("TaxCompliance", "Billing")"
+               hx-target="#businesses-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("TaxComplianceTitle")</a>
+            <a asp-controller="Billing"
+               asp-action="Payments"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Payments", "Billing")"
+               hx-target="#businesses-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Payments")</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="small text-muted mb-3">@T.T("CollectionReviewSubtitle"): @T.T("Overdue"), @T.T("DueSoon"), @T.T("Draft")</div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="Crm"
+               asp-action="Invoices"
+               asp-route-filter="Overdue"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Invoices", "Crm", new { filter = "Overdue" })"
+               hx-target="#businesses-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Overdue")</a>
+            <a asp-controller="Crm"
+               asp-action="Invoices"
+               asp-route-filter="DueSoon"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Invoices", "Crm", new { filter = "DueSoon" })"
+               hx-target="#businesses-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("DueSoon")</a>
+            <a asp-controller="Crm"
+               asp-action="Invoices"
+               asp-route-filter="Draft"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Invoices", "Crm", new { filter = "Draft" })"
+               hx-target="#businesses-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("Draft")</a>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3 mb-3">
     <div class="col-lg-4 col-md-6">
         <div class="border rounded p-3 h-100 d-flex flex-column gap-2">

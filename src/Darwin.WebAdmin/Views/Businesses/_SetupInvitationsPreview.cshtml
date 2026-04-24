@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSetupInvitationsPreviewVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     string LocalizeBusinessInvitationRole(object? role) => role is null ? "-" : T.T(role.ToString() ?? string.Empty);
@@ -78,16 +79,17 @@ else
                         <div class="fw-semibold">
                             <a asp-controller="BusinessCommunications"
                                asp-action="EmailAudits"
+                               asp-route-businessId="@Model.BusinessId"
                                asp-route-status="Failed"
                                asp-route-flowKey="BusinessInvitation"
                                asp-route-recipientEmail="@item.Email"
                                class="link-body-emphasis text-decoration-none"
-                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", recipientEmail = item.Email })"
+                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.BusinessId, status = "Failed", flowKey = "BusinessInvitation", recipientEmail = item.Email })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@item.Email</a>
                         </div>
-                        <div class="small text-muted">@string.Format(T.T("BusinessSetupInvitationsPreviewExpiresAt"), item.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm"))</div>
+                    <div class="small text-muted">@string.Format(T.T("BusinessSetupInvitationsPreviewExpiresAt"), item.ExpiresAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                         <div class="d-flex gap-2 flex-wrap mt-2">
                             <a asp-action="Invitations"
                                asp-route-businessId="@Model.BusinessId"
@@ -98,13 +100,14 @@ else
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@InvitationQueueLabel(invitationWorkspaceFilter)</a>
-                            <a asp-controller="BusinessCommunications"
+                           <a asp-controller="BusinessCommunications"
                                asp-action="EmailAudits"
+                               asp-route-businessId="@Model.BusinessId"
                                asp-route-status="Failed"
                                asp-route-flowKey="BusinessInvitation"
                                asp-route-recipientEmail="@item.Email"
                                class="btn btn-sm btn-outline-secondary"
-                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", recipientEmail = item.Email })"
+                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.BusinessId, status = "Failed", flowKey = "BusinessInvitation", recipientEmail = item.Email })"
                                hx-target="#business-setup-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("OpenFailedInvitationEmails")</a>

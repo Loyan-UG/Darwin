@@ -112,6 +112,10 @@ public sealed class MerchantReadinessPlaybookVm
         public int OpenInvitationCount { get; set; }
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }
+        public int FailedInvitationCount { get; set; }
+        public int FailedActivationCount { get; set; }
+        public int FailedPasswordResetCount { get; set; }
+        public int FailedAdminTestCount { get; set; }
     }
 
     public sealed class BusinessSupportFailedEmailVm
@@ -321,6 +325,10 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public string SmsTransportSummary { get; set; } = string.Empty;
         public string WhatsAppTransportSummary { get; set; } = string.Empty;
         public string AdminRoutingSummary { get; set; } = string.Empty;
+        public int FailedInvitationCount { get; set; }
+        public int FailedActivationCount { get; set; }
+        public int FailedPasswordResetCount { get; set; }
+        public int FailedAdminTestCount { get; set; }
     }
 
     /// <summary>

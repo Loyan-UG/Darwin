@@ -351,9 +351,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
 
         [HttpGet]
-        public async Task<IActionResult> Invoices(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Invoices(int page = 1, int pageSize = 20, string? q = null, InvoiceQueueFilter filter = InvoiceQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getInvoicesPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var (items, total) = await _getInvoicesPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var invoiceItems = items.Select(x => new InvoiceListItemVm
@@ -391,6 +391,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
+                Filter = filter,
                 Items = invoiceItems
             });
         }

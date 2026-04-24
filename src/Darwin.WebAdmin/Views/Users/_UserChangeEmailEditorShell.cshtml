@@ -31,6 +31,29 @@
         <div class="card mb-3">
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2 mb-3">
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
+                       asp-route-q="@Model.CurrentEmail"
+                       class="btn btn-sm btn-outline-warning"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, q = Model.CurrentEmail })"
+                       hx-target="#user-change-email-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa fa-user-check"></i> @T.T("UsersFilterUnconfirmed")
+                    </a>
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-status="Failed"
+                       asp-route-flowKey="AccountActivation"
+                       asp-route-recipientEmail="@Model.CurrentEmail"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", recipientEmail = Model.CurrentEmail })"
+                       hx-target="#user-change-email-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa fa-envelope-circle-check"></i> @T.T("OpenFailedActivationEmails")
+                    </a>
                     <a asp-controller="MobileOperations"
                        asp-action="Index"
                        asp-route-q="@Model.CurrentEmail"

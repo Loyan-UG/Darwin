@@ -1,9 +1,19 @@
+@using System.Globalization
 @using Darwin.Application.CRM.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.TaxComplianceListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("TaxComplianceTitle");
     string LocalizeTaxInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string TaxComplianceOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string TaxComplianceOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var taxComplianceAttentionCount = Model.Summary.BusinessCustomersMissingVatIdCount
+        + Model.Summary.BusinessInvoicesMissingVatIdCount
+        + Model.Summary.OverdueInvoiceCount
+        + (!Model.Tax.ArchiveReadinessComplete ? 1 : 0)
+        + (!Model.Tax.EInvoiceBaselineReady ? 1 : 0);
+    var taxCollectionAttentionCount = Model.Summary.OverdueInvoiceCount + Model.Summary.DueSoonInvoiceCount;
+    var taxInvoicePreparationCount = Model.Summary.DraftInvoiceCount + Model.Summary.BusinessInvoicesMissingVatIdCount;
 }
 
 <div id="billing-tax-compliance-workspace-shell">
@@ -12,6 +22,144 @@
 
 <div class="alert alert-secondary mb-3">
     @T.T("TaxComplianceIntro")
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge @TaxComplianceOpsHealthBadgeClass(taxComplianceAttentionCount == 0)">@TaxComplianceOpsHealthBadgeText(taxComplianceAttentionCount == 0)</span>
+                    <span class="badge @TaxComplianceOpsHealthBadgeClass(Model.Tax.ArchiveReadinessComplete && Model.Tax.EInvoiceBaselineReady)">@TaxComplianceOpsHealthBadgeText(Model.Tax.ArchiveReadinessComplete && Model.Tax.EInvoiceBaselineReady)</span>
+                </div>
+                <h2 class="h5 mb-1">@T.T("TaxComplianceTitle")</h2>
+                <p class="text-muted mb-0">@T.T("TaxComplianceIntro")</p>
+            </div>
+            <div class="text-md-end">
+                <div class="small text-muted">@T.T("NeedsAttention")</div>
+                <div class="fs-4 fw-semibold">@taxComplianceAttentionCount</div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("BusinessCustomersMissingVatId")</span>
+                        <span class="badge @TaxComplianceOpsHealthBadgeClass(Model.Summary.BusinessCustomersMissingVatIdCount == 0)">@Model.Summary.BusinessCustomersMissingVatIdCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("FixVatId")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-controller="CRM"
+                           asp-action="Customers"
+                           asp-route-filter="@CustomerQueueFilter.MissingVatId"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Customers", "Crm", new { filter = CustomerQueueFilter.MissingVatId })"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="CRM"
+                           asp-action="Invoices"
+                           asp-route-filter="MissingVatId"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "MissingVatId" })"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ReviewInvoices")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("BusinessInvoicesMissingVatId")</span>
+                        <span class="badge @TaxComplianceOpsHealthBadgeClass(Model.Summary.BusinessInvoicesMissingVatIdCount == 0)">@Model.Summary.BusinessInvoicesMissingVatIdCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("ReviewInvoices")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-controller="CRM"
+                           asp-action="Invoices"
+                           asp-route-filter="MissingVatId"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "MissingVatId" })"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="Orders"
+                           asp-action="Index"
+                           asp-route-filter="PaymentIssues"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Index", "Orders", new { filter = "PaymentIssues" })"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("OrdersTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("OverdueInvoices")</span>
+                        <span class="badge @TaxComplianceOpsHealthBadgeClass(taxCollectionAttentionCount == 0)">@taxCollectionAttentionCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("Payments")</p>
+                    <div class="small text-muted mb-2">@T.T("DueSoon"): <strong>@Model.Summary.DueSoonInvoiceCount</strong></div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-controller="CRM"
+                           asp-action="Invoices"
+                           asp-route-filter="Overdue"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "Overdue" })"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="CRM"
+                           asp-action="Invoices"
+                           asp-route-filter="DueSoon"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "DueSoon" })"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("DueSoon")</a>
+                        <a asp-action="Payments"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Payments")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("ArchiveReadiness")</span>
+                        <span class="badge @TaxComplianceOpsHealthBadgeClass(Model.Tax.ArchiveReadinessComplete && Model.Tax.EInvoiceBaselineReady && taxInvoicePreparationCount == 0)">@((!Model.Tax.ArchiveReadinessComplete || !Model.Tax.EInvoiceBaselineReady) ? 1 : taxInvoicePreparationCount)</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("OpenTaxSettings")</p>
+                    <div class="small text-muted mb-2">@T.T("DraftInvoices"): <strong>@Model.Summary.DraftInvoiceCount</strong></div>
+                    <div class="small text-muted mb-2">@T.T("StructuredExportReadiness"): <strong>@(Model.Tax.StructuredExportBaselineReady ? T.T("Ready") : T.T("NotReady"))</strong></div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-controller="SiteSettings"
+                           asp-action="Edit"
+                           asp-fragment="site-settings-tax"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("OpenTaxSettings")</a>
+                        <a asp-controller="CRM"
+                           asp-action="Invoices"
+                           asp-route-filter="Draft"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Invoices", "Crm", new { filter = "Draft" })"
+                           hx-target="#billing-tax-compliance-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Draft")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="card mb-3">
@@ -144,6 +292,11 @@
                     <tbody>
                     @foreach (var item in Model.InvoiceItems)
                     {
+                        var taxInvoiceNeedsVatRemediation =
+                            item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business &&
+                            string.IsNullOrWhiteSpace(item.CustomerVatId);
+                        var taxInvoiceNeedsCollectionFollowUp =
+                            item.Status.ToString() == "Overdue" || item.Status.ToString() == "DueSoon";
                         <tr>
                             <td>
                                 <div class="fw-semibold">@item.CustomerDisplayName</div>
@@ -159,7 +312,7 @@
                             <td>@(item.OrderNumber ?? "-")</td>
                             <td>@LocalizeTaxInvoiceStatus(item.Status)</td>
                             <td>@item.Currency @((item.TotalGrossMinor / 100.0m).ToString("0.00"))</td>
-                            <td>@string.Format(T.T("CreatedUtcValue"), item.DueDateUtc.ToString("yyyy-MM-dd HH:mm"))</td>
+                            <td>@string.Format(T.T("CreatedUtcValue"), item.DueDateUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture))</td>
                             <td>
                                 <div class="d-flex gap-2 flex-wrap">
                                     <a asp-controller="CRM"
@@ -191,6 +344,42 @@
                                            hx-target="#billing-tax-compliance-workspace-shell"
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("TaxComplianceOpenOrderAction")</a>
+                                    }
+                                    @if (item.PaymentId.HasValue)
+                                    {
+                                        <a asp-action="EditPayment"
+                                           asp-route-id="@item.PaymentId"
+                                           class="btn btn-sm btn-outline-secondary"
+                                           hx-get="@Url.Action("EditPayment", "Billing", new { id = item.PaymentId })"
+                                           hx-target="#billing-tax-compliance-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("Payments")</a>
+                                    }
+                                    @if (taxInvoiceNeedsCollectionFollowUp)
+                                    {
+                                        <a asp-action="Payments"
+                                           class="btn btn-sm btn-outline-warning"
+                                           hx-get="@Url.Action("Payments", "Billing")"
+                                           hx-target="#billing-tax-compliance-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("Payments")</a>
+                                        <a asp-action="Refunds"
+                                           class="btn btn-sm btn-outline-danger"
+                                           hx-get="@Url.Action("Refunds", "Billing")"
+                                           hx-target="#billing-tax-compliance-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("RefundQueueTitle")</a>
+                                    }
+                                    @if (taxInvoiceNeedsVatRemediation)
+                                    {
+                                        <a asp-controller="CRM"
+                                           asp-action="Customers"
+                                           asp-route-filter="@CustomerQueueFilter.MissingVatId"
+                                           class="btn btn-sm btn-outline-warning"
+                                           hx-get="@Url.Action("Customers", "Crm", new { filter = CustomerQueueFilter.MissingVatId })"
+                                           hx-target="#billing-tax-compliance-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("FixVatId")</a>
                                     }
                                 </div>
                             </td>
@@ -236,6 +425,7 @@
                     <tbody>
                     @foreach (var item in Model.CustomerItems)
                     {
+                        var taxCustomerHasOpportunityDebt = item.OpportunityCount > 0;
                         <tr>
                             <td>
                                 <div class="fw-semibold">@item.DisplayName</div>
@@ -247,7 +437,7 @@
                             </td>
                             <td>@item.Email</td>
                             <td>@item.OpportunityCount</td>
-                            <td>@string.Format(T.T("CreatedUtcValue"), (item.ModifiedAtUtc ?? item.CreatedAtUtc).ToString("yyyy-MM-dd HH:mm"))</td>
+                            <td>@string.Format(T.T("CreatedUtcValue"), (item.ModifiedAtUtc ?? item.CreatedAtUtc).ToLocalTime().ToString(CultureInfo.CurrentCulture))</td>
                             <td>
                                 <div class="d-flex gap-2 flex-wrap">
                                     <a asp-controller="CRM"
@@ -266,6 +456,17 @@
                                        hx-target="#billing-tax-compliance-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("ReviewInvoices")</a>
+                                    @if (taxCustomerHasOpportunityDebt)
+                                    {
+                                        <a asp-controller="CRM"
+                                           asp-action="Opportunities"
+                                           asp-route-q="@item.Email"
+                                           class="btn btn-sm btn-outline-secondary"
+                                           hx-get="@Url.Action("Opportunities", "Crm", new { q = item.Email })"
+                                           hx-target="#billing-tax-compliance-workspace-shell"
+                                           hx-swap="outerHTML"
+                                           hx-push-url="true">@T.T("Opportunities")</a>
+                                    }
                                 </div>
                             </td>
                         </tr>

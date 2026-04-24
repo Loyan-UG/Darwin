@@ -141,6 +141,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 },
                 new()
                 {
+                    Title = T("UsersPlaybookInactiveTitle"),
+                    ScopeNote = T("UsersPlaybookInactiveScope"),
+                    OperatorAction = T("UsersPlaybookInactiveAction"),
+                    FollowUp = T("UsersPlaybookInactiveFollowUp"),
+                    QueueFilter = UserQueueFilter.Inactive
+                },
+                new()
+                {
                     Title = T("UsersPlaybookMobileLinkedTitle"),
                     ScopeNote = T("UsersPlaybookMobileLinkedScope"),
                     OperatorAction = T("UsersPlaybookMobileLinkedAction"),
@@ -326,14 +334,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmEmail([FromForm] Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> ConfirmEmail([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
             var result = await _confirmUserEmail.HandleAsync(new UserAdminActionDto { Id = id }, ct);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? T("EmailConfirmedMessage")
-                : T("ConfirmEmailFailedMessage");
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("EmailConfirmedMessage");
+            }
+            else
+            {
+                SetErrorMessage("ConfirmEmailFailedMessage");
+            }
 
-            return RedirectOrHtmx(nameof(Edit), new { id });
+            return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
         }
 
         /// <summary>
@@ -366,24 +379,49 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendPasswordReset([FromForm] Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> SendPasswordReset([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
             var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!userResult.Succeeded || userResult.Value is null)
             {
                 SetErrorMessage("UserNotFoundMessage");
-                return RedirectOrHtmx(nameof(Edit), new { id });
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
             }
 
             var result = await _requestPasswordReset.HandleAsync(
                 new RequestPasswordResetDto { Email = userResult.Value.Email },
                 ct);
 
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? T("PasswordResetEmailSentMessage")
-                : T("PasswordResetEmailSendFailedMessage");
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("PasswordResetEmailSentMessage");
+            }
+            else
+            {
+                SetErrorMessage("PasswordResetEmailSendFailedMessage");
+            }
 
-            return RedirectOrHtmx(nameof(Edit), new { id });
+            return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
+        }
+
+        /// <summary>
+        /// Reactivates the specified user account from the support queue.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Activate([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
+        {
+            return await SetUserActiveStateAsync(id, true, returnToIndex, q, filter, page, pageSize, ct);
+        }
+
+        /// <summary>
+        /// Deactivates the specified user account from the support queue.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Deactivate([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
+        {
+            return await SetUserActiveStateAsync(id, false, returnToIndex, q, filter, page, pageSize, ct);
         }
 
         /// <summary>
@@ -840,6 +878,44 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             }
 
             return RedirectOrHtmx(nameof(Edit), new { id });
+        }
+
+        private async Task<IActionResult> SetUserActiveStateAsync(Guid id, bool isActive, bool returnToIndex, string? q, UserQueueFilter filter, int page, int pageSize, CancellationToken ct)
+        {
+            var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
+            if (!userResult.Succeeded || userResult.Value is null)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
+            }
+
+            var user = userResult.Value;
+            var result = await _updateUser.HandleAsync(
+                new UserEditDto
+                {
+                    Id = user.Id,
+                    RowVersion = user.RowVersion ?? Array.Empty<byte>(),
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Locale = user.Locale,
+                    Currency = user.Currency,
+                    Timezone = user.Timezone,
+                    PhoneE164 = user.PhoneE164,
+                    IsActive = isActive
+                },
+                ct);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage(isActive ? "UserActivatedMessage" : "UserDeactivatedMessage");
+            }
+            else
+            {
+                SetErrorMessage(isActive ? "UserActivationFailedMessage" : "UserDeactivationFailedMessage");
+            }
+
+            return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
         }
 
         private async Task<UserRolesEditVm?> BuildUserRolesVmAsync(Guid userId, CancellationToken ct)

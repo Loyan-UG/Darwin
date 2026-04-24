@@ -9,6 +9,43 @@
 
     <partial name="~/Views/Shared/_Alerts.cshtml" />
 
+    <div class="card mb-3 border-info-subtle">
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Index"
+                   asp-route-filter="@Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport"
+                   class="btn btn-sm btn-outline-info"
+                   hx-get="@Url.Action("Index", "Permissions", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport })"
+                   hx-target="#permission-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("IdentityFilterDelegatedSupport")</a>
+                <a asp-controller="Businesses"
+                   asp-action="SupportQueue"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-target="#permission-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                <a asp-controller="Users"
+                   asp-action="Index"
+                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
+                   class="btn btn-sm btn-outline-warning"
+                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                   hx-target="#permission-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                <a asp-controller="Users"
+                   asp-action="Index"
+                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
+                   class="btn btn-sm btn-outline-danger"
+                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                   hx-target="#permission-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("UsersFilterLocked")</a>
+            </div>
+        </div>
+    </div>
+
     <form asp-action="Create"
           method="post"
           hx-post="@Url.Action("Create", "Permissions")"

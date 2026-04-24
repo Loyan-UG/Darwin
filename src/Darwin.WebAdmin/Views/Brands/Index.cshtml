@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.BrandsListVm
+@using System.Globalization
 @{
     ViewData["Title"] = T.T("Brands");
 }
@@ -114,7 +115,7 @@
                                 <span class="badge bg-warning text-dark">@T.T("Missing")</span>
                             }
                         </td>
-                        <td>@b.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@b.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
                         <td class="text-end">
                             <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("Edit", "Brands", new { id = b.Id })"

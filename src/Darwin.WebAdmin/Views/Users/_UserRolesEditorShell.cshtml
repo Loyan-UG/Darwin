@@ -33,6 +33,52 @@
                 <div class="card-header">@T.T("AssignRolesToUserTitle")</div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a asp-controller="Users"
+                           asp-action="Index"
+                           asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
+                           asp-route-q="@Model.UserEmail"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, q = Model.UserEmail })"
+                           hx-target="#user-roles-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-user-check"></i> @T.T("UsersFilterUnconfirmed")
+                        </a>
+                        <a asp-controller="Users"
+                           asp-action="Index"
+                           asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
+                           asp-route-q="@Model.UserEmail"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = Model.UserEmail })"
+                           hx-target="#user-roles-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-lock"></i> @T.T("UsersFilterLocked")
+                        </a>
+                        <a asp-controller="BusinessCommunications"
+                           asp-action="EmailAudits"
+                           asp-route-status="Failed"
+                           asp-route-flowKey="AccountActivation"
+                           asp-route-recipientEmail="@Model.UserEmail"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", recipientEmail = Model.UserEmail })"
+                           hx-target="#user-roles-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-envelope-circle-check"></i> @T.T("OpenFailedActivationEmails")
+                        </a>
+                        <a asp-controller="BusinessCommunications"
+                           asp-action="EmailAudits"
+                           asp-route-status="Failed"
+                           asp-route-flowKey="PasswordReset"
+                           asp-route-recipientEmail="@Model.UserEmail"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", recipientEmail = Model.UserEmail })"
+                           hx-target="#user-roles-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-triangle-exclamation"></i> @T.T("OpenFailedPasswordResets")
+                        </a>
                         <a asp-controller="MobileOperations"
                            asp-action="Index"
                            asp-route-q="@Model.UserEmail"

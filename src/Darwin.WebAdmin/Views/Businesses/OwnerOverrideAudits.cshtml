@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessOwnerOverrideAuditsListVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BusinessOwnerOverrideAuditsTitle");
@@ -194,7 +195,7 @@
             foreach (var item in Model.Items)
             {
                 <tr>
-                    <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm 'UTC'")</td>
+                    <td>@item.CreatedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
                     <td>
                         <div class="fw-semibold">@item.AffectedUserDisplayName</div>
                         <div class="text-muted small">@item.AffectedUserEmail</div>
@@ -229,6 +230,13 @@
                                hx-target="#business-owner-override-audits-workspace-shell"
                                hx-swap="outerHTML"
                                hx-push-url="true">@T.T("CommonMembers")</a>
+                            <a asp-action="EditMember"
+                               asp-route-id="@item.BusinessMemberId"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("EditMember", "Businesses", new { id = item.BusinessMemberId })"
+                               hx-target="#business-owner-override-audits-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("EditMemberTitle")</a>
                             <a asp-action="SupportQueue"
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("SupportQueue", "Businesses")"

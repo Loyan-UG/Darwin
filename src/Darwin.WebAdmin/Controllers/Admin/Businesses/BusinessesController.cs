@@ -1828,7 +1828,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 .ToList();
 
             vm.OwnerUserOptions = await _referenceData.GetUserOptionsAsync(vm.OwnerUserId, includeEmpty: true, ct);
-            vm.CommunicationReadiness = await BuildBusinessCommunicationReadinessAsync(ct);
+            vm.CommunicationReadiness = await BuildBusinessCommunicationReadinessAsync(vm.Id, ct);
             vm.Subscription = await BuildBusinessSubscriptionSnapshotAsync(vm.Id, ct);
 
             if (vm.Id != Guid.Empty)
@@ -1883,7 +1883,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             vm.Business = await LoadBusinessContextAsync(vm.BusinessId, ct) ?? new BusinessContextVm { Id = vm.BusinessId };
         }
 
-        private async Task<BusinessCommunicationReadinessVm> BuildBusinessCommunicationReadinessAsync(CancellationToken ct)
+        private async Task<BusinessCommunicationReadinessVm> BuildBusinessCommunicationReadinessAsync(Guid businessId, CancellationToken ct)
         {
             var settings = await _siteSettingCache.GetAsync(ct);
 
@@ -1901,6 +1901,25 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             var adminEmailRoutingConfigured = !string.IsNullOrWhiteSpace(settings.AdminAlertEmailsCsv);
             var adminSmsRoutingConfigured = !string.IsNullOrWhiteSpace(settings.AdminAlertSmsRecipientsCsv);
+            var failedEmailAuditQuery = _db.Set<EmailDispatchAudit>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId && x.Status == "Failed");
+
+            var failedInvitationCount = await failedEmailAuditQuery
+                .CountAsync(x => x.FlowKey == "BusinessInvitation", ct)
+                .ConfigureAwait(false);
+
+            var failedActivationCount = await failedEmailAuditQuery
+                .CountAsync(x => x.FlowKey == "AccountActivation", ct)
+                .ConfigureAwait(false);
+
+            var failedPasswordResetCount = await failedEmailAuditQuery
+                .CountAsync(x => x.FlowKey == "PasswordReset", ct)
+                .ConfigureAwait(false);
+
+            var failedAdminTestCount = await failedEmailAuditQuery
+                .CountAsync(x => x.FlowKey == "AdminCommunicationTest", ct)
+                .ConfigureAwait(false);
 
             return new BusinessCommunicationReadinessVm
             {
@@ -1923,7 +1942,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     : T("BusinessCommunicationReadinessWhatsAppMissingSummary"),
                 AdminRoutingSummary = adminEmailRoutingConfigured || adminSmsRoutingConfigured
                     ? T("BusinessCommunicationReadinessAdminRoutingConfiguredSummary")
-                    : T("BusinessCommunicationReadinessAdminRoutingMissingSummary")
+                    : T("BusinessCommunicationReadinessAdminRoutingMissingSummary"),
+                FailedInvitationCount = failedInvitationCount,
+                FailedActivationCount = failedActivationCount,
+                FailedPasswordResetCount = failedPasswordResetCount,
+                FailedAdminTestCount = failedAdminTestCount
             };
         }
 
@@ -2545,7 +2568,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PendingInvitationCount = summary.PendingInvitationCount,
                 OpenInvitationCount = summary.OpenInvitationCount,
                 PendingActivationMemberCount = summary.PendingActivationMemberCount,
-                LockedMemberCount = summary.LockedMemberCount
+                LockedMemberCount = summary.LockedMemberCount,
+                FailedInvitationCount = summary.FailedInvitationCount,
+                FailedActivationCount = summary.FailedActivationCount,
+                FailedPasswordResetCount = summary.FailedPasswordResetCount,
+                FailedAdminTestCount = summary.FailedAdminTestCount
             };
         }
 

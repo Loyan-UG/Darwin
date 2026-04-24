@@ -25,6 +25,10 @@ namespace Darwin.Application.Businesses.DTOs
         public int BusinessesMissingSupportEmailCount { get; set; }
         public int BusinessesMissingSenderIdentityCount { get; set; }
         public int BusinessesRequiringEmailSetupCount { get; set; }
+        public int FailedInvitationCount { get; set; }
+        public int FailedActivationCount { get; set; }
+        public int FailedPasswordResetCount { get; set; }
+        public int FailedAdminTestCount { get; set; }
     }
 
     /// <summary>

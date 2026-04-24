@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.CMS.MediaAssetEditVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("MediaEditTitle");
@@ -25,7 +26,7 @@
                     <div><span class="text-muted">@T.T("Url"):</span> @Model.Url</div>
                     <div><span class="text-muted">@T.T("Size"):</span> @((Model.SizeBytes / 1024.0).ToString("0.0")) KB</div>
                     <div><span class="text-muted">@T.T("Dimensions"):</span> @(Model.Width.HasValue && Model.Height.HasValue ? $"{Model.Width} x {Model.Height}" : T.T("MediaUnknownValue"))</div>
-                    <div><span class="text-muted">@T.T("Updated"):</span> @(Model.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? T.T("MediaUnknownValue"))</div>
+                    <div><span class="text-muted">@T.T("Updated"):</span> @(Model.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? T.T("MediaUnknownValue"))</div>
                 </div>
             </div>
         </div>

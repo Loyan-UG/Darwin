@@ -235,10 +235,18 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 OpenInvitationCount = dto.OpenInvitationCount,
                 PendingActivationMemberCount = dto.PendingActivationMemberCount,
                 LockedMemberCount = dto.LockedMemberCount,
+                FailedInvitationCount = dto.FailedInvitationCount,
+                FailedActivationCount = dto.FailedActivationCount,
+                FailedPasswordResetCount = dto.FailedPasswordResetCount,
+                FailedAdminTestCount = dto.FailedAdminTestCount,
                 SelectedBusinessPendingInvitationCount = dto.SelectedBusinessPendingInvitationCount,
                 SelectedBusinessOpenInvitationCount = dto.SelectedBusinessOpenInvitationCount,
                 SelectedBusinessPendingActivationCount = dto.SelectedBusinessPendingActivationCount,
-                SelectedBusinessLockedMemberCount = dto.SelectedBusinessLockedMemberCount
+                SelectedBusinessLockedMemberCount = dto.SelectedBusinessLockedMemberCount,
+                SelectedBusinessFailedInvitationCount = dto.SelectedBusinessFailedInvitationCount,
+                SelectedBusinessFailedActivationCount = dto.SelectedBusinessFailedActivationCount,
+                SelectedBusinessFailedPasswordResetCount = dto.SelectedBusinessFailedPasswordResetCount,
+                SelectedBusinessFailedAdminTestCount = dto.SelectedBusinessFailedAdminTestCount
             };
         }
 
@@ -265,7 +273,11 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 OperationalAlertBusinessesCount = dto.BusinessesWithOperationalAlertEmailsEnabledCount,
                 MissingSupportEmailCount = dto.BusinessesMissingSupportEmailCount,
                 MissingSenderIdentityCount = dto.BusinessesMissingSenderIdentityCount,
-                BusinessesRequiringEmailSetupCount = dto.BusinessesRequiringEmailSetupCount
+                BusinessesRequiringEmailSetupCount = dto.BusinessesRequiringEmailSetupCount,
+                FailedInvitationCount = dto.FailedInvitationCount,
+                FailedActivationCount = dto.FailedActivationCount,
+                FailedPasswordResetCount = dto.FailedPasswordResetCount,
+                FailedAdminTestCount = dto.FailedAdminTestCount
             };
         }
     }

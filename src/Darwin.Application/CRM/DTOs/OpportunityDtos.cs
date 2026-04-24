@@ -10,6 +10,16 @@ namespace Darwin.Application.CRM.DTOs
         HighValue = 3
     }
 
+    public enum InvoiceQueueFilter
+    {
+        All = 0,
+        Draft = 1,
+        DueSoon = 2,
+        Overdue = 3,
+        MissingVatId = 4,
+        Refunded = 5
+    }
+
     public sealed class OpportunityItemDto
     {
         public Guid? Id { get; set; }

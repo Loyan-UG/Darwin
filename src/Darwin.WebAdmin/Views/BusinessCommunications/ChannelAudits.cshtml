@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.ChannelDispatchAuditsListVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @using Darwin.Application.Businesses.Queries
 @{
@@ -68,9 +69,20 @@
     bool HasRecipientOverride(Darwin.WebAdmin.ViewModels.Businesses.ChannelDispatchAuditListItemVm item) =>
         !string.IsNullOrWhiteSpace(item.IntendedRecipientAddress) &&
         !string.Equals(item.IntendedRecipientAddress, item.RecipientAddress, StringComparison.OrdinalIgnoreCase);
+    string ChannelAuditHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string ChannelAuditHealthBadgeText(bool healthy) => healthy ? T.T("Configured") : T.T("NeedsAttention");
+    var actionBacklogCount = Model.Summary.ActionReadyCount + Model.Summary.ActionBlockedCount;
+    var escalationBacklogCount = Model.Summary.EscalationCandidateCount + Model.Summary.RepeatedFailureCount;
+    var providerLaneCount = Model.Summary.ProviderReviewCount + Model.Summary.ProviderRecoveredCount;
+    var chainAttentionCount = Model.Summary.HeavyChainCount + Model.Summary.PendingCount;
+    var exactChainActive = !string.IsNullOrWhiteSpace(Model.RecipientAddress);
+    var providerReviewActive = !string.IsNullOrWhiteSpace(Model.Provider);
 }
 
 <div id="business-communication-channel-audits-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-message me-2"></i>@T.T("SmsWhatsAppAuditsTitle")</h1>
@@ -82,6 +94,150 @@
            hx-target="#business-communication-channel-audits-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BackToCommunications")</a>
+</div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+            <div>
+                <div class="text-muted text-uppercase small fw-semibold">@T.T("GoLiveReadiness")</div>
+                <h2 class="h5 mb-1">@T.T("SmsWhatsAppAuditsTitle")</h2>
+                <p class="text-muted mb-0">@T.T("NonEmailDeliveryHistory")</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-controller="Businesses"
+                   asp-action="SupportQueue"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                   hx-target="#business-communication-channel-audits-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                <a asp-controller="SiteSettings"
+                   asp-action="Edit"
+                   asp-fragment="site-settings-communications-policy"
+                   class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                   hx-target="#business-communication-channel-audits-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("OpenPolicyAction")</a>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("ActionReady")</div>
+                        <span class="@ChannelAuditHealthBadgeClass(Model.Summary.ActionReadyCount == 0)">@ChannelAuditHealthBadgeText(Model.Summary.ActionReadyCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@actionBacklogCount</div>
+                    <div class="small text-muted">@string.Format("{0} / {1}", Model.Summary.ActionReadyCount, Model.Summary.ActionBlockedCount)</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="ChannelAudits"
+                           asp-route-actionReadyOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-success"
+                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { actionReadyOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-channel-audits-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ActionReady")</a>
+                        <a asp-action="ChannelAudits"
+                           asp-route-actionBlockedOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { actionBlockedOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-channel-audits-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ActionBlocked")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("EscalationCandidates")</div>
+                        <span class="@ChannelAuditHealthBadgeClass(escalationBacklogCount == 0)">@ChannelAuditHealthBadgeText(escalationBacklogCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@escalationBacklogCount</div>
+                    <div class="small text-muted">@T.T("HeavyChains")</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="ChannelAudits"
+                           asp-route-escalationCandidatesOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { escalationCandidatesOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-channel-audits-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("EscalationCandidates")</a>
+                        <a asp-action="ChannelAudits"
+                           asp-route-repeatedFailuresOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { repeatedFailuresOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-channel-audits-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("RepeatedFailures")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("ProviderReview")</div>
+                        <span class="@ChannelAuditHealthBadgeClass(providerLaneCount == 0)">@ChannelAuditHealthBadgeText(providerLaneCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@providerLaneCount</div>
+                    <div class="small text-muted">@(providerReviewActive ? Model.Provider : T.T("LeaveProviderReview"))</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="ChannelAudits"
+                           asp-route-providerReviewOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-channel-audits-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ProviderReview")</a>
+                        <a asp-action="ChannelAudits"
+                           asp-route-priorSuccessOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { priorSuccessOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-channel-audits-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("PriorSuccessContext")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("ExactChainMode")</div>
+                        <span class="@ChannelAuditHealthBadgeClass(!exactChainActive)">@ChannelAuditHealthBadgeText(!exactChainActive)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@chainAttentionCount</div>
+                    <div class="small text-muted">@(exactChainActive ? Model.RecipientAddress : T.T("LeaveExactChain"))</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="ChannelAudits"
+                           asp-route-heavyChainsOnly="true"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { heavyChainsOnly = true, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-channel-audits-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("HeavyChains")</a>
+                        <a asp-action="ChannelAudits"
+                           asp-route-recipientAddress="@Model.RecipientAddress"
+                           asp-route-flowKey="@Model.FlowKey"
+                           asp-route-businessId="@Model.BusinessId"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { recipientAddress = Model.RecipientAddress, flowKey = Model.FlowKey, businessId = Model.BusinessId })"
+                           hx-target="#business-communication-channel-audits-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("WholeChain")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -222,7 +378,7 @@
                     <div class="fw-semibold mt-1">@ProviderRecoveryLabel(Model.ProviderSummary.RecoveryState)</div>
                     @if (Model.ProviderSummary.LastSuccessfulAttemptAtUtc.HasValue)
                     {
-                        <div class="small text-muted mt-2">@string.Format(T.T("CommonLastSuccessAtUtc"), Model.ProviderSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                        <div class="small text-muted mt-2">@string.Format(T.T("CommonLastSuccessAtUtc"), Model.ProviderSummary.LastSuccessfulAttemptAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                     }
                 </div>
             </div>
@@ -476,12 +632,12 @@
 
         <div class="alert alert-secondary mb-4">
             <strong>@T.T("ChannelAuditChainTimelineLabel")</strong>
-            @T.T("ChannelAuditFirstAttemptLabel") <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>,
-            @T.T("ChannelAuditLatestAttemptLabel") <code>@Model.ChainSummary.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>.
+            @T.T("ChannelAuditFirstAttemptLabel") <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture)</code>,
+            @T.T("ChannelAuditLatestAttemptLabel") <code>@Model.ChainSummary.LastAttemptAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture)</code>.
             @if (Model.ChainSummary.LastSuccessfulAttemptAtUtc.HasValue)
             {
                 <span>
-                    @T.T("ChannelAuditLastSuccessfulSendLabel") <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code>.
+                    @T.T("ChannelAuditLastSuccessfulSendLabel") <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture)</code>.
                 </span>
             }
             <div class="small text-muted mt-2">
@@ -784,7 +940,7 @@
                             @foreach (var item in Model.ChainSummary.RecentHistory)
                             {
                                 <tr>
-                                    <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@item.AttemptedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
                                     <td>@ChannelLabel(item.Channel)</td>
                                     <td>@DeliveryStatusLabel(item.Status)</td>
                                     <td>@item.Provider</td>
@@ -796,7 +952,7 @@
                                         }
                                         else if (item.CompletedAtUtc.HasValue)
                                         {
-                                            <div class="small text-muted mt-1">@string.Format(T.T("CommunicationCompletedAt"), item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                                            <div class="small text-muted mt-1">@string.Format(T.T("CommunicationCompletedAt"), item.CompletedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                                         }
                                     </td>
                                 </tr>
@@ -958,8 +1114,12 @@
         {
             foreach (var item in Model.Items)
             {
+                var needsActionBlockedFollowUp = !item.CanRerunNow && !string.IsNullOrWhiteSpace(item.ActionPolicyState);
+                var needsChainFollowUp = item.NeedsOperatorFollowUp || item.PriorFailureCount > 0 || item.ChainAttemptCount > 1;
+                var needsProviderLaneFollowUp = !item.IsQueueOperation && (item.NeedsEscalationReview || item.ProviderFailureCount24h > 0);
+                var needsBusinessSupportFollowUp = item.BusinessId.HasValue && (item.NeedsOperatorFollowUp || item.NeedsEscalationReview);
                 <tr>
-                    <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@item.AttemptedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
                     <td><span class="badge text-bg-light">@ChannelLabel(item.Channel)</span> <span class="small text-muted">@item.Provider</span></td>
                     <td>@FlowLabel(item.FlowKey)</td>
                     <td>
@@ -1012,7 +1172,7 @@
                                 @T.T("ChannelAuditPriorFailuresInlineLabel") <code>@item.PriorFailureCount</code>
                                 @if (item.LastSuccessfulAttemptAtUtc.HasValue)
                                 {
-                                    <span>, @T.T("ChannelAuditLastSuccessInlineLabel") <code>@item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+                                    <span>, @T.T("ChannelAuditLastSuccessInlineLabel") <code>@item.LastSuccessfulAttemptAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture)</code></span>
                                 }
                             </div>
                         }
@@ -1026,7 +1186,7 @@
                                 @T.T("ChannelAuditFailures24hInlineLabel") <code>@item.ProviderFailureCount24h</code>
                                 @if (item.ProviderLastSuccessfulAttemptAtUtc.HasValue)
                                 {
-                                    <span>, @T.T("ChannelAuditLastSuccessInlineLabel") <code>@item.ProviderLastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+                                    <span>, @T.T("ChannelAuditLastSuccessInlineLabel") <code>@item.ProviderLastSuccessfulAttemptAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture)</code></span>
                                 }
                             </div>
                             <div class="small mt-1">
@@ -1043,7 +1203,7 @@
                                     }
                                     @if (item.ActionAvailableAtUtc.HasValue)
                                     {
-                                        <span class="text-muted ms-1">@string.Format(T.T("ChannelAuditAvailableAtUtc"), item.ActionAvailableAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</span>
+                                        <span class="text-muted ms-1">@string.Format(T.T("ChannelAuditAvailableAtUtc"), item.ActionAvailableAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</span>
                                     }
                                 }
                             </div>
@@ -1060,7 +1220,7 @@
                         }
                         else if (item.CompletedAtUtc.HasValue)
                         {
-                            <div class="small text-muted mt-1">@string.Format(T.T("CommunicationCompletedAt"), item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                            <div class="small text-muted mt-1">@string.Format(T.T("CommunicationCompletedAt"), item.CompletedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                         }
                         @if (string.Equals(item.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
                         {
@@ -1217,8 +1377,109 @@
                                    asp-route-businessId="@item.BusinessId"
                                    class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { recipientAddress = LogicalRecipientAddress(item), provider = Model.Provider, flowKey = item.FlowKey, channel = string.Empty, status = string.Empty, query = string.Empty, failedOnly = false, phoneVerificationOnly = false, adminTestOnly = false, repeatedFailuresOnly = Model.RepeatedFailuresOnly, priorSuccessOnly = Model.PriorSuccessOnly, actionReadyOnly = Model.ActionReadyOnly, actionBlockedOnly = Model.ActionBlockedOnly, escalationCandidatesOnly = Model.EscalationCandidatesOnly, heavyChainsOnly = Model.HeavyChainsOnly, providerReviewOnly = Model.ProviderReviewOnly, chainFollowUpOnly = Model.ChainFollowUpOnly, chainResolvedOnly = Model.ChainResolvedOnly, businessId = item.BusinessId })"
+                                    hx-target="#business-communication-channel-audits-shell"
+                                    hx-swap="outerHTML">@T.T("OpenExactChain")</a>
+                            </div>
+                        }
+                        @if (needsActionBlockedFollowUp)
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-action="ChannelAudits"
+                                   asp-route-actionBlockedOnly="true"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { actionBlockedOnly = true, businessId = item.BusinessId })"
                                    hx-target="#business-communication-channel-audits-shell"
-                                   hx-swap="outerHTML">@T.T("OpenExactChain")</a>
+                                   hx-swap="outerHTML">@T.T("ActionBlocked")</a>
+                                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
+                                @if (string.Equals(item.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <a asp-action="ChannelAudits"
+                                       asp-route-businessId="@item.BusinessId"
+                                       asp-route-phoneVerificationOnly="true"
+                                       class="btn btn-sm btn-outline-dark"
+                                       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = item.BusinessId, phoneVerificationOnly = true })"
+                                       hx-target="#business-communication-channel-audits-shell"
+                                       hx-swap="outerHTML">@T.T("PhoneVerification")</a>
+                                }
+                            </div>
+                        }
+                        @if (needsChainFollowUp)
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-action="ChannelAudits"
+                                   asp-route-chainFollowUpOnly="true"
+                                   asp-route-recipientAddress="@LogicalRecipientAddress(item)"
+                                   asp-route-flowKey="@item.FlowKey"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { chainFollowUpOnly = true, recipientAddress = LogicalRecipientAddress(item), flowKey = item.FlowKey, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("ChannelAuditNeedsFollowUpAction")</a>
+                                <a asp-action="ChannelAudits"
+                                   asp-route-repeatedFailuresOnly="true"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { repeatedFailuresOnly = true, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("RepeatedFailures")</a>
+                            </div>
+                        }
+                        @if (needsProviderLaneFollowUp)
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-action="ChannelAudits"
+                                   asp-route-providerReviewOnly="true"
+                                   asp-route-provider="@item.Provider"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-info"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true, provider = item.Provider, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("ProviderReview")</a>
+                                <a asp-action="ChannelAudits"
+                                   asp-route-escalationCandidatesOnly="true"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { escalationCandidatesOnly = true, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("EscalationCandidates")</a>
+                            </div>
+                        }
+                        @if (needsBusinessSupportFollowUp)
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("SupportQueue")</a>
+                                <a asp-action="Details" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("BusinessCommunicationInspectBusinessAction")</a>
+                            </div>
+                        }
+                        @if (string.Equals(item.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-action="ChannelAudits"
+                                   asp-route-businessId="@item.BusinessId"
+                                   asp-route-phoneVerificationOnly="true"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = item.BusinessId, phoneVerificationOnly = true })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("PhoneVerification")</a>
+                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-q="@LogicalRecipientAddress(item)" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations", new { q = LogicalRecipientAddress(item) })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
+                                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">@T.T("OpenPolicyAction")</a>
                             </div>
                         }
                     </td>

@@ -1,8 +1,14 @@
+@using System.Globalization
 @using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.JournalEntriesListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("JournalEntriesTitle");
+    string JournalEntryOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string JournalEntryOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var journalEntryAttentionCount = Model.Summary.RecentCount + Model.Summary.MultiLineCount;
 }
 
 <div id="billing-journal-entries-workspace-shell">
@@ -47,6 +53,113 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("JournalEntriesMultiLine")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MultiLineCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h2 class="h5 mb-0">@T.T("GoLiveReadiness")</h2>
+                    <span class="@JournalEntryOpsHealthBadgeClass(journalEntryAttentionCount == 0)">@JournalEntryOpsHealthBadgeText(journalEntryAttentionCount == 0)</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    @T.T("JournalReviewPlaybooks")
+                    @if (journalEntryAttentionCount > 0)
+                    {
+                        <span class="ms-1">@T.T("NeedsAttention"): @journalEntryAttentionCount</span>
+                    }
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="CreateJournalEntry" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("CreateJournalEntry", "Billing", new { businessId = Model.BusinessId })"
+                   hx-target="#billing-journal-entries-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CreateJournalEntry")</a>
+                <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                   hx-target="#billing-journal-entries-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Recent")</div>
+                            <div class="small text-muted mt-1">@T.T("JournalEntryPlaybookRecentScope")</div>
+                        </div>
+                        <span class="@JournalEntryOpsHealthBadgeClass(Model.Summary.RecentCount == 0)">@Model.Summary.RecentCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("JournalEntryPlaybookRecentAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-queue="@JournalEntryQueueFilter.Recent" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, queue = JournalEntryQueueFilter.Recent })"
+                           hx-target="#billing-journal-entries-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Recent")</a>
+                        <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-journal-entries-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ExpensesTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("JournalEntriesMultiLine")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@JournalEntryOpsHealthBadgeClass(Model.Summary.MultiLineCount == 0)">@Model.Summary.MultiLineCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("JournalEntryPlaybookMultilineAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" asp-route-queue="@JournalEntryQueueFilter.MultiLine" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, queue = JournalEntryQueueFilter.MultiLine })"
+                           hx-target="#billing-journal-entries-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("JournalEntriesMultiLine")</a>
+                        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-journal-entries-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("CreateJournalEntry")</div>
+                            <div class="small text-muted mt-1">@T.T("Queue")</div>
+                        </div>
+                        <span class="@JournalEntryOpsHealthBadgeClass(Model.Summary.TotalCount > 0)">@Model.Summary.TotalCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("JournalEntryPlaybookMultilineDependency")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="CreateJournalEntry" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("CreateJournalEntry", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-journal-entries-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("CreateJournalEntry")</a>
+                        <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-journal-entries-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ExpensesTitle")</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -109,7 +222,7 @@
             foreach (var item in Model.Items)
             {
                 <tr>
-                    <td>@item.EntryDateUtc.ToString("yyyy-MM-dd")</td>
+                    <td>@item.EntryDateUtc.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</td>
                     <td>@item.Description</td>
                     <td>@item.LineCount</td>
                     <td>@item.Currency @((item.TotalDebitMinor / 100M).ToString("0.00"))</td>

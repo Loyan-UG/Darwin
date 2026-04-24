@@ -3,6 +3,11 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("FinancialAccountsTitle");
+    string FinancialAccountOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string FinancialAccountOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var financialAccountAttentionCount = Model.Summary.MissingCodeCount + Model.Summary.ExpenseCount;
 }
 
 @functions {
@@ -63,6 +68,137 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("FinancialAccountsMissingCode")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingCodeCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h2 class="h5 mb-0">@T.T("GoLiveReadiness")</h2>
+                    <span class="@FinancialAccountOpsHealthBadgeClass(financialAccountAttentionCount == 0)">@FinancialAccountOpsHealthBadgeText(financialAccountAttentionCount == 0)</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    @T.T("FinancialAccountsPlaybooksTitle")
+                    @if (financialAccountAttentionCount > 0)
+                    {
+                        <span class="ms-1">@T.T("NeedsAttention"): @financialAccountAttentionCount</span>
+                    }
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="CreateFinancialAccount" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("CreateFinancialAccount", "Billing", new { businessId = Model.BusinessId })"
+                   hx-target="#billing-financial-accounts-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CreateFinancialAccount")</a>
+                <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+                   hx-target="#billing-financial-accounts-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("JournalEntriesTitle")</a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Assets")</div>
+                            <div class="small text-muted mt-1">@T.T("FinancialAccountPlaybookAssetsScope")</div>
+                        </div>
+                        <span class="@FinancialAccountOpsHealthBadgeClass(Model.Summary.AssetCount > 0)">@Model.Summary.AssetCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("FinancialAccountPlaybookAssetsAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Asset" class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId, queue = AccountType.Asset })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Assets")</a>
+                        <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("JournalEntriesTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Revenue")</div>
+                            <div class="small text-muted mt-1">@T.T("Queue")</div>
+                        </div>
+                        <span class="@FinancialAccountOpsHealthBadgeClass(Model.Summary.RevenueCount > 0)">@Model.Summary.RevenueCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("FinancialAccountPlaybookMappingAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Revenue" class="btn btn-sm btn-outline-success"
+                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId, queue = AccountType.Revenue })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Revenue")</a>
+                        <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Expenses")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Expenses")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@FinancialAccountOpsHealthBadgeClass(Model.Summary.ExpenseCount == 0)">@Model.Summary.ExpenseCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("FinancialAccountPlaybookMappingDependency")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Expense" class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId, queue = AccountType.Expense })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Expenses")</a>
+                        <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ExpensesTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("FinancialAccountsMissingCode")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@FinancialAccountOpsHealthBadgeClass(Model.Summary.MissingCodeCount == 0)">@Model.Summary.MissingCodeCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("FinancialAccountPlaybookMappingScope")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId, q = string.Empty })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("FinancialAccountsMissingCode")</a>
+                        <a asp-action="CreateFinancialAccount" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("CreateFinancialAccount", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("CreateFinancialAccount")</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

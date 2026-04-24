@@ -2,6 +2,10 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] ?? false;
+    string ShippingMethodEditorOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string ShippingMethodEditorOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var shippingMethodEditorMissingRates = Model.Rates.Count == 0;
+    var shippingMethodEditorDhl = string.Equals(Model.Carrier, "DHL", StringComparison.OrdinalIgnoreCase);
 }
 
 <div id="shipping-method-editor-shell">
@@ -15,6 +19,102 @@
            hx-target="#shipping-methods-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("Back")</a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="badge @ShippingMethodEditorOpsHealthBadgeClass(!shippingMethodEditorMissingRates)">@ShippingMethodEditorOpsHealthBadgeText(!shippingMethodEditorMissingRates)</span>
+                        <span class="badge @ShippingMethodEditorOpsHealthBadgeClass(shippingMethodEditorDhl)">@ShippingMethodEditorOpsHealthBadgeText(shippingMethodEditorDhl)</span>
+                    </div>
+                    <h2 class="h5 mb-1">@(isCreate ? T.T("CreateShippingMethod") : T.T("EditShippingMethod"))</h2>
+                    <p class="text-muted mb-0">@T.T("ShippingMethodEditorIntro")</p>
+                </div>
+                <div class="text-md-end">
+                    <div class="small text-muted">@T.T("NeedsAttention")</div>
+                    <div class="fs-4 fw-semibold">@((shippingMethodEditorMissingRates ? 1 : 0) + (shippingMethodEditorDhl ? 0 : 1))</div>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span class="text-muted small">@T.T("MissingRates")</span>
+                            <span class="badge @ShippingMethodEditorOpsHealthBadgeClass(!shippingMethodEditorMissingRates)">@(shippingMethodEditorMissingRates ? 1 : 0)</span>
+                        </div>
+                        <p class="small text-muted mb-3">@T.T("OperatorAction")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-action="Index"
+                               asp-route-filter="MissingRates"
+                               class="btn btn-sm btn-outline-warning"
+                               hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })"
+                               hx-target="#shipping-methods-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Open")</a>
+                            <a asp-controller="Orders"
+                               asp-action="ShipmentsQueue"
+                               asp-route-filter="MissingService"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "MissingService" })"
+                               hx-target="#shipping-methods-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("ShipmentsQueue")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span class="text-muted small">@T.T("DhlMethods")</span>
+                            <span class="badge @ShippingMethodEditorOpsHealthBadgeClass(shippingMethodEditorDhl)">@(shippingMethodEditorDhl ? 1 : 0)</span>
+                        </div>
+                        <p class="small text-muted mb-3">@T.T("ShippingSettings")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-action="Index"
+                               asp-route-filter="Dhl"
+                               class="btn btn-sm btn-outline-primary"
+                               hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                               hx-target="#shipping-methods-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Open")</a>
+                            <a asp-controller="SiteSettings"
+                               asp-action="Edit"
+                               asp-fragment="site-settings-shipping"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                               hx-target="#shipping-methods-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("ShippingSettings")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span class="text-muted small">@T.T("CreateMethod")</span>
+                            <span class="badge @ShippingMethodEditorOpsHealthBadgeClass(!isCreate)">@(isCreate ? 1 : 0)</span>
+                        </div>
+                        <p class="small text-muted mb-3">@T.T("Back")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-action="Create"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Create", "ShippingMethods")"
+                               hx-target="#shipping-methods-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("CreateMethod")</a>
+                            <a asp-action="Index"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Index", "ShippingMethods")"
+                               hx-target="#shipping-methods-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Back")</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <form asp-action="@(isCreate ? "Create" : "Edit")"

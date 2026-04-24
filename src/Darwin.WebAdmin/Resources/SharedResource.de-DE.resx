@@ -450,6 +450,9 @@
   <data name="UsersLifecycleLockedBadge" xml:space="preserve">
     <value>Gesperrt</value>
   </data>
+  <data name="UsersLifecycleInactiveBadge" xml:space="preserve">
+    <value>Inaktiv</value>
+  </data>
   <data name="UsersLifecycleMobileBadge" xml:space="preserve">
     <value>Mobil {0}</value>
   </data>
@@ -506,6 +509,18 @@
   </data>
   <data name="UsersPlaybookLockedFollowUp" xml:space="preserve">
     <value>Wenn die Sperre durch Sicherheitsbedenken ausgeloest wurde, rotiere das Passwort oder pruefe die letzten Auth-Flows.</value>
+  </data>
+  <data name="UsersPlaybookInactiveTitle" xml:space="preserve">
+    <value>Inaktive Konten</value>
+  </data>
+  <data name="UsersPlaybookInactiveScope" xml:space="preserve">
+    <value>Inaktive Benutzer bleiben aus Login-, Onboarding- und Support-Flows heraus, auch wenn ihre Profildaten noch gesund aussehen.</value>
+  </data>
+  <data name="UsersPlaybookInactiveAction" xml:space="preserve">
+    <value>Pruefe, ob der inaktive Status beabsichtigt ist, und reaktiviere dann direkt aus der Queue, sobald das Konto wieder in Support-Flows aufgenommen werden soll.</value>
+  </data>
+  <data name="UsersPlaybookInactiveFollowUp" xml:space="preserve">
+    <value>Nutze den Benutzereditor, wenn vor der Reaktivierung noch Profil- oder Rollenpruefung noetig ist.</value>
   </data>
   <data name="UsersPlaybookMobileLinkedTitle" xml:space="preserve">
     <value>Mobil verknuepfte Konten</value>
@@ -669,11 +684,32 @@
   <data name="UserSendResetEmailAction" xml:space="preserve">
     <value>Reset-E-Mail senden</value>
   </data>
+  <data name="UsersConfirmEmailAction" xml:space="preserve">
+    <value>E-Mail bestaetigen</value>
+  </data>
+  <data name="UsersActivateAction" xml:space="preserve">
+    <value>Aktivieren</value>
+  </data>
+  <data name="UsersDeactivateAction" xml:space="preserve">
+    <value>Deaktivieren</value>
+  </data>
   <data name="UserUnlockAccountAction" xml:space="preserve">
     <value>Konto entsperren</value>
   </data>
   <data name="UserLockAccountAction" xml:space="preserve">
     <value>Konto sperren</value>
+  </data>
+  <data name="UserActivatedMessage" xml:space="preserve">
+    <value>Benutzer aktiviert.</value>
+  </data>
+  <data name="UserActivationFailedMessage" xml:space="preserve">
+    <value>Der Benutzer konnte gerade nicht aktiviert werden. Aktualisiere die Seite und versuche es erneut.</value>
+  </data>
+  <data name="UserDeactivatedMessage" xml:space="preserve">
+    <value>Benutzer deaktiviert.</value>
+  </data>
+  <data name="UserDeactivationFailedMessage" xml:space="preserve">
+    <value>Der Benutzer konnte gerade nicht deaktiviert werden. Aktualisiere die Seite und versuche es erneut.</value>
   </data>
   <data name="AddressesTitle" xml:space="preserve">
     <value>Adressen</value>

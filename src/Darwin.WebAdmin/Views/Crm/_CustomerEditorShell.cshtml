@@ -4,6 +4,14 @@
     var formAction = ViewData["FormAction"]?.ToString() ?? "EditCustomer";
     var heading = formAction == "CreateCustomer" ? T.T("CreateCustomer") : T.T("EditCustomer");
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
+    string CrmCustomerEditorHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string CrmCustomerEditorHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var customerEditorAttentionCount =
+        (Model.UsesPlatformLocaleFallback ? 1 : 0) +
+        (Model.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(Model.VatId) ? 1 : 0) +
+        (Model.SegmentCount == 0 ? 1 : 0);
 }
 
 <div id="crm-customer-editor-shell">
@@ -12,6 +20,154 @@
 
     @if (Model.Id != Guid.Empty)
     {
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <div class="fw-semibold">@T.T("CustomerFollowUpWorkspace")</div>
+                            <span class="@CrmCustomerEditorHealthBadgeClass(customerEditorAttentionCount == 0)">@CrmCustomerEditorHealthBadgeText(customerEditorAttentionCount == 0)</span>
+                        </div>
+                        <div class="small text-muted mt-2">@T.T("CustomerFollowUpWorkspaceNote")</div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-action="Customers"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Customers", "Crm")"
+                           hx-target="#crm-customer-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Customers")</a>
+                        <a asp-action="Invoices"
+                           asp-route-q="@Model.Id"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Id })"
+                           hx-target="#crm-customer-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ReviewInvoices")</a>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("LocaleFallback")</div>
+                                    <div class="small text-muted mt-1">@T.T("Locale")</div>
+                                </div>
+                                <span class="@CrmCustomerEditorHealthBadgeClass(!Model.UsesPlatformLocaleFallback)">@(Model.UsesPlatformLocaleFallback ? 1 : 0)</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("UsesPlatformLocaleFallback")</div>
+                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                <a asp-action="Customers"
+                                   asp-route-filter="UsesPlatformLocaleFallback"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Customers", "Crm", new { filter = "UsesPlatformLocaleFallback" })"
+                                   hx-target="#crm-customer-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("LocaleFallback")</a>
+                                <a asp-controller="SiteSettings"
+                                   asp-action="Edit"
+                                   asp-fragment="site-settings-localization"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
+                                   hx-target="#crm-customer-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("Open")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("B2BMissingVatId")</div>
+                                    <div class="small text-muted mt-1">@T.T("TaxSettings")</div>
+                                </div>
+                                <span class="@CrmCustomerEditorHealthBadgeClass(Model.TaxProfileType != Darwin.Domain.Enums.CustomerTaxProfileType.Business || !string.IsNullOrWhiteSpace(Model.VatId))">@((Model.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(Model.VatId)) ? 1 : 0)</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("ReviewInvoices")</div>
+                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                <a asp-action="Invoices"
+                                   asp-route-q="@Model.Id"
+                                   asp-route-filter="MissingVatId"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Id, filter = "MissingVatId" })"
+                                   hx-target="#crm-customer-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("ReviewInvoices")</a>
+                                <a asp-controller="SiteSettings"
+                                   asp-action="Edit"
+                                   asp-fragment="site-settings-tax"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                                   hx-target="#crm-customer-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("TaxSettings")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("NeedsSegmentation")</div>
+                                    <div class="small text-muted mt-1">@T.T("Segments")</div>
+                                </div>
+                                <span class="@CrmCustomerEditorHealthBadgeClass(Model.SegmentCount > 0)">@Model.SegmentCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("ReviewSegmentation")</div>
+                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                <a asp-action="Customers"
+                                   asp-route-filter="NeedsSegmentation"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("Customers", "Crm", new { filter = "NeedsSegmentation" })"
+                                   hx-target="#crm-customer-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("ReviewSegmentation")</a>
+                                <a asp-action="EditCustomer"
+                                   asp-route-id="@Model.Id"
+                                   asp-fragment="customer-segments-section"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.Id, fragment = "customer-segments-section" })"
+                                   hx-target="#crm-customer-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("Segments")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("HasOpportunities")</div>
+                                    <div class="small text-muted mt-1">@T.T("Opportunities")</div>
+                                </div>
+                                <span class="@CrmCustomerEditorHealthBadgeClass(Model.OpportunityCount == 0)">@Model.OpportunityCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("CrmNextStep")</div>
+                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                <a asp-action="CreateOpportunity"
+                                   asp-route-customerId="@Model.Id"
+                                   class="btn btn-sm btn-outline-success"
+                                   hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = Model.Id })"
+                                   hx-target="#crm-customer-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("CreateOpportunity")</a>
+                                <a asp-action="Invoices"
+                                   asp-route-q="@Model.Id"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@Url.Action("Invoices", "Crm", new { q = Model.Id })"
+                                   hx-target="#crm-customer-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("ReviewInvoices")</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card border-0 bg-light mb-3">
             <div class="card-body py-3">
                 <div class="row g-3 small">

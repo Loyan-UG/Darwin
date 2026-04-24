@@ -1,6 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.Shipping.ShippingMethodsListVm
+@using System.Globalization
 @{
     ViewData["Title"] = T.T("ShippingMethods");
+    string ShippingMethodOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string ShippingMethodOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var shippingMethodAttentionCount = Model.Summary.MissingRatesCount + Model.Summary.InactiveCount;
 }
 
 <div id="shipping-methods-workspace-shell">
@@ -18,6 +22,128 @@
        hx-push-url="true">
         <i class="fa-solid fa-plus"></i> @T.T("CreateMethod")
     </a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge @ShippingMethodOpsHealthBadgeClass(shippingMethodAttentionCount == 0)">@ShippingMethodOpsHealthBadgeText(shippingMethodAttentionCount == 0)</span>
+                    <span class="badge @ShippingMethodOpsHealthBadgeClass(Model.Summary.DhlCount > 0)">@ShippingMethodOpsHealthBadgeText(Model.Summary.DhlCount > 0)</span>
+                </div>
+                <h2 class="h5 mb-1">@T.T("ShippingMethods")</h2>
+                <p class="text-muted mb-0">@T.T("ShippingMethodsWorkspaceIntro")</p>
+            </div>
+            <div class="text-md-end">
+                <div class="small text-muted">@T.T("NeedsAttention")</div>
+                <div class="fs-4 fw-semibold">@shippingMethodAttentionCount</div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("MissingRates")</span>
+                        <span class="badge @ShippingMethodOpsHealthBadgeClass(Model.Summary.MissingRatesCount == 0)">@Model.Summary.MissingRatesCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("OperatorAction")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="MissingRates"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MissingRates" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="Orders"
+                           asp-action="ShipmentsQueue"
+                           asp-route-filter="MissingService"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "MissingService" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ShipmentsQueue")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("DhlMethods")</span>
+                        <span class="badge @ShippingMethodOpsHealthBadgeClass(Model.Summary.DhlCount > 0)">@Model.Summary.DhlCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("ShippingSettings")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="Dhl"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-controller="SiteSettings"
+                           asp-action="Edit"
+                           asp-fragment="site-settings-shipping"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ShippingSettings")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("Inactive")</span>
+                        <span class="badge @ShippingMethodOpsHealthBadgeClass(Model.Summary.InactiveCount == 0)">@Model.Summary.InactiveCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("CreateMethod")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="Inactive"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Inactive" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-action="Create"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Create", "ShippingMethods")"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("CreateMethod")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("GlobalCoverage")</span>
+                        <span class="badge @ShippingMethodOpsHealthBadgeClass(Model.Summary.GlobalCoverageCount > 0)">@Model.Summary.GlobalCoverageCount</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("MultiRate")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Index"
+                           asp-route-filter="GlobalCoverage"
+                           class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "GlobalCoverage" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-action="Index"
+                           asp-route-filter="MultiRate"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "MultiRate" })"
+                           hx-target="#shipping-methods-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("MultiRate")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-3 mb-4">
@@ -117,7 +243,7 @@
                             <div><span class="badge text-bg-info mt-1">@T.T("GlobalCoverage")</span></div>
                         }
                     </td>
-                    <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td>@(item.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")</td>
                     <td class="text-end">
                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
                            hx-get="@Url.Action("Edit", "ShippingMethods", new { id = item.Id })"

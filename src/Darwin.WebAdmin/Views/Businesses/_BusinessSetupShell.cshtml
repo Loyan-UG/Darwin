@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BusinessSetupTitle");
@@ -52,6 +53,51 @@
         _ => T.T(status.ToString())
     };
     string SubscriptionStatusLabel(string? status) => string.IsNullOrWhiteSpace(status) ? "-" : T.T(status);
+    string SetupDependencyBadgeClass(bool configured) => configured
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string SetupDependencyStatusText(bool configured) => configured
+        ? T.T("Configured")
+        : T.T("NeedsAttention");
+    string ConfiguredBusinessValueText(string? value) => string.IsNullOrWhiteSpace(value) ? T.T("NotConfigured") : value.Trim();
+    bool businessEmailIdentityReady = !string.IsNullOrWhiteSpace(Model.SupportEmail)
+        && !string.IsNullOrWhiteSpace(Model.CommunicationSenderName)
+        && !string.IsNullOrWhiteSpace(Model.CommunicationReplyToEmail);
+    bool businessTransactionalReady = Model.CustomerEmailNotificationsEnabled
+        && Model.CommunicationReadiness.EmailTransportConfigured
+        && businessEmailIdentityReady;
+    bool businessMarketingReady = Model.CustomerMarketingEmailsEnabled
+        && Model.CommunicationReadiness.EmailTransportConfigured
+        && businessEmailIdentityReady;
+    bool businessOperationalAlertsReady = Model.OperationalAlertEmailsEnabled
+        && (Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured);
+    bool businessInvitationDefaultsReady = Model.CustomerEmailNotificationsEnabled
+        && businessTransactionalReady
+        && !string.IsNullOrWhiteSpace(Model.SupportEmail);
+    bool businessActivationDefaultsReady = businessTransactionalReady;
+    bool businessPasswordResetDefaultsReady = businessTransactionalReady;
+    bool businessPhoneVerificationDefaultsReady = Model.CommunicationReadiness.SmsTransportConfigured
+        || Model.CommunicationReadiness.WhatsAppTransportConfigured;
+    bool businessCommunicationDeliveryVisibilityReady = Model.CommunicationReadiness.EmailTransportConfigured
+        && (Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured)
+        && (Model.CommunicationReadiness.SmsTransportConfigured || Model.CommunicationReadiness.WhatsAppTransportConfigured);
+    bool businessCommunicationRuntimeExecutionReady = businessInvitationDefaultsReady
+        && businessActivationDefaultsReady
+        && businessPasswordResetDefaultsReady
+        && businessPhoneVerificationDefaultsReady;
+    bool businessCommunicationDefaultsReady = businessInvitationDefaultsReady
+        && businessActivationDefaultsReady
+        && businessPasswordResetDefaultsReady
+        && businessPhoneVerificationDefaultsReady;
+    bool businessTaxProfileReady = !string.IsNullOrWhiteSpace(Model.LegalName)
+        && !string.IsNullOrWhiteSpace(Model.TaxId);
+    bool businessLocationReady = Model.PrimaryLocationCount > 0;
+    bool businessSetupCoreReady = checklistComplete
+        && Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Approved
+        && Model.IsActive;
+    bool businessCommerceReady = businessTaxProfileReady
+        && businessLocationReady
+        && Model.Subscription.HasSubscription;
     var setupOverridePlaceholder =
         "{\"" + setupPrimaryCulture + "\":{\"BusinessSetupTitle\":\"" + T.T("BusinessSetupTitleExampleGerman") + "\"},\"" +
         setupSecondaryCulture + "\":{\"BusinessSetupTitle\":\"" + T.T("BusinessSetupTitleExampleEnglish") + "\"}}";
@@ -133,11 +179,11 @@
                 <div class="small text-muted mt-2">@(Model.IsActive ? T.T("BusinessIsActive") : T.T("BusinessIsInactive"))</div>
                 @if (Model.ApprovedAtUtc.HasValue)
                 {
-                    <div class="small text-muted mt-2">@string.Format(T.T("BusinessEditorApprovedAt"), Model.ApprovedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                    <div class="small text-muted mt-2">@string.Format(T.T("BusinessEditorApprovedAt"), Model.ApprovedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                 }
                 @if (Model.SuspendedAtUtc.HasValue)
                 {
-                    <div class="small text-muted mt-1">@string.Format(T.T("BusinessEditorSuspendedAt"), Model.SuspendedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                    <div class="small text-muted mt-1">@string.Format(T.T("BusinessEditorSuspendedAt"), Model.SuspendedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                 }
                 @if (!string.IsNullOrWhiteSpace(Model.SuspensionReason))
                 {
@@ -266,6 +312,177 @@
                        hx-target="#business-setup-shell"
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">@T.T("GoLiveReadiness")</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-xl-3 col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div class="fw-semibold">@T.T("OperationalStatus")</div>
+                            <span class="@SetupDependencyBadgeClass(businessSetupCoreReady)">@SetupDependencyStatusText(businessSetupCoreReady)</span>
+                        </div>
+                        <div class="small mb-2">@BusinessLifecycleStatusLabel(Model.OperationalStatus)</div>
+                        <div class="small text-muted mb-3">@string.Format(T.T("BusinessSetupChecklistCounts"), Model.ActiveOwnerCount, Model.PrimaryLocationCount)</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-action="MerchantReadiness"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                            <a asp-action="SupportQueue"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("SupportQueue", "Businesses")"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div class="fw-semibold">@T.T("TaxComplianceTitle")</div>
+                            <span class="@SetupDependencyBadgeClass(businessTaxProfileReady)">@SetupDependencyStatusText(businessTaxProfileReady)</span>
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("LegalName"):</span>
+                            @ConfiguredBusinessValueText(Model.LegalName)
+                        </div>
+                        <div class="small text-muted mb-3">
+                            <span class="fw-semibold">@T.T("TaxVatId"):</span>
+                            @ConfiguredBusinessValueText(Model.TaxId)
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-controller="Billing"
+                               asp-action="TaxCompliance"
+                               asp-route-businessId="@Model.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("TaxCompliance", "Billing", new { businessId = Model.Id })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("TaxComplianceTitle")</a>
+                            <a asp-action="Edit"
+                               asp-route-id="@Model.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Id })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("EditBusiness")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div class="fw-semibold">@T.T("CommunicationReadiness")</div>
+                            <span class="@SetupDependencyBadgeClass(businessTransactionalReady && businessOperationalAlertsReady)">@SetupDependencyStatusText(businessTransactionalReady && businessOperationalAlertsReady)</span>
+                        </div>
+                        <div class="small mb-2">@Model.CommunicationReadiness.EmailTransportSummary</div>
+                        <div class="small mb-3">@Model.CommunicationReadiness.AdminRoutingSummary</div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("CommunicationPolicy"):</span>
+                            @SetupDependencyStatusText(businessTransactionalReady && businessOperationalAlertsReady)
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("RetryBlocked"):</span>
+                            @SetupDependencyStatusText(businessCommunicationDeliveryVisibilityReady)
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("UsersFilterUnconfirmed"):</span>
+                            @SetupDependencyStatusText(businessActivationDefaultsReady)
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending):</span>
+                            @SetupDependencyStatusText(businessInvitationDefaultsReady)
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("PasswordReset"):</span>
+                            @SetupDependencyStatusText(businessPasswordResetDefaultsReady)
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("OpenFailedPasswordResets"):</span>
+                            @SetupDependencyStatusText(businessPasswordResetDefaultsReady)
+                        </div>
+                        <div class="small mb-3">
+                            <span class="fw-semibold">@T.T("PhoneVerification"):</span>
+                            @SetupDependencyStatusText(businessPhoneVerificationDefaultsReady)
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-controller="BusinessCommunications"
+                               asp-action="Details"
+                               asp-route-businessId="@Model.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
+                            <a asp-controller="SiteSettings"
+                               asp-action="Edit"
+                               asp-fragment="site-settings-communications-policy"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("CommunicationPolicy")</a>
+                            <a asp-controller="Users"
+                               asp-action="Index"
+                               asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                            <a asp-controller="BusinessCommunications"
+                               asp-action="EmailAudits"
+                               asp-route-businessId="@Model.Id"
+                               asp-route-retryBlockedOnly="true"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, retryBlockedOnly = true })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("RetryBlocked")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div class="fw-semibold">@T.T("Subscription")</div>
+                            <span class="@SetupDependencyBadgeClass(businessCommerceReady)">@SetupDependencyStatusText(businessCommerceReady)</span>
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("Locations"):</span>
+                            @(businessLocationReady ? Model.PrimaryLocationCount.ToString() : T.T("MissingPrimaryLocation"))
+                        </div>
+                        <div class="small text-muted mb-3">
+                            <span class="fw-semibold">@T.T("Plan"):</span>
+                            @(Model.Subscription.HasSubscription ? Model.Subscription.PlanName : T.T("NoActiveSubscriptionSnapshot"))
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-action="Subscription"
+                               asp-route-businessId="@Model.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Subscription")</a>
+                            <a asp-controller="Billing"
+                               asp-action="Payments"
+                               asp-route-businessId="@Model.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Id })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("OpenPayments")</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -727,6 +944,170 @@
         <div class="card mb-4">
             <div class="card-header">@T.T("BusinessCommunicationDefaults")</div>
             <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <div class="fw-semibold">@T.T("BusinessOwnedHere")</div>
+                                <span class="@SetupDependencyBadgeClass(businessEmailIdentityReady)">@SetupDependencyStatusText(businessEmailIdentityReady)</span>
+                            </div>
+                            <div class="small mb-2">
+                                <span class="fw-semibold">@T.T("SupportEmail"):</span>
+                                @ConfiguredBusinessValueText(Model.SupportEmail)
+                            </div>
+                            <div class="small mb-2">
+                                <span class="fw-semibold">@T.T("SenderDisplayName"):</span>
+                                @ConfiguredBusinessValueText(Model.CommunicationSenderName)
+                            </div>
+                            <div class="small">
+                                <span class="fw-semibold">@T.T("ReplyToEmail"):</span>
+                                @ConfiguredBusinessValueText(Model.CommunicationReplyToEmail)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <div class="fw-semibold">@T.T("CustomerTransactionalEmailsEnabled")</div>
+                                <span class="@SetupDependencyBadgeClass(businessTransactionalReady)">@SetupDependencyStatusText(businessTransactionalReady)</span>
+                            </div>
+                            <div class="small text-muted mb-3">@Model.CommunicationReadiness.EmailTransportSummary</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a asp-controller="SiteSettings"
+                                   asp-action="Edit"
+                                   asp-fragment="site-settings-communications-policy"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("CommunicationPolicy")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="Details"
+                                   asp-route-businessId="@Model.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("BusinessCommunicationProfileTitle")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <div class="fw-semibold">@T.T("CustomerMarketingEmailsEnabled")</div>
+                                <span class="@SetupDependencyBadgeClass(businessMarketingReady)">@SetupDependencyStatusText(businessMarketingReady)</span>
+                            </div>
+                            <div class="small text-muted mb-3">@Model.CommunicationReadiness.EmailTransportSummary</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="EmailAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("EmailAudits")</a>
+                                <a asp-action="MerchantReadiness"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("MerchantReadiness", "Businesses")"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MerchantReadinessTitle")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <div class="fw-semibold">@T.T("OperationalAlertEmailsEnabled")</div>
+                                <span class="@SetupDependencyBadgeClass(businessOperationalAlertsReady)">@SetupDependencyStatusText(businessOperationalAlertsReady)</span>
+                            </div>
+                            <div class="small text-muted mb-3">@Model.CommunicationReadiness.AdminRoutingSummary</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a asp-controller="SiteSettings"
+                                   asp-action="Edit"
+                                   asp-fragment="site-settings-admin-routing"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("AdminAlerts")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="ChannelAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card border-0 bg-light-subtle mb-3">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>@T.T("Flow")</th>
+                                        <th>@T.T("BusinessOwnedHere")</th>
+                                        <th>@T.T("GlobalDependencies")</th>
+                                        <th class="text-end">@T.T("Actions")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-semibold">@T.T("CustomerTransactionalEmailsEnabled")</td>
+                                        <td>@ConfiguredBusinessValueText(Model.SupportEmail)</td>
+                                        <td>@Model.CommunicationReadiness.EmailTransportSummary</td>
+                                        <td class="text-end">
+                                            <a asp-controller="SiteSettings"
+                                               asp-action="Edit"
+                                               asp-fragment="site-settings-communications-policy"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                               hx-target="#business-setup-shell"
+                                               hx-swap="outerHTML"
+                                               hx-push-url="true">@T.T("CommunicationPolicy")</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-semibold">@T.T("CustomerMarketingEmailsEnabled")</td>
+                                        <td>@ConfiguredBusinessValueText(Model.CommunicationSenderName)</td>
+                                        <td>@Model.CommunicationReadiness.EmailTransportSummary</td>
+                                        <td class="text-end">
+                                            <a asp-controller="BusinessCommunications"
+                                               asp-action="EmailAudits"
+                                               asp-route-businessId="@Model.Id"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                               hx-target="#business-setup-shell"
+                                               hx-swap="outerHTML"
+                                               hx-push-url="true">@T.T("EmailAudits")</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-semibold">@T.T("OperationalAlertEmailsEnabled")</td>
+                                        <td>@ConfiguredBusinessValueText(Model.CommunicationReplyToEmail)</td>
+                                        <td>@Model.CommunicationReadiness.AdminRoutingSummary</td>
+                                        <td class="text-end">
+                                            <a asp-controller="SiteSettings"
+                                               asp-action="Edit"
+                                               asp-fragment="site-settings-admin-routing"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                               hx-target="#business-setup-shell"
+                                               hx-swap="outerHTML"
+                                               hx-push-url="true">@T.T("AdminAlerts")</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label asp-for="SupportEmail" class="form-label">@T.T("SupportEmail")</label>
@@ -981,7 +1362,7 @@
                             <div class="border rounded p-3 h-100">
                                 <div class="text-muted small text-uppercase">@T.T("Amount")</div>
                                 <div class="fw-semibold mt-1">@Model.Subscription.Currency @((Model.Subscription.UnitPriceMinor / 100M).ToString("0.00"))</div>
-                                <div class="small text-muted mt-2">@T.T("CurrentPeriodEnd"): @(Model.Subscription.CurrentPeriodEndUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                                <div class="small text-muted mt-2">@T.T("CurrentPeriodEnd"): @(Model.Subscription.CurrentPeriodEndUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")</div>
                                 <div class="d-flex gap-2 flex-wrap mt-3">
                                     <a asp-action="SubscriptionInvoices"
                                        asp-route-businessId="@Model.Id"
@@ -1003,10 +1384,10 @@
                         </div>
                     </div>
                     <div class="small text-muted mt-3">
-                        @T.T("Started"): @(Model.Subscription.StartedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                                            @T.T("Started"): @(Model.Subscription.StartedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")
                         @if (Model.Subscription.TrialEndsAtUtc.HasValue)
                         {
-                            <span> | @T.T("TrialEnds"): @Model.Subscription.TrialEndsAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                                                <span> | @T.T("TrialEnds"): @Model.Subscription.TrialEndsAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture)</span>
                         }
                     </div>
                 }
@@ -1342,6 +1723,46 @@
                         <div class="border rounded p-3 h-100">
                             <div class="fw-semibold">@T.T("Communications")</div>
                             <div class="small text-muted mt-2">@T.T("BusinessSetupCommunicationsDependencyNote")</div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@T.T("CommunicationPolicy"):</span>
+                                @SetupDependencyStatusText(businessCommunicationDefaultsReady)
+                            </div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@T.T("Communications"):</span>
+                                @SetupDependencyStatusText(businessCommunicationDeliveryVisibilityReady)
+                            </div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@T.T("CommunicationTemplateInventoryTitle"):</span>
+                                @SetupDependencyStatusText(businessCommunicationDefaultsReady)
+                            </div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@T.T("UsersFilterUnconfirmed"):</span>
+                                @SetupDependencyStatusText(businessActivationDefaultsReady)
+                            </div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending):</span>
+                                @SetupDependencyStatusText(businessInvitationDefaultsReady)
+                            </div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@T.T("PasswordReset"):</span>
+                                @SetupDependencyStatusText(businessPasswordResetDefaultsReady)
+                            </div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@T.T("OpenFailedPasswordResets"):</span>
+                                @SetupDependencyStatusText(businessPasswordResetDefaultsReady)
+                            </div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@T.T("PhoneVerification"):</span>
+                                @SetupDependencyStatusText(businessPhoneVerificationDefaultsReady)
+                            </div>
+                            <div class="small mt-2">
+                                <span class="fw-semibold">@T.T("RuntimeExecution"):</span>
+                                @SetupDependencyStatusText(businessCommunicationRuntimeExecutionReady)
+                                (@T.T("OpenFailedInvitationEmails"): @Model.CommunicationReadiness.FailedInvitationCount /
+                                @T.T("OpenFailedActivationEmails"): @Model.CommunicationReadiness.FailedActivationCount /
+                                @T.T("OpenFailedPasswordResets"): @Model.CommunicationReadiness.FailedPasswordResetCount /
+                                @T.T("FailedAdminTests"): @Model.CommunicationReadiness.FailedAdminTestCount)
+                            </div>
                             <div class="d-flex gap-2 mt-3 flex-wrap">
                                 <a asp-controller="SiteSettings"
                                    asp-action="Edit"
@@ -1375,6 +1796,14 @@
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("AdminAlerts")</a>
+                                <a asp-controller="SiteSettings"
+                                   asp-action="Edit"
+                                   asp-fragment="site-settings-communications-policy"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("CommunicationPolicy")</a>
                                 <a asp-controller="BusinessCommunications"
                                    asp-action="Details"
                                    asp-route-businessId="@Model.Id"
@@ -1392,6 +1821,79 @@
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("EmailAudits")</a>
                                 <a asp-controller="BusinessCommunications"
+                                   asp-action="EmailAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-retryBlockedOnly="true"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, retryBlockedOnly = true })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("RetryBlocked")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="EmailAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-status="Failed"
+                                   asp-route-flowKey="AdminCommunicationTest"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = "AdminCommunicationTest" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("FailedAdminTests")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="EmailAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-status="Failed"
+                                   asp-route-flowKey="AccountActivation"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = "AccountActivation" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
+                                <a asp-action="Invitations"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)</a>
+                                <a asp-controller="Users"
+                                   asp-action="Index"
+                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("UsersFilterUnconfirmed")</a>
+                                <a asp-controller="Users"
+                                   asp-action="Index"
+                                   asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("PasswordReset")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="EmailAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-status="Failed"
+                                   asp-route-flowKey="PasswordReset"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = "PasswordReset" })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
+                            <a asp-controller="BusinessCommunications"
+                               asp-action="EmailAudits"
+                               asp-route-businessId="@Model.Id"
+                               asp-route-status="Failed"
+                               asp-route-flowKey="PasswordReset"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = "PasswordReset" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
+                                <a asp-controller="BusinessCommunications"
                                    asp-action="ChannelAudits"
                                    asp-route-businessId="@Model.Id"
                                    class="btn btn-sm btn-outline-secondary"
@@ -1399,6 +1901,22 @@
                                    hx-target="#business-setup-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">@T.T("SmsWhatsAppAuditsTitle")</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="ChannelAudits"
+                                   asp-route-businessId="@Model.Id"
+                                   asp-route-phoneVerificationOnly="true"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id, phoneVerificationOnly = true })"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("PhoneVerification")</a>
+                                <a asp-controller="MobileOperations"
+                                   asp-action="Index"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "MobileOperations")"
+                                   hx-target="#business-setup-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("MobileOperationsTitle")</a>
                             </div>
                         </div>
                     </div>

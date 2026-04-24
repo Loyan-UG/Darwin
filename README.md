@@ -31,6 +31,7 @@ Use this README as the product and delivery overview, then continue with the foc
 - [`BACKLOG.md`](BACKLOG.md): execution priorities, go-live critical work, near-term items, future-phase items, and decision log
 - [`DarwinDomainDesign.md`](DarwinDomainDesign.md): current domain model, target refinements, lifecycle rules, and platform-level capabilities
 - [`DarwinWebAdmin.md`](DarwinWebAdmin.md): back-office operating model, HTMX/MVC conventions, onboarding workflows, settings architecture, and admin UX priorities
+- [`docs/webadmin-subscription-workspace-handoff.md`](docs/webadmin-subscription-workspace-handoff.md): durable continuation context for the current `Subscription.cshtml` cleanup lane in WebAdmin
 - [`DarwinFrontEnd.md`](DarwinFrontEnd.md): Next.js storefront and member portal boundaries, delivery assumptions, and front-office constraints
 - [`DarwinMobile.md`](DarwinMobile.md): MAUI app responsibilities, onboarding/account lifecycle dependencies, and mobile/backend coupling
 - [`DarwinWebApi.md`](DarwinWebApi.md): HTTP surfaces, contract boundaries, audience split, and integration direction

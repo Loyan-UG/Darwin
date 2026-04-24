@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
@@ -172,12 +173,12 @@
 
                     @if (Model.ApprovedAtUtc.HasValue)
                     {
-                        <div class="small text-muted mt-2">@string.Format(T.T("BusinessEditorApprovedAt"), Model.ApprovedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                    <div class="small text-muted mt-2">@string.Format(T.T("BusinessEditorApprovedAt"), Model.ApprovedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                     }
 
                     @if (Model.SuspendedAtUtc.HasValue)
                     {
-                        <div class="small text-muted mt-1">@string.Format(T.T("BusinessEditorSuspendedAt"), Model.SuspendedAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                    <div class="small text-muted mt-1">@string.Format(T.T("BusinessEditorSuspendedAt"), Model.SuspendedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                     }
 
                     @if (!string.IsNullOrWhiteSpace(Model.SuspensionReason))

@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.CMS.MediaAssetsListVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("Media");
@@ -163,7 +164,7 @@
                             <div><span class="text-muted">@T.T("AltLabel"):</span> @(string.IsNullOrWhiteSpace(item.Alt) ? T.T("MediaNotSet") : item.Alt)</div>
                             <div><span class="text-muted">@T.T("Role"):</span> @(string.IsNullOrWhiteSpace(item.Role) ? T.T("MediaGeneralRole") : item.Role)</div>
                             <div><span class="text-muted">@T.T("Size"):</span> @((item.SizeBytes / 1024.0).ToString("0.0")) KB</div>
-                            <div><span class="text-muted">@T.T("Updated"):</span> @(item.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? T.T("MediaUnknownValue"))</div>
+                            <div><span class="text-muted">@T.T("Updated"):</span> @(item.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? T.T("MediaUnknownValue"))</div>
                         </div>
                         <div class="input-group input-group-sm mt-auto">
                             <input type="text" value="@item.Url" class="form-control" readonly />

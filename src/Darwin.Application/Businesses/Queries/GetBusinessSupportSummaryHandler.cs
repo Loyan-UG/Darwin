@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -92,6 +93,26 @@ namespace Darwin.Application.Businesses.Queries
                 .CountAsync(ct)
                 .ConfigureAwait(false);
 
+            var failedEmailAuditQuery = _db.Set<EmailDispatchAudit>()
+                .AsNoTracking()
+                .Where(x => x.Status == "Failed");
+
+            var failedInvitationCount = await failedEmailAuditQuery
+                .CountAsync(x => x.FlowKey == "BusinessInvitation", ct)
+                .ConfigureAwait(false);
+
+            var failedActivationCount = await failedEmailAuditQuery
+                .CountAsync(x => x.FlowKey == "AccountActivation", ct)
+                .ConfigureAwait(false);
+
+            var failedPasswordResetCount = await failedEmailAuditQuery
+                .CountAsync(x => x.FlowKey == "PasswordReset", ct)
+                .ConfigureAwait(false);
+
+            var failedAdminTestCount = await failedEmailAuditQuery
+                .CountAsync(x => x.FlowKey == "AdminCommunicationTest", ct)
+                .ConfigureAwait(false);
+
             var dto = new BusinessSupportSummaryDto
             {
                 PendingApprovalBusinessCount = pendingApprovalCount,
@@ -105,7 +126,11 @@ namespace Darwin.Application.Businesses.Queries
                 AttentionBusinessCount = attentionCount,
                 OpenInvitationCount = openInvitationsCount,
                 PendingActivationMemberCount = pendingActivationCount,
-                LockedMemberCount = lockedMembersCount
+                LockedMemberCount = lockedMembersCount,
+                FailedInvitationCount = failedInvitationCount,
+                FailedActivationCount = failedActivationCount,
+                FailedPasswordResetCount = failedPasswordResetCount,
+                FailedAdminTestCount = failedAdminTestCount
             };
 
             if (selectedBusinessId.HasValue)
@@ -134,6 +159,25 @@ namespace Darwin.Application.Businesses.Queries
                            where member.BusinessId == businessId && !user.IsDeleted && user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > nowUtc
                            select member.Id)
                     .CountAsync(ct)
+                    .ConfigureAwait(false);
+
+                var selectedBusinessFailedEmailAuditQuery = failedEmailAuditQuery
+                    .Where(x => x.BusinessId == businessId);
+
+                dto.SelectedBusinessFailedInvitationCount = await selectedBusinessFailedEmailAuditQuery
+                    .CountAsync(x => x.FlowKey == "BusinessInvitation", ct)
+                    .ConfigureAwait(false);
+
+                dto.SelectedBusinessFailedActivationCount = await selectedBusinessFailedEmailAuditQuery
+                    .CountAsync(x => x.FlowKey == "AccountActivation", ct)
+                    .ConfigureAwait(false);
+
+                dto.SelectedBusinessFailedPasswordResetCount = await selectedBusinessFailedEmailAuditQuery
+                    .CountAsync(x => x.FlowKey == "PasswordReset", ct)
+                    .ConfigureAwait(false);
+
+                dto.SelectedBusinessFailedAdminTestCount = await selectedBusinessFailedEmailAuditQuery
+                    .CountAsync(x => x.FlowKey == "AdminCommunicationTest", ct)
                     .ConfigureAwait(false);
             }
 

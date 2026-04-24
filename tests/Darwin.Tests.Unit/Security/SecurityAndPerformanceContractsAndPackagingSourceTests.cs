@@ -660,7 +660,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         subscriptionInvoicesViewSource.Should().Contain("string InvoiceExternalRel() => \"noopener noreferrer\";");
         subscriptionInvoicesViewSource.Should().Contain("string InvoiceToolbarIconGlyphClass(string iconName) => $\"fa-solid {iconName}\";");
         subscriptionInvoicesViewSource.Should().Contain("string InvoiceAmountText(string currency, long totalMinor) => $\"{currency} {(totalMinor / 100M).ToString(\"0.00\")}\";");
-        subscriptionInvoicesViewSource.Should().Contain("string InvoiceTimestampText(DateTime? timestampUtc) => timestampUtc?.ToString(\"yyyy-MM-dd HH:mm\") ?? \"-\";");
+        subscriptionInvoicesViewSource.Should().Contain("string InvoiceTimestampText(DateTime? timestampUtc) => timestampUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? \"-\";");
         subscriptionInvoicesViewSource.Should().Contain("string InvoiceIssuedTimelineText(DateTime? timestampUtc) => string.Format(T.T(\"CommonIssuedAt\"), InvoiceTimestampText(timestampUtc));");
         subscriptionInvoicesViewSource.Should().Contain("string InvoiceDueTimelineText(DateTime? timestampUtc) => string.Format(T.T(\"CommonDueAt\"), InvoiceTimestampText(timestampUtc));");
         subscriptionInvoicesViewSource.Should().Contain("string InvoicePaidTimelineText(DateTime? timestampUtc) => string.Format(T.T(\"CommonPaidAt\"), InvoiceTimestampText(timestampUtc));");
@@ -828,57 +828,62 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         controllerSource.Should().Contain(": T(\"BusinessSubscriptionConfigureWebsite\")");
 
         subscriptionViewSource.Should().Contain("BusinessSubscriptionBillingPlaybooksTitle");
+        subscriptionViewSource.Should().Contain("@using System.Globalization");
+        subscriptionViewSource.Should().Contain("var subscriptionCulture = CultureInfo.CurrentCulture;");
+        subscriptionViewSource.Should().Contain("string SubscriptionDateTimeDisplayText(DateTime? value) => value?.ToString(\"g\", subscriptionCulture) ?? \"-\";");
+        subscriptionViewSource.Should().Contain("string SubscriptionMoneyDisplayText(string currency, long amountMinor) => string.Format(subscriptionCulture, \"{0} {1:N2}\", currency, amountMinor / 100M);");
+        subscriptionViewSource.Should().Contain("string SubscriptionMetricCardCountText(int value) => value.ToString(\"N0\", subscriptionCulture);");
         subscriptionViewSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
         subscriptionViewSource.Should().Contain("playbook.QueueActionUrl");
         subscriptionViewSource.Should().Contain("playbook.FollowUpUrl");
-        subscriptionViewSource.Should().Contain("string SubscriptionWorkspaceRootId() => \"business-subscription-workspace-shell\";");
-        subscriptionViewSource.Should().Contain("string SubscriptionWorkspaceRootTarget() => $\"#{SubscriptionWorkspaceRootId()}\";");
-        subscriptionViewSource.Should().Contain("string SubscriptionWorkspacePushUrlValue() => \"true\";");
-        subscriptionViewSource.Should().Contain("string SubscriptionWorkspaceSwapValue() => \"outerHTML\";");
-        subscriptionViewSource.Should().Contain("string SubscriptionEditWorkspaceActionHref() => Url.Action(\"Edit\", \"Businesses\", new { id = Model.Business.Id }) ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionSetupWorkspaceActionHref() => Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id }) ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionBusinessAppFragment() => \"site-settings-business-app\";");
-        subscriptionViewSource.Should().Contain("string SubscriptionConfigureWebsiteWorkspaceActionHref() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = SubscriptionBusinessAppFragment() }) ?? string.Empty;");
+subscriptionViewSource.Should().Contain("string SubscriptionWorkspaceFrameId() => \"business-subscription-workspace-shell\";");
+subscriptionViewSource.Should().Contain("string SubscriptionWorkspaceFrameTarget() => $\"#{SubscriptionWorkspaceFrameId()}\";");
+subscriptionViewSource.Should().Contain("string SubscriptionWorkspaceFramePushUrlValue() => \"true\";");
+subscriptionViewSource.Should().Contain("string SubscriptionWorkspaceFrameSwapValue() => \"outerHTML\";");
+        subscriptionViewSource.Should().Contain("string SubscriptionEditActionHref() => Url.Action(\"Edit\", \"Businesses\", new { id = Model.Business.Id }) ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionSetupActionHref() => Url.Action(\"Setup\", \"Businesses\", new { id = Model.Business.Id }) ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionConfigureWebsiteActionFragment() => \"site-settings-business-app\";");
+        subscriptionViewSource.Should().Contain("string SubscriptionConfigureWebsiteActionHref() => Url.Action(\"Edit\", \"SiteSettings\", new { fragment = SubscriptionConfigureWebsiteActionFragment() }) ?? string.Empty;");
         subscriptionViewSource.Should().Contain("string SubscriptionRenewalTogglePostActionHref() => Url.Action(\"SetSubscriptionCancelAtPeriodEnd\", \"Businesses\") ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionInvoicesWorkspaceActionHref() => Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Business.Id }) ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Business.Id, filter }) ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionPaymentsWorkspaceActionHref() => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id }) ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionPaymentsFilteredWorkspaceActionHref(string? providerInvoiceId) => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id, q = providerInvoiceId }) ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionMerchantReadinessWorkspaceActionHref() => Url.Action(\"MerchantReadiness\", \"Businesses\") ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("string SubscriptionSupportQueueWorkspaceActionHref() => Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty;");
-        subscriptionViewSource.Should().Contain("hx-target=\"@SubscriptionWorkspaceRootTarget()\"");
-        subscriptionViewSource.Should().Contain("hx-push-url=\"@SubscriptionWorkspacePushUrlValue()\"");
-        subscriptionViewSource.Should().Contain("hx-swap=\"@SubscriptionWorkspaceSwapValue()\"");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowQueueLinkHref(playbook)");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowFollowUpLinkHref(playbook)");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowWhyDisplayText(playbook)");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowQueueDisplayText(playbook)");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowOperatorDisplayText(playbook)");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowQueueActionText(playbook)");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowFollowUpActionText(playbook)");
+        subscriptionViewSource.Should().Contain("string SubscriptionInvoiceQueueActionHref() => Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Business.Id }) ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => Url.Action(\"SubscriptionInvoices\", \"Businesses\", new { businessId = Model.Business.Id, filter }) ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionPaymentsActionHref() => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id }) ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionPaymentsSearchActionHref(string? providerInvoiceId) => Url.Action(\"Payments\", \"Billing\", new { businessId = Model.Business.Id, q = providerInvoiceId }) ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionMerchantReadinessActionHref() => Url.Action(\"MerchantReadiness\", \"Businesses\") ?? string.Empty;");
+        subscriptionViewSource.Should().Contain("string SubscriptionSupportQueueActionHref() => Url.Action(\"SupportQueue\", \"Businesses\") ?? string.Empty;");
+subscriptionViewSource.Should().Contain("hx-target=\"@SubscriptionWorkspaceFrameTarget()\"");
+subscriptionViewSource.Should().Contain("hx-push-url=\"@SubscriptionWorkspaceFramePushUrlValue()\"");
+subscriptionViewSource.Should().Contain("hx-swap=\"@SubscriptionWorkspaceFrameSwapValue()\"");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowQueueActionHref(playbook)");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowFollowUpActionHref(playbook)");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowWhyDisplayText(playbook)");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowQueueDisplayText(playbook)");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowOperatorDisplayText(playbook)");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowQueueActionText(playbook)");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowFollowUpActionText(playbook)");
         subscriptionViewSource.Should().Contain("@SubscriptionActiveSubscriptionEmptyStateText()");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionSetupWorkspaceActionHref()\"");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionConfigureWebsiteWorkspaceActionHref()\"");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionInvoicesWorkspaceActionHref()\"");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open)\"");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionPaymentsWorkspaceActionHref()\"");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionPaymentsFilteredWorkspaceActionHref(invoice.ProviderInvoiceId)\"");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionMerchantReadinessWorkspaceActionHref()\"");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionSupportQueueWorkspaceActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionSetupActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionConfigureWebsiteActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionInvoiceQueueActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open)\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionPaymentsActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionPaymentsSearchActionHref(invoice.ProviderInvoiceId)\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionMerchantReadinessActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionSupportQueueActionHref()\"");
         subscriptionViewSource.Should().Contain("hx-post=\"@SubscriptionRenewalTogglePostActionHref()\"");
-        subscriptionViewSource.Should().Contain("@if (SubscriptionHasActiveSubscriptionData())");
-        subscriptionViewSource.Should().Contain("@if (SubscriptionUserHasFullAdminAccess())");
-        subscriptionViewSource.Should().Contain("@if (!SubscriptionHasAvailablePlanRows())");
-        subscriptionViewSource.Should().Contain("@if (!SubscriptionHasRecentInvoiceRows())");
-        subscriptionViewSource.Should().Contain("@if (SubscriptionPlaybookHasQueueLink(playbook.QueueActionUrl))");
-        subscriptionViewSource.Should().Contain("@if (SubscriptionPlaybookHasFollowUpLink(playbook.FollowUpUrl))");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowQueueLinkHref(playbook)");
-subscriptionViewSource.Should().Contain("@SubscriptionPlaybookRowFollowUpLinkHref(playbook)");
-subscriptionViewSource.Should().Contain("@SubscriptionRecentInvoicesEmptyStateMessageText()");
+        subscriptionViewSource.Should().Contain("@if (SubscriptionHasActiveSubscription())");
+        subscriptionViewSource.Should().Contain("@if (SubscriptionCanManageSubscription())");
+        subscriptionViewSource.Should().Contain("@if (!SubscriptionHasPlanCatalogRows())");
+        subscriptionViewSource.Should().Contain("@if (!SubscriptionHasRecentInvoiceListRows())");
+        subscriptionViewSource.Should().Contain("@if (SubscriptionBillingPlaybooksTableRowCanOpenQueueAction(playbook.QueueActionUrl))");
+        subscriptionViewSource.Should().Contain("@if (SubscriptionBillingPlaybooksTableRowCanOpenFollowUpAction(playbook.FollowUpUrl))");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowQueueActionHref(playbook)");
+subscriptionViewSource.Should().Contain("@SubscriptionBillingPlaybooksTableRowFollowUpActionHref(playbook)");
+subscriptionViewSource.Should().Contain("@SubscriptionRecentInvoicesTableEmptyStateText()");
 subscriptionViewSource.Should().Contain("@SubscriptionInvoiceQueueActionText()");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionPaymentsWorkspaceActionHref()\"");
-subscriptionViewSource.Should().Contain("@SubscriptionPlansEmptyStateMessageText()");
-        subscriptionViewSource.Should().Contain("@SubscriptionResolvePrerequisitesCaptionText()");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionPaymentsActionHref()\"");
+subscriptionViewSource.Should().Contain("@SubscriptionAvailablePlansTableEmptyStateText()");
+        subscriptionViewSource.Should().Contain("@SubscriptionResolvePrerequisitesHintText()");
 subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()");
 
         var mobileBusinessSubscriptionVmSource = ReadMobileBusinessFile(Path.Combine("ViewModels", "SubscriptionViewModel.cs"));
@@ -3554,9 +3559,9 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeMemberRoleLabel\"): @LocalizeBusinessMemberRole(Model.Role)");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeContextTitle\")");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeIssuedAtLabel\")");
-        source.Should().Contain("@Model.IssuedAtUtc.ToString(\"yyyy-MM-dd HH:mm:ss\") UTC");
+        source.Should().Contain("@Model.IssuedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeExpiresAtLabel\")");
-        source.Should().Contain("@Model.ExpiresAtUtc.ToString(\"yyyy-MM-dd HH:mm:ss\") UTC");
+        source.Should().Contain("@Model.ExpiresAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeEmailStateLabel\")");
         source.Should().Contain("@(Model.EmailConfirmed ? T.T(\"BusinessStaffAccessBadgeConfirmed\") : T.T(\"BusinessStaffAccessBadgePendingActivation\"))");
         source.Should().Contain("@T.T(\"BusinessStaffAccessBadgeAccessStateLabel\")");
@@ -4077,16 +4082,16 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
     {
         var subscriptionViewSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "Subscription.cshtml"));
 
-        subscriptionViewSource.Should().Contain("id=\"@SubscriptionWorkspaceRootId()\"");
+subscriptionViewSource.Should().Contain("id=\"@SubscriptionWorkspaceFrameId()\"");
         subscriptionViewSource.Should().Contain("@inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms");
         subscriptionViewSource.Should().Contain("var isFullAdmin = await Perms.HasAsync(\"FullAdminAccess\");");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionEditWorkspaceActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionEditActionHref()\"");
 subscriptionViewSource.Should().Contain("@SubscriptionEditActionText()");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionSetupWorkspaceActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionSetupActionHref()\"");
 subscriptionViewSource.Should().Contain("@SubscriptionSetupActionText()");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionPaymentsWorkspaceActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionPaymentsActionHref()\"");
 subscriptionViewSource.Should().Contain("@SubscriptionPaymentsActionText()");
-        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionInvoicesWorkspaceActionHref()\"");
+        subscriptionViewSource.Should().Contain("hx-get=\"@SubscriptionInvoiceQueueActionHref()\"");
 subscriptionViewSource.Should().Contain("@SubscriptionInvoiceQueueActionText()");
         subscriptionViewSource.Should().Contain("action=\"@SubscriptionRenewalTogglePostActionHref()\"");
         subscriptionViewSource.Should().Contain("hx-post=\"@SubscriptionRenewalTogglePostActionHref()\"");
@@ -4096,14 +4101,14 @@ subscriptionViewSource.Should().Contain("@SubscriptionInvoiceQueueActionText()")
         subscriptionViewSource.Should().Contain("name=\"cancelAtPeriodEnd\" value=\"@((!Model.Subscription.CancelAtPeriodEnd).ToString().ToLowerInvariant())\"");
         subscriptionViewSource.Should().Contain("string SubscriptionStatusDisplayText(string? status) => string.IsNullOrWhiteSpace(status) ? \"-\" : T.T(status);");
         subscriptionViewSource.Should().Contain("@SubscriptionStatusDisplayText(Model.Subscription.Status)");
-subscriptionViewSource.Should().Contain("string SubscriptionInvoiceRowPlanDisplayText(string? planName) => SubscriptionFallbackDisplayText(planName);");
-subscriptionViewSource.Should().Contain("@SubscriptionInvoiceRowPlanDisplayText(invoice.PlanName)");
+subscriptionViewSource.Should().Contain("string SubscriptionRecentInvoicesTableRowPlanDisplayText(string? planName) => SubscriptionFallbackDisplayText(planName);");
+subscriptionViewSource.Should().Contain("@SubscriptionRecentInvoicesTableRowPlanDisplayText(invoice.PlanName)");
         subscriptionViewSource.Should().Contain("BusinessSubscriptionRestoreRenewal");
         subscriptionViewSource.Should().Contain("BusinessSubscriptionCancelAtPeriodEndAction");
 subscriptionViewSource.Should().Contain("@SubscriptionBillingWebsiteActionText()");
 subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText()");
-        subscriptionViewSource.Should().Contain("@SubscriptionResolvePrerequisitesCaptionText()");
-        subscriptionViewSource.Should().Contain("@SubscriptionCurrentPlanBadgeLabelText()");
+        subscriptionViewSource.Should().Contain("@SubscriptionResolvePrerequisitesHintText()");
+        subscriptionViewSource.Should().Contain("@SubscriptionCurrentPlanBadgeText()");
     }
 
 
@@ -8183,6 +8188,26 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         sharedResourceDeSource.Should().Contain("<data name=\"WebhookEscalationHintReceiver5xx\"");
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -200,31 +200,51 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                 {
                     Title = T("MobilePlaybookPushDebtTitle"),
                     ScopeNote = T("MobilePlaybookPushDebtScope"),
-                    OperatorAction = T("MobilePlaybookPushDebtAction")
+                    OperatorAction = T("MobilePlaybookPushDebtAction"),
+                    QueueActionLabel = T("MobileMissingPushToken"),
+                    QueueActionUrl = Url.Action(nameof(Index), "MobileOperations", new { state = "missing-push" }) ?? string.Empty,
+                    FollowUpLabel = T("ReviewProviderLane"),
+                    FollowUpUrl = Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true }) ?? string.Empty
                 },
                 new()
                 {
                     Title = T("MobilePlaybookLoyaltyScanTitle"),
                     ScopeNote = T("MobilePlaybookLoyaltyScanScope"),
-                    OperatorAction = T("MobilePlaybookLoyaltyScanAction")
+                    OperatorAction = T("MobilePlaybookLoyaltyScanAction"),
+                    QueueActionLabel = T("BusinessMemberDevices"),
+                    QueueActionUrl = Url.Action(nameof(Index), "MobileOperations", new { state = "business-members" }) ?? string.Empty,
+                    FollowUpLabel = T("LoyaltyScanSessionsTitle"),
+                    FollowUpUrl = Url.Action("ScanSessions", "Loyalty") ?? string.Empty
                 },
                 new()
                 {
                     Title = T("MobilePlaybookTransportTitle"),
                     ScopeNote = T("MobilePlaybookTransportScope"),
-                    OperatorAction = T("MobilePlaybookTransportAction")
+                    OperatorAction = T("MobilePlaybookTransportAction"),
+                    QueueActionLabel = T("OpenCommunicationsWorkspace"),
+                    QueueActionUrl = Url.Action("Index", "BusinessCommunications") ?? string.Empty,
+                    FollowUpLabel = T("OpenMobileBootstrap"),
+                    FollowUpUrl = Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-mobile" }) ?? string.Empty
                 },
                 new()
                 {
                     Title = T("MobilePlaybookProviderLaneTitle"),
                     ScopeNote = T("MobilePlaybookProviderLaneScope"),
-                    OperatorAction = T("MobilePlaybookProviderLaneAction")
+                    OperatorAction = T("MobilePlaybookProviderLaneAction"),
+                    QueueActionLabel = T("ReviewProviderLane"),
+                    QueueActionUrl = Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true }) ?? string.Empty,
+                    FollowUpLabel = T("OpenCommunicationsWorkspace"),
+                    FollowUpUrl = Url.Action("Index", "BusinessCommunications") ?? string.Empty
                 },
                 new()
                 {
                     Title = T("MobilePlaybookMemberLifecycleTitle"),
                     ScopeNote = T("MobilePlaybookMemberLifecycleScope"),
-                    OperatorAction = T("MobilePlaybookMemberLifecycleAction")
+                    OperatorAction = T("MobilePlaybookMemberLifecycleAction"),
+                    QueueActionLabel = T("SupportQueue"),
+                    QueueActionUrl = Url.Action("SupportQueue", "Businesses") ?? string.Empty,
+                    FollowUpLabel = T("UsersFilterMobileLinked"),
+                    FollowUpUrl = Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.MobileLinked }) ?? string.Empty
                 }
             };
         }

@@ -1,8 +1,18 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderInvoicesPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
+    var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
+    string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
+    string OrderInvoiceOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string OrderInvoiceOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var orderInvoiceOutstandingCount = Model.Items.Count(item => item.BalanceMinor > 0);
+    var orderInvoiceVatGapCount = Model.Items.Count(item => item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(item.CustomerVatId));
+    var orderInvoiceRefundedCount = Model.Items.Count(item => item.RefundedAmountMinor > 0);
+    var orderInvoiceAttentionCount = orderInvoiceOutstandingCount + orderInvoiceVatGapCount + orderInvoiceRefundedCount;
 }
 
 <div id="invoices-grid-content"
@@ -10,6 +20,110 @@
      hx-target="this"
      hx-swap="outerHTML"
      hx-push-url="false">
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div class="fw-semibold">@T.T("ReviewInvoices")</div>
+                        <span class="@OrderInvoiceOpsHealthBadgeClass(orderInvoiceAttentionCount == 0)">@OrderInvoiceOpsHealthBadgeText(orderInvoiceAttentionCount == 0)</span>
+                    </div>
+                    <div class="small text-muted mt-2">
+                        @T.T("Invoice")
+                        @if (orderInvoiceAttentionCount > 0)
+                        {
+                            <span class="ms-1">@T.T("NeedsAttention"): @orderInvoiceAttentionCount</span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a asp-controller="Orders"
+                       asp-action="CreateInvoice"
+                       asp-route-orderId="@Model.OrderId"
+                       class="btn btn-sm btn-outline-primary"
+                       hx-get="@Url.Action("CreateInvoice", "Orders", new { orderId = Model.OrderId })"
+                       hx-target="#order-operation-shell"
+                       hx-swap="innerHTML"
+                       hx-push-url="false">@T.T("CreateInvoice")</a>
+                    <a asp-controller="Billing"
+                       asp-action="Payments"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Payments", "Billing")"
+                       hx-target="#order-operation-shell"
+                       hx-swap="innerHTML"
+                       hx-push-url="false">@T.T("Payments")</a>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("Outstanding")</div>
+                                <div class="small text-muted mt-1">@T.T("Balance")</div>
+                            </div>
+                            <span class="@OrderInvoiceOpsHealthBadgeClass(orderInvoiceOutstandingCount == 0)">@orderInvoiceOutstandingCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("Payment")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Orders" asp-action="Invoices" asp-route-orderId="@Model.OrderId" asp-route-filter="Outstanding" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.InvoiceQueueFilter.Outstanding ? "btn-danger" : "btn-outline-danger")">@T.T("Outstanding")</a>
+                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Payments", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payments")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("Paid")</div>
+                                <div class="small text-muted mt-1">@T.T("Settled")</div>
+                            </div>
+                            <span class="@OrderInvoiceOpsHealthBadgeClass(Model.Items.Count(item => item.BalanceMinor <= 0) == 0)">@Model.Items.Count(item => item.BalanceMinor <= 0)</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("Invoice")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Orders" asp-action="Invoices" asp-route-orderId="@Model.OrderId" asp-route-filter="Paid" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.InvoiceQueueFilter.Paid ? "btn-success" : "btn-outline-success")">@T.T("Paid")</a>
+                            <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("CreateInvoice", "Orders", new { orderId = Model.OrderId })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("CreateInvoice")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("VatIdMissing")</div>
+                                <div class="small text-muted mt-1">@T.T("TaxProfile")</div>
+                            </div>
+                            <span class="@OrderInvoiceOpsHealthBadgeClass(orderInvoiceVatGapCount == 0)">@orderInvoiceVatGapCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("TaxSettings")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Billing" asp-action="TaxCompliance" class="btn btn-sm btn-outline-danger" hx-get="@Url.Action("TaxCompliance", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("TaxSettings")</a>
+                            <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="MissingVatId" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Invoices", "Crm", new { filter = "MissingVatId" })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("ReviewInvoices")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("Refunded")</div>
+                                <div class="small text-muted mt-1">@T.T("Payment")</div>
+                            </div>
+                            <span class="@OrderInvoiceOpsHealthBadgeClass(orderInvoiceRefundedCount == 0)">@orderInvoiceRefundedCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("CrmNextStep")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-warning" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refunded")</a>
+                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Payments", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payment")</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <form asp-controller="Orders" asp-action="Invoices" method="get" class="d-flex gap-2 mb-3">
         <input type="hidden" name="orderId" value="@Model.OrderId" />
         <select name="filter" asp-items="Model.FilterItems" class="form-select form-select-sm"></select>
@@ -127,9 +241,9 @@
                                 </div>
                             </td>
                             <td>@LocalizeInvoiceStatus(item.Status)</td>
-                            <td>@item.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>@OrderDateTimeText(item.IssuedAtUtc)</td>
                             <td>
-                                @(item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")
+                                @OrderDateTimeText(item.DueAtUtc)
                                 <div class="mt-1">
                                     <a asp-controller="Crm"
                                        asp-action="EditInvoice"

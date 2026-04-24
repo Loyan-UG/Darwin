@@ -41,6 +41,17 @@
            hx-target="#business-invitation-editor-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("BusinessSupportQueueTitle")</a>
+        <a asp-controller="BusinessCommunications"
+           asp-action="EmailAudits"
+           asp-route-businessId="@Model.BusinessId"
+           asp-route-status="Failed"
+           asp-route-flowKey="BusinessInvitation"
+           asp-route-recipientEmail="@Model.Email"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.BusinessId, status = "Failed", flowKey = "BusinessInvitation", recipientEmail = Model.Email })"
+           hx-target="#business-invitation-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("OpenFailedInvitationEmails")</a>
         <a asp-action="MerchantReadiness"
            class="btn btn-sm btn-outline-secondary"
            hx-get="@Url.Action("MerchantReadiness", "Businesses")"

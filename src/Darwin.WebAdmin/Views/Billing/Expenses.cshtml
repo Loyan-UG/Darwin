@@ -1,7 +1,14 @@
+@using System.Globalization
 @model Darwin.WebAdmin.ViewModels.Billing.ExpensesListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("ExpensesTitle");
+    string ExpenseOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string ExpenseOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var expenseAttentionCount = Model.Summary.HighValueCount
+        + (Model.Summary.TotalCount - Model.Summary.SupplierLinkedCount);
 }
 
 <div id="billing-expenses-workspace-shell">
@@ -56,6 +63,137 @@
     </div>
 </div>
 
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h2 class="h5 mb-0">@T.T("GoLiveReadiness")</h2>
+                    <span class="@ExpenseOpsHealthBadgeClass(expenseAttentionCount == 0)">@ExpenseOpsHealthBadgeText(expenseAttentionCount == 0)</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    @T.T("ExpensesReviewPlaybooks")
+                    @if (expenseAttentionCount > 0)
+                    {
+                        <span class="ms-1">@T.T("NeedsAttention"): @expenseAttentionCount</span>
+                    }
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="CreateExpense" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("CreateExpense", "Billing", new { businessId = Model.BusinessId })"
+                   hx-target="#billing-expenses-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("CreateExpense")</a>
+                <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                   hx-target="#billing-expenses-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("ExpensesRecent30Days")</div>
+                            <div class="small text-muted mt-1">@T.T("ExpensePlaybookRecentScope")</div>
+                        </div>
+                        <span class="@ExpenseOpsHealthBadgeClass(Model.Summary.RecentCount == 0)">@Model.Summary.RecentCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("ExpensePlaybookRecentAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-expenses-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ExpensesTitle")</a>
+                        <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-expenses-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("JournalEntriesTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("HighValue")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@ExpenseOpsHealthBadgeClass(Model.Summary.HighValueCount == 0)">@Model.Summary.HighValueCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("ExpensePlaybookHighValueAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-expenses-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("HighValue")</a>
+                        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-expenses-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("ExpensesSupplierLinked")</div>
+                            <div class="small text-muted mt-1">@T.T("Supplier")</div>
+                        </div>
+                        <span class="@ExpenseOpsHealthBadgeClass(Model.Summary.SupplierLinkedCount == 0)">@Model.Summary.SupplierLinkedCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("ExpensePlaybookRecentDependency")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("Expenses", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-expenses-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Supplier")</a>
+                        <a asp-action="CreateExpense" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("CreateExpense", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-expenses-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("CreateExpense")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("FinancialAccountsTitle")</div>
+                            <div class="small text-muted mt-1">@T.T("ExpensePlaybookHighValueDependency")</div>
+                        </div>
+                        <span class="@ExpenseOpsHealthBadgeClass(Model.Summary.TotalCount == Model.Summary.SupplierLinkedCount)">@((Model.Summary.TotalCount - Model.Summary.SupplierLinkedCount))</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("NeedsAttention")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-expenses-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("FinancialAccountsTitle")</a>
+                        <a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId })"
+                           hx-target="#billing-expenses-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("JournalEntriesTitle")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card mb-3">
     <div class="card-header">@T.T("ExpensesReviewPlaybooks")</div>
     <div class="card-body">
@@ -96,7 +234,7 @@
             foreach (var item in Model.Items)
             {
                 <tr>
-                    <td>@item.ExpenseDateUtc.ToString("yyyy-MM-dd")</td>
+                    <td>@item.ExpenseDateUtc.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</td>
                     <td>@item.Category</td>
                     <td>@item.Description</td>
                     <td>@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>

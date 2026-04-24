@@ -1,370 +1,374 @@
+@using System.Globalization
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionWorkspaceVm
 @inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BusinessSubscriptionTitle");
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
-    string SubscriptionStatusText(string? status) => string.IsNullOrWhiteSpace(status) ? "-" : T.T(status);
-    string SubscriptionInvoiceStatusText(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
-    string SubscriptionValueText(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
-    bool SubscriptionUserHasFullAdminAccess() => isFullAdmin;
-    string SubscriptionWorkspaceTitleText() => T.T("BusinessSubscriptionTitle");
-    string SubscriptionWorkspaceBusinessNameText() => Model.Business.Name;
+    var subscriptionCulture = CultureInfo.CurrentCulture;
+    string SubscriptionStatusDisplayText(string? status) => string.IsNullOrWhiteSpace(status) ? "-" : T.T(status);
+    string SubscriptionInvoiceStatusDisplayText(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string SubscriptionDisplayText(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
+    string SubscriptionFallbackDisplayText(string? value) => SubscriptionDisplayText(value);
+    bool SubscriptionCanManageSubscription() => isFullAdmin;
+    string SubscriptionPageTitleText() => T.T("BusinessSubscriptionTitle");
+    string SubscriptionPageBusinessNameText() => Model.Business.Name;
 string SubscriptionEditActionText() => T.T("CommonEditBusiness");
 string SubscriptionSetupActionText() => T.T("CommonSetup");
 string SubscriptionPaymentsActionText() => T.T("CommonPayments");
 string SubscriptionInvoiceQueueActionText() => T.T("BusinessSubscriptionOpenInvoiceQueue");
 string SubscriptionMerchantReadinessActionText() => T.T("MerchantReadinessTitle");
 string SubscriptionSupportQueueActionText() => T.T("BusinessSupportQueueTitle");
-    string SubscriptionRenewalStatusText(bool cancelAtPeriodEnd) => cancelAtPeriodEnd ? T.T("BusinessSubscriptionCancelAtPeriodEnd") : T.T("BusinessSubscriptionRenewsNormally");
-    string SubscriptionBillingReadinessStatusText(bool isConfigured) => isConfigured ? T.T("CommonConfigured") : T.T("CommonMissingBadge");
+    string SubscriptionRenewalDisplayText(bool cancelAtPeriodEnd) => cancelAtPeriodEnd ? T.T("BusinessSubscriptionCancelAtPeriodEnd") : T.T("BusinessSubscriptionRenewsNormally");
+    string SubscriptionBillingReadinessDisplayText(bool isConfigured) => isConfigured ? T.T("CommonConfigured") : T.T("CommonMissingBadge");
 string SubscriptionRenewalToggleActionText(bool cancelAtPeriodEnd) => cancelAtPeriodEnd ? T.T("BusinessSubscriptionRestoreRenewal") : T.T("BusinessSubscriptionCancelAtPeriodEndAction");
-    string SubscriptionRenewalToggleActionToneClass(bool cancelAtPeriodEnd) => cancelAtPeriodEnd ? "btn-outline-success" : "btn-outline-danger";
-    string SubscriptionRenewalToggleActionButtonClass(bool cancelAtPeriodEnd) => $"btn {SubscriptionRenewalToggleActionToneClass(cancelAtPeriodEnd)}";
-    string SubscriptionOverviewPlanText(bool hasSubscription, string? planName) => hasSubscription ? planName ?? string.Empty : T.T("BusinessSubscriptionNoActivePlan");
-    string SubscriptionDateTimeText(DateTime? value) => value?.ToString("yyyy-MM-dd HH:mm") ?? "-";
-    string SubscriptionTrialText(int? trialDays) => trialDays.HasValue ? string.Format(T.T("BusinessSubscriptionTrialDays"), trialDays.Value) : "-";
-    string SubscriptionMoneyText(string currency, long amountMinor) => $"{currency} {(amountMinor / 100M).ToString("0.00")}";
-    string SubscriptionTimelineText(string labelKey, DateTime? value) => string.Format(T.T(labelKey), SubscriptionDateTimeText(value));
-    string SubscriptionIntervalText(int intervalCount, string interval) => string.Format(T.T("BusinessSubscriptionEveryInterval"), intervalCount, interval);
-    string SubscriptionInvoiceStatusBadgeToneClass(Darwin.Domain.Enums.SubscriptionInvoiceStatus status) => status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Paid ? "bg-success" : status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Uncollectible ? "bg-danger" : "bg-secondary";
-    string SubscriptionPlanCheckoutBadgeToneClass(bool checkoutReady) => checkoutReady ? "bg-success" : "bg-warning text-dark";
-    string SubscriptionInvoiceQueueSignalFilterToneClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => filter == Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue || filter == Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible ? "btn-outline-danger" : "btn-outline-warning";
-    string SubscriptionInvoiceQueueSignalFilterButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => $"btn btn-sm {SubscriptionInvoiceQueueSignalFilterToneClass(filter)}";
-    string SubscriptionInvoiceFollowUpBadgeToneClass(bool isWarning) => isWarning ? "bg-warning text-dark mt-1" : "bg-danger mt-1";
-    string SubscriptionCurrentPlanBadgeToneClass() => "bg-primary mt-1";
-    string SubscriptionTopRailActionButtonClass() => "btn btn-outline-secondary";
-    string SubscriptionTopRailActionRailClass() => "d-flex gap-2 flex-wrap";
-    string SubscriptionWorkspaceHeaderLayoutClass() => "d-flex justify-content-between align-items-start mb-3";
-    string SubscriptionWorkspaceTitleHeadingClass() => "mb-1";
-    string SubscriptionWorkspaceSubtitleTextClass() => "text-muted mb-0";
-string SubscriptionOverviewMetricsGridClass() => "row g-3 mb-3";
-string SubscriptionOverviewMetricColumnClass() => "col-md-6 col-xl-3";
-    string SubscriptionSecondaryButtonClass() => "btn btn-sm btn-outline-secondary";
-    string SubscriptionWarningButtonClass() => "btn btn-sm btn-outline-warning";
-    string SubscriptionInlineLinkClass() => "link-body-emphasis text-decoration-none";
-    string SubscriptionPrimaryButtonClass() => "btn btn-sm btn-outline-primary";
-    string SubscriptionInvoiceFailureTextClass() => "small text-danger mt-1";
-    string SubscriptionStripeBadgeClass() => "bg-info text-dark mt-1";
-    string SubscriptionResolvePrerequisitesTextClass() => "text-muted small align-self-center";
-    string SubscriptionInvoiceActionsGroupClass() => "btn-group btn-group-sm";
+    string SubscriptionRenewalToggleButtonStateClass(bool cancelAtPeriodEnd) => cancelAtPeriodEnd ? "btn-outline-success" : "btn-outline-danger";
+    string SubscriptionRenewalToggleButtonClass(bool cancelAtPeriodEnd) => $"btn {SubscriptionRenewalToggleButtonStateClass(cancelAtPeriodEnd)}";
+    string SubscriptionOverviewPlanDisplayText(bool hasSubscription, string? planName) => hasSubscription ? planName ?? string.Empty : T.T("BusinessSubscriptionNoActivePlan");
+    string SubscriptionDateTimeDisplayText(DateTime? value) => value?.ToString("g", subscriptionCulture) ?? "-";
+    string SubscriptionTrialDisplayText(int? trialDays) => trialDays.HasValue ? string.Format(subscriptionCulture, T.T("BusinessSubscriptionTrialDays"), trialDays.Value) : "-";
+    string SubscriptionMoneyDisplayText(string currency, long amountMinor) => string.Format(subscriptionCulture, "{0} {1:N2}", currency, amountMinor / 100M);
+    string SubscriptionTimelineDisplayText(string labelKey, DateTime? value) => string.Format(subscriptionCulture, T.T(labelKey), SubscriptionDateTimeDisplayText(value));
+    string SubscriptionIntervalDisplayText(int intervalCount, string interval) => string.Format(subscriptionCulture, T.T("BusinessSubscriptionEveryInterval"), intervalCount, interval);
+    string SubscriptionInvoiceStatusBadgeStateClass(Darwin.Domain.Enums.SubscriptionInvoiceStatus status) => status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Paid ? "bg-success" : status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Uncollectible ? "bg-danger" : "bg-secondary";
+    string SubscriptionPlanCheckoutBadgeStateClass(bool checkoutReady) => checkoutReady ? "bg-success" : "bg-warning text-dark";
+    string SubscriptionInvoiceQueueSignalButtonStateClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => filter == Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue || filter == Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible ? "btn-outline-danger" : "btn-outline-warning";
+    string SubscriptionInvoiceQueueSignalButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => $"btn btn-sm {SubscriptionInvoiceQueueSignalButtonStateClass(filter)}";
+    string SubscriptionInvoiceFollowUpBadgeStateClass(bool isWarning) => isWarning ? "bg-warning text-dark mt-1" : "bg-danger mt-1";
+    string SubscriptionCurrentPlanBadgeStateClass() => "bg-primary mt-1";
+    string SubscriptionTitleBarActionClass() => "btn btn-outline-secondary";
+    string SubscriptionTitleBarActionRailClass() => "d-flex gap-2 flex-wrap";
+    string SubscriptionTitleBarLayoutClass() => "d-flex justify-content-between align-items-start mb-3";
+    string SubscriptionTitleBarHeadingClass() => "mb-1";
+    string SubscriptionTitleBarSubtitleClass() => "text-muted mb-0";
+ string SubscriptionOverviewSummaryLayoutClass() => "row g-3 mb-3";
+ string SubscriptionOverviewSummaryColumnClass() => "col-md-6 col-xl-3";
+    string SubscriptionUtilityActionClass() => "btn btn-sm btn-outline-secondary";
+    string SubscriptionRemediationActionClass() => "btn btn-sm btn-outline-warning";
+    string SubscriptionInlineActionLinkClass() => "link-body-emphasis text-decoration-none";
+    string SubscriptionProminentActionClass() => "btn btn-sm btn-outline-primary";
+    string SubscriptionAlertMessageTextClass() => "small text-danger mt-1";
+    string SubscriptionStripeProviderBadgeClass() => "bg-info text-dark mt-1";
+    string SubscriptionRemediationHintTextClass() => "text-muted small align-self-center";
+    string SubscriptionRecentInvoicesTableRowActionsClass() => "btn-group btn-group-sm";
     string SubscriptionMetricCardClass() => "border rounded p-3 h-100";
-    string SubscriptionMetricLabelClass() => "text-muted small text-uppercase";
-    string SubscriptionMetricValueClass() => "fw-semibold mt-1";
-    string SubscriptionMetricHelpTextClass() => "small text-muted mt-2";
-    string SubscriptionOverviewMetricCardClass() => "card shadow-sm h-100";
-    string SubscriptionOverviewMetricCardBodyClass() => "card-body";
-string SubscriptionSectionCardClass() => "card shadow-sm mb-3";
-string SubscriptionSectionTitleBarClass() => "card-header";
-string SubscriptionSectionCardBodyClass() => "card-body";
-string SubscriptionBillingReadinessMetricGridClass() => "row g-3";
-string SubscriptionBillingReadinessMetricColumnClass() => "col-md-3";
-string SubscriptionSectionHelpLabelClass() => "small text-muted mt-3";
-string SubscriptionActiveSubscriptionMetricGridClass() => "row g-3";
-string SubscriptionActiveSubscriptionMetricColumnClass() => "col-md-4";
-string SubscriptionInvoiceSignalMetricGridClass() => "row g-3";
-string SubscriptionInvoiceSignalMetricColumnClass() => "col-md-2";
+    string SubscriptionMetricCardLabelClass() => "text-muted small text-uppercase";
+    string SubscriptionMetricCardValueClass() => "fw-semibold mt-1";
+    string SubscriptionMetricCardHelpTextClass() => "small text-muted mt-2";
+    string SubscriptionOverviewSummarySurfaceClass() => "card shadow-sm h-100";
+    string SubscriptionOverviewSummaryContentClass() => "card-body";
+string SubscriptionPanelClass() => "card shadow-sm mb-3";
+string SubscriptionPanelHeaderClass() => "card-header";
+string SubscriptionPanelBodyClass() => "card-body";
+string SubscriptionBillingReadinessOverviewLayoutClass() => "row g-3";
+string SubscriptionBillingReadinessOverviewColumnClass() => "col-md-3";
+string SubscriptionPanelSupportTextClass() => "small text-muted mt-3";
+string SubscriptionActiveSubscriptionOverviewLayoutClass() => "row g-3";
+string SubscriptionActiveSubscriptionOverviewColumnClass() => "col-md-4";
+string SubscriptionInvoiceSignalsOverviewLayoutClass() => "row g-3";
+string SubscriptionInvoiceSignalsOverviewColumnClass() => "col-md-2";
 string SubscriptionActiveSubscriptionEmptyStateAlertClass() => "alert alert-secondary mb-0";
-string SubscriptionTableViewportClass() => "table-responsive";
-string SubscriptionSectionDataTableClass() => "table mb-0 align-middle";
-string SubscriptionSectionTableActionsColumnClass() => "text-end";
-string SubscriptionTableCardBodyClass() => "card-body p-0";
-string SubscriptionRecentInvoicesCardClass() => "card shadow-sm";
-string SubscriptionRecentInvoicesHeaderClass() => "card-header d-flex justify-content-between align-items-center";
-    string SubscriptionRowPrimaryTextClass() => "fw-semibold";
-    string SubscriptionRowSecondaryTextClass() => "small text-muted";
-    string SubscriptionEmptyStateActionsClass() => "d-flex gap-2 flex-wrap justify-content-center mt-3";
-string SubscriptionPlaybooksCardClass() => "card shadow-sm mt-3";
-    string SubscriptionPlaybookQueueLabelClass() => "fw-semibold";
-    string SubscriptionPlaybookRowActionRailClass() => "d-flex gap-2 flex-wrap";
-string SubscriptionSectionDataTableHeaderClass() => "table-light";
-string SubscriptionResolvePrerequisitesActionRailClass() => "d-flex gap-2 flex-wrap justify-content-end";
+string SubscriptionPanelTableViewportClass() => "table-responsive";
+string SubscriptionPanelTableClass() => "table mb-0 align-middle";
+string SubscriptionPanelTableActionsColumnClass() => "text-end";
+string SubscriptionPanelTableBodyClass() => "card-body p-0";
+string SubscriptionRecentInvoicesTableCardClass() => "card shadow-sm";
+string SubscriptionRecentInvoicesTableCardHeaderClass() => "card-header d-flex justify-content-between align-items-center";
+    string SubscriptionPanelTableRowPrimaryTextClass() => "fw-semibold";
+    string SubscriptionPanelTableRowSecondaryTextClass() => "small text-muted";
+    string SubscriptionEmptyStateActionRailClass() => "d-flex gap-2 flex-wrap justify-content-center mt-3";
+string SubscriptionBillingPlaybooksTableCardClass() => "card shadow-sm mt-3";
+    string SubscriptionBillingPlaybooksTableRowPrimaryTextClass() => "fw-semibold";
+    string SubscriptionBillingPlaybooksTableRowActionsClass() => "d-flex gap-2 flex-wrap";
+string SubscriptionPanelTableHeaderClass() => "table-light";
+string SubscriptionAvailablePlansTableRemediationActionsClass() => "d-flex gap-2 flex-wrap justify-content-end";
 string SubscriptionEmptyStateCellClass() => "text-center text-muted py-4";
-string SubscriptionTimelineDividerClass() => "mx-2";
-    string SubscriptionBadgeClass() => "badge";
+string SubscriptionTimelineSeparatorClass() => "mx-2";
+    string SubscriptionStatusBadgeClass() => "badge";
 string SubscriptionActionIconClass(string icon) => $"fa-solid {icon}";
     string SubscriptionExternalLinkTargetValue() => "_blank";
     string SubscriptionExternalLinkRelValue() => "noopener noreferrer";
-    string SubscriptionWorkspaceRootId() => "business-subscription-workspace-shell";
-    string SubscriptionWorkspaceRootTarget() => $"#{SubscriptionWorkspaceRootId()}";
-    string SubscriptionWorkspacePushUrlValue() => "true";
-    string SubscriptionWorkspaceSwapValue() => "outerHTML";
-    string SubscriptionEditWorkspaceActionHref() => Url.Action("Edit", "Businesses", new { id = Model.Business.Id }) ?? string.Empty;
-    string SubscriptionSetupWorkspaceActionHref() => Url.Action("Setup", "Businesses", new { id = Model.Business.Id }) ?? string.Empty;
-    string SubscriptionBusinessAppFragment() => "site-settings-business-app";
-    string SubscriptionConfigureWebsiteWorkspaceActionHref() => Url.Action("Edit", "SiteSettings", new { fragment = SubscriptionBusinessAppFragment() }) ?? string.Empty;
+    string SubscriptionWorkspaceFrameId() => "business-subscription-workspace-shell";
+    string SubscriptionWorkspaceFrameTarget() => $"#{SubscriptionWorkspaceFrameId()}";
+    string SubscriptionWorkspaceFramePushUrlValue() => "true";
+    string SubscriptionWorkspaceFrameSwapValue() => "outerHTML";
+    string SubscriptionEditActionHref() => Url.Action("Edit", "Businesses", new { id = Model.Business.Id }) ?? string.Empty;
+    string SubscriptionSetupActionHref() => Url.Action("Setup", "Businesses", new { id = Model.Business.Id }) ?? string.Empty;
+    string SubscriptionConfigureWebsiteActionFragment() => "site-settings-business-app";
+    string SubscriptionConfigureWebsiteActionHref() => Url.Action("Edit", "SiteSettings", new { fragment = SubscriptionConfigureWebsiteActionFragment() }) ?? string.Empty;
     string SubscriptionRenewalTogglePostActionHref() => Url.Action("SetSubscriptionCancelAtPeriodEnd", "Businesses") ?? string.Empty;
-    string SubscriptionInvoicesWorkspaceActionHref() => Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id }) ?? string.Empty;
-    string SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter }) ?? string.Empty;
-    string SubscriptionPaymentsWorkspaceActionHref() => Url.Action("Payments", "Billing", new { businessId = Model.Business.Id }) ?? string.Empty;
-    string SubscriptionPaymentsFilteredWorkspaceActionHref(string? providerInvoiceId) => Url.Action("Payments", "Billing", new { businessId = Model.Business.Id, q = providerInvoiceId }) ?? string.Empty;
-    string SubscriptionMerchantReadinessWorkspaceActionHref() => Url.Action("MerchantReadiness", "Businesses") ?? string.Empty;
-    string SubscriptionSupportQueueWorkspaceActionHref() => Url.Action("SupportQueue", "Businesses") ?? string.Empty;
-string SubscriptionTimelineRailClass() => "mt-3 small text-muted";
-string SubscriptionInlineActionRailClass() => "d-flex gap-2 flex-wrap mt-3";
-    string SubscriptionMetricCaptionClass() => "small text-muted text-uppercase";
-    string SubscriptionMetricTextClass() => "fw-semibold";
-    string SubscriptionPlanRowSupportingTextClass() => "small text-muted mt-1";
-    string SubscriptionOverviewPlanLabelText() => T.T("BusinessSubscriptionShort");
-    string SubscriptionOverviewProviderLabelText() => T.T("CommonProvider");
-    string SubscriptionOverviewRenewalLabelText() => T.T("BusinessSubscriptionRenewal");
-    string SubscriptionOverviewBillingLabelText() => T.T("BusinessSubscriptionBillingHandoff");
-    string SubscriptionOverviewBillingHelpLabelText() => T.T("BusinessSubscriptionBillingHandoffHelp");
-    string SubscriptionBillingReadinessSectionTitleText() => T.T("BusinessSubscriptionBillingHandoffReadinessTitle");
-    string SubscriptionBillingReadinessPlansCountLabelText() => T.T("CommonPlans");
-    string SubscriptionBillingReadinessReadyCountLabelText() => T.T("CommonReadyBadge");
-    string SubscriptionBillingReadinessBlockedCountLabelText() => T.T("CommonBlocked");
-    string SubscriptionBillingReadinessCurrentCountLabelText() => T.T("BusinessSubscriptionCurrentMatch");
-    string SubscriptionBillingReadinessSectionHelpLabelText() => T.T("BusinessSubscriptionBillingHandoffReadinessHelp");
-    string SubscriptionCountText(int value) => value.ToString();
+    string SubscriptionInvoiceQueueActionHref() => Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id }) ?? string.Empty;
+    string SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter filter) => Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter }) ?? string.Empty;
+    string SubscriptionPaymentsActionHref() => Url.Action("Payments", "Billing", new { businessId = Model.Business.Id }) ?? string.Empty;
+    string SubscriptionPaymentsSearchActionHref(string? providerInvoiceId) => Url.Action("Payments", "Billing", new { businessId = Model.Business.Id, q = providerInvoiceId }) ?? string.Empty;
+    string SubscriptionMerchantReadinessActionHref() => Url.Action("MerchantReadiness", "Businesses") ?? string.Empty;
+    string SubscriptionSupportQueueActionHref() => Url.Action("SupportQueue", "Businesses") ?? string.Empty;
+string SubscriptionActiveSubscriptionTimelineTextClass() => "mt-3 small text-muted";
+string SubscriptionInlineActionGroupClass() => "d-flex gap-2 flex-wrap mt-3";
+string SubscriptionMetricCardCaptionClass() => "small text-muted text-uppercase";
+string SubscriptionMetricCardTextClass() => "fw-semibold";
+    string SubscriptionAvailablePlansTableRowMetaTextClass() => "small text-muted mt-1";
+    string SubscriptionOverviewPlanMetricText() => T.T("BusinessSubscriptionShort");
+    string SubscriptionOverviewProviderMetricText() => T.T("CommonProvider");
+    string SubscriptionOverviewRenewalMetricText() => T.T("BusinessSubscriptionRenewal");
+    string SubscriptionOverviewBillingMetricText() => T.T("BusinessSubscriptionBillingHandoff");
+    string SubscriptionOverviewBillingHelpText() => T.T("BusinessSubscriptionBillingHandoffHelp");
+    string SubscriptionBillingReadinessOverviewTitleText() => T.T("BusinessSubscriptionBillingHandoffReadinessTitle");
+    string SubscriptionBillingReadinessOverviewPlansMetricText() => T.T("CommonPlans");
+    string SubscriptionBillingReadinessOverviewReadyMetricText() => T.T("CommonReadyBadge");
+    string SubscriptionBillingReadinessOverviewBlockedMetricText() => T.T("CommonBlocked");
+    string SubscriptionBillingReadinessOverviewCurrentMetricText() => T.T("BusinessSubscriptionCurrentMatch");
+    string SubscriptionBillingReadinessOverviewHelpText() => T.T("BusinessSubscriptionBillingHandoffReadinessHelp");
+    string SubscriptionMetricCardCountText(int value) => value.ToString("N0", subscriptionCulture);
     string SubscriptionActiveSubscriptionSectionTitleText() => T.T("BusinessSubscriptionCurrentTitle");
-    string SubscriptionActiveSubscriptionPlanLabelText() => T.T("CommonPlan");
-    string SubscriptionActiveSubscriptionAmountLabelText() => T.T("CommonAmount");
-    string SubscriptionActiveSubscriptionStartedLabelText() => T.T("CommonStarted");
-    bool SubscriptionHasActiveSubscriptionData() => Model.Subscription.HasSubscription;
-    string SubscriptionActiveSubscriptionPlanText() => SubscriptionValueText(Model.Subscription.PlanName);
-    string SubscriptionActiveSubscriptionAmountText() => SubscriptionMoneyText(Model.Subscription.Currency, Model.Subscription.UnitPriceMinor);
-    string SubscriptionActiveSubscriptionStartedText() => SubscriptionDateTimeText(Model.Subscription.StartedAtUtc);
+    string SubscriptionActiveSubscriptionPlanMetricText() => T.T("CommonPlan");
+    string SubscriptionActiveSubscriptionAmountMetricText() => T.T("CommonAmount");
+    string SubscriptionActiveSubscriptionStartedMetricText() => T.T("CommonStarted");
+    bool SubscriptionHasActiveSubscription() => Model.Subscription.HasSubscription;
+    string SubscriptionActiveSubscriptionPlanDisplayText() => SubscriptionDisplayText(Model.Subscription.PlanName);
+    string SubscriptionActiveSubscriptionAmountDisplayText() => SubscriptionMoneyDisplayText(Model.Subscription.Currency, Model.Subscription.UnitPriceMinor);
+    string SubscriptionActiveSubscriptionStartedDisplayText() => SubscriptionDateTimeDisplayText(Model.Subscription.StartedAtUtc);
     string SubscriptionRenewalFormBusinessIdValue() => Model.Business.Id.ToString();
     string SubscriptionRenewalFormSubscriptionIdValue() => Model.Subscription.SubscriptionId.ToString();
-    string SubscriptionBillingWebsiteActionHref() => SubscriptionValueText(Model.ManagementWebsiteUrl);
-    bool SubscriptionCanOpenBillingWebsiteLink() => Model.ManagementWebsiteConfigured;
+    string SubscriptionBillingWebsiteExternalActionHref() => SubscriptionDisplayText(Model.ManagementWebsiteUrl);
+    bool SubscriptionCanOpenBillingWebsite() => Model.ManagementWebsiteConfigured;
 string SubscriptionBillingWebsiteActionText() => T.T("BusinessSubscriptionOpenBillingWebsite");
     string SubscriptionActiveSubscriptionEmptyStateText() => T.T("BusinessSubscriptionNoActiveSnapshot");
-    string SubscriptionInvoiceSignalSectionTitleText() => T.T("BusinessSubscriptionInvoiceSignalsTitle");
-    string SubscriptionInvoiceSignalSectionHelpLabelText() => T.T("BusinessSubscriptionInvoiceSignalsHelp");
-    string SubscriptionInvoiceSignalTotalCountLabelText() => T.T("CommonTotal");
-    string SubscriptionInvoiceSignalOpenCountLabelText() => T.T("CommonOpen");
-    string SubscriptionInvoiceSignalPaidCountLabelText() => T.T("CommonPaid");
-    string SubscriptionInvoiceSignalDraftCountLabelText() => T.T("CommonDraft");
-    string SubscriptionInvoiceSignalUncollectibleCountLabelText() => T.T("CommonUncollectible");
-    string SubscriptionInvoiceSignalHostedMissingCountLabelText() => T.T("BusinessSubscriptionHostedLinkMissing");
-    string SubscriptionInvoiceSignalOverdueCountLabelText() => T.T("CommonOverdue");
-    string SubscriptionInvoiceSignalPdfMissingCountLabelText() => T.T("CommonPdfMissing");
-string SubscriptionInvoiceSignalReviewOpenActionText() => T.T("BusinessSubscriptionReviewOpenInvoices");
-string SubscriptionInvoiceSignalReviewOverdueActionText() => T.T("BusinessSubscriptionReviewOverdue");
-string SubscriptionInvoiceSignalReviewPdfMissingActionText() => T.T("BusinessSubscriptionReviewPdfMissing");
-string SubscriptionInvoiceSignalReviewUncollectibleActionText() => T.T("BusinessSubscriptionReviewUncollectible");
-    string SubscriptionPlansSectionTitleText() => T.T("BusinessSubscriptionAvailablePlansTitle");
-string SubscriptionPlanColumnLabelText() => T.T("CommonPlan");
-string SubscriptionPriceColumnLabelText() => T.T("BusinessSubscriptionPriceColumn");
-string SubscriptionIntervalColumnLabelText() => T.T("BusinessSubscriptionIntervalColumn");
-string SubscriptionTrialColumnLabelText() => T.T("BusinessSubscriptionTrialColumn");
-string SubscriptionCheckoutColumnLabelText() => T.T("BusinessSubscriptionCheckoutReadinessColumn");
-string SubscriptionActionsColumnLabelText() => T.T("CommonActions");
-    string SubscriptionPlansEmptyStateMessageText() => T.T("BusinessSubscriptionNoActivePlans");
-    string SubscriptionCurrentPlanBadgeLabelText() => T.T("BusinessSubscriptionCurrentPlanBadge");
-    bool SubscriptionHasAvailablePlanRows() => Model.Plans.Count > 0;
-    bool SubscriptionPlanHasCurrentBadge(bool isCurrentPlan) => isCurrentPlan;
-    bool SubscriptionPlanShowsDescription(string? description) => !string.IsNullOrWhiteSpace(description);
-    string SubscriptionPlanRowNameText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionValueText(plan.Name);
-    string SubscriptionPlanRowCodeText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionValueText(plan.Code);
-    string SubscriptionPlanRowDescriptionText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionValueText(plan.Description);
-    string SubscriptionPlanRowCheckoutText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionValueText(plan.CheckoutReadinessLabel);
-    string SubscriptionPlanRowHandoffText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionValueText(plan.HandoffLabel);
-    string SubscriptionPlanRowManagementLinkHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionValueText(plan.ManagementWebsiteUrl);
-string SubscriptionPlanRowManagementActionText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionValueText(plan.HandoffActionLabel);
-    bool SubscriptionPlanCanOpenManagementWebsiteLink(bool canOpenManagementWebsite) => canOpenManagementWebsite;
+    string SubscriptionInvoiceSignalsOverviewTitleText() => T.T("BusinessSubscriptionInvoiceSignalsTitle");
+    string SubscriptionInvoiceSignalsOverviewHelpText() => T.T("BusinessSubscriptionInvoiceSignalsHelp");
+    string SubscriptionInvoiceSignalsOverviewTotalMetricText() => T.T("CommonTotal");
+    string SubscriptionInvoiceSignalsOverviewOpenMetricText() => T.T("CommonOpen");
+    string SubscriptionInvoiceSignalsOverviewPaidMetricText() => T.T("CommonPaid");
+    string SubscriptionInvoiceSignalsOverviewDraftMetricText() => T.T("CommonDraft");
+    string SubscriptionInvoiceSignalsOverviewUncollectibleMetricText() => T.T("CommonUncollectible");
+    string SubscriptionInvoiceSignalsOverviewHostedMissingMetricText() => T.T("BusinessSubscriptionHostedLinkMissing");
+    string SubscriptionInvoiceSignalsOverviewOverdueMetricText() => T.T("CommonOverdue");
+    string SubscriptionInvoiceSignalsOverviewPdfMissingMetricText() => T.T("CommonPdfMissing");
+string SubscriptionInvoiceSignalsOverviewReviewOpenActionText() => T.T("BusinessSubscriptionReviewOpenInvoices");
+string SubscriptionInvoiceSignalsOverviewReviewOverdueActionText() => T.T("BusinessSubscriptionReviewOverdue");
+string SubscriptionInvoiceSignalsOverviewReviewPdfMissingActionText() => T.T("BusinessSubscriptionReviewPdfMissing");
+string SubscriptionInvoiceSignalsOverviewReviewUncollectibleActionText() => T.T("BusinessSubscriptionReviewUncollectible");
+    string SubscriptionAvailablePlansTableTitleText() => T.T("BusinessSubscriptionAvailablePlansTitle");
+string SubscriptionAvailablePlansTablePlanColumnTitleText() => T.T("CommonPlan");
+string SubscriptionAvailablePlansTablePriceColumnTitleText() => T.T("BusinessSubscriptionPriceColumn");
+string SubscriptionAvailablePlansTableIntervalColumnTitleText() => T.T("BusinessSubscriptionIntervalColumn");
+string SubscriptionAvailablePlansTableTrialColumnTitleText() => T.T("BusinessSubscriptionTrialColumn");
+string SubscriptionAvailablePlansTableCheckoutColumnTitleText() => T.T("BusinessSubscriptionCheckoutReadinessColumn");
+string SubscriptionActionsColumnTitleText() => T.T("CommonActions");
+    string SubscriptionAvailablePlansTableEmptyStateText() => T.T("BusinessSubscriptionNoActivePlans");
+    string SubscriptionCurrentPlanBadgeText() => T.T("BusinessSubscriptionCurrentPlanBadge");
+    bool SubscriptionHasPlanCatalogRows() => Model.Plans.Count > 0;
+    bool SubscriptionAvailablePlansTableRowShowsCurrentBadge(bool isCurrentPlan) => isCurrentPlan;
+    bool SubscriptionAvailablePlansTableRowShowsDescription(string? description) => !string.IsNullOrWhiteSpace(description);
+    string SubscriptionAvailablePlansTableRowNameDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionFallbackDisplayText(plan.Name);
+    string SubscriptionAvailablePlansTableRowCodeDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionFallbackDisplayText(plan.Code);
+    string SubscriptionAvailablePlansTableRowDescriptionDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionFallbackDisplayText(plan.Description);
+    string SubscriptionAvailablePlansTableRowCheckoutDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionFallbackDisplayText(plan.CheckoutReadinessLabel);
+    string SubscriptionAvailablePlansTableRowHandoffDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionFallbackDisplayText(plan.HandoffLabel);
+    string SubscriptionAvailablePlansTableRowManagementWebsiteActionHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionFallbackDisplayText(plan.ManagementWebsiteUrl);
+string SubscriptionAvailablePlansTableRowManagementActionText(Darwin.WebAdmin.ViewModels.Businesses.BusinessBillingPlanVm plan) => SubscriptionFallbackDisplayText(plan.HandoffActionLabel);
+    bool SubscriptionAvailablePlansTableRowCanOpenManagementWebsite(bool canOpenManagementWebsite) => canOpenManagementWebsite;
 string SubscriptionConfigureWebsiteActionText() => T.T("BusinessSubscriptionConfigureWebsite");
-    string SubscriptionResolvePrerequisitesCaptionText() => T.T("BusinessSubscriptionResolvePrerequisites");
-    string SubscriptionRecentInvoicesSectionTitleText() => T.T("BusinessSubscriptionRecentInvoicesTitle");
-string SubscriptionInvoiceProviderColumnLabelText() => T.T("CommonProvider");
-string SubscriptionInvoiceStatusColumnLabelText() => T.T("CommonStatus");
-string SubscriptionInvoiceAmountColumnLabelText() => T.T("CommonAmount");
-string SubscriptionInvoiceTimelineColumnLabelText() => T.T("CommonTimeline");
-    string SubscriptionRecentInvoicesEmptyStateMessageText() => T.T("BusinessSubscriptionNoRecentInvoices");
-    string SubscriptionStripeBadgeLabelText() => T.T("BusinessSubscriptionStripeBadge");
-    string SubscriptionOverdueBadgeLabelText() => T.T("CommonOverdue");
-    string SubscriptionPdfMissingBadgeLabelText() => T.T("CommonPdfMissing");
-    bool SubscriptionHasRecentInvoiceRows() => Model.RecentInvoices.Count > 0;
-    bool SubscriptionInvoiceHasStripeBadge(bool isStripe) => isStripe;
-    string SubscriptionInvoiceRowPlanText(string? planName) => SubscriptionValueText(planName);
-    bool SubscriptionInvoiceShowsFailureText(string? failureReason) => !string.IsNullOrWhiteSpace(failureReason);
-    bool SubscriptionInvoiceHasOverdueBadge(bool isOverdue) => isOverdue;
-    bool SubscriptionInvoiceHasPdfMissingBadge(bool hasPdfUrl) => !hasPdfUrl;
-    string SubscriptionInvoiceRowProviderText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionValueText(invoice.Provider);
-    string SubscriptionInvoiceRowProviderIdText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionValueText(invoice.ProviderInvoiceId);
-    string SubscriptionInvoiceRowPlanCodeText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionValueText(invoice.PlanCode);
-    string SubscriptionInvoiceRowFailureText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionValueText(invoice.FailureReason);
-    string SubscriptionInvoiceRowHostedLinkHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionValueText(invoice.HostedInvoiceUrl);
-    string SubscriptionInvoiceRowPdfLinkHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionValueText(invoice.PdfUrl);
-    bool SubscriptionInvoiceHasHostedLink(bool hasHostedInvoiceUrl) => hasHostedInvoiceUrl;
-    bool SubscriptionInvoiceHasPdfLink(bool hasPdfUrl) => hasPdfUrl;
+    string SubscriptionResolvePrerequisitesHintText() => T.T("BusinessSubscriptionResolvePrerequisites");
+    string SubscriptionRecentInvoicesTableTitleText() => T.T("BusinessSubscriptionRecentInvoicesTitle");
+string SubscriptionRecentInvoicesTableProviderColumnTitleText() => T.T("CommonProvider");
+string SubscriptionRecentInvoicesTablePlanColumnTitleText() => T.T("CommonPlan");
+string SubscriptionRecentInvoicesTableStatusColumnTitleText() => T.T("CommonStatus");
+string SubscriptionRecentInvoicesTableAmountColumnTitleText() => T.T("CommonAmount");
+string SubscriptionRecentInvoicesTableTimelineColumnTitleText() => T.T("CommonTimeline");
+    string SubscriptionRecentInvoicesTableEmptyStateText() => T.T("BusinessSubscriptionNoRecentInvoices");
+    string SubscriptionStripeBadgeText() => T.T("BusinessSubscriptionStripeBadge");
+    string SubscriptionOverdueBadgeText() => T.T("CommonOverdue");
+    string SubscriptionPdfMissingBadgeText() => T.T("CommonPdfMissing");
+    bool SubscriptionHasRecentInvoiceListRows() => Model.RecentInvoices.Count > 0;
+    bool SubscriptionRecentInvoicesTableRowShowsStripeBadge(bool isStripe) => isStripe;
+    string SubscriptionRecentInvoicesTableRowPlanDisplayText(string? planName) => SubscriptionFallbackDisplayText(planName);
+    bool SubscriptionRecentInvoicesTableRowShowsFailureText(string? failureReason) => !string.IsNullOrWhiteSpace(failureReason);
+    bool SubscriptionRecentInvoicesTableRowShowsOverdueBadge(bool isOverdue) => isOverdue;
+    bool SubscriptionRecentInvoicesTableRowShowsPdfMissingBadge(bool hasPdfUrl) => !hasPdfUrl;
+    string SubscriptionRecentInvoicesTableRowProviderDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionFallbackDisplayText(invoice.Provider);
+    string SubscriptionRecentInvoicesTableRowProviderIdDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionFallbackDisplayText(invoice.ProviderInvoiceId);
+    string SubscriptionRecentInvoicesTableRowPlanCodeDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionFallbackDisplayText(invoice.PlanCode);
+    string SubscriptionRecentInvoicesTableRowFailureDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionFallbackDisplayText(invoice.FailureReason);
+    string SubscriptionRecentInvoicesTableRowHostedInvoiceActionHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionFallbackDisplayText(invoice.HostedInvoiceUrl);
+    string SubscriptionRecentInvoicesTableRowPdfActionHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionInvoiceListItemVm invoice) => SubscriptionFallbackDisplayText(invoice.PdfUrl);
+    bool SubscriptionRecentInvoicesTableRowCanOpenHostedInvoice(bool hasHostedInvoiceUrl) => hasHostedInvoiceUrl;
+    bool SubscriptionRecentInvoicesTableRowCanOpenPdf(bool hasPdfUrl) => hasPdfUrl;
 string SubscriptionInvoiceHostedActionText() => T.T("CommonHosted");
 string SubscriptionInvoicePdfActionText() => T.T("CommonPdf");
-    string SubscriptionPlaybooksSectionTitleText() => T.T("BusinessSubscriptionBillingPlaybooksTitle");
-string SubscriptionPlaybookQueueColumnLabelText() => T.T("BusinessSubscriptionQueueColumn");
-string SubscriptionPlaybookWhyColumnLabelText() => T.T("WhyItMatters");
-string SubscriptionPlaybookOperatorColumnLabelText() => T.T("OperatorAction");
-    bool SubscriptionPlaybookHasQueueLink(string? queueActionUrl) => !string.IsNullOrWhiteSpace(queueActionUrl);
-    bool SubscriptionPlaybookHasFollowUpLink(string? followUpUrl) => !string.IsNullOrWhiteSpace(followUpUrl);
-    string SubscriptionPlaybookRowQueueLinkHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionValueText(playbook.QueueActionUrl);
-    string SubscriptionPlaybookRowFollowUpLinkHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionValueText(playbook.FollowUpUrl);
-    string SubscriptionPlaybookRowQueueText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionValueText(playbook.QueueLabel);
-    string SubscriptionPlaybookRowWhyText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionValueText(playbook.WhyItMatters);
-    string SubscriptionPlaybookRowOperatorText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionValueText(playbook.OperatorAction);
-string SubscriptionPlaybookRowQueueActionText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionValueText(playbook.QueueActionLabel);
-string SubscriptionPlaybookRowFollowUpActionText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionValueText(playbook.FollowUpLabel);
+    string SubscriptionBillingPlaybooksTableTitleText() => T.T("BusinessSubscriptionBillingPlaybooksTitle");
+string SubscriptionBillingPlaybooksTableQueueColumnTitleText() => T.T("BusinessSubscriptionQueueColumn");
+string SubscriptionBillingPlaybooksTableWhyColumnTitleText() => T.T("WhyItMatters");
+string SubscriptionBillingPlaybooksTableOperatorColumnTitleText() => T.T("OperatorAction");
+    bool SubscriptionBillingPlaybooksTableRowCanOpenQueueAction(string? queueActionUrl) => !string.IsNullOrWhiteSpace(queueActionUrl);
+    bool SubscriptionBillingPlaybooksTableRowCanOpenFollowUpAction(string? followUpUrl) => !string.IsNullOrWhiteSpace(followUpUrl);
+    string SubscriptionBillingPlaybooksTableRowQueueActionHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionFallbackDisplayText(playbook.QueueActionUrl);
+    string SubscriptionBillingPlaybooksTableRowFollowUpActionHref(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionFallbackDisplayText(playbook.FollowUpUrl);
+    string SubscriptionBillingPlaybooksTableRowQueueDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionFallbackDisplayText(playbook.QueueLabel);
+    string SubscriptionBillingPlaybooksTableRowWhyDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionFallbackDisplayText(playbook.WhyItMatters);
+    string SubscriptionBillingPlaybooksTableRowOperatorDisplayText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionFallbackDisplayText(playbook.OperatorAction);
+string SubscriptionBillingPlaybooksTableRowQueueActionText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionFallbackDisplayText(playbook.QueueActionLabel);
+string SubscriptionBillingPlaybooksTableRowFollowUpActionText(Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionPlaybookVm playbook) => SubscriptionFallbackDisplayText(playbook.FollowUpLabel);
 }
 
-<div id="@SubscriptionWorkspaceRootId()">
-<div class="@SubscriptionWorkspaceHeaderLayoutClass()">
+<div id="@SubscriptionWorkspaceFrameId()">
+<div class="@SubscriptionTitleBarLayoutClass()">
     <div>
-        <h1 class="@SubscriptionWorkspaceTitleHeadingClass()">@SubscriptionWorkspaceTitleText()</h1>
-        <p class="@SubscriptionWorkspaceSubtitleTextClass()">@SubscriptionWorkspaceBusinessNameText()</p>
+        <h1 class="@SubscriptionTitleBarHeadingClass()">@SubscriptionPageTitleText()</h1>
+        <p class="@SubscriptionTitleBarSubtitleClass()">@SubscriptionPageBusinessNameText()</p>
     </div>
-    <div class="@SubscriptionTopRailActionRailClass()">
-            <a href="@SubscriptionEditWorkspaceActionHref()" class="@SubscriptionTopRailActionButtonClass()"
-           hx-get="@SubscriptionEditWorkspaceActionHref()"
-           hx-target="@SubscriptionWorkspaceRootTarget()"
-           hx-swap="@SubscriptionWorkspaceSwapValue()"
-           hx-push-url="@SubscriptionWorkspacePushUrlValue()">
+    <div class="@SubscriptionTitleBarActionRailClass()">
+            <a href="@SubscriptionEditActionHref()" class="@SubscriptionTitleBarActionClass()"
+           hx-get="@SubscriptionEditActionHref()"
+           hx-target="@SubscriptionWorkspaceFrameTarget()"
+           hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+           hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
             <i class="@SubscriptionActionIconClass("fa-pen")"></i> @SubscriptionEditActionText()
         </a>
-            <a href="@SubscriptionSetupWorkspaceActionHref()" class="@SubscriptionTopRailActionButtonClass()"
-           hx-get="@SubscriptionSetupWorkspaceActionHref()"
-           hx-target="@SubscriptionWorkspaceRootTarget()"
-           hx-swap="@SubscriptionWorkspaceSwapValue()"
-           hx-push-url="@SubscriptionWorkspacePushUrlValue()">
+            <a href="@SubscriptionSetupActionHref()" class="@SubscriptionTitleBarActionClass()"
+           hx-get="@SubscriptionSetupActionHref()"
+           hx-target="@SubscriptionWorkspaceFrameTarget()"
+           hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+           hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
             <i class="@SubscriptionActionIconClass("fa-sliders")"></i> @SubscriptionSetupActionText()
         </a>
-            <a href="@SubscriptionPaymentsWorkspaceActionHref()" class="@SubscriptionTopRailActionButtonClass()"
-           hx-get="@SubscriptionPaymentsWorkspaceActionHref()"
-           hx-target="@SubscriptionWorkspaceRootTarget()"
-           hx-swap="@SubscriptionWorkspaceSwapValue()"
-           hx-push-url="@SubscriptionWorkspacePushUrlValue()">
+            <a href="@SubscriptionPaymentsActionHref()" class="@SubscriptionTitleBarActionClass()"
+           hx-get="@SubscriptionPaymentsActionHref()"
+           hx-target="@SubscriptionWorkspaceFrameTarget()"
+           hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+           hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
             <i class="@SubscriptionActionIconClass("fa-money-bill-wave")"></i> @SubscriptionPaymentsActionText()
         </a>
-        <a href="@SubscriptionInvoicesWorkspaceActionHref()"
-           class="@SubscriptionTopRailActionButtonClass()"
-           hx-get="@SubscriptionInvoicesWorkspaceActionHref()"
-           hx-target="@SubscriptionWorkspaceRootTarget()"
-           hx-swap="@SubscriptionWorkspaceSwapValue()"
-           hx-push-url="@SubscriptionWorkspacePushUrlValue()">
+        <a href="@SubscriptionInvoiceQueueActionHref()"
+           class="@SubscriptionTitleBarActionClass()"
+           hx-get="@SubscriptionInvoiceQueueActionHref()"
+           hx-target="@SubscriptionWorkspaceFrameTarget()"
+           hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+           hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
             <i class="@SubscriptionActionIconClass("fa-file-invoice-dollar")"></i> @SubscriptionInvoiceQueueActionText()
         </a>
     </div>
 </div>
 
-<div class="@SubscriptionOverviewMetricsGridClass()">
-    <div class="@SubscriptionOverviewMetricColumnClass()">
-        <div class="@SubscriptionOverviewMetricCardClass()">
-            <div class="@SubscriptionOverviewMetricCardBodyClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionOverviewPlanLabelText()</div>
-                <div class="@SubscriptionMetricValueClass()">@SubscriptionOverviewPlanText(Model.Subscription.HasSubscription, Model.Subscription.PlanName)</div>
-                <div class="@SubscriptionMetricHelpTextClass()">@SubscriptionStatusText(Model.Subscription.Status)</div>
+<div class="@SubscriptionOverviewSummaryLayoutClass()">
+    <div class="@SubscriptionOverviewSummaryColumnClass()">
+    <div class="@SubscriptionOverviewSummarySurfaceClass()">
+        <div class="@SubscriptionOverviewSummaryContentClass()">
+        <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionOverviewPlanMetricText()</div>
+        <div class="@SubscriptionMetricCardValueClass()">@SubscriptionOverviewPlanDisplayText(Model.Subscription.HasSubscription, Model.Subscription.PlanName)</div>
+        <div class="@SubscriptionMetricCardHelpTextClass()">@SubscriptionStatusDisplayText(Model.Subscription.Status)</div>
             </div>
         </div>
     </div>
-    <div class="@SubscriptionOverviewMetricColumnClass()">
-        <div class="@SubscriptionOverviewMetricCardClass()">
-            <div class="@SubscriptionOverviewMetricCardBodyClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionOverviewProviderLabelText()</div>
-                <div class="@SubscriptionMetricValueClass()">@SubscriptionValueText(Model.Subscription.Provider)</div>
-                <div class="@SubscriptionMetricHelpTextClass()">@SubscriptionValueText(Model.Subscription.PlanCode)</div>
+    <div class="@SubscriptionOverviewSummaryColumnClass()">
+    <div class="@SubscriptionOverviewSummarySurfaceClass()">
+        <div class="@SubscriptionOverviewSummaryContentClass()">
+        <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionOverviewProviderMetricText()</div>
+        <div class="@SubscriptionMetricCardValueClass()">@SubscriptionDisplayText(Model.Subscription.Provider)</div>
+        <div class="@SubscriptionMetricCardHelpTextClass()">@SubscriptionDisplayText(Model.Subscription.PlanCode)</div>
             </div>
         </div>
     </div>
-    <div class="@SubscriptionOverviewMetricColumnClass()">
-        <div class="@SubscriptionOverviewMetricCardClass()">
-            <div class="@SubscriptionOverviewMetricCardBodyClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionOverviewRenewalLabelText()</div>
-                <div class="@SubscriptionMetricValueClass()">@SubscriptionRenewalStatusText(Model.Subscription.CancelAtPeriodEnd)</div>
-                <div class="@SubscriptionMetricHelpTextClass()">@SubscriptionTimelineDisplayText("BusinessSubscriptionCurrentPeriodEnd", Model.Subscription.CurrentPeriodEndUtc)</div>
+    <div class="@SubscriptionOverviewSummaryColumnClass()">
+    <div class="@SubscriptionOverviewSummarySurfaceClass()">
+        <div class="@SubscriptionOverviewSummaryContentClass()">
+        <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionOverviewRenewalMetricText()</div>
+        <div class="@SubscriptionMetricCardValueClass()">@SubscriptionRenewalDisplayText(Model.Subscription.CancelAtPeriodEnd)</div>
+        <div class="@SubscriptionMetricCardHelpTextClass()">@SubscriptionTimelineDisplayText("BusinessSubscriptionCurrentPeriodEnd", Model.Subscription.CurrentPeriodEndUtc)</div>
             </div>
         </div>
     </div>
-    <div class="@SubscriptionOverviewMetricColumnClass()">
-        <div class="@SubscriptionOverviewMetricCardClass()">
-            <div class="@SubscriptionOverviewMetricCardBodyClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionOverviewBillingLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionBillingReadinessStatusText(Model.ManagementWebsiteConfigured)</div>
-                    <div class="@SubscriptionMetricHelpTextClass()">@SubscriptionOverviewBillingHelpLabelText()</div>
+    <div class="@SubscriptionOverviewSummaryColumnClass()">
+    <div class="@SubscriptionOverviewSummarySurfaceClass()">
+        <div class="@SubscriptionOverviewSummaryContentClass()">
+        <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionOverviewBillingMetricText()</div>
+        <div class="@SubscriptionMetricCardValueClass()">@SubscriptionBillingReadinessDisplayText(Model.ManagementWebsiteConfigured)</div>
+        <div class="@SubscriptionMetricCardHelpTextClass()">@SubscriptionOverviewBillingHelpText()</div>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="@SubscriptionSectionCardClass()">
-    <div class="@SubscriptionSectionTitleBarClass()">@SubscriptionBillingReadinessSectionTitleText()</div>
-    <div class="@SubscriptionSectionCardBodyClass()">
-        <div class="@SubscriptionBillingReadinessMetricGridClass()">
-            <div class="@SubscriptionBillingReadinessMetricColumnClass()">
-                <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionBillingReadinessPlansCountLabelText()</div>
-                <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.HandoffSummary.TotalPlans)</div>
-                </div>
-            </div>
-            <div class="@SubscriptionBillingReadinessMetricColumnClass()">
-                <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionBillingReadinessReadyCountLabelText()</div>
-                <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.HandoffSummary.ReadyPlanCount)</div>
-                </div>
-            </div>
-            <div class="@SubscriptionBillingReadinessMetricColumnClass()">
-                <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionBillingReadinessBlockedCountLabelText()</div>
-                <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.HandoffSummary.BlockedPlanCount)</div>
-                </div>
-            </div>
-            <div class="@SubscriptionBillingReadinessMetricColumnClass()">
-                <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionBillingReadinessCurrentCountLabelText()</div>
-                <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.HandoffSummary.CurrentPlanCount)</div>
-                </div>
-            </div>
-        </div>
-        <div class="@SubscriptionSectionHelpLabelClass()">
-            @SubscriptionBillingReadinessSectionHelpLabelText()
         </div>
     </div>
 </div>
 
-<div class="@SubscriptionSectionCardClass()">
-    <div class="@SubscriptionSectionTitleBarClass()">@SubscriptionActiveSubscriptionSectionTitleText()</div>
-    <div class="@SubscriptionSectionCardBodyClass()">
-        @if (SubscriptionHasActiveSubscriptionData())
+<div class="@SubscriptionPanelClass()">
+    <div class="@SubscriptionPanelHeaderClass()">@SubscriptionBillingReadinessOverviewTitleText()</div>
+    <div class="@SubscriptionPanelBodyClass()">
+        <div class="@SubscriptionBillingReadinessOverviewLayoutClass()">
+            <div class="@SubscriptionBillingReadinessOverviewColumnClass()">
+                <div class="@SubscriptionMetricCardClass()">
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionBillingReadinessOverviewPlansMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.HandoffSummary.TotalPlans)</div>
+                </div>
+            </div>
+            <div class="@SubscriptionBillingReadinessOverviewColumnClass()">
+                <div class="@SubscriptionMetricCardClass()">
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionBillingReadinessOverviewReadyMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.HandoffSummary.ReadyPlanCount)</div>
+                </div>
+            </div>
+            <div class="@SubscriptionBillingReadinessOverviewColumnClass()">
+                <div class="@SubscriptionMetricCardClass()">
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionBillingReadinessOverviewBlockedMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.HandoffSummary.BlockedPlanCount)</div>
+                </div>
+            </div>
+            <div class="@SubscriptionBillingReadinessOverviewColumnClass()">
+                <div class="@SubscriptionMetricCardClass()">
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionBillingReadinessOverviewCurrentMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.HandoffSummary.CurrentPlanCount)</div>
+                </div>
+            </div>
+        </div>
+        <div class="@SubscriptionPanelSupportTextClass()">
+            @SubscriptionBillingReadinessOverviewHelpText()
+        </div>
+    </div>
+</div>
+
+<div class="@SubscriptionPanelClass()">
+    <div class="@SubscriptionPanelHeaderClass()">@SubscriptionActiveSubscriptionSectionTitleText()</div>
+    <div class="@SubscriptionPanelBodyClass()">
+        @if (SubscriptionHasActiveSubscription())
         {
-            <div class="@SubscriptionActiveSubscriptionMetricGridClass()">
-                <div class="@SubscriptionActiveSubscriptionMetricColumnClass()">
-                    <div class="@SubscriptionMetricCaptionClass()">@SubscriptionActiveSubscriptionPlanLabelText()</div>
-                    <div class="@SubscriptionMetricTextClass()">@SubscriptionActiveSubscriptionPlanText()</div>
-                </div>
-                <div class="@SubscriptionActiveSubscriptionMetricColumnClass()">
-                    <div class="@SubscriptionMetricCaptionClass()">@SubscriptionActiveSubscriptionAmountLabelText()</div>
-                    <div class="@SubscriptionMetricTextClass()">@SubscriptionActiveSubscriptionAmountText()</div>
-                </div>
-                <div class="@SubscriptionActiveSubscriptionMetricColumnClass()">
-                    <div class="@SubscriptionMetricCaptionClass()">@SubscriptionActiveSubscriptionStartedLabelText()</div>
-                    <div class="@SubscriptionMetricTextClass()">@SubscriptionActiveSubscriptionStartedText()</div>
-                </div>
+        <div class="@SubscriptionActiveSubscriptionOverviewLayoutClass()">
+            <div class="@SubscriptionActiveSubscriptionOverviewColumnClass()">
+                    <div class="@SubscriptionMetricCardCaptionClass()">@SubscriptionActiveSubscriptionPlanMetricText()</div>
+                    <div class="@SubscriptionMetricCardTextClass()">@SubscriptionActiveSubscriptionPlanDisplayText()</div>
             </div>
+            <div class="@SubscriptionActiveSubscriptionOverviewColumnClass()">
+                    <div class="@SubscriptionMetricCardCaptionClass()">@SubscriptionActiveSubscriptionAmountMetricText()</div>
+                    <div class="@SubscriptionMetricCardTextClass()">@SubscriptionActiveSubscriptionAmountDisplayText()</div>
+            </div>
+            <div class="@SubscriptionActiveSubscriptionOverviewColumnClass()">
+                    <div class="@SubscriptionMetricCardCaptionClass()">@SubscriptionActiveSubscriptionStartedMetricText()</div>
+                    <div class="@SubscriptionMetricCardTextClass()">@SubscriptionActiveSubscriptionStartedDisplayText()</div>
+            </div>
+        </div>
 
-            <div class="@SubscriptionTimelineRailClass()">
+            <div class="@SubscriptionActiveSubscriptionTimelineTextClass()">
                 @SubscriptionTimelineDisplayText("BusinessSubscriptionTrialEnds", Model.Subscription.TrialEndsAtUtc)
-                <span class="@SubscriptionTimelineDividerClass()">|</span>
+                <span class="@SubscriptionTimelineSeparatorClass()">|</span>
                 @SubscriptionTimelineDisplayText("BusinessSubscriptionCanceledAt", Model.Subscription.CanceledAtUtc)
             </div>
 
-            @if (SubscriptionUserHasFullAdminAccess())
+            @if (SubscriptionCanManageSubscription())
             {
                 <form action="@SubscriptionRenewalTogglePostActionHref()"
                       method="post"
                       hx-post="@SubscriptionRenewalTogglePostActionHref()"
-                      hx-target="@SubscriptionWorkspaceRootTarget()"
-                      hx-swap="@SubscriptionWorkspaceSwapValue()"
-                      class="@SubscriptionInlineActionRailClass()">
+                      hx-target="@SubscriptionWorkspaceFrameTarget()"
+                      hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                      class="@SubscriptionInlineActionGroupClass()">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="businessId" value="@SubscriptionRenewalFormBusinessIdValue()" />
                     <input type="hidden" name="subscriptionId" value="@SubscriptionRenewalFormSubscriptionIdValue()" />
                     <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.Subscription.RowVersion)" />
                     <input type="hidden" name="cancelAtPeriodEnd" value="@((!Model.Subscription.CancelAtPeriodEnd).ToString().ToLowerInvariant())" />
-                    <button type="submit" class="@SubscriptionRenewalToggleActionButtonClass(Model.Subscription.CancelAtPeriodEnd)">
+                    <button type="submit" class="@SubscriptionRenewalToggleButtonClass(Model.Subscription.CancelAtPeriodEnd)">
                     @SubscriptionRenewalToggleActionText(Model.Subscription.CancelAtPeriodEnd)
                     </button>
-                    @if (SubscriptionCanOpenBillingWebsiteLink())
+                    @if (SubscriptionCanOpenBillingWebsite())
                     {
-                        <a href="@SubscriptionBillingWebsiteActionHref()" target="@SubscriptionExternalLinkTargetValue()" rel="@SubscriptionExternalLinkRelValue()" class="@SubscriptionTopRailActionButtonClass()">
+                        <a href="@SubscriptionBillingWebsiteExternalActionHref()" target="@SubscriptionExternalLinkTargetValue()" rel="@SubscriptionExternalLinkRelValue()" class="@SubscriptionTitleBarActionClass()">
                     @SubscriptionBillingWebsiteActionText()
                         </a>
                     }
@@ -375,158 +379,158 @@ string SubscriptionPlaybookRowFollowUpActionText(Darwin.WebAdmin.ViewModels.Busi
         {
             <div class="@SubscriptionActiveSubscriptionEmptyStateAlertClass()">
                 <div>@SubscriptionActiveSubscriptionEmptyStateText()</div>
-                <div class="@SubscriptionInlineActionRailClass()">
-                    <a href="@SubscriptionSetupWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                       hx-get="@SubscriptionSetupWorkspaceActionHref()"
-                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionSetupActionText()</a>
-                    <a href="@SubscriptionMerchantReadinessWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                       hx-get="@SubscriptionMerchantReadinessWorkspaceActionHref()"
-                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionMerchantReadinessActionText()</a>
-                    <a href="@SubscriptionSupportQueueWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                       hx-get="@SubscriptionSupportQueueWorkspaceActionHref()"
-                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionSupportQueueActionText()</a>
+                <div class="@SubscriptionInlineActionGroupClass()">
+                    <a href="@SubscriptionSetupActionHref()" class="@SubscriptionUtilityActionClass()"
+                       hx-get="@SubscriptionSetupActionHref()"
+                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionSetupActionText()</a>
+                    <a href="@SubscriptionMerchantReadinessActionHref()" class="@SubscriptionUtilityActionClass()"
+                       hx-get="@SubscriptionMerchantReadinessActionHref()"
+                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionMerchantReadinessActionText()</a>
+                    <a href="@SubscriptionSupportQueueActionHref()" class="@SubscriptionUtilityActionClass()"
+                       hx-get="@SubscriptionSupportQueueActionHref()"
+                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionSupportQueueActionText()</a>
                 </div>
             </div>
         }
     </div>
 </div>
 
-<div class="@SubscriptionSectionCardClass()">
-    <div class="@SubscriptionSectionTitleBarClass()">@SubscriptionInvoiceSignalSectionTitleText()</div>
-    <div class="@SubscriptionSectionCardBodyClass()">
-        <div class="@SubscriptionInvoiceSignalMetricGridClass()">
-            <div class="@SubscriptionInvoiceSignalMetricColumnClass()">
+<div class="@SubscriptionPanelClass()">
+    <div class="@SubscriptionPanelHeaderClass()">@SubscriptionInvoiceSignalsOverviewTitleText()</div>
+    <div class="@SubscriptionPanelBodyClass()">
+        <div class="@SubscriptionInvoiceSignalsOverviewLayoutClass()">
+            <div class="@SubscriptionInvoiceSignalsOverviewColumnClass()">
                 <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionInvoiceSignalTotalCountLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.InvoiceSummary.TotalCount)</div>
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionInvoiceSignalsOverviewTotalMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.InvoiceSummary.TotalCount)</div>
                 </div>
             </div>
-            <div class="@SubscriptionInvoiceSignalMetricColumnClass()">
+            <div class="@SubscriptionInvoiceSignalsOverviewColumnClass()">
                 <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionInvoiceSignalOpenCountLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.InvoiceSummary.OpenCount)</div>
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionInvoiceSignalsOverviewOpenMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.InvoiceSummary.OpenCount)</div>
                 </div>
             </div>
-            <div class="@SubscriptionInvoiceSignalMetricColumnClass()">
+            <div class="@SubscriptionInvoiceSignalsOverviewColumnClass()">
                 <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionInvoiceSignalPaidCountLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.InvoiceSummary.PaidCount)</div>
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionInvoiceSignalsOverviewPaidMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.InvoiceSummary.PaidCount)</div>
                 </div>
             </div>
-            <div class="@SubscriptionInvoiceSignalMetricColumnClass()">
+            <div class="@SubscriptionInvoiceSignalsOverviewColumnClass()">
                 <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionInvoiceSignalDraftCountLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.InvoiceSummary.DraftCount)</div>
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionInvoiceSignalsOverviewDraftMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.InvoiceSummary.DraftCount)</div>
                 </div>
             </div>
-            <div class="@SubscriptionInvoiceSignalMetricColumnClass()">
+            <div class="@SubscriptionInvoiceSignalsOverviewColumnClass()">
                 <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionInvoiceSignalUncollectibleCountLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.InvoiceSummary.UncollectibleCount)</div>
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionInvoiceSignalsOverviewUncollectibleMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.InvoiceSummary.UncollectibleCount)</div>
                 </div>
             </div>
-            <div class="@SubscriptionInvoiceSignalMetricColumnClass()">
+            <div class="@SubscriptionInvoiceSignalsOverviewColumnClass()">
                 <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionInvoiceSignalHostedMissingCountLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.InvoiceSummary.HostedLinkMissingCount)</div>
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionInvoiceSignalsOverviewHostedMissingMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.InvoiceSummary.HostedLinkMissingCount)</div>
                 </div>
             </div>
-            <div class="@SubscriptionInvoiceSignalMetricColumnClass()">
+            <div class="@SubscriptionInvoiceSignalsOverviewColumnClass()">
                 <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionInvoiceSignalOverdueCountLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.InvoiceSummary.OverdueCount)</div>
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionInvoiceSignalsOverviewOverdueMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.InvoiceSummary.OverdueCount)</div>
                 </div>
             </div>
-            <div class="@SubscriptionInvoiceSignalMetricColumnClass()">
+            <div class="@SubscriptionInvoiceSignalsOverviewColumnClass()">
                 <div class="@SubscriptionMetricCardClass()">
-                    <div class="@SubscriptionMetricLabelClass()">@SubscriptionInvoiceSignalPdfMissingCountLabelText()</div>
-                    <div class="@SubscriptionMetricValueClass()">@SubscriptionCountText(Model.InvoiceSummary.PdfMissingCount)</div>
+                    <div class="@SubscriptionMetricCardLabelClass()">@SubscriptionInvoiceSignalsOverviewPdfMissingMetricText()</div>
+                    <div class="@SubscriptionMetricCardValueClass()">@SubscriptionMetricCardCountText(Model.InvoiceSummary.PdfMissingCount)</div>
                 </div>
             </div>
         </div>
-        <div class="@SubscriptionSectionHelpLabelClass()">
-            @SubscriptionInvoiceSignalSectionHelpLabelText()
+        <div class="@SubscriptionPanelSupportTextClass()">
+            @SubscriptionInvoiceSignalsOverviewHelpText()
         </div>
-        <div class="@SubscriptionInlineActionRailClass()">
-            <a href="@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open)"
-               class="@SubscriptionInvoiceQueueSignalFilterButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open)"
-               hx-get="@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open)"
-               hx-target="@SubscriptionWorkspaceRootTarget()"
-               hx-swap="@SubscriptionWorkspaceSwapValue()"
-               hx-push-url="@SubscriptionWorkspacePushUrlValue()">
-                        @SubscriptionInvoiceSignalReviewOpenActionText()
+        <div class="@SubscriptionInlineActionGroupClass()">
+            <a href="@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open)"
+               class="@SubscriptionInvoiceQueueSignalButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open)"
+               hx-get="@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open)"
+               hx-target="@SubscriptionWorkspaceFrameTarget()"
+               hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+               hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
+                        @SubscriptionInvoiceSignalsOverviewReviewOpenActionText()
             </a>
-            <a href="@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue)"
-               class="@SubscriptionInvoiceQueueSignalFilterButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue)"
-               hx-get="@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue)"
-               hx-target="@SubscriptionWorkspaceRootTarget()"
-               hx-swap="@SubscriptionWorkspaceSwapValue()"
-               hx-push-url="@SubscriptionWorkspacePushUrlValue()">
-                        @SubscriptionInvoiceSignalReviewOverdueActionText()
+            <a href="@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+               class="@SubscriptionInvoiceQueueSignalButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+               hx-get="@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue)"
+               hx-target="@SubscriptionWorkspaceFrameTarget()"
+               hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+               hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
+                        @SubscriptionInvoiceSignalsOverviewReviewOverdueActionText()
             </a>
-            <a href="@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
-               class="@SubscriptionInvoiceQueueSignalFilterButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
-               hx-get="@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
-               hx-target="@SubscriptionWorkspaceRootTarget()"
-               hx-swap="@SubscriptionWorkspaceSwapValue()"
-               hx-push-url="@SubscriptionWorkspacePushUrlValue()">
-                        @SubscriptionInvoiceSignalReviewPdfMissingActionText()
+            <a href="@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+               class="@SubscriptionInvoiceQueueSignalButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+               hx-get="@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing)"
+               hx-target="@SubscriptionWorkspaceFrameTarget()"
+               hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+               hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
+                        @SubscriptionInvoiceSignalsOverviewReviewPdfMissingActionText()
             </a>
-            <a href="@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
-               class="@SubscriptionInvoiceQueueSignalFilterButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
-               hx-get="@SubscriptionInvoicesFilteredWorkspaceActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
-               hx-target="@SubscriptionWorkspaceRootTarget()"
-               hx-swap="@SubscriptionWorkspaceSwapValue()"
-               hx-push-url="@SubscriptionWorkspacePushUrlValue()">
-                        @SubscriptionInvoiceSignalReviewUncollectibleActionText()
+            <a href="@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+               class="@SubscriptionInvoiceQueueSignalButtonClass(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+               hx-get="@SubscriptionInvoiceQueueFilterActionHref(Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible)"
+               hx-target="@SubscriptionWorkspaceFrameTarget()"
+               hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+               hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
+                        @SubscriptionInvoiceSignalsOverviewReviewUncollectibleActionText()
             </a>
         </div>
     </div>
 </div>
 
-<div class="@SubscriptionSectionCardClass()">
-    <div class="@SubscriptionSectionTitleBarClass()">@SubscriptionPlansSectionTitleText()</div>
-    <div class="@SubscriptionTableCardBodyClass()">
-        <div class="@SubscriptionTableViewportClass()">
-            <table class="@SubscriptionSectionDataTableClass()">
-                <thead class="@SubscriptionSectionDataTableHeaderClass()">
+<div class="@SubscriptionPanelClass()">
+    <div class="@SubscriptionPanelHeaderClass()">@SubscriptionAvailablePlansTableTitleText()</div>
+    <div class="@SubscriptionPanelTableBodyClass()">
+        <div class="@SubscriptionPanelTableViewportClass()">
+            <table class="@SubscriptionPanelTableClass()">
+                <thead class="@SubscriptionPanelTableHeaderClass()">
                     <tr>
-                    <th>@SubscriptionPlanColumnLabelText()</th>
-                    <th>@SubscriptionPriceColumnLabelText()</th>
-                    <th>@SubscriptionIntervalColumnLabelText()</th>
-                    <th>@SubscriptionTrialColumnLabelText()</th>
-                    <th>@SubscriptionCheckoutColumnLabelText()</th>
-                    <th class="@SubscriptionSectionTableActionsColumnClass()">@SubscriptionActionsColumnLabelText()</th>
+                    <th>@SubscriptionAvailablePlansTablePlanColumnTitleText()</th>
+                    <th>@SubscriptionAvailablePlansTablePriceColumnTitleText()</th>
+                    <th>@SubscriptionAvailablePlansTableIntervalColumnTitleText()</th>
+                    <th>@SubscriptionAvailablePlansTableTrialColumnTitleText()</th>
+                    <th>@SubscriptionAvailablePlansTableCheckoutColumnTitleText()</th>
+                    <th class="@SubscriptionPanelTableActionsColumnClass()">@SubscriptionActionsColumnTitleText()</th>
                     </tr>
                 </thead>
                 <tbody>
-        @if (!SubscriptionHasAvailablePlanRows())
+        @if (!SubscriptionHasPlanCatalogRows())
                     {
                         <tr>
                             <td colspan="6" class="@SubscriptionEmptyStateCellClass()">
-                                <div>@SubscriptionPlansEmptyStateMessageText()</div>
-                                <div class="@SubscriptionEmptyStateActionsClass()">
-                                    <a href="@SubscriptionSetupWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                                       hx-get="@SubscriptionSetupWorkspaceActionHref()"
-                                       hx-target="@SubscriptionWorkspaceRootTarget()"
-                                       hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionSetupActionText()</a>
-                                    <a href="@SubscriptionMerchantReadinessWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                                       hx-get="@SubscriptionMerchantReadinessWorkspaceActionHref()"
-                                       hx-target="@SubscriptionWorkspaceRootTarget()"
-                                       hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionMerchantReadinessActionText()</a>
-                                    <a href="@SubscriptionSupportQueueWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                                       hx-get="@SubscriptionSupportQueueWorkspaceActionHref()"
-                                       hx-target="@SubscriptionWorkspaceRootTarget()"
-                                       hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionSupportQueueActionText()</a>
+                                <div>@SubscriptionAvailablePlansTableEmptyStateText()</div>
+                                <div class="@SubscriptionEmptyStateActionRailClass()">
+                                    <a href="@SubscriptionSetupActionHref()" class="@SubscriptionUtilityActionClass()"
+                                       hx-get="@SubscriptionSetupActionHref()"
+                                       hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                       hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionSetupActionText()</a>
+                                    <a href="@SubscriptionMerchantReadinessActionHref()" class="@SubscriptionUtilityActionClass()"
+                                       hx-get="@SubscriptionMerchantReadinessActionHref()"
+                                       hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                       hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionMerchantReadinessActionText()</a>
+                                    <a href="@SubscriptionSupportQueueActionHref()" class="@SubscriptionUtilityActionClass()"
+                                       hx-get="@SubscriptionSupportQueueActionHref()"
+                                       hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                       hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionSupportQueueActionText()</a>
                                 </div>
                             </td>
                         </tr>
@@ -537,60 +541,60 @@ string SubscriptionPlaybookRowFollowUpActionText(Darwin.WebAdmin.ViewModels.Busi
                         {
                             <tr>
                                 <td>
-                                        <div class="@SubscriptionRowPrimaryTextClass()">@SubscriptionPlanRowNameText(plan)</div>
-                                        <div class="@SubscriptionRowSecondaryTextClass()">@SubscriptionPlanRowCodeText(plan)</div>
-                                    @if (SubscriptionPlanHasCurrentBadge(plan.IsCurrentPlan))
+                                        <div class="@SubscriptionPanelTableRowPrimaryTextClass()">@SubscriptionAvailablePlansTableRowNameDisplayText(plan)</div>
+                                        <div class="@SubscriptionPanelTableRowSecondaryTextClass()">@SubscriptionAvailablePlansTableRowCodeDisplayText(plan)</div>
+                                    @if (SubscriptionAvailablePlansTableRowShowsCurrentBadge(plan.IsCurrentPlan))
                                     {
-                                    <div><span class="@SubscriptionBadgeClass() @SubscriptionCurrentPlanBadgeToneClass()">@SubscriptionCurrentPlanBadgeLabelText()</span></div>
+                                    <div><span class="@SubscriptionStatusBadgeClass() @SubscriptionCurrentPlanBadgeStateClass()">@SubscriptionCurrentPlanBadgeText()</span></div>
                                     }
-                                    @if (SubscriptionPlanShowsDescription(plan.Description))
+                                    @if (SubscriptionAvailablePlansTableRowShowsDescription(plan.Description))
                                     {
-                                        <div class="@SubscriptionPlanRowSupportingTextClass()">@SubscriptionPlanRowDescriptionText(plan)</div>
+                                        <div class="@SubscriptionAvailablePlansTableRowMetaTextClass()">@SubscriptionAvailablePlansTableRowDescriptionDisplayText(plan)</div>
                                     }
                                 </td>
-                                <td>@SubscriptionMoneyText(plan.Currency, plan.PriceMinor)</td>
-                                <td>@SubscriptionIntervalText(plan.IntervalCount, plan.Interval)</td>
-                                <td>@SubscriptionTrialText(plan.TrialDays)</td>
+                                <td>@SubscriptionMoneyDisplayText(plan.Currency, plan.PriceMinor)</td>
+                                <td>@SubscriptionIntervalDisplayText(plan.IntervalCount, plan.Interval)</td>
+                                <td>@SubscriptionTrialDisplayText(plan.TrialDays)</td>
                                 <td>
-                                    <span class="@SubscriptionBadgeClass() @SubscriptionPlanCheckoutBadgeToneClass(plan.CheckoutReady)">@SubscriptionPlanRowCheckoutText(plan)</span>
-                                    <div class="@SubscriptionPlanRowSupportingTextClass()">@SubscriptionPlanRowHandoffText(plan)</div>
+                                    <span class="@SubscriptionStatusBadgeClass() @SubscriptionPlanCheckoutBadgeStateClass(plan.CheckoutReady)">@SubscriptionAvailablePlansTableRowCheckoutDisplayText(plan)</span>
+                                    <div class="@SubscriptionAvailablePlansTableRowMetaTextClass()">@SubscriptionAvailablePlansTableRowHandoffDisplayText(plan)</div>
                                 </td>
-                                <td class="@SubscriptionSectionTableActionsColumnClass()">
-                                    @if (SubscriptionPlanCanOpenManagementWebsiteLink(plan.CanOpenManagementWebsite))
+                                <td class="@SubscriptionPanelTableActionsColumnClass()">
+                                    @if (SubscriptionAvailablePlansTableRowCanOpenManagementWebsite(plan.CanOpenManagementWebsite))
                                     {
-                                        <a href="@SubscriptionPlanRowManagementLinkHref(plan)" target="@SubscriptionExternalLinkTargetValue()" rel="@SubscriptionExternalLinkRelValue()" class="@SubscriptionSecondaryButtonClass()">
-                                        @SubscriptionPlanRowManagementActionText(plan)
+                                        <a href="@SubscriptionAvailablePlansTableRowManagementWebsiteActionHref(plan)" target="@SubscriptionExternalLinkTargetValue()" rel="@SubscriptionExternalLinkRelValue()" class="@SubscriptionUtilityActionClass()">
+                                        @SubscriptionAvailablePlansTableRowManagementActionText(plan)
                                         </a>
                                     }
                                     else if (!Model.ManagementWebsiteConfigured)
                                     {
-                                        <a href="@SubscriptionConfigureWebsiteWorkspaceActionHref()" class="@SubscriptionWarningButtonClass()"
-                                           hx-get="@SubscriptionConfigureWebsiteWorkspaceActionHref()"
-                                           hx-target="@SubscriptionWorkspaceRootTarget()"
-                                           hx-swap="@SubscriptionWorkspaceSwapValue()"
-                                           hx-push-url="@SubscriptionWorkspacePushUrlValue()">
+                                        <a href="@SubscriptionConfigureWebsiteActionHref()" class="@SubscriptionRemediationActionClass()"
+                                           hx-get="@SubscriptionConfigureWebsiteActionHref()"
+                                           hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                           hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                                           hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
                                 @SubscriptionConfigureWebsiteActionText()
                                         </a>
                                     }
                                     else
                                     {
-                                        <div class="@SubscriptionResolvePrerequisitesActionRailClass()">
-                                            <span class="@SubscriptionResolvePrerequisitesTextClass()">@SubscriptionResolvePrerequisitesCaptionText()</span>
-                                            <a href="@SubscriptionSetupWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                                               hx-get="@SubscriptionSetupWorkspaceActionHref()"
-                                               hx-target="@SubscriptionWorkspaceRootTarget()"
-                                               hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionSetupActionText()</a>
-                                            <a href="@SubscriptionMerchantReadinessWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                                               hx-get="@SubscriptionMerchantReadinessWorkspaceActionHref()"
-                                               hx-target="@SubscriptionWorkspaceRootTarget()"
-                                               hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionMerchantReadinessActionText()</a>
-                                            <a href="@SubscriptionSupportQueueWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                                               hx-get="@SubscriptionSupportQueueWorkspaceActionHref()"
-                                               hx-target="@SubscriptionWorkspaceRootTarget()"
-                                               hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionSupportQueueActionText()</a>
+                                        <div class="@SubscriptionAvailablePlansTableRemediationActionsClass()">
+                                            <span class="@SubscriptionRemediationHintTextClass()">@SubscriptionResolvePrerequisitesHintText()</span>
+                                            <a href="@SubscriptionSetupActionHref()" class="@SubscriptionUtilityActionClass()"
+                                               hx-get="@SubscriptionSetupActionHref()"
+                                               hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                               hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionSetupActionText()</a>
+                                            <a href="@SubscriptionMerchantReadinessActionHref()" class="@SubscriptionUtilityActionClass()"
+                                               hx-get="@SubscriptionMerchantReadinessActionHref()"
+                                               hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                               hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionMerchantReadinessActionText()</a>
+                                            <a href="@SubscriptionSupportQueueActionHref()" class="@SubscriptionUtilityActionClass()"
+                                               hx-get="@SubscriptionSupportQueueActionHref()"
+                                               hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                               hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionSupportQueueActionText()</a>
                                         </div>
                                     }
                                 </td>
@@ -603,55 +607,55 @@ string SubscriptionPlaybookRowFollowUpActionText(Darwin.WebAdmin.ViewModels.Busi
     </div>
 </div>
 
-<div class="@SubscriptionRecentInvoicesCardClass()">
-    <div class="@SubscriptionRecentInvoicesHeaderClass()">
-        <span>@SubscriptionRecentInvoicesSectionTitleText()</span>
-        <a href="@SubscriptionInvoicesWorkspaceActionHref()"
-           class="@SubscriptionSecondaryButtonClass()"
-           hx-get="@SubscriptionInvoicesWorkspaceActionHref()"
-           hx-target="@SubscriptionWorkspaceRootTarget()"
-           hx-swap="@SubscriptionWorkspaceSwapValue()"
-           hx-push-url="@SubscriptionWorkspacePushUrlValue()">
+<div class="@SubscriptionRecentInvoicesTableCardClass()">
+    <div class="@SubscriptionRecentInvoicesTableCardHeaderClass()">
+        <span>@SubscriptionRecentInvoicesTableTitleText()</span>
+        <a href="@SubscriptionInvoiceQueueActionHref()"
+           class="@SubscriptionUtilityActionClass()"
+           hx-get="@SubscriptionInvoiceQueueActionHref()"
+           hx-target="@SubscriptionWorkspaceFrameTarget()"
+           hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+           hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">
                     @SubscriptionInvoiceQueueActionText()
         </a>
     </div>
-    <div class="@SubscriptionTableCardBodyClass()">
-        <div class="@SubscriptionTableViewportClass()">
-            <table class="@SubscriptionSectionDataTableClass()">
-                <thead class="@SubscriptionSectionDataTableHeaderClass()">
+    <div class="@SubscriptionPanelTableBodyClass()">
+        <div class="@SubscriptionPanelTableViewportClass()">
+            <table class="@SubscriptionPanelTableClass()">
+                <thead class="@SubscriptionPanelTableHeaderClass()">
                     <tr>
-                    <th>@SubscriptionInvoiceProviderColumnLabelText()</th>
-                    <th>@SubscriptionPlanColumnLabelText()</th>
-                    <th>@SubscriptionInvoiceStatusColumnLabelText()</th>
-                    <th>@SubscriptionInvoiceAmountColumnLabelText()</th>
-                    <th>@SubscriptionInvoiceTimelineColumnLabelText()</th>
-                    <th class="@SubscriptionSectionTableActionsColumnClass()">@SubscriptionActionsColumnLabelText()</th>
+                    <th>@SubscriptionRecentInvoicesTableProviderColumnTitleText()</th>
+                    <th>@SubscriptionRecentInvoicesTablePlanColumnTitleText()</th>
+                    <th>@SubscriptionRecentInvoicesTableStatusColumnTitleText()</th>
+                    <th>@SubscriptionRecentInvoicesTableAmountColumnTitleText()</th>
+                    <th>@SubscriptionRecentInvoicesTableTimelineColumnTitleText()</th>
+                    <th class="@SubscriptionPanelTableActionsColumnClass()">@SubscriptionActionsColumnTitleText()</th>
                     </tr>
                 </thead>
                 <tbody>
-                @if (!SubscriptionHasRecentInvoiceRows())
+                @if (!SubscriptionHasRecentInvoiceListRows())
                 {
                     <tr>
                         <td colspan="6" class="@SubscriptionEmptyStateCellClass()">
-                            <div>@SubscriptionRecentInvoicesEmptyStateMessageText()</div>
-                            <div class="@SubscriptionEmptyStateActionsClass()">
-                                <a href="@SubscriptionInvoicesWorkspaceActionHref()"
-                                   class="@SubscriptionSecondaryButtonClass()"
-                                   hx-get="@SubscriptionInvoicesWorkspaceActionHref()"
-                                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionInvoiceQueueActionText()</a>
-                                <a href="@SubscriptionPaymentsWorkspaceActionHref()"
-                                   class="@SubscriptionSecondaryButtonClass()"
-                                   hx-get="@SubscriptionPaymentsWorkspaceActionHref()"
-                                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                    hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionPaymentsActionText()</a>
-                                <a href="@SubscriptionMerchantReadinessWorkspaceActionHref()" class="@SubscriptionSecondaryButtonClass()"
-                                   hx-get="@SubscriptionMerchantReadinessWorkspaceActionHref()"
-                                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                                   hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionMerchantReadinessActionText()</a>
+                            <div>@SubscriptionRecentInvoicesTableEmptyStateText()</div>
+                            <div class="@SubscriptionEmptyStateActionRailClass()">
+                                <a href="@SubscriptionInvoiceQueueActionHref()"
+                                   class="@SubscriptionUtilityActionClass()"
+                                   hx-get="@SubscriptionInvoiceQueueActionHref()"
+                                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionInvoiceQueueActionText()</a>
+                                <a href="@SubscriptionPaymentsActionHref()"
+                                   class="@SubscriptionUtilityActionClass()"
+                                   hx-get="@SubscriptionPaymentsActionHref()"
+                                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                    hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionPaymentsActionText()</a>
+                                <a href="@SubscriptionMerchantReadinessActionHref()" class="@SubscriptionUtilityActionClass()"
+                                   hx-get="@SubscriptionMerchantReadinessActionHref()"
+                                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                                   hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionMerchantReadinessActionText()</a>
                             </div>
                         </td>
                     </tr>
@@ -662,55 +666,55 @@ string SubscriptionPlaybookRowFollowUpActionText(Darwin.WebAdmin.ViewModels.Busi
                     {
                         <tr>
                             <td>
-                                <div class="@SubscriptionRowPrimaryTextClass()">@SubscriptionInvoiceRowProviderText(invoice)</div>
-                                <div class="@SubscriptionRowSecondaryTextClass()">@SubscriptionInvoiceRowProviderIdText(invoice)</div>
-                                @if (SubscriptionInvoiceHasStripeBadge(invoice.IsStripe))
+                                <div class="@SubscriptionPanelTableRowPrimaryTextClass()">@SubscriptionRecentInvoicesTableRowProviderDisplayText(invoice)</div>
+                                <div class="@SubscriptionPanelTableRowSecondaryTextClass()">@SubscriptionRecentInvoicesTableRowProviderIdDisplayText(invoice)</div>
+                                @if (SubscriptionRecentInvoicesTableRowShowsStripeBadge(invoice.IsStripe))
                                 {
-                                    <div><span class="@SubscriptionBadgeClass() @SubscriptionStripeBadgeClass()">@SubscriptionStripeBadgeLabelText()</span></div>
+                                    <div><span class="@SubscriptionStatusBadgeClass() @SubscriptionStripeProviderBadgeClass()">@SubscriptionStripeBadgeText()</span></div>
                                 }
                             </td>
                             <td>
-                                <div class="@SubscriptionRowPrimaryTextClass()">@SubscriptionInvoiceRowPlanText(invoice.PlanName)</div>
-                                <div class="@SubscriptionRowSecondaryTextClass()">@SubscriptionInvoiceRowPlanCodeText(invoice)</div>
+                                <div class="@SubscriptionPanelTableRowPrimaryTextClass()">@SubscriptionRecentInvoicesTableRowPlanDisplayText(invoice.PlanName)</div>
+                                <div class="@SubscriptionPanelTableRowSecondaryTextClass()">@SubscriptionRecentInvoicesTableRowPlanCodeDisplayText(invoice)</div>
                             </td>
                             <td>
-                                <span class="@SubscriptionBadgeClass() @SubscriptionInvoiceStatusBadgeToneClass(invoice.Status)">
-                                    @SubscriptionInvoiceStatusText(invoice.Status)
+                                <span class="@SubscriptionStatusBadgeClass() @SubscriptionInvoiceStatusBadgeStateClass(invoice.Status)">
+                                    @SubscriptionInvoiceStatusDisplayText(invoice.Status)
                                 </span>
-                                @if (SubscriptionInvoiceShowsFailureText(invoice.FailureReason))
+                                @if (SubscriptionRecentInvoicesTableRowShowsFailureText(invoice.FailureReason))
                                 {
-                                    <div class="@SubscriptionInvoiceFailureTextClass()">@SubscriptionInvoiceRowFailureText(invoice)</div>
+                                    <div class="@SubscriptionAlertMessageTextClass()">@SubscriptionRecentInvoicesTableRowFailureDisplayText(invoice)</div>
                                 }
-                                @if (SubscriptionInvoiceHasOverdueBadge(invoice.IsOverdue))
+                                @if (SubscriptionRecentInvoicesTableRowShowsOverdueBadge(invoice.IsOverdue))
                                 {
-                                    <div><span class="@SubscriptionBadgeClass() @SubscriptionInvoiceFollowUpBadgeToneClass(isWarning: false)">@SubscriptionOverdueBadgeLabelText()</span></div>
+                                    <div><span class="@SubscriptionStatusBadgeClass() @SubscriptionInvoiceFollowUpBadgeStateClass(isWarning: false)">@SubscriptionOverdueBadgeText()</span></div>
                                 }
-                                @if (SubscriptionInvoiceHasPdfMissingBadge(invoice.HasPdfUrl))
+                                @if (SubscriptionRecentInvoicesTableRowShowsPdfMissingBadge(invoice.HasPdfUrl))
                                 {
-                                    <div><span class="@SubscriptionBadgeClass() @SubscriptionInvoiceFollowUpBadgeToneClass(isWarning: true)">@SubscriptionPdfMissingBadgeLabelText()</span></div>
+                                    <div><span class="@SubscriptionStatusBadgeClass() @SubscriptionInvoiceFollowUpBadgeStateClass(isWarning: true)">@SubscriptionPdfMissingBadgeText()</span></div>
                                 }
                             </td>
-                            <td>@SubscriptionMoneyText(invoice.Currency, invoice.TotalMinor)</td>
+                            <td>@SubscriptionMoneyDisplayText(invoice.Currency, invoice.TotalMinor)</td>
                             <td>
-                                <div>@SubscriptionTimelineText("CommonIssuedAt", invoice.IssuedAtUtc)</div>
-                                <div class="@SubscriptionRowSecondaryTextClass()">@SubscriptionTimelineText("CommonDueAt", invoice.DueAtUtc)</div>
-                                <div class="@SubscriptionRowSecondaryTextClass()">@SubscriptionTimelineText("CommonPaidAt", invoice.PaidAtUtc)</div>
+                                <div>@SubscriptionTimelineDisplayText("CommonIssuedAt", invoice.IssuedAtUtc)</div>
+                                <div class="@SubscriptionPanelTableRowSecondaryTextClass()">@SubscriptionTimelineDisplayText("CommonDueAt", invoice.DueAtUtc)</div>
+                                <div class="@SubscriptionPanelTableRowSecondaryTextClass()">@SubscriptionTimelineDisplayText("CommonPaidAt", invoice.PaidAtUtc)</div>
                             </td>
-                            <td class="@SubscriptionSectionTableActionsColumnClass()">
-                                <div class="@SubscriptionInvoiceActionsGroupClass()">
-                                    @if (SubscriptionInvoiceHasHostedLink(invoice.HasHostedInvoiceUrl))
+                            <td class="@SubscriptionPanelTableActionsColumnClass()">
+                                <div class="@SubscriptionRecentInvoicesTableRowActionsClass()">
+                                    @if (SubscriptionRecentInvoicesTableRowCanOpenHostedInvoice(invoice.HasHostedInvoiceUrl))
                                     {
-                                        <a href="@SubscriptionInvoiceRowHostedLinkHref(invoice)" target="@SubscriptionExternalLinkTargetValue()" rel="@SubscriptionExternalLinkRelValue()" class="@SubscriptionSecondaryButtonClass()">@SubscriptionInvoiceHostedActionText()</a>
+                                        <a href="@SubscriptionRecentInvoicesTableRowHostedInvoiceActionHref(invoice)" target="@SubscriptionExternalLinkTargetValue()" rel="@SubscriptionExternalLinkRelValue()" class="@SubscriptionUtilityActionClass()">@SubscriptionInvoiceHostedActionText()</a>
                                     }
-                                    @if (SubscriptionInvoiceHasPdfLink(invoice.HasPdfUrl))
+                                    @if (SubscriptionRecentInvoicesTableRowCanOpenPdf(invoice.HasPdfUrl))
                                     {
-                                        <a href="@SubscriptionInvoiceRowPdfLinkHref(invoice)" target="@SubscriptionExternalLinkTargetValue()" rel="@SubscriptionExternalLinkRelValue()" class="@SubscriptionSecondaryButtonClass()">@SubscriptionInvoicePdfActionText()</a>
+                                        <a href="@SubscriptionRecentInvoicesTableRowPdfActionHref(invoice)" target="@SubscriptionExternalLinkTargetValue()" rel="@SubscriptionExternalLinkRelValue()" class="@SubscriptionUtilityActionClass()">@SubscriptionInvoicePdfActionText()</a>
                                     }
-                                    <a href="@SubscriptionPaymentsFilteredWorkspaceActionHref(invoice.ProviderInvoiceId)" class="@SubscriptionSecondaryButtonClass()"
-                                       hx-get="@SubscriptionPaymentsFilteredWorkspaceActionHref(invoice.ProviderInvoiceId)"
-                                       hx-target="@SubscriptionWorkspaceRootTarget()"
-                                       hx-swap="@SubscriptionWorkspaceSwapValue()"
-                                       hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionPaymentsActionText()</a>
+                                    <a href="@SubscriptionPaymentsSearchActionHref(invoice.ProviderInvoiceId)" class="@SubscriptionUtilityActionClass()"
+                                       hx-get="@SubscriptionPaymentsSearchActionHref(invoice.ProviderInvoiceId)"
+                                       hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                       hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                                       hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionPaymentsActionText()</a>
                                 </div>
                             </td>
                         </tr>
@@ -722,66 +726,66 @@ string SubscriptionPlaybookRowFollowUpActionText(Darwin.WebAdmin.ViewModels.Busi
     </div>
 </div>
 
-<div class="@SubscriptionPlaybooksCardClass()">
-    <div class="@SubscriptionSectionTitleBarClass()">@SubscriptionPlaybooksSectionTitleText()</div>
-    <div class="@SubscriptionTableCardBodyClass()">
-        <div class="@SubscriptionTableViewportClass()">
-            <table class="@SubscriptionSectionDataTableClass()">
-                <thead class="@SubscriptionSectionDataTableHeaderClass()">
+<div class="@SubscriptionBillingPlaybooksTableCardClass()">
+    <div class="@SubscriptionPanelHeaderClass()">@SubscriptionBillingPlaybooksTableTitleText()</div>
+    <div class="@SubscriptionPanelTableBodyClass()">
+        <div class="@SubscriptionPanelTableViewportClass()">
+            <table class="@SubscriptionPanelTableClass()">
+                <thead class="@SubscriptionPanelTableHeaderClass()">
                     <tr>
-                        <th>@SubscriptionPlaybookQueueColumnLabelText()</th>
-                        <th>@SubscriptionPlaybookWhyColumnLabelText()</th>
-                        <th>@SubscriptionPlaybookOperatorColumnLabelText()</th>
-                        <th>@SubscriptionActionsColumnLabelText()</th>
+                        <th>@SubscriptionBillingPlaybooksTableQueueColumnTitleText()</th>
+                        <th>@SubscriptionBillingPlaybooksTableWhyColumnTitleText()</th>
+                        <th>@SubscriptionBillingPlaybooksTableOperatorColumnTitleText()</th>
+                        <th>@SubscriptionActionsColumnTitleText()</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var playbook in Model.Playbooks)
                     {
                         <tr>
-                            <td class="@SubscriptionPlaybookQueueLabelClass()">
-                                <a href="@SubscriptionPlaybookRowQueueLinkHref(playbook)"
-                                   class="@SubscriptionInlineLinkClass()"
-                                   hx-get="@SubscriptionPlaybookRowQueueLinkHref(playbook)"
-                                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                                hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionPlaybookRowQueueText(playbook)</a>
+                            <td class="@SubscriptionBillingPlaybooksTableRowPrimaryTextClass()">
+                                <a href="@SubscriptionBillingPlaybooksTableRowQueueActionHref(playbook)"
+                                   class="@SubscriptionInlineActionLinkClass()"
+                                   hx-get="@SubscriptionBillingPlaybooksTableRowQueueActionHref(playbook)"
+                                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                                hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionBillingPlaybooksTableRowQueueDisplayText(playbook)</a>
                             </td>
                             <td>
-                                <a href="@SubscriptionPlaybookRowFollowUpLinkHref(playbook)"
-                                   class="@SubscriptionInlineLinkClass()"
-                                   hx-get="@SubscriptionPlaybookRowFollowUpLinkHref(playbook)"
-                                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                                hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionPlaybookRowWhyText(playbook)</a>
+                                <a href="@SubscriptionBillingPlaybooksTableRowFollowUpActionHref(playbook)"
+                                   class="@SubscriptionInlineActionLinkClass()"
+                                   hx-get="@SubscriptionBillingPlaybooksTableRowFollowUpActionHref(playbook)"
+                                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                                hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionBillingPlaybooksTableRowWhyDisplayText(playbook)</a>
                             </td>
                             <td>
-                                <a href="@SubscriptionPlaybookRowQueueLinkHref(playbook)"
-                                   class="@SubscriptionInlineLinkClass()"
-                                   hx-get="@SubscriptionPlaybookRowQueueLinkHref(playbook)"
-                                   hx-target="@SubscriptionWorkspaceRootTarget()"
-                                   hx-swap="@SubscriptionWorkspaceSwapValue()"
-                                hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionPlaybookRowOperatorText(playbook)</a>
+                                <a href="@SubscriptionBillingPlaybooksTableRowQueueActionHref(playbook)"
+                                   class="@SubscriptionInlineActionLinkClass()"
+                                   hx-get="@SubscriptionBillingPlaybooksTableRowQueueActionHref(playbook)"
+                                   hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                   hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                                hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionBillingPlaybooksTableRowOperatorDisplayText(playbook)</a>
                             </td>
                             <td>
-                                <div class="@SubscriptionPlaybookRowActionRailClass()">
-                                    @if (SubscriptionPlaybookHasQueueLink(playbook.QueueActionUrl))
+                                <div class="@SubscriptionBillingPlaybooksTableRowActionsClass()">
+                                    @if (SubscriptionBillingPlaybooksTableRowCanOpenQueueAction(playbook.QueueActionUrl))
                                     {
-                                        <a href="@SubscriptionPlaybookRowQueueLinkHref(playbook)"
-                                   class="@SubscriptionPrimaryButtonClass()"
-                                           hx-get="@SubscriptionPlaybookRowQueueLinkHref(playbook)"
-                                           hx-target="@SubscriptionWorkspaceRootTarget()"
-                                           hx-swap="@SubscriptionWorkspaceSwapValue()"
-                                   hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionPlaybookRowQueueActionText(playbook)</a>
+                                        <a href="@SubscriptionBillingPlaybooksTableRowQueueActionHref(playbook)"
+                                   class="@SubscriptionProminentActionClass()"
+                                           hx-get="@SubscriptionBillingPlaybooksTableRowQueueActionHref(playbook)"
+                                           hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                           hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                                   hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionBillingPlaybooksTableRowQueueActionText(playbook)</a>
                                     }
-                                    @if (SubscriptionPlaybookHasFollowUpLink(playbook.FollowUpUrl))
+                                    @if (SubscriptionBillingPlaybooksTableRowCanOpenFollowUpAction(playbook.FollowUpUrl))
                                     {
-                                        <a href="@SubscriptionPlaybookRowFollowUpLinkHref(playbook)"
-                                   class="@SubscriptionSecondaryButtonClass()"
-                                           hx-get="@SubscriptionPlaybookRowFollowUpLinkHref(playbook)"
-                                           hx-target="@SubscriptionWorkspaceRootTarget()"
-                                           hx-swap="@SubscriptionWorkspaceSwapValue()"
-                                   hx-push-url="@SubscriptionWorkspacePushUrlValue()">@SubscriptionPlaybookRowFollowUpActionText(playbook)</a>
+                                        <a href="@SubscriptionBillingPlaybooksTableRowFollowUpActionHref(playbook)"
+                                   class="@SubscriptionUtilityActionClass()"
+                                           hx-get="@SubscriptionBillingPlaybooksTableRowFollowUpActionHref(playbook)"
+                                           hx-target="@SubscriptionWorkspaceFrameTarget()"
+                                           hx-swap="@SubscriptionWorkspaceFrameSwapValue()"
+                                   hx-push-url="@SubscriptionWorkspaceFramePushUrlValue()">@SubscriptionBillingPlaybooksTableRowFollowUpActionText(playbook)</a>
                                     }
                                 </div>
                             </td>
@@ -793,6 +797,26 @@ string SubscriptionPlaybookRowFollowUpActionText(Darwin.WebAdmin.ViewModels.Busi
     </div>
 </div>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

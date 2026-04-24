@@ -2,7 +2,16 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("ReturnsQueueTitle");
+    var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeReturnStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
+    string ReturnQueueOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string ReturnQueueOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var returnQueueRefundReadyCount = Model.Items.Count(item => item.HasRefundablePayment);
+    var returnQueueAttentionCount = Model.Summary.ReturnFollowUpCount + Model.Summary.CarrierReviewCount + (Model.Summary.ReturnedCount - returnQueueRefundReadyCount);
+    var returnQueueDefaultRefundItem = Model.Items.FirstOrDefault(item => item.DefaultRefundPaymentId.HasValue);
 }
 
 <div id="returns-queue-workspace-shell">
@@ -29,6 +38,117 @@
 </div>
 
 <div class="row g-3 mb-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <div class="fw-semibold">@T.T("ReturnsQueueTitle")</div>
+                            <span class="@ReturnQueueOpsHealthBadgeClass(returnQueueAttentionCount == 0)">@ReturnQueueOpsHealthBadgeText(returnQueueAttentionCount == 0)</span>
+                        </div>
+                        <div class="small text-muted mt-2">
+                            @T.T("ReturnedShipments")
+                            @if (returnQueueAttentionCount > 0)
+                            {
+                                <span class="ms-1">@T.T("NeedsAttention"): @returnQueueAttentionCount</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-action="ShipmentsQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+                           hx-target="#returns-queue-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ShipmentsQueue")</a>
+                        <a asp-controller="Billing"
+                           asp-action="Refunds"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Refunds", "Billing")"
+                           hx-target="#returns-queue-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("RefundQueue")</a>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("ReturnedShipments")</div>
+                                    <div class="small text-muted mt-1">@T.T("ReviewShipments")</div>
+                                </div>
+                                <span class="@ReturnQueueOpsHealthBadgeClass(Model.Summary.ReturnedCount == 0)">@Model.Summary.ReturnedCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("ShipmentsQueue")</div>
+                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                <a asp-action="ReturnsQueue" asp-route-filter="All" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "All" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.All ? "btn-dark" : "btn-outline-dark")">@T.T("AllReturnCases")</a>
+                                <a asp-action="ShipmentsQueue" hx-get="@Url.Action("ShipmentsQueue", "Orders")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewShipments")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("ReturnFollowUp")</div>
+                                    <div class="small text-muted mt-1">@T.T("StartReturnRefund")</div>
+                                </div>
+                                <span class="@ReturnQueueOpsHealthBadgeClass(Model.Summary.ReturnFollowUpCount == 0)">@Model.Summary.ReturnFollowUpCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("ReviewRefunds")</div>
+                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                <a asp-action="ReturnsQueue" asp-route-filter="FollowUp" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "FollowUp" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.FollowUp ? "btn-warning" : "btn-outline-warning")">@T.T("ReturnFollowUp")</a>
+                                <a asp-controller="Billing" asp-action="Refunds" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewRefunds")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("CarrierReview")</div>
+                                    <div class="small text-muted mt-1">@T.T("ShipmentsQueue")</div>
+                                </div>
+                                <span class="@ReturnQueueOpsHealthBadgeClass(Model.Summary.CarrierReviewCount == 0)">@Model.Summary.CarrierReviewCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("ReviewShipments")</div>
+                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                <a asp-action="ReturnsQueue" asp-route-filter="CarrierReview" hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "CarrierReview" })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm @(Model.Filter == Darwin.WebAdmin.ViewModels.Orders.ReturnQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">@T.T("CarrierReview")</a>
+                                <a asp-action="ShipmentsQueue" hx-get="@Url.Action("ShipmentsQueue", "Orders")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewShipments")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("RefundPath")</div>
+                                    <div class="small text-muted mt-1">@T.T("StartReturnRefund")</div>
+                                </div>
+                                <span class="@ReturnQueueOpsHealthBadgeClass(returnQueueRefundReadyCount == Model.Summary.ReturnedCount)">@returnQueueRefundReadyCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("RefundQueue")</div>
+                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                <a asp-controller="Billing" asp-action="Refunds" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("RefundQueue")</a>
+                                @if (returnQueueDefaultRefundItem?.DefaultRefundPaymentId.HasValue == true)
+                                {
+                                    <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@returnQueueDefaultRefundItem.OrderId" asp-route-paymentId="@returnQueueDefaultRefundItem.DefaultRefundPaymentId" hx-get="@Url.Action("AddRefund", "Orders", new { orderId = returnQueueDefaultRefundItem.OrderId, paymentId = returnQueueDefaultRefundItem.DefaultRefundPaymentId })" hx-target="#returns-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">@T.T("StartReturnRefund")</a>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-dark" disabled>@T.T("StartReturnRefund")</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-md-4">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("ReturnedShipments")</div>
@@ -118,6 +238,9 @@
             {
                 foreach (var item in Model.Items)
                 {
+                    var needsCarrierConfigFollowUp = item.NeedsCarrierReview || !string.IsNullOrWhiteSpace(item.ExceptionNote);
+                    var needsRefundPathFollowUp = item.NeedsReturnFollowUp || !item.HasRefundablePayment;
+                    var needsShipmentQueueFollowUp = item.NeedsCarrierReview || string.IsNullOrWhiteSpace(item.TrackingNumber);
                     <tr>
                         <td>
                             <div class="fw-semibold">@item.OrderNumber</div>
@@ -149,21 +272,21 @@
                             }
                         </td>
                         <td>
-                            <div>@string.Format(T.T("CreatedUtcValue"), item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm"))</div>
+                            <div>@string.Format(T.T("CreatedUtcValue"), OrderDateTimeText(item.CreatedAtUtc))</div>
                             @if (item.LastCarrierEventAtUtc.HasValue)
                             {
-                                <div class="small text-muted">@string.Format(T.T("LastCarrierEventAtUtc"), item.LastCarrierEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm"))</div>
+                                <div class="small text-muted">@string.Format(T.T("LastCarrierEventAtUtc"), OrderDateTimeText(item.LastCarrierEventAtUtc))</div>
                             }
                         </td>
                         <td class="text-end">
-                            <div class="btn-group btn-group-sm">
+                            <div class="d-flex justify-content-end gap-2 flex-wrap">
                                 <a asp-action="Details"
                                    asp-route-id="@item.OrderId"
                                    hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })"
                                    hx-target="#returns-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true"
-                                   class="btn btn-outline-primary">@T.T("View")</a>
+                                    class="btn btn-outline-primary">@T.T("View")</a>
                                 <a asp-controller="Billing"
                                    asp-action="Refunds"
                                    asp-route-q="@item.OrderNumber"
@@ -171,7 +294,56 @@
                                    hx-target="#returns-queue-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true"
-                                   class="btn btn-outline-secondary">@T.T("ReviewRefunds")</a>
+                                    class="btn btn-outline-secondary">@T.T("ReviewRefunds")</a>
+                                @if (needsShipmentQueueFollowUp)
+                                {
+                                    <a asp-action="ShipmentsQueue"
+                                       asp-route-filter="CarrierReview"
+                                       hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "CarrierReview" })"
+                                       hx-target="#returns-queue-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true"
+                                       class="btn btn-outline-danger">@T.T("CarrierReview")</a>
+                                }
+                                @if (string.IsNullOrWhiteSpace(item.TrackingNumber))
+                                {
+                                    <a asp-action="ShipmentsQueue"
+                                       asp-route-filter="TrackingOverdue"
+                                       hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "TrackingOverdue" })"
+                                       hx-target="#returns-queue-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true"
+                                       class="btn btn-outline-danger">@T.T("TrackingOverdue")</a>
+                                }
+                                @if (needsCarrierConfigFollowUp)
+                                {
+                                    <a asp-controller="SiteSettings"
+                                       asp-action="Edit"
+                                       asp-fragment="site-settings-shipping"
+                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                                       hx-target="#returns-queue-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true"
+                                       class="btn btn-outline-secondary">@T.T("ShippingSettings")</a>
+                                    <a asp-controller="ShippingMethods"
+                                       asp-action="Index"
+                                       asp-route-filter="Dhl"
+                                       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                                       hx-target="#returns-queue-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true"
+                                       class="btn btn-outline-secondary">@T.T("ShippingMethods")</a>
+                                }
+                                @if (needsRefundPathFollowUp)
+                                {
+                                    <a asp-action="ReturnsQueue"
+                                       asp-route-filter="FollowUp"
+                                       hx-get="@Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter = "FollowUp" })"
+                                       hx-target="#returns-queue-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true"
+                                       class="btn btn-outline-warning">@T.T("ReturnFollowUp")</a>
+                                }
                                 @if (item.DefaultRefundPaymentId.HasValue)
                                 {
                                     <a asp-action="AddRefund"

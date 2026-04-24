@@ -1,14 +1,176 @@
+@using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.CRM.InvoiceEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     string LocalizeCrmInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
     var invoiceStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
+    string CrmInvoiceEditorOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string CrmInvoiceEditorOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var crmInvoiceEditorVatGap = Model.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(Model.CustomerVatId);
+    var crmInvoiceEditorHasRefundPressure = Model.RefundedAmountMinor > 0;
+    var crmInvoiceEditorNeedsCollectionFollowUp = Model.BalanceMinor > 0 || Model.Status == Darwin.Domain.Enums.InvoiceStatus.Open;
+    var crmInvoiceEditorNeedsPendingPaymentFollowUp =
+        Model.PaymentId.HasValue &&
+        Model.BalanceMinor > 0 &&
+        Model.Status != Darwin.Domain.Enums.InvoiceStatus.Paid;
+    var crmInvoiceEditorNeedsUnlinkedPaymentFollowUp =
+        !Model.PaymentId.HasValue &&
+        Model.BalanceMinor > 0;
+    var crmInvoiceEditorNeedsRefundedPaymentFollowUp =
+        Model.PaymentId.HasValue &&
+        Model.RefundedAmountMinor > 0;
+    var crmInvoiceEditorComplianceAttention = (crmInvoiceEditorVatGap ? 1 : 0)
+        + (!Model.TaxPolicy.ArchiveReadinessComplete ? 1 : 0)
+        + (!Model.TaxPolicy.EInvoiceBaselineReady ? 1 : 0)
+        + (Model.BalanceMinor > 0 ? 1 : 0);
 }
 
 <div id="crm-invoice-editor-shell">
     <h1 class="mb-3">@T.T("EditInvoice")</h1>
     <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="badge @CrmInvoiceEditorOpsHealthBadgeClass(crmInvoiceEditorComplianceAttention == 0)">@CrmInvoiceEditorOpsHealthBadgeText(crmInvoiceEditorComplianceAttention == 0)</span>
+                        <span class="badge @CrmInvoiceEditorOpsHealthBadgeClass(Model.TaxPolicy.ArchiveReadinessComplete && Model.TaxPolicy.EInvoiceBaselineReady)">@CrmInvoiceEditorOpsHealthBadgeText(Model.TaxPolicy.ArchiveReadinessComplete && Model.TaxPolicy.EInvoiceBaselineReady)</span>
+                    </div>
+                    <h2 class="h5 mb-1">@T.T("EditInvoice")</h2>
+                    <p class="text-muted mb-0">@T.T("InvoiceFollowUpWorkspaceNote")</p>
+                </div>
+                <div class="text-md-end">
+                    <div class="small text-muted">@T.T("NeedsAttention")</div>
+                    <div class="fs-4 fw-semibold">@crmInvoiceEditorComplianceAttention</div>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span class="text-muted small">@T.T("VatIdMissing")</span>
+                            <span class="badge @CrmInvoiceEditorOpsHealthBadgeClass(!crmInvoiceEditorVatGap)">@(crmInvoiceEditorVatGap ? 1 : 0)</span>
+                        </div>
+                        <p class="small text-muted mb-3">@T.T("CustomerTaxProfile")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if (Model.CustomerId.HasValue)
+                            {
+                                <a asp-action="EditCustomer"
+                                   asp-route-id="@Model.CustomerId.Value"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("EditCustomer", "Crm", new { id = Model.CustomerId.Value })"
+                                   hx-target="#crm-invoice-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("FixVatId")</a>
+                            }
+                            <a asp-controller="Billing"
+                               asp-action="TaxCompliance"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("TaxCompliance", "Billing")"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("TaxComplianceTitle")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span class="text-muted small">@T.T("ArchiveReadiness")</span>
+                            <span class="badge @CrmInvoiceEditorOpsHealthBadgeClass(Model.TaxPolicy.ArchiveReadinessComplete)">@(!Model.TaxPolicy.ArchiveReadinessComplete ? 1 : 0)</span>
+                        </div>
+                        <p class="small text-muted mb-3">@T.T("OpenTaxSettings")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-controller="SiteSettings"
+                               asp-action="Edit"
+                               asp-fragment="site-settings-tax"
+                               class="btn btn-sm btn-outline-warning"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("CompleteIssuerData")</a>
+                            <a asp-controller="Billing"
+                               asp-action="TaxCompliance"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("TaxCompliance", "Billing")"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Open")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span class="text-muted small">@T.T("EInvoiceBaseline")</span>
+                            <span class="badge @CrmInvoiceEditorOpsHealthBadgeClass(Model.TaxPolicy.EInvoiceBaselineReady)">@(!Model.TaxPolicy.EInvoiceBaselineReady ? 1 : 0)</span>
+                        </div>
+                        <p class="small text-muted mb-3">@T.T("ReviewEInvoiceBaseline")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-controller="SiteSettings"
+                               asp-action="Edit"
+                               asp-fragment="site-settings-tax"
+                               class="btn btn-sm btn-outline-danger"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("ReviewEInvoiceBaseline")</a>
+                            <a asp-controller="Billing"
+                               asp-action="TaxCompliance"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("TaxCompliance", "Billing")"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("TaxComplianceTitle")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span class="text-muted small">@T.T("OpenBalance")</span>
+                            <span class="badge @CrmInvoiceEditorOpsHealthBadgeClass(Model.BalanceMinor <= 0)">@(Model.BalanceMinor > 0 ? 1 : 0)</span>
+                        </div>
+                        <p class="small text-muted mb-3">@T.T("ReviewPaymentTrail")</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if (Model.OrderId.HasValue)
+                            {
+                                <a asp-controller="Orders"
+                                   asp-action="Details"
+                                   asp-route-id="@Model.OrderId.Value"
+                                   asp-fragment="payments"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId.Value, fragment = "payments" })"
+                                   hx-target="#crm-invoice-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("ReviewPaymentTrail")</a>
+                            }
+                            @if (Model.PaymentId.HasValue)
+                            {
+                                <a asp-controller="Billing"
+                                   asp-action="EditPayment"
+                                   asp-route-id="@Model.PaymentId.Value"
+                                   class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("EditPayment", "Billing", new { id = Model.PaymentId.Value })"
+                                   hx-target="#crm-invoice-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("Payments")</a>
+                            }
+                            <a asp-controller="Billing"
+                               asp-action="Payments"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Payments", "Billing")"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Payments")</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="alert alert-light border mb-3">
         <div class="row g-2 small">
@@ -180,6 +342,78 @@
                        hx-push-url="true">
                         <i class="fa fa-list"></i> @T.T("RelatedInvoices")
                     </a>
+                    @if (crmInvoiceEditorNeedsCollectionFollowUp)
+                    {
+                        <a asp-controller="Billing"
+                           asp-action="Payments"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-money-bill-wave"></i> @T.T("Payments")
+                        </a>
+                    }
+                    @if (crmInvoiceEditorNeedsPendingPaymentFollowUp)
+                    {
+                        <a asp-controller="Billing"
+                           asp-action="Payments"
+                           asp-route-queue="@PaymentQueueFilter.Pending"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Pending })"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-hourglass-half"></i> @T.T("Pending")
+                        </a>
+                    }
+                    @if (crmInvoiceEditorNeedsUnlinkedPaymentFollowUp)
+                    {
+                        <a asp-controller="Billing"
+                           asp-action="Payments"
+                           asp-route-queue="@PaymentQueueFilter.Unlinked"
+                           class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Unlinked })"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-link-slash"></i> @T.T("Unlinked")
+                        </a>
+                    }
+                    @if (crmInvoiceEditorHasRefundPressure)
+                    {
+                        <a asp-controller="Billing"
+                           asp-action="Refunds"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("Refunds", "Billing")"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-rotate-left"></i> @T.T("RefundQueueTitle")
+                        </a>
+                    }
+                    @if (crmInvoiceEditorNeedsRefundedPaymentFollowUp)
+                    {
+                        <a asp-controller="Billing"
+                           asp-action="Payments"
+                           asp-route-queue="@PaymentQueueFilter.Refunded"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Refunded })"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            <i class="fa fa-rotate-left"></i> @T.T("Refunded")
+                        </a>
+                    }
+                    <a asp-controller="Billing"
+                       asp-action="TaxCompliance"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("TaxCompliance", "Billing")"
+                       hx-target="#crm-invoice-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <i class="fa fa-scale-balanced"></i> @T.T("TaxComplianceTitle")
+                    </a>
                 </div>
             </div>
         </div>
@@ -300,6 +534,78 @@
                                 @T.T("CompleteIssuerData")
                             </a>
                         }
+                        @if (crmInvoiceEditorNeedsCollectionFollowUp)
+                        {
+                            <a asp-controller="Billing"
+                               asp-action="Payments"
+                               class="btn btn-sm btn-outline-warning"
+                               hx-get="@Url.Action("Payments", "Billing")"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                @T.T("Payments")
+                            </a>
+                        }
+                        @if (crmInvoiceEditorNeedsPendingPaymentFollowUp)
+                        {
+                            <a asp-controller="Billing"
+                               asp-action="Payments"
+                               asp-route-queue="@PaymentQueueFilter.Pending"
+                               class="btn btn-sm btn-outline-warning"
+                               hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Pending })"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                @T.T("Pending")
+                            </a>
+                        }
+                        @if (crmInvoiceEditorNeedsUnlinkedPaymentFollowUp)
+                        {
+                            <a asp-controller="Billing"
+                               asp-action="Payments"
+                               asp-route-queue="@PaymentQueueFilter.Unlinked"
+                               class="btn btn-sm btn-outline-dark"
+                               hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Unlinked })"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                @T.T("Unlinked")
+                            </a>
+                        }
+                        @if (crmInvoiceEditorHasRefundPressure)
+                        {
+                            <a asp-controller="Billing"
+                               asp-action="Refunds"
+                               class="btn btn-sm btn-outline-danger"
+                               hx-get="@Url.Action("Refunds", "Billing")"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                @T.T("RefundQueueTitle")
+                            </a>
+                        }
+                        @if (crmInvoiceEditorNeedsRefundedPaymentFollowUp)
+                        {
+                            <a asp-controller="Billing"
+                               asp-action="Payments"
+                               asp-route-queue="@PaymentQueueFilter.Refunded"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Refunded })"
+                               hx-target="#crm-invoice-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
+                                @T.T("Refunded")
+                            </a>
+                        }
+                        <a asp-controller="Billing"
+                           asp-action="TaxCompliance"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("TaxCompliance", "Billing")"
+                           hx-target="#crm-invoice-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
+                            @T.T("OpenTaxCompliance")
+                        </a>
                     </div>
                 </div>
             </div>

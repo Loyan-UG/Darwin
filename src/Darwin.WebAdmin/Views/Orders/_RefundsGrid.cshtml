@@ -1,7 +1,18 @@
 @model Darwin.WebAdmin.ViewModels.Orders.OrderRefundsPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
+    var orderCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeRefundStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string OrderDateTimeText(DateTime? utc) => utc?.ToString("g", orderCulture) ?? "-";
+    string OrderRefundOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string OrderRefundOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var orderRefundPendingCount = Model.Items.Count(item => item.Status == Darwin.Domain.Enums.RefundStatus.Pending);
+    var orderRefundCompletedCount = Model.Items.Count(item => item.Status == Darwin.Domain.Enums.RefundStatus.Completed);
+    var orderRefundReturnedShipmentCount = Model.ReturnedShipmentCount;
+    var orderRefundProviderFollowUpCount = Model.Items.Count(item => string.IsNullOrWhiteSpace(item.PaymentProviderReference) || item.PaymentStatus == Darwin.Domain.Enums.PaymentStatus.Failed);
+    var orderRefundAttentionCount = orderRefundPendingCount + orderRefundReturnedShipmentCount + orderRefundProviderFollowUpCount;
 }
 
 <div id="refunds-grid-content"
@@ -9,6 +20,117 @@
      hx-target="this"
      hx-swap="outerHTML"
      hx-push-url="false">
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div class="fw-semibold">@T.T("Refund")</div>
+                        <span class="@OrderRefundOpsHealthBadgeClass(orderRefundAttentionCount == 0)">@OrderRefundOpsHealthBadgeText(orderRefundAttentionCount == 0)</span>
+                    </div>
+                    <div class="small text-muted mt-2">
+                        @T.T("ReturnedShipments")
+                        @if (orderRefundAttentionCount > 0)
+                        {
+                            <span class="ms-1">@T.T("NeedsAttention"): @orderRefundAttentionCount</span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    @if (Model.DefaultRefundPaymentId.HasValue)
+                    {
+                        <a asp-controller="Orders"
+                           asp-action="AddRefund"
+                           asp-route-orderId="@Model.OrderId"
+                           asp-route-paymentId="@Model.DefaultRefundPaymentId"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })"
+                           hx-target="#order-operation-shell"
+                           hx-swap="innerHTML"
+                           hx-push-url="false">@T.T("Refund")</a>
+                    }
+                    <a asp-controller="Billing"
+                       asp-action="Refunds"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Refunds", "Billing")"
+                       hx-target="#order-operation-shell"
+                       hx-swap="innerHTML"
+                       hx-push-url="false">@T.T("Refunds")</a>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("Pending")</div>
+                                <div class="small text-muted mt-1">@T.T("Refund")</div>
+                            </div>
+                            <span class="@OrderRefundOpsHealthBadgeClass(orderRefundPendingCount == 0)">@orderRefundPendingCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("NeedsAttention")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.RefundQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")">@T.T("Pending")</a>
+                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refunds")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("Completed")</div>
+                                <div class="small text-muted mt-1">@T.T("Refunded")</div>
+                            </div>
+                            <span class="@OrderRefundOpsHealthBadgeClass(orderRefundCompletedCount == 0)">@orderRefundCompletedCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("Payment")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Orders" asp-action="Refunds" asp-route-orderId="@Model.OrderId" asp-route-filter="Completed" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.RefundQueueFilter.Completed ? "btn-success" : "btn-outline-success")">@T.T("Completed")</a>
+                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Payments", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Payment")</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("ReturnedShipments")</div>
+                                <div class="small text-muted mt-1">@T.T("ReviewShipments")</div>
+                            </div>
+                            <span class="@OrderRefundOpsHealthBadgeClass(orderRefundReturnedShipmentCount == 0)">@orderRefundReturnedShipmentCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("ReturnedShipmentFollowUpNote")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="tab" data-bs-target="#shipments">@T.T("ReviewShipments")</button>
+                            @if (Model.DefaultRefundPaymentId.HasValue)
+                            {
+                                <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId" asp-route-paymentId="@Model.DefaultRefundPaymentId" class="btn btn-sm btn-outline-danger" hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("StartReturnRefund")</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">@T.T("Reference")</div>
+                                <div class="small text-muted mt-1">@T.T("Payment")</div>
+                            </div>
+                            <span class="@OrderRefundOpsHealthBadgeClass(orderRefundProviderFollowUpCount == 0)">@orderRefundProviderFollowUpCount</span>
+                        </div>
+                        <div class="small text-muted mt-3">@T.T("Open")</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="Billing" asp-action="Refunds" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Refunds", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Refunds")</a>
+                            <a asp-controller="Billing" asp-action="Payments" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("Payments", "Billing")" hx-target="#order-operation-shell" hx-swap="innerHTML" hx-push-url="false">@T.T("Open")</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <form asp-controller="Orders" asp-action="Refunds" method="get" class="d-flex gap-2 mb-3">
         <input type="hidden" name="orderId" value="@Model.OrderId" />
         <select name="filter" asp-items="Model.FilterItems" class="form-select form-select-sm"></select>
@@ -75,7 +197,7 @@
                             <td>@item.Reason</td>
                             <td class="text-end">@item.Currency @((item.AmountMinor / 100.0M).ToString("0.00"))</td>
                             <td>@LocalizeRefundStatus(item.Status)</td>
-                            <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>@OrderDateTimeText(item.CreatedAtUtc)</td>
                             <td class="text-end">
                                 <a asp-controller="Billing"
                                    asp-action="EditPayment"

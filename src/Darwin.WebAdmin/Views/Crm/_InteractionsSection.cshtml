@@ -1,8 +1,10 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InteractionsPageVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
+    var crmCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeInteractionType(object? type) => type is null ? "-" : T.T(type.ToString() ?? string.Empty);
     string LocalizeInteractionChannel(object? channel) => channel is null ? "-" : T.T(channel.ToString() ?? string.Empty);
+    string CrmDateTimeText(DateTime utc) => utc.ToString("g", crmCulture);
 }
 
 <div hx-boost="true"
@@ -35,7 +37,7 @@
                             <td>@LocalizeInteractionChannel(item.Channel)</td>
                             <td>@item.Subject</td>
                             <td>@item.Content</td>
-                            <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>@CrmDateTimeText(item.CreatedAtUtc)</td>
                         </tr>
                     }
                 }

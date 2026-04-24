@@ -2,7 +2,14 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("CrmLeadsTitle");
+    var crmCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeLeadStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string CrmDateTimeText(DateTime? utc) => utc?.ToString("g", crmCulture) ?? "-";
+    string CrmLeadOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string CrmLeadOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var crmLeadAttentionCount = Model.OpsSummary.UnassignedCount + Model.OpsSummary.UnconvertedCount;
 }
 
 <div id="crm-leads-workspace-shell">
@@ -33,6 +40,108 @@
 </div>
 
 <div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                    <div>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <h2 class="h5 mb-0">@T.T("GoLiveReadiness")</h2>
+                            <span class="@CrmLeadOpsHealthBadgeClass(crmLeadAttentionCount == 0)">@CrmLeadOpsHealthBadgeText(crmLeadAttentionCount == 0)</span>
+                        </div>
+                        <p class="text-muted small mb-0 mt-2">
+                            @T.T("CrmOperatorPlaybooks")
+                            @if (crmLeadAttentionCount > 0)
+                            {
+                                <span class="ms-1">@T.T("NeedsAttention"): @crmLeadAttentionCount</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="CreateLead"
+                           hx-get="@Url.Action("CreateLead", "Crm")"
+                           hx-target="#crm-leads-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true"
+                           class="btn btn-sm btn-outline-primary">@T.T("NewLead")</a>
+                        <a asp-action="Customers"
+                           hx-get="@Url.Action("Customers", "Crm")"
+                           hx-target="#crm-leads-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true"
+                           class="btn btn-sm btn-outline-secondary">@T.T("Customers")</a>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("Qualified")</div>
+                                    <div class="small text-muted mt-1">@T.T("Queue")</div>
+                                </div>
+                                <span class="@CrmLeadOpsHealthBadgeClass(Model.OpsSummary.QualifiedCount > 0)">@Model.OpsSummary.QualifiedCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("CrmLeadQualifiedPlaybookAction")</div>
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <a asp-action="Leads" asp-route-filter="Qualified" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Qualified" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">@T.T("Qualified")</a>
+                                <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Opportunity")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("Unassigned")</div>
+                                    <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                                </div>
+                                <span class="@CrmLeadOpsHealthBadgeClass(Model.OpsSummary.UnassignedCount == 0)">@Model.OpsSummary.UnassignedCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("CrmLeadUnassignedPlaybookAction")</div>
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <a asp-action="Leads" asp-route-filter="Unassigned" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unassigned" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-info">@T.T("Unassigned")</a>
+                                <a asp-action="CreateLead" hx-get="@Url.Action("CreateLead", "Crm")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("NewLead")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("Unconverted")</div>
+                                    <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                                </div>
+                                <span class="@CrmLeadOpsHealthBadgeClass(Model.OpsSummary.UnconvertedCount == 0)">@Model.OpsSummary.UnconvertedCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("CrmLeadUnconvertedPlaybookAction")</div>
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <a asp-action="Leads" asp-route-filter="Unconverted" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query, filter = "Unconverted" })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Unconverted")</a>
+                                <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Customers")</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@T.T("Interactions")</div>
+                                    <div class="small text-muted mt-1">@T.T("Queue")</div>
+                                </div>
+                                <span class="@CrmLeadOpsHealthBadgeClass(Model.OpsSummary.HighInteractionCount > 0)">@Model.OpsSummary.HighInteractionCount</span>
+                            </div>
+                            <div class="small text-muted mt-3">@T.T("CrmNextStep")</div>
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <a asp-action="Leads" hx-get="@Url.Action("Leads", "Crm", new { q = Model.Query })" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">@T.T("Interactions")</a>
+                                <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">@T.T("Opportunity")</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="col-lg-8">
         <div class="row g-3">
             <div class="col-md-4">
@@ -149,7 +258,7 @@
                     <td><span class="badge text-bg-light">@LocalizeLeadStatus(item.Status)</span></td>
                     <td>@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? "-" : item.AssignedToUserDisplayName)</td>
                     <td>@item.InteractionCount</td>
-                    <td>@item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@CrmDateTimeText(item.ModifiedAtUtc)</td>
                     <td class="text-end">
                         @if (item.CustomerId.HasValue)
                         {

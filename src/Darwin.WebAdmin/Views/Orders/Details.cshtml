@@ -3,6 +3,13 @@
 @{
     ViewData["Title"] = T.T("Order") + " " + Model.OrderNumber;
     string LocalizeOrderStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string OrderDetailOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string OrderDetailOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var orderDetailPaymentAttention = Model.Status == Darwin.Domain.Enums.OrderStatus.Created ? 1 : 0;
+    var orderDetailShipmentAttention = Model.Status == Darwin.Domain.Enums.OrderStatus.Paid && string.IsNullOrWhiteSpace(Model.ShippingMethodName) ? 1 : 0;
+    var orderDetailRefundAttention = Model.ReturnSupport.ReturnedShipmentCount + (Model.ReturnSupport.HasRefundablePayment ? 0 : Model.ReturnSupport.CarrierReviewShipmentCount);
+    var orderDetailInvoiceAttention = (!Model.TaxPolicy.ArchiveReadinessComplete ? 1 : 0) + (!Model.TaxPolicy.EInvoiceBaselineReady ? 1 : 0);
+    var orderDetailAttentionCount = orderDetailPaymentAttention + orderDetailShipmentAttention + orderDetailRefundAttention + orderDetailInvoiceAttention;
 }
 
 <div id="order-details-workspace-shell">
@@ -16,6 +23,123 @@
        class="btn btn-outline-secondary">@T.T("BackToOrders")</a>
 </div>
 <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge @OrderDetailOpsHealthBadgeClass(orderDetailAttentionCount == 0)">@OrderDetailOpsHealthBadgeText(orderDetailAttentionCount == 0)</span>
+                    <span class="badge @OrderDetailOpsHealthBadgeClass(Model.TaxPolicy.ArchiveReadinessComplete)">@OrderDetailOpsHealthBadgeText(Model.TaxPolicy.ArchiveReadinessComplete)</span>
+                </div>
+                <h2 class="h5 mb-1">@T.T("Order") @Model.OrderNumber</h2>
+                <p class="text-muted mb-0">@T.T("BackToOrders")</p>
+            </div>
+            <div class="text-md-end">
+                <div class="small text-muted">@T.T("NeedsAttention")</div>
+                <div class="fs-4 fw-semibold">@orderDetailAttentionCount</div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("Payments")</span>
+                        <span class="badge @OrderDetailOpsHealthBadgeClass(orderDetailPaymentAttention == 0)">@orderDetailPaymentAttention</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("PaymentIssues")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-sm btn-outline-danger"
+                                type="button"
+                                data-bs-toggle="tab"
+                                data-bs-target="#payments">
+                            @T.T("Open")
+                        </button>
+                        <a asp-controller="Billing"
+                           asp-action="Payments"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-target="#order-details-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Payments")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("Shipments")</span>
+                        <span class="badge @OrderDetailOpsHealthBadgeClass(orderDetailShipmentAttention == 0)">@orderDetailShipmentAttention</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("FulfillmentAttention")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-sm btn-outline-warning"
+                                type="button"
+                                data-bs-toggle="tab"
+                                data-bs-target="#shipments">
+                            @T.T("Open")
+                        </button>
+                        <a asp-controller="Orders"
+                           asp-action="ShipmentsQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+                           hx-target="#order-details-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ShipmentsQueue")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("Refunds")</span>
+                        <span class="badge @OrderDetailOpsHealthBadgeClass(orderDetailRefundAttention == 0)">@orderDetailRefundAttention</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("ReturnFollowUp")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-sm btn-outline-dark"
+                                type="button"
+                                data-bs-toggle="tab"
+                                data-bs-target="#refunds">
+                            @T.T("Open")
+                        </button>
+                        <a asp-controller="Orders"
+                           asp-action="ReturnsQueue"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("ReturnsQueue", "Orders")"
+                           hx-target="#order-details-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("ReturnsQueueTitle")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("Invoices")</span>
+                        <span class="badge @OrderDetailOpsHealthBadgeClass(orderDetailInvoiceAttention == 0)">@orderDetailInvoiceAttention</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("ReviewInvoices")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-sm btn-outline-secondary"
+                                type="button"
+                                data-bs-toggle="tab"
+                                data-bs-target="#invoices">
+                            @T.T("Open")
+                        </button>
+                        <a asp-controller="Crm"
+                           asp-action="Invoices"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Invoices", "Crm")"
+                           hx-target="#order-details-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Invoice")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="card mb-3">
     <div class="card-body">

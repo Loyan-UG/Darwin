@@ -1,4 +1,5 @@
 @using Darwin.Application.Billing.DTOs
+@using System.Globalization
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
@@ -42,7 +43,240 @@
         "Multiple" => T.T("PaymentProviderEventCorrelationMultiple"),
         _ => T.T("PaymentProviderEventCorrelationProviderReference")
     };
+    string PaymentEditorOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
+    string PaymentEditorOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var paymentEditorProviderReferenceMissing = string.IsNullOrWhiteSpace(Model.ProviderTransactionRef) && string.IsNullOrWhiteSpace(Model.ProviderPaymentIntentRef) && string.IsNullOrWhiteSpace(Model.ProviderCheckoutSessionRef);
+    var paymentEditorHasRefundPressure = Model.RefundedAmountMinor > 0 || Model.Refunds.Count > 0;
+    var paymentEditorNeedsInvoiceFollowUp = Model.InvoiceId.HasValue || Model.InvoiceStatus.HasValue;
+    var paymentEditorNeedsPendingQueueFollowUp =
+        Model.Status == Darwin.Domain.Enums.PaymentStatus.Pending ||
+        Model.NeedsReconciliation;
+    var paymentEditorNeedsUnlinkedQueueFollowUp = !Model.InvoiceId.HasValue;
+    var paymentEditorNeedsRefundedQueueFollowUp = paymentEditorHasRefundPressure;
+    var paymentEditorInvoiceStatus = Model.InvoiceStatus?.ToString();
+    var paymentEditorNeedsOverdueInvoiceFollowUp =
+        Model.InvoiceId.HasValue &&
+        string.Equals(paymentEditorInvoiceStatus, "Overdue", StringComparison.OrdinalIgnoreCase);
+    var paymentEditorNeedsDueSoonInvoiceFollowUp =
+        Model.InvoiceId.HasValue &&
+        string.Equals(paymentEditorInvoiceStatus, "DueSoon", StringComparison.OrdinalIgnoreCase);
+    var paymentEditorNeedsDraftInvoiceFollowUp =
+        Model.InvoiceId.HasValue &&
+        Model.InvoiceStatus == Darwin.Domain.Enums.InvoiceStatus.Draft;
+    var paymentEditorAttentionCount = (paymentEditorProviderReferenceMissing ? 1 : 0)
+        + (Model.NeedsReconciliation ? 1 : 0)
+        + (Model.NeedsDisputeFollowUp ? 1 : 0)
+        + (Model.ProviderEvents.Count == 0 ? 1 : 0);
 }
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge @PaymentEditorOpsHealthBadgeClass(paymentEditorAttentionCount == 0)">@PaymentEditorOpsHealthBadgeText(paymentEditorAttentionCount == 0)</span>
+                    <span class="badge @PaymentEditorOpsHealthBadgeClass(!paymentEditorProviderReferenceMissing)">@PaymentEditorOpsHealthBadgeText(!paymentEditorProviderReferenceMissing)</span>
+                </div>
+                <h2 class="h5 mb-1">@T.T("ReconciliationAndDisputeSnapshot")</h2>
+                <p class="text-muted mb-0">@T.T("PaymentSupportPlaybooks")</p>
+            </div>
+            <div class="text-md-end">
+                <div class="small text-muted">@T.T("NeedsAttention")</div>
+                <div class="fs-4 fw-semibold">@paymentEditorAttentionCount</div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("ProviderRef")</span>
+                        <span class="badge @PaymentEditorOpsHealthBadgeClass(!paymentEditorProviderReferenceMissing)">@(paymentEditorProviderReferenceMissing ? 1 : 0)</span>
+                    </div>
+                    <p class="small text-muted mb-3">@LocalizeProviderReferenceState(Model.ProviderReferenceState)</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Payments"
+                           asp-route-businessId="@Model.BusinessId"
+                           asp-route-queue="@PaymentQueueFilter.MissingProviderRef"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.MissingProviderRef })"
+                           hx-target="#billing-payment-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-action="Webhooks"
+                           asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+                           hx-target="#billing-payment-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("PaymentExceptions")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("NeedsReconciliation")</span>
+                        <span class="badge @PaymentEditorOpsHealthBadgeClass(!Model.NeedsReconciliation)">@(Model.NeedsReconciliation ? 1 : 0)</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("NeedsReconciliationQueue")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Payments"
+                           asp-route-businessId="@Model.BusinessId"
+                           asp-route-queue="@PaymentQueueFilter.NeedsReconciliation"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })"
+                           hx-target="#billing-payment-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-action="Payments"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing")"
+                           hx-target="#billing-payment-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Payments")</a>
+                        @if (paymentEditorNeedsPendingQueueFollowUp)
+                        {
+                            <a asp-action="Payments"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-queue="@PaymentQueueFilter.Pending"
+                               class="btn btn-sm btn-outline-warning"
+                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Pending })"
+                               hx-target="#billing-payment-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Pending")</a>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("DisputeFollowUp")</span>
+                        <span class="badge @PaymentEditorOpsHealthBadgeClass(!Model.NeedsDisputeFollowUp)">@(Model.NeedsDisputeFollowUp ? 1 : 0)</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("DisputeSignals")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="Payments"
+                           asp-route-businessId="@Model.BusinessId"
+                           asp-route-queue="@PaymentQueueFilter.DisputeFollowUp"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })"
+                           hx-target="#billing-payment-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Open")</a>
+                        <a asp-action="Webhooks"
+                           asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+                           hx-target="#billing-payment-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("DisputeSignals")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <span class="text-muted small">@T.T("OpenTaxCompliance")</span>
+                        <span class="badge @PaymentEditorOpsHealthBadgeClass(Model.InvoiceId.HasValue)">@(Model.InvoiceId.HasValue ? 0 : 1)</span>
+                    </div>
+                    <p class="small text-muted mb-3">@T.T("WebhookExceptions")</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-action="TaxCompliance"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("TaxCompliance", "Billing")"
+                           hx-target="#billing-payment-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("OpenTaxCompliance")</a>
+                        @if (paymentEditorHasRefundPressure)
+                        {
+                            <a asp-action="Refunds"
+                               asp-route-businessId="@Model.BusinessId"
+                               class="btn btn-sm btn-outline-danger"
+                               hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId })"
+                               hx-target="#billing-payment-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("RefundQueueTitle")</a>
+                        }
+                        @if (paymentEditorNeedsRefundedQueueFollowUp)
+                        {
+                            <a asp-action="Payments"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-queue="@PaymentQueueFilter.Refunded"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Refunded })"
+                               hx-target="#billing-payment-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Refunded")</a>
+                        }
+                        @if (paymentEditorNeedsInvoiceFollowUp && Model.InvoiceId.HasValue)
+                        {
+                            <a asp-controller="Crm"
+                               asp-action="EditInvoice"
+                               asp-route-id="@Model.InvoiceId.Value"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("EditInvoice", "Crm", new { id = Model.InvoiceId.Value })"
+                               hx-target="#billing-payment-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Invoices")</a>
+                            @if (paymentEditorNeedsOverdueInvoiceFollowUp)
+                            {
+                                <a asp-controller="Crm"
+                                   asp-action="Invoices"
+                                   asp-route-filter="Overdue"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("Invoices", "Crm", new { filter = "Overdue" })"
+                                   hx-target="#billing-payment-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("Overdue")</a>
+                            }
+                            @if (paymentEditorNeedsDueSoonInvoiceFollowUp)
+                            {
+                                <a asp-controller="Crm"
+                                   asp-action="Invoices"
+                                   asp-route-filter="DueSoon"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("Invoices", "Crm", new { filter = "DueSoon" })"
+                                   hx-target="#billing-payment-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("DueSoon")</a>
+                            }
+                            @if (paymentEditorNeedsDraftInvoiceFollowUp)
+                            {
+                                <a asp-controller="Crm"
+                                   asp-action="Invoices"
+                                   asp-route-filter="Draft"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Invoices", "Crm", new { filter = "Draft" })"
+                                   hx-target="#billing-payment-editor-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("Draft")</a>
+                            }
+                        }
+                        @if (paymentEditorNeedsUnlinkedQueueFollowUp)
+                        {
+                            <a asp-action="Payments"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-queue="@PaymentQueueFilter.Unlinked"
+                               class="btn btn-sm btn-outline-dark"
+                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Unlinked })"
+                               hx-target="#billing-payment-editor-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Unlinked")</a>
+                        }
+                        <a asp-action="Webhooks"
+                           asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+                           hx-target="#billing-payment-editor-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("WebhookExceptions")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @if (Model.OrderId.HasValue || Model.InvoiceId.HasValue || Model.CustomerId.HasValue || Model.UserId.HasValue)
 {
@@ -65,7 +299,17 @@
             @if (Model.InvoiceId.HasValue)
             {
                 <div class="col-md-6">
-                    <strong>@T.T("Invoice"):</strong> <code>@Model.InvoiceId</code>
+                    <strong>@T.T("Invoice"):</strong>
+                    <a asp-controller="Crm"
+                       asp-action="EditInvoice"
+                       asp-route-id="@Model.InvoiceId.Value"
+                       class="text-decoration-none"
+                       hx-get="@Url.Action("EditInvoice", "Crm", new { id = Model.InvoiceId.Value })"
+                       hx-target="#billing-payment-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        <code>@Model.InvoiceId</code>
+                    </a>
                     @if (Model.InvoiceStatus.HasValue)
                     {
                         <span class="text-muted">(@LocalizeInvoiceStatus(Model.InvoiceStatus))</span>
@@ -116,14 +360,14 @@
             <div class="card-body py-3">
                 <div class="small text-uppercase text-muted fw-semibold">@T.T("Lifecycle")</div>
                 <div class="fs-5">@LocalizePaymentStatus(Model.Status)</div>
-                <div class="small text-muted mt-1">@T.T("Created") @Model.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                <div class="small text-muted mt-1">@T.T("Created") @Model.CreatedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
                 @if (Model.PaidAtUtc.HasValue)
                 {
-                    <div class="small">@T.T("Paid") @Model.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div class="small">@T.T("Paid") @Model.PaidAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
                 }
                 @if (Model.LastFinancialEventAtUtc.HasValue)
                 {
-                    <div class="small">@T.T("LastEvent") @Model.LastFinancialEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div class="small">@T.T("LastEvent") @Model.LastFinancialEventAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
                 }
                 @if (Model.IsStripe)
                 {
@@ -245,6 +489,72 @@
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("OpenOrderPayments")</a>
             }
+            @if (paymentEditorHasRefundPressure)
+            {
+                <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-danger"
+                   hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId })"
+                   hx-target="#billing-payment-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("RefundQueueTitle")</a>
+                <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Refunded" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Refunded })"
+                   hx-target="#billing-payment-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Refunded")</a>
+            }
+            @if (paymentEditorNeedsPendingQueueFollowUp)
+            {
+                <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Pending" class="btn btn-sm btn-outline-warning"
+                   hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Pending })"
+                   hx-target="#billing-payment-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Pending")</a>
+            }
+            @if (paymentEditorNeedsUnlinkedQueueFollowUp)
+            {
+                <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Unlinked" class="btn btn-sm btn-outline-dark"
+                   hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Unlinked })"
+                   hx-target="#billing-payment-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Unlinked")</a>
+            }
+            @if (paymentEditorNeedsInvoiceFollowUp && Model.InvoiceId.HasValue)
+            {
+                <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@Model.InvoiceId.Value" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("EditInvoice", "Crm", new { id = Model.InvoiceId.Value })"
+                   hx-target="#billing-payment-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Invoices")</a>
+                @if (paymentEditorNeedsOverdueInvoiceFollowUp)
+                {
+                    <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="Overdue" class="btn btn-sm btn-outline-warning"
+                       hx-get="@Url.Action("Invoices", "Crm", new { filter = "Overdue" })"
+                       hx-target="#billing-payment-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("Overdue")</a>
+                }
+                @if (paymentEditorNeedsDueSoonInvoiceFollowUp)
+                {
+                    <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="DueSoon" class="btn btn-sm btn-outline-warning"
+                       hx-get="@Url.Action("Invoices", "Crm", new { filter = "DueSoon" })"
+                       hx-target="#billing-payment-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("DueSoon")</a>
+                }
+                @if (paymentEditorNeedsDraftInvoiceFollowUp)
+                {
+                    <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="Draft" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Invoices", "Crm", new { filter = "Draft" })"
+                       hx-target="#billing-payment-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("Draft")</a>
+                }
+            }
+            <a asp-action="TaxCompliance" class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("TaxCompliance", "Billing")"
+               hx-target="#billing-payment-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">@T.T("OpenTaxCompliance")</a>
         </div>
     </div>
 </div>
@@ -275,7 +585,7 @@
                     @foreach (var item in Model.ProviderEvents)
                     {
                         <tr>
-                            <td>@item.OccurredAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@item.OccurredAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
                             <td>@LocalizeProviderEventType(item.EventType)</td>
                             <td>
                                 <div>@LocalizeProviderEventCorrelation(item.CorrelationKind)</div>
@@ -359,10 +669,10 @@
                     {
                         <tr>
                             <td>
-                                <div>@refund.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                                        <div>@refund.CreatedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
                                 @if (refund.CompletedAtUtc.HasValue)
                                 {
-                                    <div class="small text-muted">@T.T("Completed") @refund.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                            <div class="small text-muted">@T.T("Completed") @refund.CompletedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
                                 }
                             </td>
                             <td>@refund.Reason</td>

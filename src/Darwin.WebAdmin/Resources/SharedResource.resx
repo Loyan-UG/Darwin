@@ -450,6 +450,9 @@
   <data name="UsersLifecycleLockedBadge" xml:space="preserve">
     <value>Locked</value>
   </data>
+  <data name="UsersLifecycleInactiveBadge" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
   <data name="UsersLifecycleMobileBadge" xml:space="preserve">
     <value>Mobile {0}</value>
   </data>
@@ -506,6 +509,18 @@
   </data>
   <data name="UsersPlaybookLockedFollowUp" xml:space="preserve">
     <value>If the lockout was triggered by security concerns, rotate the password or review recent auth flows.</value>
+  </data>
+  <data name="UsersPlaybookInactiveTitle" xml:space="preserve">
+    <value>Inactive accounts</value>
+  </data>
+  <data name="UsersPlaybookInactiveScope" xml:space="preserve">
+    <value>Inactive users stay outside sign-in, onboarding, and member-support flows even when their profile data still looks healthy.</value>
+  </data>
+  <data name="UsersPlaybookInactiveAction" xml:space="preserve">
+    <value>Confirm whether the inactive state is intentional, then reactivate from the queue once the account should re-enter support flows.</value>
+  </data>
+  <data name="UsersPlaybookInactiveFollowUp" xml:space="preserve">
+    <value>Use the user editor if the operator still needs profile or role review before reactivating the account.</value>
   </data>
   <data name="UsersPlaybookMobileLinkedTitle" xml:space="preserve">
     <value>Mobile-linked accounts</value>
@@ -669,11 +684,32 @@
   <data name="UserSendResetEmailAction" xml:space="preserve">
     <value>Send Reset Email</value>
   </data>
+  <data name="UsersConfirmEmailAction" xml:space="preserve">
+    <value>Confirm Email</value>
+  </data>
+  <data name="UsersActivateAction" xml:space="preserve">
+    <value>Activate</value>
+  </data>
+  <data name="UsersDeactivateAction" xml:space="preserve">
+    <value>Deactivate</value>
+  </data>
   <data name="UserUnlockAccountAction" xml:space="preserve">
     <value>Unlock Account</value>
   </data>
   <data name="UserLockAccountAction" xml:space="preserve">
     <value>Lock Account</value>
+  </data>
+  <data name="UserActivatedMessage" xml:space="preserve">
+    <value>User activated.</value>
+  </data>
+  <data name="UserActivationFailedMessage" xml:space="preserve">
+    <value>User could not be activated right now. Refresh and try again.</value>
+  </data>
+  <data name="UserDeactivatedMessage" xml:space="preserve">
+    <value>User deactivated.</value>
+  </data>
+  <data name="UserDeactivationFailedMessage" xml:space="preserve">
+    <value>User could not be deactivated right now. Refresh and try again.</value>
   </data>
   <data name="AddressesTitle" xml:space="preserve">
     <value>Addresses</value>

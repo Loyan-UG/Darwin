@@ -2,7 +2,14 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("PurchaseOrders");
+    var inventoryCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizePurchaseOrderStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string InventoryDateTimeText(DateTime utc) => utc.ToString("g", inventoryCulture);
+    string PurchaseOrderOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string PurchaseOrderOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var purchaseOrderAttentionCount = Model.Summary.DraftCount + Model.Summary.IssuedCount;
 }
 
 <div id="inventory-purchase-orders-workspace-shell">
@@ -89,6 +96,137 @@
     </div>
 </div>
 
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h2 class="h5 mb-0">@T.T("GoLiveReadiness")</h2>
+                    <span class="@PurchaseOrderOpsHealthBadgeClass(purchaseOrderAttentionCount == 0)">@PurchaseOrderOpsHealthBadgeText(purchaseOrderAttentionCount == 0)</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    @T.T("PurchaseOrderOpsPlaybooks")
+                    @if (purchaseOrderAttentionCount > 0)
+                    {
+                        <span class="ms-1">@T.T("NeedsAttention"): @purchaseOrderAttentionCount</span>
+                    }
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="CreatePurchaseOrder" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("CreatePurchaseOrder", "Inventory", new { businessId = Model.BusinessId })"
+                   hx-target="#inventory-purchase-orders-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("NewPurchaseOrder")</a>
+                <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="HasPurchaseOrders" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, filter = "HasPurchaseOrders" })"
+                   hx-target="#inventory-purchase-orders-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Suppliers")</a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Draft")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@PurchaseOrderOpsHealthBadgeClass(Model.Summary.DraftCount == 0)">@Model.Summary.DraftCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryPurchaseOrdersPlaybookDraftAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Draft" class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Draft" })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Draft")</a>
+                        <a asp-action="CreatePurchaseOrder" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("CreatePurchaseOrder", "Inventory", new { businessId = Model.BusinessId })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("NewPurchaseOrder")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Issued")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@PurchaseOrderOpsHealthBadgeClass(Model.Summary.IssuedCount == 0)">@Model.Summary.IssuedCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryPurchaseOrdersPlaybookIssuedAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Issued" class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Issued" })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Issued")</a>
+                        <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="HasPurchaseOrders" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, filter = "HasPurchaseOrders" })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Suppliers")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Received")</div>
+                            <div class="small text-muted mt-1">@T.T("Queue")</div>
+                        </div>
+                        <span class="@PurchaseOrderOpsHealthBadgeClass(Model.Summary.ReceivedCount > 0)">@Model.Summary.ReceivedCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryPurchaseOrdersPlaybookIssuedScope")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Received" class="btn btn-sm btn-outline-success"
+                           hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Received" })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Received")</a>
+                        <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="HasPurchaseOrders" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, filter = "HasPurchaseOrders" })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Suppliers")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Suppliers")</div>
+                            <div class="small text-muted mt-1">@T.T("HasPurchaseOrders")</div>
+                        </div>
+                        <span class="@PurchaseOrderOpsHealthBadgeClass(Model.Summary.TotalCount == 0)">@Model.Summary.TotalCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryPurchaseOrdersPlaybookDraftScope")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="HasPurchaseOrders" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId, filter = "HasPurchaseOrders" })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Suppliers")</a>
+                        <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("PurchaseOrders")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (Model.Playbooks.Count > 0)
 {
     <div class="card mb-4">
@@ -147,7 +285,7 @@
                         }
                     </td>
                     <td>@item.LineCount</td>
-                    <td>@item.OrderedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@InventoryDateTimeText(item.OrderedAtUtc)</td>
                     <td class="text-end"><a asp-action="EditPurchaseOrder" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditPurchaseOrder", "Inventory", new { id = item.Id })"
                            hx-target="#inventory-purchase-orders-workspace-shell"

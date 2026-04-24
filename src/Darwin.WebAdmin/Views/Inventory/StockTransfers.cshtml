@@ -2,7 +2,14 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("StockTransfersTitle");
+    var inventoryCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LocalizeStockTransferStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string InventoryDateTimeText(DateTime utc) => utc.ToString("g", inventoryCulture);
+    string StockTransferOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string StockTransferOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var stockTransferAttentionCount = Model.Summary.DraftCount + Model.Summary.InTransitCount;
 }
 
 <div id="inventory-stock-transfers-workspace-shell">
@@ -90,6 +97,137 @@
     </div>
 </div>
 
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h2 class="h5 mb-0">@T.T("GoLiveReadiness")</h2>
+                    <span class="@StockTransferOpsHealthBadgeClass(stockTransferAttentionCount == 0)">@StockTransferOpsHealthBadgeText(stockTransferAttentionCount == 0)</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    @T.T("StockTransferOpsPlaybooks")
+                    @if (stockTransferAttentionCount > 0)
+                    {
+                        <span class="ms-1">@T.T("NeedsAttention"): @stockTransferAttentionCount</span>
+                    }
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="CreateStockTransfer" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("CreateStockTransfer", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                   hx-target="#inventory-stock-transfers-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("NewTransfer")</a>
+                <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                   hx-target="#inventory-stock-transfers-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("StockLevels")</a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Draft")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@StockTransferOpsHealthBadgeClass(Model.Summary.DraftCount == 0)">@Model.Summary.DraftCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryTransfersPlaybookDraftAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Draft" class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Draft" })"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Draft")</a>
+                        <a asp-action="CreateStockTransfer" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("CreateStockTransfer", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("NewTransfer")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("InTransit")</div>
+                            <div class="small text-muted mt-1">@T.T("NeedsAttention")</div>
+                        </div>
+                        <span class="@StockTransferOpsHealthBadgeClass(Model.Summary.InTransitCount == 0)">@Model.Summary.InTransitCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryTransfersPlaybookInTransitAction")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="InTransit" class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "InTransit" })"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("InTransit")</a>
+                        <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StockLevels")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("Completed")</div>
+                            <div class="small text-muted mt-1">@T.T("Queue")</div>
+                        </div>
+                        <span class="@StockTransferOpsHealthBadgeClass(Model.Summary.CompletedCount > 0)">@Model.Summary.CompletedCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryTransfersPlaybookInTransitScope")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Completed" class="btn btn-sm btn-outline-success"
+                           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query, filter = "Completed" })"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Completed")</a>
+                        <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StockLevels")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@T.T("StockTransfersTitle")</div>
+                            <div class="small text-muted mt-1">@T.T("StockLevels")</div>
+                        </div>
+                        <span class="@StockTransferOpsHealthBadgeClass(Model.Summary.TotalCount == 0)">@Model.Summary.TotalCount</span>
+                    </div>
+                    <div class="small text-muted mt-3">@T.T("InventoryTransfersPlaybookDraftScope")</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId })"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StockLevels")</a>
+                        <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("StockTransfers", "Inventory", new { businessId = ViewBag.BusinessId, warehouseId = Model.WarehouseId, q = Model.Query })"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StockTransfersTitle")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (Model.Playbooks.Count > 0)
 {
     <div class="card mb-4">
@@ -148,7 +286,7 @@
                         }
                     </td>
                     <td>@item.LineCount</td>
-                    <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@InventoryDateTimeText(item.CreatedAtUtc)</td>
                     <td class="text-end"><a asp-action="EditStockTransfer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditStockTransfer", "Inventory", new { id = item.Id })"
                            hx-target="#inventory-stock-transfers-workspace-shell"

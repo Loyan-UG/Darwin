@@ -1,4 +1,5 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessStaffAccessBadgeVm
+@using System.Globalization
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("BusinessStaffAccessBadgeTitle");
@@ -156,11 +157,11 @@
                     </div>
                     <div class="col-md-6">
                         <div class="small text-muted text-uppercase">@T.T("BusinessStaffAccessBadgeIssuedAtLabel")</div>
-                        <div class="fw-semibold">@Model.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm:ss") UTC</div>
+                <div class="fw-semibold">@Model.IssuedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
                     </div>
                     <div class="col-md-6">
                         <div class="small text-muted text-uppercase">@T.T("BusinessStaffAccessBadgeExpiresAtLabel")</div>
-                        <div class="fw-semibold">@Model.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm:ss") UTC</div>
+                <div class="fw-semibold">@Model.ExpiresAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
                     </div>
                     <div class="col-md-6">
                         <div class="small text-muted text-uppercase">@T.T("BusinessStaffAccessBadgeEmailStateLabel")</div>

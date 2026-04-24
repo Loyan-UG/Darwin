@@ -3,12 +3,74 @@
 @{
     ViewData["Title"] = T.T("EditUserTitle");
     var addressesSection = ViewBag.AddressesSection as Darwin.WebAdmin.ViewModels.Identity.UserAddressesSectionVm;
+    var needsActivationFollowUp = !Model.EmailConfirmed;
+    var needsPasswordResetFollowUp = Model.IsLockedOut;
+    var needsInactiveFollowUp = !Model.IsActive;
 }
 
 <div id="user-edit-editor-shell"
      data-add-address-title="@T.T("AddAddress")"
      data-edit-address-title="@T.T("EditAddress")">
     <h2>@T.T("EditUserTitle")</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">@T.T("UsersLifecycleColumn")</div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                @if (needsActivationFollowUp)
+                {
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed"
+                       asp-route-q="@Model.Email"
+                       class="btn btn-sm btn-outline-warning"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed, q = Model.Email })"
+                       hx-target="#user-edit-editor-shell"
+                       hx-swap="outerHTML">@T.T("UsersFilterUnconfirmed")</a>
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-status="Failed"
+                       asp-route-flowKey="AccountActivation"
+                       asp-route-recipientEmail="@Model.Email"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", recipientEmail = Model.Email })"
+                       hx-target="#user-edit-editor-shell"
+                       hx-swap="outerHTML">@T.T("OpenFailedActivationEmails")</a>
+                }
+                @if (needsPasswordResetFollowUp)
+                {
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked"
+                       asp-route-q="@Model.Email"
+                       class="btn btn-sm btn-outline-danger"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Locked, q = Model.Email })"
+                       hx-target="#user-edit-editor-shell"
+                       hx-swap="outerHTML">@T.T("UsersFilterLocked")</a>
+                    <a asp-controller="BusinessCommunications"
+                       asp-action="EmailAudits"
+                       asp-route-status="Failed"
+                       asp-route-flowKey="PasswordReset"
+                       asp-route-recipientEmail="@Model.Email"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", recipientEmail = Model.Email })"
+                       hx-target="#user-edit-editor-shell"
+                       hx-swap="outerHTML">@T.T("OpenFailedPasswordResets")</a>
+                }
+                @if (needsInactiveFollowUp)
+                {
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive"
+                       asp-route-q="@Model.Email"
+                       class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Users", new { filter = Darwin.Application.Identity.DTOs.UserQueueFilter.Inactive, q = Model.Email })"
+                       hx-target="#user-edit-editor-shell"
+                       hx-swap="outerHTML">@T.T("UsersFilterInactive")</a>
+                }
+            </div>
+        </div>
+    </div>
 
     <div class="card mb-4">
         <div class="card-header">@T.T("UserAdministrativeActionsTitle")</div>
@@ -112,6 +174,11 @@
                       class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="returnToIndex" value="@Model.ReturnToIndex" />
+                    <input type="hidden" name="q" value="@Model.Query" />
+                    <input type="hidden" name="filter" value="@Model.Filter" />
+                    <input type="hidden" name="page" value="@Model.Page" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="fa fa-paper-plane"></i> @T.T("UserSendActivationEmailAction")
                     </button>
@@ -125,6 +192,11 @@
                       class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="returnToIndex" value="@Model.ReturnToIndex" />
+                    <input type="hidden" name="q" value="@Model.Query" />
+                    <input type="hidden" name="filter" value="@Model.Filter" />
+                    <input type="hidden" name="page" value="@Model.Page" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
                     <button type="submit" class="btn btn-outline-success">
                         <i class="fa fa-check-circle"></i> @T.T("BusinessMemberConfirmEmailAction")
                     </button>
@@ -139,6 +211,11 @@
                   class="d-inline">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="returnToIndex" value="@Model.ReturnToIndex" />
+                <input type="hidden" name="q" value="@Model.Query" />
+                <input type="hidden" name="filter" value="@Model.Filter" />
+                <input type="hidden" name="page" value="@Model.Page" />
+                <input type="hidden" name="pageSize" value="@Model.PageSize" />
                 <button type="submit" class="btn btn-outline-warning">
                     <i class="fa fa-paper-plane"></i> @T.T("UserSendResetEmailAction")
                 </button>
@@ -154,6 +231,11 @@
                       class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="returnToIndex" value="@Model.ReturnToIndex" />
+                    <input type="hidden" name="q" value="@Model.Query" />
+                    <input type="hidden" name="filter" value="@Model.Filter" />
+                    <input type="hidden" name="page" value="@Model.Page" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
                     <button type="submit" class="btn btn-outline-success">
                         <i class="fa fa-lock-open"></i> @T.T("UserUnlockAccountAction")
                     </button>
@@ -170,8 +252,55 @@
                       class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="returnToIndex" value="@Model.ReturnToIndex" />
+                    <input type="hidden" name="q" value="@Model.Query" />
+                    <input type="hidden" name="filter" value="@Model.Filter" />
+                    <input type="hidden" name="page" value="@Model.Page" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
                     <button type="submit" class="btn btn-outline-danger">
                         <i class="fa fa-lock"></i> @T.T("UserLockAccountAction")
+                    </button>
+                </form>
+            }
+            @if (Model.IsActive)
+            {
+                <form asp-controller="Users"
+                      asp-action="Deactivate"
+                      method="post"
+                      hx-post="@Url.Action("Deactivate", "Users")"
+                      hx-target="#user-edit-editor-shell"
+                      hx-swap="outerHTML"
+                      class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="returnToIndex" value="@Model.ReturnToIndex" />
+                    <input type="hidden" name="q" value="@Model.Query" />
+                    <input type="hidden" name="filter" value="@Model.Filter" />
+                    <input type="hidden" name="page" value="@Model.Page" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                    <button type="submit" class="btn btn-outline-secondary">
+                        <i class="fa fa-user-slash"></i> @T.T("UsersDeactivateAction")
+                    </button>
+                </form>
+            }
+            else
+            {
+                <form asp-controller="Users"
+                      asp-action="Activate"
+                      method="post"
+                      hx-post="@Url.Action("Activate", "Users")"
+                      hx-target="#user-edit-editor-shell"
+                      hx-swap="outerHTML"
+                      class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="returnToIndex" value="@Model.ReturnToIndex" />
+                    <input type="hidden" name="q" value="@Model.Query" />
+                    <input type="hidden" name="filter" value="@Model.Filter" />
+                    <input type="hidden" name="page" value="@Model.Page" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                    <button type="submit" class="btn btn-outline-success">
+                        <i class="fa fa-user-check"></i> @T.T("UsersActivateAction")
                     </button>
                 </form>
             }

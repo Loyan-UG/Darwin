@@ -84,7 +84,7 @@
                                 <div><span class="badge text-bg-info mt-1">@T.T("LoyaltySpendBased")</span></div>
                             }
                         </td>
-                        <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                        <td>@(item.ModifiedAtUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "-")</td>
                         <td class="text-end">
                             <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@item.Id" class="btn btn-sm btn-outline-primary" hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = item.Id })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">@T.T("LoyaltyRewards")</a>
                             <a asp-action="EditProgram" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" hx-get="@Url.Action("EditProgram", "Loyalty", new { id = item.Id })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">@T.T("Edit")</a>

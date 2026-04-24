@@ -1,3 +1,4 @@
+@using System.Globalization
 @using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.BillingWebhooksListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
@@ -5,9 +6,18 @@
     ViewData["Title"] = T.T("WebhookDeliveries");
     string LocalizeWebhookStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeRetrySafetyState(string? state) => string.IsNullOrWhiteSpace(state) ? "-" : T.T(state);
+    string WebhookOpsHealthBadgeClass(bool healthy) => healthy
+        ? "badge bg-success-subtle text-success-emphasis"
+        : "badge bg-warning-subtle text-warning-emphasis";
+    string WebhookOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    var webhookAttentionCount = Model.Summary.FailedDeliveryCount
+        + Model.Summary.RetryPendingCount
+        + Model.Summary.PaymentExceptionCount
+        + Model.Summary.DisputeSignalCount;
 }
 
 <div id="billing-webhooks-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
 <h1 class="mb-3">@T.T("WebhookDeliveries")</h1>
 
 <div class="row g-3 mb-3">
@@ -92,6 +102,138 @@
 </div>
 
 <div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+            <div>
+                <div class="text-muted text-uppercase small fw-semibold">@T.T("GoLiveReadiness")</div>
+                <h2 class="h5 mb-1">@T.T("WebhookDeliveries")</h2>
+                <p class="text-muted mb-0">@T.T("WebhookSupportPlaybooks")</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-action="Payments"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Payments", "Billing")"
+                   hx-target="#billing-webhooks-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("PaymentsLabel")</a>
+                <a asp-action="Refunds"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("Refunds", "Billing")"
+                   hx-target="#billing-webhooks-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("RefundQueueTitle")</a>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("NeedsAttention")</div>
+                        <span class="@WebhookOpsHealthBadgeClass(webhookAttentionCount == 0)">@WebhookOpsHealthBadgeText(webhookAttentionCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@webhookAttentionCount</div>
+                    <div class="small text-muted">@T.T("Failed") / @T.T("RetryPending") / @T.T("DisputeSignals")</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="Webhooks"
+                           asp-route-queue="@BillingWebhookDeliveryQueueFilter.Failed"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.Failed })"
+                           hx-target="#billing-webhooks-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("Failed")</a>
+                        <a asp-action="Webhooks"
+                           asp-route-queue="@BillingWebhookDeliveryQueueFilter.RetryPending"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.RetryPending })"
+                           hx-target="#billing-webhooks-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("RetryPending")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("PaymentExceptions")</div>
+                        <span class="@WebhookOpsHealthBadgeClass(Model.Summary.PaymentExceptionCount == 0)">@WebhookOpsHealthBadgeText(Model.Summary.PaymentExceptionCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@Model.Summary.PaymentExceptionCount</div>
+                    <div class="small text-muted">@T.T("NeedsReconciliation")</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="Webhooks"
+                           asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
+                           class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+                           hx-target="#billing-webhooks-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("PaymentExceptions")</a>
+                        <a asp-action="Payments"
+                           asp-route-queue="@PaymentQueueFilter.NeedsReconciliation"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.NeedsReconciliation })"
+                           hx-target="#billing-webhooks-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("NeedsReconciliation")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("DisputeSignals")</div>
+                        <span class="@WebhookOpsHealthBadgeClass(Model.Summary.DisputeSignalCount == 0)">@WebhookOpsHealthBadgeText(Model.Summary.DisputeSignalCount == 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@Model.Summary.DisputeSignalCount</div>
+                    <div class="small text-muted">@T.T("DisputeQueue")</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-action="Webhooks"
+                           asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
+                           class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+                           hx-target="#billing-webhooks-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("DisputeSignals")</a>
+                        <a asp-action="Payments"
+                           asp-route-queue="@PaymentQueueFilter.DisputeFollowUp"
+                           class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.DisputeFollowUp })"
+                           hx-target="#billing-webhooks-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("DisputeQueue")</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="border rounded p-3 h-100 d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="text-muted small">@T.T("PaymentSettings")</div>
+                        <span class="@WebhookOpsHealthBadgeClass(Model.Summary.ActiveSubscriptionCount > 0)">@WebhookOpsHealthBadgeText(Model.Summary.ActiveSubscriptionCount > 0)</span>
+                    </div>
+                    <div class="fs-4 fw-semibold">@Model.Summary.ActiveSubscriptionCount</div>
+                    <div class="small text-muted">@T.T("ActiveSubscriptions")</div>
+                    <div class="d-flex gap-2 flex-wrap mt-auto">
+                        <a asp-controller="SiteSettings"
+                           asp-action="Edit"
+                           asp-fragment="site-settings-payments"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+                           hx-target="#billing-webhooks-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("PaymentSettings")</a>
+                        <a asp-action="Refunds"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Refunds", "Billing")"
+                           hx-target="#billing-webhooks-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("RefundQueueTitle")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
     <div class="card-header">@T.T("ActiveWebhookSubscriptions")</div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -121,7 +263,7 @@
                                     @(item.IsActive ? T.T("Active") : T.T("Inactive"))
                                 </span>
                             </td>
-                            <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@item.CreatedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
                         </tr>
                     }
                 }
@@ -253,6 +395,32 @@
         {
             foreach (var item in Model.Deliveries)
             {
+                var webhookIsDisputeSignal = item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) ||
+                    item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase);
+                var webhookHasPaymentEvidence = item.EventType.Contains("payment_intent", StringComparison.OrdinalIgnoreCase) ||
+                    item.EventType.Contains("charge", StringComparison.OrdinalIgnoreCase) ||
+                    item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase);
+                var webhookNeedsRetryAttention = item.Status != "Succeeded" || item.RetryCount > 0;
+                var webhookNeedsProviderCorrelationFollowUp = webhookHasPaymentEvidence &&
+                    (item.FailureDiagnostics.Contains("provider", StringComparison.OrdinalIgnoreCase) ||
+                     item.EscalationHint.Contains("provider", StringComparison.OrdinalIgnoreCase) ||
+                     item.EscalationHint.Contains("reference", StringComparison.OrdinalIgnoreCase));
+                var webhookNeedsPaymentReconciliationFollowUp = webhookHasPaymentEvidence &&
+                    (item.Status == "Pending" ||
+                     item.Status == "RetryPending" ||
+                     item.FailureDiagnostics.Contains("reconciliation", StringComparison.OrdinalIgnoreCase));
+                var webhookNeedsFailedPaymentFollowUp = webhookHasPaymentEvidence &&
+                    (item.Status == "Failed" ||
+                     item.FailureDiagnostics.Contains("failure", StringComparison.OrdinalIgnoreCase));
+                var webhookNeedsTaxFollowUp = webhookHasPaymentEvidence &&
+                    (item.FailureDiagnostics.Contains("tax", StringComparison.OrdinalIgnoreCase) ||
+                     item.EscalationHint.Contains("tax", StringComparison.OrdinalIgnoreCase) ||
+                     item.EventType.Contains("invoice", StringComparison.OrdinalIgnoreCase));
+                var webhookNeedsRefundedInvoiceFollowUp =
+                    item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase);
+                var webhookNeedsVatInvoiceFollowUp = webhookNeedsTaxFollowUp &&
+                    item.EventType.Contains("invoice", StringComparison.OrdinalIgnoreCase);
+
                 <tr>
                     <td>
                         <div class="fw-semibold">@item.EventType</div>
@@ -264,14 +432,11 @@
                     <td><code>@item.CallbackUrl</code></td>
                     <td>
                         <span class="badge @(item.Status == "Succeeded" ? "bg-success" : item.Status == "Failed" ? "bg-danger" : "bg-warning text-dark")">@LocalizeWebhookStatus(item.Status)</span>
-                        @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
+                        @if (webhookIsDisputeSignal)
                         {
                             <div><span class="badge text-bg-dark mt-1">@T.T("DisputeSignal")</span></div>
                         }
-                        else if ((item.EventType.Contains("payment_intent", StringComparison.OrdinalIgnoreCase) ||
-                                  item.EventType.Contains("charge", StringComparison.OrdinalIgnoreCase) ||
-                                  item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase)) &&
-                                 (item.Status != "Succeeded" || item.RetryCount > 0))
+                        else if (webhookHasPaymentEvidence && webhookNeedsRetryAttention)
                         {
                             <div><span class="badge text-bg-warning mt-1">@T.T("PaymentException")</span></div>
                         }
@@ -288,8 +453,8 @@
                         }
                     </td>
                     <td>
-                            <div class="small text-muted">@T.T("WebhookCreatedLabel") @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
-                            <div>@T.T("WebhookLastAttemptLabel") @(item.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                            <div class="small text-muted">@T.T("WebhookCreatedLabel") @item.CreatedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
+                            <div>@T.T("WebhookLastAttemptLabel") @(item.LastAttemptAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")</div>
                     </td>
                     <td>
                         <div class="small text-muted">@T.T("SubscriptionLabel") @item.SubscriptionId</div>
@@ -297,13 +462,11 @@
                         <div class="small mt-1">
                             <span class="badge text-bg-light">@LocalizeRetrySafetyState(item.RetrySafetyState)</span>
                         </div>
-                        @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
+                        @if (webhookIsDisputeSignal)
                         {
                             <div class="small text-danger mt-1">@T.T("WebhookDisputeEscalationNote")</div>
                         }
-                        else if (item.EventType.Contains("payment_intent", StringComparison.OrdinalIgnoreCase) ||
-                                 item.EventType.Contains("charge", StringComparison.OrdinalIgnoreCase) ||
-                                 item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase))
+                        else if (webhookHasPaymentEvidence)
                         {
                             <div class="small text-muted mt-1">@T.T("WebhookPaymentEvidenceNote")</div>
                         }
@@ -341,13 +504,110 @@
                             else if (item.SuggestedQueueTarget == "DisputeSignals")
                             {
                                 <a asp-action="Payments"
-                                   asp-route-queue="NeedsReconciliation"
+                                   asp-route-queue="@PaymentQueueFilter.DisputeFollowUp"
                                    class="btn btn-sm btn-outline-dark"
-                                   hx-get="@Url.Action("Payments", "Billing", new { queue = "NeedsReconciliation" })"
+                                   hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.DisputeFollowUp })"
                                    hx-target="#billing-webhooks-workspace-shell"
                                    hx-swap="outerHTML"
                                    hx-push-url="true">
                                     @item.SuggestedOperatorAction
+                                </a>
+                            }
+                            @if (webhookNeedsProviderCorrelationFollowUp || item.SuggestedQueueTarget == "Payments")
+                            {
+                                <a asp-action="Payments"
+                                   asp-route-queue="@PaymentQueueFilter.MissingProviderRef"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.MissingProviderRef })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    @T.T("MissingProviderRef")
+                                </a>
+                            }
+                            @if (webhookNeedsPaymentReconciliationFollowUp)
+                            {
+                                <a asp-action="Payments"
+                                   asp-route-queue="@PaymentQueueFilter.NeedsReconciliation"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.NeedsReconciliation })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    @T.T("NeedsReconciliation")
+                                </a>
+                            }
+                            @if (webhookNeedsFailedPaymentFollowUp)
+                            {
+                                <a asp-action="Payments"
+                                   asp-route-queue="@PaymentQueueFilter.Failed"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.Failed })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    @T.T("Failed")
+                                </a>
+                            }
+                            @if (webhookIsDisputeSignal)
+                            {
+                                <a asp-action="Payments"
+                                   asp-route-queue="@PaymentQueueFilter.DisputeFollowUp"
+                                   class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("Payments", "Billing", new { queue = PaymentQueueFilter.DisputeFollowUp })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    @T.T("DisputeQueue")
+                                </a>
+                            }
+                            @if (webhookNeedsTaxFollowUp)
+                            {
+                                <a asp-action="TaxCompliance"
+                                   class="btn btn-sm btn-outline-warning"
+                                   hx-get="@Url.Action("TaxCompliance", "Billing")"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    @T.T("TaxCompliance")
+                                </a>
+                            }
+                            @if (webhookNeedsVatInvoiceFollowUp)
+                            {
+                                <a asp-controller="Crm"
+                                   asp-action="Invoices"
+                                   asp-route-filter="MissingVatId"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("Invoices", "Crm", new { filter = "MissingVatId" })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    @T.T("FixVatId")
+                                </a>
+                            }
+                            @if (item.SuggestedQueueTarget == "Refunds" || item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <a asp-action="Refunds"
+                                   asp-route-queue="@BillingRefundQueueFilter.NeedsSupport"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("Refunds", "Billing", new { queue = BillingRefundQueueFilter.NeedsSupport })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    @T.T("RefundQueueTitle")
+                                </a>
+                            }
+                            @if (webhookNeedsRefundedInvoiceFollowUp)
+                            {
+                                <a asp-controller="Crm"
+                                   asp-action="Invoices"
+                                   asp-route-filter="Refunded"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Invoices", "Crm", new { filter = "Refunded" })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    @T.T("Refunded")
                                 </a>
                             }
                             <a asp-controller="SiteSettings"

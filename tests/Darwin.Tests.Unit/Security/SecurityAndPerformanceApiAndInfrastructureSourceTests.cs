@@ -964,10 +964,11 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         permissionsSource.Should().Contain("public IActionResult Create()");
         permissionsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
 
-        siteSettingsSource.Should().Contain("public async Task<IActionResult> Edit(CancellationToken ct)");
+        siteSettingsSource.Should().Contain("public async Task<IActionResult> Edit(string? fragment, CancellationToken ct)");
         siteSettingsSource.Should().Contain("var dto = await _cache.GetAsync(ct);");
         siteSettingsSource.Should().Contain("return PartialView(\"~/Views/SiteSettings/_SiteSettingsEditorShell.cshtml\", vm);");
-        siteSettingsSource.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName) ?? string.Empty;");
+        siteSettingsSource.Should().Contain("ViewData[\"ActiveFragment\"] = string.IsNullOrWhiteSpace(fragment) ? null : fragment.Trim();");
+        siteSettingsSource.Should().Contain("Response.Headers[\"HX-Redirect\"] = targetUrl;");
 
         mobileOpsSource.Should().Contain("public async Task<IActionResult> Index(");
 
@@ -1141,7 +1142,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_SetupInvitationsPreview.cshtml"));
 
-        source.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { status = \"Failed\", flowKey = \"BusinessInvitation\", recipientEmail = item.Email })");
+        source.Should().Contain("@Url.Action(\"EmailAudits\", \"BusinessCommunications\", new { businessId = Model.BusinessId, status = \"Failed\", flowKey = \"BusinessInvitation\", recipientEmail = item.Email })");
         source.Should().Contain("@T.T(\"OpenFailedInvitationEmails\")");
     }
 
@@ -1215,8 +1216,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorPendingApproval\")");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorApproved\")");
         editorShellSource.Should().Contain("@T.T(\"BusinessEditorSuspended\")");
-        editorShellSource.Should().Contain("@string.Format(T.T(\"BusinessEditorApprovedAt\"), Model.ApprovedAtUtc.Value.ToString(\"yyyy-MM-dd HH:mm\"))");
-        editorShellSource.Should().Contain("@string.Format(T.T(\"BusinessEditorSuspendedAt\"), Model.SuspendedAtUtc.Value.ToString(\"yyyy-MM-dd HH:mm\"))");
+        editorShellSource.Should().Contain("@string.Format(T.T(\"BusinessEditorApprovedAt\"), Model.ApprovedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))");
+        editorShellSource.Should().Contain("@string.Format(T.T(\"BusinessEditorSuspendedAt\"), Model.SuspendedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))");
         editorShellSource.Should().Contain("@string.Format(T.T(\"BusinessEditorReasonValue\"), Model.SuspensionReason)");
     }
 

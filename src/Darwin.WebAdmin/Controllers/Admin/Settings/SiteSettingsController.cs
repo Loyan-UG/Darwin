@@ -34,11 +34,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
         /// Shows the edit form with current settings (loaded from cache).
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Edit(CancellationToken ct)
+        public async Task<IActionResult> Edit(string? fragment, CancellationToken ct)
         {
             var dto = await _cache.GetAsync(ct);
             var vm = MapToVm(dto);
-            return RenderEditor(vm);
+            return RenderEditor(vm, fragment);
         }
 
         /// <summary>
@@ -47,10 +47,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
         /// </summary>
         [ValidateAntiForgeryToken]
         [HttpPost]
-        public async Task<IActionResult> Edit(SiteSettingVm vm, CancellationToken ct)
+        public async Task<IActionResult> Edit(SiteSettingVm vm, string? fragment, CancellationToken ct)
         {
             if (!ModelState.IsValid)
-                return RenderEditor(vm);
+                return RenderEditor(vm, fragment);
 
             var dto = MapToUpdateDto(vm);
 
@@ -59,23 +59,25 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
                 await _update.HandleAsync(dto, ct);
                 _cache.Invalidate();
                 SetSuccessMessage("SettingsUpdatedMessage");
-                return RedirectOrHtmx(nameof(Edit));
+                return RedirectOrHtmx(nameof(Edit), fragment);
             }
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, T("SettingsConcurrencyMessage"));
-                return RenderEditor(vm);
+                return RenderEditor(vm, fragment);
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
-                return RenderEditor(vm);
+                return RenderEditor(vm, fragment);
             }
         }
 
-        private IActionResult RenderEditor(SiteSettingVm vm)
+        private IActionResult RenderEditor(SiteSettingVm vm, string? fragment)
         {
+            ViewData["ActiveFragment"] = string.IsNullOrWhiteSpace(fragment) ? null : fragment.Trim();
+
             if (IsHtmxRequest())
             {
                 return PartialView("~/Views/SiteSettings/_SiteSettingsEditorShell.cshtml", vm);
@@ -84,15 +86,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             return View("Edit", vm);
         }
 
-        private IActionResult RedirectOrHtmx(string actionName)
+        private IActionResult RedirectOrHtmx(string actionName, string? fragment)
         {
+            var targetUrl = Url.Action(actionName, new { fragment }) ?? string.Empty;
+
             if (IsHtmxRequest())
             {
-                Response.Headers["HX-Redirect"] = Url.Action(actionName) ?? string.Empty;
+                Response.Headers["HX-Redirect"] = targetUrl;
                 return new EmptyResult();
             }
 
-            return RedirectToAction(actionName);
+            return RedirectToAction(actionName, new { fragment });
         }
 
         private bool IsHtmxRequest()
