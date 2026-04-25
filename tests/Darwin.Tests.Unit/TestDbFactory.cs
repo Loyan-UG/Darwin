@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
+using Darwin.Domain.Entities.Inventory;
+using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Settings;
 using Microsoft.EntityFrameworkCore;
 
@@ -131,6 +133,52 @@ namespace Darwin.Tests.Unit
                     b.Property(x => x.DefaultCulture).IsRequired();
                     b.Property(x => x.SupportedCulturesCsv).IsRequired();
                     // Additional properties can be configured here as needed for settings tests.
+                });
+
+                // ── Inventory entities ─────────────────────────────────────────────────
+                modelBuilder.Entity<Warehouse>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                    b.Property(x => x.IsDefault);
+                    b.Property(x => x.IsDeleted);
+                });
+
+                modelBuilder.Entity<StockLevel>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.WarehouseId).IsRequired();
+                    b.Property(x => x.ProductVariantId).IsRequired();
+                    b.Property(x => x.AvailableQuantity);
+                    b.Property(x => x.ReservedQuantity);
+                });
+
+                modelBuilder.Entity<InventoryTransaction>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.WarehouseId).IsRequired();
+                    b.Property(x => x.ProductVariantId).IsRequired();
+                    b.Property(x => x.QuantityDelta);
+                    b.Property(x => x.Reason).HasMaxLength(64).IsRequired();
+                    b.Property(x => x.ReferenceId);
+                });
+
+                // ── Catalog entities needed for inventory handler tests ─────────────────
+                modelBuilder.Entity<ProductVariant>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.Sku).HasMaxLength(128).IsRequired();
+                    b.Property(x => x.StockOnHand);
+                    b.Property(x => x.StockReserved);
+                    b.Property(x => x.IsDeleted);
+                });
+
+                // ── Order entity needed for allocation handler tests ────────────────────
+                modelBuilder.Entity<Order>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.OrderNumber).HasMaxLength(64).IsRequired();
+                    b.Property(x => x.IsDeleted);
                 });
             }
         }
