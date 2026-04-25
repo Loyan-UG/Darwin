@@ -9,7 +9,7 @@
         string.Create(CultureInfo.CurrentCulture, $"{minor / 100m:N2} {currency}");
 }
 
-<div id="add-on-group-attach-variants-shell">
+<div id="add-on-group-attach-variants-shell" data-addon-selection-shell>
     <partial name="~/Views/Shared/_Alerts.cshtml" />
     <h1 class="mb-4">@T.T("AddOnAttachVariantsTitle") <small class="text-muted">(@Model.AddOnGroupName)</small></h1>
 
@@ -29,70 +29,76 @@
         <input type="hidden" asp-for="PageSize" />
         <input type="hidden" asp-for="Query" />
 
-        <div id="selected-container">
+        <div id="selected-container" data-addon-selected-container>
             @foreach (var id in Model.SelectedVariantIds)
             {
                 <input type="hidden" name="SelectedVariantIds" value="@id" />
             }
         </div>
 
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th class="admin-w-40"></th>
-                    <th>@T.T("Sku")</th>
-                    <th>@T.T("Product")</th>
-                    <th>@T.T("PriceNet")</th>
-                    <th>@T.T("Stock")</th>
-                    <th>@T.T("Kind")</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Items.Count == 0)
-                {
+        <div class="table-responsive" data-addon-selection-scope>
+            <table class="table table-striped align-middle">
+                <thead>
                     <tr>
-                        <td colspan="6" class="text-center text-muted">@T.T("AddOnNoVariants")</td>
+                        <th class="admin-w-40"><input type="checkbox" data-addon-toggle-all /></th>
+                        <th>@T.T("Sku")</th>
+                        <th>@T.T("Product")</th>
+                        <th>@T.T("PriceNet")</th>
+                        <th>@T.T("Stock")</th>
+                        <th>@T.T("Kind")</th>
                     </tr>
-                }
-                else
-                {
-                    foreach (var it in Model.Items)
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td>
-                                <input type="checkbox"
-                                       class="sel"
-                                       data-addon-variant-selection
-                                       data-id="@it.Id"
-                                       name="SelectedVariantIds"
-                                       value="@it.Id"
-                                       @(it.Selected ? "checked" : "") />
-                            </td>
-                            <td>
-                                <div class="fw-semibold">@it.Sku</div>
-                                @if (!string.IsNullOrWhiteSpace(it.Gtin))
-                                {
-                                    <div class="small text-muted">@T.T("Gtin"): @it.Gtin</div>
-                                }
-                            </td>
-                            <td>@it.ProductName</td>
-                            <td>@FormatMinor(it.BasePriceNetMinor, it.Currency)</td>
-                            <td>@it.StockOnHand.ToString("N0", CultureInfo.CurrentCulture)</td>
-                            <td>
-                                @if (it.IsDigital)
-                                {
-                                    <span class="badge text-bg-info">@T.T("Digital")</span>
-                                }
-                                else
-                                {
-                                    <span class="badge text-bg-secondary">@T.T("Physical")</span>
-                                }
-                            </td>
+                            <td colspan="6" class="text-center text-muted">@T.T("AddOnNoVariants")</td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        foreach (var it in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="checkbox"
+                                           class="sel"
+                                           data-addon-row-check
+                                           data-addon-persisted-selection
+                                           data-addon-variant-selection
+                                           data-id="@it.Id"
+                                           data-selection-name="SelectedVariantIds"
+                                           data-selection-container="#selected-container"
+                                           name="SelectedVariantIds"
+                                           value="@it.Id"
+                                           @(it.Selected ? "checked" : "") />
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@it.Sku</div>
+                                    @if (!string.IsNullOrWhiteSpace(it.Gtin))
+                                    {
+                                        <div class="small text-muted">@T.T("Gtin"): @it.Gtin</div>
+                                    }
+                                </td>
+                                <td>@it.ProductName</td>
+                                <td>@FormatMinor(it.BasePriceNetMinor, it.Currency)</td>
+                                <td>@it.StockOnHand.ToString("N0", CultureInfo.CurrentCulture)</td>
+                                <td>
+                                    @if (it.IsDigital)
+                                    {
+                                        <span class="badge text-bg-info">@T.T("Digital")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">@T.T("Physical")</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
 
         <div class="mt-3">
             <button type="submit" class="btn btn-success">@T.T("Save")</button>

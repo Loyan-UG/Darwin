@@ -368,7 +368,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Id = p.Id,
                     Display = p.DefaultName ?? p.Id.ToString(),
                     Selected = attachedSet.Contains(p.Id)
-                }).ToList()
+                }).ToList(),
+                SelectedProductIds = attached.ToList()
             };
             return RenderAttachToProducts(vm);
         }
@@ -426,7 +427,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Id = c.Id,
                     Display = string.IsNullOrWhiteSpace(c.Name) ? c.Id.ToString() : c.Name,
                     Selected = attachedSet.Contains(c.Id)
-                }).ToList()
+                }).ToList(),
+                SelectedCategoryIds = attached.ToList()
             };
             return RenderAttachToCategories(vm);
         }
@@ -483,7 +485,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Id = b.Id,
                     Display = string.IsNullOrWhiteSpace(b.Name) ? b.Id.ToString() : b.Name,
                     Selected = attachedSet.Contains(b.Id)
-                }).ToList()
+                }).ToList(),
+                SelectedBrandIds = attached.ToList()
             };
             return RenderAttachToBrands(vm);
         }

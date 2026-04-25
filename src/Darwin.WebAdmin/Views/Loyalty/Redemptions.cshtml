@@ -1,6 +1,7 @@
-﻿@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyRedemptionsListVm
+@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyRedemptionsListVm
 @{
     ViewData["Title"] = T.T("LoyaltyRedemptionsTitle");
+
     string LocalizeRedemptionStatus(Darwin.Domain.Enums.LoyaltyRedemptionStatus status) => T.T(status.ToString());
     string LocalizeScanStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeScanOutcome(string? outcome) => string.IsNullOrWhiteSpace(outcome) ? "-" : T.T(outcome);
@@ -33,14 +34,177 @@
     string AccountDetailsUrl(Guid id) => Url.Action("AccountDetails", "Loyalty", new { id }) ?? string.Empty;
     string MobileOperationsUrl(object? businessId = null, string? q = null) => Url.Action("Index", "MobileOperations", new { businessId, q }) ?? string.Empty;
 }
-<div id="loyalty-redemptions-workspace-shell">
-<partial name="~/Views/Shared/_Alerts.cshtml" />
-<div class="d-flex justify-content-between align-items-center mb-3"><div><h1 class="mb-1">@T.T("LoyaltyRedemptionsTitle")</h1><div class="text-muted">@T.T("LoyaltyRedemptionsIntro")</div></div><div class="d-flex gap-2"><a asp-action="Accounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@AccountsUrl(Model.BusinessId)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Accounts")</a><a asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@ScanSessionsUrl(Model.BusinessId)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("LoyaltyScanSessionsTitle")</a><a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true" class="btn btn-outline-secondary" hx-get="@ProviderReviewUrl()" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("ProviderReview")</a></div></div>
-<form asp-action="Redemptions" method="get" class="row g-2 mb-3" hx-get="@RedemptionsUrl()" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML"><div class="col-md-3"><select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select></div><div class="col-md-3"><input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("LoyaltySearchMemberRewardOutcome")" /></div><div class="col-md-3"><select name="status" asp-items="Model.StatusItems" class="form-select"></select></div><div class="col-auto"><button type="submit" class="btn btn-outline-secondary">@T.T("Filter")</button><a asp-action="Redemptions" class="btn btn-outline-secondary" hx-get="@RedemptionsUrl()" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Reset")</a></div></form>
-<div class="d-flex gap-2 flex-wrap mb-3"><a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-sm @(Model.StatusFilter is null ? "btn-dark" : "btn-outline-dark")" hx-get="@RedemptionsUrl(Model.BusinessId)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("All")</a><a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" asp-route-status="@Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending" class="btn btn-sm @(Model.StatusFilter == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending ? "btn-warning" : "btn-outline-warning")" hx-get="@RedemptionsUrl(Model.BusinessId, status: Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Pending")</a><a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" asp-route-status="@Darwin.Domain.Enums.LoyaltyRedemptionStatus.Completed" class="btn btn-sm @(Model.StatusFilter == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Completed ? "btn-success" : "btn-outline-success")" hx-get="@RedemptionsUrl(Model.BusinessId, status: Darwin.Domain.Enums.LoyaltyRedemptionStatus.Completed)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Completed")</a><a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" asp-route-status="@Darwin.Domain.Enums.LoyaltyRedemptionStatus.Cancelled" class="btn btn-sm @(Model.StatusFilter == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Cancelled ? "btn-secondary" : "btn-outline-secondary")" hx-get="@RedemptionsUrl(Model.BusinessId, status: Darwin.Domain.Enums.LoyaltyRedemptionStatus.Cancelled)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Cancelled")</a></div>
-<div class="row g-3 mb-4"><div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">@T.T("Total")</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div><div class="col-md-2"><div class="card h-100 border-warning-subtle"><div class="card-body"><div class="text-muted small">@T.T("Pending")</div><div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div></div></div></div><div class="col-md-2"><div class="card h-100 border-success-subtle"><div class="card-body"><div class="text-muted small">@T.T("Completed")</div><div class="fs-4 fw-semibold">@Model.Summary.CompletedCount</div></div></div></div><div class="col-md-2"><div class="card h-100 border-secondary-subtle"><div class="card-body"><div class="text-muted small">@T.T("Cancelled")</div><div class="fs-4 fw-semibold">@Model.Summary.CancelledCount</div></div></div></div><div class="col-md-3"><div class="card h-100 border-danger-subtle"><div class="card-body"><div class="text-muted small">@T.T("LoyaltyScanLinkedFailures")</div><div class="fs-4 fw-semibold">@Model.Summary.ScanFailureCount</div></div></div></div></div>
-@if (Model.Playbooks.Count > 0) { <div class="card mb-4"><div class="card-header">@T.T("LoyaltyRedemptionPlaybooks")</div><div class="table-responsive"><table class="table table-sm mb-0 align-middle"><thead><tr><th>@T.T("Playbook")</th><th>@T.T("WhenItApplies")</th><th>@T.T("OperatorAction")</th></tr></thead><tbody>@foreach (var playbook in Model.Playbooks){<tr><td class="fw-semibold">@playbook.Title</td><td>@playbook.ScopeNote</td><td>@playbook.OperatorAction</td></tr>}</tbody></table></div></div> }
-<div class="table-responsive"><table class="table table-sm table-striped align-middle"><thead><tr><th>@T.T("Member")</th><th>@T.T("Reward")</th><th>@T.T("Status")</th><th>@T.T("LoyaltyScan")</th><th>@T.T("When")</th><th>@T.T("Note")</th><th class="text-end">@T.T("Actions")</th></tr></thead><tbody>@if (Model.Items.Count == 0) { <tr><td colspan="7" class="text-center text-muted">@T.T("LoyaltyNoRedemptionsFound")</td></tr> } else { foreach (var item in Model.Items) { <tr><td><div>@item.ConsumerDisplayName</div><div class="small text-muted">@item.ConsumerEmail</div></td><td><div>@item.RewardLabel</div><div class="small text-muted">@item.PointsSpent @T.T("LoyaltyPts")</div></td><td>@LocalizeRedemptionStatus(item.Status)</td><td><div>@LocalizeScanStatus(item.ScanStatus)</div><div class="small text-muted">@LocalizeScanOutcome(item.ScanOutcome)</div></td><td>@LoyaltyDateTimeText(item.RedeemedAtUtc)</td><td class="small text-muted">@(string.IsNullOrWhiteSpace(item.Note) ? LocalizeScanFailureReason(item.ScanFailureReason) : item.Note)</td><td class="text-end"><a asp-action="AccountDetails" asp-route-id="@item.LoyaltyAccountId" class="btn btn-sm btn-outline-primary" hx-get="@AccountDetailsUrl(item.LoyaltyAccountId)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Account")</a><a asp-controller="MobileOperations" asp-action="Index" asp-route-businessId="@item.BusinessId" asp-route-q="@item.ConsumerEmail" class="btn btn-sm btn-outline-secondary" hx-get="@MobileOperationsUrl(item.BusinessId, item.ConsumerEmail)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("LoyaltyMobileOps")</a>@if (item.Status == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending) { <form asp-action="ConfirmRedemption" method="post" class="d-inline" hx-post="@Url.Action("ConfirmRedemption", "Loyalty")" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@Html.AntiForgeryToken()<input type="hidden" name="redemptionId" value="@item.Id" /><input type="hidden" name="businessId" value="@item.BusinessId" /><input type="hidden" name="loyaltyAccountId" value="@item.LoyaltyAccountId" /><input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" /><button type="submit" class="btn btn-sm btn-outline-success">@T.T("Confirm")</button></form> }</td></tr> } }</tbody></table></div>
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-status="@Model.StatusFilter" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML"></pager>
-</div>
 
+<div id="loyalty-redemptions-workspace-shell">
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-1">@T.T("LoyaltyRedemptionsTitle")</h1>
+            <div class="text-muted">@T.T("LoyaltyRedemptionsIntro")</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Accounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@AccountsUrl(Model.BusinessId)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Accounts")</a>
+            <a asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@ScanSessionsUrl(Model.BusinessId)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("LoyaltyScanSessionsTitle")</a>
+            <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true" class="btn btn-outline-secondary" hx-get="@ProviderReviewUrl()" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("ProviderReview")</a>
+        </div>
+    </div>
+
+    <form asp-action="Redemptions" method="get" class="row g-2 mb-3" hx-get="@RedemptionsUrl()" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">
+        <div class="col-md-3">
+            <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="@T.T("LoyaltySearchMemberRewardOutcome")" />
+        </div>
+        <div class="col-md-3">
+            <select name="status" asp-items="Model.StatusItems" class="form-select"></select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-secondary">@T.T("Filter")</button>
+            <a asp-action="Redemptions" class="btn btn-outline-secondary" hx-get="@RedemptionsUrl()" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Reset")</a>
+        </div>
+    </form>
+
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-sm @(Model.StatusFilter is null ? "btn-dark" : "btn-outline-dark")" hx-get="@RedemptionsUrl(Model.BusinessId)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("All")</a>
+        <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" asp-route-status="@Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending" class="btn btn-sm @(Model.StatusFilter == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending ? "btn-warning" : "btn-outline-warning")" hx-get="@RedemptionsUrl(Model.BusinessId, status: Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Pending")</a>
+        <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" asp-route-status="@Darwin.Domain.Enums.LoyaltyRedemptionStatus.Completed" class="btn btn-sm @(Model.StatusFilter == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Completed ? "btn-success" : "btn-outline-success")" hx-get="@RedemptionsUrl(Model.BusinessId, status: Darwin.Domain.Enums.LoyaltyRedemptionStatus.Completed)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Completed")</a>
+        <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" asp-route-status="@Darwin.Domain.Enums.LoyaltyRedemptionStatus.Cancelled" class="btn btn-sm @(Model.StatusFilter == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Cancelled ? "btn-secondary" : "btn-outline-secondary")" hx-get="@RedemptionsUrl(Model.BusinessId, status: Darwin.Domain.Enums.LoyaltyRedemptionStatus.Cancelled)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Cancelled")</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small">@T.T("Total")</div>
+                    <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card h-100 border-warning-subtle">
+                <div class="card-body">
+                    <div class="text-muted small">@T.T("Pending")</div>
+                    <div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card h-100 border-success-subtle">
+                <div class="card-body">
+                    <div class="text-muted small">@T.T("Completed")</div>
+                    <div class="fs-4 fw-semibold">@Model.Summary.CompletedCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card h-100 border-secondary-subtle">
+                <div class="card-body">
+                    <div class="text-muted small">@T.T("Cancelled")</div>
+                    <div class="fs-4 fw-semibold">@Model.Summary.CancelledCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-danger-subtle">
+                <div class="card-body">
+                    <div class="text-muted small">@T.T("LoyaltyScanLinkedFailures")</div>
+                    <div class="fs-4 fw-semibold">@Model.Summary.ScanFailureCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Playbooks.Count > 0)
+    {
+        <div class="card mb-4">
+            <div class="card-header">@T.T("LoyaltyRedemptionPlaybooks")</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>@T.T("Playbook")</th>
+                            <th>@T.T("WhenItApplies")</th>
+                            <th>@T.T("OperatorAction")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var playbook in Model.Playbooks)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@playbook.Title</td>
+                                <td>@playbook.ScopeNote</td>
+                                <td>@playbook.OperatorAction</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>@T.T("Member")</th>
+                    <th>@T.T("Reward")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("LoyaltyScan")</th>
+                    <th>@T.T("When")</th>
+                    <th>@T.T("Note")</th>
+                    <th class="text-end">@T.T("Actions")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">@T.T("LoyaltyNoRedemptionsFound")</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div>@item.ConsumerDisplayName</div>
+                                <div class="small text-muted">@item.ConsumerEmail</div>
+                            </td>
+                            <td>
+                                <div>@item.RewardLabel</div>
+                                <div class="small text-muted">@item.PointsSpent @T.T("LoyaltyPts")</div>
+                            </td>
+                            <td>@LocalizeRedemptionStatus(item.Status)</td>
+                            <td>
+                                <div>@LocalizeScanStatus(item.ScanStatus)</div>
+                                <div class="small text-muted">@LocalizeScanOutcome(item.ScanOutcome)</div>
+                            </td>
+                            <td>@LoyaltyDateTimeText(item.RedeemedAtUtc)</td>
+                            <td class="small text-muted">@(string.IsNullOrWhiteSpace(item.Note) ? LocalizeScanFailureReason(item.ScanFailureReason) : item.Note)</td>
+                            <td class="text-end">
+                                <a asp-action="AccountDetails" asp-route-id="@item.LoyaltyAccountId" class="btn btn-sm btn-outline-primary" hx-get="@AccountDetailsUrl(item.LoyaltyAccountId)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("Account")</a>
+                                <a asp-controller="MobileOperations" asp-action="Index" asp-route-businessId="@item.BusinessId" asp-route-q="@item.ConsumerEmail" class="btn btn-sm btn-outline-secondary" hx-get="@MobileOperationsUrl(item.BusinessId, item.ConsumerEmail)" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">@T.T("LoyaltyMobileOps")</a>
+                                @if (item.Status == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending)
+                                {
+                                    <form asp-action="ConfirmRedemption" method="post" class="d-inline" hx-post="@Url.Action("ConfirmRedemption", "Loyalty")" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="redemptionId" value="@item.Id" />
+                                        <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                        <input type="hidden" name="loyaltyAccountId" value="@item.LoyaltyAccountId" />
+                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success">@T.T("Confirm")</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-status="@Model.StatusFilter" hx-target="#loyalty-redemptions-workspace-shell" hx-swap="outerHTML"></pager>
+</div>

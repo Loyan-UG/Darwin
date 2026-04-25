@@ -72,39 +72,64 @@
         editor.dataset.optionsEditorBound = 'true';
     }
 
+    function getPersistedSelectionConfig(checkbox) {
+        const name = checkbox.getAttribute('data-selection-name') ||
+            checkbox.getAttribute('name') ||
+            'SelectedVariantIds';
+        const id = checkbox.getAttribute('data-id') || checkbox.value;
+        const containerSelector = checkbox.getAttribute('data-selection-container');
+        const shell = checkbox.closest('[data-addon-selection-shell]') ||
+            checkbox.closest('#add-on-group-attach-variants-shell');
+        const container = containerSelector
+            ? (shell ? shell.querySelector(containerSelector) : document.querySelector(containerSelector))
+            : (shell ? shell.querySelector('[data-addon-selected-container]') : document.querySelector('[data-addon-selected-container]'));
+
+        return { container, id, name };
+    }
+
+    function findPersistedInput(container, name, id) {
+        return Array.from(container.querySelectorAll('input[type="hidden"][name="' + name + '"]'))
+            .find(function (input) {
+                return input.value === id;
+            });
+    }
+
+    function syncPersistedSelection(checkbox) {
+        const config = getPersistedSelectionConfig(checkbox);
+        if (!config.container || !config.id || !config.name) {
+            return;
+        }
+
+        const existing = findPersistedInput(config.container, config.name, config.id);
+        if (checkbox.checked && !existing) {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = config.name;
+            hidden.value = config.id;
+            hidden.dataset.bindId = config.id;
+            config.container.appendChild(hidden);
+        } else if (!checkbox.checked && existing) {
+            existing.remove();
+        }
+    }
+
     document.addEventListener('change', function (event) {
         const toggle = event.target.closest('[data-addon-toggle-all]');
         if (toggle) {
             const scope = toggle.closest('[data-addon-selection-scope]') || document;
             scope.querySelectorAll('[data-addon-row-check]').forEach(function (checkbox) {
                 checkbox.checked = toggle.checked;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
             });
             return;
         }
 
-        const variant = event.target.closest('[data-addon-variant-selection]');
-        if (!variant) {
+        const persistedSelection = event.target.closest('[data-addon-persisted-selection], [data-addon-variant-selection]');
+        if (!persistedSelection) {
             return;
         }
 
-        const shell = variant.closest('#add-on-group-attach-variants-shell');
-        const container = shell ? shell.querySelector('#selected-container') : document.getElementById('selected-container');
-        const id = variant.getAttribute('data-id');
-        if (!container || !id) {
-            return;
-        }
-
-        const existing = container.querySelector('input[type="hidden"][name="SelectedVariantIds"][value="' + id + '"]');
-        if (variant.checked && !existing) {
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'SelectedVariantIds';
-            hidden.value = id;
-            hidden.dataset.bindId = id;
-            container.appendChild(hidden);
-        } else if (!variant.checked && existing) {
-            existing.remove();
-        }
+        syncPersistedSelection(persistedSelection);
     });
 
     document.addEventListener('input', function (event) {
