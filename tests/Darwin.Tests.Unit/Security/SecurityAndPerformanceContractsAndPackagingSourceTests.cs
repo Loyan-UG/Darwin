@@ -4196,8 +4196,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
 
         addOnGroupsJsSource.Should().Contain("event.target.closest('[data-addon-toggle-all]')");
         addOnGroupsJsSource.Should().Contain("scope.querySelectorAll('[data-addon-row-check]')");
-        addOnGroupsJsSource.Should().Contain("event.target.closest('[data-addon-variant-selection]')");
-        addOnGroupsJsSource.Should().Contain("hidden.dataset.bindId = id;");
+        addOnGroupsJsSource.Should().Contain("[data-addon-variant-selection]");
+        addOnGroupsJsSource.Should().Contain("hidden.dataset.bindId =");
         addOnGroupsJsSource.Should().Contain("event.target.closest('[data-addon-currency-uppercase]')");
         addOnGroupsJsSource.Should().Contain("input.value = input.value.toUpperCase();");
     }

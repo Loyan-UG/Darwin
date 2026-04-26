@@ -13,6 +13,13 @@ obj/
 **/secrets.json
 **/local.settings.json   # (Azure Functions)
 
+# Allow committed development baseline configs (no real secrets, used by structure tests)
+!/src/Darwin.WebAdmin/appsettings.Development.json
+!/src/Darwin.WebApi/appsettings.Development.json
+!/src/Darwin.Worker/appsettings.Development.json
+!/src/Darwin.Mobile.Business/Resources/Raw/appsettings.mobile.Development.json
+!/src/Darwin.Mobile.Consumer/Resources/Raw/appsettings.mobile.Development.json
+
 # Logs
 *.log
 logs/
@@ -378,8 +385,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/src/Darwin.WebAdmin/appsettings.Development.json
-/src/Darwin.WebAdmin/appsettings.Development.json
 /src/Darwin.Mobile.Consumer/google-services.json
 /src/Darwin.Mobile.Consumer/Directory.Build.props
 /tests/Darwin.Tests.Common/appsettings.Testing.Development.json

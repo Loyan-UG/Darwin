@@ -27,6 +27,9 @@ namespace Darwin.Application.SEO.Commands
 
         public async Task HandleAsync(RedirectRuleCreateDto dto, CancellationToken ct = default)
         {
+            dto.FromPath = dto.FromPath?.Trim() ?? string.Empty;
+            dto.To = dto.To?.Trim() ?? string.Empty;
+
             var r1 = _vBasic.Validate(dto);
             if (!r1.IsValid) throw new ValidationException(r1.Errors);
             var r2 = await _vUnique.ValidateAsync(dto, ct);

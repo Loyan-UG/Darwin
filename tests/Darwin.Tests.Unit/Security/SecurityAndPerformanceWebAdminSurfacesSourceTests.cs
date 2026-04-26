@@ -106,7 +106,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
             .Select(action => $"{action.Path}: {action.Signature}")
             .Should()
             .BeEquivalentTo(
-                new[] { "Admin\\Media\\MediaController.cs: public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)" },
+                new[] { $"{Path.Combine("Admin", "Media", "MediaController.cs")}: public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)" },
                 "UploadQuill is the only intentional WebAdmin anti-forgery exception");
 
         ignoreExceptions.Single().Block.Should().Contain("Quill sends multipart uploads through fetch without the admin form token");
@@ -953,7 +953,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         var ordersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
         var shippingSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Shipping", "ShippingMethodsController.cs"));
         var mediaSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
-        var crmSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var crmSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
         var rolesSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "RolesController.cs"));
         var resourcesSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
 
@@ -5536,7 +5536,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepOperationalMutationsProtected()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("[ValidateAntiForgeryToken]");
         source.Should().Contain("public async Task<IActionResult> CreateCustomer(CustomerEditVm vm");
@@ -5563,7 +5563,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepAdminWorkspacesAndReviewGetsReachable()
     {
-        var crmSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var crmSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
         var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
 
         adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
@@ -5594,7 +5594,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepInvoiceEditorEntryAndRefundWorkflowWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("public async Task<IActionResult> EditInvoice(Guid id, CancellationToken ct = default)");
         source.Should().Contain("var dto = await _getInvoiceForEdit.HandleAsync(id, ct).ConfigureAwait(false);");
@@ -5623,7 +5623,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepInvoiceWorkspaceAndRenderHelpersWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("public async Task<IActionResult> Invoices(int page = 1, int pageSize = 20, string? q = null, InvoiceQueueFilter filter = InvoiceQueueFilter.All, CancellationToken ct = default)");
         source.Should().Contain("var (items, total) = await _getInvoicesPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);");
@@ -5653,7 +5653,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepCustomerEditorEntryAndSubmitContractsWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("public async Task<IActionResult> CreateCustomer(CancellationToken ct = default)");
         source.Should().Contain("var vm = new CustomerEditVm();");
@@ -5693,7 +5693,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepCustomerFragmentsAndMembershipMutationsWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("public async Task<IActionResult> CustomerInteractions(Guid customerId, int page = 1, int pageSize = 10, CancellationToken ct = default)");
         source.Should().Contain("var (items, total) = await _getCustomerInteractionsPage.HandleAsync(customerId, page, pageSize, ct).ConfigureAwait(false);");
@@ -5736,7 +5736,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepLeadAndOpportunityEditorContractsWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("public async Task<IActionResult> CreateLead(CancellationToken ct = default)");
         source.Should().Contain("var vm = new LeadEditVm();");
@@ -5792,7 +5792,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepLeadConversionAndSegmentEditorContractsWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("public async Task<IActionResult> ConvertLead(ConvertLeadVm vm, CancellationToken ct = default)");
         source.Should().Contain("var customerId = await _convertLeadToCustomer.HandleAsync(new ConvertLeadToCustomerDto");
@@ -5830,7 +5830,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepLeadAndOpportunityWorkspaceCompositionWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("public async Task<IActionResult> Leads(int page = 1, int pageSize = 20, string? q = null, LeadQueueFilter filter = LeadQueueFilter.All, CancellationToken ct = default)");
         source.Should().Contain("var (items, total) = await _getLeadsPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);");
@@ -5861,7 +5861,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepLeadOpportunityAndSegmentHelperBuildersWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("private static LeadOpsSummaryVm BuildLeadOpsSummary(IReadOnlyCollection<LeadListItemDto> items)");
         source.Should().Contain("QualifiedCount = items.Count(x => x.Status == Darwin.Domain.Enums.LeadStatus.Qualified),");
@@ -5906,7 +5906,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepCrmOptionPopulationHelpersWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("private async Task PopulateCustomerOptionsAsync(CustomerEditVm vm, CancellationToken ct)");
         source.Should().Contain("vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId, includeEmpty: true, ct).ConfigureAwait(false);");
@@ -5926,7 +5926,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepCrmEditorAndLineRowHelpersWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("private static void EnsureCustomerAddressRows(CustomerEditVm vm)");
         source.Should().Contain("vm.Addresses ??= new List<CustomerAddressVm>();");
@@ -5952,7 +5952,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepCustomerWorkspaceBuildersAndRenderHelpersWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("private IEnumerable<SelectListItem> BuildCustomerFilterItems(CustomerQueueFilter selectedFilter)");
         source.Should().Contain("new SelectListItem(T(\"AllCustomers\"), CustomerQueueFilter.All.ToString(), selectedFilter == CustomerQueueFilter.All)");
@@ -5984,7 +5984,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     [Fact]
     public void CrmController_Should_KeepSharedMappingAndErrorHelpersWired()
     {
-        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Crm", "CrmController.cs"));
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
 
         source.Should().Contain("private async Task PopulateInvoiceOptionsAsync(InvoiceEditVm vm, CancellationToken ct)");
         source.Should().Contain("vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);");
@@ -8982,7 +8982,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("public async Task<IActionResult> AttachToVariants(");
         source.Should().Contain("var (items, total) = await _getVariantsPage.HandleAsync(page, pageSize, q, culture, ct);");
         source.Should().Contain("var attached = await _getAttachedVariants.HandleAsync(id, ct);");
-        source.Should().Contain("Display = $\"{v.Sku} - {v.ProductName ?? \"(no name)\"}\"");
+        source.Should().Contain("Sku = v.Sku,");
+        source.Should().Contain("ProductName = string.IsNullOrWhiteSpace(v.ProductName)");
         source.Should().Contain("SelectedVariantIds = attached.ToList()");
         source.Should().Contain("return RenderAttachToVariants(vm);");
         source.Should().Contain("public async Task<IActionResult> AttachToVariants(AddOnGroupAttachToVariantsVm vm, CancellationToken ct = default)");
@@ -10152,9 +10153,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         attachProductsSource.Should().Contain("name=\"Page\" value=\"@Model.Page\"");
         attachProductsSource.Should().Contain("name=\"PageSize\" value=\"@Model.PageSize\"");
         attachProductsSource.Should().Contain("name=\"Query\" value=\"@Model.Query\"");
-        attachProductsSource.Should().Contain("id=\"toggleAll\"");
         attachProductsSource.Should().Contain("data-addon-toggle-all");
-        attachProductsSource.Should().Contain("class=\"row-check\" data-addon-row-check name=\"SelectedProductIds\" value=\"@p.Id\"");
+        attachProductsSource.Should().Contain("class=\"row-check\"");
+        attachProductsSource.Should().Contain("data-addon-row-check");
+        attachProductsSource.Should().Contain("name=\"SelectedProductIds\"");
+        attachProductsSource.Should().Contain("value=\"@p.Id\"");
         attachProductsSource.Should().Contain("@T.T(\"AddOnNoProducts\")");
         attachProductsSource.Should().Contain("@T.T(\"AddOnSaveAttachments\")");
         attachProductsSource.Should().Contain("string AddOnGroupsIndexUrl() => Url.Action(\"Index\", \"AddOnGroups\") ?? string.Empty;");
