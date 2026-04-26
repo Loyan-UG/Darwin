@@ -1,5 +1,6 @@
 using Darwin.Tests.Common.TestInfrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit.Sdk;
 
 namespace Darwin.Tests.Integration.Support;
 
@@ -32,8 +33,22 @@ public abstract class DeterministicIntegrationTestBase : IAsyncLifetime
     /// <summary>
     ///     Recreates and seeds the database before each test class to guarantee
     ///     deterministic state regardless of execution order across suites.
+    ///     Skips the test gracefully when no integration database connection string
+    ///     is configured in the environment.
     /// </summary>
-    public ValueTask InitializeAsync() => new(IntegrationTestDatabaseReset.ResetAndSeedAsync(Factory, default));
+    public async ValueTask InitializeAsync()
+    {
+        try
+        {
+            await IntegrationTestDatabaseReset.ResetAndSeedAsync(Factory, default).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Integration DB connection string is missing"))
+        {
+            throw SkipException.ForSkip(
+                "Integration database not configured. " +
+                "Set 'ConnectionStrings__DefaultConnection' environment variable or provide appsettings.Testing.local.json to run integration tests.");
+        }
+    }
 
     /// <summary>
     ///     No asynchronous class-level cleanup is required by the shared fixture.
