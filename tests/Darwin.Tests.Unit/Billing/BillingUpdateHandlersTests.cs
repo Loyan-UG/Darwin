@@ -8,6 +8,7 @@ using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using System.Linq;
 
 namespace Darwin.Tests.Unit.Billing;
 
@@ -131,11 +132,12 @@ public sealed class BillingUpdateHandlersTests
         afterRequeue.Status.Should().Be("Pending");
         afterRequeue.RetryCount.Should().Be(3);
         afterRequeue.ResponseCode.Should().BeNull();
+        var requeueRowVersion = afterRequeue.RowVersion.ToArray();
 
         var suppress = await handler.HandleAsync(new UpdateBillingWebhookDeliveryDto
         {
             Id = deliveryId,
-            RowVersion = [3],
+            RowVersion = requeueRowVersion,
             Action = "Suppress"
         }, TestContext.Current.CancellationToken);
 
@@ -258,6 +260,7 @@ public sealed class BillingUpdateHandlersTests
         updated.Status.Should().Be(PaymentStatus.Completed);
         updated.FailureReason.Should().Contain("gateway declined");
         updated.FailureReason.Should().Contain("[DisputeReview:Won;");
+        updated.FailureReason.Should().NotContain("[note]");
         updated.FailureReason.Should().Contain("analyst (note) new line");
         UpdatePaymentDisputeReviewHandler.ResolveDisputeReviewState(updated.FailureReason).Should().Be("Won");
         UpdatePaymentDisputeReviewHandler.IsDisputeReviewResolved(updated.FailureReason).Should().BeTrue();
@@ -293,11 +296,12 @@ public sealed class BillingUpdateHandlersTests
         var afterLost = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
         afterLost.Status.Should().Be(PaymentStatus.Failed);
         UpdatePaymentDisputeReviewHandler.ResolveDisputeReviewState(afterLost.FailureReason).Should().Be("Lost");
+        var clearRowVersion = afterLost.RowVersion.ToArray();
 
         var clear = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
         {
             Id = paymentId,
-            RowVersion = [9],
+            RowVersion = clearRowVersion,
             Action = UpdatePaymentDisputeReviewHandler.ClearAction
         }, TestContext.Current.CancellationToken);
 
