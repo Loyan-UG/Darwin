@@ -78,18 +78,31 @@ public sealed class BusinessInvitationAndLocationValidatorsTests
     }
 
     [Fact]
-    public void InvitationRevoke_Should_Fail_WhenIdMissing_OrNoteTooLong()
+    public void InvitationRevoke_Should_Fail_WhenIdMissing()
     {
         var dto = new BusinessInvitationRevokeDto
         {
-            Id = Guid.Empty,
-            Note = new string('r', 2001)
+            Id = Guid.Empty
         };
 
         var result = new BusinessInvitationRevokeDtoValidator().Validate(dto);
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Id));
+    }
+
+    [Fact]
+    public void InvitationRevoke_Should_Fail_WhenNoteTooLong()
+    {
+        var dto = new BusinessInvitationRevokeDto
+        {
+            Id = Guid.NewGuid(),
+            Note = new string('r', 2001)
+        };
+
+        var result = new BusinessInvitationRevokeDtoValidator().Validate(dto);
+
+        result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Note));
     }
 
