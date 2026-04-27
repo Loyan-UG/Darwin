@@ -4,7 +4,6 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using FluentAssertions;
 using Microsoft.Extensions.Localization;
-using Moq;
 
 namespace Darwin.Tests.Unit.Identity;
 
@@ -16,14 +15,6 @@ namespace Darwin.Tests.Unit.Identity;
 /// </summary>
 public sealed class RoleAndPermissionValidatorsTests
 {
-    private static IStringLocalizer<ValidationResource> CreateLocalizer()
-    {
-        var mock = new Mock<IStringLocalizer<ValidationResource>>();
-        mock.Setup(l => l[It.IsAny<string>()])
-            .Returns<string>(name => new LocalizedString(name, name));
-        return mock.Object;
-    }
-
     // ─── RoleCreateValidator ──────────────────────────────────────────────────
 
     [Fact]
