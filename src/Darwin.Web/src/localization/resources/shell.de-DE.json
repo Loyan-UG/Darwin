@@ -49,7 +49,7 @@
                              "href":  "/cart"
                          },
                          {
-                             "label":  "Checkout",
+                             "label":  "Kasse",
                              "href":  "/checkout"
                          }
                      ],
