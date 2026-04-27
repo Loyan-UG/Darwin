@@ -106,6 +106,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 LogoMediaId = vm.LogoMediaId,
                 Translations = vm.Translations.Select(t => new BrandTranslationDto
                 {
+                    Id = t.Id,
                     Culture = t.Culture,
                     Name = t.Name,
                     DescriptionHtml = t.DescriptionHtml
@@ -144,6 +145,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 LogoMediaId = dto.LogoMediaId,
                 Translations = dto.Translations.Select(t => new BrandTranslationVm
                 {
+                    Id = t.Id,
                     Culture = t.Culture,
                     Name = t.Name,
                     DescriptionHtml = t.DescriptionHtml
@@ -170,6 +172,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 LogoMediaId = vm.LogoMediaId,
                 Translations = vm.Translations.Select(t => new BrandTranslationDto
                 {
+                    Id = t.Id,
                     Culture = t.Culture,
                     Name = t.Name,
                     DescriptionHtml = t.DescriptionHtml

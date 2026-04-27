@@ -1,7 +1,9 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Inventory.DTOs;
+using Darwin.Application.Inventory;
 using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Enums;
+using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -371,6 +373,179 @@ namespace Darwin.Application.Inventory.Commands
         }
     }
 
+    public sealed class UpdateStockTransferLifecycleHandler
+    {
+        public const string MarkInTransitAction = "MarkInTransit";
+        public const string CompleteAction = "Complete";
+        public const string CancelAction = "Cancel";
+
+        private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public UpdateStockTransferLifecycleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
+
+        public async Task<Result> HandleAsync(StockTransferLifecycleActionDto dto, CancellationToken ct = default)
+        {
+            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var transfer = await _db.Set<StockTransfer>()
+                .Include(x => x.Lines)
+                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .ConfigureAwait(false);
+
+            if (transfer is null)
+            {
+                return Result.Fail(_localizer["StockTransferNotFound"]);
+            }
+
+            if (!transfer.RowVersion.SequenceEqual(dto.RowVersion))
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            var variantIdsToRefresh = new HashSet<Guid>();
+            var action = (dto.Action ?? string.Empty).Trim();
+
+            if (string.Equals(action, MarkInTransitAction, StringComparison.OrdinalIgnoreCase))
+            {
+                var result = await MarkInTransitAsync(transfer, variantIdsToRefresh, ct).ConfigureAwait(false);
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
+            }
+            else if (string.Equals(action, CompleteAction, StringComparison.OrdinalIgnoreCase))
+            {
+                var result = await CompleteAsync(transfer, variantIdsToRefresh, ct).ConfigureAwait(false);
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
+            }
+            else if (string.Equals(action, CancelAction, StringComparison.OrdinalIgnoreCase))
+            {
+                var result = await CancelAsync(transfer, variantIdsToRefresh, ct).ConfigureAwait(false);
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
+            }
+            else
+            {
+                return Result.Fail(_localizer["StockTransferLifecycleUnsupportedAction"]);
+            }
+
+            foreach (var variantId in variantIdsToRefresh)
+            {
+                await InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, variantId, _localizer, ct).ConfigureAwait(false);
+            }
+
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return Result.Ok();
+        }
+
+        private async Task<Result> MarkInTransitAsync(StockTransfer transfer, HashSet<Guid> variantIdsToRefresh, CancellationToken ct)
+        {
+            if (transfer.Status != TransferStatus.Draft)
+            {
+                return Result.Fail(_localizer["StockTransferLifecycleUnsupportedAction"]);
+            }
+
+            foreach (var line in transfer.Lines)
+            {
+                var source = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.FromWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
+                if (source.AvailableQuantity < line.Quantity)
+                {
+                    return Result.Fail(_localizer["StockTransferLifecycleInsufficientSourceStock"]);
+                }
+
+                source.AvailableQuantity -= line.Quantity;
+                source.InTransitQuantity += line.Quantity;
+                AddInventoryTransaction(transfer.FromWarehouseId, line.ProductVariantId, -line.Quantity, "StockTransferDispatched", transfer.Id);
+                variantIdsToRefresh.Add(line.ProductVariantId);
+            }
+
+            transfer.Status = TransferStatus.InTransit;
+            return Result.Ok();
+        }
+
+        private async Task<Result> CompleteAsync(StockTransfer transfer, HashSet<Guid> variantIdsToRefresh, CancellationToken ct)
+        {
+            if (transfer.Status != TransferStatus.InTransit)
+            {
+                return Result.Fail(_localizer["StockTransferLifecycleUnsupportedAction"]);
+            }
+
+            foreach (var line in transfer.Lines)
+            {
+                var source = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.FromWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
+                if (source.InTransitQuantity < line.Quantity)
+                {
+                    return Result.Fail(_localizer["StockTransferLifecycleInsufficientInTransitStock"]);
+                }
+
+                var destination = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.ToWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
+                source.InTransitQuantity -= line.Quantity;
+                destination.AvailableQuantity += line.Quantity;
+                AddInventoryTransaction(transfer.ToWarehouseId, line.ProductVariantId, line.Quantity, "StockTransferReceived", transfer.Id);
+                variantIdsToRefresh.Add(line.ProductVariantId);
+            }
+
+            transfer.Status = TransferStatus.Completed;
+            return Result.Ok();
+        }
+
+        private async Task<Result> CancelAsync(StockTransfer transfer, HashSet<Guid> variantIdsToRefresh, CancellationToken ct)
+        {
+            if (transfer.Status == TransferStatus.Draft)
+            {
+                transfer.Status = TransferStatus.Cancelled;
+                return Result.Ok();
+            }
+
+            if (transfer.Status != TransferStatus.InTransit)
+            {
+                return Result.Fail(_localizer["StockTransferLifecycleUnsupportedAction"]);
+            }
+
+            foreach (var line in transfer.Lines)
+            {
+                var source = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, transfer.FromWarehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
+                if (source.InTransitQuantity < line.Quantity)
+                {
+                    return Result.Fail(_localizer["StockTransferLifecycleInsufficientInTransitStock"]);
+                }
+
+                source.InTransitQuantity -= line.Quantity;
+                source.AvailableQuantity += line.Quantity;
+                AddInventoryTransaction(transfer.FromWarehouseId, line.ProductVariantId, line.Quantity, "StockTransferCancelled", transfer.Id);
+                variantIdsToRefresh.Add(line.ProductVariantId);
+            }
+
+            transfer.Status = TransferStatus.Cancelled;
+            return Result.Ok();
+        }
+
+        private void AddInventoryTransaction(Guid warehouseId, Guid productVariantId, int quantityDelta, string reason, Guid referenceId)
+        {
+            _db.Set<InventoryTransaction>().Add(new InventoryTransaction
+            {
+                WarehouseId = warehouseId,
+                ProductVariantId = productVariantId,
+                QuantityDelta = quantityDelta,
+                Reason = reason,
+                ReferenceId = referenceId
+            });
+        }
+    }
+
     public sealed class CreatePurchaseOrderHandler
     {
         private readonly IAppDbContext _db;
@@ -464,6 +639,127 @@ namespace Darwin.Application.Inventory.Commands
             }).ToList();
 
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+    }
+
+    public sealed class UpdatePurchaseOrderLifecycleHandler
+    {
+        public const string IssueAction = "Issue";
+        public const string ReceiveAction = "Receive";
+        public const string CancelAction = "Cancel";
+
+        private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public UpdatePurchaseOrderLifecycleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
+
+        public async Task<Result> HandleAsync(PurchaseOrderLifecycleActionDto dto, CancellationToken ct = default)
+        {
+            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var order = await _db.Set<PurchaseOrder>()
+                .Include(x => x.Lines)
+                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .ConfigureAwait(false);
+
+            if (order is null)
+            {
+                return Result.Fail(_localizer["PurchaseOrderNotFound"]);
+            }
+
+            if (!order.RowVersion.SequenceEqual(dto.RowVersion))
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            var action = (dto.Action ?? string.Empty).Trim();
+            if (string.Equals(action, IssueAction, StringComparison.OrdinalIgnoreCase))
+            {
+                if (order.Status != PurchaseOrderStatus.Draft)
+                {
+                    return Result.Fail(_localizer["PurchaseOrderLifecycleUnsupportedAction"]);
+                }
+
+                order.Status = PurchaseOrderStatus.Issued;
+            }
+            else if (string.Equals(action, ReceiveAction, StringComparison.OrdinalIgnoreCase))
+            {
+                var result = await ReceiveAsync(order, ct).ConfigureAwait(false);
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
+            }
+            else if (string.Equals(action, CancelAction, StringComparison.OrdinalIgnoreCase))
+            {
+                if (order.Status is not (PurchaseOrderStatus.Draft or PurchaseOrderStatus.Issued))
+                {
+                    return Result.Fail(_localizer["PurchaseOrderLifecycleUnsupportedAction"]);
+                }
+
+                order.Status = PurchaseOrderStatus.Cancelled;
+            }
+            else
+            {
+                return Result.Fail(_localizer["PurchaseOrderLifecycleUnsupportedAction"]);
+            }
+
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return Result.Ok();
+        }
+
+        private async Task<Result> ReceiveAsync(PurchaseOrder order, CancellationToken ct)
+        {
+            if (order.Status != PurchaseOrderStatus.Issued)
+            {
+                return Result.Fail(_localizer["PurchaseOrderLifecycleUnsupportedAction"]);
+            }
+
+            var warehouseId = await _db.Set<Warehouse>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == order.BusinessId)
+                .OrderByDescending(x => x.IsDefault)
+                .ThenBy(x => x.Name)
+                .Select(x => x.Id)
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false);
+
+            if (warehouseId == Guid.Empty)
+            {
+                return Result.Fail(_localizer["NoWarehouseIsConfigured"]);
+            }
+
+            var variantIdsToRefresh = new HashSet<Guid>();
+            foreach (var line in order.Lines)
+            {
+                var stockLevel = await InventoryStockHelper.GetOrCreateStockLevelAsync(_db, warehouseId, line.ProductVariantId, ct).ConfigureAwait(false);
+                stockLevel.AvailableQuantity += line.Quantity;
+                _db.Set<InventoryTransaction>().Add(new InventoryTransaction
+                {
+                    WarehouseId = warehouseId,
+                    ProductVariantId = line.ProductVariantId,
+                    QuantityDelta = line.Quantity,
+                    Reason = "PurchaseOrderReceived",
+                    ReferenceId = order.Id
+                });
+                variantIdsToRefresh.Add(line.ProductVariantId);
+            }
+
+            order.Status = PurchaseOrderStatus.Received;
+
+            foreach (var variantId in variantIdsToRefresh)
+            {
+                await InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, variantId, _localizer, ct).ConfigureAwait(false);
+            }
+
+            return Result.Ok();
         }
     }
 

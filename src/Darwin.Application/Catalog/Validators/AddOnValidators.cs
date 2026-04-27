@@ -41,6 +41,7 @@ namespace Darwin.Application.Catalog.Validators
     {
         public AddOnOptionValidator()
         {
+            RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
             RuleFor(x => x.Label).NotEmpty().MaximumLength(256);
             RuleForEach(x => x.Values).SetValidator(new AddOnOptionValueValidator());
         }
@@ -50,6 +51,7 @@ namespace Darwin.Application.Catalog.Validators
     {
         public AddOnOptionValueValidator()
         {
+            RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
             RuleFor(x => x.Label).NotEmpty().MaximumLength(256);
             RuleFor(x => x.PriceDeltaMinor);
             RuleFor(x => x.Hint).MaximumLength(256).When(x => x.Hint != null);

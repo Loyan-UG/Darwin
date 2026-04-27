@@ -63,6 +63,7 @@ namespace Darwin.Application.Billing.DTOs
         public DateTime? LastFinancialEventAtUtc { get; set; }
         public int OpenAgeHours { get; set; }
         public string ProviderReferenceState { get; set; } = string.Empty;
+        public string DisputeReviewState { get; set; } = string.Empty;
         public bool IsStripe { get; set; }
         public bool NeedsReconciliation { get; set; }
         public bool NeedsDisputeFollowUp { get; set; }
@@ -195,6 +196,7 @@ namespace Darwin.Application.Billing.DTOs
         public DateTime? LastFinancialEventAtUtc { get; set; }
         public int OpenAgeHours { get; set; }
         public string ProviderReferenceState { get; set; } = string.Empty;
+        public string DisputeReviewState { get; set; } = string.Empty;
         public bool NeedsReconciliation { get; set; }
         public bool NeedsDisputeFollowUp { get; set; }
         public string? OrderNumber { get; set; }
@@ -210,6 +212,14 @@ namespace Darwin.Application.Billing.DTOs
         public List<PaymentRefundHistoryItemDto> Refunds { get; set; } = new();
         public List<PaymentProviderEventItemDto> ProviderEvents { get; set; } = new();
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class UpdatePaymentDisputeReviewDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Action { get; set; } = string.Empty;
+        public string? Note { get; set; }
     }
 
     public sealed class PaymentRefundHistoryItemDto

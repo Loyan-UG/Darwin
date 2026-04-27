@@ -1,9 +1,9 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CartCheckout.DTOs;
+using Darwin.Application.Pricing;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Pricing;
-using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using System;
@@ -71,6 +71,7 @@ namespace Darwin.Application.CartCheckout.Queries
                 .Select(v => new
                 {
                     v.Id,
+                    v.ProductId,
                     v.BasePriceNetMinor,
                     v.Currency,
                     v.TaxCategoryId
@@ -98,6 +99,13 @@ namespace Darwin.Application.CartCheckout.Queries
             // Helper map
             var variantById = variants.ToDictionary(v => v.Id);
             var vatByTaxId = taxCats.ToDictionary(t => t.Id, t => t.VatRate);
+            var productIds = variants.Select(v => v.ProductId).Distinct().ToList();
+            var categoryIds = await _db.Set<Product>()
+                .AsNoTracking()
+                .Where(p => productIds.Contains(p.Id) && !p.IsDeleted && p.PrimaryCategoryId.HasValue)
+                .Select(p => p.PrimaryCategoryId!.Value)
+                .Distinct()
+                .ToListAsync(ct);
 
             // Add-on price deltas
             var allSelectedAddOnValueIds = new HashSet<Guid>();
@@ -180,57 +188,57 @@ namespace Darwin.Application.CartCheckout.Queries
             if (!string.IsNullOrWhiteSpace(cart.CouponCode))
             {
                 var now = DateTime.UtcNow;
+                var normalizedCode = CouponEligibility.NormalizeCode(cart.CouponCode);
                 var promo = await _db.Set<Promotion>()
                     .AsNoTracking()
                     .FirstOrDefaultAsync(p =>
                         !p.IsDeleted &&
                         p.IsActive &&
-                        p.Code == cart.CouponCode &&
+                        p.Code != null &&
+                        p.Code.ToUpper() == normalizedCode &&
                         (p.StartsAtUtc == null || p.StartsAtUtc <= now) &&
                         (p.EndsAtUtc == null || p.EndsAtUtc >= now), ct);
 
                 if (promo != null)
                 {
-                    // Validate currency match for amount-based rewards
-                    if (promo.Type == PromotionType.Amount)
+                    var redemptionLimitReached = false;
+                    if (promo.MaxRedemptions.HasValue)
                     {
-                        if (!string.Equals(promo.Currency, result.Currency, StringComparison.OrdinalIgnoreCase))
-                            throw new InvalidOperationException(_localizer["PromotionCurrencyDoesNotMatchCartCurrency"]);
+                        var totalRedemptions = await _db.Set<PromotionRedemption>()
+                            .AsNoTracking()
+                            .CountAsync(r => !r.IsDeleted && r.PromotionId == promo.Id, ct);
+                        redemptionLimitReached = totalRedemptions >= promo.MaxRedemptions.Value;
                     }
 
-                    // Min subtotal net gate
-                    if (!promo.MinSubtotalNetMinor.HasValue || subtotalNet >= promo.MinSubtotalNetMinor.Value)
+                    if (!redemptionLimitReached && promo.PerCustomerLimit.HasValue && cart.UserId.HasValue)
                     {
-                        switch (promo.Type)
-                        {
-                            case PromotionType.Percentage:
-                                if (promo.Percent is > 0m and <= 100m)
-                                {
-                                    var raw = (decimal)subtotalNet * (promo.Percent.Value / 100m);
-                                    discountMinor = (long)Math.Round(raw, MidpointRounding.AwayFromZero);
-                                }
-                                break;
+                        var customerRedemptions = await _db.Set<PromotionRedemption>()
+                            .AsNoTracking()
+                            .CountAsync(r => !r.IsDeleted && r.PromotionId == promo.Id && r.UserId == cart.UserId, ct);
+                        redemptionLimitReached = customerRedemptions >= promo.PerCustomerLimit.Value;
+                    }
 
-                            case PromotionType.Amount:
-                                if (promo.AmountMinor.HasValue && promo.AmountMinor.Value > 0)
-                                {
-                                    discountMinor = promo.AmountMinor.Value;
-                                }
-                                break;
-                        }
+                    var eligibility = redemptionLimitReached
+                        ? new CouponEligibilityResult { IsValid = false }
+                        : CouponEligibility.Evaluate(
+                            promo,
+                            new CouponEligibilityContext
+                            {
+                                SubtotalNetMinor = subtotalNet,
+                                Currency = result.Currency,
+                                ProductIds = productIds,
+                                CategoryIds = categoryIds
+                            });
 
-                        // Never exceed subtotal
-                        if (discountMinor > subtotalNet) discountMinor = subtotalNet;
+                    discountMinor = eligibility.IsValid ? eligibility.DiscountMinor : 0;
 
-                        // VAT impact for discount:
-                        // Simple approach: apply proportional reduction on VAT total.
-                        // (For line-accurate VAT allocation you'd recalc per line; OK for phase 1.)
-                        if (subtotalNet > 0 && discountMinor > 0)
-                        {
-                            var vatReduction = (long)Math.Round((double)vatTotal * ((double)discountMinor / subtotalNet), MidpointRounding.AwayFromZero);
-                            vatTotal -= vatReduction;
-                        }
-
+                    // VAT impact for discount:
+                    // Simple approach: apply proportional reduction on VAT total.
+                    // (For line-accurate VAT allocation you'd recalc per line; OK for phase 1.)
+                    if (subtotalNet > 0 && discountMinor > 0)
+                    {
+                        var vatReduction = (long)Math.Round((double)vatTotal * ((double)discountMinor / subtotalNet), MidpointRounding.AwayFromZero);
+                        vatTotal -= vatReduction;
                         subtotalNet -= discountMinor;
                     }
                 }

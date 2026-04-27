@@ -1,3 +1,204 @@
+## 2026-04-27 - WebAdmin runtime smoke pass
+Done:
+- Ran WebAdmin through the real ASP.NET Core host against local SQL Server using the seeded admin account.
+- Fixed startup blockers found by runtime smoke: Serilog file sink no longer combines `buffered=true` with `shared=true`; Development can run HTTP launch profile without antiforgery secure-cookie 500s; Development SQL connection now trusts the local server certificate.
+- Logged in with seeded admin credentials and requested the recent WebAdmin surfaces with an authenticated session.
+- Verified full-page and HTMX GET rendering for Loyalty campaigns, Loyalty campaign deliveries, Brands, BusinessCommunications channel audits, Media unused filter, and MobileOperations stale-device filter.
+
+Verification:
+- Authenticated smoke results: `/Loyalty/Campaigns`, `/Loyalty/CampaignDeliveries`, `/Brands`, `/BusinessCommunications/ChannelAudits`, `/Media?filter=Unused`, and `/MobileOperations?state=stale` returned HTTP 200.
+- HTMX GET smoke for the same surfaces returned HTTP 200.
+- `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeded with 0 warnings and 0 errors.
+- `git diff --check` passed; it only reported existing LF-to-CRLF working-copy warnings.
+
+Notes:
+- No tests were added or expanded per the current WebAdmin-only instruction.
+- Destructive POST actions were not executed during smoke; route/action wiring for those was static-checked in the previous pass.
+## 2026-04-27 - WebAdmin static smoke pass
+Done:
+- Static-checked the recent operational WebAdmin surfaces: Loyalty campaign deliveries, Brand translation edit form, BusinessCommunications channel queue batch cancellation, Media unused purge, and MobileOperations batch/single remediation actions.
+- Matched targeted `asp-action` and `Url.Action` usages against controller actions; the only unmatched entry was a dynamic `@family.ActionTarget` false positive in ChannelAudits.
+- Rechecked the recent operational POST forms for anti-forgery tokens and filter-preserving hidden fields.
+
+Verification:
+- `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeded with 0 warnings and 0 errors.
+- `git diff --check` passed; it only reported existing LF-to-CRLF working-copy warnings.
+
+Notes:
+- No tests were added or expanded per the current WebAdmin-only instruction.
+- No actionable placeholder-only WebAdmin screen was found in this pass.
+## 2026-04-27 - WebAdmin stabilization pass
+Done:
+- Checked the new Loyalty campaign delivery routes, action links, DI registrations, validation resources, and targeted SharedResource keys.
+- Completed missing English/German UI resource entries used by Loyalty campaign delivery and Brand editing surfaces.
+- Normalized campaign delivery channel localization for SMS while keeping the WebAdmin build warning-free.
+
+Verification:
+- `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeded with 0 warnings and 0 errors.
+- Targeted literal SharedResource scan found no missing keys in the touched Loyalty/Brand WebAdmin files.
+
+Notes:
+- No tests were added or expanded per the current WebAdmin-only instruction.
+## 2026-04-27 - Brand translation upsert completed
+
+Done:
+- Ran the final WebAdmin/Application placeholder and TODO scan; most hits were normal HTML placeholders, resource names, XML docs, or explanatory phase-1 text.
+- Closed the remaining real catalog placeholder pattern in `UpdateBrandHandler`, which still cleared and recreated all brand translations on edit.
+- Brand edits now preserve translation ids through the WebAdmin edit form and application DTOs.
+- Brand translations are upserted by persisted id with culture fallback, removed translations are soft-deleted, and duplicate active cultures are rejected.
+- Brand edit queries now ignore soft-deleted translations.
+- Verified `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeds with 0 warnings and 0 errors.
+
+Notes:
+- No tests were added or expanded, per the current project instruction to focus only on main WebAdmin work.
+- `git diff --check` passed; it only reported existing LF-to-CRLF working-copy warnings.
+- The follow-up TODO/FIXME/NotImplemented/coming-soon scan did not find another actionable WebAdmin implementation placeholder.
+
+Remaining main WebAdmin work:
+- Run one stabilization pass focused on route/resource consistency and a full WebAdmin build after the accumulated main-project changes.
+- After stabilization, the remaining work should be manual UI smoke checks rather than additional feature implementation, unless a specific broken route or missing action is found.
+
+Suggested next work:
+- Perform the stabilization pass: inspect new/changed route links, resource keys, and DI registrations, then run the final WebAdmin build.
+## 2026-04-27 - Loyalty campaign delivery operations
+
+Done:
+- Confirmed Loyalty Programs, RewardTiers, and Campaigns already had real CRUD/lifecycle operations and were not placeholder-only pages.
+- Closed the larger missing operational workflow around existing CampaignDelivery records by adding a WebAdmin campaign-delivery queue.
+- Added delivery filtering by business, campaign, and status/attention state with operational summary counts for pending, in-progress, failed, succeeded, cancelled, and needs-attention deliveries.
+- Added row-version guarded delivery remediation actions so operators can requeue, mark succeeded, mark failed, or cancel individual campaign delivery attempts.
+- Linked campaign rows to their delivery diagnostics and registered the new handlers in WebAdmin DI.
+- Added localized WebAdmin and validation resource keys for the new campaign-delivery operations.
+- Verified `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeds with 0 warnings and 0 errors.
+
+Notes:
+- No tests were added or expanded, per the current project instruction to focus only on main WebAdmin work.
+- `git diff --check` passed; it only reported existing LF-to-CRLF working-copy warnings.
+
+Remaining main WebAdmin work:
+- Run a final broad scan over WebAdmin/Application for TODO/placeholder text and queue pages that still only display diagnostics.
+- If the scan finds no real placeholders, move to a final stabilization pass: resource consistency, route coverage, and a full WebAdmin build.
+
+Suggested next work:
+- Perform the final placeholder/TODO/read-only workflow scan across project-owned WebAdmin and Application paths, excluding tests and ordinary HTML placeholder attributes.
+## 2026-04-27 - BusinessCommunications channel queue batch cancellation
+
+Done:
+- Confirmed BusinessCommunications ChannelAudits is not a placeholder page; it already has diagnostics, chain/provider guidance, test rerun actions, and single queued-dispatch cancellation.
+- Closed the remaining operational gap by adding bounded batch cancellation for queued SMS/WhatsApp dispatch operations, capped at 200 matching pending/failed queue records.
+- The batch operation respects the current ChannelAudits filters: business, query, recipient, provider, channel, flow, status, failed-only, phone-verification, and admin-test filters.
+- Added a WebAdmin batch action and queue-card button so operators can clear the current filtered queued-dispatch backlog without cancelling unrelated operations.
+- Added localized WebAdmin labels/messages for the new batch action.
+- Verified `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeds with 0 warnings and 0 errors.
+
+Notes:
+- No tests were added or expanded, per the current project instruction to focus only on main WebAdmin work.
+- `git diff --check` passed; it only reported existing LF-to-CRLF working-copy warnings.
+
+Remaining main WebAdmin work:
+- Run a final broad operational pass over WebAdmin queues/pages for any remaining read-only workflow that still lacks a safe admin remediation action.
+- Run a final placeholder/TODO scan for project-owned WebAdmin/Application paths, excluding normal HTML placeholder attributes and test expansion.
+
+Suggested next work:
+- Review the remaining WebAdmin queue surfaces outside BusinessCommunications, especially Loyalty/Campaigns/Programs/RewardTiers and any CRM/Billing/Inventory queues that still expose diagnostics without a concrete lifecycle action.
+## 2026-04-27 - MobileOperations batch device remediation
+
+Done:
+- Confirmed MobileOperations already had single-device remediation actions for clearing push tokens and deactivating devices.
+- Added bounded batch remediation for stale active devices: deactivate up to 200 matching devices, disable notifications, and clear push tokens.
+- Added bounded batch remediation for notification-disabled devices: clear push tokens for up to 200 matching active devices.
+- Both batch actions respect the current business and platform filters to avoid over-broad operations.
+- Added WebAdmin actions and queue-visible buttons for stale and notifications-disabled device queues.
+- Verified `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeds with 0 warnings and 0 errors.
+
+Notes:
+- No tests were added or expanded, per the current project instruction to focus only on main WebAdmin work.
+- `git diff --check` passed; it only reported existing LF-to-CRLF working-copy warnings.
+- MobileOperations placeholder scan only found normal HTML input placeholder text, not an unfinished operational placeholder.
+
+Remaining main WebAdmin work:
+- Run one broader operational pass over provider diagnostic queues and the remaining WebAdmin pages for read-only-only workflows.
+- Run a final broad placeholder/TODO scan after that pass.
+
+Suggested next work:
+- Review BusinessCommunications provider/channel audit diagnostics for any remaining read-only queue that should expose a concrete remediation action.
+## 2026-04-27 - Media unused asset bulk purge
+
+Done:
+- Confirmed Media already had single unused-asset purge wired through WebAdmin.
+- Completed the remaining operational gap by adding a bounded bulk purge for unused media assets, capped at 100 records per operation.
+- The application handler now returns purged asset URLs; WebAdmin deletes local `/uploads` files only after the database purge succeeds and only when the resolved path remains under the uploads folder.
+- Added a bulk purge button on the unused media queue and localized success/failure labels.
+- Verified `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeds with 0 warnings and 0 errors.
+
+Notes:
+- No tests were added or expanded, per the current project instruction to focus only on main WebAdmin work.
+- `git diff --check` passed; it only reported existing LF-to-CRLF working-copy warnings.
+- Media placeholder scan only found normal HTML input placeholders, not unfinished operational placeholders.
+
+Remaining main WebAdmin work:
+- Continue with a final operational pass over provider/mobile diagnostic queues and any WebAdmin page that still only lists items without a real admin action.
+- Run a broader placeholder/TODO scan after that pass.
+
+Suggested next work:
+- Review MobileOperations and provider diagnostic screens for read-only queues that should expose a concrete remediation action.
+## 2026-04-27 - Loyalty scan session stale-expiry operations
+
+Done:
+- Added an application handler for expiring stale pending loyalty scan sessions with business ownership checks, row-version concurrency, and bounded bulk processing.
+- Exposed row versions on the WebAdmin scan-session queue so single-session operations can use optimistic concurrency.
+- Added WebAdmin actions and UI controls for expiring one stale pending scan session or up to 200 expired pending sessions in bulk.
+- Added SharedResource and ValidationResource localization keys for the new scan-session operation messages.
+- Verified `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeds with 0 warnings and 0 errors.
+
+Notes:
+- No tests were added or expanded, per the current project instruction to focus only on main WebAdmin work.
+- `git diff --check` passed; it only reported existing LF-to-CRLF working-copy warnings.
+
+Remaining main WebAdmin work:
+- Continue reviewing WebAdmin for operationally read-only queues that still need admin actions, especially Media unused asset cleanup and any remaining provider/mobile diagnostic queues.
+- Do one more placeholder/TODO scan after each completed module pass.
+
+Suggested next work:
+- Close the Media unused-asset cleanup flow in WebAdmin if it is still only surfaced as a queue without a real purge/review action.
+## 2026-04-27 - WebAdmin add-on group nested upsert completed
+- Closed the AddOnGroup nested rewrite placeholder path that cleared and recreated options/values on every edit.
+- Add-on group edits now preserve option/value ids through the WebAdmin edit form, update existing rows by id, create new rows with explicit GUIDs, and soft-delete removed options/values while deactivating removed values.
+- Edit DTO/query/view models now carry nested option/value ids, so selected add-on value references are not broken by routine admin edits.
+- Verification: dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore succeeded with 0 warnings and 0 errors.
+## 2026-04-27 - WebAdmin product update upsert completed
+- Closed the Product update placeholder path that cleared and recreated translations and variants on every edit.
+- Product edits now preserve variant identities through the WebAdmin edit form, upsert translations by culture, upsert variants by persisted id with SKU fallback, and soft-delete removed translations/variants instead of breaking historical references.
+- Create-product mapping now ignores client-supplied variant ids, and product validators reject duplicate cultures/SKUs before persistence.
+- Verification: dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore succeeded with 0 warnings and 0 errors.
+## 2026-04-27 - WebAdmin auth anti-bot completed
+- Closed the AuthDtos captcha/anti-bot TODO with a real WebAdmin login protection path instead of a placeholder field.
+- Added protected login challenge tokens, honeypot validation, configurable minimum form age, challenge expiry, and IP/email scoped login rate limiting before password verification.
+- Login form/controller now issue and submit anti-bot signals, and post-registration auto sign-in no longer reuses the password login path in a way that would bypass or trip the anti-bot challenge.
+- Verification: dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore succeeded with 0 warnings and 0 errors.
+## 2026-04-27 - WebAdmin coupon eligibility completed
+- Closed the coupon/promotion placeholder path by centralizing coupon eligibility for validation, apply-coupon, and cart-summary pricing.
+- Coupon checks now cover normalized code matching, active windows, soft-delete awareness, redemption caps, per-customer limits, minimum subtotal, currency, include/exclude products, and include/exclude primary categories.
+- Cart summary now uses the same eligibility engine before discounting, so invalid or exhausted coupons no longer silently receive discount logic from a different path.
+- Verification: dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore succeeded with 0 warnings and 0 errors.
+2026-04-27 - WebAdmin production Order lifecycle policy completed: manual order status changes now require real payment, shipment, delivery, and refund evidence before Paid, PartiallyShipped, Shipped, Delivered, PartiallyRefunded, Refunded, or Completed can be set; Delivered can now transition to Completed when delivery is fully evidenced and no refunds are pending. Validation messages are surfaced to WebAdmin operators. No test coverage was added per instruction. `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore` passes.
+2026-04-27 - WebAdmin production Identity admin user deletion safety completed: admin user deletion now detects order history and deactivates referenced users instead of soft-deleting them, rotates the security stamp, revokes JWT sessions, and shows an explicit WebAdmin message. The stale 2FA TODO in SignInHandler was removed because the enforcement path is already implemented. No test coverage was added per instruction. `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore` passes.
+2026-04-27 - WebAdmin production Inventory purchase and transfer lifecycle completed: stock transfers now support MarkInTransit/Complete/Cancel actions with real source, in-transit, and destination stock movements plus ledger rows; purchase orders now support Issue/Receive/Cancel actions with receipt into the business default warehouse and inventory ledger updates. WebAdmin grids expose these actions with concurrency row-version posts. No test coverage was added per instruction. `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore` passes.
+2026-04-27 - WebAdmin production Billing dispute review lifecycle completed: Stripe dispute-follow-up payments now have RowVersion-guarded operator actions for under review, evidence submitted, resolved won, resolved lost, and clear review. The payment queue and editor show persisted dispute review state, and won/lost resolutions remove payments from the open dispute-follow-up queue without adding schema or test work. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-27 - WebAdmin production Settings tenant-aware effective settings completed: added a business effective settings cache, routed AdminTextLocalizer through it, surfaced effective tenant defaults and communication identity readiness in Business Setup, and invalidated tenant-effective settings after business or Site Settings changes. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production CRM pipeline lifecycle completed: Leads and Opportunities queues now expose RowVersion-guarded lifecycle actions backed by application handlers. Operators can qualify, disqualify, or reopen leads directly from the Leads queue, and advance, close won, close lost, or reopen opportunities directly from the Opportunities queue without opening edit forms for routine pipeline movement. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Billing webhook delivery lifecycle completed: Billing Webhooks now exposes RowVersion-guarded queue actions for webhook deliveries, backed by UpdateBillingWebhookDeliveryHandler. Operators can requeue failed/pending callbacks, mark externally verified deliveries as succeeded, or suppress non-actionable rows from the active queue while keeping payment/refund reconciliation as a separate finance step. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Business/Tenant onboarding provisioning completed: Business setup and Merchant Readiness now expose a RowVersion-guarded Finalize onboarding action backed by ProvisionBusinessOnboardingHandler. The handler blocks approval until an active owner, primary location, legal name, and contact/provisioning email are present, then creates or syncs the managed CRM support customer profile and approves/reactivates the business in one operation. This closes the previous split between manual approval and separate CRM customer provisioning. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Shipping carrier-exception closure completed: ShipmentsQueue and ReturnsQueue now expose a RowVersion-guarded Resolve carrier exception action for active provider exception events. The application command records a shipment.exception_resolved carrier event, updates the shipment LastCarrierEventKey, and the tracking presentation suppresses older exception notes once a newer resolution event exists, so operators can close DHL/RMA exception follow-up without database edits. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Shipping provider-operation lifecycle completed: Orders now exposes the Integration.ShipmentProviderOperations DHL queue through a ShipmentProviderOperations workspace with provider/type/status/search/stale filters, summary cards, order/shipment context, and RowVersion-guarded Mark processed/Requeue/Mark failed/Cancel operations. Shipment and Returns queues now link into the provider-operation workspace so failed or stuck DHL CreateShipment and GenerateLabel operations can be recovered without direct database edits. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Provider callback inbox operations completed: BusinessCommunications now exposes the existing Integration.ProviderCallbackInboxMessages queue through a ProviderCallbacks workspace with provider/status/search/stale filters, summary cards, payload previews, RowVersion-guarded Mark processed/Requeue/Mark failed operations, localized operator messages, and dashboard navigation. The application query now performs provider callback counts and paging in the database instead of leaving the inbox as an unoperated placeholder entity. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Communication template previews completed: BusinessCommunications now has a dedicated TemplatePreviews workspace that renders the configured SiteSettings templates for business invitations, account activation, password reset, phone verification, and admin email/SMS/WhatsApp tests with realistic sample placeholders. Operators can filter by flow/channel, compare configured template text against rendered output, jump to SiteSettings editing, and open the relevant audit queues without sending messages or executing HTML. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Communication queued-dispatch cancellation completed: EmailAudits and ChannelAudits now expose RowVersion-guarded operator cancellation for pending/failed EmailDispatchOperation and ChannelDispatchOperation rows, backed by an application handler that soft-deletes queued operations so the background workers skip duplicate or stuck dispatches while preserving audit history. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Inventory exception queues completed: PurchaseOrders and StockTransfers now expose cancelled and stale operational queues, application query filters, summary counters, WebAdmin VM mappings, dashboard cards, queue shortcuts, and per-row stale badges based on a 14-day aging window for issued POs and in-transit transfers. No test coverage was added in this step per current instruction; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Media orphan purge workflow completed: Media now has a guarded PurgeUnused POST path backed by an application handler that refuses referenced assets and enforces RowVersion concurrency, plus a WebAdmin action that removes the local /uploads file only after the database purge succeeds. The Media grid exposes purge only for assets with zero product references while retaining the safer soft-delete action for general cleanup. No test coverage was added in this step; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Media reference visibility completed: Media assets now expose product-reference counts from ProductMedia in the application DTO/query path, WebAdmin view models, controller summaries, queue filters for UsedInProducts and Unused, summary cards, and per-card badges/details so operators can distinguish catalog-used media from orphan candidates before any future purge workflow. No test coverage was added in this step; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Loyalty program workspace maintenance completed: Programs now uses a maintainable HTMX-safe Razor structure aligned with the other Loyalty workspaces, removes the redundant trailing localizer injection already supplied by ViewImports, and preserves business filtering, queue filters, summary cards, playbooks, reward-tier/edit handoffs, delete anti-forgery POST contracts, rowVersion concurrency tokens, and pager state. No test coverage was added in this step; Darwin.WebAdmin production build passes.
+2026-04-26 - WebAdmin production Loyalty campaign/reward-tier workspace maintenance completed: Campaigns and RewardTiers now use maintainable HTMX-safe Razor structures instead of compressed one-line markup while preserving queue filters, summary cards, playbooks, edit/create handoffs, activation/deactivation, delete anti-forgery POST contracts, rowVersion concurrency tokens, and pager state. No test coverage was added in this step; Darwin.WebAdmin production build passes.
 2026-04-25 - WebAdmin production Loyalty scan-session workspace maintenance completed: ScanSessions now uses maintainable HTMX-safe Razor structure instead of compressed one-line markup while preserving filters, queue shortcuts, summary cards, playbooks, mobile/provider handoffs, localized scan failure mapping, and pager state. No placeholder-only WebAdmin surface was found in the production scan; no test coverage was added in this step; Darwin.WebAdmin production build passes.
 2026-04-25 - WebAdmin production Loyalty accounts/redemptions maintenance completed: the high-traffic Accounts and Redemptions Razor workspaces were expanded from compressed one-line markup into maintainable HTMX-safe structures while preserving filters, summary cards, playbooks, account/mobile handoffs, and redemption confirmation anti-forgery POST contracts. No test coverage was added in this step; Darwin.WebAdmin production build passes.
 2026-04-25 - WebAdmin production AddOnGroups attachment UI completed: AttachToProducts, AttachToCategories, AttachToBrands, and AttachToVariants now carry attached id sets through their WebAdmin view models, render persistent hidden selection containers, and use a shared add-on selection script so row toggles and select-all stay synchronized with the posted attachment ids. No test coverage was added in this step; Darwin.WebAdmin production build passes.

@@ -75,4 +75,26 @@ namespace Darwin.Application.Businesses.DTOs
         public int PendingActivationMemberCount { get; set; }
         public int LockedMemberCount { get; set; }
     }
+
+    public sealed class CancelCommunicationDispatchOperationDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Channel { get; set; } = string.Empty;
+    }
+
+    public sealed class CancelChannelDispatchOperationsBatchDto
+    {
+        public string Channel { get; set; } = string.Empty;
+        public string FlowKey { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string Query { get; set; } = string.Empty;
+        public string RecipientAddress { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public Guid? BusinessId { get; set; }
+        public bool FailedOnly { get; set; }
+        public bool PhoneVerificationOnly { get; set; }
+        public bool AdminTestOnly { get; set; }
+        public int Limit { get; set; } = 200;
+    }
 }

@@ -8,12 +8,16 @@
     string StockTransferOpsHealthBadgeClass(bool healthy) => healthy
         ? "badge bg-success-subtle text-success-emphasis"
         : "badge bg-warning-subtle text-warning-emphasis";
+    string StockTransferStaleBadgeClass(bool isStale) => isStale
+        ? "badge bg-danger-subtle text-danger-emphasis"
+        : "badge bg-success-subtle text-success-emphasis";
     string StockTransferOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
     var stockTransferAttentionCount = Model.Summary.DraftCount + Model.Summary.InTransitCount;
     string StockTransfersUrl(object? businessId = null, object? warehouseId = null, string? q = null, string? filter = null) => Url.Action("StockTransfers", "Inventory", new { businessId, warehouseId, q, filter }) ?? string.Empty;
     string CreateStockTransferUrl(object? businessId = null, object? warehouseId = null) => Url.Action("CreateStockTransfer", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
     string StockLevelsUrl(object? businessId = null, object? warehouseId = null) => Url.Action("StockLevels", "Inventory", new { businessId, warehouseId }) ?? string.Empty;
     string EditStockTransferUrl(Guid id) => Url.Action("EditStockTransfer", "Inventory", new { id }) ?? string.Empty;
+    string UpdateStockTransferLifecycleUrl(Guid id) => Url.Action("UpdateStockTransferLifecycle", "Inventory", new { id }) ?? string.Empty;
 }
 
 <div id="inventory-stock-transfers-workspace-shell">
@@ -59,6 +63,16 @@
        hx-target="#inventory-stock-transfers-workspace-shell"
        hx-swap="outerHTML"
        hx-push-url="true">@T.T("Completed")</a>
+    <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="StaleInTransit" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockTransferQueueFilter.StaleInTransit ? "btn-danger" : "btn-outline-danger")"
+       hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "StaleInTransit")"
+       hx-target="#inventory-stock-transfers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("StaleInTransit")</a>
+    <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Cancelled" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockTransferQueueFilter.Cancelled ? "btn-secondary" : "btn-outline-secondary")"
+       hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "Cancelled")"
+       hx-target="#inventory-stock-transfers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">@T.T("Cancelled")</a>
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
        hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query)"
        hx-target="#inventory-stock-transfers-workspace-shell"
@@ -67,7 +81,7 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4 col-xl-2">
         <div class="card h-100">
             <div class="card-body">
                 <div class="text-muted small">@T.T("Total")</div>
@@ -75,7 +89,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4 col-xl-2">
         <div class="card h-100 border-secondary-subtle">
             <div class="card-body">
                 <div class="text-muted small">@T.T("Draft")</div>
@@ -83,7 +97,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4 col-xl-2">
         <div class="card h-100 border-warning-subtle">
             <div class="card-body">
                 <div class="text-muted small">@T.T("InTransit")</div>
@@ -91,11 +105,28 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4 col-xl-2">
         <div class="card h-100 border-success-subtle">
             <div class="card-body">
                 <div class="text-muted small">@T.T("Completed")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.CompletedCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100 border-danger-subtle">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("StaleInTransit")</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.StaleInTransitCount</div>
+                <div class="small text-muted">@T.T("InventoryAgingWindow14Days")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100 border-secondary-subtle">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("Cancelled")</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.CancelledCount</div>
             </div>
         </div>
     </div>
@@ -172,6 +203,11 @@
                            hx-target="#inventory-stock-transfers-workspace-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("InTransit")</a>
+                        <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="StaleInTransit" class="btn btn-sm btn-outline-danger"
+                           hx-get="@StockTransfersUrl(ViewBag.BusinessId, Model.WarehouseId, Model.Query, "StaleInTransit")"
+                           hx-target="#inventory-stock-transfers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("StaleInTransit")</a>
                         <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
                            hx-get="@StockLevelsUrl(ViewBag.BusinessId, Model.WarehouseId)"
                            hx-target="#inventory-stock-transfers-workspace-shell"
@@ -272,6 +308,7 @@
         {
             foreach (var item in Model.Items)
             {
+                var rowVersion = Convert.ToBase64String(item.RowVersion);
                 <tr>
                     <td>@item.FromWarehouseName</td>
                     <td>@item.ToWarehouseName</td>
@@ -284,18 +321,92 @@
                         {
                             <span class="badge text-bg-success">@T.T("Completed")</span>
                         }
+                        else if (string.Equals(item.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="badge text-bg-secondary">@T.T("Cancelled")</span>
+                        }
                         else
                         {
                             <span class="badge text-bg-secondary">@LocalizeStockTransferStatus(item.Status)</span>
                         }
+                        @if (item.IsStale)
+                        {
+                            <span class="@StockTransferStaleBadgeClass(item.IsStale) ms-1">@T.T("StaleInTransit")</span>
+                        }
                     </td>
                     <td>@item.LineCount</td>
                     <td>@InventoryDateTimeText(item.CreatedAtUtc)</td>
-                    <td class="text-end"><a asp-action="EditStockTransfer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@EditStockTransferUrl(item.Id)"
-                           hx-target="#inventory-stock-transfers-workspace-shell"
-                           hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("Edit")</a></td>
+                    <td class="text-end">
+                        <div class="d-inline-flex flex-wrap justify-content-end gap-1">
+                            @if (string.Equals(item.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <form asp-action="UpdateStockTransferLifecycle" asp-route-id="@item.Id" method="post" class="d-inline"
+                                      hx-post="@UpdateStockTransferLifecycleUrl(item.Id)"
+                                      hx-target="#inventory-stock-transfers-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="MarkInTransit" />
+                                    <input type="hidden" name="businessId" value="@ViewBag.BusinessId" />
+                                    <input type="hidden" name="warehouseId" value="@Model.WarehouseId" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">@T.T("MarkInTransit")</button>
+                                </form>
+                                <form asp-action="UpdateStockTransferLifecycle" asp-route-id="@item.Id" method="post" class="d-inline"
+                                      hx-post="@UpdateStockTransferLifecycleUrl(item.Id)"
+                                      hx-target="#inventory-stock-transfers-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="Cancel" />
+                                    <input type="hidden" name="businessId" value="@ViewBag.BusinessId" />
+                                    <input type="hidden" name="warehouseId" value="@Model.WarehouseId" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("Cancel")</button>
+                                </form>
+                            }
+                            else if (string.Equals(item.Status, "InTransit", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <form asp-action="UpdateStockTransferLifecycle" asp-route-id="@item.Id" method="post" class="d-inline"
+                                      hx-post="@UpdateStockTransferLifecycleUrl(item.Id)"
+                                      hx-target="#inventory-stock-transfers-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="Complete" />
+                                    <input type="hidden" name="businessId" value="@ViewBag.BusinessId" />
+                                    <input type="hidden" name="warehouseId" value="@Model.WarehouseId" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">@T.T("Complete")</button>
+                                </form>
+                                <form asp-action="UpdateStockTransferLifecycle" asp-route-id="@item.Id" method="post" class="d-inline"
+                                      hx-post="@UpdateStockTransferLifecycleUrl(item.Id)"
+                                      hx-target="#inventory-stock-transfers-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="Cancel" />
+                                    <input type="hidden" name="businessId" value="@ViewBag.BusinessId" />
+                                    <input type="hidden" name="warehouseId" value="@Model.WarehouseId" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("Cancel")</button>
+                                </form>
+                            }
+                            <a asp-action="EditStockTransfer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@EditStockTransferUrl(item.Id)"
+                               hx-target="#inventory-stock-transfers-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Edit")</a>
+                        </div>
+                    </td>
                 </tr>
             }
         }

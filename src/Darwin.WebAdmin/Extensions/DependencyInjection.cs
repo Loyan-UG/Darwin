@@ -54,6 +54,7 @@ using Darwin.WebAdmin.Localization;
 using Darwin.WebAdmin;
 using Darwin.WebAdmin.Services.Admin;
 using Darwin.WebAdmin.Services.Seo;
+using Darwin.WebAdmin.Services.Security;
 using Darwin.WebAdmin.Services.Settings;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -82,6 +83,8 @@ namespace Darwin.WebAdmin.Extensions
         /// </summary>
         public static IServiceCollection AddWebComposition(this IServiceCollection services, IConfiguration config)
         {
+            var cookieSecurePolicy = ResolveCookieSecurePolicy(config);
+
             services.AddScoped<IClock, SystemClock>();
 
             // Identity handlers required for Auth flows
@@ -101,6 +104,10 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetMobileDevicesPageHandler>();
             services.AddScoped<ClearUserDevicePushTokenHandler>();
             services.AddScoped<DeactivateUserDeviceHandler>();
+            services.Configure<AuthAntiBotOptions>(config.GetSection("Security:AuthAntiBot"));
+            services.AddSingleton<IAuthAntiBotChallengeService, ProtectedAuthAntiBotChallengeService>();
+            services.AddSingleton<Application.Abstractions.Security.IAuthAntiBotVerifier>(sp =>
+                sp.GetRequiredService<IAuthAntiBotChallengeService>());
             services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -153,7 +160,7 @@ namespace Darwin.WebAdmin.Extensions
                     options.Cookie.Name = "Darwin.Auth";
                     options.Cookie.HttpOnly = true;
                     options.Cookie.SameSite = SameSiteMode.Lax;
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Cookie.SecurePolicy = cookieSecurePolicy;
                     options.SlidingExpiration = true;
                     options.ExpireTimeSpan = TimeSpan.FromDays(30);
 
@@ -195,6 +202,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreateMediaAssetHandler>();
             services.AddScoped<UpdateMediaAssetHandler>();
             services.AddScoped<SoftDeleteMediaAssetHandler>();
+            services.AddScoped<PurgeUnusedMediaAssetHandler>();
 
             // Roles (Identity)
             services.AddScoped<GetRolesPageHandler>();
@@ -264,6 +272,7 @@ namespace Darwin.WebAdmin.Extensions
             // Settings cache
             services.AddMemoryCache();
             services.AddScoped<ISiteSettingCache, SiteSettingCache>();
+            services.AddScoped<IBusinessEffectiveSettingsCache, BusinessEffectiveSettingsCache>();
 
             // Brands
             services.AddScoped<GetBrandsPageHandler>();
@@ -279,11 +288,15 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetBusinessCommunicationProfileHandler>();
             services.AddScoped<GetEmailDispatchAuditsPageHandler>();
             services.AddScoped<GetChannelDispatchActivityHandler>();
+            services.AddScoped<GetProviderCallbackInboxPageHandler>();
             services.AddScoped<RetryEmailDispatchAuditHandler>();
+            services.AddScoped<CancelCommunicationDispatchOperationHandler>();
+            services.AddScoped<UpdateProviderCallbackInboxMessageHandler>();
             services.AddScoped<GetBusinessForEditHandler>();
             services.AddScoped<GetBusinessOnboardingCustomerProfileHandler>();
             services.AddScoped<CreateBusinessHandler>();
             services.AddScoped<EnsureBusinessOnboardingCustomerProfileHandler>();
+            services.AddScoped<ProvisionBusinessOnboardingHandler>();
             services.AddScoped<UpdateBusinessHandler>();
             services.AddScoped<SoftDeleteBusinessHandler>();
             services.AddScoped<ApproveBusinessHandler>();
@@ -309,6 +322,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetOrdersPageHandler>();
             services.AddScoped<GetShipmentsPageHandler>();
             services.AddScoped<GetShipmentOpsSummaryHandler>();
+            services.AddScoped<GetShipmentProviderOperationsPageHandler>();
             services.AddScoped<GetOrderForViewHandler>();
             services.AddScoped<GetOrderPaymentsPageHandler>();
             services.AddScoped<GetOrderShipmentsPageHandler>();
@@ -347,15 +361,20 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<AdjustLoyaltyPointsHandler>();
             services.AddScoped<SuspendLoyaltyAccountHandler>();
             services.AddScoped<ActivateLoyaltyAccountHandler>();
+            services.AddScoped<ExpireLoyaltyScanSessionHandler>();
             services.AddScoped<GetBusinessCampaignsHandler>();
             services.AddScoped<CreateBusinessCampaignHandler>();
             services.AddScoped<UpdateBusinessCampaignHandler>();
             services.AddScoped<SetCampaignActivationHandler>();
+            services.AddScoped<GetCampaignDeliveriesPageHandler>();
+            services.AddScoped<UpdateCampaignDeliveryStatusHandler>();
 
             // Orders – commands
             services.AddScoped<AddPaymentHandler>();
             services.AddScoped<AddShipmentHandler>();
             services.AddScoped<GenerateDhlShipmentLabelHandler>();
+            services.AddScoped<ResolveShipmentCarrierExceptionHandler>();
+            services.AddScoped<UpdateShipmentProviderOperationHandler>();
             services.AddScoped<AddRefundHandler>();
             services.AddScoped<CreateOrderInvoiceHandler>();
             services.AddScoped<UpdateOrderStatusHandler>();
@@ -376,10 +395,12 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreateLeadHandler>();
             services.AddScoped<UpdateLeadHandler>();
             services.AddScoped<ConvertLeadToCustomerHandler>();
+            services.AddScoped<UpdateLeadLifecycleHandler>();
             services.AddScoped<GetOpportunitiesPageHandler>();
             services.AddScoped<GetOpportunityForEditHandler>();
             services.AddScoped<CreateOpportunityHandler>();
             services.AddScoped<UpdateOpportunityHandler>();
+            services.AddScoped<UpdateOpportunityLifecycleHandler>();
             services.AddScoped<CreateInteractionHandler>();
             services.AddScoped<CreateConsentHandler>();
             services.AddScoped<CreateCustomerSegmentHandler>();
@@ -400,6 +421,8 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetBillingWebhookSubscriptionsPageHandler>();
             services.AddScoped<GetBillingWebhookDeliveriesPageHandler>();
             services.AddScoped<GetBillingWebhookOpsSummaryHandler>();
+            services.AddScoped<UpdateBillingWebhookDeliveryHandler>();
+            services.AddScoped<UpdatePaymentDisputeReviewHandler>();
             services.AddScoped<GetPaymentForEditHandler>();
             services.AddScoped<GetRefundsPageHandler>();
             services.AddScoped<GetRefundOpsSummaryHandler>();
@@ -438,10 +461,12 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetStockTransferForEditHandler>();
             services.AddScoped<CreateStockTransferHandler>();
             services.AddScoped<UpdateStockTransferHandler>();
+            services.AddScoped<UpdateStockTransferLifecycleHandler>();
             services.AddScoped<GetPurchaseOrdersPageHandler>();
             services.AddScoped<GetPurchaseOrderForEditHandler>();
             services.AddScoped<CreatePurchaseOrderHandler>();
             services.AddScoped<UpdatePurchaseOrderHandler>();
+            services.AddScoped<UpdatePurchaseOrderLifecycleHandler>();
             services.AddScoped<GetInventoryLedgerHandler>();
 
             // Inventory – commands
@@ -510,7 +535,7 @@ namespace Darwin.WebAdmin.Extensions
                 options.Cookie.Name = "Darwin.AntiForgery";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SecurePolicy = cookieSecurePolicy;
             });
 
             // HTML Sanitizer using our factory (singleton across the app)
@@ -625,6 +650,14 @@ namespace Darwin.WebAdmin.Extensions
             services.AddValidatorsFromAssembly(Assembly.Load("Darwin.Application"), includeInternalTypes: true);
 
             return services;
+        }
+
+        private static CookieSecurePolicy ResolveCookieSecurePolicy(IConfiguration config)
+        {
+            var configured = config["Security:CookieSecurePolicy"];
+            return Enum.TryParse<CookieSecurePolicy>(configured, ignoreCase: true, out var policy)
+                ? policy
+                : CookieSecurePolicy.Always;
         }
 
         /// <summary>

@@ -8,6 +8,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Application.Identity.Services;
 using Darwin.WebAdmin.Localization;
+using Darwin.WebAdmin.Services.Security;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -32,6 +33,7 @@ namespace Darwin.WebAdmin.Controllers
         private readonly IPermissionService _permissions;
         private readonly IAdminTextLocalizer _text;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IAuthAntiBotChallengeService _antiBotChallenge;
 
         /// <summary>
         /// Initializes the controller with required Application services.
@@ -46,7 +48,8 @@ namespace Darwin.WebAdmin.Controllers
             GetRoleIdByKeyHandler getRoleIdByKey,
             IPermissionService permissions,
             IAdminTextLocalizer text,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            IAuthAntiBotChallengeService antiBotChallenge)
         {
             _signIn = signIn;
             _register = register;
@@ -58,6 +61,7 @@ namespace Darwin.WebAdmin.Controllers
             _permissions = permissions;
             _text = text;
             _siteSettingCache = siteSettingCache;
+            _antiBotChallenge = antiBotChallenge;
         }
 
         /// <summary>Renders the login page.</summary>
@@ -65,7 +69,7 @@ namespace Darwin.WebAdmin.Controllers
         [HttpGet("/account/login")]
         public IActionResult Login(string? returnUrl = null)
         {
-            ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
+            PrepareLoginViewState(returnUrl);
             return View();
         }
 
@@ -80,17 +84,28 @@ namespace Darwin.WebAdmin.Controllers
             [FromForm] string email,
             [FromForm] string password,
             [FromForm] bool rememberMe = false,
+            [FromForm] string? antiBotToken = null,
+            [FromForm] string? antiBotHoneypot = null,
             [FromForm] string? returnUrl = null,
             CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
                 ModelState.AddModelError(string.Empty, _text.T("EmailPasswordRequiredMessage"));
-                ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
+                PrepareLoginViewState(returnUrl);
                 return View("Login");
             }
 
-            var dto = new SignInDto { Email = email.Trim(), Password = password, RememberMe = rememberMe };
+            var dto = new SignInDto
+            {
+                Email = email.Trim(),
+                Password = password,
+                RememberMe = rememberMe,
+                AntiBotToken = antiBotToken,
+                AntiBotHoneypot = antiBotHoneypot,
+                ClientIpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = Request.Headers.UserAgent.ToString()
+            };
             var result = await _signIn.HandleAsync(dto, ct);
 
             if (!result.Succeeded)
@@ -105,14 +120,14 @@ namespace Darwin.WebAdmin.Controllers
 
                 AddLocalizedModelError("InvalidCredentialsMessage");
 
-                ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
+                PrepareLoginViewState(returnUrl);
                 return View("Login");
             }
 
             if (!result.UserId.HasValue || string.IsNullOrWhiteSpace(result.SecurityStamp))
             {
                 ModelState.AddModelError(string.Empty, _text.T("UnexpectedLoginResultMessage"));
-                ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
+                PrepareLoginViewState(returnUrl);
                 return View("Login");
             }
 
@@ -295,12 +310,13 @@ namespace Darwin.WebAdmin.Controllers
                 return View("Register");
             }
 
-            // Sign-in after registration (best-effort).
-            var sign = await _signIn.HandleAsync(new SignInDto { Email = email.Trim(), Password = password, RememberMe = true }, ct);
-            if (sign.Succeeded && sign.UserId.HasValue && !string.IsNullOrWhiteSpace(sign.SecurityStamp))
+            // Sign in the freshly created account without re-submitting the password login anti-bot challenge.
+            var registeredUserId = result.Value;
+            var stamp = await _getSecurityStamp.HandleAsync(registeredUserId, ct);
+            if (stamp is { Succeeded: true } && !string.IsNullOrWhiteSpace(stamp.Value))
             {
-                await IssueCookieAsync(sign.UserId.Value, sign.SecurityStamp!, true, ct);
-                var dest = await DeterminePostLoginRedirectAsync(sign.UserId.Value, returnUrl, ct);
+                await IssueCookieAsync(registeredUserId, stamp.Value!, true, ct);
+                var dest = await DeterminePostLoginRedirectAsync(registeredUserId, returnUrl, ct);
                 return Redirect(dest);
             }
 
@@ -353,6 +369,12 @@ namespace Darwin.WebAdmin.Controllers
             ViewData["RememberMe"] = rememberMe;
             ViewData["ReturnUrl"] = returnUrl ?? string.Empty;
             ViewData["TwoFaUserId"] = userId ?? string.Empty;
+        }
+
+        private void PrepareLoginViewState(string? returnUrl)
+        {
+            ViewData["ReturnUrl"] = SafeReturnUrlForForm(returnUrl);
+            ViewData["AntiBotToken"] = _antiBotChallenge.CreateChallengeToken();
         }
 
         /// <summary>

@@ -849,6 +849,9 @@
   <data name="UserDeletedMessage" xml:space="preserve">
     <value>Benutzer geloescht.</value>
   </data>
+  <data name="UserDeactivatedDueToOrderHistoryMessage" xml:space="preserve">
+    <value>Der Benutzer hat Bestellhistorie, daher wurde das Konto deaktiviert statt geloescht.</value>
+  </data>
   <data name="UserDeleteFailedMessage" xml:space="preserve">
     <value>Benutzer konnte nicht geloescht werden.</value>
   </data>
@@ -4577,6 +4580,61 @@
     <value>Die Aktivierung der Treuekampagne konnte nicht aktualisiert werden.</value>
     <comment>Fehlermeldung, wenn das Aktivieren oder Deaktivieren einer Treuekampagne fehlschlägt.</comment>
   </data>
+  <data name="CampaignDeliveries" xml:space="preserve">
+    <value>Kampagnenzustellungen</value>
+  </data>
+  <data name="Deliveries" xml:space="preserve">
+    <value>Zustellungen</value>
+  </data>
+  <data name="CampaignDeliveriesIntro" xml:space="preserve">
+    <value>Kampagnenzustellungen über In-App- und Push-Kanäle überwachen und abgleichen.</value>
+  </data>
+  <data name="BackToCampaigns" xml:space="preserve">
+    <value>Zurück zu Kampagnen</value>
+  </data>
+  <data name="LoyaltyCampaignDeliveriesLoadFailed" xml:space="preserve">
+    <value>Kampagnenzustellungen konnten nicht geladen werden.</value>
+  </data>
+  <data name="CampaignDeliveryStatusUpdated" xml:space="preserve">
+    <value>Status der Kampagnenzustellung wurde aktualisiert.</value>
+  </data>
+  <data name="CampaignDeliveryStatusUpdateFailed" xml:space="preserve">
+    <value>Status der Kampagnenzustellung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="CampaignDeliveryUpdatedByOperator" xml:space="preserve">
+    <value>Vom WebAdmin-Operator aktualisiert.</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>Ziel</value>
+  </data>
+  <data name="FirstAttempt" xml:space="preserve">
+    <value>Erster Versuch</value>
+  </data>
+  <data name="ResponseCode" xml:space="preserve">
+    <value>Antwortcode</value>
+  </data>
+  <data name="InProgress" xml:space="preserve">
+    <value>In Bearbeitung</value>
+  </data>
+  <data name="LoyaltyScanSessionExpired" xml:space="preserve">
+    <value>Scan-Sitzung abgelaufen.</value>
+    <comment>Erfolgsmeldung nach dem Ablaufenlassen einer veralteten Treue-Scan-Sitzung.</comment>
+  </data>
+  <data name="LoyaltyScanSessionsExpired" xml:space="preserve">
+    <value>Veraltete Scan-Sitzungen abgelaufen.</value>
+    <comment>Erfolgsmeldung nach dem massenhaften Ablaufenlassen veralteter Treue-Scan-Sitzungen.</comment>
+  </data>
+  <data name="LoyaltyScanSessionExpireFailed" xml:space="preserve">
+    <value>Scan-Sitzung konnte nicht ablaufen gelassen werden.</value>
+    <comment>Fehlermeldung, wenn das Ablaufenlassen einer veralteten Treue-Scan-Sitzung fehlschlägt.</comment>
+  </data>
+  <data name="LoyaltyExpireStaleScanSessions" xml:space="preserve">
+    <value>Veraltete Sitzungen ablaufen lassen</value>
+    <comment>Schaltfläche zum Ablaufenlassen veralteter ausstehender Treue-Scan-Sitzungen.</comment>
+  </data>
+  <data name="Expire" xml:space="preserve">
+    <value>Ablaufen lassen</value>
+  </data>
   <data name="LoyaltyAccountNotFound" xml:space="preserve">
     <value>Treuekonto wurde nicht gefunden.</value>
     <comment>Fehlermeldung, wenn ein Treuekonto nicht gefunden wird.</comment>
@@ -6880,7 +6938,7 @@
     <value>Diese Zeilen stehen für bereits verbuchte Rückzahlungen an Kunden und sollten mit Zahlungs- und Rechnungskontext konsistent bleiben.</value>
   </data>
   <data name="BillingWebhookLifecycleNote" xml:space="preserve">
-    <value>Diese Queue macht Callback-Abläufe für Zahlungsoperationen der Phase 1 sichtbar. Sie ist bewusst leseorientiert und beansprucht weder automatisches Resend noch vollständigen Abgleich.</value>
+    <value>Diese Queue macht Callback-Ablaeufe fuer Zahlungsoperationen der Phase 1 sichtbar und bietet Operator-Lifecycle-Aktionen. Sie beansprucht weder automatisches Resend noch vollstaendigen Abgleich.</value>
   </data>
   <data name="BillingRefundsPlaybookFailedScope" xml:space="preserve">
     <value>Nutzen Sie diese Teilmenge, wenn Erstattungsstatus oder Stripe-Verhalten eine explizite Prüfung durch Finance/Support benötigen.</value>
@@ -9381,6 +9439,33 @@
   <data name="MediaSetTitle" xml:space="preserve">
     <value>Titel setzen</value>
   </data>
+  <data name="MediaPurgeUnusedBatch" xml:space="preserve">
+    <value>Ungenutzten Batch bereinigen</value>
+  </data>
+  <data name="MediaBulkPurged" xml:space="preserve">
+    <value>{0} ungenutzte Medien-Assets bereinigt.</value>
+  </data>
+  <data name="MediaBulkPurgeFailed" xml:space="preserve">
+    <value>Ungenutzte Medien-Assets konnten gerade nicht bereinigt werden.</value>
+  </data>
+  <data name="MobileDeactivateStaleBatch" xml:space="preserve">
+    <value>Veralteten Batch deaktivieren</value>
+  </data>
+  <data name="MobileClearDisabledPushBatch" xml:space="preserve">
+    <value>Deaktivierte Push-Tokens bereinigen</value>
+  </data>
+  <data name="MobileStaleDevicesDeactivated" xml:space="preserve">
+    <value>{0} veraltete Mobilgeraete deaktiviert.</value>
+  </data>
+  <data name="MobileStaleDevicesDeactivateFailed" xml:space="preserve">
+    <value>Veraltete Mobilgeraete konnten gerade nicht deaktiviert werden.</value>
+  </data>
+  <data name="MobileNotificationsDisabledPushTokensCleared" xml:space="preserve">
+    <value>Push-Tokens fuer {0} Geraete mit deaktivierten Benachrichtigungen bereinigt.</value>
+  </data>
+  <data name="MobileNotificationsDisabledPushTokensClearFailed" xml:space="preserve">
+    <value>Push-Tokens fuer Geraete mit deaktivierten Benachrichtigungen konnten gerade nicht bereinigt werden.</value>
+  </data>
   <data name="Copied" xml:space="preserve">
     <value>Kopiert</value>
   </data>
@@ -10748,5 +10833,422 @@
   </data>
   <data name="BusinessBrandSecondaryColorPlaceholder" xml:space="preserve">
     <value>#FFCC00</value>
+  </data>
+  <data name="StaleIssued" xml:space="preserve">
+    <value>Ueberfaellige Bestellungen</value>
+  </data>
+  <data name="StaleInTransit" xml:space="preserve">
+    <value>Ueberfaellige Umlagerungen</value>
+  </data>
+  <data name="InventoryAgingWindow14Days" xml:space="preserve">
+    <value>Aelter als 14 Tage</value>
+  </data>
+  <data name="CancelQueuedDispatch" xml:space="preserve">
+    <value>Queue-Versand abbrechen</value>
+  </data>
+  <data name="CancelQueuedDispatchBatch" xml:space="preserve">
+    <value>Aktuelle Queue-Versande abbrechen</value>
+  </data>
+  <data name="CommunicationQueuedDispatchCancelledMessage" xml:space="preserve">
+    <value>Der Queue-Versand wurde abgebrochen.</value>
+  </data>
+  <data name="CommunicationQueuedDispatchBatchCancelledMessage" xml:space="preserve">
+    <value>{0} Queue-Versande wurden abgebrochen.</value>
+  </data>
+  <data name="CommunicationQueuedDispatchCancelFailedMessage" xml:space="preserve">
+    <value>Der Queue-Versand konnte nicht abgebrochen werden.</value>
+  </data>
+  <data name="CommunicationTemplatePreviewsTitle" xml:space="preserve">
+    <value>Template-Vorschau</value>
+  </data>
+  <data name="CommunicationTemplatePreviewsIntro" xml:space="preserve">
+    <value>Pruefen Sie konfigurierte Kommunikationstemplates mit realistischen Beispieldaten, bevor Live-Flows fuer E-Mail, SMS oder WhatsApp ausgefuehrt werden.</value>
+  </data>
+  <data name="CommunicationTemplatePreviewsSafetyNote" xml:space="preserve">
+    <value>Vorschauen werden fuer Operatoren kodiert angezeigt und versenden keine Nachrichten oder fuehren kein HTML aus.</value>
+  </data>
+  <data name="CommunicationTemplatePreviewConfiguredTemplate" xml:space="preserve">
+    <value>Konfiguriertes Template</value>
+  </data>
+  <data name="CommunicationTemplatePreviewRenderedOutput" xml:space="preserve">
+    <value>Gerenderte Ausgabe</value>
+  </data>
+  <data name="CommunicationTemplatePreviewSampleData" xml:space="preserve">
+    <value>Beispieldaten</value>
+  </data>
+  <data name="CommunicationTemplatePreviewNoSubject" xml:space="preserve">
+    <value>Kein Betreff</value>
+  </data>
+  <data name="SupportedTokens" xml:space="preserve">
+    <value>Unterstuetzte Tokens</value>
+  </data>
+  <data name="ApplyFilters" xml:space="preserve">
+    <value>Filter anwenden</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>Keine Ergebnisse gefunden.</value>
+  </data>
+  <data name="ProviderCallbackInboxTitle" xml:space="preserve">
+    <value>Provider-Callback-Inbox</value>
+  </data>
+  <data name="ProviderCallbackInboxIntro" xml:space="preserve">
+    <value>Ueberwachen Sie eingehende Provider-Callbacks, stellen Sie haengende oder fehlgeschlagene Nachrichten wieder her und schliessen Sie Nachrichten, die ausserhalb des Worker-Pfads bereits behandelt wurden.</value>
+  </data>
+  <data name="Processed" xml:space="preserve">
+    <value>Verarbeitet</value>
+  </data>
+  <data name="Retried" xml:space="preserve">
+    <value>Erneut versucht</value>
+  </data>
+  <data name="Payload" xml:space="preserve">
+    <value>Nutzlast</value>
+  </data>
+  <data name="LastAttempt" xml:space="preserve">
+    <value>Letzter Versuch</value>
+  </data>
+  <data name="Minutes" xml:space="preserve">
+    <value>Minuten</value>
+  </data>
+  <data name="Requeue" xml:space="preserve">
+    <value>Erneut einreihen</value>
+  </data>
+  <data name="MarkSucceeded" xml:space="preserve">
+    <value>Als erfolgreich markieren</value>
+  </data>
+  <data name="Suppress" xml:space="preserve">
+    <value>Unterdruecken</value>
+  </data>
+  <data name="QueueActions" xml:space="preserve">
+    <value>Queue-Aktionen</value>
+  </data>
+  <data name="WebhookDeliveryActionNote" xml:space="preserve">
+    <value>Diese Aktionen aktualisieren nur den Zustand der Zustellungs-Queue; Zahlungs- oder Erstattungsdaten separat pruefen, bevor Finance-Daten geaendert werden.</value>
+  </data>
+  <data name="WebhookDeliveryMarkedSucceededMessage" xml:space="preserve">
+    <value>Die Webhook-Zustellung wurde als erfolgreich markiert.</value>
+  </data>
+  <data name="WebhookDeliveryRequeuedMessage" xml:space="preserve">
+    <value>Die Webhook-Zustellung wurde erneut eingereiht.</value>
+  </data>
+  <data name="WebhookDeliverySuppressedMessage" xml:space="preserve">
+    <value>Die Webhook-Zustellung wurde aus der aktiven Queue unterdrueckt.</value>
+  </data>
+  <data name="WebhookDeliveryUpdatedMessage" xml:space="preserve">
+    <value>Die Webhook-Zustellung wurde aktualisiert.</value>
+  </data>
+  <data name="WebhookDeliveryUpdateFailedMessage" xml:space="preserve">
+    <value>Die Webhook-Zustellung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="MarkProcessed" xml:space="preserve">
+    <value>Als verarbeitet markieren</value>
+  </data>
+  <data name="MarkFailed" xml:space="preserve">
+    <value>Als fehlgeschlagen markieren</value>
+  </data>
+  <data name="Qualify" xml:space="preserve">
+    <value>Qualifizieren</value>
+  </data>
+  <data name="Disqualify" xml:space="preserve">
+    <value>Disqualifizieren</value>
+  </data>
+  <data name="Advance" xml:space="preserve">
+    <value>Weiterfuehren</value>
+  </data>
+  <data name="CloseWon" xml:space="preserve">
+    <value>Als gewonnen schliessen</value>
+  </data>
+  <data name="CloseLost" xml:space="preserve">
+    <value>Als verloren schliessen</value>
+  </data>
+  <data name="Reopen" xml:space="preserve">
+    <value>Wieder oeffnen</value>
+  </data>
+  <data name="LeadQualifiedMessage" xml:space="preserve">
+    <value>Der Lead wurde qualifiziert.</value>
+  </data>
+  <data name="LeadDisqualifiedMessage" xml:space="preserve">
+    <value>Der Lead wurde disqualifiziert.</value>
+  </data>
+  <data name="LeadReopenedMessage" xml:space="preserve">
+    <value>Der Lead wurde wieder geoeffnet.</value>
+  </data>
+  <data name="LeadLifecycleUpdatedMessage" xml:space="preserve">
+    <value>Der Lead-Lifecycle wurde aktualisiert.</value>
+  </data>
+  <data name="LeadLifecycleUpdateFailedMessage" xml:space="preserve">
+    <value>Der Lead-Lifecycle konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="OpportunityAdvancedMessage" xml:space="preserve">
+    <value>Die Opportunity wurde weitergefuehrt.</value>
+  </data>
+  <data name="OpportunityClosedWonMessage" xml:space="preserve">
+    <value>Die Opportunity wurde als gewonnen geschlossen.</value>
+  </data>
+  <data name="OpportunityClosedLostMessage" xml:space="preserve">
+    <value>Die Opportunity wurde als verloren geschlossen.</value>
+  </data>
+  <data name="OpportunityReopenedMessage" xml:space="preserve">
+    <value>Die Opportunity wurde wieder geoeffnet.</value>
+  </data>
+  <data name="OpportunityLifecycleUpdatedMessage" xml:space="preserve">
+    <value>Der Opportunity-Lifecycle wurde aktualisiert.</value>
+  </data>
+  <data name="OpportunityLifecycleUpdateFailedMessage" xml:space="preserve">
+    <value>Der Opportunity-Lifecycle konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="ProviderCallbackMarkedProcessedMessage" xml:space="preserve">
+    <value>Der Provider-Callback wurde als verarbeitet markiert.</value>
+  </data>
+  <data name="ProviderCallbackMarkedFailedMessage" xml:space="preserve">
+    <value>Der Provider-Callback wurde als fehlgeschlagen markiert.</value>
+  </data>
+  <data name="ProviderCallbackRequeuedMessage" xml:space="preserve">
+    <value>Der Provider-Callback wurde erneut eingereiht.</value>
+  </data>
+  <data name="ProviderCallbackUpdatedMessage" xml:space="preserve">
+    <value>Der Provider-Callback wurde aktualisiert.</value>
+  </data>
+  <data name="ProviderCallbackUpdateFailedMessage" xml:space="preserve">
+    <value>Der Provider-Callback konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="ProviderCallbackMarkedFailedByOperator" xml:space="preserve">
+    <value>Durch WebAdmin-Operator als fehlgeschlagen markiert.</value>
+  </data>
+  <data name="ShipmentProviderOperationsTitle" xml:space="preserve">
+    <value>Versand-Provider-Operationen</value>
+  </data>
+  <data name="ShipmentProviderOperationsIntro" xml:space="preserve">
+    <value>Ueberwachen und beheben Sie DHL-Versand-Provider-Operationen fuer Sendungserzeugung und Label-Erzeugung.</value>
+  </data>
+  <data name="ShipmentProviderOperationTypeAll" xml:space="preserve">
+    <value>Alle Operationstypen</value>
+  </data>
+  <data name="OperationType" xml:space="preserve">
+    <value>Operationstyp</value>
+  </data>
+  <data name="FailureReason" xml:space="preserve">
+    <value>Fehlergrund</value>
+  </data>
+  <data name="ShipmentProviderOperationMarkedProcessedMessage" xml:space="preserve">
+    <value>Die Versand-Provider-Operation wurde als verarbeitet markiert.</value>
+  </data>
+  <data name="ShipmentProviderOperationMarkedFailedMessage" xml:space="preserve">
+    <value>Die Versand-Provider-Operation wurde als fehlgeschlagen markiert.</value>
+  </data>
+  <data name="ShipmentProviderOperationRequeuedMessage" xml:space="preserve">
+    <value>Die Versand-Provider-Operation wurde erneut eingereiht.</value>
+  </data>
+  <data name="ShipmentProviderOperationCancelledMessage" xml:space="preserve">
+    <value>Die Versand-Provider-Operation wurde abgebrochen.</value>
+  </data>
+  <data name="ShipmentProviderOperationUpdatedMessage" xml:space="preserve">
+    <value>Die Versand-Provider-Operation wurde aktualisiert.</value>
+  </data>
+  <data name="ShipmentProviderOperationUpdateFailedMessage" xml:space="preserve">
+    <value>Die Versand-Provider-Operation konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="ShipmentProviderOperationMarkedFailedByOperator" xml:space="preserve">
+    <value>Durch WebAdmin-Operator als fehlgeschlagen markiert.</value>
+  </data>
+  <data name="ShipmentProviderOperationCancelledByOperator" xml:space="preserve">
+    <value>Durch WebAdmin-Operator abgebrochen.</value>
+  </data>
+  <data name="ResolveCarrierException" xml:space="preserve">
+    <value>Carrier-Ausnahme loesen</value>
+  </data>
+  <data name="ShipmentCarrierExceptionResolvedMessage" xml:space="preserve">
+    <value>Die Carrier-Ausnahme wurde als geloest markiert.</value>
+  </data>
+  <data name="ShipmentCarrierExceptionResolveFailedMessage" xml:space="preserve">
+    <value>Die Carrier-Ausnahme konnte nicht geloest werden.</value>
+  </data>
+  <data name="ShipmentCarrierExceptionResolvedByOperator" xml:space="preserve">
+    <value>Carrier-Ausnahme durch WebAdmin-Operator geprueft und geloest.</value>
+  </data>
+  <data name="FinalizeBusinessOnboarding" xml:space="preserve">
+    <value>Onboarding finalisieren</value>
+  </data>
+  <data name="FinalizeBusinessOnboardingBlocked" xml:space="preserve">
+    <value>Owner-Zuweisung, Primary Location, Legal Name und Kontakt-E-Mail abschliessen, bevor das Onboarding finalisiert wird.</value>
+  </data>
+  <data name="BusinessOnboardingProvisionedAndApproved" xml:space="preserve">
+    <value>Business-Onboarding finalisiert: CRM-Supportprofil provisioniert und Business freigegeben.</value>
+  </data>
+  <data name="BusinessOnboardingSyncedAndApproved" xml:space="preserve">
+    <value>Business-Onboarding finalisiert: CRM-Supportprofil synchronisiert und Business freigegeben.</value>
+  </data>
+  <data name="BusinessOnboardingProvisioningFailed" xml:space="preserve">
+    <value>Business-Onboarding konnte nicht finalisiert werden.</value>
+  </data>
+  <data name="EffectiveTenantSettings" xml:space="preserve">
+    <value>Effektive Tenant-Einstellungen</value>
+  </data>
+  <data name="PlatformFallback" xml:space="preserve">
+    <value>Plattform-Fallback</value>
+  </data>
+  <data name="BusinessOverride" xml:space="preserve">
+    <value>Business-Override</value>
+  </data>
+  <data name="TenantCommunicationIdentity" xml:space="preserve">
+    <value>Tenant-Kommunikationsidentität</value>
+  </data>
+  <data name="PaymentDisputeOpen" xml:space="preserve">
+    <value>Offene Dispute-Pruefung</value>
+  </data>
+  <data name="PaymentDisputeUnderReview" xml:space="preserve">
+    <value>In Pruefung</value>
+  </data>
+  <data name="PaymentDisputeEvidenceSubmitted" xml:space="preserve">
+    <value>Nachweise eingereicht</value>
+  </data>
+  <data name="PaymentDisputeWon" xml:space="preserve">
+    <value>Dispute gewonnen</value>
+  </data>
+  <data name="PaymentDisputeLost" xml:space="preserve">
+    <value>Dispute verloren</value>
+  </data>
+  <data name="DisputeReviewState" xml:space="preserve">
+    <value>Dispute-Pruefstatus</value>
+  </data>
+  <data name="MarkUnderReview" xml:space="preserve">
+    <value>In Pruefung setzen</value>
+  </data>
+  <data name="MarkEvidenceSubmitted" xml:space="preserve">
+    <value>Nachweise eingereicht</value>
+  </data>
+  <data name="ResolveDisputeWon" xml:space="preserve">
+    <value>Gewonnen abschliessen</value>
+  </data>
+  <data name="ResolveDisputeLost" xml:space="preserve">
+    <value>Verloren abschliessen</value>
+  </data>
+  <data name="ClearDisputeReview" xml:space="preserve">
+    <value>Dispute-Pruefung loeschen</value>
+  </data>
+  <data name="PaymentDisputeMarkedUnderReviewMessage" xml:space="preserve">
+    <value>Payment-Dispute wurde als in Pruefung markiert.</value>
+  </data>
+  <data name="PaymentDisputeEvidenceSubmittedMessage" xml:space="preserve">
+    <value>Payment-Dispute-Nachweise wurden als eingereicht markiert.</value>
+  </data>
+  <data name="PaymentDisputeResolvedWonMessage" xml:space="preserve">
+    <value>Payment-Dispute wurde als gewonnen abgeschlossen.</value>
+  </data>
+  <data name="PaymentDisputeResolvedLostMessage" xml:space="preserve">
+    <value>Payment-Dispute wurde als verloren abgeschlossen.</value>
+  </data>
+  <data name="PaymentDisputeReviewClearedMessage" xml:space="preserve">
+    <value>Payment-Dispute-Pruefmarker wurde geloescht.</value>
+  </data>
+  <data name="PaymentDisputeReviewUpdatedMessage" xml:space="preserve">
+    <value>Payment-Dispute-Pruefung wurde aktualisiert.</value>
+  </data>
+  <data name="PaymentDisputeReviewUpdateFailedMessage" xml:space="preserve">
+    <value>Payment-Dispute-Pruefung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="MarkInTransit" xml:space="preserve">
+    <value>Als in Transit markieren</value>
+  </data>
+  <data name="Issue" xml:space="preserve">
+    <value>Ausstellen</value>
+  </data>
+  <data name="Receive" xml:space="preserve">
+    <value>Empfangen</value>
+  </data>
+  <data name="StockTransferMarkedInTransitMessage" xml:space="preserve">
+    <value>Bestandstransfer wurde als in Transit markiert und Quellbestand wurde in Transit verschoben.</value>
+  </data>
+  <data name="StockTransferCompletedMessage" xml:space="preserve">
+    <value>Bestandstransfer wurde abgeschlossen und Zielbestand wurde erhoeht.</value>
+  </data>
+  <data name="StockTransferCancelledMessage" xml:space="preserve">
+    <value>Bestandstransfer wurde storniert.</value>
+  </data>
+  <data name="StockTransferLifecycleUpdatedMessage" xml:space="preserve">
+    <value>Bestandstransfer-Lifecycle wurde aktualisiert.</value>
+  </data>
+  <data name="StockTransferLifecycleUpdateFailedMessage" xml:space="preserve">
+    <value>Bestandstransfer-Lifecycle konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="PurchaseOrderIssuedMessage" xml:space="preserve">
+    <value>Bestellauftrag wurde ausgestellt.</value>
+  </data>
+  <data name="PurchaseOrderReceivedMessage" xml:space="preserve">
+    <value>Bestellauftrag wurde empfangen und Bestand wurde erhoeht.</value>
+  </data>
+  <data name="PurchaseOrderCancelledMessage" xml:space="preserve">
+    <value>Bestellauftrag wurde storniert.</value>
+  </data>
+  <data name="PurchaseOrderLifecycleUpdatedMessage" xml:space="preserve">
+    <value>Bestellauftrags-Lifecycle wurde aktualisiert.</value>
+  </data>
+  <data name="PurchaseOrderLifecycleUpdateFailedMessage" xml:space="preserve">
+    <value>Bestellauftrags-Lifecycle konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="Activate" xml:space="preserve">
+    <value>Aktivieren</value>
+  </data>
+  <data name="Campaign" xml:space="preserve">
+    <value>Kampagne</value>
+  </data>
+  <data name="Channels" xml:space="preserve">
+    <value>Kanaele</value>
+  </data>
+  <data name="Culture" xml:space="preserve">
+    <value>Kultur</value>
+  </data>
+  <data name="Deactivate" xml:space="preserve">
+    <value>Deaktivieren</value>
+  </data>
+  <data name="LoyaltyCampaignPlaybooks" xml:space="preserve">
+    <value>Treuekampagnen-Playbooks</value>
+  </data>
+  <data name="LoyaltyCampaignsIntro" xml:space="preserve">
+    <value>Treuekampagnen fuer Kundenbindung erstellen, planen, aktivieren und ueberwachen.</value>
+  </data>
+  <data name="LoyaltyCampaignsTitle" xml:space="preserve">
+    <value>Treuekampagnen</value>
+  </data>
+  <data name="LoyaltyClearQueueFilters" xml:space="preserve">
+    <value>Filter loeschen</value>
+  </data>
+  <data name="LoyaltyInAppOnly" xml:space="preserve">
+    <value>Nur In-App</value>
+  </data>
+  <data name="LoyaltyInAppPlusPush" xml:space="preserve">
+    <value>In-App plus Push</value>
+  </data>
+  <data name="InApp" xml:space="preserve">
+    <value>In-App</value>
+  </data>
+  <data name="Push" xml:space="preserve">
+    <value>Push</value>
+  </data>
+  <data name="LoyaltyNewCampaign" xml:space="preserve">
+    <value>Neue Kampagne</value>
+  </data>
+  <data name="LoyaltyNoCampaignsFound" xml:space="preserve">
+    <value>Keine Treuekampagnen gefunden.</value>
+  </data>
+  <data name="LoyaltyTo" xml:space="preserve">
+    <value>Bis</value>
+  </data>
+  <data name="LoyaltyWindow" xml:space="preserve">
+    <value>Fenster</value>
+  </data>
+  <data name="NoRecordsFound" xml:space="preserve">
+    <value>Keine Eintraege gefunden.</value>
+  </data>
+  <data name="Slug" xml:space="preserve">
+    <value>Slug</value>
+  </data>
+  <data name="State" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Translations" xml:space="preserve">
+    <value>Uebersetzungen</value>
+  </data>
+  <data name="Unpublished" xml:space="preserve">
+    <value>Unveroeffentlicht</value>
   </data>
 </root>

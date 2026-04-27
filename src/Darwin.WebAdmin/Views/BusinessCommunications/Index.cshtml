@@ -11,6 +11,9 @@
     string GlobalEmailAuditsUrl() => Url.Action("EmailAudits", "BusinessCommunications") ?? string.Empty;
     string GlobalBusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
     string GlobalChannelAuditsUrl() => Url.Action("ChannelAudits", "BusinessCommunications") ?? string.Empty;
+    string GlobalTemplatePreviewsUrl() => Url.Action("TemplatePreviews", "BusinessCommunications") ?? string.Empty;
+    string GlobalProviderCallbacksUrl() => Url.Action("ProviderCallbacks", "BusinessCommunications") ?? string.Empty;
+    string TemplatePreviewFlowUrl(string flowKey) => Url.Action("TemplatePreviews", "BusinessCommunications", new { flowKey }) ?? string.Empty;
     string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
     string BusinessCommunicationsSetupUrl() => Url.Action("Index", "BusinessCommunications", new { setupOnly = true }) ?? string.Empty;
     string PendingInvitationsUrl() => Url.Action("Invitations", "Businesses", new { filter = Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending }) ?? string.Empty;
@@ -141,6 +144,16 @@
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("EmailAudits")</a>
+        <a asp-action="TemplatePreviews" class="btn btn-outline-secondary"
+           hx-get="@GlobalTemplatePreviewsUrl()"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("CommunicationTemplatePreviewsTitle")</a>
+        <a asp-action="ProviderCallbacks" class="btn btn-outline-secondary"
+           hx-get="@GlobalProviderCallbacksUrl()"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("ProviderCallbackInboxTitle")</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary"
            hx-get="@SiteSettingsUrl("site-settings-smtp")"
            hx-target="#business-communications-workspace-shell"
@@ -998,6 +1011,16 @@
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@item.OperatorActionLabel</a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(item.PreviewFlowKey))
+                                {
+                                    <a asp-action="TemplatePreviews"
+                                       asp-route-flowKey="@item.PreviewFlowKey"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@TemplatePreviewFlowUrl(item.PreviewFlowKey)"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("Preview")</a>
                                 }
                                 @if (item.OperatorActionTarget != "AdminAlerts")
                                 {

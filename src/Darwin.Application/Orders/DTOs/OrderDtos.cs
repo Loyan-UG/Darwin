@@ -249,6 +249,13 @@ namespace Darwin.Application.Orders.DTOs
         public string? ExceptionMessage { get; set; }
     }
 
+    public sealed class ResolveShipmentCarrierExceptionDto
+    {
+        public Guid ShipmentId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string ResolutionNote { get; set; } = string.Empty;
+    }
+
     public sealed class ShipmentDetailDto
     {
         public Guid Id { get; set; }

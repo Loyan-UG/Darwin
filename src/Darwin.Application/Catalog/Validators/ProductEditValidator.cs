@@ -1,5 +1,7 @@
 ﻿using Darwin.Application.Catalog.DTOs;
 using FluentValidation;
+using System;
+using System.Linq;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -22,6 +24,12 @@ namespace Darwin.Application.Catalog.Validators
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.Translations).NotEmpty();
+            RuleFor(x => x.Variants).NotEmpty();
+            RuleFor(x => x.Translations)
+                .Must(x => x is not null && x.Select(t => t.Culture?.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == x.Count);
+            RuleFor(x => x.Variants)
+                .Must(x => x is not null && x.Select(v => v.Sku?.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == x.Count);
             RuleForEach(x => x.Translations).SetValidator(new ProductTranslationDtoValidator());
             RuleForEach(x => x.Variants).SetValidator(new ProductVariantCreateDtoValidator());
         }

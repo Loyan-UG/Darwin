@@ -4,7 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CartCheckout.DTOs;
+using Darwin.Application.Pricing;
 using Darwin.Domain.Entities.CartCheckout;
+using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Pricing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -12,9 +14,7 @@ using Microsoft.Extensions.Localization;
 namespace Darwin.Application.CartCheckout.Commands
 {
     /// <summary>
-    /// Applies or clears a coupon code on a cart. For now, it validates that the promotion with the given
-    /// code exists, is active, and is within time window. Discount calculation is still performed during
-    /// pricing (e.g., at summary/checkout). This handler only stores the chosen code on the cart.
+    /// Applies or clears a coupon code on a cart after checking the same eligibility gates used by pricing.
     /// </summary>
     public sealed class ApplyCouponHandler
     {
@@ -39,14 +39,51 @@ namespace Darwin.Application.CartCheckout.Commands
                 return;
             }
 
-            // Validate promo existence and window
+            var normalizedCode = CouponEligibility.NormalizeCode(dto.CouponCode);
+            if (!IsCouponCodeFormatValid(normalizedCode))
+            {
+                throw new InvalidOperationException(_localizer["CouponIsInvalidOrInactive"]);
+            }
+
+            var lines = await _db.Set<CartItem>()
+                .AsNoTracking()
+                .Where(i => i.CartId == cart.Id && !i.IsDeleted && i.Quantity > 0)
+                .ToListAsync(ct);
+
+            if (lines.Count == 0)
+            {
+                throw new InvalidOperationException(_localizer["CouponIsInvalidOrInactive"]);
+            }
+
+            var subtotalNetMinor = lines.Sum(i => i.UnitPriceNetMinor * i.Quantity);
+            var variantIds = lines.Select(i => i.VariantId).Distinct().ToList();
+            var productRows = await _db.Set<ProductVariant>()
+                .AsNoTracking()
+                .Where(v => variantIds.Contains(v.Id) && !v.IsDeleted)
+                .Join(
+                    _db.Set<Product>().AsNoTracking().Where(p => !p.IsDeleted),
+                    variant => variant.ProductId,
+                    product => product.Id,
+                    (variant, product) => new
+                    {
+                        ProductId = product.Id,
+                        product.PrimaryCategoryId
+                    })
+                .ToListAsync(ct);
+
+            if (productRows.Count != variantIds.Count)
+            {
+                throw new InvalidOperationException(_localizer["CartVariantsNoLongerAvailable"]);
+            }
+
             var now = DateTime.UtcNow;
             var promo = await _db.Set<Promotion>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p =>
                     !p.IsDeleted &&
                     p.IsActive &&
-                    p.Code == dto.CouponCode &&
+                    p.Code != null &&
+                    p.Code.ToUpper() == normalizedCode &&
                     (p.StartsAtUtc == null || p.StartsAtUtc <= now) &&
                     (p.EndsAtUtc == null || p.EndsAtUtc >= now),
                     ct);
@@ -54,9 +91,52 @@ namespace Darwin.Application.CartCheckout.Commands
             if (promo == null)
                 throw new InvalidOperationException(_localizer["CouponIsInvalidOrInactive"]);
 
-            // (Optional) You can add more checks here: max redemptions, per-customer limits, etc.
-            cart.CouponCode = dto.CouponCode!.Trim();
+            if (promo.MaxRedemptions.HasValue)
+            {
+                var totalRedemptions = await _db.Set<PromotionRedemption>()
+                    .AsNoTracking()
+                    .CountAsync(r => !r.IsDeleted && r.PromotionId == promo.Id, ct);
+                if (totalRedemptions >= promo.MaxRedemptions.Value)
+                {
+                    throw new InvalidOperationException(_localizer["CouponIsInvalidOrInactive"]);
+                }
+            }
+
+            if (promo.PerCustomerLimit.HasValue && cart.UserId.HasValue)
+            {
+                var customerRedemptions = await _db.Set<PromotionRedemption>()
+                    .AsNoTracking()
+                    .CountAsync(r => !r.IsDeleted && r.PromotionId == promo.Id && r.UserId == cart.UserId, ct);
+                if (customerRedemptions >= promo.PerCustomerLimit.Value)
+                {
+                    throw new InvalidOperationException(_localizer["CouponIsInvalidOrInactive"]);
+                }
+            }
+
+            var eligibility = CouponEligibility.Evaluate(
+                promo,
+                new CouponEligibilityContext
+                {
+                    SubtotalNetMinor = subtotalNetMinor,
+                    Currency = cart.Currency,
+                    ProductIds = productRows.Select(p => p.ProductId).Distinct().ToList(),
+                    CategoryIds = productRows
+                        .Where(p => p.PrimaryCategoryId.HasValue)
+                        .Select(p => p.PrimaryCategoryId!.Value)
+                        .Distinct()
+                        .ToList()
+                });
+
+            if (!eligibility.IsValid)
+            {
+                throw new InvalidOperationException(_localizer["CouponIsInvalidOrInactive"]);
+            }
+
+            cart.CouponCode = promo.Code!.Trim();
             await _db.SaveChangesAsync(ct);
         }
+
+        private static bool IsCouponCodeFormatValid(string code) =>
+            code.Length <= 64 && code.All(ch => char.IsLetterOrDigit(ch) || ch == '_' || ch == '-');
     }
 }

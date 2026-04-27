@@ -1,0 +1,9 @@
+@model Darwin.WebAdmin.ViewModels.Orders.ShipmentProviderOperationsListVm
+<input type="hidden" name="page" value="@Model.Page" />
+<input type="hidden" name="pageSize" value="@Model.PageSize" />
+<input type="hidden" name="query" value="@Model.Query" />
+<input type="hidden" name="provider" value="@Model.Provider" />
+<input type="hidden" name="operationType" value="@Model.OperationType" />
+<input type="hidden" name="status" value="@Model.Status" />
+<input type="hidden" name="stalePendingOnly" value="@Model.StalePendingOnly.ToString().ToLowerInvariant()" />
+<input type="hidden" name="failedOnly" value="@Model.FailedOnly.ToString().ToLowerInvariant()" />

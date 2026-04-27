@@ -37,11 +37,13 @@ namespace Darwin.Application.Catalog.Queries
                         .OrderBy(o => o.SortOrder)
                         .Select(o => new AddOnOptionDto
                         {
+                            Id = o.Id,
                             Label = o.Label,
                             SortOrder = o.SortOrder,
                             Values = o.Values
                                 .OrderBy(v => v.SortOrder).Select(v => new AddOnOptionValueDto
                                 {
+                                    Id = v.Id,
                                     Label = v.Label,
                                     PriceDeltaMinor = v.PriceDeltaMinor,
                                     Hint = v.Hint,

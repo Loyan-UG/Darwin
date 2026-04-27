@@ -88,7 +88,8 @@ namespace Darwin.Application.Loyalty.Queries
                     FailureReason = x.session.FailureReason,
                     CreatedAtUtc = x.session.CreatedAtUtc,
                     ExpiresAtUtc = x.session.ExpiresAtUtc,
-                    CompletedAtUtc = x.session.Status == LoyaltyScanStatus.Completed ? x.session.ModifiedAtUtc : null
+                    CompletedAtUtc = x.session.Status == LoyaltyScanStatus.Completed ? x.session.ModifiedAtUtc : null,
+                    RowVersion = x.session.RowVersion
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);

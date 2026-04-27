@@ -16,10 +16,11 @@ namespace Darwin.Application.Orders.StateMachine
             [OrderStatus.Paid] = new() { OrderStatus.PartiallyShipped, OrderStatus.Shipped, OrderStatus.Refunded, OrderStatus.PartiallyRefunded },
             [OrderStatus.PartiallyShipped] = new() { OrderStatus.Shipped, OrderStatus.Delivered, OrderStatus.PartiallyRefunded },
             [OrderStatus.Shipped] = new() { OrderStatus.Delivered, OrderStatus.PartiallyRefunded, OrderStatus.Refunded },
-            [OrderStatus.Delivered] = new() { OrderStatus.PartiallyRefunded, OrderStatus.Refunded },
+            [OrderStatus.Delivered] = new() { OrderStatus.PartiallyRefunded, OrderStatus.Refunded, OrderStatus.Completed },
             [OrderStatus.PartiallyRefunded] = new() { OrderStatus.Refunded },
             [OrderStatus.Cancelled] = new(),
-            [OrderStatus.Refunded] = new()
+            [OrderStatus.Refunded] = new(),
+            [OrderStatus.Completed] = new()
         };
 
         public bool IsAllowed(OrderStatus from, OrderStatus to)

@@ -14,6 +14,7 @@
                     {
                         var opt = Model.Options[i];
                         <div class="option-item border rounded p-2 mb-2" data-index="@i">
+                            <input type="hidden" name="Options[@i].Id" value="@opt.Id" />
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-6">
                                     <label class="form-label">@T.T("AddOnOptionLabel") <span class="text-danger">*</span></label>
@@ -41,6 +42,7 @@
                                         {
                                             var val = opt.Values[j];
                                             <div class="value-item border rounded p-2 mb-2" data-vindex="@j">
+                                                <input type="hidden" name="Options[@i].Values[@j].Id" value="@val.Id" />
                                                 <div class="row g-2">
                                                     <div class="col-md-4">
                                                         <label class="form-label">@T.T("AddOnValueLabel") <span class="text-danger">*</span></label>
@@ -87,6 +89,7 @@
 
             <template id="addOnOptionTemplate">
                 <div class="option-item border rounded p-2 mb-2" data-index="__i__">
+                    <input type="hidden" name="__prefix__[__i__].Id" value="" />
                     <div class="row g-2 align-items-end">
                         <div class="col-md-6">
                             <label class="form-label">@T.T("AddOnOptionLabel") <span class="text-danger">*</span></label>
@@ -112,6 +115,7 @@
 
             <template id="addOnValueTemplate">
                 <div class="value-item border rounded p-2 mb-2" data-vindex="__j__">
+                    <input type="hidden" name="__prefix__[__i__].Values[__j__].Id" value="" />
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label class="form-label">@T.T("AddOnValueLabel") <span class="text-danger">*</span></label>

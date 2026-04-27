@@ -1,12 +1,9 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using Darwin.Application.Abstractions.Persistence;
 using Darwin.WebAdmin;
-using Darwin.Domain.Entities.Businesses;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebAdmin.Localization
@@ -24,19 +21,19 @@ namespace Darwin.WebAdmin.Localization
     public sealed class AdminTextLocalizer : IAdminTextLocalizer
     {
         private readonly IStringLocalizer<SharedResource> _localizer;
-        private readonly IAppDbContext _db;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IBusinessEffectiveSettingsCache _businessEffectiveSettings;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AdminTextLocalizer(
             IStringLocalizer<SharedResource> localizer,
-            IAppDbContext db,
             ISiteSettingCache siteSettingCache,
+            IBusinessEffectiveSettingsCache businessEffectiveSettings,
             IHttpContextAccessor httpContextAccessor)
         {
             _localizer = localizer;
-            _db = db;
             _siteSettingCache = siteSettingCache;
+            _businessEffectiveSettings = businessEffectiveSettings;
             _httpContextAccessor = httpContextAccessor;
         }
 
@@ -110,15 +107,12 @@ namespace Darwin.WebAdmin.Localization
                 return AdminTextOverrideCatalog.Empty;
             }
 
-            var businessOverridesJson = _db.Set<Business>()
-                .AsNoTracking()
-                .Where(x => x.Id == businessId.Value)
-                .Select(x => x.AdminTextOverridesJson)
-                .FirstOrDefaultAsync()
+            var businessSettings = _businessEffectiveSettings
+                .GetAsync(businessId.Value)
                 .GetAwaiter()
                 .GetResult();
 
-            var businessOverrides = AdminTextOverrideCatalog.Parse(businessOverridesJson);
+            var businessOverrides = AdminTextOverrideCatalog.Parse(businessSettings?.AdminTextOverridesJson);
             httpContext.Items[cacheKey] = businessOverrides;
             return businessOverrides;
         }

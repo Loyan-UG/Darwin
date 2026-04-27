@@ -119,9 +119,82 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string SupportedTokens { get; set; } = string.Empty;
         public string OperatorControl { get; set; } = string.Empty;
         public string AuditFlowKey { get; set; } = string.Empty;
+        public string PreviewFlowKey { get; set; } = string.Empty;
         public string OperatorActionLabel { get; set; } = string.Empty;
         public string OperatorActionTarget { get; set; } = string.Empty;
         public string NextStep { get; set; } = string.Empty;
+    }
+
+    public sealed class CommunicationTemplatePreviewsVm
+    {
+        public string FlowKey { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public List<CommunicationTemplatePreviewItemVm> Items { get; set; } = new();
+        public IEnumerable<SelectListItem> FlowItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> ChannelItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class CommunicationTemplatePreviewItemVm
+    {
+        public string FlowKey { get; set; } = string.Empty;
+        public string FlowName { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public string TemplateKey { get; set; } = string.Empty;
+        public string TargetSurface { get; set; } = string.Empty;
+        public string SubjectTemplate { get; set; } = string.Empty;
+        public string BodyTemplate { get; set; } = string.Empty;
+        public string RenderedSubject { get; set; } = string.Empty;
+        public string RenderedBody { get; set; } = string.Empty;
+        public string SupportedTokens { get; set; } = string.Empty;
+        public string SampleData { get; set; } = string.Empty;
+        public string EditFragment { get; set; } = string.Empty;
+        public string AuditFlowKey { get; set; } = string.Empty;
+        public bool IsEmail { get; set; }
+    }
+
+    public sealed class ProviderCallbackInboxListVm
+    {
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public bool StalePendingOnly { get; set; }
+        public bool FailedOnly { get; set; }
+        public ProviderCallbackInboxSummaryVm Summary { get; set; } = new();
+        public List<ProviderCallbackInboxListItemVm> Items { get; set; } = new();
+        public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> ProviderItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> StatusItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class ProviderCallbackInboxSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int PendingCount { get; set; }
+        public int FailedCount { get; set; }
+        public int ProcessedCount { get; set; }
+        public int StalePendingCount { get; set; }
+        public int RetriedCount { get; set; }
+    }
+
+    public sealed class ProviderCallbackInboxListItemVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Provider { get; set; } = string.Empty;
+        public string CallbackType { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string? IdempotencyKey { get; set; }
+        public int AttemptCount { get; set; }
+        public DateTime? LastAttemptAtUtc { get; set; }
+        public DateTime? ProcessedAtUtc { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public int AgeMinutes { get; set; }
+        public bool IsStalePending { get; set; }
+        public string? FailureReason { get; set; }
+        public string PayloadPreview { get; set; } = string.Empty;
     }
 
     public sealed class CommunicationResendPolicyVm
@@ -139,6 +212,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
     public sealed class EmailDispatchAuditListItemVm
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public bool IsQueueOperation { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? FlowKey { get; set; }
@@ -199,6 +273,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
     public sealed class ChannelDispatchAuditListItemVm
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public bool IsQueueOperation { get; set; }
         public string Channel { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;

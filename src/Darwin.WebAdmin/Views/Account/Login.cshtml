@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = T.T("Login");
     var returnUrl = (string?)ViewData["ReturnUrl"] ?? "";
+    var antiBotToken = (string?)ViewData["AntiBotToken"] ?? "";
 }
 
 <h1 class="mb-3">@T.T("Login")</h1>
@@ -10,6 +11,11 @@
 <form asp-action="LoginPost" asp-controller="Account" method="post" class="mb-3">
     @Html.AntiForgeryToken()
     <input type="hidden" name="returnUrl" value="@returnUrl" />
+    <input type="hidden" name="antiBotToken" value="@antiBotToken" />
+    <div class="d-none" aria-hidden="true">
+        <label for="antiBotHoneypot">Leave this field empty</label>
+        <input id="antiBotHoneypot" name="antiBotHoneypot" type="text" value="" tabindex="-1" autocomplete="off" />
+    </div>
     <div class="mb-3">
         <label for="email" class="form-label">@T.T("Email")</label>
         <input id="email" name="email" type="email" class="form-control" required />

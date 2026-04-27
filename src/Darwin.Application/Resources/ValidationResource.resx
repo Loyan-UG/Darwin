@@ -291,6 +291,30 @@
   <data name="OrderTransitionNotAllowed" xml:space="preserve">
     <value>Transition {0} to {1} is not allowed.</value>
   </data>
+  <data name="OrderPaidStatusRequiresCapturedPayment" xml:space="preserve">
+    <value>Paid status requires captured or completed payments covering the order total.</value>
+  </data>
+  <data name="OrderPartiallyShippedStatusRequiresPartialShipment" xml:space="preserve">
+    <value>Partially shipped status requires shipment evidence for some, but not all, order quantities.</value>
+  </data>
+  <data name="OrderShippedStatusRequiresFullShipment" xml:space="preserve">
+    <value>Shipped status requires shipment evidence covering every order line.</value>
+  </data>
+  <data name="OrderDeliveredStatusRequiresFullDelivery" xml:space="preserve">
+    <value>Delivered status requires delivered shipment evidence covering every order line.</value>
+  </data>
+  <data name="OrderPartiallyRefundedStatusRequiresPartialRefund" xml:space="preserve">
+    <value>Partially refunded status requires completed refund evidence for less than the order total.</value>
+  </data>
+  <data name="OrderRefundedStatusRequiresFullRefund" xml:space="preserve">
+    <value>Refunded status requires completed refund evidence covering the order total.</value>
+  </data>
+  <data name="OrderCompletedStatusRequiresFullDelivery" xml:space="preserve">
+    <value>Completed status requires delivered shipment evidence covering every order line.</value>
+  </data>
+  <data name="OrderCompletedStatusRequiresNoOpenRefunds" xml:space="preserve">
+    <value>Completed status is not allowed while refunds are still pending.</value>
+  </data>
   <data name="LoyaltyProgramAlreadyExistsForBusiness" xml:space="preserve">
     <value>A loyalty program already exists for this business.</value>
   </data>
@@ -368,6 +392,9 @@
   </data>
   <data name="SlugMustBeUniquePerCulture" xml:space="preserve">
     <value>Slug must be unique per culture.</value>
+  </data>
+  <data name="DuplicateCulturesNotAllowed" xml:space="preserve">
+    <value>Duplicate cultures are not allowed.</value>
   </data>
   <data name="SimpleProductMustContainOneVariant" xml:space="preserve">
     <value>Simple product must contain one variant.</value>
@@ -462,6 +489,12 @@
   <data name="OpportunityNotFound" xml:space="preserve">
     <value>Opportunity not found.</value>
   </data>
+  <data name="LeadLifecycleUnsupportedAction" xml:space="preserve">
+    <value>Unsupported lead lifecycle action.</value>
+  </data>
+  <data name="OpportunityLifecycleUnsupportedAction" xml:space="preserve">
+    <value>Unsupported opportunity lifecycle action.</value>
+  </data>
   <data name="LinkedUserNotFound" xml:space="preserve">
     <value>Linked user not found.</value>
   </data>
@@ -482,6 +515,9 @@
   </data>
   <data name="MediaAssetNotFound" xml:space="preserve">
     <value>Media asset not found.</value>
+  </data>
+  <data name="MediaAssetStillReferenced" xml:space="preserve">
+    <value>Media asset is still referenced and cannot be purged.</value>
   </data>
   <data name="BrandNotFound" xml:space="preserve">
     <value>Brand not found.</value>
@@ -1256,6 +1292,12 @@
   <data name="StripeWebhookProcessingFailed" xml:space="preserve">
     <value>Stripe webhook processing failed.</value>
   </data>
+  <data name="WebhookDeliveryNotFound" xml:space="preserve">
+    <value>Webhook delivery not found.</value>
+  </data>
+  <data name="WebhookDeliveryUnsupportedAction" xml:space="preserve">
+    <value>Unsupported webhook delivery action.</value>
+  </data>
   <data name="CarrierEventOccurredAtUtcRequired" xml:space="preserve">
     <value>Carrier event occurredAtUtc is required.</value>
   </data>
@@ -1285,5 +1327,74 @@
   </data>
   <data name="ShipmentCarrierMustBeDhlForLabelGeneration" xml:space="preserve">
     <value>Only DHL shipments can generate carrier labels in the current phase.</value>
+  </data>
+  <data name="CommunicationDispatchOperationNotFound" xml:space="preserve">
+    <value>Communication dispatch operation was not found.</value>
+  </data>
+  <data name="CampaignDeliveryNotFound" xml:space="preserve">
+    <value>Campaign delivery was not found.</value>
+  </data>
+  <data name="ProviderCallbackInboxMessageNotFound" xml:space="preserve">
+    <value>Provider callback inbox message was not found.</value>
+  </data>
+  <data name="ProviderCallbackInboxUnsupportedAction" xml:space="preserve">
+    <value>Provider callback inbox action is not supported.</value>
+  </data>
+  <data name="ShipmentProviderOperationNotFound" xml:space="preserve">
+    <value>Shipment provider operation was not found.</value>
+  </data>
+  <data name="ShipmentProviderOperationUnsupportedAction" xml:space="preserve">
+    <value>Shipment provider operation action is not supported.</value>
+  </data>
+  <data name="ShipmentNotFoundForCarrierResolution" xml:space="preserve">
+    <value>Shipment was not found for carrier exception resolution.</value>
+  </data>
+  <data name="ShipmentCarrierExceptionResolutionNoteRequired" xml:space="preserve">
+    <value>A resolution note is required to close a carrier exception.</value>
+  </data>
+  <data name="BusinessOnboardingProvisioningBlocked" xml:space="preserve">
+    <value>Business onboarding cannot be finalized yet. Missing: {0}.</value>
+  </data>
+  <data name="BusinessOnboardingMissingOwner" xml:space="preserve">
+    <value>active owner</value>
+  </data>
+  <data name="BusinessOnboardingMissingPrimaryLocation" xml:space="preserve">
+    <value>primary location</value>
+  </data>
+  <data name="BusinessOnboardingMissingLegalName" xml:space="preserve">
+    <value>legal name</value>
+  </data>
+  <data name="PaymentDisputeReviewUnsupportedAction" xml:space="preserve">
+    <value>The requested payment dispute review action is not supported.</value>
+  </data>
+  <data name="StockTransferNotFound" xml:space="preserve">
+    <value>Stock transfer not found.</value>
+  </data>
+  <data name="PurchaseOrderNotFound" xml:space="preserve">
+    <value>Purchase order not found.</value>
+  </data>
+  <data name="StockTransferLifecycleUnsupportedAction" xml:space="preserve">
+    <value>The requested stock transfer action is not supported for the current status.</value>
+  </data>
+  <data name="StockTransferLifecycleInsufficientSourceStock" xml:space="preserve">
+    <value>The source warehouse does not have enough available stock to dispatch this transfer.</value>
+  </data>
+  <data name="StockTransferLifecycleInsufficientInTransitStock" xml:space="preserve">
+    <value>The source warehouse does not have enough in-transit stock to complete or cancel this transfer.</value>
+  </data>
+  <data name="PurchaseOrderLifecycleUnsupportedAction" xml:space="preserve">
+    <value>The requested purchase order action is not supported for the current status.</value>
+  </data>
+  <data name="LoyaltyScanSessionRequired" xml:space="preserve">
+    <value>Scan session and business are required.</value>
+  </data>
+  <data name="LoyaltyScanSessionNotFound" xml:space="preserve">
+    <value>Scan session was not found.</value>
+  </data>
+  <data name="LoyaltyScanSessionConcurrencyConflict" xml:space="preserve">
+    <value>The scan session was modified by another operation. Please reload and retry.</value>
+  </data>
+  <data name="LoyaltyScanSessionCannotExpire" xml:space="preserve">
+    <value>Only pending scan sessions past their expiry time can be expired.</value>
   </data>
 </root>

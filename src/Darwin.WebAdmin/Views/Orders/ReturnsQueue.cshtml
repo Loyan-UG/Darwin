@@ -4,6 +4,7 @@
     ViewData["Title"] = T.T("ReturnsQueueTitle");
     string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
     string GlobalShipmentsQueueUrl() => Url.Action("ShipmentsQueue", "Orders") ?? string.Empty;
+    string GlobalShipmentProviderOperationsUrl() => Url.Action("ShipmentProviderOperations", "Orders") ?? string.Empty;
     string GlobalReturnsQueueUrl() => Url.Action("ReturnsQueue", "Orders") ?? string.Empty;
     string ReturnsQueueUrl(string filter) => Url.Action("ReturnsQueue", "Orders", new { query = Model.Query, filter }) ?? string.Empty;
     string ShipmentsQueueUrl(string filter) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
@@ -44,6 +45,12 @@
            hx-target="#returns-queue-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">@T.T("RefundQueue")</a>
+        <a asp-action="ShipmentProviderOperations"
+           class="btn btn-outline-secondary"
+           hx-get="@GlobalShipmentProviderOperationsUrl()"
+           hx-target="#returns-queue-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("ShipmentProviderOperationsTitle")</a>
     </div>
 </div>
 
@@ -251,6 +258,8 @@
                     var needsCarrierConfigFollowUp = item.NeedsCarrierReview || !string.IsNullOrWhiteSpace(item.ExceptionNote);
                     var needsRefundPathFollowUp = item.NeedsReturnFollowUp || !item.HasRefundablePayment;
                     var needsShipmentQueueFollowUp = item.NeedsCarrierReview || string.IsNullOrWhiteSpace(item.TrackingNumber);
+                    var hasActiveCarrierException = !string.IsNullOrWhiteSpace(item.ExceptionNote)
+                        && item.RecentCarrierEvents.Any(e => !string.IsNullOrWhiteSpace(e.ExceptionCode) || !string.IsNullOrWhiteSpace(e.ExceptionMessage));
                     <tr>
                         <td>
                             <div class="fw-semibold">@item.OrderNumber</div>
@@ -305,6 +314,28 @@
                                    hx-swap="outerHTML"
                                    hx-push-url="true"
                                     class="btn btn-outline-secondary">@T.T("ReviewRefunds")</a>
+                                @if (hasActiveCarrierException)
+                                {
+                                    <form asp-controller="Orders"
+                                          asp-action="ResolveShipmentCarrierException"
+                                          method="post"
+                                          class="d-inline-block"
+                                          hx-post="@Url.Action("ResolveShipmentCarrierException", "Orders")"
+                                          hx-target="#returns-queue-workspace-shell"
+                                          hx-swap="outerHTML"
+                                          hx-push-url="true">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="shipmentId" value="@item.Id" />
+                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                        <input type="hidden" name="resolutionNote" value="@T.T("ShipmentCarrierExceptionResolvedByOperator")" />
+                                        <input type="hidden" name="returnToReturnsQueue" value="true" />
+                                        <input type="hidden" name="returnFilter" value="@Model.Filter" />
+                                        <input type="hidden" name="query" value="@Model.Query" />
+                                        <input type="hidden" name="page" value="@Model.Page" />
+                                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                        <button type="submit" class="btn btn-outline-success">@T.T("ResolveCarrierException")</button>
+                                    </form>
+                                }
                                 @if (needsShipmentQueueFollowUp)
                                 {
                                     <a asp-action="ShipmentsQueue"

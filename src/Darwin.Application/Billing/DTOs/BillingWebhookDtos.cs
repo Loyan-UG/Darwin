@@ -26,6 +26,7 @@ public sealed class BillingWebhookSubscriptionListItemDto
 public sealed class BillingWebhookDeliveryListItemDto
 {
     public Guid Id { get; init; }
+    public byte[] RowVersion { get; init; } = Array.Empty<byte>();
     public Guid SubscriptionId { get; init; }
     public string EventType { get; init; } = string.Empty;
     public string CallbackUrl { get; init; } = string.Empty;
@@ -64,4 +65,11 @@ public sealed class GetBillingWebhookDeliveriesPageDto
 {
     public IReadOnlyList<BillingWebhookDeliveryListItemDto> Items { get; init; } = new List<BillingWebhookDeliveryListItemDto>();
     public int Total { get; init; }
+}
+
+public sealed class UpdateBillingWebhookDeliveryDto
+{
+    public Guid Id { get; init; }
+    public byte[] RowVersion { get; init; } = Array.Empty<byte>();
+    public string Action { get; init; } = string.Empty;
 }

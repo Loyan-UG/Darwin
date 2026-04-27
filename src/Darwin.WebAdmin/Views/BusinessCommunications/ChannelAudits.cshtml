@@ -1046,6 +1046,37 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("CommunicationQueuedDispatchesLabel")</div>
             <div class="fw-semibold mt-1">@Model.Summary.QueuedPendingCount / @Model.Summary.QueuedFailedCount</div>
+            @if (Model.Summary.QueuedPendingCount > 0 || Model.Summary.QueuedFailedCount > 0)
+            {
+                <form asp-action="CancelChannelDispatchOperationsBatch" method="post" class="mt-2"
+                      hx-post="@Url.Action("CancelChannelDispatchOperationsBatch", "BusinessCommunications")"
+                      hx-target="#business-communication-channel-audits-shell"
+                      hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="page" value="@Model.Page" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                    <input type="hidden" name="query" value="@Model.Query" />
+                    <input type="hidden" name="recipientAddress" value="@Model.RecipientAddress" />
+                    <input type="hidden" name="provider" value="@Model.Provider" />
+                    <input type="hidden" name="channel" value="@Model.Channel" />
+                    <input type="hidden" name="flowKey" value="@Model.FlowKey" />
+                    <input type="hidden" name="status" value="@Model.Status" />
+                    <input type="hidden" name="failedOnly" value="@Model.FailedOnly" />
+                    <input type="hidden" name="phoneVerificationOnly" value="@Model.PhoneVerificationOnly" />
+                    <input type="hidden" name="adminTestOnly" value="@Model.AdminTestOnly" />
+                    <input type="hidden" name="repeatedFailuresOnly" value="@Model.RepeatedFailuresOnly" />
+                    <input type="hidden" name="priorSuccessOnly" value="@Model.PriorSuccessOnly" />
+                    <input type="hidden" name="actionReadyOnly" value="@Model.ActionReadyOnly" />
+                    <input type="hidden" name="actionBlockedOnly" value="@Model.ActionBlockedOnly" />
+                    <input type="hidden" name="escalationCandidatesOnly" value="@Model.EscalationCandidatesOnly" />
+                    <input type="hidden" name="heavyChainsOnly" value="@Model.HeavyChainsOnly" />
+                    <input type="hidden" name="providerReviewOnly" value="@Model.ProviderReviewOnly" />
+                    <input type="hidden" name="chainFollowUpOnly" value="@Model.ChainFollowUpOnly" />
+                    <input type="hidden" name="chainResolvedOnly" value="@Model.ChainResolvedOnly" />
+                    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("CancelQueuedDispatchBatch")</button>
+                </form>
+            }
         </div>
     </div>
     <div class="col-md-2">
@@ -1272,6 +1303,41 @@
                         else if (item.CompletedAtUtc.HasValue)
                         {
                             <div class="small text-muted mt-1">@string.Format(T.T("CommunicationCompletedAt"), item.CompletedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
+                        }
+                        @if (item.IsQueueOperation)
+                        {
+                            <div class="mt-2">
+                                <form asp-action="CancelChannelDispatchOperation" method="post" class="d-inline"
+                                      hx-post="@Url.Action("CancelChannelDispatchOperation", "BusinessCommunications")"
+                                      hx-target="#business-communication-channel-audits-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="query" value="@Model.Query" />
+                                    <input type="hidden" name="recipientAddress" value="@Model.RecipientAddress" />
+                                    <input type="hidden" name="provider" value="@Model.Provider" />
+                                    <input type="hidden" name="channel" value="@Model.Channel" />
+                                    <input type="hidden" name="flowKey" value="@Model.FlowKey" />
+                                    <input type="hidden" name="status" value="@Model.Status" />
+                                    <input type="hidden" name="failedOnly" value="@Model.FailedOnly" />
+                                    <input type="hidden" name="phoneVerificationOnly" value="@Model.PhoneVerificationOnly" />
+                                    <input type="hidden" name="adminTestOnly" value="@Model.AdminTestOnly" />
+                                    <input type="hidden" name="repeatedFailuresOnly" value="@Model.RepeatedFailuresOnly" />
+                                    <input type="hidden" name="priorSuccessOnly" value="@Model.PriorSuccessOnly" />
+                                    <input type="hidden" name="actionReadyOnly" value="@Model.ActionReadyOnly" />
+                                    <input type="hidden" name="actionBlockedOnly" value="@Model.ActionBlockedOnly" />
+                                    <input type="hidden" name="escalationCandidatesOnly" value="@Model.EscalationCandidatesOnly" />
+                                    <input type="hidden" name="heavyChainsOnly" value="@Model.HeavyChainsOnly" />
+                                    <input type="hidden" name="providerReviewOnly" value="@Model.ProviderReviewOnly" />
+                                    <input type="hidden" name="chainFollowUpOnly" value="@Model.ChainFollowUpOnly" />
+                                    <input type="hidden" name="chainResolvedOnly" value="@Model.ChainResolvedOnly" />
+                                    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("CancelQueuedDispatch")</button>
+                                </form>
+                            </div>
                         }
                         @if (string.Equals(item.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
                         {

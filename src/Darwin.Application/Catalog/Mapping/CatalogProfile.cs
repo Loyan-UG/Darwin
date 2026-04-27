@@ -10,7 +10,8 @@ namespace Darwin.Application.Catalog.Mapping
         public CatalogProfile()
         {
             CreateMap<ProductTranslationDto, ProductTranslation>();
-            CreateMap<ProductVariantCreateDto, ProductVariant>();
+            CreateMap<ProductVariantCreateDto, ProductVariant>()
+                .ForMember(d => d.Id, cfg => cfg.Ignore());
 
             CreateMap<ProductCreateDto, Product>()
                 .ForMember(d => d.Translations, cfg => cfg.MapFrom(s => s.Translations))

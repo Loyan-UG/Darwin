@@ -65,4 +65,11 @@ namespace Darwin.Application.CRM.DTOs
         public string? AssignedToUserDisplayName { get; set; }
         public int InteractionCount { get; set; }
     }
+
+    public sealed class UpdateOpportunityLifecycleDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Action { get; set; } = string.Empty;
+    }
 }

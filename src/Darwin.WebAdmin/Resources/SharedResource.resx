@@ -849,6 +849,9 @@
   <data name="UserDeletedMessage" xml:space="preserve">
     <value>User deleted.</value>
   </data>
+  <data name="UserDeactivatedDueToOrderHistoryMessage" xml:space="preserve">
+    <value>User has order history, so the account was deactivated instead of deleted.</value>
+  </data>
   <data name="UserDeleteFailedMessage" xml:space="preserve">
     <value>Failed to delete user.</value>
   </data>
@@ -4577,6 +4580,61 @@
     <value>Failed to update loyalty campaign activation.</value>
     <comment>Error shown when activating or deactivating a loyalty campaign fails.</comment>
   </data>
+  <data name="CampaignDeliveries" xml:space="preserve">
+    <value>Campaign deliveries</value>
+  </data>
+  <data name="Deliveries" xml:space="preserve">
+    <value>Deliveries</value>
+  </data>
+  <data name="CampaignDeliveriesIntro" xml:space="preserve">
+    <value>Monitor and reconcile campaign delivery attempts across in-app and push channels.</value>
+  </data>
+  <data name="BackToCampaigns" xml:space="preserve">
+    <value>Back to campaigns</value>
+  </data>
+  <data name="LoyaltyCampaignDeliveriesLoadFailed" xml:space="preserve">
+    <value>Unable to load campaign deliveries.</value>
+  </data>
+  <data name="CampaignDeliveryStatusUpdated" xml:space="preserve">
+    <value>Campaign delivery status was updated.</value>
+  </data>
+  <data name="CampaignDeliveryStatusUpdateFailed" xml:space="preserve">
+    <value>Campaign delivery status could not be updated.</value>
+  </data>
+  <data name="CampaignDeliveryUpdatedByOperator" xml:space="preserve">
+    <value>Updated by WebAdmin operator.</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>Destination</value>
+  </data>
+  <data name="FirstAttempt" xml:space="preserve">
+    <value>First attempt</value>
+  </data>
+  <data name="ResponseCode" xml:space="preserve">
+    <value>Response code</value>
+  </data>
+  <data name="InProgress" xml:space="preserve">
+    <value>In progress</value>
+  </data>
+  <data name="LoyaltyScanSessionExpired" xml:space="preserve">
+    <value>Scan session expired.</value>
+    <comment>Success message after expiring a stale loyalty scan session.</comment>
+  </data>
+  <data name="LoyaltyScanSessionsExpired" xml:space="preserve">
+    <value>Stale scan sessions expired.</value>
+    <comment>Success message after expiring stale loyalty scan sessions in bulk.</comment>
+  </data>
+  <data name="LoyaltyScanSessionExpireFailed" xml:space="preserve">
+    <value>Failed to expire scan session.</value>
+    <comment>Error shown when expiring a stale loyalty scan session fails.</comment>
+  </data>
+  <data name="LoyaltyExpireStaleScanSessions" xml:space="preserve">
+    <value>Expire stale sessions</value>
+    <comment>Button label for expiring stale pending loyalty scan sessions.</comment>
+  </data>
+  <data name="Expire" xml:space="preserve">
+    <value>Expire</value>
+  </data>
   <data name="LoyaltyAccountNotFound" xml:space="preserve">
     <value>Loyalty account not found.</value>
     <comment>Error shown when a loyalty account cannot be found.</comment>
@@ -6880,7 +6938,7 @@
     <value>These rows represent already recorded customer giveback and should stay aligned with payment and invoice context.</value>
   </data>
   <data name="BillingWebhookLifecycleNote" xml:space="preserve">
-    <value>This queue gives callback visibility for phase-1 payment operations. It is intentionally read-oriented and does not claim automated resend or full reconciliation completion.</value>
+    <value>This queue gives callback visibility and operator lifecycle controls for phase-1 payment operations. It does not claim automated resend or full reconciliation completion.</value>
   </data>
   <data name="BillingRefundsPlaybookFailedScope" xml:space="preserve">
     <value>Use this subset when refund status or Stripe handling needs explicit finance support review.</value>
@@ -9381,6 +9439,33 @@
   <data name="MediaSetTitle" xml:space="preserve">
     <value>Set Title</value>
   </data>
+  <data name="MediaPurgeUnusedBatch" xml:space="preserve">
+    <value>Purge unused batch</value>
+  </data>
+  <data name="MediaBulkPurged" xml:space="preserve">
+    <value>Purged {0} unused media assets.</value>
+  </data>
+  <data name="MediaBulkPurgeFailed" xml:space="preserve">
+    <value>Unable to purge unused media assets right now.</value>
+  </data>
+  <data name="MobileDeactivateStaleBatch" xml:space="preserve">
+    <value>Deactivate stale batch</value>
+  </data>
+  <data name="MobileClearDisabledPushBatch" xml:space="preserve">
+    <value>Clear disabled push batch</value>
+  </data>
+  <data name="MobileStaleDevicesDeactivated" xml:space="preserve">
+    <value>Deactivated {0} stale mobile devices.</value>
+  </data>
+  <data name="MobileStaleDevicesDeactivateFailed" xml:space="preserve">
+    <value>Unable to deactivate stale mobile devices right now.</value>
+  </data>
+  <data name="MobileNotificationsDisabledPushTokensCleared" xml:space="preserve">
+    <value>Cleared push tokens for {0} notification-disabled devices.</value>
+  </data>
+  <data name="MobileNotificationsDisabledPushTokensClearFailed" xml:space="preserve">
+    <value>Unable to clear push tokens for notification-disabled devices right now.</value>
+  </data>
   <data name="Copied" xml:space="preserve">
     <value>Copied</value>
   </data>
@@ -10748,5 +10833,422 @@
   </data>
   <data name="BusinessBrandSecondaryColorPlaceholder" xml:space="preserve">
     <value>#FFCC00</value>
+  </data>
+  <data name="StaleIssued" xml:space="preserve">
+    <value>Stale issued</value>
+  </data>
+  <data name="StaleInTransit" xml:space="preserve">
+    <value>Stale in transit</value>
+  </data>
+  <data name="InventoryAgingWindow14Days" xml:space="preserve">
+    <value>Older than 14 days</value>
+  </data>
+  <data name="CancelQueuedDispatch" xml:space="preserve">
+    <value>Cancel queued dispatch</value>
+  </data>
+  <data name="CancelQueuedDispatchBatch" xml:space="preserve">
+    <value>Cancel current queued dispatches</value>
+  </data>
+  <data name="CommunicationQueuedDispatchCancelledMessage" xml:space="preserve">
+    <value>The queued dispatch operation was cancelled.</value>
+  </data>
+  <data name="CommunicationQueuedDispatchBatchCancelledMessage" xml:space="preserve">
+    <value>{0} queued dispatch operations were cancelled.</value>
+  </data>
+  <data name="CommunicationQueuedDispatchCancelFailedMessage" xml:space="preserve">
+    <value>The queued dispatch operation could not be cancelled.</value>
+  </data>
+  <data name="CommunicationTemplatePreviewsTitle" xml:space="preserve">
+    <value>Template previews</value>
+  </data>
+  <data name="CommunicationTemplatePreviewsIntro" xml:space="preserve">
+    <value>Review configured communication templates with realistic sample data before running live email, SMS, or WhatsApp flows.</value>
+  </data>
+  <data name="CommunicationTemplatePreviewsSafetyNote" xml:space="preserve">
+    <value>Preview renders are encoded for operator review and do not send messages or execute HTML.</value>
+  </data>
+  <data name="CommunicationTemplatePreviewConfiguredTemplate" xml:space="preserve">
+    <value>Configured template</value>
+  </data>
+  <data name="CommunicationTemplatePreviewRenderedOutput" xml:space="preserve">
+    <value>Rendered output</value>
+  </data>
+  <data name="CommunicationTemplatePreviewSampleData" xml:space="preserve">
+    <value>Sample data</value>
+  </data>
+  <data name="CommunicationTemplatePreviewNoSubject" xml:space="preserve">
+    <value>No subject</value>
+  </data>
+  <data name="SupportedTokens" xml:space="preserve">
+    <value>Supported tokens</value>
+  </data>
+  <data name="ApplyFilters" xml:space="preserve">
+    <value>Apply filters</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>No results found.</value>
+  </data>
+  <data name="ProviderCallbackInboxTitle" xml:space="preserve">
+    <value>Provider callback inbox</value>
+  </data>
+  <data name="ProviderCallbackInboxIntro" xml:space="preserve">
+    <value>Monitor inbound provider callbacks, recover stale or failed messages, and close messages that have already been handled outside the worker path.</value>
+  </data>
+  <data name="Processed" xml:space="preserve">
+    <value>Processed</value>
+  </data>
+  <data name="Retried" xml:space="preserve">
+    <value>Retried</value>
+  </data>
+  <data name="Payload" xml:space="preserve">
+    <value>Payload</value>
+  </data>
+  <data name="LastAttempt" xml:space="preserve">
+    <value>Last attempt</value>
+  </data>
+  <data name="Minutes" xml:space="preserve">
+    <value>minutes</value>
+  </data>
+  <data name="Requeue" xml:space="preserve">
+    <value>Requeue</value>
+  </data>
+  <data name="MarkSucceeded" xml:space="preserve">
+    <value>Mark succeeded</value>
+  </data>
+  <data name="Suppress" xml:space="preserve">
+    <value>Suppress</value>
+  </data>
+  <data name="QueueActions" xml:space="preserve">
+    <value>Queue actions</value>
+  </data>
+  <data name="WebhookDeliveryActionNote" xml:space="preserve">
+    <value>These actions update only the delivery queue state; verify payment or refund records separately before changing finance data.</value>
+  </data>
+  <data name="WebhookDeliveryMarkedSucceededMessage" xml:space="preserve">
+    <value>The webhook delivery was marked as succeeded.</value>
+  </data>
+  <data name="WebhookDeliveryRequeuedMessage" xml:space="preserve">
+    <value>The webhook delivery was requeued.</value>
+  </data>
+  <data name="WebhookDeliverySuppressedMessage" xml:space="preserve">
+    <value>The webhook delivery was suppressed from the active queue.</value>
+  </data>
+  <data name="WebhookDeliveryUpdatedMessage" xml:space="preserve">
+    <value>The webhook delivery was updated.</value>
+  </data>
+  <data name="WebhookDeliveryUpdateFailedMessage" xml:space="preserve">
+    <value>The webhook delivery could not be updated.</value>
+  </data>
+  <data name="MarkProcessed" xml:space="preserve">
+    <value>Mark processed</value>
+  </data>
+  <data name="MarkFailed" xml:space="preserve">
+    <value>Mark failed</value>
+  </data>
+  <data name="Qualify" xml:space="preserve">
+    <value>Qualify</value>
+  </data>
+  <data name="Disqualify" xml:space="preserve">
+    <value>Disqualify</value>
+  </data>
+  <data name="Advance" xml:space="preserve">
+    <value>Advance</value>
+  </data>
+  <data name="CloseWon" xml:space="preserve">
+    <value>Close won</value>
+  </data>
+  <data name="CloseLost" xml:space="preserve">
+    <value>Close lost</value>
+  </data>
+  <data name="Reopen" xml:space="preserve">
+    <value>Reopen</value>
+  </data>
+  <data name="LeadQualifiedMessage" xml:space="preserve">
+    <value>The lead was qualified.</value>
+  </data>
+  <data name="LeadDisqualifiedMessage" xml:space="preserve">
+    <value>The lead was disqualified.</value>
+  </data>
+  <data name="LeadReopenedMessage" xml:space="preserve">
+    <value>The lead was reopened.</value>
+  </data>
+  <data name="LeadLifecycleUpdatedMessage" xml:space="preserve">
+    <value>The lead lifecycle was updated.</value>
+  </data>
+  <data name="LeadLifecycleUpdateFailedMessage" xml:space="preserve">
+    <value>The lead lifecycle could not be updated.</value>
+  </data>
+  <data name="OpportunityAdvancedMessage" xml:space="preserve">
+    <value>The opportunity was advanced.</value>
+  </data>
+  <data name="OpportunityClosedWonMessage" xml:space="preserve">
+    <value>The opportunity was closed as won.</value>
+  </data>
+  <data name="OpportunityClosedLostMessage" xml:space="preserve">
+    <value>The opportunity was closed as lost.</value>
+  </data>
+  <data name="OpportunityReopenedMessage" xml:space="preserve">
+    <value>The opportunity was reopened.</value>
+  </data>
+  <data name="OpportunityLifecycleUpdatedMessage" xml:space="preserve">
+    <value>The opportunity lifecycle was updated.</value>
+  </data>
+  <data name="OpportunityLifecycleUpdateFailedMessage" xml:space="preserve">
+    <value>The opportunity lifecycle could not be updated.</value>
+  </data>
+  <data name="ProviderCallbackMarkedProcessedMessage" xml:space="preserve">
+    <value>The provider callback was marked as processed.</value>
+  </data>
+  <data name="ProviderCallbackMarkedFailedMessage" xml:space="preserve">
+    <value>The provider callback was marked as failed.</value>
+  </data>
+  <data name="ProviderCallbackRequeuedMessage" xml:space="preserve">
+    <value>The provider callback was requeued.</value>
+  </data>
+  <data name="ProviderCallbackUpdatedMessage" xml:space="preserve">
+    <value>The provider callback was updated.</value>
+  </data>
+  <data name="ProviderCallbackUpdateFailedMessage" xml:space="preserve">
+    <value>The provider callback could not be updated.</value>
+  </data>
+  <data name="ProviderCallbackMarkedFailedByOperator" xml:space="preserve">
+    <value>Marked failed by WebAdmin operator.</value>
+  </data>
+  <data name="ShipmentProviderOperationsTitle" xml:space="preserve">
+    <value>Shipment provider operations</value>
+  </data>
+  <data name="ShipmentProviderOperationsIntro" xml:space="preserve">
+    <value>Monitor and recover DHL shipment-provider operations for create-shipment and label-generation workflows.</value>
+  </data>
+  <data name="ShipmentProviderOperationTypeAll" xml:space="preserve">
+    <value>All operation types</value>
+  </data>
+  <data name="OperationType" xml:space="preserve">
+    <value>Operation type</value>
+  </data>
+  <data name="FailureReason" xml:space="preserve">
+    <value>Failure reason</value>
+  </data>
+  <data name="ShipmentProviderOperationMarkedProcessedMessage" xml:space="preserve">
+    <value>The shipment provider operation was marked as processed.</value>
+  </data>
+  <data name="ShipmentProviderOperationMarkedFailedMessage" xml:space="preserve">
+    <value>The shipment provider operation was marked as failed.</value>
+  </data>
+  <data name="ShipmentProviderOperationRequeuedMessage" xml:space="preserve">
+    <value>The shipment provider operation was requeued.</value>
+  </data>
+  <data name="ShipmentProviderOperationCancelledMessage" xml:space="preserve">
+    <value>The shipment provider operation was cancelled.</value>
+  </data>
+  <data name="ShipmentProviderOperationUpdatedMessage" xml:space="preserve">
+    <value>The shipment provider operation was updated.</value>
+  </data>
+  <data name="ShipmentProviderOperationUpdateFailedMessage" xml:space="preserve">
+    <value>The shipment provider operation could not be updated.</value>
+  </data>
+  <data name="ShipmentProviderOperationMarkedFailedByOperator" xml:space="preserve">
+    <value>Marked failed by WebAdmin operator.</value>
+  </data>
+  <data name="ShipmentProviderOperationCancelledByOperator" xml:space="preserve">
+    <value>Cancelled by WebAdmin operator.</value>
+  </data>
+  <data name="ResolveCarrierException" xml:space="preserve">
+    <value>Resolve carrier exception</value>
+  </data>
+  <data name="ShipmentCarrierExceptionResolvedMessage" xml:space="preserve">
+    <value>The carrier exception was marked as resolved.</value>
+  </data>
+  <data name="ShipmentCarrierExceptionResolveFailedMessage" xml:space="preserve">
+    <value>The carrier exception could not be resolved.</value>
+  </data>
+  <data name="ShipmentCarrierExceptionResolvedByOperator" xml:space="preserve">
+    <value>Carrier exception reviewed and resolved by WebAdmin operator.</value>
+  </data>
+  <data name="FinalizeBusinessOnboarding" xml:space="preserve">
+    <value>Finalize onboarding</value>
+  </data>
+  <data name="FinalizeBusinessOnboardingBlocked" xml:space="preserve">
+    <value>Complete owner assignment, primary location, legal name, and contact email before finalizing onboarding.</value>
+  </data>
+  <data name="BusinessOnboardingProvisionedAndApproved" xml:space="preserve">
+    <value>Business onboarding finalized: CRM support profile provisioned and business approved.</value>
+  </data>
+  <data name="BusinessOnboardingSyncedAndApproved" xml:space="preserve">
+    <value>Business onboarding finalized: CRM support profile synced and business approved.</value>
+  </data>
+  <data name="BusinessOnboardingProvisioningFailed" xml:space="preserve">
+    <value>Business onboarding could not be finalized.</value>
+  </data>
+  <data name="EffectiveTenantSettings" xml:space="preserve">
+    <value>Effective tenant settings</value>
+  </data>
+  <data name="PlatformFallback" xml:space="preserve">
+    <value>Platform fallback</value>
+  </data>
+  <data name="BusinessOverride" xml:space="preserve">
+    <value>Business override</value>
+  </data>
+  <data name="TenantCommunicationIdentity" xml:space="preserve">
+    <value>Tenant communication identity</value>
+  </data>
+  <data name="PaymentDisputeOpen" xml:space="preserve">
+    <value>Open dispute review</value>
+  </data>
+  <data name="PaymentDisputeUnderReview" xml:space="preserve">
+    <value>Under review</value>
+  </data>
+  <data name="PaymentDisputeEvidenceSubmitted" xml:space="preserve">
+    <value>Evidence submitted</value>
+  </data>
+  <data name="PaymentDisputeWon" xml:space="preserve">
+    <value>Dispute won</value>
+  </data>
+  <data name="PaymentDisputeLost" xml:space="preserve">
+    <value>Dispute lost</value>
+  </data>
+  <data name="DisputeReviewState" xml:space="preserve">
+    <value>Dispute review state</value>
+  </data>
+  <data name="MarkUnderReview" xml:space="preserve">
+    <value>Mark under review</value>
+  </data>
+  <data name="MarkEvidenceSubmitted" xml:space="preserve">
+    <value>Evidence submitted</value>
+  </data>
+  <data name="ResolveDisputeWon" xml:space="preserve">
+    <value>Resolve won</value>
+  </data>
+  <data name="ResolveDisputeLost" xml:space="preserve">
+    <value>Resolve lost</value>
+  </data>
+  <data name="ClearDisputeReview" xml:space="preserve">
+    <value>Clear dispute review</value>
+  </data>
+  <data name="PaymentDisputeMarkedUnderReviewMessage" xml:space="preserve">
+    <value>Payment dispute review was marked as under review.</value>
+  </data>
+  <data name="PaymentDisputeEvidenceSubmittedMessage" xml:space="preserve">
+    <value>Payment dispute evidence was marked as submitted.</value>
+  </data>
+  <data name="PaymentDisputeResolvedWonMessage" xml:space="preserve">
+    <value>Payment dispute was resolved as won.</value>
+  </data>
+  <data name="PaymentDisputeResolvedLostMessage" xml:space="preserve">
+    <value>Payment dispute was resolved as lost.</value>
+  </data>
+  <data name="PaymentDisputeReviewClearedMessage" xml:space="preserve">
+    <value>Payment dispute review marker was cleared.</value>
+  </data>
+  <data name="PaymentDisputeReviewUpdatedMessage" xml:space="preserve">
+    <value>Payment dispute review was updated.</value>
+  </data>
+  <data name="PaymentDisputeReviewUpdateFailedMessage" xml:space="preserve">
+    <value>Payment dispute review could not be updated.</value>
+  </data>
+  <data name="MarkInTransit" xml:space="preserve">
+    <value>Mark in transit</value>
+  </data>
+  <data name="Issue" xml:space="preserve">
+    <value>Issue</value>
+  </data>
+  <data name="Receive" xml:space="preserve">
+    <value>Receive</value>
+  </data>
+  <data name="StockTransferMarkedInTransitMessage" xml:space="preserve">
+    <value>Stock transfer was marked in transit and source stock was moved to in-transit.</value>
+  </data>
+  <data name="StockTransferCompletedMessage" xml:space="preserve">
+    <value>Stock transfer was completed and destination stock was increased.</value>
+  </data>
+  <data name="StockTransferCancelledMessage" xml:space="preserve">
+    <value>Stock transfer was cancelled.</value>
+  </data>
+  <data name="StockTransferLifecycleUpdatedMessage" xml:space="preserve">
+    <value>Stock transfer lifecycle was updated.</value>
+  </data>
+  <data name="StockTransferLifecycleUpdateFailedMessage" xml:space="preserve">
+    <value>Stock transfer lifecycle could not be updated.</value>
+  </data>
+  <data name="PurchaseOrderIssuedMessage" xml:space="preserve">
+    <value>Purchase order was issued.</value>
+  </data>
+  <data name="PurchaseOrderReceivedMessage" xml:space="preserve">
+    <value>Purchase order was received and stock was increased.</value>
+  </data>
+  <data name="PurchaseOrderCancelledMessage" xml:space="preserve">
+    <value>Purchase order was cancelled.</value>
+  </data>
+  <data name="PurchaseOrderLifecycleUpdatedMessage" xml:space="preserve">
+    <value>Purchase order lifecycle was updated.</value>
+  </data>
+  <data name="PurchaseOrderLifecycleUpdateFailedMessage" xml:space="preserve">
+    <value>Purchase order lifecycle could not be updated.</value>
+  </data>
+  <data name="Activate" xml:space="preserve">
+    <value>Activate</value>
+  </data>
+  <data name="Campaign" xml:space="preserve">
+    <value>Campaign</value>
+  </data>
+  <data name="Channels" xml:space="preserve">
+    <value>Channels</value>
+  </data>
+  <data name="Culture" xml:space="preserve">
+    <value>Culture</value>
+  </data>
+  <data name="Deactivate" xml:space="preserve">
+    <value>Deactivate</value>
+  </data>
+  <data name="LoyaltyCampaignPlaybooks" xml:space="preserve">
+    <value>Loyalty campaign playbooks</value>
+  </data>
+  <data name="LoyaltyCampaignsIntro" xml:space="preserve">
+    <value>Create, schedule, activate, and monitor loyalty campaigns for customer engagement.</value>
+  </data>
+  <data name="LoyaltyCampaignsTitle" xml:space="preserve">
+    <value>Loyalty campaigns</value>
+  </data>
+  <data name="LoyaltyClearQueueFilters" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
+  <data name="LoyaltyInAppOnly" xml:space="preserve">
+    <value>In-app only</value>
+  </data>
+  <data name="LoyaltyInAppPlusPush" xml:space="preserve">
+    <value>In-app plus push</value>
+  </data>
+  <data name="InApp" xml:space="preserve">
+    <value>In-app</value>
+  </data>
+  <data name="Push" xml:space="preserve">
+    <value>Push</value>
+  </data>
+  <data name="LoyaltyNewCampaign" xml:space="preserve">
+    <value>New campaign</value>
+  </data>
+  <data name="LoyaltyNoCampaignsFound" xml:space="preserve">
+    <value>No loyalty campaigns found.</value>
+  </data>
+  <data name="LoyaltyTo" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="LoyaltyWindow" xml:space="preserve">
+    <value>Window</value>
+  </data>
+  <data name="NoRecordsFound" xml:space="preserve">
+    <value>No records found.</value>
+  </data>
+  <data name="Slug" xml:space="preserve">
+    <value>Slug</value>
+  </data>
+  <data name="State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="Translations" xml:space="preserve">
+    <value>Translations</value>
+  </data>
+  <data name="Unpublished" xml:space="preserve">
+    <value>Unpublished</value>
   </data>
 </root>

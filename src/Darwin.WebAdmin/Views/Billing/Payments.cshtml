@@ -11,6 +11,7 @@
     string TaxSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" }) ?? string.Empty;
     string ScopedPaymentsIndexUrl() => Url.Action("Payments", "Billing", new { businessId = Model.BusinessId }) ?? string.Empty;
     string ScopedPaymentsUrl(PaymentQueueFilter queue) => Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue }) ?? string.Empty;
+    string UpdatePaymentDisputeReviewUrl(Guid id) => Url.Action("UpdatePaymentDisputeReview", "Billing", new { id }) ?? string.Empty;
     string ScopedRefundsIndexUrl() => Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId }) ?? string.Empty;
     string ScopedRefundsUrl(BillingRefundQueueFilter queue) => Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue }) ?? string.Empty;
     string CreatePaymentUrl() => Url.Action("CreatePayment", "Billing", new { businessId = Model.BusinessId }) ?? string.Empty;
@@ -24,6 +25,14 @@
     string UserEditUrl(Guid id) => Url.Action("Edit", "Users", new { id }) ?? string.Empty;
     string LocalizePaymentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeDisputeReviewState(string? state) => state switch
+    {
+        "UnderReview" => T.T("PaymentDisputeUnderReview"),
+        "EvidenceSubmitted" => T.T("PaymentDisputeEvidenceSubmitted"),
+        "Won" => T.T("PaymentDisputeWon"),
+        "Lost" => T.T("PaymentDisputeLost"),
+        _ => string.IsNullOrWhiteSpace(state) ? T.T("PaymentDisputeOpen") : T.T(state)
+    };
     string LocalizeProviderReferenceState(string? state) => state switch
     {
         "Stripe ref missing" => T.T("BillingProviderStripeRefMissing"),
@@ -564,6 +573,10 @@
                         {
                             <div><span class="badge text-bg-dark mt-1">@T.T("DisputeFollowUp")</span></div>
                         }
+                        @if (!string.IsNullOrWhiteSpace(item.DisputeReviewState))
+                        {
+                            <div><span class="badge text-bg-primary mt-1">@LocalizeDisputeReviewState(item.DisputeReviewState)</span></div>
+                        }
                         @if (item.NeedsSupportAttention)
                         {
                             <div><span class="badge text-bg-secondary mt-1">@T.T("NeedsSupport")</span></div>
@@ -718,6 +731,74 @@
                                hx-get="@BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter.DisputeSignals)"
                                hx-target="#billing-payments-workspace-shell"
                                hx-swap="outerHTML">@T.T("DisputeSignals")</a>
+                            <form asp-action="UpdatePaymentDisputeReview"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@UpdatePaymentDisputeReviewUrl(item.Id)"
+                                  hx-target="#billing-payments-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="queue" value="@Model.QueueFilter" />
+                                <input type="hidden" name="action" value="UnderReview" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("MarkUnderReview")</button>
+                            </form>
+                            <form asp-action="UpdatePaymentDisputeReview"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@UpdatePaymentDisputeReviewUrl(item.Id)"
+                                  hx-target="#billing-payments-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="queue" value="@Model.QueueFilter" />
+                                <input type="hidden" name="action" value="EvidenceSubmitted" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("MarkEvidenceSubmitted")</button>
+                            </form>
+                            <form asp-action="UpdatePaymentDisputeReview"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@UpdatePaymentDisputeReviewUrl(item.Id)"
+                                  hx-target="#billing-payments-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="queue" value="@Model.QueueFilter" />
+                                <input type="hidden" name="action" value="ResolveWon" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">@T.T("ResolveDisputeWon")</button>
+                            </form>
+                            <form asp-action="UpdatePaymentDisputeReview"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@UpdatePaymentDisputeReviewUrl(item.Id)"
+                                  hx-target="#billing-payments-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="queue" value="@Model.QueueFilter" />
+                                <input type="hidden" name="action" value="ResolveLost" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("ResolveDisputeLost")</button>
+                            </form>
                         }
                         @if (paymentHasRefundPressure)
                         {

@@ -62,7 +62,7 @@ namespace Darwin.Application.Pricing.Validators
     {
         public ValidateCouponInputValidator()
         {
-            RuleFor(x => x.Code).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.Code).NotEmpty().MaximumLength(64).Matches("^[A-Za-z0-9_-]+$");
             RuleFor(x => x.SubtotalNetMinor).GreaterThanOrEqualTo(0);
             RuleFor(x => x.Currency).NotEmpty().Length(3);
         }

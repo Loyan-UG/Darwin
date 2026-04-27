@@ -6,6 +6,7 @@
     string GlobalPaymentsUrl() => Url.Action("Payments", "Billing") ?? string.Empty;
     string GlobalTaxComplianceUrl() => Url.Action("TaxCompliance", "Billing") ?? string.Empty;
     string ScopedPaymentsUrl(PaymentQueueFilter queue) => Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue }) ?? string.Empty;
+    string UpdatePaymentDisputeReviewUrl(Guid id) => Url.Action("UpdatePaymentDisputeReview", "Billing", new { id }) ?? string.Empty;
     string ScopedRefundsUrl() => Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId }) ?? string.Empty;
     string BillingWebhooksUrl(BillingWebhookDeliveryQueueFilter queue) => Url.Action("Webhooks", "Billing", new { queue }) ?? string.Empty;
     string OrderDetailsUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
@@ -18,6 +19,14 @@
     string LocalizePaymentStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeRefundStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeDisputeReviewState(string? state) => state switch
+    {
+        "UnderReview" => T.T("PaymentDisputeUnderReview"),
+        "EvidenceSubmitted" => T.T("PaymentDisputeEvidenceSubmitted"),
+        "Won" => T.T("PaymentDisputeWon"),
+        "Lost" => T.T("PaymentDisputeLost"),
+        _ => string.IsNullOrWhiteSpace(state) ? T.T("PaymentDisputeOpen") : T.T(state)
+    };
     var paymentStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.PaymentStatus>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
     string LocalizeProviderReferenceState(string? state) => state switch
     {
@@ -167,6 +176,10 @@
                         <span class="badge @PaymentEditorOpsHealthBadgeClass(!Model.NeedsDisputeFollowUp)">@(Model.NeedsDisputeFollowUp ? 1 : 0)</span>
                     </div>
                     <p class="small text-muted mb-3">@T.T("DisputeSignals")</p>
+                    <div class="small mb-2">
+                        <span class="fw-semibold">@T.T("DisputeReviewState"):</span>
+                        @LocalizeDisputeReviewState(Model.DisputeReviewState)
+                    </div>
                     <div class="d-flex flex-wrap gap-2">
                         <a asp-action="Payments"
                            asp-route-businessId="@Model.BusinessId"
@@ -183,6 +196,22 @@
                            hx-target="#billing-payment-editor-shell"
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("DisputeSignals")</a>
+                        @if (!string.IsNullOrWhiteSpace(Model.DisputeReviewState))
+                        {
+                            <form asp-action="UpdatePaymentDisputeReview"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@UpdatePaymentDisputeReviewUrl(Model.Id)"
+                                  hx-target="#billing-payment-editor-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                                <input type="hidden" name="returnToEdit" value="true" />
+                                <input type="hidden" name="action" value="Clear" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T("ClearDisputeReview")</button>
+                            </form>
+                        }
                     </div>
                 </div>
             </div>

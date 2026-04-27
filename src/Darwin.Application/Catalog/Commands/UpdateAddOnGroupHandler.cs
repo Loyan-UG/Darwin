@@ -6,6 +6,8 @@ using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +15,7 @@ using System.Threading.Tasks;
 namespace Darwin.Application.Catalog.Commands
 {
     /// <summary>
-    /// Replaces an add-on group's editable fields and fully rewrites its nested options/values (simple upsert strategy).
+    /// Updates an add-on group while preserving nested option/value identities for existing selections.
     /// </summary>
     public sealed class UpdateAddOnGroupHandler
     {
@@ -49,30 +51,117 @@ namespace Darwin.Application.Catalog.Commands
             g.MaxSelections = dto.MaxSelections;
             g.IsActive = dto.IsActive;
 
-            g.Options.Clear();
-            foreach (var o in dto.Options.OrderBy(x => x.SortOrder))
-            {
-                var opt = new AddOnOption
-                {
-                    AddOnGroupId = g.Id,
-                    Label = o.Label.Trim(),
-                    SortOrder = o.SortOrder
-                };
-                foreach (var v in o.Values.OrderBy(x => x.SortOrder))
-                {
-                    opt.Values.Add(new AddOnOptionValue
-                    {
-                        Label = v.Label.Trim(),
-                        PriceDeltaMinor = v.PriceDeltaMinor,
-                        Hint = string.IsNullOrWhiteSpace(v.Hint) ? null : v.Hint.Trim(),
-                        SortOrder = v.SortOrder,
-                        IsActive = v.IsActive
-                    });
-                }
-                g.Options.Add(opt);
-            }
+            SyncOptions(g, dto);
 
             await _db.SaveChangesAsync(ct);
+        }
+
+        private void SyncOptions(AddOnGroup group, AddOnGroupEditDto dto)
+        {
+            var existingById = group.Options
+                .Where(o => !o.IsDeleted)
+                .ToDictionary(o => o.Id);
+            var requestedIds = new HashSet<Guid>();
+            var requestedLabels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var input in dto.Options.OrderBy(x => x.SortOrder))
+            {
+                var label = input.Label.Trim();
+                if (!requestedLabels.Add(label))
+                {
+                    throw new ValidationException(_localizer["DuplicateVariantLinesNotAllowed"]);
+                }
+
+                AddOnOption option;
+                if (input.Id.HasValue && existingById.TryGetValue(input.Id.Value, out var existingOption))
+                {
+                    option = existingOption;
+                }
+                else
+                {
+                    option = new AddOnOption
+                    {
+                        Id = Guid.NewGuid(),
+                        AddOnGroupId = group.Id
+                    };
+                    group.Options.Add(option);
+                }
+
+                option.Label = label;
+                option.SortOrder = input.SortOrder;
+                option.IsDeleted = false;
+                requestedIds.Add(option.Id);
+
+                SyncValues(option, input);
+            }
+
+            foreach (var existing in group.Options.Where(o => !o.IsDeleted).ToList())
+            {
+                if (!requestedIds.Contains(existing.Id))
+                {
+                    SoftDeleteOption(existing);
+                }
+            }
+        }
+
+        private void SyncValues(AddOnOption option, AddOnOptionDto dto)
+        {
+            var existingById = option.Values
+                .Where(v => !v.IsDeleted)
+                .ToDictionary(v => v.Id);
+            var requestedIds = new HashSet<Guid>();
+            var requestedLabels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var input in dto.Values.OrderBy(x => x.SortOrder))
+            {
+                var label = input.Label.Trim();
+                if (!requestedLabels.Add(label))
+                {
+                    throw new ValidationException(_localizer["DuplicateVariantLinesNotAllowed"]);
+                }
+
+                AddOnOptionValue value;
+                if (input.Id.HasValue && existingById.TryGetValue(input.Id.Value, out var existingValue))
+                {
+                    value = existingValue;
+                }
+                else
+                {
+                    value = new AddOnOptionValue
+                    {
+                        Id = Guid.NewGuid(),
+                        AddOnOptionId = option.Id
+                    };
+                    option.Values.Add(value);
+                }
+
+                value.Label = label;
+                value.PriceDeltaMinor = input.PriceDeltaMinor;
+                value.Hint = string.IsNullOrWhiteSpace(input.Hint) ? null : input.Hint.Trim();
+                value.SortOrder = input.SortOrder;
+                value.IsActive = input.IsActive;
+                value.IsDeleted = false;
+                requestedIds.Add(value.Id);
+            }
+
+            foreach (var existing in option.Values.Where(v => !v.IsDeleted).ToList())
+            {
+                if (!requestedIds.Contains(existing.Id))
+                {
+                    existing.IsDeleted = true;
+                    existing.IsActive = false;
+                }
+            }
+        }
+
+        private static void SoftDeleteOption(AddOnOption option)
+        {
+            option.IsDeleted = true;
+            foreach (var value in option.Values.Where(v => !v.IsDeleted))
+            {
+                value.IsDeleted = true;
+                value.IsActive = false;
+            }
         }
     }
 }

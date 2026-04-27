@@ -1022,6 +1022,39 @@
                         {
                             <div class="small text-muted">@string.Format(T.T("EmailAuditsRetryAvailableAtUtc"), item.RetryAvailableAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</div>
                         }
+                        @if (item.IsQueueOperation)
+                        {
+                            <div class="mt-2">
+                                <form asp-action="CancelEmailDispatchOperation" method="post" class="d-inline"
+                                      hx-post="@Url.Action("CancelEmailDispatchOperation", "BusinessCommunications")"
+                                      hx-target="#business-communication-audits-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="query" value="@Model.Query" />
+                                    <input type="hidden" name="recipientEmail" value="@Model.RecipientEmail" />
+                                    <input type="hidden" name="status" value="@Model.Status" />
+                                    <input type="hidden" name="flowKey" value="@Model.FlowKey" />
+                                    <input type="hidden" name="stalePendingOnly" value="@Model.StalePendingOnly" />
+                                    <input type="hidden" name="businessLinkedFailuresOnly" value="@Model.BusinessLinkedFailuresOnly" />
+                                    <input type="hidden" name="repeatedFailuresOnly" value="@Model.RepeatedFailuresOnly" />
+                                    <input type="hidden" name="priorSuccessOnly" value="@Model.PriorSuccessOnly" />
+                                    <input type="hidden" name="retryReadyOnly" value="@Model.RetryReadyOnly" />
+                                    <input type="hidden" name="retryBlockedOnly" value="@Model.RetryBlockedOnly" />
+                                    <input type="hidden" name="highChainVolumeOnly" value="@Model.HighChainVolumeOnly" />
+                                    <input type="hidden" name="chainFollowUpOnly" value="@Model.ChainFollowUpOnly" />
+                                    <input type="hidden" name="chainResolvedOnly" value="@Model.ChainResolvedOnly" />
+                                    @if (Model.BusinessId.HasValue)
+                                    {
+                                        <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                    }
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("CancelQueuedDispatch")</button>
+                                </form>
+                            </div>
+                        }
                         @if (item.CanRetryNow)
                         {
                             <div class="mt-2">

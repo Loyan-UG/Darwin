@@ -291,6 +291,30 @@
   <data name="OrderTransitionNotAllowed" xml:space="preserve">
     <value>Der Uebergang von {0} zu {1} ist nicht erlaubt.</value>
   </data>
+  <data name="OrderPaidStatusRequiresCapturedPayment" xml:space="preserve">
+    <value>Der Status Bezahlt erfordert erfasste oder abgeschlossene Zahlungen in Hoehe der Bestellsumme.</value>
+  </data>
+  <data name="OrderPartiallyShippedStatusRequiresPartialShipment" xml:space="preserve">
+    <value>Der Status Teilweise versendet erfordert Versandnachweise fuer einige, aber nicht alle Bestellmengen.</value>
+  </data>
+  <data name="OrderShippedStatusRequiresFullShipment" xml:space="preserve">
+    <value>Der Status Versendet erfordert Versandnachweise fuer jede Bestellposition.</value>
+  </data>
+  <data name="OrderDeliveredStatusRequiresFullDelivery" xml:space="preserve">
+    <value>Der Status Zugestellt erfordert Zustellnachweise fuer jede Bestellposition.</value>
+  </data>
+  <data name="OrderPartiallyRefundedStatusRequiresPartialRefund" xml:space="preserve">
+    <value>Der Status Teilweise erstattet erfordert abgeschlossene Erstattungen unterhalb der Bestellsumme.</value>
+  </data>
+  <data name="OrderRefundedStatusRequiresFullRefund" xml:space="preserve">
+    <value>Der Status Erstattet erfordert abgeschlossene Erstattungen in Hoehe der Bestellsumme.</value>
+  </data>
+  <data name="OrderCompletedStatusRequiresFullDelivery" xml:space="preserve">
+    <value>Der Status Abgeschlossen erfordert Zustellnachweise fuer jede Bestellposition.</value>
+  </data>
+  <data name="OrderCompletedStatusRequiresNoOpenRefunds" xml:space="preserve">
+    <value>Der Status Abgeschlossen ist nicht erlaubt, solange Erstattungen noch ausstehen.</value>
+  </data>
   <data name="LoyaltyProgramAlreadyExistsForBusiness" xml:space="preserve">
     <value>Fuer dieses Geschaeft existiert bereits ein Treueprogramm.</value>
   </data>
@@ -368,6 +392,9 @@
   </data>
   <data name="SlugMustBeUniquePerCulture" xml:space="preserve">
     <value>Slug muss pro Kultur eindeutig sein.</value>
+  </data>
+  <data name="DuplicateCulturesNotAllowed" xml:space="preserve">
+    <value>Doppelte Kulturen sind nicht erlaubt.</value>
   </data>
   <data name="SimpleProductMustContainOneVariant" xml:space="preserve">
     <value>Ein einfaches Produkt muss genau eine Variante enthalten.</value>
@@ -462,6 +489,12 @@
   <data name="OpportunityNotFound" xml:space="preserve">
     <value>Opportunity nicht gefunden.</value>
   </data>
+  <data name="LeadLifecycleUnsupportedAction" xml:space="preserve">
+    <value>Nicht unterstuetzte Lead-Lifecycle-Aktion.</value>
+  </data>
+  <data name="OpportunityLifecycleUnsupportedAction" xml:space="preserve">
+    <value>Nicht unterstuetzte Opportunity-Lifecycle-Aktion.</value>
+  </data>
   <data name="LinkedUserNotFound" xml:space="preserve">
     <value>Verknuepfter Benutzer nicht gefunden.</value>
   </data>
@@ -482,6 +515,9 @@
   </data>
   <data name="MediaAssetNotFound" xml:space="preserve">
     <value>Medienobjekt nicht gefunden.</value>
+  </data>
+  <data name="MediaAssetStillReferenced" xml:space="preserve">
+    <value>Das Medienobjekt wird noch referenziert und kann nicht bereinigt werden.</value>
   </data>
   <data name="BrandNotFound" xml:space="preserve">
     <value>Marke nicht gefunden.</value>
@@ -1256,6 +1292,12 @@
   <data name="StripeWebhookProcessingFailed" xml:space="preserve">
     <value>Die Verarbeitung des Stripe-Webhooks ist fehlgeschlagen.</value>
   </data>
+  <data name="WebhookDeliveryNotFound" xml:space="preserve">
+    <value>Webhook-Zustellung nicht gefunden.</value>
+  </data>
+  <data name="WebhookDeliveryUnsupportedAction" xml:space="preserve">
+    <value>Nicht unterstuetzte Webhook-Zustellungsaktion.</value>
+  </data>
   <data name="CarrierEventOccurredAtUtcRequired" xml:space="preserve">
     <value>occurredAtUtc des Carrier-Ereignisses ist erforderlich.</value>
   </data>
@@ -1285,5 +1327,74 @@
   </data>
   <data name="ShipmentCarrierMustBeDhlForLabelGeneration" xml:space="preserve">
     <value>Im aktuellen Stand koennen nur DHL-Sendungen Carrier-Label erzeugen.</value>
+  </data>
+  <data name="CommunicationDispatchOperationNotFound" xml:space="preserve">
+    <value>Der Kommunikationsversand wurde nicht gefunden.</value>
+  </data>
+  <data name="CampaignDeliveryNotFound" xml:space="preserve">
+    <value>Kampagnenzustellung wurde nicht gefunden.</value>
+  </data>
+  <data name="ProviderCallbackInboxMessageNotFound" xml:space="preserve">
+    <value>Die Provider-Callback-Inbox-Nachricht wurde nicht gefunden.</value>
+  </data>
+  <data name="ProviderCallbackInboxUnsupportedAction" xml:space="preserve">
+    <value>Die Provider-Callback-Inbox-Aktion wird nicht unterstuetzt.</value>
+  </data>
+  <data name="ShipmentProviderOperationNotFound" xml:space="preserve">
+    <value>Die Versand-Provider-Operation wurde nicht gefunden.</value>
+  </data>
+  <data name="ShipmentProviderOperationUnsupportedAction" xml:space="preserve">
+    <value>Die Aktion fuer die Versand-Provider-Operation wird nicht unterstuetzt.</value>
+  </data>
+  <data name="ShipmentNotFoundForCarrierResolution" xml:space="preserve">
+    <value>Die Sendung fuer die Carrier-Ausnahme wurde nicht gefunden.</value>
+  </data>
+  <data name="ShipmentCarrierExceptionResolutionNoteRequired" xml:space="preserve">
+    <value>Zum Schliessen einer Carrier-Ausnahme ist eine Abschlussnotiz erforderlich.</value>
+  </data>
+  <data name="BusinessOnboardingProvisioningBlocked" xml:space="preserve">
+    <value>Business-Onboarding kann noch nicht finalisiert werden. Fehlt: {0}.</value>
+  </data>
+  <data name="BusinessOnboardingMissingOwner" xml:space="preserve">
+    <value>aktiver Owner</value>
+  </data>
+  <data name="BusinessOnboardingMissingPrimaryLocation" xml:space="preserve">
+    <value>Primary Location</value>
+  </data>
+  <data name="BusinessOnboardingMissingLegalName" xml:space="preserve">
+    <value>Legal Name</value>
+  </data>
+  <data name="PaymentDisputeReviewUnsupportedAction" xml:space="preserve">
+    <value>Die angeforderte Payment-Dispute-Aktion wird nicht unterstuetzt.</value>
+  </data>
+  <data name="StockTransferNotFound" xml:space="preserve">
+    <value>Bestandstransfer nicht gefunden.</value>
+  </data>
+  <data name="PurchaseOrderNotFound" xml:space="preserve">
+    <value>Bestellauftrag nicht gefunden.</value>
+  </data>
+  <data name="StockTransferLifecycleUnsupportedAction" xml:space="preserve">
+    <value>Die angeforderte Bestandstransfer-Aktion wird fuer den aktuellen Status nicht unterstuetzt.</value>
+  </data>
+  <data name="StockTransferLifecycleInsufficientSourceStock" xml:space="preserve">
+    <value>Das Quelllager hat nicht genuegend verfuegbaren Bestand, um diesen Transfer zu versenden.</value>
+  </data>
+  <data name="StockTransferLifecycleInsufficientInTransitStock" xml:space="preserve">
+    <value>Das Quelllager hat nicht genuegend Bestand in Transit, um diesen Transfer abzuschliessen oder zu stornieren.</value>
+  </data>
+  <data name="PurchaseOrderLifecycleUnsupportedAction" xml:space="preserve">
+    <value>Die angeforderte Bestellauftrags-Aktion wird fuer den aktuellen Status nicht unterstuetzt.</value>
+  </data>
+  <data name="LoyaltyScanSessionRequired" xml:space="preserve">
+    <value>Scan-Sitzung und Business sind erforderlich.</value>
+  </data>
+  <data name="LoyaltyScanSessionNotFound" xml:space="preserve">
+    <value>Scan-Sitzung wurde nicht gefunden.</value>
+  </data>
+  <data name="LoyaltyScanSessionConcurrencyConflict" xml:space="preserve">
+    <value>Die Scan-Sitzung wurde von einem anderen Vorgang geaendert. Bitte neu laden und erneut versuchen.</value>
+  </data>
+  <data name="LoyaltyScanSessionCannotExpire" xml:space="preserve">
+    <value>Nur ausstehende Scan-Sitzungen nach ihrer Ablaufzeit koennen ablaufen gelassen werden.</value>
   </data>
 </root>

@@ -33,6 +33,7 @@ namespace Darwin.Application.Catalog.DTOs
     /// </summary>
     public sealed class BrandTranslationDto
     {
+        public Guid? Id { get; set; }
         public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
         public string Name { get; set; } = string.Empty;
         public string? DescriptionHtml { get; set; }

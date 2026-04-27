@@ -20,14 +20,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
     {
         private readonly UpdateSiteSettingHandler _update;
         private readonly ISiteSettingCache _cache;
+        private readonly IBusinessEffectiveSettingsCache _businessEffectiveSettingsCache;
 
         /// <summary>
         /// Initializes a new instance of <see cref="SiteSettingsController"/>.
         /// </summary>
-        public SiteSettingsController(UpdateSiteSettingHandler update, ISiteSettingCache cache)
+        public SiteSettingsController(
+            UpdateSiteSettingHandler update,
+            ISiteSettingCache cache,
+            IBusinessEffectiveSettingsCache businessEffectiveSettingsCache)
         {
             _update = update;
             _cache = cache;
+            _businessEffectiveSettingsCache = businessEffectiveSettingsCache;
         }
 
         /// <summary>
@@ -58,6 +63,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             {
                 await _update.HandleAsync(dto, ct);
                 _cache.Invalidate();
+                _businessEffectiveSettingsCache.InvalidateAll();
                 SetSuccessMessage("SettingsUpdatedMessage");
                 return RedirectOrHtmx(nameof(Edit), fragment);
             }

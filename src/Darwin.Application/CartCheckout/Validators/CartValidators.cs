@@ -53,7 +53,10 @@ namespace Darwin.Application.CartCheckout.Validators
         public CartApplyCouponValidator()
         {
             RuleFor(x => x.CartId).NotEmpty();
-            // TODO: Coupon format rule can be added later
+            RuleFor(x => x.CouponCode)
+                .MaximumLength(64)
+                .Matches("^[A-Za-z0-9_-]+$")
+                .When(x => !string.IsNullOrWhiteSpace(x.CouponCode));
         }
     }
 }

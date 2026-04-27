@@ -1,0 +1,143 @@
+@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyCampaignDeliveriesListVm
+@using System.Globalization
+@using Darwin.Domain.Enums
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("CampaignDeliveries");
+    var loyaltyCulture = CultureInfo.CurrentCulture;
+    string DateTimeText(DateTime? utc) => utc?.ToString("g", loyaltyCulture) ?? "-";
+    string CampaignDeliveriesUrl(object? businessId = null, Guid? campaignId = null, string? filter = null) => Url.Action("CampaignDeliveries", "Loyalty", new { businessId, campaignId, filter }) ?? string.Empty;
+    string CampaignsUrl(object? businessId = null) => Url.Action("Campaigns", "Loyalty", new { businessId }) ?? string.Empty;
+    string ChannelText(CampaignDeliveryChannel channel) => T.T(channel == CampaignDeliveryChannel.Sms ? "SMS" : channel.ToString());
+    string StatusBadge(CampaignDeliveryStatus status) => status switch
+    {
+        CampaignDeliveryStatus.Succeeded => "badge bg-success",
+        CampaignDeliveryStatus.Failed => "badge bg-danger",
+        CampaignDeliveryStatus.InProgress => "badge bg-warning text-dark",
+        CampaignDeliveryStatus.Cancelled => "badge bg-secondary",
+        _ => "badge bg-info text-dark"
+    };
+}
+
+<div id="loyalty-campaigns-workspace-shell">
+    <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-1">@T.T("CampaignDeliveries")</h1>
+            <div class="text-muted">@T.T("CampaignDeliveriesIntro")</div>
+        </div>
+        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@CampaignsUrl(Model.BusinessId)" hx-target="#loyalty-campaigns-workspace-shell" hx-swap="outerHTML">@T.T("BackToCampaigns")</a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Total")</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div>
+        <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("NeedsAttention")</div><div class="fs-4 fw-semibold">@Model.Summary.NeedsAttentionCount</div></div></div>
+        <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Pending")</div><div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div></div></div>
+        <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Failed")</div><div class="fs-4 fw-semibold">@Model.Summary.FailedCount</div></div></div>
+        <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Succeeded")</div><div class="fs-4 fw-semibold">@Model.Summary.SucceededCount</div></div></div>
+        <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Cancelled")</div><div class="fs-4 fw-semibold">@Model.Summary.CancelledCount</div></div></div>
+    </div>
+
+    <form asp-action="CampaignDeliveries" method="get" class="d-flex gap-2 mb-3" hx-get="@CampaignDeliveriesUrl()" hx-target="#loyalty-campaigns-workspace-shell" hx-swap="outerHTML">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <input type="hidden" name="campaignId" value="@Model.CampaignId" />
+        <button class="btn btn-outline-secondary" type="submit">@T.T("Filter")</button>
+        <a asp-action="CampaignDeliveries" asp-route-businessId="@Model.BusinessId" asp-route-campaignId="@Model.CampaignId" class="btn btn-outline-secondary" hx-get="@CampaignDeliveriesUrl(Model.BusinessId, Model.CampaignId)" hx-target="#loyalty-campaigns-workspace-shell" hx-swap="outerHTML">@T.T("Reset")</a>
+    </form>
+
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <a asp-action="CampaignDeliveries" asp-route-businessId="@Model.BusinessId" asp-route-campaignId="@Model.CampaignId" asp-route-filter="NeedsAttention" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignDeliveryQueueFilter.NeedsAttention ? "btn-warning" : "btn-outline-warning")" hx-get="@CampaignDeliveriesUrl(Model.BusinessId, Model.CampaignId, "NeedsAttention")" hx-target="#loyalty-campaigns-workspace-shell" hx-swap="outerHTML">@T.T("NeedsAttention")</a>
+        <a asp-action="CampaignDeliveries" asp-route-businessId="@Model.BusinessId" asp-route-campaignId="@Model.CampaignId" asp-route-filter="Failed" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignDeliveryQueueFilter.Failed ? "btn-danger" : "btn-outline-danger")" hx-get="@CampaignDeliveriesUrl(Model.BusinessId, Model.CampaignId, "Failed")" hx-target="#loyalty-campaigns-workspace-shell" hx-swap="outerHTML">@T.T("Failed")</a>
+        <a asp-action="CampaignDeliveries" asp-route-businessId="@Model.BusinessId" asp-route-campaignId="@Model.CampaignId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignDeliveryQueueFilter.Pending ? "btn-info" : "btn-outline-info")" hx-get="@CampaignDeliveriesUrl(Model.BusinessId, Model.CampaignId, "Pending")" hx-target="#loyalty-campaigns-workspace-shell" hx-swap="outerHTML">@T.T("Pending")</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>@T.T("Campaign")</th>
+                    <th>@T.T("Channel")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("Destination")</th>
+                    <th>@T.T("Attempts")</th>
+                    <th>@T.T("LastAttempt")</th>
+                    <th>@T.T("Provider")</th>
+                    <th class="text-end">@T.T("Actions")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-4">@T.T("NoRecordsFound")</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@item.CampaignName</div>
+                                <div class="small text-muted">@item.CampaignTitle</div>
+                                <div class="small text-muted"><code>@item.CampaignId</code></div>
+                            </td>
+                            <td>@ChannelText(item.Channel)</td>
+                            <td><span class="@StatusBadge(item.Status)">@T.T(item.Status.ToString())</span></td>
+                            <td>
+                                <div>@(item.Destination ?? "-")</div>
+                                @if (item.RecipientUserId.HasValue)
+                                {
+                                    <div class="small text-muted"><code>@item.RecipientUserId</code></div>
+                                }
+                            </td>
+                            <td>@item.AttemptCount</td>
+                            <td>
+                                <div>@DateTimeText(item.LastAttemptAtUtc)</div>
+                                <div class="small text-muted">@T.T("FirstAttempt"): @DateTimeText(item.FirstAttemptAtUtc)</div>
+                            </td>
+                            <td>
+                                @if (item.LastResponseCode.HasValue)
+                                {
+                                    <div>@T.T("ResponseCode"): <code>@item.LastResponseCode</code></div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(item.ProviderMessageId))
+                                {
+                                    <div class="small text-muted">@T.T("ProviderMessageId"): <code>@item.ProviderMessageId</code></div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(item.LastError))
+                                {
+                                    <div class="small text-danger">@item.LastError</div>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @foreach (var nextStatus in new[] { CampaignDeliveryStatus.Pending, CampaignDeliveryStatus.Succeeded, CampaignDeliveryStatus.Failed, CampaignDeliveryStatus.Cancelled })
+                                {
+                                    if (nextStatus == item.Status)
+                                    {
+                                        continue;
+                                    }
+
+                                    <form asp-action="UpdateCampaignDeliveryStatus" method="post" class="d-inline" hx-post="@Url.Action("UpdateCampaignDeliveryStatus", "Loyalty")" hx-target="#loyalty-campaigns-workspace-shell" hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                        <input type="hidden" name="campaignId" value="@Model.CampaignId" />
+                                        <input type="hidden" name="status" value="@nextStatus" />
+                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                        <input type="hidden" name="page" value="@Model.Page" />
+                                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                        <input type="hidden" name="filter" value="@Model.Filter" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T(nextStatus == CampaignDeliveryStatus.Pending ? "Requeue" : nextStatus.ToString())</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="CampaignDeliveries" asp-route-businessId="@Model.BusinessId" asp-route-campaignId="@Model.CampaignId" asp-route-filter="@Model.Filter" hx-target="#loyalty-campaigns-workspace-shell" hx-swap="outerHTML"></pager>
+</div>

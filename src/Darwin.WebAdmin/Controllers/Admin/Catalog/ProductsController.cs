@@ -223,6 +223,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 }).ToList() ?? new(),
                 Variants = dto.Variants?.Select(v => new ProductVariantCreateVm
                 {
+                    Id = v.Id,
                     Sku = v.Sku,
                     Gtin = v.Gtin,
                     ManufacturerPartNumber = v.ManufacturerPartNumber,
@@ -283,6 +284,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 }).ToList(),
                 Variants = vm.Variants.Select(v => new ProductVariantCreateDto
                 {
+                    Id = v.Id,
                     Sku = v.Sku,
                     Gtin = v.Gtin,
                     ManufacturerPartNumber = v.ManufacturerPartNumber,

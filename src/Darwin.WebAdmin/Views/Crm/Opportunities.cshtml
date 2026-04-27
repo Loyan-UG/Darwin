@@ -259,6 +259,9 @@
         {
             foreach (var item in Model.Items)
             {
+                var rowVersion = Convert.ToBase64String(item.RowVersion);
+                var isClosed = item.Stage == Darwin.Domain.Enums.OpportunityStage.ClosedWon ||
+                    item.Stage == Darwin.Domain.Enums.OpportunityStage.ClosedLost;
                 <tr>
                     <td>@item.Title</td>
                     <td>@item.CustomerDisplayName</td>
@@ -269,6 +272,69 @@
                     <td>@item.ItemCount</td>
                     <td>@CrmDateTimeText(item.ModifiedAtUtc)</td>
                     <td class="text-end">
+                        <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                        @if (!isClosed)
+                        {
+                            <form asp-action="UpdateOpportunityLifecycle" method="post" class="d-inline"
+                                  hx-post="@Url.Action("UpdateOpportunityLifecycle", "Crm")"
+                                  hx-target="#crm-opportunities-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                <input type="hidden" name="action" value="Advance" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="filter" value="@Model.Filter" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("Advance")</button>
+                            </form>
+                            <form asp-action="UpdateOpportunityLifecycle" method="post" class="d-inline"
+                                  hx-post="@Url.Action("UpdateOpportunityLifecycle", "Crm")"
+                                  hx-target="#crm-opportunities-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                <input type="hidden" name="action" value="CloseWon" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="filter" value="@Model.Filter" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">@T.T("CloseWon")</button>
+                            </form>
+                            <form asp-action="UpdateOpportunityLifecycle" method="post" class="d-inline"
+                                  hx-post="@Url.Action("UpdateOpportunityLifecycle", "Crm")"
+                                  hx-target="#crm-opportunities-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                <input type="hidden" name="action" value="CloseLost" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="filter" value="@Model.Filter" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("CloseLost")</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-action="UpdateOpportunityLifecycle" method="post" class="d-inline"
+                                  hx-post="@Url.Action("UpdateOpportunityLifecycle", "Crm")"
+                                  hx-target="#crm-opportunities-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                <input type="hidden" name="action" value="Reopen" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="filter" value="@Model.Filter" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T("Reopen")</button>
+                            </form>
+                        }
                         <a asp-action="EditCustomer" asp-route-id="@item.CustomerId" hx-get="@EditCrmCustomerUrl(item.CustomerId)" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-success">
                             <i class="fa fa-user"></i> @T.T("Customer")
                         </a>
@@ -278,6 +344,7 @@
                         <a asp-action="EditOpportunity" asp-route-id="@item.Id" hx-get="@EditCrmOpportunityUrl(item.Id)" hx-target="#crm-opportunities-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-pen"></i> @T.T("Edit")
                         </a>
+                        </div>
                     </td>
                 </tr>
             }

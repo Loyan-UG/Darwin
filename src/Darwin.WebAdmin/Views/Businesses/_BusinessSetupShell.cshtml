@@ -85,6 +85,10 @@
         ? T.T("Configured")
         : T.T("NeedsAttention");
     string ConfiguredBusinessValueText(string? value) => string.IsNullOrWhiteSpace(value) ? T.T("NotConfigured") : value.Trim();
+    string EffectiveFallbackBadge(bool usesPlatformFallback) => usesPlatformFallback ? T.T("PlatformFallback") : T.T("BusinessOverride");
+    string EffectiveFallbackBadgeClass(bool usesPlatformFallback) => usesPlatformFallback
+        ? "badge bg-info-subtle text-info-emphasis"
+        : "badge bg-success-subtle text-success-emphasis";
     bool businessEmailIdentityReady = !string.IsNullOrWhiteSpace(Model.SupportEmail)
         && !string.IsNullOrWhiteSpace(Model.CommunicationSenderName)
         && !string.IsNullOrWhiteSpace(Model.CommunicationReplyToEmail);
@@ -231,6 +235,16 @@
                        hx-push-url="true">@T.T("EditBusiness")</a>
                 </div>
                 <div class="d-flex gap-2 flex-wrap mt-3">
+                    @if (checklistComplete && (Model.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Approved || !Model.IsActive))
+                    {
+                        <form asp-action="ProvisionOnboarding" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                            <input type="hidden" name="returnToSetup" value="true" />
+                            <button type="submit" class="btn btn-sm btn-success">@T.T("FinalizeBusinessOnboarding")</button>
+                        </form>
+                    }
                     @if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
                     {
                         <form asp-action="Approve" method="post" class="d-inline">
@@ -266,6 +280,10 @@
                         </form>
                     }
                 </div>
+                @if (!checklistComplete)
+                {
+                    <div class="small text-muted mt-2">@T.T("FinalizeBusinessOnboardingBlocked")</div>
+                }
             </div>
         </div>
         <div class="col-md-3">
@@ -296,9 +314,14 @@
         </div>
         <div class="col-md-3">
             <div class="border rounded p-3 h-100">
-                <div class="text-muted small text-uppercase">@T.T("Defaults")</div>
-                <div class="fw-semibold mt-1">@Model.DefaultCulture / @Model.DefaultCurrency</div>
-                <div class="small text-muted mt-2">@Model.DefaultTimeZoneId</div>
+                <div class="text-muted small text-uppercase">@T.T("EffectiveTenantSettings")</div>
+                <div class="fw-semibold mt-1">@Model.CommunicationReadiness.EffectiveCulture / @Model.CommunicationReadiness.EffectiveCurrency</div>
+                <div class="small text-muted mt-2">@Model.CommunicationReadiness.EffectiveTimeZoneId</div>
+                <div class="d-flex gap-1 flex-wrap mt-2">
+                    <span class="@EffectiveFallbackBadgeClass(Model.CommunicationReadiness.UsesPlatformCultureFallback)">@EffectiveFallbackBadge(Model.CommunicationReadiness.UsesPlatformCultureFallback)</span>
+                    <span class="@EffectiveFallbackBadgeClass(Model.CommunicationReadiness.UsesPlatformCurrencyFallback)">@EffectiveFallbackBadge(Model.CommunicationReadiness.UsesPlatformCurrencyFallback)</span>
+                    <span class="@EffectiveFallbackBadgeClass(Model.CommunicationReadiness.UsesPlatformTimeZoneFallback)">@EffectiveFallbackBadge(Model.CommunicationReadiness.UsesPlatformTimeZoneFallback)</span>
+                </div>
                 <div class="d-flex gap-2 flex-wrap mt-3">
                     <a asp-controller="SiteSettings"
                        asp-action="Edit"
@@ -417,6 +440,20 @@
                         <div class="small mb-2">
                             <span class="fw-semibold">@T.T("CommunicationPolicy"):</span>
                             @SetupDependencyStatusText(businessTransactionalReady && businessOperationalAlertsReady)
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("TenantCommunicationIdentity"):</span>
+                            @SetupDependencyStatusText(Model.CommunicationReadiness.TenantCommunicationIdentityConfigured)
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("SupportEmail"):</span>
+                            @ConfiguredBusinessValueText(Model.CommunicationReadiness.EffectiveSupportEmail)
+                            <span class="@EffectiveFallbackBadgeClass(Model.CommunicationReadiness.UsesPlatformContactEmailFallback) ms-1">@EffectiveFallbackBadge(Model.CommunicationReadiness.UsesPlatformContactEmailFallback)</span>
+                        </div>
+                        <div class="small mb-2">
+                            <span class="fw-semibold">@T.T("BusinessCommunicationProfileSenderDefaultsTitle"):</span>
+                            @ConfiguredBusinessValueText(Model.CommunicationReadiness.EffectiveSenderName)
+                            <span class="@EffectiveFallbackBadgeClass(Model.CommunicationReadiness.UsesPlatformSenderFallback) ms-1">@EffectiveFallbackBadge(Model.CommunicationReadiness.UsesPlatformSenderFallback)</span>
                         </div>
                         <div class="small mb-2">
                             <span class="fw-semibold">@T.T("RetryBlocked"):</span>

@@ -49,6 +49,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
         private readonly CreateBusinessHandler _createBusiness;
         private readonly EnsureBusinessOnboardingCustomerProfileHandler _ensureBusinessOnboardingCustomerProfile;
+        private readonly ProvisionBusinessOnboardingHandler _provisionBusinessOnboarding;
         private readonly UpdateBusinessHandler _updateBusiness;
         private readonly SoftDeleteBusinessHandler _deleteBusiness;
         private readonly GetBusinessLocationsPageHandler _getBusinessLocationsPage;
@@ -76,6 +77,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly UnlockUserByAdminHandler _unlockUser;
         private readonly AdminReferenceDataService _referenceData;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IBusinessEffectiveSettingsCache _businessEffectiveSettingsCache;
 
         public BusinessesController(
             GetBusinessesPageHandler getBusinessesPage,
@@ -91,6 +93,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
             CreateBusinessHandler createBusiness,
             EnsureBusinessOnboardingCustomerProfileHandler ensureBusinessOnboardingCustomerProfile,
+            ProvisionBusinessOnboardingHandler provisionBusinessOnboarding,
             UpdateBusinessHandler updateBusiness,
             SoftDeleteBusinessHandler deleteBusiness,
             GetBusinessLocationsPageHandler getBusinessLocationsPage,
@@ -117,7 +120,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             LockUserByAdminHandler lockUser,
             UnlockUserByAdminHandler unlockUser,
             AdminReferenceDataService referenceData,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            IBusinessEffectiveSettingsCache businessEffectiveSettingsCache)
         {
             _getBusinessesPage = getBusinessesPage;
             _getBusinessForEdit = getBusinessForEdit;
@@ -132,6 +136,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
             _createBusiness = createBusiness;
             _ensureBusinessOnboardingCustomerProfile = ensureBusinessOnboardingCustomerProfile;
+            _provisionBusinessOnboarding = provisionBusinessOnboarding;
             _updateBusiness = updateBusiness;
             _deleteBusiness = deleteBusiness;
             _getBusinessLocationsPage = getBusinessLocationsPage;
@@ -159,6 +164,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _unlockUser = unlockUser;
             _referenceData = referenceData;
             _siteSettingCache = siteSettingCache;
+            _businessEffectiveSettingsCache = businessEffectiveSettingsCache;
         }
 
         [HttpGet]
@@ -292,6 +298,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 items.Add(new MerchantReadinessItemVm
                 {
                     Id = business.Id,
+                    RowVersion = business.RowVersion,
                     Name = business.Name,
                     LegalName = business.LegalName,
                     IsActive = business.IsActive,
@@ -559,6 +566,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }
 
                 await SyncBusinessOnboardingCustomerProfileAsync(businessId, ct);
+                _businessEffectiveSettingsCache.Invalidate(businessId);
 
                 TempData["Success"] = vm.OwnerUserId.HasValue
                     ? T("BusinessCreateOwnerAssigned")
@@ -830,6 +838,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 await _updateBusiness.HandleAsync(dto, ct);
                 await SyncBusinessOnboardingCustomerProfileAsync(vm.Id, ct);
+                _businessEffectiveSettingsCache.Invalidate(vm.Id);
                 SetSuccessMessage("BusinessUpdated");
                 return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
@@ -889,6 +898,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 await _updateBusiness.HandleAsync(dto, ct);
                 await SyncBusinessOnboardingCustomerProfileAsync(vm.Id, ct);
+                _businessEffectiveSettingsCache.Invalidate(vm.Id);
                 SetSuccessMessage("BusinessSetupSaved");
                 return RedirectOrHtmx(nameof(Setup), new { id = vm.Id });
             }
@@ -922,6 +932,40 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id = businessId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> ProvisionOnboarding(
+            [FromForm] Guid id,
+            [FromForm] byte[]? rowVersion,
+            [FromForm] bool returnToSetup = false,
+            [FromForm] bool returnToReadiness = false,
+            CancellationToken ct = default)
+        {
+            var result = await _provisionBusinessOnboarding.HandleAsync(new BusinessLifecycleActionDto
+            {
+                Id = id,
+                RowVersion = rowVersion ?? Array.Empty<byte>()
+            }, ct).ConfigureAwait(false);
+
+            if (result.Succeeded && result.Value is not null)
+            {
+                SetSuccessMessage(result.Value.CustomerCreated
+                    ? "BusinessOnboardingProvisionedAndApproved"
+                    : "BusinessOnboardingSyncedAndApproved");
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("BusinessOnboardingProvisioningFailed");
+            }
+
+            if (returnToReadiness)
+            {
+                return RedirectOrHtmx(nameof(MerchantReadiness), new { businessId = id });
+            }
+
+            return RedirectOrHtmx(returnToSetup ? nameof(Setup) : nameof(Edit), new { id });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1876,20 +1920,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private async Task PopulateBusinessFormOptionsAsync(BusinessEditVm vm, CancellationToken ct)
         {
             var settings = await _siteSettingCache.GetAsync(ct);
-            vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? settings.DefaultCurrency : vm.DefaultCurrency;
-            vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? settings.DefaultCulture : vm.DefaultCulture;
-            vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;
+            var effectiveSettings = vm.Id == Guid.Empty
+                ? null
+                : await _businessEffectiveSettingsCache.GetAsync(vm.Id, ct).ConfigureAwait(false);
+
+            vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? (effectiveSettings?.DefaultCurrency ?? settings.DefaultCurrency) : vm.DefaultCurrency;
+            vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? (effectiveSettings?.DefaultCulture ?? settings.DefaultCulture) : vm.DefaultCulture;
+            vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (effectiveSettings?.DefaultTimeZoneId ?? settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;
             vm.ContactEmail = string.IsNullOrWhiteSpace(vm.ContactEmail) ? settings.ContactEmail : vm.ContactEmail;
-            vm.BrandDisplayName = string.IsNullOrWhiteSpace(vm.BrandDisplayName) ? settings.Title : vm.BrandDisplayName;
-            vm.BrandLogoUrl = string.IsNullOrWhiteSpace(vm.BrandLogoUrl) ? settings.LogoUrl : vm.BrandLogoUrl;
+            vm.BrandDisplayName = string.IsNullOrWhiteSpace(vm.BrandDisplayName) ? (effectiveSettings?.BrandDisplayName ?? settings.Title) : vm.BrandDisplayName;
+            vm.BrandLogoUrl = string.IsNullOrWhiteSpace(vm.BrandLogoUrl) ? (effectiveSettings?.BrandLogoUrl ?? settings.LogoUrl) : vm.BrandLogoUrl;
             vm.SupportEmail = string.IsNullOrWhiteSpace(vm.SupportEmail)
-                ? (!string.IsNullOrWhiteSpace(settings.ContactEmail) ? settings.ContactEmail : settings.SmtpFromAddress)
+                ? (effectiveSettings?.SupportEmail ?? (!string.IsNullOrWhiteSpace(settings.ContactEmail) ? settings.ContactEmail : settings.SmtpFromAddress))
                 : vm.SupportEmail;
             vm.CommunicationSenderName = string.IsNullOrWhiteSpace(vm.CommunicationSenderName)
-                ? (!string.IsNullOrWhiteSpace(settings.SmtpFromDisplayName) ? settings.SmtpFromDisplayName : settings.Title)
+                ? (effectiveSettings?.CommunicationSenderName ?? (!string.IsNullOrWhiteSpace(settings.SmtpFromDisplayName) ? settings.SmtpFromDisplayName : settings.Title))
                 : vm.CommunicationSenderName;
             vm.CommunicationReplyToEmail = string.IsNullOrWhiteSpace(vm.CommunicationReplyToEmail)
-                ? (!string.IsNullOrWhiteSpace(settings.ContactEmail) ? settings.ContactEmail : settings.SmtpFromAddress)
+                ? (effectiveSettings?.CommunicationReplyToEmail ?? (!string.IsNullOrWhiteSpace(settings.ContactEmail) ? settings.ContactEmail : settings.SmtpFromAddress))
                 : vm.CommunicationReplyToEmail;
 
             vm.CategoryOptions = Enum.GetValues<BusinessCategoryKind>()
@@ -1955,6 +2003,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private async Task<BusinessCommunicationReadinessVm> BuildBusinessCommunicationReadinessAsync(Guid businessId, CancellationToken ct)
         {
             var settings = await _siteSettingCache.GetAsync(ct);
+            var effectiveSettings = businessId == Guid.Empty
+                ? null
+                : await _businessEffectiveSettingsCache.GetAsync(businessId, ct).ConfigureAwait(false);
 
             var emailConfigured = settings.SmtpEnabled &&
                                   !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
@@ -1996,6 +2047,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 AdminRoutingSummary = adminEmailRoutingConfigured || adminSmsRoutingConfigured
                     ? T("BusinessCommunicationReadinessAdminRoutingConfiguredSummary")
                     : T("BusinessCommunicationReadinessAdminRoutingMissingSummary"),
+                EffectiveCulture = effectiveSettings?.DefaultCulture ?? settings.DefaultCulture,
+                EffectiveCurrency = effectiveSettings?.DefaultCurrency ?? settings.DefaultCurrency,
+                EffectiveTimeZoneId = effectiveSettings?.DefaultTimeZoneId ?? settings.TimeZone ?? string.Empty,
+                EffectiveBrandDisplayName = effectiveSettings?.BrandDisplayName ?? settings.Title,
+                EffectiveSupportEmail = effectiveSettings?.SupportEmail,
+                EffectiveSenderName = effectiveSettings?.CommunicationSenderName,
+                EffectiveReplyToEmail = effectiveSettings?.CommunicationReplyToEmail,
+                UsesPlatformCultureFallback = effectiveSettings?.UsesPlatformCultureFallback ?? false,
+                UsesPlatformCurrencyFallback = effectiveSettings?.UsesPlatformCurrencyFallback ?? false,
+                UsesPlatformTimeZoneFallback = effectiveSettings?.UsesPlatformTimeZoneFallback ?? false,
+                UsesPlatformContactEmailFallback = effectiveSettings?.UsesPlatformContactEmailFallback ?? false,
+                UsesPlatformSenderFallback = effectiveSettings?.UsesPlatformSenderFallback ?? false,
+                TenantCommunicationIdentityConfigured =
+                    !string.IsNullOrWhiteSpace(effectiveSettings?.SupportEmail) &&
+                    !string.IsNullOrWhiteSpace(effectiveSettings?.CommunicationSenderName) &&
+                    !string.IsNullOrWhiteSpace(effectiveSettings?.CommunicationReplyToEmail),
                 FailedInvitationCount = failedEmailSummary.FailedInvitationCount,
                 FailedActivationCount = failedEmailSummary.FailedActivationCount,
                 FailedPasswordResetCount = failedEmailSummary.FailedPasswordResetCount,

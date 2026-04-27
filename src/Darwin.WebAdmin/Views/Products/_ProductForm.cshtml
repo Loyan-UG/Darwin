@@ -96,6 +96,7 @@
         {
             <div class="border rounded p-3 mb-3">
                 <input type="hidden" name="Variants.Index" value="@j" />
+                <input type="hidden" asp-for="Variants[@j].Id" />
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">@T.T("Sku")</label>

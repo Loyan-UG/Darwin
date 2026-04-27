@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
@@ -65,7 +66,10 @@ namespace Darwin.Application.Billing.Queries
                         x.Provider == "Stripe" &&
                         (x.Status == PaymentStatus.Failed ||
                          x.Status == PaymentStatus.Refunded ||
-                         _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed))),
+                         _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
+                        (x.FailureReason == null ||
+                         (!x.FailureReason.Contains("[DisputeReview:Won;") &&
+                          !x.FailureReason.Contains("[DisputeReview:Lost;")))),
                     _ => paymentsQuery
                 };
             }
@@ -268,9 +272,11 @@ namespace Darwin.Application.Billing.Queries
                      string.IsNullOrWhiteSpace(item.ProviderCheckoutSessionRef));
                 item.NeedsDisputeFollowUp =
                     item.IsStripe &&
+                    !UpdatePaymentDisputeReviewHandler.IsDisputeReviewResolved(item.FailureReason) &&
                     (item.Status == PaymentStatus.Failed ||
                      item.Status == PaymentStatus.Refunded ||
                      item.RefundedAmountMinor > 0);
+                item.DisputeReviewState = UpdatePaymentDisputeReviewHandler.ResolveDisputeReviewState(item.FailureReason);
                 item.NeedsSupportAttention =
                     item.NeedsReconciliation ||
                     item.NeedsDisputeFollowUp ||
@@ -341,7 +347,10 @@ namespace Darwin.Application.Billing.Queries
                     x.Provider == "Stripe" &&
                     (x.Status == PaymentStatus.Failed ||
                      x.Status == PaymentStatus.Refunded ||
-                     _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)), ct).ConfigureAwait(false)
+                     _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
+                    (x.FailureReason == null ||
+                     (!x.FailureReason.Contains("[DisputeReview:Won;") &&
+                      !x.FailureReason.Contains("[DisputeReview:Lost;"))), ct).ConfigureAwait(false)
             };
             return summary;
         }
@@ -470,9 +479,11 @@ namespace Darwin.Application.Billing.Queries
                  string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionRef));
             dto.NeedsDisputeFollowUp =
                 dto.IsStripe &&
+                !UpdatePaymentDisputeReviewHandler.IsDisputeReviewResolved(dto.FailureReason) &&
                 (dto.Status == PaymentStatus.Failed ||
                  dto.Status == PaymentStatus.Refunded ||
                  dto.RefundedAmountMinor > 0);
+            dto.DisputeReviewState = UpdatePaymentDisputeReviewHandler.ResolveDisputeReviewState(dto.FailureReason);
 
             User? paymentUser = null;
             if (dto.UserId.HasValue)

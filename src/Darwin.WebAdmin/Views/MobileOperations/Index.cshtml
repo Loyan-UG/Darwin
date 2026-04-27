@@ -78,6 +78,8 @@
     string MobileOperationsIndexUrl() => Url.Action("Index", "MobileOperations", new { businessId = Model.BusinessId }) ?? string.Empty;
     string MobileOperationsUrl(string state) => Url.Action("Index", "MobileOperations", new { businessId = Model.BusinessId, state }) ?? string.Empty;
     string MobileOperationsItemUrl(Darwin.WebAdmin.ViewModels.Mobile.MobileDeviceOpsListItemVm item) => Url.Action("Index", "MobileOperations", new { businessId = Model.BusinessId, state = DeviceRemediationState(item) }) ?? string.Empty;
+    string DeactivateStaleDevicesUrl() => Url.Action("DeactivateStaleDevices", "MobileOperations") ?? string.Empty;
+    string ClearNotificationsDisabledPushTokensUrl() => Url.Action("ClearNotificationsDisabledPushTokens", "MobileOperations") ?? string.Empty;
     var bootstrapAttentionCount =
         (Model.JwtEnabled ? 0 : 1)
         + (Model.JwtRequireDeviceBinding ? 0 : 1)
@@ -488,6 +490,26 @@
                 <div class="text-muted small">@T.T("RecentMobileDevices")</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                @if (string.Equals(Model.StateFilter, "stale", StringComparison.OrdinalIgnoreCase) && Model.StaleDevicesCount > 0)
+                {
+                    <form asp-action="DeactivateStaleDevices" method="post" class="d-inline" hx-post="@DeactivateStaleDevicesUrl()" hx-target="#mobile-operations-workspace-shell" hx-swap="outerHTML">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="q" value="@Model.Query" />
+                        <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                        <input type="hidden" name="platform" value="@Model.PlatformFilter" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("MobileDeactivateStaleBatch")</button>
+                    </form>
+                }
+                @if (string.Equals(Model.StateFilter, "notifications-disabled", StringComparison.OrdinalIgnoreCase) && Model.NotificationsDisabledCount > 0)
+                {
+                    <form asp-action="ClearNotificationsDisabledPushTokens" method="post" class="d-inline" hx-post="@ClearNotificationsDisabledPushTokensUrl()" hx-target="#mobile-operations-workspace-shell" hx-swap="outerHTML">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="q" value="@Model.Query" />
+                        <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                        <input type="hidden" name="platform" value="@Model.PlatformFilter" />
+                        <button type="submit" class="btn btn-sm btn-outline-warning">@T.T("MobileClearDisabledPushBatch")</button>
+                    </form>
+                }
                 <a asp-action="Index" asp-route-businessId="@Model.BusinessId" asp-route-state="business-members" class="btn btn-sm btn-outline-secondary"
                    hx-get="@MobileOperationsUrl("business-members")"
                    hx-target="#mobile-operations-workspace-shell"

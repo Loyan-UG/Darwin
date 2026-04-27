@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CMS.Media.DTOs;
+using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,6 +41,8 @@ namespace Darwin.Application.CMS.Media.Queries
                 MediaAssetQueueFilter.EditorAssets => baseQuery.Where(m => m.Role != null && m.Role.Contains("EditorAsset")),
                 MediaAssetQueueFilter.LibraryAssets => baseQuery.Where(m => m.Role == null || m.Role == string.Empty || m.Role.Contains("LibraryAsset")),
                 MediaAssetQueueFilter.MissingTitle => baseQuery.Where(m => string.IsNullOrWhiteSpace(m.Title)),
+                MediaAssetQueueFilter.UsedInProducts => baseQuery.Where(m => _db.Set<ProductMedia>().Any(pm => !pm.IsDeleted && pm.MediaAssetId == m.Id)),
+                MediaAssetQueueFilter.Unused => baseQuery.Where(m => !_db.Set<ProductMedia>().Any(pm => !pm.IsDeleted && pm.MediaAssetId == m.Id)),
                 _ => baseQuery
             };
 
@@ -60,6 +63,7 @@ namespace Darwin.Application.CMS.Media.Queries
                     Height = m.Height,
                     Role = m.Role,
                     ModifiedAtUtc = m.ModifiedAtUtc,
+                    ProductReferenceCount = _db.Set<ProductMedia>().Count(pm => !pm.IsDeleted && pm.MediaAssetId == m.Id),
                     RowVersion = m.RowVersion
                 }).ToListAsync(ct);
 
@@ -75,6 +79,7 @@ namespace Darwin.Application.CMS.Media.Queries
         public async Task<MediaAssetOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {
             var media = _db.Set<MediaAsset>().AsNoTracking().Where(m => !m.IsDeleted);
+            var productMedia = _db.Set<ProductMedia>().AsNoTracking().Where(pm => !pm.IsDeleted);
 
             return new MediaAssetOpsSummaryDto
             {
@@ -82,7 +87,9 @@ namespace Darwin.Application.CMS.Media.Queries
                 MissingAltCount = await media.CountAsync(m => string.IsNullOrWhiteSpace(m.Alt), ct).ConfigureAwait(false),
                 MissingTitleCount = await media.CountAsync(m => string.IsNullOrWhiteSpace(m.Title), ct).ConfigureAwait(false),
                 EditorAssetCount = await media.CountAsync(m => m.Role != null && m.Role.Contains("EditorAsset"), ct).ConfigureAwait(false),
-                LibraryAssetCount = await media.CountAsync(m => m.Role == null || m.Role == string.Empty || m.Role.Contains("LibraryAsset"), ct).ConfigureAwait(false)
+                LibraryAssetCount = await media.CountAsync(m => m.Role == null || m.Role == string.Empty || m.Role.Contains("LibraryAsset"), ct).ConfigureAwait(false),
+                ProductReferencedCount = await media.CountAsync(m => productMedia.Any(pm => pm.MediaAssetId == m.Id), ct).ConfigureAwait(false),
+                UnusedCount = await media.CountAsync(m => !productMedia.Any(pm => pm.MediaAssetId == m.Id), ct).ConfigureAwait(false)
             };
         }
     }

@@ -1,0 +1,333 @@
+@model Darwin.WebAdmin.ViewModels.Orders.ShipmentProviderOperationsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("ShipmentProviderOperationsTitle");
+
+    string ProviderOperationsUrl() => Url.Action("ShipmentProviderOperations", "Orders") ?? string.Empty;
+    string ShipmentsQueueUrl() => Url.Action("ShipmentsQueue", "Orders") ?? string.Empty;
+    string ReturnsQueueUrl() => Url.Action("ReturnsQueue", "Orders") ?? string.Empty;
+    string OrderDetailsUrl(Guid id) => Url.Action("Details", "Orders", new { id }) ?? string.Empty;
+    string PageUrl(int page) => Url.Action("ShipmentProviderOperations", "Orders", new
+    {
+        page,
+        pageSize = Model.PageSize,
+        query = Model.Query,
+        provider = Model.Provider,
+        operationType = Model.OperationType,
+        status = Model.Status,
+        stalePendingOnly = Model.StalePendingOnly,
+        failedOnly = Model.FailedOnly
+    }) ?? string.Empty;
+
+    int totalPages = Math.Max(1, (int)Math.Ceiling(Model.Total / (double)Math.Max(1, Model.PageSize)));
+
+    string StatusBadgeClass(string? status) => status switch
+    {
+        "Processed" => "text-bg-success",
+        "Failed" => "text-bg-danger",
+        "Pending" => "text-bg-warning",
+        "Cancelled" => "text-bg-secondary",
+        _ => "text-bg-secondary"
+    };
+
+    string StatusLabel(string? status) => status switch
+    {
+        "Processed" => T.T("Processed"),
+        "Failed" => T.T("Failed"),
+        "Pending" => T.T("Pending"),
+        "Cancelled" => T.T("Cancelled"),
+        _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : T.T(status)
+    };
+}
+
+<div id="shipment-provider-operations-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1"><i class="fa-solid fa-truck-fast me-2"></i>@T.T("ShipmentProviderOperationsTitle")</h1>
+        <p class="text-muted mb-0">@T.T("ShipmentProviderOperationsIntro")</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="ShipmentsQueue"
+           class="btn btn-outline-secondary"
+           hx-get="@ShipmentsQueueUrl()"
+           hx-target="#shipment-provider-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("ShipmentsQueue")</a>
+        <a asp-action="ReturnsQueue"
+           class="btn btn-outline-secondary"
+           hx-get="@ReturnsQueueUrl()"
+           hx-target="#shipment-provider-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("ReturnsQueueTitle")</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <a asp-action="ShipmentProviderOperations" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@ProviderOperationsUrl()"
+           hx-target="#shipment-provider-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("Total")</div>
+                <div class="h4 mb-0">@Model.Summary.TotalCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a asp-action="ShipmentProviderOperations" asp-route-status="Pending" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@Url.Action("ShipmentProviderOperations", "Orders", new { status = "Pending" })"
+           hx-target="#shipment-provider-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("Pending")</div>
+                <div class="h4 mb-0">@Model.Summary.PendingCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a asp-action="ShipmentProviderOperations" asp-route-failedOnly="true" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@Url.Action("ShipmentProviderOperations", "Orders", new { failedOnly = true })"
+           hx-target="#shipment-provider-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("Failed")</div>
+                <div class="h4 mb-0">@Model.Summary.FailedCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a asp-action="ShipmentProviderOperations" asp-route-stalePendingOnly="true" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@Url.Action("ShipmentProviderOperations", "Orders", new { stalePendingOnly = true })"
+           hx-target="#shipment-provider-operations-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("StalePending")</div>
+                <div class="h4 mb-0">@Model.Summary.StalePendingCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("Processed")</div>
+                <div class="h4 mb-0">@Model.Summary.ProcessedCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("Cancelled")</div>
+                <div class="h4 mb-0">@Model.Summary.CancelledCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get"
+      asp-action="ShipmentProviderOperations"
+      class="card border-0 shadow-sm mb-4"
+      hx-get="@ProviderOperationsUrl()"
+      hx-target="#shipment-provider-operations-workspace-shell"
+      hx-swap="outerHTML"
+      hx-push-url="true">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label" for="query">@T.T("Search")</label>
+                <input class="form-control" id="query" name="query" value="@Model.Query" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="provider">@T.T("Provider")</label>
+                <select class="form-select" id="provider" name="provider" asp-items="Model.ProviderItems"></select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="operationType">@T.T("OperationType")</label>
+                <select class="form-select" id="operationType" name="operationType" asp-items="Model.OperationTypeItems"></select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="status">@T.T("Status")</label>
+                <select class="form-select" id="status" name="status" asp-items="Model.StatusItems"></select>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="stalePendingOnly" name="stalePendingOnly" value="true" checked="@Model.StalePendingOnly" />
+                    <label class="form-check-label" for="stalePendingOnly">@T.T("StalePending")</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="failedOnly" name="failedOnly" value="true" checked="@Model.FailedOnly" />
+                    <label class="form-check-label" for="failedOnly">@T.T("FailedOnly")</label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="pageSize">@T.T("PageSize")</label>
+                <select class="form-select" id="pageSize" name="pageSize" asp-items="Model.PageSizeItems"></select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">@T.T("ApplyFilters")</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent fw-semibold">@T.T("ShipmentProviderOperationsTitle")</div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>@T.T("Order")</th>
+                    <th>@T.T("Shipment")</th>
+                    <th>@T.T("Provider")</th>
+                    <th>@T.T("Status")</th>
+                    <th>@T.T("Attempts")</th>
+                    <th>@T.T("Created")</th>
+                    <th>@T.T("FailureReason")</th>
+                    <th>@T.T("Actions")</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr>
+                    <td colspan="8" class="text-muted text-center py-4">@T.T("NoResults")</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Items)
+                {
+                    var rowVersion = Convert.ToBase64String(item.RowVersion);
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@item.OrderNumber</div>
+                            @if (item.OrderId != Guid.Empty)
+                            {
+                                <a asp-action="Details"
+                                   asp-route-id="@item.OrderId"
+                                   class="small"
+                                   hx-get="@OrderDetailsUrl(item.OrderId)"
+                                   hx-target="#shipment-provider-operations-workspace-shell"
+                                   hx-swap="outerHTML">@T.T("Open")</a>
+                            }
+                        </td>
+                        <td>
+                            <div><code>@item.ShipmentId</code></div>
+                            <div class="small text-muted">@T.T("Tracking"): @(string.IsNullOrWhiteSpace(item.TrackingNumber) ? "-" : item.TrackingNumber)</div>
+                            @if (!string.IsNullOrWhiteSpace(item.LabelUrl))
+                            {
+                                <a href="@item.LabelUrl" target="_blank" rel="noopener noreferrer" class="small">@T.T("CarrierLabel")</a>
+                            }
+                        </td>
+                        <td>
+                            <div class="fw-semibold">@item.Provider</div>
+                            <div class="small text-muted">@item.OperationType</div>
+                        </td>
+                        <td>
+                            <span class="badge @StatusBadgeClass(item.Status)">@StatusLabel(item.Status)</span>
+                            @if (item.IsStalePending)
+                            {
+                                <span class="badge text-bg-warning ms-1">@T.T("StalePending")</span>
+                            }
+                        </td>
+                        <td>
+                            <div>@item.AttemptCount</div>
+                            @if (item.LastAttemptAtUtc.HasValue)
+                            {
+                                <div class="small text-muted">@T.T("LastAttempt"): @item.LastAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                            }
+                        </td>
+                        <td>
+                            <div>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div class="small text-muted">@item.AgeMinutes @T.T("Minutes")</div>
+                            @if (item.ProcessedAtUtc.HasValue)
+                            {
+                                <div class="small text-muted">@T.T("Processed"): @item.ProcessedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                            }
+                        </td>
+                        <td class="small text-danger">@item.FailureReason</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (!string.Equals(item.Status, "Processed", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <form asp-action="UpdateShipmentProviderOperation" method="post" hx-post="@Url.Action("UpdateShipmentProviderOperation", "Orders")" hx-target="#shipment-provider-operations-workspace-shell" hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                        <input type="hidden" name="action" value="MarkProcessed" />
+                                        <partial name="_ShipmentProviderOperationRouteState" model="Model" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success">@T.T("MarkProcessed")</button>
+                                    </form>
+                                }
+                                @if (!string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <form asp-action="UpdateShipmentProviderOperation" method="post" hx-post="@Url.Action("UpdateShipmentProviderOperation", "Orders")" hx-target="#shipment-provider-operations-workspace-shell" hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                        <input type="hidden" name="action" value="Requeue" />
+                                        <partial name="_ShipmentProviderOperationRouteState" model="Model" />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("Requeue")</button>
+                                    </form>
+                                }
+                                @if (!string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <form asp-action="UpdateShipmentProviderOperation" method="post" hx-post="@Url.Action("UpdateShipmentProviderOperation", "Orders")" hx-target="#shipment-provider-operations-workspace-shell" hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                        <input type="hidden" name="action" value="MarkFailed" />
+                                        <input type="hidden" name="failureReason" value="@T.T("ShipmentProviderOperationMarkedFailedByOperator")" />
+                                        <partial name="_ShipmentProviderOperationRouteState" model="Model" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("MarkFailed")</button>
+                                    </form>
+                                }
+                                @if (!string.Equals(item.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <form asp-action="UpdateShipmentProviderOperation" method="post" hx-post="@Url.Action("UpdateShipmentProviderOperation", "Orders")" hx-target="#shipment-provider-operations-workspace-shell" hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                        <input type="hidden" name="action" value="Cancel" />
+                                        <input type="hidden" name="failureReason" value="@T.T("ShipmentProviderOperationCancelledByOperator")" />
+                                        <partial name="_ShipmentProviderOperationRouteState" model="Model" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T("Cancel")</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (totalPages > 1)
+    {
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <div class="small text-muted">@T.T("Page") @Model.Page / @totalPages</div>
+            <div class="btn-group">
+                <a class="btn btn-sm btn-outline-secondary @(Model.Page <= 1 ? "disabled" : string.Empty)"
+                   href="@PageUrl(Math.Max(1, Model.Page - 1))"
+                   hx-get="@PageUrl(Math.Max(1, Model.Page - 1))"
+                   hx-target="#shipment-provider-operations-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Previous")</a>
+                <a class="btn btn-sm btn-outline-secondary @(Model.Page >= totalPages ? "disabled" : string.Empty)"
+                   href="@PageUrl(Math.Min(totalPages, Model.Page + 1))"
+                   hx-get="@PageUrl(Math.Min(totalPages, Model.Page + 1))"
+                   hx-target="#shipment-provider-operations-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("Next")</a>
+            </div>
+        </div>
+    }
+</div>
+</div>

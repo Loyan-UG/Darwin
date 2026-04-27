@@ -17,6 +17,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
 
     public sealed class ProductVariantCreateVm
     {
+        public Guid? Id { get; set; }
         public string Sku { get; set; } = string.Empty;
         public string? Gtin { get; set; }
         public string? ManufacturerPartNumber { get; set; }

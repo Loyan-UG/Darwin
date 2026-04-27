@@ -19,6 +19,7 @@ namespace Darwin.Application.Catalog.DTOs
     /// <summary>Create DTO for product variant.</summary>
     public sealed class ProductVariantCreateDto
     {
+        public Guid? Id { get; set; }
         public string Sku { get; set; } = string.Empty;
         public string? Gtin { get; set; }
         public string? ManufacturerPartNumber { get; set; }

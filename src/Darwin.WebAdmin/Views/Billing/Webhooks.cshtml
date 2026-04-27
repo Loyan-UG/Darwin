@@ -392,13 +392,14 @@
                 <th>@T.T("Timeline")</th>
                 <th>@T.T("Correlation")</th>
                 <th>@T.T("FailureDiagnostics")</th>
+                <th>@T.T("QueueActions")</th>
                 <th class="text-end">@T.T("OperatorFollowUp")</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Deliveries.Count == 0)
         {
-            <tr><td colspan="8" class="text-center text-muted">@T.T("NoWebhookDeliveriesFound")</td></tr>
+            <tr><td colspan="9" class="text-center text-muted">@T.T("NoWebhookDeliveriesFound")</td></tr>
         }
         else
         {
@@ -429,6 +430,7 @@
                     item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase);
                 var webhookNeedsVatInvoiceFollowUp = webhookNeedsTaxFollowUp &&
                     item.EventType.Contains("invoice", StringComparison.OrdinalIgnoreCase);
+                var rowVersion = Convert.ToBase64String(item.RowVersion);
 
                 <tr>
                     <td>
@@ -483,6 +485,59 @@
                     <td>
                         <div>@T.T(item.FailureDiagnostics)</div>
                         <div class="small text-muted mt-1">@T.T(item.EscalationHint)</div>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @if (!string.Equals(item.Status, "Succeeded", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <form asp-action="UpdateWebhookDelivery"
+                                      method="post"
+                                      hx-post="@Url.Action("UpdateWebhookDelivery", "Billing")"
+                                      hx-target="#billing-webhooks-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="Requeue" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="queue" value="@Model.QueueFilter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">@T.T("Requeue")</button>
+                                </form>
+                                <form asp-action="UpdateWebhookDelivery"
+                                      method="post"
+                                      hx-post="@Url.Action("UpdateWebhookDelivery", "Billing")"
+                                      hx-target="#billing-webhooks-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="MarkSucceeded" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="queue" value="@Model.QueueFilter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">@T.T("MarkSucceeded")</button>
+                                </form>
+                            }
+                            <form asp-action="UpdateWebhookDelivery"
+                                  method="post"
+                                  hx-post="@Url.Action("UpdateWebhookDelivery", "Billing")"
+                                  hx-target="#billing-webhooks-workspace-shell"
+                                  hx-swap="outerHTML">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                <input type="hidden" name="action" value="Suppress" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="q" value="@Model.Query" />
+                                <input type="hidden" name="queue" value="@Model.QueueFilter" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T("Suppress")</button>
+                            </form>
+                        </div>
+                        <div class="small text-muted mt-2">@T.T("WebhookDeliveryActionNote")</div>
                     </td>
                     <td class="text-end">
                         <div class="d-flex justify-content-end gap-2 flex-wrap">

@@ -260,6 +260,7 @@
         {
             foreach (var item in Model.Items)
             {
+                var rowVersion = Convert.ToBase64String(item.RowVersion);
                 <tr>
                     <td>@item.FullName</td>
                     <td>@item.CompanyName</td>
@@ -270,6 +271,61 @@
                     <td>@item.InteractionCount</td>
                     <td>@CrmDateTimeText(item.ModifiedAtUtc)</td>
                     <td class="text-end">
+                        <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                        @if (item.Status != Darwin.Domain.Enums.LeadStatus.Converted)
+                        {
+                            @if (item.Status != Darwin.Domain.Enums.LeadStatus.Qualified)
+                            {
+                                <form asp-action="UpdateLeadLifecycle" method="post" class="d-inline"
+                                      hx-post="@Url.Action("UpdateLeadLifecycle", "Crm")"
+                                      hx-target="#crm-leads-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="Qualify" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">@T.T("Qualify")</button>
+                                </form>
+                            }
+                            @if (item.Status != Darwin.Domain.Enums.LeadStatus.Disqualified)
+                            {
+                                <form asp-action="UpdateLeadLifecycle" method="post" class="d-inline"
+                                      hx-post="@Url.Action("UpdateLeadLifecycle", "Crm")"
+                                      hx-target="#crm-leads-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="Disqualify" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("Disqualify")</button>
+                                </form>
+                            }
+                            @if (item.Status == Darwin.Domain.Enums.LeadStatus.Disqualified)
+                            {
+                                <form asp-action="UpdateLeadLifecycle" method="post" class="d-inline"
+                                      hx-post="@Url.Action("UpdateLeadLifecycle", "Crm")"
+                                      hx-target="#crm-leads-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@rowVersion" />
+                                    <input type="hidden" name="action" value="Reopen" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T("Reopen")</button>
+                                </form>
+                            }
+                        }
                         @if (item.CustomerId.HasValue)
                         {
                             <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@EditCrmCustomerUrl(item.CustomerId.Value)" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-success">
@@ -297,6 +353,7 @@
                         <a asp-action="EditLead" asp-route-id="@item.Id" hx-get="@EditCrmLeadUrl(item.Id)" hx-target="#crm-leads-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-pen"></i> @T.T("Edit")
                         </a>
+                        </div>
                     </td>
                 </tr>
             }

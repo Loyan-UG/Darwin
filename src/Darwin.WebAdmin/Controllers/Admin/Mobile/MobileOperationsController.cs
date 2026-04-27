@@ -168,6 +168,40 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeactivateStaleDevices(string? q = null, Guid? businessId = null, MobilePlatform? platform = null, CancellationToken ct = default)
+        {
+            var result = await _deactivateDevice.HandleStaleBatchAsync(businessId, platform, ct: ct).ConfigureAwait(false);
+            if (result.Succeeded && result.Value is not null)
+            {
+                TempData["Success"] = string.Format(T("MobileStaleDevicesDeactivated"), result.Value.AffectedCount);
+            }
+            else
+            {
+                SetErrorMessage("MobileStaleDevicesDeactivateFailed");
+            }
+
+            return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state = "stale" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClearNotificationsDisabledPushTokens(string? q = null, Guid? businessId = null, MobilePlatform? platform = null, CancellationToken ct = default)
+        {
+            var result = await _clearDevicePushToken.HandleNotificationsDisabledBatchAsync(businessId, platform, ct: ct).ConfigureAwait(false);
+            if (result.Succeeded && result.Value is not null)
+            {
+                TempData["Success"] = string.Format(T("MobileNotificationsDisabledPushTokensCleared"), result.Value.AffectedCount);
+            }
+            else
+            {
+                SetErrorMessage("MobileNotificationsDisabledPushTokensClearFailed");
+            }
+
+            return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state = "notifications-disabled" });
+        }
+
         private IActionResult RenderIndex(MobileOperationsVm vm)
         {
             if (IsHtmxRequest())

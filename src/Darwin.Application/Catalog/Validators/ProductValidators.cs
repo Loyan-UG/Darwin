@@ -1,6 +1,8 @@
 ﻿using Darwin.Application.Catalog.DTOs;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
+using System;
+using System.Linq;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -18,6 +20,7 @@ namespace Darwin.Application.Catalog.Validators
     {
         public ProductVariantCreateDtoValidator()
         {
+            RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
             RuleFor(x => x.Sku).NotEmpty().MaximumLength(100);
             RuleFor(x => x.Currency).NotEmpty().Length(3);
             RuleFor(x => x.BasePriceNetMinor).GreaterThanOrEqualTo(0);
@@ -57,9 +60,15 @@ namespace Darwin.Application.Catalog.Validators
         {
             RuleForEach(x => x.Translations).SetValidator(new ProductTranslationDtoValidator());
             RuleFor(x => x.Translations).NotEmpty().WithMessage(localizer["AtLeastOneTranslationRequired"]);
+            RuleFor(x => x.Translations)
+                .Must(x => x is not null && x.Select(t => t.Culture?.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == x.Count)
+                .WithMessage(localizer["DuplicateVariantLinesNotAllowed"]);
 
             RuleForEach(x => x.Variants).SetValidator(new ProductVariantCreateDtoValidator());
             RuleFor(x => x.Variants).NotEmpty().WithMessage(localizer["AtLeastOneVariantRequired"]);
+            RuleFor(x => x.Variants)
+                .Must(x => x is not null && x.Select(v => v.Sku?.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == x.Count)
+                .WithMessage(localizer["DuplicateVariantLinesNotAllowed"]);
         }
     }
 }

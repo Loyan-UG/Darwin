@@ -151,6 +151,13 @@ namespace Darwin.Application.CRM.DTOs
         public bool CopyNotesToCustomer { get; set; } = true;
     }
 
+    public sealed class UpdateLeadLifecycleDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Action { get; set; } = string.Empty;
+    }
+
     public sealed class CrmSummaryDto
     {
         public int CustomerCount { get; set; }

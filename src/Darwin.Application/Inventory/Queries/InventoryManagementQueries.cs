@@ -305,6 +305,7 @@ namespace Darwin.Application.Inventory.Queries
 
     public sealed class GetStockTransfersPageHandler
     {
+        private static readonly TimeSpan StaleInTransitAge = TimeSpan.FromDays(14);
         private readonly IAppDbContext _db;
 
         public GetStockTransfersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -314,6 +315,7 @@ namespace Darwin.Application.Inventory.Queries
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
+            var staleInTransitCutoffUtc = DateTime.UtcNow.Subtract(StaleInTransitAge);
             var stockTransfersQuery =
                 from transfer in _db.Set<StockTransfer>().AsNoTracking()
                 join fromWarehouse in _db.Set<Warehouse>().AsNoTracking() on transfer.FromWarehouseId equals fromWarehouse.Id
@@ -335,6 +337,8 @@ namespace Darwin.Application.Inventory.Queries
                 StockTransferQueueFilter.Draft => stockTransfersQuery.Where(x => x.transfer.Status == Domain.Enums.TransferStatus.Draft),
                 StockTransferQueueFilter.InTransit => stockTransfersQuery.Where(x => x.transfer.Status == Domain.Enums.TransferStatus.InTransit),
                 StockTransferQueueFilter.Completed => stockTransfersQuery.Where(x => x.transfer.Status == Domain.Enums.TransferStatus.Completed),
+                StockTransferQueueFilter.Cancelled => stockTransfersQuery.Where(x => x.transfer.Status == Domain.Enums.TransferStatus.Cancelled),
+                StockTransferQueueFilter.StaleInTransit => stockTransfersQuery.Where(x => x.transfer.Status == Domain.Enums.TransferStatus.InTransit && x.transfer.CreatedAtUtc <= staleInTransitCutoffUtc),
                 _ => stockTransfersQuery
             };
 
@@ -354,6 +358,7 @@ namespace Darwin.Application.Inventory.Queries
                     Status = x.transfer.Status.ToString(),
                     LineCount = x.transfer.Lines.Count,
                     CreatedAtUtc = x.transfer.CreatedAtUtc,
+                    IsStale = x.transfer.Status == Domain.Enums.TransferStatus.InTransit && x.transfer.CreatedAtUtc <= staleInTransitCutoffUtc,
                     RowVersion = x.transfer.RowVersion
                 })
                 .ToListAsync(ct)
@@ -364,6 +369,7 @@ namespace Darwin.Application.Inventory.Queries
 
         public async Task<StockTransferOpsSummaryDto> GetSummaryAsync(Guid warehouseId, CancellationToken ct = default)
         {
+            var staleInTransitCutoffUtc = DateTime.UtcNow.Subtract(StaleInTransitAge);
             var transfersQuery = _db.Set<StockTransfer>()
                 .AsNoTracking()
                 .Where(x => x.FromWarehouseId == warehouseId || x.ToWarehouseId == warehouseId);
@@ -373,7 +379,9 @@ namespace Darwin.Application.Inventory.Queries
                 TotalCount = await transfersQuery.CountAsync(ct).ConfigureAwait(false),
                 DraftCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.Draft, ct).ConfigureAwait(false),
                 InTransitCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.InTransit, ct).ConfigureAwait(false),
-                CompletedCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.Completed, ct).ConfigureAwait(false)
+                CompletedCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.Completed, ct).ConfigureAwait(false),
+                CancelledCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.Cancelled, ct).ConfigureAwait(false),
+                StaleInTransitCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.InTransit && x.CreatedAtUtc <= staleInTransitCutoffUtc, ct).ConfigureAwait(false)
             };
         }
     }
@@ -418,6 +426,7 @@ namespace Darwin.Application.Inventory.Queries
 
     public sealed class GetPurchaseOrdersPageHandler
     {
+        private static readonly TimeSpan StaleIssuedAge = TimeSpan.FromDays(14);
         private readonly IAppDbContext _db;
 
         public GetPurchaseOrdersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -427,6 +436,7 @@ namespace Darwin.Application.Inventory.Queries
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
+            var staleIssuedCutoffUtc = DateTime.UtcNow.Subtract(StaleIssuedAge);
             var purchaseOrdersQuery =
                 from order in _db.Set<PurchaseOrder>().AsNoTracking()
                 join supplier in _db.Set<Supplier>().AsNoTracking() on order.SupplierId equals supplier.Id
@@ -447,6 +457,8 @@ namespace Darwin.Application.Inventory.Queries
                 PurchaseOrderQueueFilter.Draft => purchaseOrdersQuery.Where(x => x.order.Status == Domain.Enums.PurchaseOrderStatus.Draft),
                 PurchaseOrderQueueFilter.Issued => purchaseOrdersQuery.Where(x => x.order.Status == Domain.Enums.PurchaseOrderStatus.Issued),
                 PurchaseOrderQueueFilter.Received => purchaseOrdersQuery.Where(x => x.order.Status == Domain.Enums.PurchaseOrderStatus.Received),
+                PurchaseOrderQueueFilter.Cancelled => purchaseOrdersQuery.Where(x => x.order.Status == Domain.Enums.PurchaseOrderStatus.Cancelled),
+                PurchaseOrderQueueFilter.StaleIssued => purchaseOrdersQuery.Where(x => x.order.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.order.OrderedAtUtc <= staleIssuedCutoffUtc),
                 _ => purchaseOrdersQuery
             };
 
@@ -466,6 +478,7 @@ namespace Darwin.Application.Inventory.Queries
                     Status = x.order.Status.ToString(),
                     OrderedAtUtc = x.order.OrderedAtUtc,
                     LineCount = x.order.Lines.Count,
+                    IsStale = x.order.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.order.OrderedAtUtc <= staleIssuedCutoffUtc,
                     RowVersion = x.order.RowVersion
                 })
                 .ToListAsync(ct)
@@ -476,6 +489,7 @@ namespace Darwin.Application.Inventory.Queries
 
         public async Task<PurchaseOrderOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
         {
+            var staleIssuedCutoffUtc = DateTime.UtcNow.Subtract(StaleIssuedAge);
             var ordersQuery = _db.Set<PurchaseOrder>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
@@ -485,7 +499,9 @@ namespace Darwin.Application.Inventory.Queries
                 TotalCount = await ordersQuery.CountAsync(ct).ConfigureAwait(false),
                 DraftCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Draft, ct).ConfigureAwait(false),
                 IssuedCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Issued, ct).ConfigureAwait(false),
-                ReceivedCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Received, ct).ConfigureAwait(false)
+                ReceivedCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Received, ct).ConfigureAwait(false),
+                CancelledCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Cancelled, ct).ConfigureAwait(false),
+                StaleIssuedCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.OrderedAtUtc <= staleIssuedCutoffUtc, ct).ConfigureAwait(false)
             };
         }
     }

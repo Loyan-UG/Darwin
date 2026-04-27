@@ -79,6 +79,7 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
                          select new BillingWebhookDeliveryListItemDto
                          {
                              Id = delivery.Id,
+                             RowVersion = delivery.RowVersion,
                              SubscriptionId = delivery.SubscriptionId,
                              EventType = subscription.EventType,
                              CallbackUrl = subscription.CallbackUrl,

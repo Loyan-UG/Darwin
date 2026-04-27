@@ -81,6 +81,12 @@ namespace Darwin.Application.Identity.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public sealed class UserDeleteOutcomeDto
+    {
+        public bool WasSoftDeleted { get; set; }
+        public bool WasDeactivatedDueToReferences { get; set; }
+    }
+
     /// <summary>
     /// Request model for changing a user's email address (Admin only).
     /// </summary>

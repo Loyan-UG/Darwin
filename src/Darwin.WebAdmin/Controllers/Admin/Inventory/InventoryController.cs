@@ -35,10 +35,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         private readonly GetStockTransferForEditHandler _getStockTransferForEdit;
         private readonly CreateStockTransferHandler _createStockTransfer;
         private readonly UpdateStockTransferHandler _updateStockTransfer;
+        private readonly UpdateStockTransferLifecycleHandler _updateStockTransferLifecycle;
         private readonly GetPurchaseOrdersPageHandler _getPurchaseOrdersPage;
         private readonly GetPurchaseOrderForEditHandler _getPurchaseOrderForEdit;
         private readonly CreatePurchaseOrderHandler _createPurchaseOrder;
         private readonly UpdatePurchaseOrderHandler _updatePurchaseOrder;
+        private readonly UpdatePurchaseOrderLifecycleHandler _updatePurchaseOrderLifecycle;
         private readonly GetInventoryLedgerHandler _getLedger;
         private readonly AdminReferenceDataService _referenceData;
 
@@ -63,10 +65,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             GetStockTransferForEditHandler getStockTransferForEdit,
             CreateStockTransferHandler createStockTransfer,
             UpdateStockTransferHandler updateStockTransfer,
+            UpdateStockTransferLifecycleHandler updateStockTransferLifecycle,
             GetPurchaseOrdersPageHandler getPurchaseOrdersPage,
             GetPurchaseOrderForEditHandler getPurchaseOrderForEdit,
             CreatePurchaseOrderHandler createPurchaseOrder,
             UpdatePurchaseOrderHandler updatePurchaseOrder,
+            UpdatePurchaseOrderLifecycleHandler updatePurchaseOrderLifecycle,
             GetInventoryLedgerHandler getLedger,
             AdminReferenceDataService referenceData)
         {
@@ -90,10 +94,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             _getStockTransferForEdit = getStockTransferForEdit;
             _createStockTransfer = createStockTransfer;
             _updateStockTransfer = updateStockTransfer;
+            _updateStockTransferLifecycle = updateStockTransferLifecycle;
             _getPurchaseOrdersPage = getPurchaseOrdersPage;
             _getPurchaseOrderForEdit = getPurchaseOrderForEdit;
             _createPurchaseOrder = createPurchaseOrder;
             _updatePurchaseOrder = updatePurchaseOrder;
+            _updatePurchaseOrderLifecycle = updatePurchaseOrderLifecycle;
             _getLedger = getLedger;
             _referenceData = referenceData;
         }
@@ -767,11 +773,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 items = result.Items.Select(x => new StockTransferListItemVm
                 {
                     Id = x.Id,
+                    FromWarehouseId = x.FromWarehouseId,
+                    ToWarehouseId = x.ToWarehouseId,
                     FromWarehouseName = x.FromWarehouseName,
                     ToWarehouseName = x.ToWarehouseName,
                     Status = x.Status,
                     LineCount = x.LineCount,
                     CreatedAtUtc = x.CreatedAtUtc,
+                    IsStale = x.IsStale,
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
@@ -780,7 +789,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     TotalCount = summaryDto.TotalCount,
                     DraftCount = summaryDto.DraftCount,
                     InTransitCount = summaryDto.InTransitCount,
-                    CompletedCount = summaryDto.CompletedCount
+                    CompletedCount = summaryDto.CompletedCount,
+                    CancelledCount = summaryDto.CancelledCount,
+                    StaleInTransitCount = summaryDto.StaleInTransitCount
                 };
             }
 
@@ -885,6 +896,64 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStockTransferLifecycle(
+            Guid id,
+            string rowVersion,
+            string action,
+            Guid? businessId = null,
+            Guid? warehouseId = null,
+            int page = 1,
+            int pageSize = 20,
+            string? q = null,
+            StockTransferQueueFilter filter = StockTransferQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            try
+            {
+                var result = await _updateStockTransferLifecycle
+                    .HandleAsync(new StockTransferLifecycleActionDto
+                    {
+                        Id = id,
+                        RowVersion = version,
+                        Action = action
+                    }, ct)
+                    .ConfigureAwait(false);
+
+                if (result.Succeeded)
+                {
+                    SetSuccessMessage(action switch
+                    {
+                        UpdateStockTransferLifecycleHandler.MarkInTransitAction => "StockTransferMarkedInTransitMessage",
+                        UpdateStockTransferLifecycleHandler.CompleteAction => "StockTransferCompletedMessage",
+                        UpdateStockTransferLifecycleHandler.CancelAction => "StockTransferCancelledMessage",
+                        _ => "StockTransferLifecycleUpdatedMessage"
+                    });
+                }
+                else
+                {
+                    TempData["Error"] = result.Error ?? T("StockTransferLifecycleUpdateFailedMessage");
+                }
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                SetErrorMessage("StockTransferConcurrencyMessage");
+            }
+
+            return RedirectOrHtmx(nameof(StockTransfers), new { businessId, warehouseId, page, pageSize, q, filter });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditStockTransfer(StockTransferEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -943,11 +1012,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 {
                     Id = x.Id,
                     SupplierId = x.SupplierId,
+                    BusinessId = x.BusinessId,
                     OrderNumber = x.OrderNumber,
                     SupplierName = x.SupplierName,
                     Status = x.Status,
                     OrderedAtUtc = x.OrderedAtUtc,
                     LineCount = x.LineCount,
+                    IsStale = x.IsStale,
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
@@ -956,7 +1027,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     TotalCount = summaryDto.TotalCount,
                     DraftCount = summaryDto.DraftCount,
                     IssuedCount = summaryDto.IssuedCount,
-                    ReceivedCount = summaryDto.ReceivedCount
+                    ReceivedCount = summaryDto.ReceivedCount,
+                    CancelledCount = summaryDto.CancelledCount,
+                    StaleIssuedCount = summaryDto.StaleIssuedCount
                 };
             }
 
@@ -1064,6 +1137,63 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             EnsurePurchaseOrderRows(vm);
             await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderPurchaseOrderEditor(vm, isCreate: false);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdatePurchaseOrderLifecycle(
+            Guid id,
+            string rowVersion,
+            string action,
+            Guid? businessId = null,
+            int page = 1,
+            int pageSize = 20,
+            string? q = null,
+            PurchaseOrderQueueFilter filter = PurchaseOrderQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            try
+            {
+                var result = await _updatePurchaseOrderLifecycle
+                    .HandleAsync(new PurchaseOrderLifecycleActionDto
+                    {
+                        Id = id,
+                        RowVersion = version,
+                        Action = action
+                    }, ct)
+                    .ConfigureAwait(false);
+
+                if (result.Succeeded)
+                {
+                    SetSuccessMessage(action switch
+                    {
+                        UpdatePurchaseOrderLifecycleHandler.IssueAction => "PurchaseOrderIssuedMessage",
+                        UpdatePurchaseOrderLifecycleHandler.ReceiveAction => "PurchaseOrderReceivedMessage",
+                        UpdatePurchaseOrderLifecycleHandler.CancelAction => "PurchaseOrderCancelledMessage",
+                        _ => "PurchaseOrderLifecycleUpdatedMessage"
+                    });
+                }
+                else
+                {
+                    TempData["Error"] = result.Error ?? T("PurchaseOrderLifecycleUpdateFailedMessage");
+                }
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                SetErrorMessage("PurchaseOrderConcurrencyMessage");
+            }
+
+            return RedirectOrHtmx(nameof(PurchaseOrders), new { businessId, page, pageSize, q, filter });
         }
 
         [HttpPost]
@@ -1375,6 +1505,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             yield return new SelectListItem(T("Draft"), PurchaseOrderQueueFilter.Draft.ToString(), selectedFilter == PurchaseOrderQueueFilter.Draft);
             yield return new SelectListItem(T("Issued"), PurchaseOrderQueueFilter.Issued.ToString(), selectedFilter == PurchaseOrderQueueFilter.Issued);
             yield return new SelectListItem(T("Received"), PurchaseOrderQueueFilter.Received.ToString(), selectedFilter == PurchaseOrderQueueFilter.Received);
+            yield return new SelectListItem(T("Cancelled"), PurchaseOrderQueueFilter.Cancelled.ToString(), selectedFilter == PurchaseOrderQueueFilter.Cancelled);
+            yield return new SelectListItem(T("StaleIssued"), PurchaseOrderQueueFilter.StaleIssued.ToString(), selectedFilter == PurchaseOrderQueueFilter.StaleIssued);
         }
 
         private IEnumerable<SelectListItem> BuildStockTransferFilterItems(StockTransferQueueFilter selectedFilter)
@@ -1383,6 +1515,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             yield return new SelectListItem(T("Draft"), StockTransferQueueFilter.Draft.ToString(), selectedFilter == StockTransferQueueFilter.Draft);
             yield return new SelectListItem(T("InTransit"), StockTransferQueueFilter.InTransit.ToString(), selectedFilter == StockTransferQueueFilter.InTransit);
             yield return new SelectListItem(T("Completed"), StockTransferQueueFilter.Completed.ToString(), selectedFilter == StockTransferQueueFilter.Completed);
+            yield return new SelectListItem(T("Cancelled"), StockTransferQueueFilter.Cancelled.ToString(), selectedFilter == StockTransferQueueFilter.Cancelled);
+            yield return new SelectListItem(T("StaleInTransit"), StockTransferQueueFilter.StaleInTransit.ToString(), selectedFilter == StockTransferQueueFilter.StaleInTransit);
         }
 
         private IEnumerable<SelectListItem> BuildWarehouseFilterItems(WarehouseQueueFilter selectedFilter)

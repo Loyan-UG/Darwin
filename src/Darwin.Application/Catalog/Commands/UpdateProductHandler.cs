@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -69,52 +70,129 @@ namespace Darwin.Application.Catalog.Commands
             product.PrimaryCategoryId = dto.PrimaryCategoryId;
             product.Kind = ParseKind(dto.Kind);
 
-            // Replace translations (simplest approach for now)
-            product.Translations.Clear();
-            foreach (var t in dto.Translations)
-            {
-                product.Translations.Add(new ProductTranslation
-                {
-                    Culture = t.Culture,
-                    Name = t.Name,
-                    Slug = t.Slug,
-                    ShortDescription = t.ShortDescription,
-                    FullDescriptionHtml = HtmlSanitizerHelper.SanitizeOrNull(_sanitizer, t.FullDescriptionHtml),
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription,
-                    SearchKeywords = t.SearchKeywords
-                });
-            }
-
-            // Replace variants (simplest approach for now)
-            product.Variants.Clear();
-            foreach (var v in dto.Variants)
-            {
-                product.Variants.Add(new ProductVariant
-                {
-                    Sku = v.Sku,
-                    Gtin = v.Gtin,
-                    ManufacturerPartNumber = v.ManufacturerPartNumber,
-                    BasePriceNetMinor = v.BasePriceNetMinor,
-                    CompareAtPriceNetMinor = v.CompareAtPriceNetMinor,
-                    Currency = v.Currency,
-                    TaxCategoryId = v.TaxCategoryId,
-                    StockOnHand = v.StockOnHand,
-                    StockReserved = v.StockReserved,
-                    ReorderPoint = v.ReorderPoint,
-                    BackorderAllowed = v.BackorderAllowed,
-                    MinOrderQty = v.MinOrderQty,
-                    MaxOrderQty = v.MaxOrderQty,
-                    StepOrderQty = v.StepOrderQty,
-                    PackageWeight = v.PackageWeight,
-                    PackageLength = v.PackageLength,
-                    PackageWidth = v.PackageWidth,
-                    PackageHeight = v.PackageHeight,
-                    IsDigital = v.IsDigital
-                });
-            }
+            SyncTranslations(product, dto);
+            SyncVariants(product, dto);
 
             await _db.SaveChangesAsync(ct);
+        }
+
+        private void SyncTranslations(Product product, ProductEditDto dto)
+        {
+            var requestedCultures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var translationsByCulture = product.Translations
+                .Where(t => !t.IsDeleted)
+                .ToDictionary(t => t.Culture, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var input in dto.Translations)
+            {
+                var culture = input.Culture.Trim();
+                if (!requestedCultures.Add(culture))
+                {
+                    throw new ValidationException(_localizer["DuplicateVariantLinesNotAllowed"]);
+                }
+
+                if (!translationsByCulture.TryGetValue(culture, out var translation))
+                {
+                    translation = new ProductTranslation
+                    {
+                        ProductId = product.Id,
+                        Culture = culture
+                    };
+                    product.Translations.Add(translation);
+                }
+
+                translation.Name = input.Name.Trim();
+                translation.Slug = input.Slug.Trim();
+                translation.ShortDescription = input.ShortDescription?.Trim();
+                translation.FullDescriptionHtml = HtmlSanitizerHelper.SanitizeOrNull(_sanitizer, input.FullDescriptionHtml);
+                translation.MetaTitle = input.MetaTitle?.Trim();
+                translation.MetaDescription = input.MetaDescription?.Trim();
+                translation.SearchKeywords = input.SearchKeywords?.Trim();
+                translation.IsDeleted = false;
+            }
+
+            foreach (var existing in product.Translations.Where(t => !t.IsDeleted).ToList())
+            {
+                if (!requestedCultures.Contains(existing.Culture))
+                {
+                    existing.IsDeleted = true;
+                }
+            }
+        }
+
+        private void SyncVariants(Product product, ProductEditDto dto)
+        {
+            var existingById = product.Variants
+                .Where(v => !v.IsDeleted)
+                .ToDictionary(v => v.Id);
+            var existingBySku = product.Variants
+                .Where(v => !v.IsDeleted)
+                .GroupBy(v => v.Sku, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+            var retainedVariantIds = new HashSet<Guid>();
+            var requestedSkus = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var input in dto.Variants)
+            {
+                var sku = input.Sku.Trim();
+                if (!requestedSkus.Add(sku))
+                {
+                    throw new ValidationException(_localizer["DuplicateVariantLinesNotAllowed"]);
+                }
+
+                ProductVariant variant;
+                if (input.Id.HasValue && existingById.TryGetValue(input.Id.Value, out var existingByRequestedId))
+                {
+                    variant = existingByRequestedId;
+                }
+                else if (existingBySku.TryGetValue(sku, out var existingByRequestedSku))
+                {
+                    variant = existingByRequestedSku;
+                }
+                else
+                {
+                    variant = new ProductVariant
+                    {
+                        ProductId = product.Id
+                    };
+                    product.Variants.Add(variant);
+                }
+
+                ApplyVariant(input, variant);
+                variant.IsDeleted = false;
+                retainedVariantIds.Add(variant.Id);
+            }
+
+            foreach (var existing in product.Variants.Where(v => !v.IsDeleted).ToList())
+            {
+                if (!retainedVariantIds.Contains(existing.Id))
+                {
+                    existing.IsDeleted = true;
+                }
+            }
+        }
+
+        private static void ApplyVariant(ProductVariantCreateDto input, ProductVariant variant)
+        {
+            variant.Sku = input.Sku.Trim();
+            variant.Gtin = input.Gtin?.Trim();
+            variant.ManufacturerPartNumber = input.ManufacturerPartNumber?.Trim();
+            variant.BasePriceNetMinor = input.BasePriceNetMinor;
+            variant.CompareAtPriceNetMinor = input.CompareAtPriceNetMinor;
+            variant.Currency = input.Currency.Trim().ToUpperInvariant();
+            variant.TaxCategoryId = input.TaxCategoryId;
+            variant.StockOnHand = input.StockOnHand;
+            variant.StockReserved = input.StockReserved;
+            variant.ReorderPoint = input.ReorderPoint;
+            variant.BackorderAllowed = input.BackorderAllowed;
+            variant.MinOrderQty = input.MinOrderQty;
+            variant.MaxOrderQty = input.MaxOrderQty;
+            variant.StepOrderQty = input.StepOrderQty;
+            variant.PackageWeight = input.PackageWeight;
+            variant.PackageLength = input.PackageLength;
+            variant.PackageWidth = input.PackageWidth;
+            variant.PackageHeight = input.PackageHeight;
+            variant.IsDigital = input.IsDigital;
         }
 
         private static ProductKind ParseKind(string? value)

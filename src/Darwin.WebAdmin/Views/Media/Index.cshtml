@@ -6,6 +6,7 @@
     string MediaCreateUrl() => Url.Action("Create", "Media") ?? string.Empty;
     string MediaIndexUrl(string? filter = null) => Url.Action("Index", "Media", string.IsNullOrWhiteSpace(filter) ? null : new { filter }) ?? string.Empty;
     string MediaEditUrl(Guid id) => Url.Action("Edit", "Media", new { id }) ?? string.Empty;
+    string MediaPurgeUnusedBatchUrl() => Url.Action("PurgeUnusedBatch", "Media") ?? string.Empty;
 }
 <div id="media-workspace-shell">
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
@@ -14,14 +15,25 @@
         <p class="text-muted mb-0">@T.T("MediaLibraryIntro")</p>
     </div>
 
-    <a asp-action="Create"
-       class="btn btn-primary"
-       hx-get="@MediaCreateUrl()"
-       hx-target="#media-workspace-shell"
-       hx-swap="outerHTML"
-       hx-push-url="true">
-        <i class="fa fa-upload"></i> @T.T("UploadMedia")
-    </a>
+    <div class="d-flex gap-2">
+        @if (Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.Unused && Model.Summary.UnusedCount > 0)
+        {
+            <form asp-action="PurgeUnusedBatch" method="post" hx-post="@MediaPurgeUnusedBatchUrl()" hx-target="#media-workspace-shell" hx-swap="outerHTML">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="fa fa-broom"></i> @T.T("MediaPurgeUnusedBatch")
+                </button>
+            </form>
+        }
+        <a asp-action="Create"
+           class="btn btn-primary"
+           hx-get="@MediaCreateUrl()"
+           hx-target="#media-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa fa-upload"></i> @T.T("UploadMedia")
+        </a>
+    </div>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
@@ -33,6 +45,10 @@
        hx-get="@MediaIndexUrl("EditorAssets")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaEditorAssets")</a>
     <a asp-action="Index" asp-route-filter="LibraryAssets" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.LibraryAssets ? "btn-secondary" : "btn-outline-secondary")"
        hx-get="@MediaIndexUrl("LibraryAssets")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaLibraryAssets")</a>
+    <a asp-action="Index" asp-route-filter="UsedInProducts" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.UsedInProducts ? "btn-success" : "btn-outline-success")"
+       hx-get="@MediaIndexUrl("UsedInProducts")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaUsedInProducts")</a>
+    <a asp-action="Index" asp-route-filter="Unused" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.Unused ? "btn-danger" : "btn-outline-danger")"
+       hx-get="@MediaIndexUrl("Unused")" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("MediaUnusedAssets")</a>
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary"
        hx-get="@MediaIndexUrl()" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("ClearQueueFilters")</a>
 </div>
@@ -56,16 +72,28 @@
             <div class="fs-4 fw-semibold">@Model.Summary.MissingTitleCount</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("MediaEditorAssets")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.EditorAssetCount</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">@T.T("MediaLibraryAssets")</div>
             <div class="fs-4 fw-semibold">@Model.Summary.LibraryAssetCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("MediaUsedInProducts")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.ProductReferencedCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("MediaUnusedAssets")</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.UnusedCount</div>
         </div>
     </div>
 </div>
@@ -162,10 +190,19 @@
                             {
                                 <span class="badge text-bg-secondary">@T.T("MediaLibraryAsset")</span>
                             }
+                            @if (item.ProductReferenceCount > 0)
+                            {
+                                <span class="badge text-bg-success">@T.T("MediaProductReferences"): @item.ProductReferenceCount</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-danger">@T.T("MediaUnusedAsset")</span>
+                            }
                         </div>
                         <div class="small">
                             <div><span class="text-muted">@T.T("AltLabel"):</span> @(string.IsNullOrWhiteSpace(item.Alt) ? T.T("MediaNotSet") : item.Alt)</div>
                             <div><span class="text-muted">@T.T("Role"):</span> @(string.IsNullOrWhiteSpace(item.Role) ? T.T("MediaGeneralRole") : item.Role)</div>
+                            <div><span class="text-muted">@T.T("MediaProductReferences"):</span> @item.ProductReferenceCount</div>
                             <div><span class="text-muted">@T.T("Size"):</span> @((item.SizeBytes / 1024.0).ToString("0.0")) KB</div>
                             <div><span class="text-muted">@T.T("Updated"):</span> @(item.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? T.T("MediaUnknownValue"))</div>
                         </div>
@@ -218,6 +255,21 @@
                                >
                             <i class="fa fa-trash"></i> @T.T("Delete")
                         </button>
+                        @if (item.ProductReferenceCount == 0)
+                        {
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-action="@Url.Action("PurgeUnused", "Media")"
+                                    data-id="@item.Id"
+                                    data-rowversion="@Convert.ToBase64String(item.RowVersion)"
+                                    data-name="@(!string.IsNullOrWhiteSpace(item.Title) ? item.Title : item.OriginalFileName)"
+                                    data-hx-target="#media-workspace-shell"
+                                    data-hx-swap="outerHTML">
+                                <i class="fa fa-broom"></i> @T.T("MediaPurgeUnused")
+                            </button>
+                        }
                     </div>
                 </div>
             </div>

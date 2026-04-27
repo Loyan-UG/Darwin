@@ -28,9 +28,11 @@ namespace Darwin.Application.Catalog.Queries
                     Slug = b.Slug,
                     LogoMediaId = b.LogoMediaId,
                     Translations = b.Translations
+                        .Where(t => !t.IsDeleted)
                         .OrderBy(t => t.Culture)
                         .Select(t => new BrandTranslationDto
                         {
+                            Id = t.Id,
                             Culture = t.Culture,
                             Name = t.Name,
                             DescriptionHtml = t.DescriptionHtml

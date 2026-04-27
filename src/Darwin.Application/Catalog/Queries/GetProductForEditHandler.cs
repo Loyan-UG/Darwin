@@ -43,6 +43,7 @@ namespace Darwin.Application.Catalog.Queries
                 }).ToList(),
                 Variants = product.Variants.Select(v => new ProductVariantCreateDto
                 {
+                    Id = v.Id,
                     Sku = v.Sku,
                     Gtin = v.Gtin,
                     ManufacturerPartNumber = v.ManufacturerPartNumber,

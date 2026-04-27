@@ -7,6 +7,7 @@ namespace Darwin.Application.Orders.Queries;
 internal static class ShipmentTrackingPresentation
 {
     private const string DhlTrackingBaseUrl = "https://www.dhl.com/global-en/home/tracking/tracking-express.html";
+    private const string ResolutionEventKey = "shipment.exception_resolved";
 
     public static string? ResolveTrackingUrl(string? carrier, string? trackingNumber)
     {
@@ -78,8 +79,15 @@ internal static class ShipmentTrackingPresentation
 
     private static string ResolveExceptionNote(ShipmentListItemDto item)
     {
+        var latestResolution = item.RecentCarrierEvents
+            .Where(x => string.Equals(x.CarrierEventKey, ResolutionEventKey, StringComparison.OrdinalIgnoreCase))
+            .Select(x => (DateTime?)x.OccurredAtUtc)
+            .FirstOrDefault();
+
         var latestCarrierException = item.RecentCarrierEvents
-            .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.ExceptionMessage) || !string.IsNullOrWhiteSpace(x.ExceptionCode));
+            .FirstOrDefault(x =>
+                (!latestResolution.HasValue || x.OccurredAtUtc > latestResolution.Value) &&
+                (!string.IsNullOrWhiteSpace(x.ExceptionMessage) || !string.IsNullOrWhiteSpace(x.ExceptionCode)));
 
         if (latestCarrierException is not null)
         {

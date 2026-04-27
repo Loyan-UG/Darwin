@@ -115,6 +115,7 @@ namespace Darwin.Application.Businesses.Queries
                 .Select(x => new EmailDispatchAuditListItemDto
                 {
                     Id = x.Audit.Id,
+                    RowVersion = x.Audit.RowVersion,
                     IsQueueOperation = false,
                     Provider = x.Audit.Provider,
                     FlowKey = x.Audit.FlowKey,
@@ -457,6 +458,7 @@ namespace Darwin.Application.Businesses.Queries
             return rows.Select(x => new EmailDispatchAuditListItemDto
                 {
                     Id = x.Operation.Id,
+                    RowVersion = x.Operation.RowVersion,
                     IsQueueOperation = true,
                     Provider = x.Operation.Provider,
                     FlowKey = x.Operation.FlowKey,

@@ -168,6 +168,52 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public int Total { get; set; }
     }
 
+    public sealed class LoyaltyCampaignDeliveriesListVm
+    {
+        public Guid? BusinessId { get; set; }
+        public Guid? CampaignId { get; set; }
+        public LoyaltyCampaignDeliveryQueueFilter Filter { get; set; } = LoyaltyCampaignDeliveryQueueFilter.All;
+        public List<SelectListItem> FilterItems { get; set; } = new();
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public LoyaltyCampaignDeliveryOpsSummaryVm Summary { get; set; } = new();
+        public List<LoyaltyCampaignDeliveryListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class LoyaltyCampaignDeliveryOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int PendingCount { get; set; }
+        public int InProgressCount { get; set; }
+        public int FailedCount { get; set; }
+        public int SucceededCount { get; set; }
+        public int CancelledCount { get; set; }
+        public int NeedsAttentionCount { get; set; }
+    }
+
+    public sealed class LoyaltyCampaignDeliveryListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid CampaignId { get; set; }
+        public string CampaignName { get; set; } = string.Empty;
+        public string CampaignTitle { get; set; } = string.Empty;
+        public Guid? RecipientUserId { get; set; }
+        public Guid? BusinessId { get; set; }
+        public CampaignDeliveryChannel Channel { get; set; }
+        public CampaignDeliveryStatus Status { get; set; }
+        public string? Destination { get; set; }
+        public int AttemptCount { get; set; }
+        public DateTime? FirstAttemptAtUtc { get; set; }
+        public DateTime? LastAttemptAtUtc { get; set; }
+        public int? LastResponseCode { get; set; }
+        public string? ProviderMessageId { get; set; }
+        public string? LastError { get; set; }
+        public string? IdempotencyKey { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
     public sealed class LoyaltyCampaignOpsSummaryVm
     {
         public int TotalCount { get; set; }
@@ -318,6 +364,7 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public DateTime CreatedAtUtc { get; set; }
         public DateTime ExpiresAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     public sealed class LoyaltyAccountListItemVm

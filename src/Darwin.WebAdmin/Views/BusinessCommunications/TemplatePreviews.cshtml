@@ -1,0 +1,150 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.CommunicationTemplatePreviewsVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("CommunicationTemplatePreviewsTitle");
+
+    string TemplatePreviewsUrl() => Url.Action("TemplatePreviews", "BusinessCommunications", new { flowKey = Model.FlowKey, channel = Model.Channel }) ?? string.Empty;
+    string BusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
+    string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
+    string EmailAuditsUrl(string flowKey) => Url.Action("EmailAudits", "BusinessCommunications", new { flowKey }) ?? string.Empty;
+    string ChannelAuditsUrl(string flowKey, string channel) => Url.Action("ChannelAudits", "BusinessCommunications", new { flowKey, channel }) ?? string.Empty;
+
+    string ChannelLabel(string? channel) => channel switch
+    {
+        "Email" => T.T("CommunicationBuiltInFlowEmailChannel"),
+        "SMS" => T.T("BusinessCommunicationSmsShort"),
+        "WhatsApp" => T.T("BusinessCommunicationWhatsAppShort"),
+        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : T.T(channel)
+    };
+}
+
+<div id="business-communications-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1"><i class="fa-solid fa-file-lines me-2"></i>@T.T("CommunicationTemplatePreviewsTitle")</h1>
+        <p class="text-muted mb-0">@T.T("CommunicationTemplatePreviewsIntro")</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index"
+           class="btn btn-outline-secondary"
+           hx-get="@BusinessCommunicationsUrl()"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("CommunicationOpsTitle")</a>
+        <a asp-controller="SiteSettings"
+           asp-action="Edit"
+           asp-fragment="site-settings-communications-policy"
+           class="btn btn-outline-primary"
+           hx-get="@SiteSettingsUrl("site-settings-communications-policy")"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("OpenPolicyAction")</a>
+    </div>
+</div>
+
+<form method="get"
+      asp-action="TemplatePreviews"
+      class="card border-0 shadow-sm mb-4"
+      hx-get="@TemplatePreviewsUrl()"
+      hx-target="#business-communications-workspace-shell"
+      hx-swap="outerHTML"
+      hx-push-url="true">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" for="flowKey">@T.T("Flow")</label>
+                <select class="form-select" id="flowKey" name="flowKey" asp-items="Model.FlowItems"></select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label" for="channel">@T.T("Channel")</label>
+                <select class="form-select" id="channel" name="channel" asp-items="Model.ChannelItems"></select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">@T.T("ApplyFilters")</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="alert alert-secondary">
+    @T.T("CommunicationTemplatePreviewsSafetyNote")
+</div>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="alert alert-info">@T.T("NoResults")</div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var item in Model.Items)
+        {
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                        <div>
+                            <div class="fw-semibold">@item.FlowName</div>
+                            <div class="small text-muted">@ChannelLabel(item.Channel) / @item.TemplateKey / @item.TargetSurface</div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @if (item.IsEmail)
+                            {
+                                <a asp-action="EmailAudits"
+                                   asp-route-flowKey="@item.AuditFlowKey"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@EmailAuditsUrl(item.AuditFlowKey)"
+                                   hx-target="#business-communications-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("EmailAudits")</a>
+                            }
+                            else
+                            {
+                                <a asp-action="ChannelAudits"
+                                   asp-route-flowKey="@item.AuditFlowKey"
+                                   asp-route-channel="@item.Channel"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@ChannelAuditsUrl(item.AuditFlowKey, item.Channel)"
+                                   hx-target="#business-communications-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">@T.T("SmsWhatsAppAudits")</a>
+                            }
+                            <a asp-controller="SiteSettings"
+                               asp-action="Edit"
+                               asp-fragment="@item.EditFragment"
+                               class="btn btn-sm btn-outline-primary"
+                               hx-get="@SiteSettingsUrl(item.EditFragment)"
+                               hx-target="#business-communications-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">@T.T("Edit")</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-lg-6">
+                                <div class="text-muted text-uppercase small fw-semibold mb-2">@T.T("CommunicationTemplatePreviewConfiguredTemplate")</div>
+                                <div class="small fw-semibold mb-1">@T.T("SubjectLabel")</div>
+                                <pre class="border rounded bg-light-subtle p-3 small text-wrap">@item.SubjectTemplate</pre>
+                                <div class="small fw-semibold mb-1">@T.T("BodyLabel")</div>
+                                <pre class="border rounded bg-light-subtle p-3 small text-wrap mb-0">@item.BodyTemplate</pre>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="text-muted text-uppercase small fw-semibold mb-2">@T.T("CommunicationTemplatePreviewRenderedOutput")</div>
+                                <div class="small fw-semibold mb-1">@T.T("SubjectLabel")</div>
+                                <pre class="border rounded bg-body-tertiary p-3 small text-wrap">@item.RenderedSubject</pre>
+                                <div class="small fw-semibold mb-1">@T.T("BodyLabel")</div>
+                                <pre class="border rounded bg-body-tertiary p-3 small text-wrap mb-0">@item.RenderedBody</pre>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="small"><strong>@T.T("SupportedTokens"):</strong> <code>@item.SupportedTokens</code></div>
+                            <div class="small text-muted mt-1"><strong>@T.T("CommunicationTemplatePreviewSampleData"):</strong> @item.SampleData</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+</div>

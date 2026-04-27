@@ -35,10 +35,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         private readonly AdjustLoyaltyPointsHandler _adjustPoints;
         private readonly SuspendLoyaltyAccountHandler _suspendAccount;
         private readonly ActivateLoyaltyAccountHandler _activateAccount;
+        private readonly ExpireLoyaltyScanSessionHandler _expireScanSession;
         private readonly GetBusinessCampaignsHandler _getCampaigns;
         private readonly CreateBusinessCampaignHandler _createCampaign;
         private readonly UpdateBusinessCampaignHandler _updateCampaign;
         private readonly SetCampaignActivationHandler _setCampaignActivation;
+        private readonly GetCampaignDeliveriesPageHandler _getCampaignDeliveriesPage;
+        private readonly UpdateCampaignDeliveryStatusHandler _updateCampaignDeliveryStatus;
         private readonly AdminReferenceDataService _referenceData;
 
         public LoyaltyController(
@@ -63,10 +66,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             AdjustLoyaltyPointsHandler adjustPoints,
             SuspendLoyaltyAccountHandler suspendAccount,
             ActivateLoyaltyAccountHandler activateAccount,
+            ExpireLoyaltyScanSessionHandler expireScanSession,
             GetBusinessCampaignsHandler getCampaigns,
             CreateBusinessCampaignHandler createCampaign,
             UpdateBusinessCampaignHandler updateCampaign,
             SetCampaignActivationHandler setCampaignActivation,
+            GetCampaignDeliveriesPageHandler getCampaignDeliveriesPage,
+            UpdateCampaignDeliveryStatusHandler updateCampaignDeliveryStatus,
             AdminReferenceDataService referenceData)
         {
             _getProgramsPage = getProgramsPage;
@@ -90,10 +96,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             _adjustPoints = adjustPoints;
             _suspendAccount = suspendAccount;
             _activateAccount = activateAccount;
+            _expireScanSession = expireScanSession;
             _getCampaigns = getCampaigns;
             _createCampaign = createCampaign;
             _updateCampaign = updateCampaign;
             _setCampaignActivation = setCampaignActivation;
+            _getCampaignDeliveriesPage = getCampaignDeliveriesPage;
+            _updateCampaignDeliveryStatus = updateCampaignDeliveryStatus;
             _referenceData = referenceData;
         }
 
@@ -729,6 +738,96 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         }
 
         [HttpGet]
+        public async Task<IActionResult> CampaignDeliveries(
+            Guid? businessId = null,
+            Guid? campaignId = null,
+            int page = 1,
+            int pageSize = 20,
+            LoyaltyCampaignDeliveryQueueFilter filter = LoyaltyCampaignDeliveryQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var result = await _getCampaignDeliveriesPage.HandleAsync(businessId, campaignId, page, pageSize, filter, ct).ConfigureAwait(false);
+            var summaryDto = await _getCampaignDeliveriesPage.GetSummaryAsync(businessId, campaignId, ct).ConfigureAwait(false);
+            var items = result.Succeeded && result.Value is not null
+                ? result.Value.Items
+                : new List<CampaignDeliveryItemDto>();
+
+            if (!result.Succeeded)
+            {
+                SetLocalizedErrorMessage("LoyaltyCampaignDeliveriesLoadFailed", result.Error);
+            }
+
+            return RenderCampaignDeliveriesWorkspace(new LoyaltyCampaignDeliveriesListVm
+            {
+                BusinessId = businessId,
+                CampaignId = campaignId,
+                Filter = filter,
+                FilterItems = BuildCampaignDeliveryFilterItems(filter),
+                BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
+                Summary = new LoyaltyCampaignDeliveryOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    PendingCount = summaryDto.PendingCount,
+                    InProgressCount = summaryDto.InProgressCount,
+                    FailedCount = summaryDto.FailedCount,
+                    SucceededCount = summaryDto.SucceededCount,
+                    CancelledCount = summaryDto.CancelledCount,
+                    NeedsAttentionCount = summaryDto.NeedsAttentionCount
+                },
+                Page = page,
+                PageSize = pageSize,
+                Total = result.Value?.Total ?? 0,
+                Items = items.Select(x => new LoyaltyCampaignDeliveryListItemVm
+                {
+                    Id = x.Id,
+                    CampaignId = x.CampaignId,
+                    CampaignName = x.CampaignName,
+                    CampaignTitle = x.CampaignTitle,
+                    RecipientUserId = x.RecipientUserId,
+                    BusinessId = x.BusinessId,
+                    Channel = (CampaignDeliveryChannel)x.Channel,
+                    Status = (CampaignDeliveryStatus)x.Status,
+                    Destination = x.Destination,
+                    AttemptCount = x.AttemptCount,
+                    FirstAttemptAtUtc = x.FirstAttemptAtUtc,
+                    LastAttemptAtUtc = x.LastAttemptAtUtc,
+                    LastResponseCode = x.LastResponseCode,
+                    ProviderMessageId = x.ProviderMessageId,
+                    LastError = x.LastError,
+                    IdempotencyKey = x.IdempotencyKey,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateCampaignDeliveryStatus(
+            Guid id,
+            Guid? businessId,
+            Guid? campaignId,
+            CampaignDeliveryStatus status,
+            byte[]? rowVersion,
+            int page = 1,
+            int pageSize = 20,
+            LoyaltyCampaignDeliveryQueueFilter filter = LoyaltyCampaignDeliveryQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            var result = await _updateCampaignDeliveryStatus.HandleAsync(new UpdateCampaignDeliveryStatusDto
+            {
+                Id = id,
+                BusinessId = businessId,
+                Status = (short)status,
+                OperatorNote = T("CampaignDeliveryUpdatedByOperator"),
+                RowVersion = rowVersion ?? Array.Empty<byte>()
+            }, ct).ConfigureAwait(false);
+
+            SetLocalizedResultMessage(result.Succeeded, "CampaignDeliveryStatusUpdated", "CampaignDeliveryStatusUpdateFailed", result.Error);
+            return RedirectOrHtmx(nameof(CampaignDeliveries), new { businessId, campaignId, page, pageSize, filter });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> ScanSessions(
             Guid? businessId = null,
             int page = 1,
@@ -785,9 +884,38 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     FailureReason = x.FailureReason,
                     CreatedAtUtc = x.CreatedAtUtc,
                     ExpiresAtUtc = x.ExpiresAtUtc,
-                    CompletedAtUtc = x.CompletedAtUtc
+                    CompletedAtUtc = x.CompletedAtUtc,
+                    RowVersion = x.RowVersion
                 }).ToList()
             });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExpireScanSession(Guid id, Guid businessId, byte[]? rowVersion, CancellationToken ct = default)
+        {
+            var result = await _expireScanSession.HandleAsync(new ExpireLoyaltyScanSessionDto
+            {
+                Id = id,
+                BusinessId = businessId,
+                RowVersion = rowVersion ?? Array.Empty<byte>()
+            }, ct).ConfigureAwait(false);
+
+            SetLocalizedResultMessage(result.Succeeded, "LoyaltyScanSessionExpired", "LoyaltyScanSessionExpireFailed", result.Error);
+            return RedirectOrHtmx(nameof(ScanSessions), new { businessId, status = LoyaltyScanStatus.Expired });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExpireExpiredScanSessions(Guid businessId, CancellationToken ct = default)
+        {
+            var result = await _expireScanSession.HandleExpiredAsync(new ExpireExpiredLoyaltyScanSessionsDto
+            {
+                BusinessId = businessId
+            }, ct).ConfigureAwait(false);
+
+            SetLocalizedResultMessage(result.Succeeded, "LoyaltyScanSessionsExpired", "LoyaltyScanSessionExpireFailed", result.Error);
+            return RedirectOrHtmx(nameof(ScanSessions), new { businessId, status = LoyaltyScanStatus.Expired });
         }
 
         [HttpGet]
@@ -1044,6 +1172,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             };
         }
 
+        private List<SelectListItem> BuildCampaignDeliveryFilterItems(LoyaltyCampaignDeliveryQueueFilter selected)
+        {
+            return new List<SelectListItem>
+            {
+                new(T("AllStatuses"), LoyaltyCampaignDeliveryQueueFilter.All.ToString(), selected == LoyaltyCampaignDeliveryQueueFilter.All),
+                new(T("Pending"), LoyaltyCampaignDeliveryQueueFilter.Pending.ToString(), selected == LoyaltyCampaignDeliveryQueueFilter.Pending),
+                new(T("InProgress"), LoyaltyCampaignDeliveryQueueFilter.InProgress.ToString(), selected == LoyaltyCampaignDeliveryQueueFilter.InProgress),
+                new(T("Failed"), LoyaltyCampaignDeliveryQueueFilter.Failed.ToString(), selected == LoyaltyCampaignDeliveryQueueFilter.Failed),
+                new(T("Succeeded"), LoyaltyCampaignDeliveryQueueFilter.Succeeded.ToString(), selected == LoyaltyCampaignDeliveryQueueFilter.Succeeded),
+                new(T("Cancelled"), LoyaltyCampaignDeliveryQueueFilter.Cancelled.ToString(), selected == LoyaltyCampaignDeliveryQueueFilter.Cancelled),
+                new(T("NeedsAttention"), LoyaltyCampaignDeliveryQueueFilter.NeedsAttention.ToString(), selected == LoyaltyCampaignDeliveryQueueFilter.NeedsAttention)
+            };
+        }
+
         private List<LoyaltyOpsPlaybookVm> BuildProgramPlaybooks()
         {
             return new List<LoyaltyOpsPlaybookVm>
@@ -1267,6 +1409,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }
 
             return View("Campaigns", vm);
+        }
+
+        private IActionResult RenderCampaignDeliveriesWorkspace(LoyaltyCampaignDeliveriesListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/CampaignDeliveries.cshtml", vm);
+            }
+
+            return View("CampaignDeliveries", vm);
         }
 
         private IActionResult RenderScanSessionsWorkspace(LoyaltyScanSessionsListVm vm)

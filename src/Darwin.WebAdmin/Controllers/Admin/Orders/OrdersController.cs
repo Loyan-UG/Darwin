@@ -8,6 +8,7 @@ using Darwin.Domain.Enums;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.CRM;
 using Darwin.WebAdmin.ViewModels.Orders;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         private readonly GetOrdersPageHandler _getOrdersPage;
         private readonly GetShipmentsPageHandler _getShipmentsPage;
         private readonly GetShipmentOpsSummaryHandler _getShipmentOpsSummary;
+        private readonly GetShipmentProviderOperationsPageHandler _getShipmentProviderOperationsPage;
         private readonly GetOrderForViewHandler _getOrderForView;
         private readonly GetOrderPaymentsPageHandler _getOrderPaymentsPage;
         private readonly GetOrderShipmentsPageHandler _getOrderShipmentsPage;
@@ -33,6 +35,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         private readonly AddPaymentHandler _addPayment;
         private readonly AddShipmentHandler _addShipment;
         private readonly GenerateDhlShipmentLabelHandler _generateDhlShipmentLabel;
+        private readonly ResolveShipmentCarrierExceptionHandler _resolveShipmentCarrierException;
+        private readonly UpdateShipmentProviderOperationHandler _updateShipmentProviderOperation;
         private readonly AddRefundHandler _addRefund;
         private readonly CreateOrderInvoiceHandler _createOrderInvoice;
         private readonly UpdateOrderStatusHandler _updateOrderStatus;
@@ -42,6 +46,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             GetOrdersPageHandler getOrdersPage,
             GetShipmentsPageHandler getShipmentsPage,
             GetShipmentOpsSummaryHandler getShipmentOpsSummary,
+            GetShipmentProviderOperationsPageHandler getShipmentProviderOperationsPage,
             GetOrderForViewHandler getOrderForView,
             GetOrderPaymentsPageHandler getOrderPaymentsPage,
             GetOrderShipmentsPageHandler getOrderShipmentsPage,
@@ -53,6 +58,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             AddPaymentHandler addPayment,
             AddShipmentHandler addShipment,
             GenerateDhlShipmentLabelHandler generateDhlShipmentLabel,
+            ResolveShipmentCarrierExceptionHandler resolveShipmentCarrierException,
+            UpdateShipmentProviderOperationHandler updateShipmentProviderOperation,
             AddRefundHandler addRefund,
             CreateOrderInvoiceHandler createOrderInvoice,
             UpdateOrderStatusHandler updateOrderStatus,
@@ -61,6 +68,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             _getOrdersPage = getOrdersPage;
             _getShipmentsPage = getShipmentsPage;
             _getShipmentOpsSummary = getShipmentOpsSummary;
+            _getShipmentProviderOperationsPage = getShipmentProviderOperationsPage;
             _getOrderForView = getOrderForView;
             _getOrderPaymentsPage = getOrderPaymentsPage;
             _getOrderShipmentsPage = getOrderShipmentsPage;
@@ -72,6 +80,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             _addPayment = addPayment;
             _addShipment = addShipment;
             _generateDhlShipmentLabel = generateDhlShipmentLabel;
+            _resolveShipmentCarrierException = resolveShipmentCarrierException;
+            _updateShipmentProviderOperation = updateShipmentProviderOperation;
             _addRefund = addRefund;
             _createOrderInvoice = createOrderInvoice;
             _updateOrderStatus = updateOrderStatus;
@@ -267,6 +277,81 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             };
 
             return RenderReturnsQueueWorkspace(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ShipmentProviderOperations(
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? provider = null,
+            string? operationType = null,
+            string? status = null,
+            bool stalePendingOnly = false,
+            bool failedOnly = false,
+            CancellationToken ct = default)
+        {
+            var filter = new ShipmentProviderOperationFilterDto
+            {
+                Query = query ?? string.Empty,
+                Provider = provider ?? string.Empty,
+                OperationType = operationType ?? string.Empty,
+                Status = status ?? string.Empty,
+                StalePendingOnly = stalePendingOnly,
+                FailedOnly = failedOnly
+            };
+
+            var (items, total, summary, providers, operationTypes) = await _getShipmentProviderOperationsPage
+                .HandleAsync(page, pageSize, filter, ct)
+                .ConfigureAwait(false);
+
+            var vm = new ShipmentProviderOperationsListVm
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = filter.Query,
+                Provider = filter.Provider,
+                OperationType = filter.OperationType,
+                Status = filter.Status,
+                StalePendingOnly = stalePendingOnly,
+                FailedOnly = failedOnly,
+                Summary = new ShipmentProviderOperationSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    PendingCount = summary.PendingCount,
+                    FailedCount = summary.FailedCount,
+                    ProcessedCount = summary.ProcessedCount,
+                    StalePendingCount = summary.StalePendingCount,
+                    CancelledCount = summary.CancelledCount
+                },
+                PageSizeItems = BuildPageSizeItems(pageSize),
+                ProviderItems = BuildShipmentProviderItems(providers, provider),
+                OperationTypeItems = BuildShipmentOperationTypeItems(operationTypes, operationType),
+                StatusItems = BuildShipmentProviderOperationStatusItems(status),
+                Items = items.Select(x => new ShipmentProviderOperationListItemVm
+                {
+                    Id = x.Id,
+                    RowVersion = x.RowVersion,
+                    ShipmentId = x.ShipmentId,
+                    OrderId = x.OrderId,
+                    OrderNumber = x.OrderNumber,
+                    Provider = x.Provider,
+                    OperationType = x.OperationType,
+                    Status = x.Status,
+                    AttemptCount = x.AttemptCount,
+                    LastAttemptAtUtc = x.LastAttemptAtUtc,
+                    ProcessedAtUtc = x.ProcessedAtUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    AgeMinutes = x.AgeMinutes,
+                    IsStalePending = x.IsStalePending,
+                    FailureReason = x.FailureReason,
+                    TrackingNumber = x.TrackingNumber,
+                    LabelUrl = x.LabelUrl
+                }).ToList()
+            };
+
+            return RenderShipmentProviderOperationsWorkspace(vm);
         }
 
         private async Task<DhlOperationsVm> BuildDhlOperationsVmAsync(CancellationToken ct)
@@ -881,6 +966,124 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResolveShipmentCarrierException(
+            Guid shipmentId,
+            string rowVersion,
+            string? resolutionNote = null,
+            bool returnToReturnsQueue = false,
+            ShipmentQueueFilter filter = ShipmentQueueFilter.All,
+            ReturnQueueFilter returnFilter = ReturnQueueFilter.All,
+            string? query = null,
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            var result = await _resolveShipmentCarrierException
+                .HandleAsync(new ResolveShipmentCarrierExceptionDto
+                {
+                    ShipmentId = shipmentId,
+                    RowVersion = version,
+                    ResolutionNote = string.IsNullOrWhiteSpace(resolutionNote)
+                        ? T("ShipmentCarrierExceptionResolvedByOperator")
+                        : resolutionNote
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("ShipmentCarrierExceptionResolvedMessage");
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("ShipmentCarrierExceptionResolveFailedMessage");
+            }
+
+            if (returnToReturnsQueue)
+            {
+                return RedirectOrHtmx(nameof(ReturnsQueue), new { page, pageSize, query, filter = returnFilter });
+            }
+
+            return RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateShipmentProviderOperation(
+            Guid id,
+            string rowVersion,
+            string action,
+            string? failureReason = null,
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? provider = null,
+            string? operationType = null,
+            string? status = null,
+            bool stalePendingOnly = false,
+            bool failedOnly = false,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            var result = await _updateShipmentProviderOperation
+                .HandleAsync(new UpdateShipmentProviderOperationDto
+                {
+                    Id = id,
+                    RowVersion = version,
+                    Action = action,
+                    FailureReason = failureReason
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage(action switch
+                {
+                    "MarkProcessed" => "ShipmentProviderOperationMarkedProcessedMessage",
+                    "MarkFailed" => "ShipmentProviderOperationMarkedFailedMessage",
+                    "Requeue" => "ShipmentProviderOperationRequeuedMessage",
+                    "Cancel" => "ShipmentProviderOperationCancelledMessage",
+                    _ => "ShipmentProviderOperationUpdatedMessage"
+                });
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("ShipmentProviderOperationUpdateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(ShipmentProviderOperations), new
+            {
+                page,
+                pageSize,
+                query,
+                provider,
+                operationType,
+                status,
+                stalePendingOnly,
+                failedOnly
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddRefund(RefundCreateVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -995,6 +1198,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
                 TempData["Success"] = string.Format(T("OrderStatusUpdatedFormat"), vm.NewStatus);
             }
+            catch (ValidationException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
             catch (Exception)
             {
                 SetErrorMessage("OrderStatusUpdateFailed");
@@ -1045,6 +1252,40 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem(T("AllReturnCases"), ReturnQueueFilter.All.ToString(), selectedFilter == ReturnQueueFilter.All);
             yield return new SelectListItem(T("ReturnFollowUp"), ReturnQueueFilter.FollowUp.ToString(), selectedFilter == ReturnQueueFilter.FollowUp);
             yield return new SelectListItem(T("CarrierReview"), ReturnQueueFilter.CarrierReview.ToString(), selectedFilter == ReturnQueueFilter.CarrierReview);
+        }
+
+        private IEnumerable<SelectListItem> BuildShipmentProviderItems(IEnumerable<string> providers, string? selectedProvider)
+        {
+            yield return new SelectListItem(T("CommunicationProviderAll"), string.Empty, string.IsNullOrWhiteSpace(selectedProvider));
+            foreach (var provider in providers
+                         .Concat(string.IsNullOrWhiteSpace(selectedProvider) ? Array.Empty<string>() : new[] { selectedProvider! })
+                         .Where(x => !string.IsNullOrWhiteSpace(x))
+                         .Distinct(StringComparer.OrdinalIgnoreCase)
+                         .OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            {
+                yield return new SelectListItem(provider, provider, string.Equals(selectedProvider, provider, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        private IEnumerable<SelectListItem> BuildShipmentOperationTypeItems(IEnumerable<string> operationTypes, string? selectedOperationType)
+        {
+            yield return new SelectListItem(T("ShipmentProviderOperationTypeAll"), string.Empty, string.IsNullOrWhiteSpace(selectedOperationType));
+            foreach (var operationType in operationTypes
+                         .Concat(string.IsNullOrWhiteSpace(selectedOperationType) ? Array.Empty<string>() : new[] { selectedOperationType! })
+                         .Where(x => !string.IsNullOrWhiteSpace(x))
+                         .Distinct(StringComparer.OrdinalIgnoreCase)
+                         .OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            {
+                yield return new SelectListItem(operationType, operationType, string.Equals(selectedOperationType, operationType, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        private IEnumerable<SelectListItem> BuildShipmentProviderOperationStatusItems(string? selectedStatus)
+        {
+            yield return new SelectListItem(T("CommunicationAuditStatusAll"), string.Empty, string.IsNullOrWhiteSpace(selectedStatus));
+            yield return new SelectListItem(T("Pending"), "Pending", string.Equals(selectedStatus, "Pending", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("Failed"), "Failed", string.Equals(selectedStatus, "Failed", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("Processed"), "Processed", string.Equals(selectedStatus, "Processed", StringComparison.OrdinalIgnoreCase));
         }
 
         private IEnumerable<SelectListItem> BuildInvoiceFilterItems(InvoiceQueueFilter selectedFilter)
@@ -1156,6 +1397,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
 
             return View("ReturnsQueue", vm);
+        }
+
+        private IActionResult RenderShipmentProviderOperationsWorkspace(ShipmentProviderOperationsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/ShipmentProviderOperations.cshtml", vm);
+            }
+
+            return View("ShipmentProviderOperations", vm);
         }
 
         private IActionResult RenderOrdersWorkspace(OrdersListVm vm)

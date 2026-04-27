@@ -15,7 +15,9 @@ namespace Darwin.Application.Inventory.DTOs
         All = 0,
         Draft = 1,
         Issued = 2,
-        Received = 3
+        Received = 3,
+        Cancelled = 4,
+        StaleIssued = 5
     }
 
     public enum StockTransferQueueFilter
@@ -23,7 +25,9 @@ namespace Darwin.Application.Inventory.DTOs
         All = 0,
         Draft = 1,
         InTransit = 2,
-        Completed = 3
+        Completed = 3,
+        Cancelled = 4,
+        StaleInTransit = 5
     }
 
     public enum WarehouseQueueFilter
@@ -314,6 +318,7 @@ namespace Darwin.Application.Inventory.DTOs
         public string Status { get; set; } = string.Empty;
         public int LineCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
+        public bool IsStale { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -323,6 +328,8 @@ namespace Darwin.Application.Inventory.DTOs
         public int DraftCount { get; set; }
         public int InTransitCount { get; set; }
         public int CompletedCount { get; set; }
+        public int CancelledCount { get; set; }
+        public int StaleInTransitCount { get; set; }
     }
 
     /// <summary>
@@ -343,6 +350,13 @@ namespace Darwin.Application.Inventory.DTOs
     {
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class StockTransferLifecycleActionDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Action { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -369,6 +383,7 @@ namespace Darwin.Application.Inventory.DTOs
         public string Status { get; set; } = string.Empty;
         public DateTime OrderedAtUtc { get; set; }
         public int LineCount { get; set; }
+        public bool IsStale { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -378,6 +393,8 @@ namespace Darwin.Application.Inventory.DTOs
         public int DraftCount { get; set; }
         public int IssuedCount { get; set; }
         public int ReceivedCount { get; set; }
+        public int CancelledCount { get; set; }
+        public int StaleIssuedCount { get; set; }
     }
 
     /// <summary>
@@ -400,5 +417,12 @@ namespace Darwin.Application.Inventory.DTOs
     {
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class PurchaseOrderLifecycleActionDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Action { get; set; } = string.Empty;
     }
 }

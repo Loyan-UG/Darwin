@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = T.T("Shipments");
     string GlobalShipmentsQueueUrl() => Url.Action("ShipmentsQueue", "Orders") ?? string.Empty;
+    string GlobalShipmentProviderOperationsUrl() => Url.Action("ShipmentProviderOperations", "Orders") ?? string.Empty;
     string GlobalReturnsQueueUrl() => Url.Action("ReturnsQueue", "Orders") ?? string.Empty;
     string ShipmentsQueueUrl(ShipmentQueueFilter filter) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
     string OrdersIndexUrl(string filter) => Url.Action("Index", "Orders", new { filter }) ?? string.Empty;
@@ -51,6 +52,8 @@
            hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.TrackingOverdue)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("TrackingOverdue")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="CarrierReview" class="btn btn-outline-danger btn-sm"
            hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.CarrierReview)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("CarrierReview")</a>
+        <a asp-action="ShipmentProviderOperations" class="btn btn-outline-secondary btn-sm"
+           hx-get="@GlobalShipmentProviderOperationsUrl()" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("ShipmentProviderOperationsTitle")</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="ReturnFollowUp" class="btn btn-outline-dark btn-sm"
            hx-get="@ShipmentsQueueUrl(ShipmentQueueFilter.ReturnFollowUp)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">@T.T("ReturnFollowUp")</a>
     </div>
@@ -377,6 +380,8 @@
                 var needsCarrierQueueFollowUp = item.NeedsCarrierReview || item.ProviderOperationFailed;
                 var needsTrackingQueueFollowUp = item.TrackingOverdue || string.IsNullOrWhiteSpace(item.TrackingNumber);
                 var needsReturnedQueueFollowUp = item.NeedsReturnFollowUp || item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned;
+                var hasActiveCarrierException = !string.IsNullOrWhiteSpace(item.ExceptionNote)
+                    && item.RecentCarrierEvents.Any(e => !string.IsNullOrWhiteSpace(e.ExceptionCode) || !string.IsNullOrWhiteSpace(e.ExceptionMessage));
                 <tr>
                     <td>
                         <div class="fw-semibold">@item.OrderNumber</div>
@@ -567,6 +572,28 @@
                                hx-get="@OrderDetailsUrl(item.OrderId)" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
                                 <i class="fa-solid fa-receipt"></i> @T.T("Order")
                             </a>
+                            @if (hasActiveCarrierException)
+                            {
+                                <form asp-controller="Orders"
+                                      asp-action="ResolveShipmentCarrierException"
+                                      method="post"
+                                      class="d-inline-block"
+                                      hx-post="@Url.Action("ResolveShipmentCarrierException", "Orders")"
+                                      hx-target="#shipments-queue-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="shipmentId" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                    <input type="hidden" name="resolutionNote" value="@T.T("ShipmentCarrierExceptionResolvedByOperator")" />
+                                    <input type="hidden" name="filter" value="@Model.Filter" />
+                                    <input type="hidden" name="query" value="@Model.Query" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fa-solid fa-check"></i> @T.T("ResolveCarrierException")
+                                    </button>
+                                </form>
+                            }
                             @if (item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned || item.NeedsCarrierReview)
                             {
                                 <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-danger"

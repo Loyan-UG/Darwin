@@ -749,6 +749,7 @@
                     @foreach (var item in Model.Items)
                     {
                         var setupMissing = item.ActiveOwnerCount == 0 || item.PrimaryLocationCount == 0 || !item.HasContactEmailConfigured || !item.HasLegalNameConfigured;
+                        var canFinalizeOnboarding = !setupMissing && (item.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Approved || !item.IsActive);
                         <tr>
                             <td>
                                 <div class="fw-semibold">
@@ -951,6 +952,22 @@
                             </td>
                             <td>
                                 <div class="d-flex gap-2 flex-wrap">
+                                    @if (canFinalizeOnboarding)
+                                    {
+                                        <form asp-action="ProvisionOnboarding"
+                                              method="post"
+                                              class="d-inline-block"
+                                              hx-post="@Url.Action("ProvisionOnboarding", "Businesses")"
+                                              hx-target="#merchant-readiness-workspace-shell"
+                                              hx-swap="outerHTML"
+                                              hx-push-url="true">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                            <input type="hidden" name="returnToReadiness" value="true" />
+                                            <button type="submit" class="btn btn-sm btn-success">@T.T("FinalizeBusinessOnboarding")</button>
+                                        </form>
+                                    }
                                     <a asp-action="Edit"
                                        asp-route-id="@item.Id"
                                        class="btn btn-sm btn-outline-secondary"

@@ -77,6 +77,9 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     /// </summary>
     public sealed class BrandTranslationVm
     {
+        /// <summary>Existing translation id; empty for newly added rows.</summary>
+        public Guid? Id { get; set; }
+
         /// <summary>Culture code (e.g., "de-DE"). Required.</summary>
         public string Culture { get; set; } = string.Empty;
 

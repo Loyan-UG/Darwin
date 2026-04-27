@@ -533,7 +533,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             var dto = new UserDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
             var result = await _softDeleteUser.HandleAsync(dto, ct);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("UserDeletedMessage") : T("UserDeleteFailedMessage");
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? T(result.Value?.WasDeactivatedDueToReferences == true ? "UserDeactivatedDueToOrderHistoryMessage" : "UserDeletedMessage")
+                : result.Error ?? T("UserDeleteFailedMessage");
             return RedirectOrHtmx(nameof(Index), new { });
         }
 

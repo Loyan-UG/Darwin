@@ -31,7 +31,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly GetBusinessCommunicationProfileHandler _getProfile;
         private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
         private readonly GetChannelDispatchActivityHandler _getChannelDispatchActivity;
+        private readonly GetProviderCallbackInboxPageHandler _getProviderCallbackInboxPage;
         private readonly RetryEmailDispatchAuditHandler _retryEmailDispatchAudit;
+        private readonly CancelCommunicationDispatchOperationHandler _cancelCommunicationDispatchOperation;
+        private readonly UpdateProviderCallbackInboxMessageHandler _updateProviderCallbackInboxMessage;
         private readonly IAppDbContext _db;
         private readonly ISiteSettingCache _siteSettingCache;
 
@@ -41,7 +44,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             GetBusinessCommunicationProfileHandler getProfile,
             GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
             GetChannelDispatchActivityHandler getChannelDispatchActivity,
+            GetProviderCallbackInboxPageHandler getProviderCallbackInboxPage,
             RetryEmailDispatchAuditHandler retryEmailDispatchAudit,
+            CancelCommunicationDispatchOperationHandler cancelCommunicationDispatchOperation,
+            UpdateProviderCallbackInboxMessageHandler updateProviderCallbackInboxMessage,
             IAppDbContext db,
             ISiteSettingCache siteSettingCache)
         {
@@ -50,7 +56,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _getProfile = getProfile;
             _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
             _getChannelDispatchActivity = getChannelDispatchActivity;
+            _getProviderCallbackInboxPage = getProviderCallbackInboxPage;
             _retryEmailDispatchAudit = retryEmailDispatchAudit;
+            _cancelCommunicationDispatchOperation = cancelCommunicationDispatchOperation;
+            _updateProviderCallbackInboxMessage = updateProviderCallbackInboxMessage;
             _db = db;
             _siteSettingCache = siteSettingCache;
         }
@@ -166,6 +175,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 RecentEmailAudits = emailAudits.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     IsQueueOperation = x.IsQueueOperation,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
@@ -203,6 +213,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 RecentChannelAudits = channelAudits.Select(x => new ChannelDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     IsQueueOperation = x.IsQueueOperation,
                     Channel = x.Channel,
                     Provider = x.Provider,
@@ -237,6 +248,153 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
 
             return RenderCommunicationsWorkspace(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TemplatePreviews(string? flowKey = null, string? channel = null, CancellationToken ct = default)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var vm = new CommunicationTemplatePreviewsVm
+            {
+                FlowKey = flowKey ?? string.Empty,
+                Channel = channel ?? string.Empty,
+                FlowItems = BuildTemplatePreviewFlowItems(flowKey),
+                ChannelItems = BuildTemplatePreviewChannelItems(channel),
+                Items = BuildTemplatePreviews(settings, flowKey, channel)
+            };
+
+            return RenderTemplatePreviewsWorkspace(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ProviderCallbacks(
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? provider = null,
+            string? status = null,
+            bool stalePendingOnly = false,
+            bool failedOnly = false,
+            CancellationToken ct = default)
+        {
+            var filter = new ProviderCallbackInboxFilterDto
+            {
+                Query = query ?? string.Empty,
+                Provider = provider ?? string.Empty,
+                Status = status ?? string.Empty,
+                StalePendingOnly = stalePendingOnly,
+                FailedOnly = failedOnly
+            };
+
+            var (items, total, summary, providers) = await _getProviderCallbackInboxPage
+                .HandleAsync(page, pageSize, filter, ct)
+                .ConfigureAwait(false);
+
+            var vm = new ProviderCallbackInboxListVm
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = filter.Query,
+                Provider = filter.Provider,
+                Status = filter.Status,
+                StalePendingOnly = stalePendingOnly,
+                FailedOnly = failedOnly,
+                Summary = new ProviderCallbackInboxSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    PendingCount = summary.PendingCount,
+                    FailedCount = summary.FailedCount,
+                    ProcessedCount = summary.ProcessedCount,
+                    StalePendingCount = summary.StalePendingCount,
+                    RetriedCount = summary.RetriedCount
+                },
+                PageSizeItems = BuildPageSizeItems(pageSize),
+                ProviderItems = BuildProviderCallbackProviderItems(providers, provider),
+                StatusItems = BuildProviderCallbackStatusItems(status),
+                Items = items.Select(x => new ProviderCallbackInboxListItemVm
+                {
+                    Id = x.Id,
+                    RowVersion = x.RowVersion,
+                    Provider = x.Provider,
+                    CallbackType = x.CallbackType,
+                    Status = x.Status,
+                    IdempotencyKey = x.IdempotencyKey,
+                    AttemptCount = x.AttemptCount,
+                    LastAttemptAtUtc = x.LastAttemptAtUtc,
+                    ProcessedAtUtc = x.ProcessedAtUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    AgeMinutes = x.AgeMinutes,
+                    IsStalePending = x.IsStalePending,
+                    FailureReason = x.FailureReason,
+                    PayloadPreview = x.PayloadPreview
+                }).ToList()
+            };
+
+            return RenderProviderCallbacksWorkspace(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProviderCallback(
+            Guid id,
+            string rowVersion,
+            string action,
+            string? failureReason = null,
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? provider = null,
+            string? status = null,
+            bool stalePendingOnly = false,
+            bool failedOnly = false,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            var result = await _updateProviderCallbackInboxMessage
+                .HandleAsync(new UpdateProviderCallbackInboxMessageDto
+                {
+                    Id = id,
+                    RowVersion = version,
+                    Action = action,
+                    FailureReason = failureReason
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage(action switch
+                {
+                    "MarkProcessed" => "ProviderCallbackMarkedProcessedMessage",
+                    "MarkFailed" => "ProviderCallbackMarkedFailedMessage",
+                    "Requeue" => "ProviderCallbackRequeuedMessage",
+                    _ => "ProviderCallbackUpdatedMessage"
+                });
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("ProviderCallbackUpdateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(ProviderCallbacks), new
+            {
+                page,
+                pageSize,
+                query,
+                provider,
+                status,
+                stalePendingOnly,
+                failedOnly
+            });
         }
 
         [HttpGet]
@@ -326,6 +484,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 RecentEmailAudits = recentAudits.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     IsQueueOperation = x.IsQueueOperation,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
@@ -381,6 +540,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             vm.RecentChannelAudits = channelAudits.Select(x => new ChannelDispatchAuditListItemVm
             {
                 Id = x.Id,
+                RowVersion = x.RowVersion,
                 IsQueueOperation = x.IsQueueOperation,
                 Channel = x.Channel,
                 Provider = x.Provider,
@@ -520,6 +680,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Items = items.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     IsQueueOperation = x.IsQueueOperation,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
@@ -712,6 +873,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Items = items.Select(x => new ChannelDispatchAuditListItemVm
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     IsQueueOperation = x.IsQueueOperation,
                     Channel = x.Channel,
                     Provider = x.Provider,
@@ -808,6 +970,223 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     retryReadyOnly,
                     retryBlockedOnly,
                     highChainVolumeOnly,
+                    chainFollowUpOnly,
+                    chainResolvedOnly,
+                    businessId
+                });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelEmailDispatchOperation(
+            Guid id,
+            byte[] rowVersion,
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? recipientEmail = null,
+            string? status = null,
+            string? flowKey = null,
+            bool stalePendingOnly = false,
+            bool businessLinkedFailuresOnly = false,
+            bool repeatedFailuresOnly = false,
+            bool priorSuccessOnly = false,
+            bool retryReadyOnly = false,
+            bool retryBlockedOnly = false,
+            bool highChainVolumeOnly = false,
+            bool chainFollowUpOnly = false,
+            bool chainResolvedOnly = false,
+            Guid? businessId = null,
+            CancellationToken ct = default)
+        {
+            var result = await _cancelCommunicationDispatchOperation
+                .HandleAsync(new CancelCommunicationDispatchOperationDto
+                {
+                    Id = id,
+                    RowVersion = rowVersion ?? Array.Empty<byte>(),
+                    Channel = "Email"
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("CommunicationQueuedDispatchCancelledMessage");
+            }
+            else
+            {
+                SetErrorMessage("CommunicationQueuedDispatchCancelFailedMessage");
+            }
+
+            return RedirectOrHtmx(
+                nameof(EmailAudits),
+                new
+                {
+                    page,
+                    pageSize,
+                    query,
+                    recipientEmail,
+                    status,
+                    flowKey,
+                    stalePendingOnly,
+                    businessLinkedFailuresOnly,
+                    repeatedFailuresOnly,
+                    priorSuccessOnly,
+                    retryReadyOnly,
+                    retryBlockedOnly,
+                    highChainVolumeOnly,
+                    chainFollowUpOnly,
+                    chainResolvedOnly,
+                    businessId
+                });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelChannelDispatchOperation(
+            Guid id,
+            byte[] rowVersion,
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? recipientAddress = null,
+            string? provider = null,
+            string? channel = null,
+            string? flowKey = null,
+            string? status = null,
+            bool failedOnly = false,
+            bool phoneVerificationOnly = false,
+            bool adminTestOnly = false,
+            bool repeatedFailuresOnly = false,
+            bool priorSuccessOnly = false,
+            bool actionReadyOnly = false,
+            bool actionBlockedOnly = false,
+            bool escalationCandidatesOnly = false,
+            bool heavyChainsOnly = false,
+            bool providerReviewOnly = false,
+            bool chainFollowUpOnly = false,
+            bool chainResolvedOnly = false,
+            Guid? businessId = null,
+            CancellationToken ct = default)
+        {
+            var result = await _cancelCommunicationDispatchOperation
+                .HandleAsync(new CancelCommunicationDispatchOperationDto
+                {
+                    Id = id,
+                    RowVersion = rowVersion ?? Array.Empty<byte>(),
+                    Channel = channel ?? string.Empty
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("CommunicationQueuedDispatchCancelledMessage");
+            }
+            else
+            {
+                SetErrorMessage("CommunicationQueuedDispatchCancelFailedMessage");
+            }
+
+            return RedirectOrHtmx(
+                nameof(ChannelAudits),
+                new
+                {
+                    page,
+                    pageSize,
+                    query,
+                    recipientAddress,
+                    provider,
+                    channel,
+                    flowKey,
+                    status,
+                    failedOnly,
+                    phoneVerificationOnly,
+                    adminTestOnly,
+                    repeatedFailuresOnly,
+                    priorSuccessOnly,
+                    actionReadyOnly,
+                    actionBlockedOnly,
+                    escalationCandidatesOnly,
+                    heavyChainsOnly,
+                    providerReviewOnly,
+                    chainFollowUpOnly,
+                    chainResolvedOnly,
+                    businessId
+                });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelChannelDispatchOperationsBatch(
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? recipientAddress = null,
+            string? provider = null,
+            string? channel = null,
+            string? flowKey = null,
+            string? status = null,
+            bool failedOnly = false,
+            bool phoneVerificationOnly = false,
+            bool adminTestOnly = false,
+            bool repeatedFailuresOnly = false,
+            bool priorSuccessOnly = false,
+            bool actionReadyOnly = false,
+            bool actionBlockedOnly = false,
+            bool escalationCandidatesOnly = false,
+            bool heavyChainsOnly = false,
+            bool providerReviewOnly = false,
+            bool chainFollowUpOnly = false,
+            bool chainResolvedOnly = false,
+            Guid? businessId = null,
+            CancellationToken ct = default)
+        {
+            var result = await _cancelCommunicationDispatchOperation
+                .HandleChannelBatchAsync(new CancelChannelDispatchOperationsBatchDto
+                {
+                    Query = query ?? string.Empty,
+                    RecipientAddress = recipientAddress ?? string.Empty,
+                    Provider = provider ?? string.Empty,
+                    Channel = channel ?? string.Empty,
+                    FlowKey = flowKey ?? string.Empty,
+                    Status = status ?? string.Empty,
+                    BusinessId = businessId,
+                    FailedOnly = failedOnly,
+                    PhoneVerificationOnly = phoneVerificationOnly,
+                    AdminTestOnly = adminTestOnly
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                TempData["Success"] = string.Format(CultureInfo.CurrentCulture, T("CommunicationQueuedDispatchBatchCancelledMessage"), result.Value);
+            }
+            else
+            {
+                SetErrorMessage("CommunicationQueuedDispatchCancelFailedMessage");
+            }
+
+            return RedirectOrHtmx(
+                nameof(ChannelAudits),
+                new
+                {
+                    page,
+                    pageSize,
+                    query,
+                    recipientAddress,
+                    provider,
+                    channel,
+                    flowKey,
+                    status,
+                    failedOnly,
+                    phoneVerificationOnly,
+                    adminTestOnly,
+                    repeatedFailuresOnly,
+                    priorSuccessOnly,
+                    actionReadyOnly,
+                    actionBlockedOnly,
+                    escalationCandidatesOnly,
+                    heavyChainsOnly,
+                    providerReviewOnly,
                     chainFollowUpOnly,
                     chainResolvedOnly,
                     businessId
@@ -1341,6 +1720,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return View("ChannelAudits", vm);
         }
 
+        private IActionResult RenderTemplatePreviewsWorkspace(CommunicationTemplatePreviewsVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/BusinessCommunications/TemplatePreviews.cshtml", vm);
+            }
+
+            return View("TemplatePreviews", vm);
+        }
+
+        private IActionResult RenderProviderCallbacksWorkspace(ProviderCallbackInboxListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/BusinessCommunications/ProviderCallbacks.cshtml", vm);
+            }
+
+            return View("ProviderCallbacks", vm);
+        }
+
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)
         {
             if (IsHtmxRequest())
@@ -1420,6 +1819,45 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             yield return new SelectListItem(T("CommunicationChannelFlowAll"), string.Empty, string.IsNullOrWhiteSpace(selectedFlowKey));
             yield return new SelectListItem(T("CommunicationTemplateInventoryPhoneVerificationFlow"), "PhoneVerification", string.Equals(selectedFlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase));
             yield return new SelectListItem(T("CommunicationTemplateInventoryAdminTestFlow"), "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private IEnumerable<SelectListItem> BuildTemplatePreviewFlowItems(string? selectedFlowKey)
+        {
+            yield return new SelectListItem(T("CommunicationAuditFlowAll"), string.Empty, string.IsNullOrWhiteSpace(selectedFlowKey));
+            yield return new SelectListItem(T("CommunicationDetailsActiveFlowInvitation"), "BusinessInvitation", string.Equals(selectedFlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationDetailsActiveFlowActivation"), "AccountActivation", string.Equals(selectedFlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationTemplateInventoryPasswordResetFlow"), "PasswordReset", string.Equals(selectedFlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationTemplateInventoryPhoneVerificationFlow"), "PhoneVerification", string.Equals(selectedFlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(T("CommunicationTemplateInventoryAdminTestFlow"), "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private IEnumerable<SelectListItem> BuildTemplatePreviewChannelItems(string? selectedChannel)
+        {
+            yield return new SelectListItem(T("CommunicationChannelAll"), string.Empty, string.IsNullOrWhiteSpace(selectedChannel));
+            yield return new SelectListItem(DescribeCommunicationChannel("Email"), "Email", string.Equals(selectedChannel, "Email", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(DescribeCommunicationChannel("SMS"), "SMS", string.Equals(selectedChannel, "SMS", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(DescribeCommunicationChannel("WhatsApp"), "WhatsApp", string.Equals(selectedChannel, "WhatsApp", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private IEnumerable<SelectListItem> BuildProviderCallbackProviderItems(IEnumerable<string> providers, string? selectedProvider)
+        {
+            yield return new SelectListItem(T("CommunicationProviderAll"), string.Empty, string.IsNullOrWhiteSpace(selectedProvider));
+            foreach (var provider in providers
+                         .Concat(string.IsNullOrWhiteSpace(selectedProvider) ? Array.Empty<string>() : new[] { selectedProvider! })
+                         .Where(x => !string.IsNullOrWhiteSpace(x))
+                         .Distinct(StringComparer.OrdinalIgnoreCase)
+                         .OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            {
+                yield return new SelectListItem(provider, provider, string.Equals(selectedProvider, provider, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        private IEnumerable<SelectListItem> BuildProviderCallbackStatusItems(string? selectedStatus)
+        {
+            yield return new SelectListItem(T("CommunicationAuditStatusAll"), string.Empty, string.IsNullOrWhiteSpace(selectedStatus));
+            yield return new SelectListItem(DescribeProviderCallbackStatus("Pending"), "Pending", string.Equals(selectedStatus, "Pending", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(DescribeProviderCallbackStatus("Failed"), "Failed", string.Equals(selectedStatus, "Failed", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem(DescribeProviderCallbackStatus("Processed"), "Processed", string.Equals(selectedStatus, "Processed", StringComparison.OrdinalIgnoreCase));
         }
 
         private List<BuiltInCommunicationFlowVm> BuildBuiltInFlows()
@@ -1604,6 +2042,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SupportedTokens = "{recipient_name}, {business_name}, {invitation_link}, {support_email}",
                     OperatorControl = T("CommunicationTemplateInventoryInvitationOperatorControl"),
                     AuditFlowKey = "BusinessInvitation",
+                    PreviewFlowKey = "BusinessInvitation",
                     OperatorActionLabel = T("OpenInvitations"),
                     OperatorActionTarget = "Invitations",
                     NextStep = T("CommunicationTemplateInventoryInvitationNextStep")
@@ -1619,6 +2058,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SupportedTokens = "{recipient_name}, {confirmation_link}, {support_email}",
                     OperatorControl = T("CommunicationTemplateInventoryActivationOperatorControl"),
                     AuditFlowKey = "AccountActivation",
+                    PreviewFlowKey = "AccountActivation",
                     OperatorActionLabel = T("OpenUsers"),
                     OperatorActionTarget = "Users",
                     NextStep = T("CommunicationTemplateInventoryActivationNextStep")
@@ -1634,6 +2074,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SupportedTokens = "{recipient_name}, {reset_link}, {support_email}",
                     OperatorControl = T("CommunicationTemplateInventoryPasswordResetOperatorControl"),
                     AuditFlowKey = "PasswordReset",
+                    PreviewFlowKey = "PasswordReset",
                     OperatorActionLabel = T("OpenUsers"),
                     OperatorActionTarget = "Users",
                     NextStep = T("CommunicationTemplateInventoryPasswordResetNextStep")
@@ -1649,6 +2090,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SupportedTokens = "{phone_e164}, {token}, {expires_at_utc}",
                     OperatorControl = T("CommunicationTemplateInventoryPhoneVerificationOperatorControl"),
                     AuditFlowKey = string.Empty,
+                    PreviewFlowKey = "PhoneVerification",
                     OperatorActionLabel = T("BusinessCommunicationOpenPolicyAction"),
                     OperatorActionTarget = "SiteSettings",
                     NextStep = T("CommunicationTemplateInventoryPhoneVerificationNextStep")
@@ -1664,6 +2106,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SupportedTokens = "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
                     OperatorControl = T("CommunicationTemplateInventoryAdminTestOperatorControl"),
                     AuditFlowKey = "AdminCommunicationTest",
+                    PreviewFlowKey = "AdminCommunicationTest",
                     OperatorActionLabel = T("CommunicationResendPolicyOpenAuditLog"),
                     OperatorActionTarget = "EmailAudits",
                     NextStep = T("CommunicationTemplateInventoryAdminTestNextStep")
@@ -1679,6 +2122,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SupportedTokens = T("CommunicationTemplateInventoryAdminAlertsNotCentralized"),
                     OperatorControl = T("CommunicationTemplateInventoryAdminAlertsOperatorControl"),
                     AuditFlowKey = string.Empty,
+                    PreviewFlowKey = string.Empty,
                     OperatorActionLabel = T("CommunicationResendPolicyOpenAlertSettings"),
                     OperatorActionTarget = "AdminAlerts",
                     NextStep = T("CommunicationTemplateInventoryAdminAlertsNextStep")
@@ -1723,6 +2167,181 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return output;
+        }
+
+        private List<CommunicationTemplatePreviewItemVm> BuildTemplatePreviews(SiteSettingDto settings, string? flowKey, string? channel)
+        {
+            var attemptedAtUtc = DateTime.UtcNow;
+            var emailSample = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["email"] = "operator@example.com",
+                ["token"] = "731904",
+                ["expires_at_utc"] = attemptedAtUtc.AddHours(2).ToString("yyyy-MM-dd HH:mm:ss"),
+                ["business_name"] = "Darwin Demo Store",
+                ["acceptance_link_html"] = "<a href=\"https://admin.example.test/invitations/accept\">Accept invitation</a>",
+                ["invitation_intro_html"] = "You have been invited to manage Darwin Demo Store.",
+                ["support_email"] = settings.SmtpFromAddress ?? "support@example.com",
+                ["recipient_name"] = "Operator"
+            };
+
+            var items = new List<CommunicationTemplatePreviewItemVm>
+            {
+                BuildEmailTemplatePreview(
+                    flowKey: "BusinessInvitation",
+                    flowName: T("CommunicationDetailsActiveFlowInvitation"),
+                    templateKey: "BusinessInvitationEmail",
+                    targetSurface: T("CommunicationTemplateInventoryInvitationSurface"),
+                    subjectTemplate: settings.BusinessInvitationEmailSubjectTemplate,
+                    subjectFallback: T("CommunicationTemplateInventoryInvitationSubjectFallback"),
+                    bodyTemplate: settings.BusinessInvitationEmailBodyTemplate,
+                    bodyFallback: T("CommunicationTemplateInventoryInvitationBodyFallback"),
+                    supportedTokens: "{business_name}, {acceptance_link_html}, {invitation_intro_html}, {token}, {expires_at_utc}, {email}, {support_email}",
+                    sample: emailSample),
+                BuildEmailTemplatePreview(
+                    flowKey: "AccountActivation",
+                    flowName: T("CommunicationDetailsActiveFlowActivation"),
+                    templateKey: "AccountActivationEmail",
+                    targetSurface: T("CommunicationTemplateInventoryActivationSurface"),
+                    subjectTemplate: settings.AccountActivationEmailSubjectTemplate,
+                    subjectFallback: T("CommunicationTemplateInventoryActivationSubjectFallback"),
+                    bodyTemplate: settings.AccountActivationEmailBodyTemplate,
+                    bodyFallback: T("CommunicationTemplateInventoryActivationBodyFallback"),
+                    supportedTokens: "{email}, {token}, {expires_at_utc}, {recipient_name}, {support_email}",
+                    sample: emailSample),
+                BuildEmailTemplatePreview(
+                    flowKey: "PasswordReset",
+                    flowName: T("CommunicationTemplateInventoryPasswordResetFlow"),
+                    templateKey: "PasswordResetEmail",
+                    targetSurface: T("CommunicationTemplateInventoryPasswordResetSurface"),
+                    subjectTemplate: settings.PasswordResetEmailSubjectTemplate,
+                    subjectFallback: T("CommunicationTemplateInventoryPasswordResetSubjectFallback"),
+                    bodyTemplate: settings.PasswordResetEmailBodyTemplate,
+                    bodyFallback: T("CommunicationTemplateInventoryPasswordResetBodyFallback"),
+                    supportedTokens: "{email}, {token}, {expires_at_utc}, {recipient_name}, {support_email}",
+                    sample: emailSample),
+                BuildEmailTemplatePreview(
+                    flowKey: "AdminCommunicationTest",
+                    flowName: T("CommunicationTemplateInventoryAdminTestFlow"),
+                    templateKey: "AdminCommunicationTestEmail",
+                    targetSurface: settings.CommunicationTestInboxEmail ?? T("CommunicationChannelFamilyReservedTestTargetMissing"),
+                    subjectTemplate: settings.CommunicationTestEmailSubjectTemplate,
+                    subjectFallback: T("CommunicationTemplateInventoryAdminTestSubjectFallback"),
+                    bodyTemplate: settings.CommunicationTestEmailBodyTemplate,
+                    bodyFallback: T("CommunicationTemplateInventoryAdminTestEmailBodyFallback"),
+                    supportedTokens: "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
+                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("Email"), T("CommunicationChannelFamilyOperatorPlaceholder"), attemptedAtUtc, settings.CommunicationTestInboxEmail ?? "operator@example.com", DescribeCommunicationTransportState(true))),
+                BuildChannelTemplatePreview(
+                    flowKey: "PhoneVerification",
+                    flowName: T("CommunicationTemplateInventoryPhoneVerificationFlow"),
+                    channel: "SMS",
+                    templateKey: "PhoneVerificationSms",
+                    targetSurface: "+4915112345678",
+                    template: settings.PhoneVerificationSmsTemplate,
+                    fallback: T("CommunicationTemplateInventoryPhoneVerificationSmsFallback"),
+                    supportedTokens: "{phone_e164}, {token}, {expires_at_utc}",
+                    sample: BuildPhoneVerificationPlaceholders("+4915112345678", "731904", attemptedAtUtc.AddMinutes(10))),
+                BuildChannelTemplatePreview(
+                    flowKey: "PhoneVerification",
+                    flowName: T("CommunicationTemplateInventoryPhoneVerificationFlow"),
+                    channel: "WhatsApp",
+                    templateKey: "PhoneVerificationWhatsApp",
+                    targetSurface: "+4915112345678",
+                    template: settings.PhoneVerificationWhatsAppTemplate,
+                    fallback: T("CommunicationTemplateInventoryPhoneVerificationWhatsAppFallback"),
+                    supportedTokens: "{phone_e164}, {token}, {expires_at_utc}",
+                    sample: BuildPhoneVerificationPlaceholders("+4915112345678", "731904", attemptedAtUtc.AddMinutes(10))),
+                BuildChannelTemplatePreview(
+                    flowKey: "AdminCommunicationTest",
+                    flowName: T("CommunicationTemplateInventoryAdminTestFlow"),
+                    channel: "SMS",
+                    templateKey: "AdminCommunicationTestSms",
+                    targetSurface: settings.CommunicationTestSmsRecipientE164 ?? T("CommunicationChannelFamilyReservedTestTargetMissing"),
+                    template: settings.CommunicationTestSmsTemplate,
+                    fallback: T("CommunicationTemplateInventoryAdminTestSmsBodyFallback"),
+                    supportedTokens: "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
+                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("SMS"), T("CommunicationChannelFamilyOperatorPlaceholder"), attemptedAtUtc, settings.CommunicationTestSmsRecipientE164 ?? "+4915112345678", DescribeCommunicationTransportState(true))),
+                BuildChannelTemplatePreview(
+                    flowKey: "AdminCommunicationTest",
+                    flowName: T("CommunicationTemplateInventoryAdminTestFlow"),
+                    channel: "WhatsApp",
+                    templateKey: "AdminCommunicationTestWhatsApp",
+                    targetSurface: settings.CommunicationTestWhatsAppRecipientE164 ?? T("CommunicationChannelFamilyReservedTestTargetMissing"),
+                    template: settings.CommunicationTestWhatsAppTemplate,
+                    fallback: T("CommunicationTemplateInventoryAdminTestWhatsAppBodyFallback"),
+                    supportedTokens: "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
+                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("WhatsApp"), T("CommunicationChannelFamilyOperatorPlaceholder"), attemptedAtUtc, settings.CommunicationTestWhatsAppRecipientE164 ?? "+4915112345678", DescribeCommunicationTransportState(true)))
+            };
+
+            return items
+                .Where(x => string.IsNullOrWhiteSpace(flowKey) || string.Equals(x.FlowKey, flowKey, StringComparison.OrdinalIgnoreCase))
+                .Where(x => string.IsNullOrWhiteSpace(channel) || string.Equals(x.Channel, channel, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        private CommunicationTemplatePreviewItemVm BuildEmailTemplatePreview(
+            string flowKey,
+            string flowName,
+            string templateKey,
+            string targetSurface,
+            string? subjectTemplate,
+            string subjectFallback,
+            string? bodyTemplate,
+            string bodyFallback,
+            string supportedTokens,
+            IReadOnlyDictionary<string, string?> sample)
+        {
+            return new CommunicationTemplatePreviewItemVm
+            {
+                FlowKey = flowKey,
+                FlowName = flowName,
+                Channel = "Email",
+                TemplateKey = templateKey,
+                TargetSurface = targetSurface,
+                SubjectTemplate = string.IsNullOrWhiteSpace(subjectTemplate) ? subjectFallback : subjectTemplate,
+                BodyTemplate = string.IsNullOrWhiteSpace(bodyTemplate) ? bodyFallback : bodyTemplate,
+                RenderedSubject = RenderTemplate(subjectTemplate, subjectFallback, sample),
+                RenderedBody = RenderTemplate(bodyTemplate, bodyFallback, sample),
+                SupportedTokens = supportedTokens,
+                SampleData = BuildSampleDataPreview(sample),
+                EditFragment = "site-settings-communications-policy",
+                AuditFlowKey = flowKey,
+                IsEmail = true
+            };
+        }
+
+        private CommunicationTemplatePreviewItemVm BuildChannelTemplatePreview(
+            string flowKey,
+            string flowName,
+            string channel,
+            string templateKey,
+            string targetSurface,
+            string? template,
+            string fallback,
+            string supportedTokens,
+            IReadOnlyDictionary<string, string?> sample)
+        {
+            return new CommunicationTemplatePreviewItemVm
+            {
+                FlowKey = flowKey,
+                FlowName = flowName,
+                Channel = channel,
+                TemplateKey = templateKey,
+                TargetSurface = targetSurface,
+                SubjectTemplate = T("CommunicationTemplatePreviewNoSubject"),
+                BodyTemplate = string.IsNullOrWhiteSpace(template) ? fallback : template,
+                RenderedSubject = T("CommunicationTemplatePreviewNoSubject"),
+                RenderedBody = RenderTemplate(template, fallback, sample),
+                SupportedTokens = supportedTokens,
+                SampleData = BuildSampleDataPreview(sample),
+                EditFragment = "site-settings-communications-policy",
+                AuditFlowKey = flowKey,
+                IsEmail = false
+            };
+        }
+
+        private static string BuildSampleDataPreview(IReadOnlyDictionary<string, string?> sample)
+        {
+            return string.Join(", ", sample.Select(x => $"{x.Key}={x.Value}"));
         }
 
         private List<CommunicationResendPolicyVm> BuildResendPolicies()
@@ -1925,6 +2544,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 "Sent" => T("Sent"),
                 "Failed" => T("Failed"),
                 "Pending" => T("Pending"),
+                _ => string.IsNullOrWhiteSpace(status) ? T("CommonUnclassified") : T(status)
+            };
+        }
+
+        private string DescribeProviderCallbackStatus(string? status)
+        {
+            return status switch
+            {
+                "Pending" => T("Pending"),
+                "Failed" => T("Failed"),
+                "Processed" => T("Processed"),
                 _ => string.IsNullOrWhiteSpace(status) ? T("CommonUnclassified") : T(status)
             };
         }

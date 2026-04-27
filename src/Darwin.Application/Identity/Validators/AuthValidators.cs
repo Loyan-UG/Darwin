@@ -10,6 +10,10 @@ namespace Darwin.Application.Identity.Validators
         {
             RuleFor(x => x.Email).NotEmpty().EmailAddress();
             RuleFor(x => x.Password).NotEmpty();
+            RuleFor(x => x.AntiBotToken).MaximumLength(2048);
+            RuleFor(x => x.AntiBotHoneypot).MaximumLength(256);
+            RuleFor(x => x.ClientIpAddress).MaximumLength(64);
+            RuleFor(x => x.UserAgent).MaximumLength(512);
         }
     }
 

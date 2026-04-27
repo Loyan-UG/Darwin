@@ -25,6 +25,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         private readonly GetBillingWebhookSubscriptionsPageHandler _getBillingWebhookSubscriptionsPage;
         private readonly GetBillingWebhookDeliveriesPageHandler _getBillingWebhookDeliveriesPage;
         private readonly GetBillingWebhookOpsSummaryHandler _getBillingWebhookOpsSummary;
+        private readonly UpdateBillingWebhookDeliveryHandler _updateBillingWebhookDelivery;
+        private readonly UpdatePaymentDisputeReviewHandler _updatePaymentDisputeReview;
         private readonly GetPaymentForEditHandler _getPaymentForEdit;
         private readonly GetRefundsPageHandler _getRefundsPage;
         private readonly GetRefundOpsSummaryHandler _getRefundOpsSummary;
@@ -57,6 +59,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             GetBillingWebhookSubscriptionsPageHandler getBillingWebhookSubscriptionsPage,
             GetBillingWebhookDeliveriesPageHandler getBillingWebhookDeliveriesPage,
             GetBillingWebhookOpsSummaryHandler getBillingWebhookOpsSummary,
+            UpdateBillingWebhookDeliveryHandler updateBillingWebhookDelivery,
+            UpdatePaymentDisputeReviewHandler updatePaymentDisputeReview,
             GetPaymentForEditHandler getPaymentForEdit,
             GetRefundsPageHandler getRefundsPage,
             GetRefundOpsSummaryHandler getRefundOpsSummary,
@@ -88,6 +92,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             _getBillingWebhookSubscriptionsPage = getBillingWebhookSubscriptionsPage;
             _getBillingWebhookDeliveriesPage = getBillingWebhookDeliveriesPage;
             _getBillingWebhookOpsSummary = getBillingWebhookOpsSummary;
+            _updateBillingWebhookDelivery = updateBillingWebhookDelivery;
+            _updatePaymentDisputeReview = updatePaymentDisputeReview;
             _getPaymentForEdit = getPaymentForEdit;
             _getRefundsPage = getRefundsPage;
             _getRefundOpsSummary = getRefundOpsSummary;
@@ -312,6 +318,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     LastFinancialEventAtUtc = x.LastFinancialEventAtUtc,
                     OpenAgeHours = x.OpenAgeHours,
                     ProviderReferenceState = x.ProviderReferenceState,
+                    DisputeReviewState = x.DisputeReviewState,
                     IsStripe = x.IsStripe,
                     NeedsReconciliation = x.NeedsReconciliation,
                     NeedsDisputeFollowUp = x.NeedsDisputeFollowUp,
@@ -341,6 +348,66 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
 
             return RenderPaymentsWorkspace(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdatePaymentDisputeReview(
+            Guid id,
+            string rowVersion,
+            string action,
+            string? note = null,
+            Guid? businessId = null,
+            int page = 1,
+            int pageSize = 20,
+            string? q = null,
+            PaymentQueueFilter? queue = null,
+            bool returnToEdit = false,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            var result = await _updatePaymentDisputeReview
+                .HandleAsync(new UpdatePaymentDisputeReviewDto
+                {
+                    Id = id,
+                    RowVersion = version,
+                    Action = action,
+                    Note = note
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage(action switch
+                {
+                    UpdatePaymentDisputeReviewHandler.UnderReviewAction => "PaymentDisputeMarkedUnderReviewMessage",
+                    UpdatePaymentDisputeReviewHandler.EvidenceSubmittedAction => "PaymentDisputeEvidenceSubmittedMessage",
+                    UpdatePaymentDisputeReviewHandler.ResolveWonAction => "PaymentDisputeResolvedWonMessage",
+                    UpdatePaymentDisputeReviewHandler.ResolveLostAction => "PaymentDisputeResolvedLostMessage",
+                    UpdatePaymentDisputeReviewHandler.ClearAction => "PaymentDisputeReviewClearedMessage",
+                    _ => "PaymentDisputeReviewUpdatedMessage"
+                });
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("PaymentDisputeReviewUpdateFailedMessage");
+            }
+
+            if (returnToEdit)
+            {
+                return RedirectOrHtmx(nameof(EditPayment), new { id });
+            }
+
+            return RedirectOrHtmx(nameof(Payments), new { businessId, page, pageSize, q, queue });
         }
 
         [HttpGet]
@@ -416,6 +483,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Deliveries = deliveries.Items.Select(x => new BillingWebhookDeliveryListItemVm
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     SubscriptionId = x.SubscriptionId,
                     EventType = x.EventType,
                     CallbackUrl = x.CallbackUrl,
@@ -439,6 +507,55 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
 
             return RenderWebhooksWorkspace(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateWebhookDelivery(
+            Guid id,
+            string rowVersion,
+            string action,
+            int page = 1,
+            int pageSize = 20,
+            string? q = null,
+            BillingWebhookDeliveryQueueFilter queue = BillingWebhookDeliveryQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            var result = await _updateBillingWebhookDelivery
+                .HandleAsync(new UpdateBillingWebhookDeliveryDto
+                {
+                    Id = id,
+                    RowVersion = version,
+                    Action = action
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage(action switch
+                {
+                    "MarkSucceeded" => "WebhookDeliveryMarkedSucceededMessage",
+                    "Requeue" => "WebhookDeliveryRequeuedMessage",
+                    "Suppress" => "WebhookDeliverySuppressedMessage",
+                    _ => "WebhookDeliveryUpdatedMessage"
+                });
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("WebhookDeliveryUpdateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(Webhooks), new { page, pageSize, q, queue });
         }
 
         [HttpGet]
@@ -853,6 +970,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 LastFinancialEventAtUtc = dto.LastFinancialEventAtUtc,
                 OpenAgeHours = dto.OpenAgeHours,
                 ProviderReferenceState = dto.ProviderReferenceState,
+                DisputeReviewState = dto.DisputeReviewState,
                 NeedsReconciliation = dto.NeedsReconciliation,
                 NeedsDisputeFollowUp = dto.NeedsDisputeFollowUp,
                 BusinessId = dto.BusinessId,

@@ -8,7 +8,10 @@ namespace Darwin.Application.Identity.DTOs
         public string Email { get; set; } = string.Empty;     // Case-insensitive; Infra should normalize
         public string Password { get; set; } = string.Empty;
         public bool RememberMe { get; set; } = false;
-        // TODO: Add captcha/anti-bot signal if needed.
+        public string? AntiBotToken { get; set; }
+        public string? AntiBotHoneypot { get; set; }
+        public string? ClientIpAddress { get; set; }
+        public string? UserAgent { get; set; }
     }
 
     /// <summary>Result of sign-in flow. Cookie issuance is done in Web, not here.</summary>

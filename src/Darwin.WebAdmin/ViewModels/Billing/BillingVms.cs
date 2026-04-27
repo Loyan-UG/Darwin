@@ -206,6 +206,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     public sealed class BillingWebhookDeliveryListItemVm
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid SubscriptionId { get; set; }
         public string EventType { get; set; } = string.Empty;
         public string CallbackUrl { get; set; } = string.Empty;
@@ -270,6 +271,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime? LastFinancialEventAtUtc { get; set; }
         public int OpenAgeHours { get; set; }
         public string ProviderReferenceState { get; set; } = string.Empty;
+        public string DisputeReviewState { get; set; } = string.Empty;
         public bool IsStripe { get; set; }
         public bool NeedsReconciliation { get; set; }
         public bool NeedsDisputeFollowUp { get; set; }
@@ -315,6 +317,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime? LastFinancialEventAtUtc { get; set; }
         public int OpenAgeHours { get; set; }
         public string ProviderReferenceState { get; set; } = string.Empty;
+        public string DisputeReviewState { get; set; } = string.Empty;
         public bool NeedsReconciliation { get; set; }
         public bool NeedsDisputeFollowUp { get; set; }
 

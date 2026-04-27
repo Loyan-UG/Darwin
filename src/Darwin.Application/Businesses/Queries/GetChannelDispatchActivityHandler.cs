@@ -58,6 +58,7 @@ namespace Darwin.Application.Businesses.Queries
                 .Select(x => new ChannelDispatchAuditListItemDto
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     IsQueueOperation = false,
                     Channel = x.Channel,
                     Provider = x.Provider,
@@ -239,6 +240,7 @@ namespace Darwin.Application.Businesses.Queries
                     return new ChannelDispatchAuditListItemDto
                     {
                         Id = x.Id,
+                        RowVersion = x.RowVersion,
                         IsQueueOperation = false,
                         Channel = x.Channel,
                         Provider = x.Provider,
@@ -432,6 +434,7 @@ namespace Darwin.Application.Businesses.Queries
             return rows.Select(x => new ChannelDispatchAuditListItemDto
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     IsQueueOperation = true,
                     Channel = x.Channel,
                     Provider = x.Provider,

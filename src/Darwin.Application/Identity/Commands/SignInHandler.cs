@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Security;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
@@ -22,32 +23,66 @@ namespace Darwin.Application.Identity.Auth.Commands
         private readonly IUserPasswordHasher _hasher;
         private readonly IValidator<SignInDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IAuthAntiBotVerifier _antiBot;
+        private readonly ILoginRateLimiter _limiter;
 
         public SignInHandler(
             IAppDbContext db,
             IUserPasswordHasher hasher,
             IValidator<SignInDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource> localizer,
+            IAuthAntiBotVerifier antiBot,
+            ILoginRateLimiter limiter)
         {
             _db = db;
             _hasher = hasher;
             _validator = validator;
             _localizer = localizer;
+            _antiBot = antiBot;
+            _limiter = limiter;
         }
 
         public async Task<SignInResultDto> HandleAsync(SignInDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
-            var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
-            if (user == null || !user.IsActive)
+            var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
+            var rateKey = BuildRateKey(dto.ClientIpAddress, normalizedEmail);
+            if (!await _limiter.IsAllowedAsync(rateKey, maxAttempts: 8, windowSeconds: 300, ct).ConfigureAwait(false))
+            {
+                return new SignInResultDto { Succeeded = false, FailureReason = _localizer["TooManyAttemptsPleaseTryAgain"] };
+            }
+
+            var antiBotResult = await _antiBot.VerifyAsync(
+                new AuthAntiBotCheck
+                {
+                    ChallengeToken = dto.AntiBotToken,
+                    HoneypotValue = dto.AntiBotHoneypot,
+                    ClientIpAddress = dto.ClientIpAddress,
+                    UserAgent = dto.UserAgent
+                },
+                ct).ConfigureAwait(false);
+
+            if (!antiBotResult.Succeeded)
+            {
+                await _limiter.RecordAsync(rateKey, ct).ConfigureAwait(false);
                 return new SignInResultDto { Succeeded = false, FailureReason = _localizer["InvalidCredentials"] };
+            }
+
+            var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail && !u.IsDeleted, ct);
+            if (user == null || !user.IsActive)
+            {
+                await _limiter.RecordAsync(rateKey, ct).ConfigureAwait(false);
+                return new SignInResultDto { Succeeded = false, FailureReason = _localizer["InvalidCredentials"] };
+            }
 
             if (!_hasher.Verify(user.PasswordHash, dto.Password))
+            {
+                await _limiter.RecordAsync(rateKey, ct).ConfigureAwait(false);
                 return new SignInResultDto { Succeeded = false, FailureReason = _localizer["InvalidCredentials"] };
+            }
 
-            // TODO: If 2FA enabled on user, enforce it and return RequiresTwoFactor=true.
-            var twoFactorEnabled = user.TwoFactorEnabled; // Assuming Domain has this flag.
+            var twoFactorEnabled = user.TwoFactorEnabled;
             if (twoFactorEnabled)
             {
                 return new SignInResultDto
@@ -65,6 +100,12 @@ namespace Darwin.Application.Identity.Auth.Commands
                 UserId = user.Id,
                 SecurityStamp = user.SecurityStamp
             };
+        }
+
+        private static string BuildRateKey(string? ipAddress, string normalizedEmail)
+        {
+            var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress.Trim();
+            return $"webadmin-login:{ip}:{normalizedEmail}";
         }
     }
 }

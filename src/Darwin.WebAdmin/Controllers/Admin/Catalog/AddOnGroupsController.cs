@@ -235,10 +235,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 IsActive = dto.IsActive,
                 Options = dto.Options.Select(o => new AddOnOptionVm
                 {
+                    Id = o.Id,
                     Label = o.Label,
                     SortOrder = o.SortOrder,
                     Values = o.Values.Select(v => new AddOnOptionValueVm
                     {
+                        Id = v.Id,
                         Label = v.Label,
                         PriceDeltaMinor = v.PriceDeltaMinor,
                         Hint = v.Hint,
@@ -274,10 +276,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 IsActive = vm.IsActive,
                 Options = vm.Options.Select(o => new AddOnOptionDto
                 {
+                    Id = o.Id,
                     Label = o.Label?.Trim() ?? string.Empty,
                     SortOrder = o.SortOrder,
                     Values = o.Values.Select(v => new AddOnOptionValueDto
                     {
+                        Id = v.Id,
                         Label = v.Label?.Trim() ?? string.Empty,
                         PriceDeltaMinor = v.PriceDeltaMinor,
                         Hint = string.IsNullOrWhiteSpace(v.Hint) ? null : v.Hint.Trim(),

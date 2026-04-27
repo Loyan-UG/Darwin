@@ -8,7 +8,9 @@ namespace Darwin.Application.CMS.Media.DTOs
         MissingAlt = 1,
         EditorAssets = 2,
         LibraryAssets = 3,
-        MissingTitle = 4
+        MissingTitle = 4,
+        UsedInProducts = 5,
+        Unused = 6
     }
 
     /// <summary>
@@ -55,6 +57,7 @@ namespace Darwin.Application.CMS.Media.DTOs
         public int? Height { get; set; }
         public string? Role { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
+        public int ProductReferenceCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -65,6 +68,8 @@ namespace Darwin.Application.CMS.Media.DTOs
         public int MissingTitleCount { get; set; }
         public int EditorAssetCount { get; set; }
         public int LibraryAssetCount { get; set; }
+        public int ProductReferencedCount { get; set; }
+        public int UnusedCount { get; set; }
     }
 
     /// <summary>

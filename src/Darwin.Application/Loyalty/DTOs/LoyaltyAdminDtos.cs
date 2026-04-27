@@ -43,6 +43,7 @@ namespace Darwin.Application.Loyalty.DTOs
         public DateTime CreatedAtUtc { get; set; }
         public DateTime ExpiresAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     public sealed class LoyaltyScanSessionOpsSummaryDto

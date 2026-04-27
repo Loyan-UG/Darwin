@@ -13,6 +13,17 @@ namespace Darwin.Application.Loyalty.Campaigns
         PushEnabled = 5
     }
 
+    public enum LoyaltyCampaignDeliveryQueueFilter
+    {
+        All = 0,
+        Pending = 1,
+        InProgress = 2,
+        Failed = 3,
+        Succeeded = 4,
+        Cancelled = 5,
+        NeedsAttention = 6
+    }
+
     public sealed class BusinessCampaignItemDto
     {
         public Guid Id { get; init; }
@@ -42,6 +53,44 @@ namespace Darwin.Application.Loyalty.Campaigns
         public int DraftCount { get; init; }
         public int ExpiredCount { get; init; }
         public int PushEnabledCount { get; init; }
+    }
+
+    public sealed class CampaignDeliveryItemDto
+    {
+        public Guid Id { get; init; }
+        public Guid CampaignId { get; init; }
+        public string CampaignName { get; init; } = string.Empty;
+        public string CampaignTitle { get; init; } = string.Empty;
+        public Guid? RecipientUserId { get; init; }
+        public Guid? BusinessId { get; init; }
+        public short Channel { get; init; }
+        public short Status { get; init; }
+        public string? Destination { get; init; }
+        public int AttemptCount { get; init; }
+        public DateTime? FirstAttemptAtUtc { get; init; }
+        public DateTime? LastAttemptAtUtc { get; init; }
+        public int? LastResponseCode { get; init; }
+        public string? ProviderMessageId { get; init; }
+        public string? LastError { get; init; }
+        public string? IdempotencyKey { get; init; }
+        public byte[] RowVersion { get; init; } = Array.Empty<byte>();
+    }
+
+    public sealed class CampaignDeliveryOpsSummaryDto
+    {
+        public int TotalCount { get; init; }
+        public int PendingCount { get; init; }
+        public int InProgressCount { get; init; }
+        public int FailedCount { get; init; }
+        public int SucceededCount { get; init; }
+        public int CancelledCount { get; init; }
+        public int NeedsAttentionCount { get; init; }
+    }
+
+    public sealed class GetCampaignDeliveriesResultDto
+    {
+        public List<CampaignDeliveryItemDto> Items { get; init; } = new();
+        public int Total { get; init; }
     }
 
 
@@ -101,6 +150,15 @@ namespace Darwin.Application.Loyalty.Campaigns
         public Guid BusinessId { get; init; }
         public Guid Id { get; init; }
         public bool IsActive { get; init; }
+        public byte[] RowVersion { get; init; } = Array.Empty<byte>();
+    }
+
+    public sealed class UpdateCampaignDeliveryStatusDto
+    {
+        public Guid Id { get; init; }
+        public Guid? BusinessId { get; init; }
+        public short Status { get; init; }
+        public string? OperatorNote { get; init; }
         public byte[] RowVersion { get; init; } = Array.Empty<byte>();
     }
 }

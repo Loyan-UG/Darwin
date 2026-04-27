@@ -73,6 +73,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
     public sealed class MerchantReadinessItemVm
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string Name { get; set; } = string.Empty;
         public string? LegalName { get; set; }
         public bool IsActive { get; set; }
@@ -327,6 +328,19 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public string SmsTransportSummary { get; set; } = string.Empty;
         public string WhatsAppTransportSummary { get; set; } = string.Empty;
         public string AdminRoutingSummary { get; set; } = string.Empty;
+        public string EffectiveCulture { get; set; } = string.Empty;
+        public string EffectiveCurrency { get; set; } = string.Empty;
+        public string EffectiveTimeZoneId { get; set; } = string.Empty;
+        public string EffectiveBrandDisplayName { get; set; } = string.Empty;
+        public string? EffectiveSupportEmail { get; set; }
+        public string? EffectiveSenderName { get; set; }
+        public string? EffectiveReplyToEmail { get; set; }
+        public bool UsesPlatformCultureFallback { get; set; }
+        public bool UsesPlatformCurrencyFallback { get; set; }
+        public bool UsesPlatformTimeZoneFallback { get; set; }
+        public bool UsesPlatformContactEmailFallback { get; set; }
+        public bool UsesPlatformSenderFallback { get; set; }
+        public bool TenantCommunicationIdentityConfigured { get; set; }
         public int FailedInvitationCount { get; set; }
         public int FailedActivationCount { get; set; }
         public int FailedPasswordResetCount { get; set; }

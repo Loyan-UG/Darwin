@@ -28,6 +28,8 @@
     var loyaltyCulture = System.Globalization.CultureInfo.CurrentCulture;
     string LoyaltyDateTimeText(DateTime? utc) => utc?.ToString("g", loyaltyCulture) ?? "-";
     string ScanSessionsUrl(object? businessId = null, string? q = null, Darwin.Domain.Enums.LoyaltyScanMode? mode = null, Darwin.Domain.Enums.LoyaltyScanStatus? status = null) => Url.Action("ScanSessions", "Loyalty", new { businessId, q, mode, status }) ?? string.Empty;
+    string ExpireScanSessionUrl() => Url.Action("ExpireScanSession", "Loyalty") ?? string.Empty;
+    string ExpireExpiredScanSessionsUrl() => Url.Action("ExpireExpiredScanSessions", "Loyalty") ?? string.Empty;
     string RedemptionsUrl(object? businessId = null) => Url.Action("Redemptions", "Loyalty", new { businessId }) ?? string.Empty;
     string MobileOperationsUrl(object? businessId = null, string? q = null) => Url.Action("Index", "MobileOperations", new { businessId, q }) ?? string.Empty;
     string ProviderReviewUrl() => Url.Action("ChannelAudits", "BusinessCommunications", new { providerReviewOnly = true }) ?? string.Empty;
@@ -42,6 +44,14 @@
             <div class="text-muted">@T.T("LoyaltyScanSessionsIntro")</div>
         </div>
         <div class="d-flex gap-2">
+            @if (Model.BusinessId.HasValue)
+            {
+                <form asp-action="ExpireExpiredScanSessions" method="post" class="d-inline" hx-post="@ExpireExpiredScanSessionsUrl()" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                    <button type="submit" class="btn btn-outline-warning">@T.T("LoyaltyExpireStaleScanSessions")</button>
+                </form>
+            }
             <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@RedemptionsUrl(Model.BusinessId)" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML">@T.T("Redemptions")</a>
             <a asp-controller="MobileOperations" asp-action="Index" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@MobileOperationsUrl(Model.BusinessId)" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML">@T.T("LoyaltyMobileOps")</a>
             <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true" class="btn btn-outline-secondary" hx-get="@ProviderReviewUrl()" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML">@T.T("ProviderReview")</a>
@@ -195,6 +205,16 @@
                             <td>@LoyaltyDateTimeText(item.CompletedAtUtc)</td>
                             <td class="small text-muted">@LocalizeScanFailureReason(item.FailureReason)</td>
                             <td class="text-end">
+                                @if (item.Status == Darwin.Domain.Enums.LoyaltyScanStatus.Pending && item.ExpiresAtUtc <= DateTime.UtcNow)
+                                {
+                                    <form asp-action="ExpireScanSession" method="post" class="d-inline" hx-post="@ExpireScanSessionUrl()" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">@T.T("Expire")</button>
+                                    </form>
+                                }
                                 <a asp-controller="MobileOperations" asp-action="Index" asp-route-businessId="@item.BusinessId" asp-route-q="@item.CustomerEmail" class="btn btn-sm btn-outline-secondary" hx-get="@MobileOperationsUrl(item.BusinessId, item.CustomerEmail)" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML">@T.T("LoyaltyMobileOps")</a>
                             </td>
                         </tr>

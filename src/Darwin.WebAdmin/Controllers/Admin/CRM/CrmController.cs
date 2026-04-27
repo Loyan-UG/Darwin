@@ -29,11 +29,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly CreateLeadHandler _createLead;
         private readonly UpdateLeadHandler _updateLead;
         private readonly ConvertLeadToCustomerHandler _convertLeadToCustomer;
+        private readonly UpdateLeadLifecycleHandler _updateLeadLifecycle;
         private readonly GetOpportunitiesPageHandler _getOpportunitiesPage;
         private readonly GetOpportunityForEditHandler _getOpportunityForEdit;
         private readonly GetOpportunityInteractionsPageHandler _getOpportunityInteractionsPage;
         private readonly CreateOpportunityHandler _createOpportunity;
         private readonly UpdateOpportunityHandler _updateOpportunity;
+        private readonly UpdateOpportunityLifecycleHandler _updateOpportunityLifecycle;
         private readonly GetCustomerSegmentsPageHandler _getCustomerSegmentsPage;
         private readonly GetCustomerSegmentForEditHandler _getCustomerSegmentForEdit;
         private readonly GetInvoicesPageHandler _getInvoicesPage;
@@ -65,11 +67,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             CreateLeadHandler createLead,
             UpdateLeadHandler updateLead,
             ConvertLeadToCustomerHandler convertLeadToCustomer,
+            UpdateLeadLifecycleHandler updateLeadLifecycle,
             GetOpportunitiesPageHandler getOpportunitiesPage,
             GetOpportunityForEditHandler getOpportunityForEdit,
             GetOpportunityInteractionsPageHandler getOpportunityInteractionsPage,
             CreateOpportunityHandler createOpportunity,
             UpdateOpportunityHandler updateOpportunity,
+            UpdateOpportunityLifecycleHandler updateOpportunityLifecycle,
             GetCustomerSegmentsPageHandler getCustomerSegmentsPage,
             GetCustomerSegmentForEditHandler getCustomerSegmentForEdit,
             GetInvoicesPageHandler getInvoicesPage,
@@ -100,11 +104,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _createLead = createLead;
             _updateLead = updateLead;
             _convertLeadToCustomer = convertLeadToCustomer;
+            _updateLeadLifecycle = updateLeadLifecycle;
             _getOpportunitiesPage = getOpportunitiesPage;
             _getOpportunityForEdit = getOpportunityForEdit;
             _getOpportunityInteractionsPage = getOpportunityInteractionsPage;
             _createOpportunity = createOpportunity;
             _updateOpportunity = updateOpportunity;
+            _updateOpportunityLifecycle = updateOpportunityLifecycle;
             _getCustomerSegmentsPage = getCustomerSegmentsPage;
             _getCustomerSegmentForEdit = getCustomerSegmentForEdit;
             _getInvoicesPage = getInvoicesPage;
@@ -770,6 +776,105 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
 
             return RenderOpportunitiesWorkspace(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateLeadLifecycle(
+            Guid id,
+            string rowVersion,
+            string action,
+            int page = 1,
+            int pageSize = 20,
+            string? q = null,
+            LeadQueueFilter filter = LeadQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            var result = await _updateLeadLifecycle
+                .HandleAsync(new UpdateLeadLifecycleDto
+                {
+                    Id = id,
+                    RowVersion = version,
+                    Action = action
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage(action switch
+                {
+                    "Qualify" => "LeadQualifiedMessage",
+                    "Disqualify" => "LeadDisqualifiedMessage",
+                    "Reopen" => "LeadReopenedMessage",
+                    _ => "LeadLifecycleUpdatedMessage"
+                });
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("LeadLifecycleUpdateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(Leads), new { page, pageSize, q, filter });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateOpportunityLifecycle(
+            Guid id,
+            string rowVersion,
+            string action,
+            int page = 1,
+            int pageSize = 20,
+            string? q = null,
+            OpportunityQueueFilter filter = OpportunityQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            byte[] version;
+            try
+            {
+                version = Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                version = Array.Empty<byte>();
+            }
+
+            var result = await _updateOpportunityLifecycle
+                .HandleAsync(new UpdateOpportunityLifecycleDto
+                {
+                    Id = id,
+                    RowVersion = version,
+                    Action = action
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage(action switch
+                {
+                    "Advance" => "OpportunityAdvancedMessage",
+                    "CloseWon" => "OpportunityClosedWonMessage",
+                    "CloseLost" => "OpportunityClosedLostMessage",
+                    "Reopen" => "OpportunityReopenedMessage",
+                    _ => "OpportunityLifecycleUpdatedMessage"
+                });
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? T("OpportunityLifecycleUpdateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(Opportunities), new { page, pageSize, q, filter });
         }
 
         [HttpGet]

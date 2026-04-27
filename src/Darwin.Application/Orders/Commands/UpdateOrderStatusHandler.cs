@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,7 +25,7 @@ namespace Darwin.Application.Orders.Commands
     /// - Shipped    => allocate (finalize) stock per order lines (idempotent per order)
     /// 
     /// This command centralizes imperative consistency while a future event-driven pipeline
-    /// may take over cross-aggregate side-effects (see TODO below).
+    /// can later be replaced by an event-driven pipeline if the platform adopts an outbox/saga boundary.
     /// </summary>
     public sealed class UpdateOrderStatusHandler
     {
@@ -65,6 +66,9 @@ namespace Darwin.Application.Orders.Commands
             // Load order with lines for inventory orchestration.
             var order = await _db.Set<Order>()
                 .Include(o => o.Lines)
+                .Include(o => o.Payments)
+                .Include(o => o.Shipments)
+                    .ThenInclude(s => s.Lines)
                 .FirstOrDefaultAsync(o => o.Id == dto.OrderId, ct);
 
             if (order is null)
@@ -77,6 +81,8 @@ namespace Darwin.Application.Orders.Commands
             // Policy check: allowed transitions.
             if (!_policy.IsAllowed(order.Status, dto.NewStatus))
                 throw new ValidationException(_localizer["OrderTransitionNotAllowed", order.Status, dto.NewStatus]);
+
+            await ValidateTargetStatusEvidenceAsync(order, dto.NewStatus, ct).ConfigureAwait(false);
 
             if (dto.WarehouseId.HasValue)
             {
@@ -156,24 +162,141 @@ namespace Darwin.Application.Orders.Commands
                         await _allocateForOrder.HandleAsync(allocDto, ct);
                         break;
                     }
-                    // TODO : Other statuses (Delivered/Refunded/Partially...) may have separate policies later.
             }
 
             order.Status = dto.NewStatus;
             await _db.SaveChangesAsync(ct);
+        }
 
-            // TODO (Option B — Event-driven alternative):
-            // In the future, raise domain/application events instead of imperative calls:
-            //  - OnOrderPaid(orderId)       => InventoryService reserves per line (idempotent by (orderId, reason))
-            //  - OnOrderCancelled(orderId)  => InventoryService releases reservations
-            //  - OnOrderShipped(orderId)    => InventoryService allocates final stock
-            //
-            // Pros:
-            //  * Decouples Orders from Inventory orchestration.
-            //  * Retries/outbox patterns improve reliability across service boundaries.
-            // Cons:
-            //  * More moving parts (event bus/outbox), higher operational complexity.
-            //  * Harder to maintain strong consistency without sagas/compensation.
+        private async Task ValidateTargetStatusEvidenceAsync(Order order, OrderStatus targetStatus, CancellationToken ct)
+        {
+            switch (targetStatus)
+            {
+                case OrderStatus.Paid:
+                    if (GetCollectedPaymentTotal(order) < order.GrandTotalGrossMinor)
+                    {
+                        throw new ValidationException(_localizer["OrderPaidStatusRequiresCapturedPayment"]);
+                    }
+                    break;
+
+                case OrderStatus.PartiallyShipped:
+                    if (!HasPartialFulfillmentEvidence(order))
+                    {
+                        throw new ValidationException(_localizer["OrderPartiallyShippedStatusRequiresPartialShipment"]);
+                    }
+                    break;
+
+                case OrderStatus.Shipped:
+                    if (!HasFullFulfillmentEvidence(order, includeDelivered: true))
+                    {
+                        throw new ValidationException(_localizer["OrderShippedStatusRequiresFullShipment"]);
+                    }
+                    break;
+
+                case OrderStatus.Delivered:
+                    if (!HasFullDeliveryEvidence(order))
+                    {
+                        throw new ValidationException(_localizer["OrderDeliveredStatusRequiresFullDelivery"]);
+                    }
+                    break;
+
+                case OrderStatus.PartiallyRefunded:
+                case OrderStatus.Refunded:
+                    await ValidateRefundEvidenceAsync(order, targetStatus, ct).ConfigureAwait(false);
+                    break;
+
+                case OrderStatus.Completed:
+                    if (!HasFullDeliveryEvidence(order))
+                    {
+                        throw new ValidationException(_localizer["OrderCompletedStatusRequiresFullDelivery"]);
+                    }
+                    if (await HasOpenRefundsAsync(order.Id, ct).ConfigureAwait(false))
+                    {
+                        throw new ValidationException(_localizer["OrderCompletedStatusRequiresNoOpenRefunds"]);
+                    }
+                    break;
+            }
+        }
+
+        private static long GetCollectedPaymentTotal(Order order)
+        {
+            return order.Payments
+                .Where(x => !x.IsDeleted && x.Currency == order.Currency && x.Status is PaymentStatus.Captured or PaymentStatus.Completed)
+                .Sum(x => x.AmountMinor);
+        }
+
+        private static bool HasPartialFulfillmentEvidence(Order order)
+        {
+            var orderedQuantity = order.Lines.Where(x => !x.IsDeleted).Sum(x => x.Quantity);
+            var shippedQuantity = GetFulfilledQuantity(order, includeDelivered: true);
+            return orderedQuantity > 0 && shippedQuantity > 0 && shippedQuantity < orderedQuantity;
+        }
+
+        private static bool HasFullFulfillmentEvidence(Order order, bool includeDelivered)
+        {
+            var shippedByLine = GetFulfilledQuantitiesByLine(order, includeDelivered);
+            return order.Lines
+                .Where(x => !x.IsDeleted)
+                .All(line => shippedByLine.TryGetValue(line.Id, out var quantity) && quantity >= line.Quantity);
+        }
+
+        private static bool HasFullDeliveryEvidence(Order order)
+        {
+            var deliveredByLine = order.Shipments
+                .Where(x => !x.IsDeleted && x.Status == ShipmentStatus.Delivered)
+                .SelectMany(x => x.Lines.Where(l => !l.IsDeleted))
+                .GroupBy(x => x.OrderLineId)
+                .ToDictionary(x => x.Key, x => x.Sum(l => l.Quantity));
+
+            return order.Lines
+                .Where(x => !x.IsDeleted)
+                .All(line => deliveredByLine.TryGetValue(line.Id, out var quantity) && quantity >= line.Quantity);
+        }
+
+        private static int GetFulfilledQuantity(Order order, bool includeDelivered)
+        {
+            return GetFulfilledQuantitiesByLine(order, includeDelivered).Values.Sum();
+        }
+
+        private static Dictionary<Guid, int> GetFulfilledQuantitiesByLine(Order order, bool includeDelivered)
+        {
+            var validStatuses = includeDelivered
+                ? new[] { ShipmentStatus.Shipped, ShipmentStatus.Delivered, ShipmentStatus.Returned }
+                : new[] { ShipmentStatus.Shipped, ShipmentStatus.Returned };
+
+            return order.Shipments
+                .Where(x => !x.IsDeleted && validStatuses.Contains(x.Status))
+                .SelectMany(x => x.Lines.Where(l => !l.IsDeleted))
+                .GroupBy(x => x.OrderLineId)
+                .ToDictionary(x => x.Key, x => x.Sum(l => l.Quantity));
+        }
+
+        private async Task ValidateRefundEvidenceAsync(Order order, OrderStatus targetStatus, CancellationToken ct)
+        {
+            var completedRefundTotal = await _db.Set<Refund>()
+                .AsNoTracking()
+                .Where(x => x.OrderId == order.Id && x.Status == RefundStatus.Completed)
+                .SumAsync(x => (long?)x.AmountMinor, ct)
+                .ConfigureAwait(false) ?? 0L;
+
+            if (targetStatus == OrderStatus.PartiallyRefunded &&
+                (completedRefundTotal <= 0 || completedRefundTotal >= order.GrandTotalGrossMinor))
+            {
+                throw new ValidationException(_localizer["OrderPartiallyRefundedStatusRequiresPartialRefund"]);
+            }
+
+            if (targetStatus == OrderStatus.Refunded && completedRefundTotal < order.GrandTotalGrossMinor)
+            {
+                throw new ValidationException(_localizer["OrderRefundedStatusRequiresFullRefund"]);
+            }
+        }
+
+        private async Task<bool> HasOpenRefundsAsync(Guid orderId, CancellationToken ct)
+        {
+            return await _db.Set<Refund>()
+                .AsNoTracking()
+                .AnyAsync(x => x.OrderId == orderId && x.Status == RefundStatus.Pending, ct)
+                .ConfigureAwait(false);
         }
     }
 }

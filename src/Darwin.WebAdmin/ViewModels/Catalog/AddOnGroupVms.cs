@@ -68,6 +68,8 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     /// </summary>
     public sealed class AddOnOptionValueVm
     {
+        public Guid? Id { get; set; }
+
         [Required, MaxLength(200)]
         public string Label { get; set; } = string.Empty;
 
@@ -86,6 +88,8 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     /// </summary>
     public sealed class AddOnOptionVm
     {
+        public Guid? Id { get; set; }
+
         [Required, MaxLength(200)]
         public string Label { get; set; } = string.Empty;
 

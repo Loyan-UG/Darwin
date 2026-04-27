@@ -30,7 +30,7 @@ namespace Darwin.Application.Catalog.DTOs
     }
 
     /// <summary>
-    /// Edit payload for an AddOnGroup (whole aggregate upsert; simplest approach for phase 1).
+    /// Edit payload for an AddOnGroup with identity-preserving nested option/value upsert.
     /// </summary>
     public sealed class AddOnGroupEditDto
     {
@@ -52,6 +52,7 @@ namespace Darwin.Application.Catalog.DTOs
     /// </summary>
     public sealed class AddOnOptionDto
     {
+        public Guid? Id { get; set; }
         public string Label { get; set; } = string.Empty;
         public int SortOrder { get; set; } = 0;
         public List<AddOnOptionValueDto> Values { get; set; } = new();
@@ -62,6 +63,7 @@ namespace Darwin.Application.Catalog.DTOs
     /// </summary>
     public sealed class AddOnOptionValueDto
     {
+        public Guid? Id { get; set; }
         public string Label { get; set; } = string.Empty;
         public long PriceDeltaMinor { get; set; } = 0;
         public string? Hint { get; set; }

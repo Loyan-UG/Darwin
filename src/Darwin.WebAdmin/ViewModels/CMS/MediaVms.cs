@@ -21,6 +21,7 @@ namespace Darwin.WebAdmin.ViewModels.CMS
         public int? Height { get; set; }
         public string? Role { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
+        public int ProductReferenceCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -47,6 +48,8 @@ namespace Darwin.WebAdmin.ViewModels.CMS
         public int MissingTitleCount { get; set; }
         public int EditorAssetCount { get; set; }
         public int LibraryAssetCount { get; set; }
+        public int ProductReferencedCount { get; set; }
+        public int UnusedCount { get; set; }
     }
 
     public sealed class MediaAssetPlaybookVm

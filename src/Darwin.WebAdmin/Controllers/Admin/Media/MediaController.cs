@@ -38,6 +38,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         private readonly CreateMediaAssetHandler _create;
         private readonly UpdateMediaAssetHandler _update;
         private readonly SoftDeleteMediaAssetHandler _softDelete;
+        private readonly PurgeUnusedMediaAssetHandler _purgeUnused;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MediaController"/> class.
@@ -49,7 +50,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             GetMediaAssetForEditHandler getForEdit,
             CreateMediaAssetHandler create,
             UpdateMediaAssetHandler update,
-            SoftDeleteMediaAssetHandler softDelete)
+            SoftDeleteMediaAssetHandler softDelete,
+            PurgeUnusedMediaAssetHandler purgeUnused)
         {
             _env = env;
             _getPage = getPage;
@@ -58,6 +60,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             _create = create;
             _update = update;
             _softDelete = softDelete;
+            _purgeUnused = purgeUnused;
         }
 
         /// <summary>
@@ -81,7 +84,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                     MissingAltCount = summary.MissingAltCount,
                     MissingTitleCount = summary.MissingTitleCount,
                     EditorAssetCount = summary.EditorAssetCount,
-                    LibraryAssetCount = summary.LibraryAssetCount
+                    LibraryAssetCount = summary.LibraryAssetCount,
+                    ProductReferencedCount = summary.ProductReferencedCount,
+                    UnusedCount = summary.UnusedCount
                 },
                 Playbooks = BuildPlaybooks(),
                 FilterItems = BuildFilterItems(filter),
@@ -97,6 +102,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                     Height = x.Height,
                     Role = x.Role,
                     ModifiedAtUtc = x.ModifiedAtUtc,
+                    ProductReferenceCount = x.ProductReferenceCount,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -111,6 +117,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaEditorAssets"), MediaAssetQueueFilter.EditorAssets.ToString(), selectedFilter == MediaAssetQueueFilter.EditorAssets);
             yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaLibraryAssets"), MediaAssetQueueFilter.LibraryAssets.ToString(), selectedFilter == MediaAssetQueueFilter.LibraryAssets);
             yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaMissingTitle"), MediaAssetQueueFilter.MissingTitle.ToString(), selectedFilter == MediaAssetQueueFilter.MissingTitle);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaUsedInProducts"), MediaAssetQueueFilter.UsedInProducts.ToString(), selectedFilter == MediaAssetQueueFilter.UsedInProducts);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(T("MediaUnusedAssets"), MediaAssetQueueFilter.Unused.ToString(), selectedFilter == MediaAssetQueueFilter.Unused);
         }
 
         private List<MediaAssetPlaybookVm> BuildPlaybooks()
@@ -134,6 +142,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                     Title = T("MediaPlaybookEditorAssetsTitle"),
                     ScopeNote = T("MediaPlaybookEditorAssetsScope"),
                     OperatorAction = T("MediaPlaybookEditorAssetsAction")
+                },
+                new()
+                {
+                    Title = T("MediaPlaybookUnusedAssetsTitle"),
+                    ScopeNote = T("MediaPlaybookUnusedAssetsScope"),
+                    OperatorAction = T("MediaPlaybookUnusedAssetsAction")
                 }
             };
         }
@@ -268,6 +282,64 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             await _softDelete.HandleAsync(id, ct).ConfigureAwait(false);
             SetSuccessMessage("MediaDeleted");
             return RedirectOrHtmx(nameof(Index), new { });
+        }
+
+        /// <summary>
+        /// Permanently removes an unreferenced media asset and its local upload file when safe.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PurgeUnused([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        {
+            var dto = await _getForEdit.HandleAsync(id, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                SetErrorMessage("MediaAssetNotFound");
+                return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
+            }
+
+            var localPath = TryResolveLocalUploadPath(dto.Url);
+            var result = await _purgeUnused.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                SetErrorMessage(string.IsNullOrWhiteSpace(result.Error) ? "MediaPurgeFailed" : result.Error);
+                return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
+            }
+
+            if (!string.IsNullOrWhiteSpace(localPath) && System.IO.File.Exists(localPath))
+            {
+                System.IO.File.Delete(localPath);
+            }
+
+            SetSuccessMessage("MediaPurged");
+            return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
+        }
+
+        /// <summary>
+        /// Permanently removes a bounded batch of currently unreferenced media assets and their local upload files.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PurgeUnusedBatch(CancellationToken ct = default)
+        {
+            var result = await _purgeUnused.HandleBatchAsync(ct: ct).ConfigureAwait(false);
+            if (!result.Succeeded || result.Value is null)
+            {
+                SetErrorMessage(string.IsNullOrWhiteSpace(result.Error) ? "MediaBulkPurgeFailed" : result.Error);
+                return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
+            }
+
+            foreach (var url in result.Value.PurgedUrls)
+            {
+                var localPath = TryResolveLocalUploadPath(url);
+                if (!string.IsNullOrWhiteSpace(localPath) && System.IO.File.Exists(localPath))
+                {
+                    System.IO.File.Delete(localPath);
+                }
+            }
+
+            TempData["Success"] = string.Format(T("MediaBulkPurged"), result.Value.PurgedCount);
+            return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
         }
 
         /// <summary>
@@ -419,6 +491,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             }
 
             return Path.Combine(_env.ContentRootPath, "wwwroot");
+        }
+
+        private string? TryResolveLocalUploadPath(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url) || !url.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var relative = url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var fullPath = Path.GetFullPath(Path.Combine(GetWebRootPath(), relative));
+            var uploadsRoot = Path.GetFullPath(Path.Combine(GetWebRootPath(), "uploads"));
+            return fullPath.StartsWith(uploadsRoot, StringComparison.OrdinalIgnoreCase) ? fullPath : null;
         }
 
         private sealed record StoredUploadResult(string PhysicalPath, string PublicUrl, long SizeBytes, string ContentHash);

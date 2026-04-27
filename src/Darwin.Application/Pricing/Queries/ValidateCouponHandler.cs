@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Pricing;
 using Darwin.Application.Pricing.DTOs;
 using Darwin.Application.Pricing.Validators;
 using Darwin.Domain.Entities.Pricing;
-using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,28 +28,24 @@ namespace Darwin.Application.Pricing.Queries
             if (!v.IsValid) throw new ValidationException(v.Errors);
 
             var now = DateTime.UtcNow;
+            var normalizedCode = CouponEligibility.NormalizeCode(input.Code);
             var promo = await _db.Set<Promotion>().AsNoTracking()
                 .FirstOrDefaultAsync(p =>
+                    !p.IsDeleted &&
                     p.IsActive &&
                     p.Code != null &&
-                    p.Code.ToLower() == input.Code.ToLower() &&
+                    p.Code.ToUpper() == normalizedCode &&
                     (!p.StartsAtUtc.HasValue || p.StartsAtUtc <= now) &&
                     (!p.EndsAtUtc.HasValue || now <= p.EndsAtUtc), ct);
 
             if (promo == null)
                 return new ValidateCouponResultDto { IsValid = false, Message = "Invalid or inactive coupon." };
 
-            if (!string.Equals(promo.Currency, input.Currency, StringComparison.OrdinalIgnoreCase))
-                return new ValidateCouponResultDto { IsValid = false, Message = "Coupon currency mismatch." };
-
-            if (promo.MinSubtotalNetMinor.HasValue && input.SubtotalNetMinor < promo.MinSubtotalNetMinor.Value)
-                return new ValidateCouponResultDto { IsValid = false, Message = "Subtotal does not meet minimum requirement." };
-
             // Check redemption caps
             if (promo.MaxRedemptions.HasValue)
             {
                 var totalRedemptions = await _db.Set<PromotionRedemption>().AsNoTracking()
-                    .CountAsync(r => r.PromotionId == promo.Id, ct);
+                    .CountAsync(r => !r.IsDeleted && r.PromotionId == promo.Id, ct);
                 if (totalRedemptions >= promo.MaxRedemptions.Value)
                     return new ValidateCouponResultDto { IsValid = false, Message = "Redemption limit reached." };
             }
@@ -59,60 +53,29 @@ namespace Darwin.Application.Pricing.Queries
             if (promo.PerCustomerLimit.HasValue && input.UserId.HasValue)
             {
                 var perUser = await _db.Set<PromotionRedemption>().AsNoTracking()
-                    .CountAsync(r => r.PromotionId == promo.Id && r.UserId == input.UserId, ct);
+                    .CountAsync(r => !r.IsDeleted && r.PromotionId == promo.Id && r.UserId == input.UserId, ct);
                 if (perUser >= promo.PerCustomerLimit.Value)
                     return new ValidateCouponResultDto { IsValid = false, Message = "Per-customer limit reached." };
             }
 
-            // Evaluate simple conditions (optional)
-            if (!string.IsNullOrWhiteSpace(promo.ConditionsJson) && (input.ProductIds != null || input.CategoryIds != null))
-            {
-                try
+            var eligibility = CouponEligibility.Evaluate(
+                promo,
+                new CouponEligibilityContext
                 {
-                    var doc = JsonSerializer.Deserialize<ConditionsModel>(promo.ConditionsJson);
-                    if (doc != null)
-                    {
-                        // includeProducts
-                        if (doc.includeProducts?.Any() == true && input.ProductIds?.Any(id => doc.includeProducts.Contains(id)) != true)
-                            return new ValidateCouponResultDto { IsValid = false, Message = "Coupon conditions not met (products)." };
-
-                        // includeCategories (TODO: needs product-category mapping; assume ok for phase 1 if not provided)
-                    }
-                }
-                catch
-                {
-                    // Invalid conditions json => treat as not matched
-                    return new ValidateCouponResultDto { IsValid = false, Message = "Coupon conditions not met." };
-                }
-            }
-
-            // Compute discount
-            long discount = 0;
-            if (promo.Type == PromotionType.Amount)
-            {
-                discount = Math.Min(promo.AmountMinor ?? 0, input.SubtotalNetMinor);
-            }
-            else if (promo.Type == PromotionType.Percentage)
-            {
-                var pct = (promo.Percent ?? 0m) / 100m;
-                discount = (long)Math.Round(input.SubtotalNetMinor * (double)pct, MidpointRounding.AwayFromZero);
-            }
+                    SubtotalNetMinor = input.SubtotalNetMinor,
+                    Currency = input.Currency,
+                    ProductIds = input.ProductIds ?? new List<Guid>(),
+                    CategoryIds = input.CategoryIds ?? new List<Guid>()
+                });
 
             return new ValidateCouponResultDto
             {
-                IsValid = discount > 0,
-                DiscountMinor = discount,
+                IsValid = eligibility.IsValid,
+                DiscountMinor = eligibility.DiscountMinor,
                 Currency = promo.Currency,
                 PromotionId = promo.Id,
-                Message = discount > 0 ? "Coupon applied." : "No discount applicable."
+                Message = eligibility.Message
             };
-        }
-
-        private sealed class ConditionsModel
-        {
-            public Guid[]? includeProducts { get; set; }
-            public Guid[]? includeCategories { get; set; }
-            public Guid[]? excludeProducts { get; set; }
         }
     }
 }

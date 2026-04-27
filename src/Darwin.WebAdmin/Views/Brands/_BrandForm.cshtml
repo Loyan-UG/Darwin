@@ -29,6 +29,7 @@
                     @for (int i = 0; i < Model.Translations.Count; i++)
                     {
                         <div class="col-12 border-bottom pb-3 mb-3">
+                            <input type="hidden" asp-for="Translations[i].Id" />
                             <div class="row g-2">
                                 <div class="col-md-2">
                                     <label asp-for="Translations[i].Culture" class="form-label">@T.T("Culture")</label>

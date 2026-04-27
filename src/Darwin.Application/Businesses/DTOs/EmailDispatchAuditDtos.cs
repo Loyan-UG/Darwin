@@ -8,6 +8,7 @@ namespace Darwin.Application.Businesses.DTOs
     public sealed class EmailDispatchAuditListItemDto
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public bool IsQueueOperation { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? FlowKey { get; set; }

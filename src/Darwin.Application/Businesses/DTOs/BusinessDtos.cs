@@ -130,5 +130,15 @@ namespace Darwin.Application.Businesses.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string? Note { get; set; }
     }
+
+    public sealed class BusinessProvisionOnboardingResultDto
+    {
+        public Guid BusinessId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public bool CustomerCreated { get; set; }
+        public bool CustomerUpdated { get; set; }
+        public bool WasActivated { get; set; }
+        public bool WasApproved { get; set; }
+    }
     
 }

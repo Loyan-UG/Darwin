@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Domain.Enums;
 using Darwin.Domain.Entities.Marketing;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
@@ -144,6 +145,131 @@ namespace Darwin.Application.Loyalty.Campaigns
             }
 
             return ActiveCampaignState;
+        }
+    }
+
+    /// <summary>
+    /// Queries campaign delivery attempts so operators can reconcile provider failures.
+    /// </summary>
+    public sealed class GetCampaignDeliveriesPageHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetCampaignDeliveriesPageHandler(IAppDbContext db)
+        {
+            _db = db;
+        }
+
+        public async Task<Result<GetCampaignDeliveriesResultDto>> HandleAsync(
+            Guid? businessId,
+            Guid? campaignId,
+            int page,
+            int pageSize,
+            LoyaltyCampaignDeliveryQueueFilter filter = LoyaltyCampaignDeliveryQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            var normalizedPage = page <= 0 ? 1 : page;
+            var normalizedPageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 100);
+            var query = BuildBaseQuery(businessId, campaignId, filter);
+            var total = await query.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await query
+                .OrderByDescending(x => x.LastAttemptAtUtc ?? x.CreatedAtUtc)
+                .Skip((normalizedPage - 1) * normalizedPageSize)
+                .Take(normalizedPageSize)
+                .Select(x => new CampaignDeliveryItemDto
+                {
+                    Id = x.Id,
+                    CampaignId = x.CampaignId,
+                    CampaignName = _db.Set<Campaign>()
+                        .Where(c => c.Id == x.CampaignId)
+                        .Select(c => c.Name)
+                        .FirstOrDefault() ?? string.Empty,
+                    CampaignTitle = _db.Set<Campaign>()
+                        .Where(c => c.Id == x.CampaignId)
+                        .Select(c => c.Title)
+                        .FirstOrDefault() ?? string.Empty,
+                    RecipientUserId = x.RecipientUserId,
+                    BusinessId = x.BusinessId,
+                    Channel = (short)x.Channel,
+                    Status = (short)x.Status,
+                    Destination = x.Destination,
+                    AttemptCount = x.AttemptCount,
+                    FirstAttemptAtUtc = x.FirstAttemptAtUtc,
+                    LastAttemptAtUtc = x.LastAttemptAtUtc,
+                    LastResponseCode = x.LastResponseCode,
+                    ProviderMessageId = x.ProviderMessageId,
+                    LastError = x.LastError,
+                    IdempotencyKey = x.IdempotencyKey,
+                    RowVersion = x.RowVersion
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            return Result<GetCampaignDeliveriesResultDto>.Ok(new GetCampaignDeliveriesResultDto
+            {
+                Items = items,
+                Total = total
+            });
+        }
+
+        public async Task<CampaignDeliveryOpsSummaryDto> GetSummaryAsync(Guid? businessId, Guid? campaignId, CancellationToken ct = default)
+        {
+            var query = _db.Set<CampaignDelivery>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+            if (businessId.HasValue)
+            {
+                query = query.Where(x => x.BusinessId == businessId.Value);
+            }
+
+            if (campaignId.HasValue)
+            {
+                query = query.Where(x => x.CampaignId == campaignId.Value);
+            }
+
+            return new CampaignDeliveryOpsSummaryDto
+            {
+                TotalCount = await query.CountAsync(ct).ConfigureAwait(false),
+                PendingCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Pending, ct).ConfigureAwait(false),
+                InProgressCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.InProgress, ct).ConfigureAwait(false),
+                FailedCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Failed, ct).ConfigureAwait(false),
+                SucceededCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Succeeded, ct).ConfigureAwait(false),
+                CancelledCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Cancelled, ct).ConfigureAwait(false),
+                NeedsAttentionCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Failed || x.Status == CampaignDeliveryStatus.InProgress, ct).ConfigureAwait(false)
+            };
+        }
+
+        private IQueryable<CampaignDelivery> BuildBaseQuery(
+            Guid? businessId,
+            Guid? campaignId,
+            LoyaltyCampaignDeliveryQueueFilter filter)
+        {
+            var query = _db.Set<CampaignDelivery>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+            if (businessId.HasValue)
+            {
+                query = query.Where(x => x.BusinessId == businessId.Value);
+            }
+
+            if (campaignId.HasValue)
+            {
+                query = query.Where(x => x.CampaignId == campaignId.Value);
+            }
+
+            return filter switch
+            {
+                LoyaltyCampaignDeliveryQueueFilter.Pending => query.Where(x => x.Status == CampaignDeliveryStatus.Pending),
+                LoyaltyCampaignDeliveryQueueFilter.InProgress => query.Where(x => x.Status == CampaignDeliveryStatus.InProgress),
+                LoyaltyCampaignDeliveryQueueFilter.Failed => query.Where(x => x.Status == CampaignDeliveryStatus.Failed),
+                LoyaltyCampaignDeliveryQueueFilter.Succeeded => query.Where(x => x.Status == CampaignDeliveryStatus.Succeeded),
+                LoyaltyCampaignDeliveryQueueFilter.Cancelled => query.Where(x => x.Status == CampaignDeliveryStatus.Cancelled),
+                LoyaltyCampaignDeliveryQueueFilter.NeedsAttention => query.Where(x => x.Status == CampaignDeliveryStatus.Failed || x.Status == CampaignDeliveryStatus.InProgress),
+                _ => query
+            };
         }
     }
 
@@ -458,6 +584,80 @@ namespace Darwin.Application.Loyalty.Campaigns
             catch (DbUpdateConcurrencyException)
             {
                 return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Lets WebAdmin operators reconcile or requeue individual campaign delivery attempts.
+    /// </summary>
+    public sealed class UpdateCampaignDeliveryStatusHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public UpdateCampaignDeliveryStatusHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db;
+            _localizer = localizer;
+        }
+
+        public async Task<Result> HandleAsync(UpdateCampaignDeliveryStatusDto dto, CancellationToken ct = default)
+        {
+            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            if (!Enum.IsDefined(typeof(CampaignDeliveryStatus), dto.Status))
+            {
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var delivery = await _db.Set<CampaignDelivery>()
+                .FirstOrDefaultAsync(x =>
+                    !x.IsDeleted &&
+                    x.Id == dto.Id &&
+                    (!dto.BusinessId.HasValue || x.BusinessId == dto.BusinessId.Value), ct)
+                .ConfigureAwait(false);
+
+            if (delivery is null)
+            {
+                return Result.Fail(_localizer["CampaignDeliveryNotFound"]);
+            }
+
+            if (!delivery.RowVersion.SequenceEqual(dto.RowVersion))
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
+            var nextStatus = (CampaignDeliveryStatus)dto.Status;
+            delivery.Status = nextStatus;
+            if (nextStatus == CampaignDeliveryStatus.Pending)
+            {
+                delivery.LastError = null;
+                delivery.LastResponseCode = null;
+            }
+            else if (!string.IsNullOrWhiteSpace(dto.OperatorNote))
+            {
+                delivery.LastError = dto.OperatorNote.Trim();
+            }
+
+            var nowUtc = DateTime.UtcNow;
+            delivery.LastAttemptAtUtc ??= nowUtc;
+            if (nextStatus == CampaignDeliveryStatus.Succeeded && !delivery.FirstAttemptAtUtc.HasValue)
+            {
+                delivery.FirstAttemptAtUtc = nowUtc;
+            }
+
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return Result.Ok();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
         }
     }

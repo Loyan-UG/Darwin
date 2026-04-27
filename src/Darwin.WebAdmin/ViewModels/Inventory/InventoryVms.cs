@@ -419,11 +419,14 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     public sealed class StockTransferListItemVm
     {
         public Guid Id { get; set; }
+        public Guid FromWarehouseId { get; set; }
+        public Guid ToWarehouseId { get; set; }
         public string FromWarehouseName { get; set; } = string.Empty;
         public string ToWarehouseName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public int LineCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
+        public bool IsStale { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -433,6 +436,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public int DraftCount { get; set; }
         public int InTransitCount { get; set; }
         public int CompletedCount { get; set; }
+        public int CancelledCount { get; set; }
+        public int StaleInTransitCount { get; set; }
     }
 
     public sealed class StockTransferLineVm
@@ -482,11 +487,13 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     {
         public Guid Id { get; set; }
         public Guid SupplierId { get; set; }
+        public Guid BusinessId { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
         public string SupplierName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public DateTime OrderedAtUtc { get; set; }
         public int LineCount { get; set; }
+        public bool IsStale { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -496,6 +503,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public int DraftCount { get; set; }
         public int IssuedCount { get; set; }
         public int ReceivedCount { get; set; }
+        public int CancelledCount { get; set; }
+        public int StaleIssuedCount { get; set; }
     }
 
     public sealed class PurchaseOrderLineVm

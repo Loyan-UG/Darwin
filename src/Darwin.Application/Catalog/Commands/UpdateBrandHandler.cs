@@ -13,8 +13,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.Catalog.Commands
 {
     /// <summary>
-    /// Updates an existing brand. Performs optimistic concurrency check via RowVersion and replaces
-    /// translations with the provided set (simple replace strategy for phase 1).
+    /// Updates an existing brand. Performs optimistic concurrency check via RowVersion and upserts
+    /// translations so existing translation identities are preserved.
     /// </summary>
     public sealed class UpdateBrandHandler
     {
@@ -60,16 +60,56 @@ namespace Darwin.Application.Catalog.Commands
 
             var sanitizer = HtmlSanitizerFactory.Create();
 
-            // Replace translations (phase 1 strategy)
-            brand.Translations.Clear();
+            var submittedTranslationIds = dto.Translations
+                .Where(t => t.Id.HasValue && t.Id.Value != Guid.Empty)
+                .Select(t => t.Id!.Value)
+                .ToHashSet();
+
+            foreach (var existing in brand.Translations.Where(t => !t.IsDeleted))
+            {
+                var stillSubmittedById = submittedTranslationIds.Contains(existing.Id);
+                var stillSubmittedByCulture = dto.Translations.Any(t =>
+                    (!t.Id.HasValue || t.Id.Value == Guid.Empty) &&
+                    string.Equals(t.Culture.Trim(), existing.Culture, StringComparison.OrdinalIgnoreCase));
+                if (!stillSubmittedById && !stillSubmittedByCulture)
+                {
+                    existing.IsDeleted = true;
+                }
+            }
+
             foreach (var tr in dto.Translations)
             {
-                brand.Translations.Add(new BrandTranslation
+                var culture = tr.Culture.Trim();
+                var translation = tr.Id.HasValue && tr.Id.Value != Guid.Empty
+                    ? brand.Translations.FirstOrDefault(t => t.Id == tr.Id.Value)
+                    : brand.Translations.FirstOrDefault(t => string.Equals(t.Culture, culture, StringComparison.OrdinalIgnoreCase));
+
+                if (translation is null)
                 {
-                    Culture = tr.Culture.Trim(),
-                    Name = tr.Name.Trim(),
-                    DescriptionHtml = tr.DescriptionHtml is null ? null : sanitizer.Sanitize(tr.DescriptionHtml)
-                });
+                    brand.Translations.Add(new BrandTranslation
+                    {
+                        Culture = culture,
+                        Name = tr.Name.Trim(),
+                        DescriptionHtml = tr.DescriptionHtml is null ? null : sanitizer.Sanitize(tr.DescriptionHtml)
+                    });
+                    continue;
+                }
+
+                translation.IsDeleted = false;
+                translation.Culture = culture;
+                translation.Name = tr.Name.Trim();
+                translation.DescriptionHtml = tr.DescriptionHtml is null ? null : sanitizer.Sanitize(tr.DescriptionHtml);
+            }
+
+            var duplicateCultures = brand.Translations
+                .Where(t => !t.IsDeleted)
+                .GroupBy(t => t.Culture, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+            if (duplicateCultures.Count > 0)
+            {
+                throw new FluentValidation.ValidationException(_localizer["DuplicateCulturesNotAllowed"]);
             }
 
             await _db.SaveChangesAsync(ct);
