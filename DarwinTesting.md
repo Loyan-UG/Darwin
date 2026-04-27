@@ -39,7 +39,11 @@ The repository currently contains these test projects:
    - Infrastructure-focused checks (e.g., persistence setup/design-time factory behavior).
 6. `tests/Darwin.Mobile.Shared.Tests`
    - Mobile shared client/services reliability and behavior checks.
-7. `tests/Darwin.Tests.Common`
+7. `tests/Darwin.WebAdmin.Tests`
+   - WebAdmin-focused smoke and security tests for the admin panel (e.g., security header checks, authentication flows, anti-forgery token validation).
+   - Uses `Microsoft.AspNetCore.Mvc.Testing` with an in-process `WebAdminTestFactory`.
+   - **Not yet wired into CI or coverage-gate** — local execution only at this stage.
+8. `tests/Darwin.Tests.Common`
    - Shared test infrastructure/helpers consumed by other suites.
 
 ### Coverage lanes in CI
@@ -52,6 +56,8 @@ CI treats the main suites as independent lanes:
 - webapi
 - integration
 - mobile-shared
+
+The `webadmin` lane exists as a project but is **not yet included** in the `tests-quality-gates.yml` workflow or `scripts/ci/verify_coverage.py`.
 
 Lane coverage is validated from Cobertura reports via `scripts/ci/verify_coverage.py`.
 
@@ -110,6 +116,15 @@ Use for mobile shared client reliability:
 - Retry/reliability behavior.
 - Service-level behavior and failure handling.
 
+### 3.7 WebAdmin lane (`Darwin.WebAdmin.Tests`) *(not yet in CI)*
+
+Use for the WebAdmin panel's HTTP-level correctness:
+
+- Security header presence and correctness (CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy).
+- Authentication/redirect boundaries for admin-only routes.
+- Anti-forgery token and form rendering sanity checks.
+- Forwarded-header handling and HTTPS redirection behavior.
+
 ---
 
 ## 4) Test design conventions
@@ -147,6 +162,9 @@ dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj
 dotnet test tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj
 
 dotnet test tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj
+
+# WebAdmin tests (local only — not yet in CI lane):
+dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
 ```
 
 ### 5.2 Run lane with coverage output
@@ -215,6 +233,7 @@ When implementing a feature, aim for this minimum matrix:
 2. **Contracts**: payload shape/serialization compatibility for new/changed DTOs.
 3. **WebApi or Integration**: endpoint behavior and auth boundary.
 4. **Mobile.Shared** (if affected): client/service behavior for changed routes or payloads.
+5. **WebAdmin** (if affected): security headers and auth boundaries for admin routes.
 
 If behavior crosses layers, prefer one extra integration test over many brittle mocks.
 
@@ -224,6 +243,7 @@ If behavior crosses layers, prefer one extra integration test over many brittle 
 
 Current direction for stronger confidence:
 
+- Wire `Darwin.WebAdmin.Tests` into CI (`tests-quality-gates.yml`) as a dedicated `webadmin` lane and add it to `scripts/ci/verify_coverage.py` with an initial threshold.
 - Increase depth in infrastructure and webapi lanes where currently thinner than unit/integration.
 - Expand integration matrices for concurrency/authorization edge-cases.
 - Raise lane thresholds gradually after sustained green history.
