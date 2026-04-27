@@ -5,7 +5,10 @@ import {
   getPublicApiCachePolicy,
   getPublicApiFetchCacheOptions,
   getPublicApiKeyTag,
+  getPublicApiCacheProfile,
+  getPublicApiPathCharacteristics,
   getPublicApiPathTag,
+  getPublicApiProfileRevalidate,
   getPublicApiRequestPlan,
   getPublicApiRevalidate,
   normalizePublicApiCachePath,
@@ -64,6 +67,161 @@ test("getPublicApiFetchCacheOptions keeps GET cacheable and mutations no-store",
   });
 
   assert.deepEqual(getPublicApiFetchCacheOptions(identity, "POST"), {
+    cache: "no-store",
+  });
+});
+
+test("getPublicApiPathCharacteristics keeps query-driven cache signals explicit", () => {
+  assert.deepEqual(
+    getPublicApiPathCharacteristics(
+      "/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12&search=coffee&categorySlug=coffee&visibleState=offers&visibleSort=offers-first&mediaState=with-image&savingsBand=hero",
+    ),
+    {
+      hasSearch: true,
+      hasCategorySlug: true,
+      hasVisibleState: true,
+      hasVisibleSort: true,
+      hasMediaState: true,
+      hasSavingsBand: true,
+      page: 3,
+      pageSize: 12,
+    },
+  );
+
+  assert.deepEqual(
+    getPublicApiPathCharacteristics(
+      "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
+    ),
+    {
+      hasSearch: false,
+      hasCategorySlug: false,
+      hasVisibleState: false,
+      hasVisibleSort: false,
+      hasMediaState: false,
+      hasSavingsBand: false,
+      page: 1,
+      pageSize: 48,
+    },
+  );
+});
+
+test("getPublicApiCacheProfile keeps stable, detail, filtered, and paged discovery buckets explicit", () => {
+  assert.equal(
+    getPublicApiCacheProfile(
+      "cms-menu",
+      "/api/v1/public/cms/menus/main-navigation",
+    ),
+    "stable",
+  );
+
+  assert.equal(
+    getPublicApiCacheProfile(
+      "cms-page",
+      "/api/v1/public/cms/pages/faq?culture=de-DE",
+    ),
+    "detail",
+  );
+
+  assert.equal(
+    getPublicApiCacheProfile(
+      "catalog-product-detail",
+      "/api/v1/public/catalog/products/coffee-machine?culture=de-DE",
+    ),
+    "detail",
+  );
+
+  assert.equal(
+    getPublicApiCacheProfile(
+      "catalog-categories",
+      "/api/v1/public/catalog/categories?culture=de-DE&page=1&pageSize=100",
+    ),
+    "category-heavy",
+  );
+
+  assert.equal(
+    getPublicApiCacheProfile(
+      "cms-pages",
+      "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48&search=story",
+    ),
+    "discovery-filtered",
+  );
+
+  assert.equal(
+    getPublicApiCacheProfile(
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&visibleSort=offers-first",
+    ),
+    "discovery-filtered",
+  );
+
+  assert.equal(
+    getPublicApiCacheProfile(
+      "catalog-products",
+      "/api/v1/public/catalog/products?culture=de-DE&page=3&pageSize=12",
+    ),
+    "discovery-paged",
+  );
+
+  assert.equal(
+    getPublicApiCacheProfile(
+      "unknown-feed",
+      "/api/v1/public/unknown",
+    ),
+    "default",
+  );
+});
+
+test("getPublicApiProfileRevalidate keeps profile windows explicit per feed family", () => {
+  assert.equal(getPublicApiProfileRevalidate("cms-menu", "stable"), 900);
+  assert.equal(getPublicApiProfileRevalidate("cms-page", "detail"), 180);
+  assert.equal(
+    getPublicApiProfileRevalidate("catalog-product-detail", "detail"),
+    120,
+  );
+  assert.equal(
+    getPublicApiProfileRevalidate("catalog-categories", "category-heavy"),
+    300,
+  );
+  assert.equal(
+    getPublicApiProfileRevalidate("cms-pages", "discovery-filtered"),
+    120,
+  );
+  assert.equal(
+    getPublicApiProfileRevalidate("catalog-products", "discovery-filtered"),
+    90,
+  );
+  assert.equal(
+    getPublicApiProfileRevalidate("cms-pages", "discovery-paged"),
+    120,
+  );
+  assert.equal(
+    getPublicApiProfileRevalidate("catalog-products", "discovery-paged"),
+    90,
+  );
+  assert.equal(
+    getPublicApiProfileRevalidate("unknown-feed", "default"),
+    60,
+  );
+});
+
+test("getPublicApiFetchCacheOptions canonicalizes HTTP method casing", () => {
+  const identity = getPublicApiCacheIdentity(
+    "catalog-products",
+    "/api/v1/public/catalog/products?pageSize=12&page=1&culture=de-DE",
+  );
+
+  assert.deepEqual(getPublicApiFetchCacheOptions(identity, "get"), {
+    cache: "force-cache",
+    next: {
+      revalidate: 120,
+      tags: [
+        "public:catalog-products",
+        "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12",
+      ],
+    },
+  });
+
+  assert.deepEqual(getPublicApiFetchCacheOptions(identity, "post"), {
     cache: "no-store",
   });
 });

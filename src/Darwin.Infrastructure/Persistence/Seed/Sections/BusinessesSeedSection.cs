@@ -54,6 +54,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var businesses = await EnsureBusinessesAsync(db, ct);
             await EnsurePrimaryBusinessForBiz1Async(db, businesses, users, ct);
+            await EnsureBusinessOperatorCoverageAsync(db, businesses, users, ct);
 
             if (!await db.Set<BusinessLocation>().AnyAsync(ct))
                 await SeedLocationsAsync(db, businesses, ct);
@@ -292,6 +293,148 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     OpeningHoursJson = "{\"Mon\":[{\"Open\":\"08:00\",\"Close\":\"18:00\"}],\"Sat\":[{\"Open\":\"09:00\",\"Close\":\"14:00\"}]}",
                     InternalNote = "Self-healed primary location for the default business operator test account."
                 });
+                await db.SaveChangesAsync(ct);
+            }
+        }
+
+        /// <summary>
+        /// Ensures that each seeded business has a deterministic operator account so
+        /// business-side Web and API flows can be exercised without guessing which
+        /// user owns which workspace in an older database.
+        /// </summary>
+        private static async Task EnsureBusinessOperatorCoverageAsync(
+            DarwinDbContext db,
+            IReadOnlyList<Business> businesses,
+            IReadOnlyList<User> users,
+            CancellationToken ct)
+        {
+            var businessUsers = users
+                .Where(u => u.Email.StartsWith("biz", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(u => u.Email)
+                .ToList();
+
+            if (businessUsers.Count == 0 || businesses.Count == 0)
+            {
+                return;
+            }
+
+            var locations = await db.Set<BusinessLocation>()
+                .Where(x => !x.IsDeleted)
+                .ToListAsync(ct);
+
+            var requiresSave = false;
+            var seeds = GetBusinessSeeds();
+            var limit = Math.Min(Math.Min(businesses.Count, businessUsers.Count), seeds.Length);
+
+            for (var i = 0; i < limit; i++)
+            {
+                var business = businesses[i];
+                var user = businessUsers[i];
+                var seed = seeds[i];
+
+                if (!business.IsActive)
+                {
+                    business.IsActive = true;
+                    requiresSave = true;
+                }
+
+                if (business.OperationalStatus != BusinessOperationalStatus.Approved)
+                {
+                    business.OperationalStatus = BusinessOperationalStatus.Approved;
+                    requiresSave = true;
+                }
+
+                if (business.ApprovedAtUtc is null)
+                {
+                    business.ApprovedAtUtc = DateTime.UtcNow;
+                    requiresSave = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(business.LegalName))
+                {
+                    business.LegalName = seed.LegalName;
+                    requiresSave = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(business.ContactEmail))
+                {
+                    business.ContactEmail = seed.Email;
+                    requiresSave = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(business.ContactPhoneE164))
+                {
+                    business.ContactPhoneE164 = seed.Phone;
+                    requiresSave = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(business.WebsiteUrl))
+                {
+                    business.WebsiteUrl = seed.Website;
+                    requiresSave = true;
+                }
+
+                if (string.IsNullOrWhiteSpace(business.ShortDescription))
+                {
+                    business.ShortDescription = seed.ShortDescription;
+                    requiresSave = true;
+                }
+
+                var membership = await db.Set<BusinessMember>()
+                    .FirstOrDefaultAsync(
+                        x => x.BusinessId == business.Id && x.UserId == user.Id && !x.IsDeleted,
+                        ct);
+
+                if (membership is null)
+                {
+                    db.Add(new BusinessMember
+                    {
+                        BusinessId = business.Id,
+                        UserId = user.Id,
+                        Role = i == 0 ? BusinessMemberRole.Owner : BusinessMemberRole.Manager,
+                        IsActive = true
+                    });
+                    requiresSave = true;
+                }
+                else
+                {
+                    if (!membership.IsActive)
+                    {
+                        membership.IsActive = true;
+                        requiresSave = true;
+                    }
+
+                    var expectedRole = i == 0 ? BusinessMemberRole.Owner : BusinessMemberRole.Manager;
+                    if (membership.Role != expectedRole)
+                    {
+                        membership.Role = expectedRole;
+                        requiresSave = true;
+                    }
+                }
+
+                var primaryLocation = locations.FirstOrDefault(x => x.BusinessId == business.Id && x.IsPrimary);
+                if (primaryLocation is null)
+                {
+                    db.Add(new BusinessLocation
+                    {
+                        BusinessId = business.Id,
+                        Name = $"{seed.City} Hauptfiliale",
+                        AddressLine1 = seed.Street,
+                        City = seed.City,
+                        Region = DomainDefaults.DefaultCountryCode,
+                        CountryCode = DomainDefaults.DefaultCountryCode,
+                        PostalCode = seed.Postal,
+                        Coordinate = new GeoCoordinate(seed.Lat, seed.Lon),
+                        IsPrimary = true,
+                        OpeningHoursJson = "{\"Mon\":[{\"Open\":\"08:00\",\"Close\":\"18:00\"}],\"Sat\":[{\"Open\":\"09:00\",\"Close\":\"14:00\"}]}",
+                        InternalNote = "Self-healed primary location for seeded business operator coverage."
+                    });
+                    requiresSave = true;
+                }
+            }
+
+            if (requiresSave)
+            {
                 await db.SaveChangesAsync(ct);
             }
         }

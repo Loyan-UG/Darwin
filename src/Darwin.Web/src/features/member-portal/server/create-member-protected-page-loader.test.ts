@@ -1,6 +1,83 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createMemberProtectedPageLoaderCore } from "@/features/member-portal/server/create-member-protected-page-loader-core";
+import {
+  buildMemberProtectedPageLoaderObservationContext,
+  buildMemberProtectedPageLoaderSuccessContext,
+  createMemberProtectedPageLoaderCore,
+} from "@/features/member-portal/server/create-member-protected-page-loader-core";
+
+test("member-protected page loader helper builders keep guest and authorized diagnostics explicit", () => {
+  assert.deepEqual(
+    buildMemberProtectedPageLoaderObservationContext(
+      "/orders/order-1",
+      {
+        culture: "de-DE",
+        id: "order-1",
+      },
+      {
+        hasCanonicalNormalization: true,
+      },
+    ),
+    {
+      pageLoaderKind: "member-protected",
+      pageLoaderNormalization: "canonical",
+      entryRoute: "/orders/order-1",
+      culture: "de-DE",
+      id: "order-1",
+    },
+  );
+
+  assert.deepEqual(
+    buildMemberProtectedPageLoaderSuccessContext(
+      "/orders/order-1",
+      {
+        entryContext: {
+          session: null,
+          storefrontContext: {
+            cmsPagesResult: { status: "ok", data: { items: [] } },
+            cmsPagesStatus: "ok",
+            cmsPages: [],
+            categoriesResult: { status: "ok", data: { items: [] } },
+            categoriesStatus: "ok",
+            categories: [],
+            productsResult: { status: "ok", data: { items: [] } },
+            productsStatus: "ok",
+            products: [],
+            storefrontCart: null,
+            storefrontCartStatus: "not-found",
+            cartSnapshots: [],
+            cartLinkedProductSlugs: [],
+          },
+        },
+        routeContext: null,
+      },
+      () => ({ detailStatus: "ok" }),
+    ),
+    {
+      pageLoaderKind: "member-protected",
+      pageLoaderNormalization: "raw",
+      entryRoute: "/orders/order-1",
+      authGate: "guest-fallback",
+      sessionState: "missing",
+      routeContextState: "guest-fallback",
+      storefrontFallbackState: "present",
+      protectedRouteFootprint: "auth:guest-fallback|route:guest-fallback|storefront:present",
+      cmsStatus: "ok",
+      cmsCount: 0,
+      categoriesStatus: "ok",
+      categoryCount: 0,
+      productsStatus: "ok",
+      productCount: 0,
+      heroOfferCount: 0,
+      valueOfferCount: 0,
+      liveOfferCount: 0,
+      baseAssortmentCount: 0,
+      promotionLaneFootprint: "hero:0|value:0|live:0|base:0",
+      cartStatus: "not-found",
+      cartLinkedCount: 0,
+    },
+  );
+});
 
 test("createMemberProtectedPageLoader skips protected route loading when the member session is missing", async () => {
   let protectedExecutions = 0;

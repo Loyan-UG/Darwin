@@ -63,6 +63,30 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
 
     // ---------- Create/Edit (aggregate upsert) ----------
 
+    public sealed class AddOnGroupTranslationVm
+    {
+        public string Culture { get; set; } = string.Empty;
+
+        [MaxLength(200)]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public sealed class AddOnOptionTranslationVm
+    {
+        public string Culture { get; set; } = string.Empty;
+
+        [MaxLength(200)]
+        public string Label { get; set; } = string.Empty;
+    }
+
+    public sealed class AddOnOptionValueTranslationVm
+    {
+        public string Culture { get; set; } = string.Empty;
+
+        [MaxLength(200)]
+        public string Label { get; set; } = string.Empty;
+    }
+
     /// <summary>
     /// Nested value inside an option with price delta in minor units.
     /// </summary>
@@ -81,6 +105,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
 
         public int SortOrder { get; set; } = 0;
         public bool IsActive { get; set; } = true;
+        public List<AddOnOptionValueTranslationVm> Translations { get; set; } = new();
     }
 
     /// <summary>
@@ -95,6 +120,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
 
         public int SortOrder { get; set; } = 0;
 
+        public List<AddOnOptionTranslationVm> Translations { get; set; } = new();
         public List<AddOnOptionValueVm> Values { get; set; } = new();
     }
 
@@ -119,6 +145,8 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public int? MaxSelections { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        public List<AddOnGroupTranslationVm> Translations { get; set; } = new();
 
         /// <summary>Nested options with their values.</summary>
         public List<AddOnOptionVm> Options { get; set; } = new();

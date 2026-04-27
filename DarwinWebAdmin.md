@@ -1,3 +1,43 @@
+## 2026-04-27 - Web bilingual runtime smoke and route fix
+Done:
+- Ran a real WebApi + Next runtime smoke pass for German and English storefront routes.
+- Found that `/en-US/account`, `/en-US/cart`, `/en-US/checkout`, `/en-US/orders`, `/en-US/invoices`, and `/en-US/loyalty` redirected back to unprefixed paths because only home/catalog/CMS were treated as localized public paths.
+- Expanded the Web locale routing contract so all main storefront, account, commerce, orders, invoices, loyalty, and mock-checkout routes accept the culture prefix.
+- Restarted WebApi with the updated seed and confirmed English CMS pages no longer fall back to German titles for the previously missing pages.
+- Re-ran Web smoke after restarting Next with the new build; all checked German and English routes returned HTTP 200.
+- Verified representative rendered content: English CMS/account/cart pages show English strings, while German routes show German strings.
+
+Verification:
+- `npm run build` in `src\Darwin.Web` succeeded.
+- `dotnet build src\Darwin.WebApi\Darwin.WebApi.csproj --no-restore /p:UseSharedCompilation=false` succeeded with 0 warnings and 0 errors.
+- `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeded with 0 warnings and 0 errors.
+- Runtime smoke checked 26 Web routes across de-DE/en-US; all returned HTTP 200 after the route fix.
+
+Remaining main WebAdmin/Web work:
+- No known blocker remains for the current two-language Web/WebAdmin flow.
+- Remaining work should be final manual UX review and any business-specific copy/legal content replacement before production.
+
+Suggested next work:
+- Do a final placeholder/copy/legal review of seeded CMS pages and storefront surfaces, because the multilingual mechanics now work but some seed texts are still sample/legal starter content.
+## 2026-04-27 - WebAdmin and storefront localization completion pass
+Done:
+- Checked Web storefront localization bundles for English and German key parity; all six bundles matched with no missing keys.
+- Checked WebAdmin/Application resx parity for Shared, Validation, and Communication resources; English base and German resources matched with no missing keys.
+- Completed CMS seed coverage so all public CMS seed pages now have English and German content instead of only a subset having English translations.
+- Added default-culture fallback to public catalog and CMS queries so missing future-language translations do not produce empty storefront names/slugs/content.
+- Changed CMS Page and Catalog Category update handlers from clear-and-recreate translations to culture-based upsert/removal, preserving existing translation rows while allowing content production in multiple languages.
+- Made WebAdmin localization settings future-language-safe by preserving valid culture names beyond de-DE/en-US, using configured DefaultCulture at startup, and rendering DefaultCulture from SupportedCulturesCsv instead of a hard-coded two-option select.
+
+Verification:
+- `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeded with 0 warnings and 0 errors.
+- `git diff --check` passed; it only reported LF-to-CRLF working-copy warnings.
+
+Remaining main WebAdmin work:
+- WebAdmin and Web now have complete English/German resource key parity and enough seed content for public catalog/CMS display in both languages.
+- For adding a third language later, the content/data path now preserves valid culture codes and falls back safely, but the Web Next.js UI still needs a new resource file/import set for each new UI language.
+
+Suggested next work:
+- Run one Web runtime smoke pass switching between `de-DE` and `en-US` across home, catalog, product detail, CMS index/detail, account, cart, and checkout to verify rendered text/content end-to-end in the browser.
 ## 2026-04-27 - WebAdmin navigation runtime smoke pass
 Done:
 - Ran an authenticated runtime smoke pass across every primary sidebar GET route in WebAdmin using the seeded admin account.
@@ -1656,3 +1696,15 @@ Use that handoff document when resuming the ongoing core WebAdmin subscription w
 - 2026-04-24: Localization readiness batch completed for Businesses Invitations, OwnerOverrideAudits, SubscriptionInvoices, Business editor/setup shells, setup invitation preview, support failed-email rows, Loyalty Programs, Users, and MerchantReadiness subscription timeline so those timestamps now render with local-time culture-aware formatting instead of invariant yyyy-MM-dd HH:mm strings.
 
 - 2026-04-24: Localization readiness batch completed for BusinessCommunications EmailAudits, ChannelAudits, Index, and Details so audit timelines, chain summaries, retry windows, and last-success/completed stamps now render with local-time culture-aware formatting instead of invariant yyyy-MM-dd HH:mm strings.
+- 2026-04-27: Closed a multilingual storefront cleanup pass by forcing remaining checkout/header commerce links through locale-aware routing and removing visible sample/placeholder legal-contact copy from the CMS seed pages while preserving German and English seeded content.
+- 2026-04-27: Cleaned remaining visible demo-seed placeholders from CRM guest customers/leads and order address snapshots by replacing beispiel.de/Max Mustermann data with Darwin demo identities, with WebAdmin and WebApi builds kept green.
+- 2026-04-27: Removed the public footer's mock-checkout seed link and pointed the seeded navigation to the real checkout route so seeded storefront navigation no longer exposes a development-only checkout path.
+- 2026-04-27: Normalized storefront media seed URLs from /media/sample to /media/storefront, added idempotent URL migration for existing seeded media, and aligned catalog product media assignments with the new public storefront paths.
+- 2026-04-27: Completed WebAdmin multilingual editor readiness for Pages, Products, Categories, and Brands by preloading every supported culture into create/edit forms, filtering incomplete translation rows before command submission, and defaulting new product variant currency from SiteSettings.
+- 2026-04-27: Aligned WebAdmin Development database connection with WebApi's Darwin_Dev SQL-auth connection and verified authenticated WebAdmin create forms for Pages, Products, Categories, and Brands render both de-DE and en-US translation rows at runtime.
+
+- Hardened multilingual WebAdmin edit persistence for CMS pages, products, categories, and brands: blank/missing culture rows are ignored by controllers, while Application update handlers now upsert submitted translations without deleting existing translations for omitted cultures. This keeps de-DE/en-US content safe and preserves future culture content during partial edits.
+
+- Hardened CMS menu update semantics in the Application layer: menu edits now preserve item identities, soft-delete removed items, exclude soft-deleted items from edit DTOs, and upsert submitted translations without deleting omitted cultures. This prepares future WebAdmin menu management for multilingual content without destructive rewrites.
+
+- Added multilingual add-on catalog content support: AddOn groups, options, and option values now have translation entities, EF configuration, an AddOnTranslations migration with de-DE/en-US backfill from legacy labels, localized applicable add-on query fallback, and WebAdmin create/edit fields for active cultures. Applied the migration to Darwin_Dev and verified authenticated AddOnGroups create/edit forms render de-DE and en-US rows at runtime.

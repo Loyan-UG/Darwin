@@ -44,6 +44,12 @@ public sealed class StorefrontCheckoutFlowHandlersTests
             TaxCategoryId = taxCategoryId,
             PackageWeight = 750
         });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
 
         db.Set<TaxCategory>().Add(new TaxCategory
         {
@@ -78,6 +84,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 Name = "DHL Standard",
                 Carrier = "DHL",
                 Service = "Standard",
+                IsActive = true,
                 CountriesCsv = "DE",
                 Currency = "EUR",
                 Rates =
@@ -98,6 +105,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 Name = "DHL Express",
                 Carrier = "DHL",
                 Service = "Express",
+                IsActive = true,
                 CountriesCsv = "DE",
                 Currency = "EUR",
                 Rates =
@@ -369,6 +377,12 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Sku).IsRequired();
                 builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Product>(builder =>
+            {
+                builder.HasKey(x => x.Id);
                 builder.Property(x => x.RowVersion).IsRequired();
             });
 

@@ -5,6 +5,7 @@ import { CatalogContinuationRail } from "@/components/catalog/catalog-continuati
 import { ProductContentCompositionWindow } from "@/components/catalog/product-content-composition-window";
 import { ProductStorefrontSupportWindow } from "@/components/catalog/product-storefront-support-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { SurfaceSectionNav } from "@/components/layout/surface-section-nav";
 import { getProductSavingsPercent } from "@/features/catalog/merchandising";
 import {
   buildCatalogReviewTargetHref,
@@ -223,7 +224,7 @@ export function ProductDetailPage({
     { href: "#product-related", label: copy.relatedProductsTitle },
   ];
   return (
-    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
+    <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <div className="flex w-full flex-col gap-8">
       <nav
         aria-label={copy.productBreadcrumbLabel}
@@ -231,14 +232,14 @@ export function ProductDetailPage({
       >
         <Link
           href={localizeHref("/", culture)}
-          className="transition hover:text-[var(--color-brand)]"
+          className="rounded-full bg-white/80 px-3 py-1.5 transition hover:text-[var(--color-brand)]"
         >
           {copy.productBreadcrumbHome}
         </Link>
         <span>/</span>
         <Link
           href={localizeHref("/catalog", culture)}
-          className="transition hover:text-[var(--color-brand)]"
+          className="rounded-full bg-white/80 px-3 py-1.5 transition hover:text-[var(--color-brand)]"
         >
           {copy.productBreadcrumbCatalog}
         </Link>
@@ -247,7 +248,7 @@ export function ProductDetailPage({
             <span>/</span>
             <Link
               href={categoryHref!}
-              className="transition hover:text-[var(--color-brand)]"
+              className="rounded-full bg-white/80 px-3 py-1.5 transition hover:text-[var(--color-brand)]"
             >
               {primaryCategory.name}
             </Link>
@@ -259,25 +260,11 @@ export function ProductDetailPage({
         </span>
       </nav>
 
-      <div className="sticky top-24 z-10 -mt-2">
-        <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
-          <div className="flex min-w-max flex-wrap gap-2">
-            {sectionLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
+      <SurfaceSectionNav items={sectionLinks} />
 
       <div
         id="product-overview"
-        className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]"
+        className="scroll-mt-28 rounded-[2rem] border border-[rgba(53,92,38,0.12)] bg-[linear-gradient(135deg,#f6ffe9_0%,#ffffff_38%,#fff1d2_100%)] px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)]"
       >
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
           {copy.productRouteSummaryTitle}
@@ -288,13 +275,13 @@ export function ProductDetailPage({
       </div>
 
       <div className="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)] sm:p-8">
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-white/92 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
           <div className="grid gap-4 sm:grid-cols-2">
             {resolvedGallery.length > 0 ? (
               resolvedGallery.map((media) => (
                 <div
                   key={media.id}
-                  className="flex min-h-52 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-5"
+                  className="flex min-h-52 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-5"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -305,7 +292,7 @@ export function ProductDetailPage({
                 </div>
               ))
             ) : (
-              <div className="flex min-h-72 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-5 sm:col-span-2">
+              <div className="flex min-h-72 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-5 sm:col-span-2">
                 <span className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
                   {copy.noMedia}
                 </span>
@@ -314,7 +301,7 @@ export function ProductDetailPage({
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+        <div className="rounded-[2rem] border border-[rgba(53,92,38,0.12)] bg-white/92 px-6 py-8 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:px-8">
           {status !== "ok" && (
             <div className="mb-6">
               <StatusBanner
@@ -828,7 +815,7 @@ export function ProductDetailPage({
       {primaryCategory ? (
         <div
           id="product-related"
-          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8"
+          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-white/92 px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:px-8"
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -868,9 +855,9 @@ export function ProductDetailPage({
                 return (
                 <article
                   key={relatedProduct.id}
-                  className="flex h-full flex-col rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4"
+                  className="flex h-full flex-col rounded-[1.5rem] border border-[rgba(53,92,38,0.1)] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.88))] p-4 shadow-[0_18px_40px_rgba(38,76,34,0.06)]"
                 >
-                  <div className="flex min-h-40 items-center justify-center rounded-[1.25rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-4">
+                  <div className="flex min-h-40 items-center justify-center rounded-[1.25rem] bg-white/80 p-4">
                     {relatedProductImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -913,7 +900,7 @@ export function ProductDetailPage({
                           buildCatalogReviewTargetHref(relatedProduct.slug, reviewWindow),
                           culture,
                         )}
-                        className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
+                        className="inline-flex rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-brand-strong)]"
                       >
                         {copy.openProductCta}
                       </Link>

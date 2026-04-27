@@ -53,6 +53,12 @@ namespace Darwin.Application.Catalog.Queries
         public async Task<IReadOnlyList<ApplicableAddOnGroupDto>> HandleAsync(
             Guid productId, Guid? variantId = null, CancellationToken ct = default)
         {
+            return await HandleAsync(productId, variantId, culture: null, ct).ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<ApplicableAddOnGroupDto>> HandleAsync(
+            Guid productId, Guid? variantId, string? culture, CancellationToken ct = default)
+        {
             // Load existence + joins for product-level precedence.
             var prod = await _db.Set<Product>()
                 .AsNoTracking()
@@ -118,54 +124,84 @@ namespace Darwin.Application.Catalog.Queries
             if (orderedDistinctGroupIds.Count == 0)
                 return Array.Empty<ApplicableAddOnGroupDto>();
 
-            // Fetch groups + options + active values and project to DTOs.
+            var requestedCulture = string.IsNullOrWhiteSpace(culture)
+                ? null
+                : culture.Trim();
+
+            // Fetch groups + options + active values and map localized labels in memory.
             var groups = await _db.Set<AddOnGroup>()
                 .AsNoTracking()
                 .Where(g => orderedDistinctGroupIds.Contains(g.Id) && !g.IsDeleted && g.IsActive)
-                .Select(g => new ApplicableAddOnGroupDto
-                {
-                    Id = g.Id,
-                    Name = g.Name,
-                    Currency = g.Currency,
-                    SelectionMode = g.SelectionMode,
-                    MinSelections = g.MinSelections,
-                    MaxSelections = g.MaxSelections,
-                    IsActive = g.IsActive,
-                    Options = g.Options
-                        .OrderBy(o => o.SortOrder)
-                        .Select(o => new ApplicableAddOnOptionDto
-                        {
-                            Id = o.Id,
-                            Label = o.Label,
-                            SortOrder = o.SortOrder,
-                            Values = o.Values
-                                .Where(v => v.IsActive)
-                                .OrderBy(v => v.SortOrder)
-                                .Select(v => new ApplicableAddOnOptionValueDto
-                                {
-                                    Id = v.Id,
-                                    Label = v.Label,
-                                    PriceDeltaMinor = v.PriceDeltaMinor,
-                                    Hint = v.Hint,
-                                    SortOrder = v.SortOrder
-                                })
-                                .ToList()
-                        })
-                        .ToList()
-                })
+                .Include(g => g.Translations)
+                .Include(g => g.Options).ThenInclude(o => o.Translations)
+                .Include(g => g.Options).ThenInclude(o => o.Values).ThenInclude(v => v.Translations)
                 .ToListAsync(ct);
+
+            var mappedGroups = groups.Select(g => new ApplicableAddOnGroupDto
+            {
+                Id = g.Id,
+                Name = Localize(g.Name, g.Translations, requestedCulture, static t => t.Culture, static t => t.Name),
+                Currency = g.Currency,
+                SelectionMode = g.SelectionMode,
+                MinSelections = g.MinSelections,
+                MaxSelections = g.MaxSelections,
+                IsActive = g.IsActive,
+                Options = g.Options
+                    .OrderBy(o => o.SortOrder)
+                    .Select(o => new ApplicableAddOnOptionDto
+                    {
+                        Id = o.Id,
+                        Label = Localize(o.Label, o.Translations, requestedCulture, static t => t.Culture, static t => t.Label),
+                        SortOrder = o.SortOrder,
+                        Values = o.Values
+                            .Where(v => v.IsActive)
+                            .OrderBy(v => v.SortOrder)
+                            .Select(v => new ApplicableAddOnOptionValueDto
+                            {
+                                Id = v.Id,
+                                Label = Localize(v.Label, v.Translations, requestedCulture, static t => t.Culture, static t => t.Label),
+                                PriceDeltaMinor = v.PriceDeltaMinor,
+                                Hint = v.Hint,
+                                SortOrder = v.SortOrder
+                            })
+                            .ToList()
+                    })
+                    .ToList()
+            }).ToList();
 
             // Preserve explicit precedence order; apply secondary Name ordering for stability.
             var orderIndex = orderedDistinctGroupIds
                 .Select((id, idx) => new { id, idx })
                 .ToDictionary(x => x.id, x => x.idx);
 
-            var ordered = groups
+            var ordered = mappedGroups
                 .OrderBy(g => orderIndex.TryGetValue(g.Id, out var idx) ? idx : int.MaxValue)
                 .ThenBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             return ordered;
+        }
+
+        private static string Localize<TTranslation>(
+            string fallback,
+            IEnumerable<TTranslation> translations,
+            string? culture,
+            Func<TTranslation, string> cultureSelector,
+            Func<TTranslation, string> valueSelector)
+        {
+            if (!string.IsNullOrWhiteSpace(culture))
+            {
+                var localized = translations
+                    .Where(t => string.Equals(cultureSelector(t), culture, StringComparison.OrdinalIgnoreCase))
+                    .Select(valueSelector)
+                    .FirstOrDefault(static value => !string.IsNullOrWhiteSpace(value));
+                if (!string.IsNullOrWhiteSpace(localized))
+                {
+                    return localized;
+                }
+            }
+
+            return fallback;
         }
     }
 }

@@ -4,6 +4,7 @@ import { CmsContentCompositionWindow } from "@/components/cms/cms-content-compos
 import { CmsContinuationRail } from "@/components/cms/cms-continuation-rail";
 import { CmsStorefrontSupportWindow } from "@/components/cms/cms-storefront-support-window";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import { SurfaceSectionNav } from "@/components/layout/surface-section-nav";
 import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
 import { summarizeCmsContent } from "@/features/cms/content-summary";
 import {
@@ -184,21 +185,7 @@ export function CmsPageDetail({
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-6">
-        <div className="sticky top-24 z-10 -mt-2">
-          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
-            <div className="flex min-w-max flex-wrap gap-2">
-              {sectionLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
+        <SurfaceSectionNav items={sectionLinks} />
 
       <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <article

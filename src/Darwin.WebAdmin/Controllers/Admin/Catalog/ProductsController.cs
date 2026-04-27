@@ -106,13 +106,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             await LoadLookupsAsync(ct);
             var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var defaultCurrency = siteSettings.DefaultCurrency;
-            var defaultCulture = siteSettings.DefaultCulture;
             var vm = new ProductCreateVm();
             vm.Translations ??= new();
-            if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = defaultCulture });
+            await EnsureProductTranslationsAsync(vm, ct).ConfigureAwait(false);
 
             vm.Variants ??= new();
-            if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = defaultCurrency });
+            EnsureVariantDefaults(vm, defaultCurrency);
 
             return RenderCreateEditor(vm);
         }
@@ -129,6 +128,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (vm.Variants.Count == 0)
                 ModelState.AddModelError(nameof(vm.Variants), T("ProductAtLeastOneVariantRequired"));
 
+            var translations = FilterCompleteTranslations(vm.Translations);
+            if (translations.Count == 0)
+                ModelState.AddModelError(nameof(vm.Translations), T("ProductAtLeastOneTranslationRequired"));
+
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
@@ -141,7 +144,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 BrandId = vm.BrandId,
                 PrimaryCategoryId = vm.PrimaryCategoryId,
                 Kind = vm.Kind,
-                Translations = vm.Translations.Select(t => new ProductTranslationDto
+                Translations = translations.Select(t => new ProductTranslationDto
                 {
                     Culture = t.Culture,
                     Name = t.Name,
@@ -247,6 +250,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             };
 
             await LoadLookupsAsync(ct);
+            await EnsureProductTranslationsAsync(vm, ct).ConfigureAwait(false);
             return RenderEditEditor(vm);
         }
 
@@ -264,6 +268,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RenderEditEditor(vm);
             }
 
+            var translations = FilterCompleteTranslations(vm.Translations);
+            if (translations.Count == 0)
+            {
+                ModelState.AddModelError(nameof(vm.Translations), T("ProductAtLeastOneTranslationRequired"));
+                await LoadLookupsAsync(ct);
+                await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
+                return RenderEditEditor(vm);
+            }
+
             var dto = new ProductEditDto
             {
                 Id = vm.Id,
@@ -271,7 +284,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 PrimaryCategoryId = vm.PrimaryCategoryId,
                 Kind = vm.Kind,
                 RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
-                Translations = vm.Translations.Select(t => new ProductTranslationDto
+                Translations = translations.Select(t => new ProductTranslationDto
                 {
                     Culture = t.Culture,
                     Name = t.Name,
@@ -423,17 +436,60 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private async Task EnsureProductDefaultsAsync(ProductEditorVm vm, CancellationToken ct)
         {
             var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
-            var defaultCulture = siteSettings.DefaultCulture;
 
-            if (vm.Translations.Count == 0)
-            {
-                vm.Translations.Add(new ProductTranslationVm { Culture = defaultCulture });
-            }
+            await EnsureProductTranslationsAsync(vm, ct).ConfigureAwait(false);
 
             if (vm.Variants.Count == 0)
             {
                 vm.Variants.Add(new ProductVariantCreateVm { Currency = siteSettings.DefaultCurrency });
             }
+
+            EnsureVariantDefaults(vm, siteSettings.DefaultCurrency);
+        }
+
+        private static void EnsureVariantDefaults(ProductEditorVm vm, string defaultCurrency)
+        {
+            var currency = string.IsNullOrWhiteSpace(defaultCurrency)
+                ? Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault
+                : defaultCurrency.Trim().ToUpperInvariant();
+
+            foreach (var variant in vm.Variants.Where(static x => string.IsNullOrWhiteSpace(x.Currency)))
+            {
+                variant.Currency = currency;
+            }
+        }
+
+        private async Task EnsureProductTranslationsAsync(ProductEditorVm vm, CancellationToken ct)
+        {
+            var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            var orderedCultures = cultures
+                .Prepend(defaultCulture)
+                .Where(static x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (orderedCultures.Length == 0)
+            {
+                orderedCultures = [defaultCulture];
+            }
+
+            foreach (var culture in orderedCultures)
+            {
+                if (vm.Translations.All(x => !string.Equals(x.Culture, culture, StringComparison.OrdinalIgnoreCase)))
+                {
+                    vm.Translations.Add(new ProductTranslationVm { Culture = culture });
+                }
+            }
+        }
+
+        private static List<ProductTranslationVm> FilterCompleteTranslations(IEnumerable<ProductTranslationVm> translations)
+        {
+            return translations
+                .Where(static t =>
+                    !string.IsNullOrWhiteSpace(t.Culture) &&
+                    !string.IsNullOrWhiteSpace(t.Name) &&
+                    !string.IsNullOrWhiteSpace(t.Slug))
+                .ToList();
         }
 
         private OperationalPlaybookVm[] BuildProductPlaybooks()

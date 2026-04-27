@@ -27,6 +27,7 @@ public sealed class GetPublishedCategoriesHandler
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
+        var defaultCulture = SiteSettingDto.DefaultCultureDefault;
 
         var baseQuery = _db.Set<Category>()
             .AsNoTracking()
@@ -42,9 +43,14 @@ public sealed class GetPublishedCategoriesHandler
             {
                 Id = x.Id,
                 ParentId = x.ParentId,
-                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault() ?? string.Empty,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault() ?? string.Empty,
-                Description = x.Translations.Where(t => t.Culture == culture).Select(t => t.Description).FirstOrDefault(),
+                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
+                    ?? string.Empty,
+                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                    ?? string.Empty,
+                Description = x.Translations.Where(t => t.Culture == culture).Select(t => t.Description).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Description).FirstOrDefault(),
                 SortOrder = x.SortOrder
             })
             .ToListAsync(ct)
@@ -79,6 +85,7 @@ public sealed class GetPublishedProductsPageHandler
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
+        var defaultCulture = SiteSettingDto.DefaultCultureDefault;
         categorySlug = string.IsNullOrWhiteSpace(categorySlug) ? null : categorySlug.Trim();
 
         var nowUtc = DateTime.UtcNow;
@@ -96,7 +103,9 @@ public sealed class GetPublishedProductsPageHandler
                 x.PrimaryCategoryId.HasValue &&
                 _db.Set<Category>().Any(category =>
                     category.Id == x.PrimaryCategoryId.Value &&
-                    category.Translations.Any(translation => translation.Culture == culture && translation.Slug == categorySlug)));
+                    category.Translations.Any(translation =>
+                        translation.Slug == categorySlug &&
+                        (translation.Culture == culture || translation.Culture == defaultCulture))));
         }
 
         var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
@@ -107,9 +116,14 @@ public sealed class GetPublishedProductsPageHandler
             .Select(x => new PublicProductSummaryDto
             {
                 Id = x.Id,
-                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault() ?? string.Empty,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault() ?? string.Empty,
-                ShortDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault(),
+                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
+                    ?? string.Empty,
+                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                    ?? string.Empty,
+                ShortDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.ShortDescription).FirstOrDefault(),
                 Currency = x.Variants.OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? SiteSettingDto.DefaultCurrencyDefault,
                 PriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.BasePriceNetMinor).FirstOrDefault(),
                 CompareAtPriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.CompareAtPriceNetMinor).FirstOrDefault(),
@@ -150,6 +164,7 @@ public sealed class GetPublishedProductBySlugHandler
         }
 
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
+        var defaultCulture = SiteSettingDto.DefaultCultureDefault;
         var normalizedSlug = slug.Trim();
         var nowUtc = DateTime.UtcNow;
 
@@ -160,16 +175,24 @@ public sealed class GetPublishedProductBySlugHandler
                 x.IsVisible &&
                 (!x.PublishStartUtc.HasValue || x.PublishStartUtc <= nowUtc) &&
                 (!x.PublishEndUtc.HasValue || x.PublishEndUtc >= nowUtc) &&
-                x.Translations.Any(t => t.Culture == culture && t.Slug == normalizedSlug))
+                x.Translations.Any(t => t.Slug == normalizedSlug && (t.Culture == culture || t.Culture == defaultCulture)))
             .Select(x => new PublicProductDetailDto
             {
                 Id = x.Id,
-                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault() ?? string.Empty,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault() ?? string.Empty,
-                ShortDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault(),
-                FullDescriptionHtml = x.Translations.Where(t => t.Culture == culture).Select(t => t.FullDescriptionHtml).FirstOrDefault(),
-                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault(),
-                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault(),
+                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
+                    ?? string.Empty,
+                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                    ?? string.Empty,
+                ShortDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.ShortDescription).FirstOrDefault(),
+                FullDescriptionHtml = x.Translations.Where(t => t.Culture == culture).Select(t => t.FullDescriptionHtml).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.FullDescriptionHtml).FirstOrDefault(),
+                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault(),
+                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault(),
                 Currency = x.Variants.OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? SiteSettingDto.DefaultCurrencyDefault,
                 PriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.BasePriceNetMinor).FirstOrDefault(),
                 CompareAtPriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.CompareAtPriceNetMinor).FirstOrDefault(),

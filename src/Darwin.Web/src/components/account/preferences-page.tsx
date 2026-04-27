@@ -4,6 +4,7 @@ import { AccountStorefrontWindow } from "@/components/account/account-storefront
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
+import { SurfaceSectionNav } from "@/components/layout/surface-section-nav";
 import type {
   PublicCategorySummary,
   PublicProductSummary,
@@ -92,45 +93,99 @@ export function PreferencesPage({
   ];
 
   return (
-    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+    <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-6">
-        <div className="sticky top-24 z-10 -mt-2">
-          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
-            <div className="flex min-w-max flex-wrap gap-2">
-              {sectionLinks.map((link) => (
-                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {link.label}
-                </a>
-              ))}
+        <div className="overflow-hidden rounded-[2.25rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_340px] lg:items-end">
+            <div>
+              <nav
+                aria-label={copy.memberBreadcrumbLabel}
+                className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
+              >
+                <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-text-primary)]">
+                  {copy.memberBreadcrumbHome}
+                </Link>
+                <span>/</span>
+                <Link href={localizeHref("/account", culture)} className="transition hover:text-[var(--color-text-primary)]">
+                  {copy.memberBreadcrumbAccount}
+                </Link>
+                <span>/</span>
+                <span className="text-[var(--color-text-primary)]">{copy.preferencesRouteLabel}</span>
+              </nav>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
+                {copy.preferencesEditEyebrow}
+              </p>
+              <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
+                {copy.preferencesEditTitle}
+              </h1>
+              <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
+                {preferences
+                  ? copy.preferencesRouteSummaryMessage
+                  : copy.preferencesRouteSummaryUnavailableMessage}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  href={localizeHref("/account/profile", culture)}
+                  className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
+                >
+                  {copy.memberRouteSummaryProfileCta}
+                </Link>
+                <Link
+                  href={localizeHref("/account/addresses", culture)}
+                  className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-white/85 px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-white"
+                >
+                  {copy.preferencesRouteSummaryAddressesCta}
+                </Link>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.preferencesEmailChannelTitle}
+                </p>
+                <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                  {profile?.email && preferences?.allowEmailMarketing
+                    ? copy.dashboardCommunicationReady
+                    : copy.dashboardCommunicationNeedsAttention}
+                </p>
+              </article>
+              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.preferencesSmsChannelTitle}
+                </p>
+                <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
+                  {smsReady
+                    ? copy.dashboardCommunicationReady
+                    : copy.dashboardCommunicationNeedsAttention}
+                </p>
+              </article>
+              <article className="rounded-[1.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/78">
+                  {copy.preferencesWhatsAppChannelTitle}
+                </p>
+                <p className="mt-2 text-base font-semibold text-white">
+                  {whatsAppReady
+                    ? copy.dashboardCommunicationReady
+                    : copy.dashboardCommunicationNeedsAttention}
+                </p>
+              </article>
             </div>
           </div>
         </div>
+
+        <SurfaceSectionNav items={sectionLinks} />
       <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <form
           action={updateMemberPreferencesAction}
           id="preferences-form"
-          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
+          className="scroll-mt-28 rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
         >
-          <nav
-            aria-label={copy.memberBreadcrumbLabel}
-            className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
-          >
-            <Link href={localizeHref("/", culture)} className="transition hover:text-[var(--color-text-primary)]">
-              {copy.memberBreadcrumbHome}
-            </Link>
-            <span>/</span>
-            <Link href={localizeHref("/account", culture)} className="transition hover:text-[var(--color-text-primary)]">
-              {copy.memberBreadcrumbAccount}
-            </Link>
-            <span>/</span>
-            <span className="text-[var(--color-text-primary)]">{copy.preferencesRouteLabel}</span>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            {copy.preferencesEditEyebrow}
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
+            {copy.preferencesRouteLabel}
           </p>
-          <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
+          <h2 className="mt-4 text-2xl font-semibold text-[var(--color-text-primary)] sm:text-3xl">
             {copy.preferencesEditTitle}
-          </h1>
+          </h2>
 
           {matchesLocalizedQueryMessageKey(
             preferencesStatus,

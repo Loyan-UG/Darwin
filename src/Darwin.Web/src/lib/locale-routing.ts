@@ -88,7 +88,14 @@ export function isPublicLocalizedPath(pathname: string) {
   return (
     strippedPath === "/" ||
     isExactOrChildPath(strippedPath, "/catalog") ||
-    isExactOrChildPath(strippedPath, "/cms")
+    isExactOrChildPath(strippedPath, "/cms") ||
+    isExactOrChildPath(strippedPath, "/account") ||
+    isExactOrChildPath(strippedPath, "/cart") ||
+    isExactOrChildPath(strippedPath, "/checkout") ||
+    isExactOrChildPath(strippedPath, "/invoices") ||
+    isExactOrChildPath(strippedPath, "/loyalty") ||
+    isExactOrChildPath(strippedPath, "/mock-checkout") ||
+    isExactOrChildPath(strippedPath, "/orders")
   );
 }
 

@@ -1,8 +1,10 @@
 using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Catalog.Services;
 using Darwin.Application.CartCheckout.Commands;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
+using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Pricing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -19,17 +21,161 @@ public sealed class CartHandlersTests
     // ─── ApplyCouponHandler ──────────────────────────────────────────────────
 
     [Fact]
+    public async Task AddOrIncreaseCartItem_Should_IncreaseExistingLine_WhenSameVariantAndAddOnsAlreadyExist()
+    {
+        await using var db = CartTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            TaxCategoryId = taxCategoryId,
+            Sku = "SKU-111",
+            Currency = "EUR",
+            BasePriceNetMinor = 2999
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<Cart>().Add(new Cart { Id = cartId, AnonymousId = "anon-add-1", Currency = "EUR" });
+        db.Set<CartItem>().Add(new CartItem
+        {
+            CartId = cartId,
+            VariantId = variantId,
+            Quantity = 1,
+            UnitPriceNetMinor = 2999,
+            VatRate = 0.19m,
+            SelectedAddOnValueIdsJson = "[]"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new AddOrIncreaseCartItemHandler(db, new TestAddOnPricingService(), new TestStringLocalizer());
+
+        await handler.HandleAsync(new CartAddItemDto
+        {
+            AnonymousId = "anon-add-1",
+            VariantId = variantId,
+            Quantity = 2,
+            Currency = "EUR"
+        }, TestContext.Current.CancellationToken);
+
+        var items = await db.Set<CartItem>()
+            .Where(x => x.CartId == cartId && !x.IsDeleted)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        items.Should().HaveCount(1);
+        items[0].Quantity.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task AddOrIncreaseCartItem_Should_CreateCart_WhenAnonymousCartDoesNotExist()
+    {
+        await using var db = CartTestDbContext.Create();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            TaxCategoryId = taxCategoryId,
+            Sku = "SKU-222",
+            Currency = "EUR",
+            BasePriceNetMinor = 1999
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new AddOrIncreaseCartItemHandler(db, new TestAddOnPricingService(), new TestStringLocalizer());
+
+        var cartId = await handler.HandleAsync(new CartAddItemDto
+        {
+            AnonymousId = "anon-add-2",
+            VariantId = variantId,
+            Quantity = 1,
+            Currency = "EUR"
+        }, TestContext.Current.CancellationToken);
+
+        var cart = await db.Set<Cart>().SingleAsync(x => x.Id == cartId, TestContext.Current.CancellationToken);
+        var item = await db.Set<CartItem>().SingleAsync(x => x.CartId == cartId && x.VariantId == variantId, TestContext.Current.CancellationToken);
+
+        cart.AnonymousId.Should().Be("anon-add-2");
+        item.Quantity.Should().Be(1);
+        item.UnitPriceNetMinor.Should().Be(1999);
+    }
+
+    [Fact]
     public async Task ApplyCoupon_Should_SetCouponCode_WhenPromoIsValid()
     {
         await using var db = CartTestDbContext.Create();
         var cartId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
 
         db.Set<Cart>().Add(new Cart { Id = cartId, AnonymousId = "anon-1", Currency = "EUR" });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            TaxCategoryId = taxCategoryId,
+            Sku = "SKU-COUPON-1",
+            Currency = "EUR",
+            BasePriceNetMinor = 3000
+        });
+        db.Set<CartItem>().Add(new CartItem
+        {
+            CartId = cartId,
+            VariantId = variantId,
+            Quantity = 1,
+            UnitPriceNetMinor = 3000,
+            VatRate = 0.19m,
+            SelectedAddOnValueIdsJson = "[]"
+        });
         db.Set<Promotion>().Add(new Promotion
         {
             Id = Guid.NewGuid(),
             Name = "Summer Sale",
             Code = "SUMMER10",
+            Type = Darwin.Domain.Enums.PromotionType.Percentage,
+            Percent = 10m,
             IsActive = true,
             StartsAtUtc = null,
             EndsAtUtc = null,
@@ -354,6 +500,20 @@ public sealed class CartHandlersTests
                 b.Property(x => x.RowVersion).IsRequired();
             });
 
+            modelBuilder.Entity<ProductVariant>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Sku).HasMaxLength(128).IsRequired();
+                b.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Product>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.RowVersion).IsRequired();
+            });
+
             modelBuilder.Entity<Promotion>(b =>
             {
                 b.HasKey(x => x.Id);
@@ -361,7 +521,23 @@ public sealed class CartHandlersTests
                 b.Property(x => x.Currency).IsRequired();
                 b.Property(x => x.RowVersion).IsRequired();
             });
+
+            modelBuilder.Entity<TaxCategory>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Name).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired();
+            });
         }
+    }
+
+    private sealed class TestAddOnPricingService : IAddOnPricingService
+    {
+        public Task ValidateSelectionsForVariantAsync(Guid variantId, IReadOnlyCollection<Guid> selectedValueIds, CancellationToken ct) =>
+            Task.CompletedTask;
+
+        public Task<long> SumPriceDeltasAsync(IReadOnlyCollection<Guid> selectedValueIds, CancellationToken ct) =>
+            Task.FromResult(0L);
     }
 
     private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>

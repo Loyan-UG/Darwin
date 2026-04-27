@@ -1,12 +1,14 @@
 using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
+using Darwin.Application.Settings.Queries;
 using Darwin.Shared.Results;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,6 +29,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private readonly UpdateBrandHandler _update;
         private readonly SoftDeleteBrandHandler _softDelete;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly GetCulturesHandler _getCultures;
 
         public BrandsController(
             GetBrandsPageHandler getPage,
@@ -35,7 +38,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             CreateBrandHandler create,
             UpdateBrandHandler update,
             SoftDeleteBrandHandler softDelete,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            GetCulturesHandler getCultures)
         {
             _getPage = getPage;
             _getBrandOpsSummary = getBrandOpsSummary;
@@ -44,6 +48,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             _update = update;
             _softDelete = softDelete;
             _siteSettingCache = siteSettingCache;
+            _getCultures = getCultures;
         }
 
         /// <summary>
@@ -86,10 +91,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         }
 
         [HttpGet]
-        public IActionResult Create() => RenderBrandEditor(new BrandEditVm
+        public async Task<IActionResult> Create(CancellationToken ct = default)
         {
-            Translations = { new BrandTranslationVm { Culture = GetDefaultCulture() } }
-        }, isCreate: true);
+            var vm = new BrandEditVm();
+            await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
+            return RenderBrandEditor(vm, isCreate: true);
+        }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(BrandEditVm vm, CancellationToken ct = default)
@@ -100,11 +107,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RenderBrandEditor(vm, isCreate: true);
             }
 
+            var translations = FilterCompleteTranslations(vm.Translations);
+            if (translations.Count == 0)
+            {
+                AddModelErrorMessage("BrandCreateFailed");
+                await EnsureTranslationsAsync(vm, ct);
+                return RenderBrandEditor(vm, isCreate: true);
+            }
+
             var dto = new BrandCreateDto
             {
                 Slug = string.IsNullOrWhiteSpace(vm.Slug) ? null : vm.Slug.Trim(),
                 LogoMediaId = vm.LogoMediaId,
-                Translations = vm.Translations.Select(t => new BrandTranslationDto
+                Translations = translations.Select(t => new BrandTranslationDto
                 {
                     Id = t.Id,
                     Culture = t.Culture,
@@ -152,6 +167,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 }).ToList()
             };
 
+            await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
             return RenderBrandEditor(vm, isCreate: false);
         }
 
@@ -164,13 +180,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RenderBrandEditor(vm, isCreate: false);
             }
 
+            var translations = FilterCompleteTranslations(vm.Translations);
+            if (translations.Count == 0)
+            {
+                AddModelErrorMessage("BrandUpdateFailed");
+                await EnsureTranslationsAsync(vm, ct);
+                return RenderBrandEditor(vm, isCreate: false);
+            }
+
             var dto = new BrandEditDto
             {
                 Id = vm.Id,
                 RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
                 Slug = string.IsNullOrWhiteSpace(vm.Slug) ? null : vm.Slug.Trim(),
                 LogoMediaId = vm.LogoMediaId,
-                Translations = vm.Translations.Select(t => new BrandTranslationDto
+                Translations = translations.Select(t => new BrandTranslationDto
                 {
                     Id = t.Id,
                     Culture = t.Culture,
@@ -251,18 +275,36 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        private string GetDefaultCulture()
-        {
-            return _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCulture;
-        }
-
         private async Task EnsureTranslationsAsync(BrandEditVm vm, CancellationToken ct)
         {
-            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
-            if (vm.Translations.Count == 0)
+            var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            var orderedCultures = cultures
+                .Prepend(defaultCulture)
+                .Where(static x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (orderedCultures.Length == 0)
             {
-                vm.Translations.Add(new BrandTranslationVm { Culture = defaultCulture });
+                orderedCultures = [defaultCulture];
             }
+
+            foreach (var culture in orderedCultures)
+            {
+                if (vm.Translations.All(x => !string.Equals(x.Culture, culture, StringComparison.OrdinalIgnoreCase)))
+                {
+                    vm.Translations.Add(new BrandTranslationVm { Culture = culture });
+                }
+            }
+        }
+
+        private static List<BrandTranslationVm> FilterCompleteTranslations(IEnumerable<BrandTranslationVm> translations)
+        {
+            return translations
+                .Where(static t =>
+                    !string.IsNullOrWhiteSpace(t.Culture) &&
+                    !string.IsNullOrWhiteSpace(t.Name))
+                .ToList();
         }
 
         private OperationalPlaybookVm[] BuildBrandPlaybooks()

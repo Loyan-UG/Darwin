@@ -157,7 +157,7 @@ export function CheckoutPage({
 
   if (!cart) {
     return (
-      <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
+      <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-5 py-10 sm:px-6 lg:px-8">
         <div className="flex w-full flex-col gap-6 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
           <StatusBanner
             tone="warning"
@@ -177,7 +177,7 @@ export function CheckoutPage({
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
+    <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-5 py-10 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <nav
           aria-label={copy.commerceBreadcrumbLabel}
@@ -200,16 +200,46 @@ export function CheckoutPage({
           </span>
         </nav>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
-            {copy.publicCheckoutEyebrow}
-          </p>
-          <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
-            {copy.checkoutHeroTitle}
-          </h1>
-          <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
-            {copy.checkoutHeroDescription}
-          </p>
+        <div className="overflow-hidden rounded-[2.25rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_340px] lg:items-end">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
+                {copy.publicCheckoutEyebrow}
+              </p>
+              <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
+                {copy.checkoutHeroTitle}
+              </h1>
+              <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
+                {copy.checkoutHeroDescription}
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.cartLinesLabel}
+                </p>
+                <p className="mt-2 text-xl font-semibold text-[var(--color-text-primary)]">
+                  {cart.items.length}
+                </p>
+              </article>
+              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.shippingLabel}
+                </p>
+                <p className="mt-2 text-xl font-semibold text-[var(--color-text-primary)]">
+                  {hasSelectedShipping ? copy.readyYes : copy.readyNo}
+                </p>
+              </article>
+              <article className="rounded-[1.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/78">
+                  {copy.estimatedGrandTotalLabel}
+                </p>
+                <p className="mt-2 text-xl font-semibold text-white">
+                  {formatMoney(projectedCheckoutTotalMinor, cart.currency, culture)}
+                </p>
+              </article>
+            </div>
+          </div>
         </div>
 
         {resolvedCheckoutError && (
@@ -237,21 +267,49 @@ export function CheckoutPage({
           />
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-            {copy.checkoutRouteSummaryTitle}
-          </p>
-          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-            {formatResource(copy.checkoutRouteSummaryMessage, {
-              cartStatus: model.status,
-              intentStatus,
-              lineCount: cart.items.length,
-              addressReady: addressComplete ? copy.readyYes : copy.readyNo,
-            })}
-          </p>
+        <div className="grid gap-4 rounded-[2rem] border border-[#dce6cf] bg-white px-6 py-6 shadow-[0_24px_60px_-36px_rgba(58,92,35,0.3)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              {copy.checkoutRouteSummaryTitle}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+              {formatResource(copy.checkoutRouteSummaryMessage, {
+                cartStatus: model.status,
+                intentStatus,
+                lineCount: cart.items.length,
+                addressReady: addressComplete ? copy.readyYes : copy.readyNo,
+              })}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[1.5rem] bg-[#f7fbef] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.addressReadyLabel}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                {addressComplete ? copy.readyYes : copy.readyNo}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[#fff7ea] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.intentReadyLabel}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                {intent ? copy.readyYes : copy.readyNo}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[#eef8ec] px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                {copy.checkoutPaymentWindowExposureLabel}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                {formatMoney(combinedExposureMinor, cart.currency, culture)}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+        <section className="sticky top-4 z-10 rounded-[2rem] border border-[#dce6cf] bg-[color:color-mix(in_srgb,white_84%,#eff7e9_16%)] px-6 py-5 shadow-[0_24px_54px_-36px_rgba(58,92,35,0.32)] backdrop-blur">
           <div className="flex flex-wrap gap-2">
             {sectionLinks.map((section) => (
               <a
@@ -269,7 +327,7 @@ export function CheckoutPage({
           id="checkout-overview"
           className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
         >
-          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <section className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.checkoutConfidenceTitle}
             </p>
@@ -312,7 +370,7 @@ export function CheckoutPage({
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <section className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.checkoutAttentionTitle}
             </p>
@@ -355,7 +413,7 @@ export function CheckoutPage({
 
         <section
           id="checkout-payment-window"
-          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+          className="scroll-mt-28 rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(150deg,#ffffff_0%,#f7fbef_55%,#fff3dc_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.checkoutPaymentWindowTitle}
@@ -1124,8 +1182,8 @@ export function CheckoutPage({
                 canPlaceOrder={canPlaceOrder}
                 addressComplete={addressComplete}
                 hasSelectedShipping={hasSelectedShipping}
-                cartHref="/cart"
-                accountHref="/account"
+                cartHref={localizeHref("/cart", culture)}
+                accountHref={localizeHref("/account", culture)}
                 cmsPages={cmsPages}
                 categories={categories}
                 products={products}

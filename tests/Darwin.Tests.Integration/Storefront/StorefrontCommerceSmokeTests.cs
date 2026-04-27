@@ -52,6 +52,25 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
         products.Should().NotBeNull();
         products!.Total.Should().BeGreaterThanOrEqualTo(20);
         products.Items.Should().Contain(item => !string.IsNullOrWhiteSpace(item.Slug));
+
+        var englishCategories = await client.GetFromJsonAsync<PagedResponse<PublicCategorySummary>>(
+            "/api/v1/public/catalog/categories?culture=en-US&page=1&pageSize=50",
+            TestContext.Current.CancellationToken);
+        var englishProducts = await client.GetFromJsonAsync<PagedResponse<PublicProductSummary>>(
+            "/api/v1/public/catalog/products?culture=en-US&page=1&pageSize=100",
+            TestContext.Current.CancellationToken);
+
+        englishCategories.Should().NotBeNull();
+        englishCategories!.Items.Should().OnlyContain(item =>
+            !string.IsNullOrWhiteSpace(item.Name) &&
+            !string.IsNullOrWhiteSpace(item.Slug));
+        englishCategories.Items.Should().Contain(item => item.Name == "Android phones");
+
+        englishProducts.Should().NotBeNull();
+        englishProducts!.Items.Should().OnlyContain(item =>
+            !string.IsNullOrWhiteSpace(item.Name) &&
+            !string.IsNullOrWhiteSpace(item.Slug));
+        englishProducts.Items.Should().Contain(item => item.Name == "iPhone 15 Pro 128GB");
     }
     /// <summary>
     ///     Verifies that the seeded public menus expose the main storefront and legal

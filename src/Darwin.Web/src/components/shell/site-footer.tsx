@@ -11,7 +11,7 @@ export function SiteFooter({ groups, culture }: SiteFooterProps) {
   const copy = getShellCopy(culture);
 
   return (
-    <footer className="border-t border-[var(--color-border-soft)] bg-[rgba(255,253,248,0.9)]">
+    <footer className="border-t border-[var(--color-border-soft)] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(241,248,230,0.96))]">
       <div className="mx-auto grid w-full max-w-[var(--content-max-width)] gap-10 px-5 py-10 sm:px-6 lg:grid-cols-[1.1fr_repeat(3,minmax(0,1fr))] lg:px-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-brand)]">

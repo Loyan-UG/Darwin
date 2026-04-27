@@ -35,7 +35,10 @@ namespace Darwin.Application.Catalog.Commands
             if (!vr.IsValid) throw new ValidationException(vr.Errors);
 
             var g = await _db.Set<AddOnGroup>()
+                .Include(x => x.Translations)
                 .Include(x => x.Options).ThenInclude(o => o.Values)
+                .Include(x => x.Options).ThenInclude(o => o.Translations)
+                .Include(x => x.Options).ThenInclude(o => o.Values).ThenInclude(v => v.Translations)
                 .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
 
             if (g == null) throw new InvalidOperationException(_localizer["AddOnGroupNotFound"]);
@@ -50,6 +53,7 @@ namespace Darwin.Application.Catalog.Commands
             g.MinSelections = dto.MinSelections;
             g.MaxSelections = dto.MaxSelections;
             g.IsActive = dto.IsActive;
+            SyncGroupTranslations(g, dto);
 
             SyncOptions(g, dto);
 
@@ -90,6 +94,7 @@ namespace Darwin.Application.Catalog.Commands
                 option.Label = label;
                 option.SortOrder = input.SortOrder;
                 option.IsDeleted = false;
+                SyncOptionTranslations(option, input);
                 requestedIds.Add(option.Id);
 
                 SyncValues(option, input);
@@ -141,6 +146,7 @@ namespace Darwin.Application.Catalog.Commands
                 value.SortOrder = input.SortOrder;
                 value.IsActive = input.IsActive;
                 value.IsDeleted = false;
+                SyncValueTranslations(value, input);
                 requestedIds.Add(value.Id);
             }
 
@@ -161,6 +167,57 @@ namespace Darwin.Application.Catalog.Commands
             {
                 value.IsDeleted = true;
                 value.IsActive = false;
+            }
+        }
+
+        private static void SyncGroupTranslations(AddOnGroup group, AddOnGroupEditDto dto)
+        {
+            foreach (var input in dto.Translations)
+            {
+                var culture = input.Culture.Trim();
+                var translation = group.Translations.FirstOrDefault(t => string.Equals(t.Culture, culture, StringComparison.OrdinalIgnoreCase));
+                if (translation is null)
+                {
+                    translation = new AddOnGroupTranslation { Culture = culture };
+                    group.Translations.Add(translation);
+                }
+
+                translation.Name = input.Name.Trim();
+                translation.IsDeleted = false;
+            }
+        }
+
+        private static void SyncOptionTranslations(AddOnOption option, AddOnOptionDto dto)
+        {
+            foreach (var input in dto.Translations)
+            {
+                var culture = input.Culture.Trim();
+                var translation = option.Translations.FirstOrDefault(t => string.Equals(t.Culture, culture, StringComparison.OrdinalIgnoreCase));
+                if (translation is null)
+                {
+                    translation = new AddOnOptionTranslation { Culture = culture };
+                    option.Translations.Add(translation);
+                }
+
+                translation.Label = input.Label.Trim();
+                translation.IsDeleted = false;
+            }
+        }
+
+        private static void SyncValueTranslations(AddOnOptionValue value, AddOnOptionValueDto dto)
+        {
+            foreach (var input in dto.Translations)
+            {
+                var culture = input.Culture.Trim();
+                var translation = value.Translations.FirstOrDefault(t => string.Equals(t.Culture, culture, StringComparison.OrdinalIgnoreCase));
+                if (translation is null)
+                {
+                    translation = new AddOnOptionValueTranslation { Culture = culture };
+                    value.Translations.Add(translation);
+                }
+
+                translation.Label = input.Label.Trim();
+                translation.IsDeleted = false;
             }
         }
     }

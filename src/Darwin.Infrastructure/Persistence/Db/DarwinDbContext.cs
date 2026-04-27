@@ -79,6 +79,9 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<ProductOptionValue> ProductOptionValues => Set<ProductOptionValue>();
         public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
         public DbSet<VariantOptionValue> VariantOptionValues => Set<VariantOptionValue>();
+        public DbSet<AddOnGroupTranslation> AddOnGroupTranslations => Set<AddOnGroupTranslation>();
+        public DbSet<AddOnOptionTranslation> AddOnOptionTranslations => Set<AddOnOptionTranslation>();
+        public DbSet<AddOnOptionValueTranslation> AddOnOptionValueTranslations => Set<AddOnOptionValueTranslation>();
 
         // Pricing
         public DbSet<TaxCategory> TaxCategories => Set<TaxCategory>();

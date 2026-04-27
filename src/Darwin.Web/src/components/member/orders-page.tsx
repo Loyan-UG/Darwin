@@ -5,6 +5,7 @@ import { StatusBanner } from "@/components/feedback/status-banner";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
 import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
+import { SurfaceSectionNav } from "@/components/layout/surface-section-nav";
 import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
 import type {
   PublicCategorySummary,
@@ -166,17 +167,7 @@ export function OrdersPage({
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
-        <div className="sticky top-24 z-10 -mt-2">
-          <div className="overflow-x-auto rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_88%,transparent)] px-3 py-3 shadow-[var(--shadow-panel)] backdrop-blur">
-            <div className="flex min-w-max flex-wrap gap-2">
-              {sectionLinks.map((link) => (
-                <a key={link.href} href={link.href} className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
+        <SurfaceSectionNav items={sectionLinks} />
       <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-8">
         <nav

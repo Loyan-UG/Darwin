@@ -196,7 +196,7 @@ export function CommerceAuthHandoff({
             {copy.commerceAuthOfferBoardTitle}
           </p>
           <Link
-            href="/catalog"
+            href={localizeHref("/catalog", culture)}
             className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
           >
             {copy.commerceAuthOfferBoardCta}

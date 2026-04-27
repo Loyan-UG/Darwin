@@ -451,7 +451,7 @@ export function MemberDashboardPage({
   ];
 
   return (
-    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+    <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <nav
           aria-label={copy.memberBreadcrumbLabel}
@@ -466,8 +466,8 @@ export function MemberDashboardPage({
           </span>
         </nav>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
-          <div className="flex flex-wrap items-start justify-between gap-5">
+        <div className="overflow-hidden rounded-[2.25rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_340px] lg:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
                 {copy.memberDashboardEyebrow}
@@ -479,14 +479,44 @@ export function MemberDashboardPage({
                 {copy.memberDashboardDescription}
               </p>
             </div>
-            <form action={signOutMemberAction}>
-              <button
-                type="submit"
-                className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-              >
-                {copy.signOut}
-              </button>
-            </form>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.dashboardCommerceReadinessOrdersLabel}
+                </p>
+                <p className="mt-2 text-xl font-semibold text-[var(--color-text-primary)]">
+                  {attentionOrders.length}
+                </p>
+              </article>
+              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
+                  {copy.dashboardCommunicationEmailLabel}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                  {emailChannelReady
+                    ? copy.dashboardCommunicationReady
+                    : copy.dashboardCommunicationNeedsAttention}
+                </p>
+              </article>
+              <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/78">
+                    {copy.dashboardSecurityStateLabel}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-white">
+                    {securityState}
+                  </p>
+                </div>
+                <form action={signOutMemberAction}>
+                  <button
+                    type="submit"
+                    className="inline-flex rounded-full border border-white/35 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    {copy.signOut}
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -504,7 +534,7 @@ export function MemberDashboardPage({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid gap-6">
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.profileSnapshotTitle}
               </p>
@@ -526,7 +556,7 @@ export function MemberDashboardPage({
               )}
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.preferencesSnapshotTitle}
               </p>
@@ -550,7 +580,7 @@ export function MemberDashboardPage({
           <div className="flex flex-col gap-5">
             <MemberPortalNav culture={culture} activePath="/account" />
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.memberRouteSummaryTitle}
               </p>
@@ -583,7 +613,7 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.crmContextTitle}
               </p>
@@ -661,7 +691,7 @@ export function MemberDashboardPage({
               cartSectionCheckoutCtaLabel={copy.dashboardStorefrontCartOpenCheckoutCta}
             />
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.dashboardCommunicationWindowTitle}
               </p>
@@ -725,7 +755,7 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.checkoutLaunchTitle}
               </p>
@@ -753,7 +783,7 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.dashboardSecurityWindowTitle}
               </p>

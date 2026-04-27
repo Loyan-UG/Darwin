@@ -238,13 +238,21 @@ export function CatalogPage({
   ];
 
   return (
-    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
+    <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <div className="flex w-full flex-col gap-8">
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-[rgba(61,105,52,0.12)] bg-[linear-gradient(135deg,#f6ffe9_0%,#ffffff_38%,#fff1d2_100%)] px-6 py-8 shadow-[0_34px_120px_rgba(38,76,34,0.12)] sm:px-8 sm:py-10">
+          <div
+            aria-hidden="true"
+            className="absolute -right-12 top-0 h-48 w-48 rounded-full bg-[rgba(76,175,80,0.14)] blur-3xl"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute bottom-0 left-0 h-40 w-40 rounded-full bg-[rgba(255,152,0,0.14)] blur-3xl"
+          />
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-brand)]">
             {copy.heroEyebrow}
           </p>
-          <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="relative mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
                 {copy.heroTitle}
@@ -253,7 +261,7 @@ export function CatalogPage({
                 {copy.heroDescription}
               </p>
               {activeCategory ? (
-                <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4">
+                <div className="mt-5 rounded-[1.5rem] border border-white/70 bg-white/80 px-5 py-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
                     {copy.activeCategoryEyebrow}
                   </p>
@@ -291,7 +299,7 @@ export function CatalogPage({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4"
+                  className="rounded-[1.5rem] border border-white/70 bg-white/80 px-5 py-4 shadow-sm"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
                     {item.label}
@@ -319,7 +327,7 @@ export function CatalogPage({
           />
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-white/86 px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] backdrop-blur">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.catalogRouteSummaryTitle}
           </p>
@@ -339,7 +347,7 @@ export function CatalogPage({
           />
         )}
 
-        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+        <section className="sticky top-4 z-10 rounded-[2rem] border border-[rgba(53,92,38,0.12)] bg-[rgba(255,255,255,0.86)] px-6 py-5 shadow-[0_20px_50px_rgba(38,76,34,0.1)] backdrop-blur">
           <div className="flex flex-wrap gap-2">
             {sectionLinks.map((section) => (
               <a
@@ -811,7 +819,7 @@ export function CatalogPage({
         <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
           <aside
             id="catalog-filters"
-            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-5 py-6 shadow-[var(--shadow-panel)]"
+            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-white/92 px-5 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)]"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.categoriesTitle}
@@ -820,7 +828,7 @@ export function CatalogPage({
             <form
               action={localizeHref("/catalog", culture)}
               method="get"
-              className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+              className="mt-5 rounded-[1.5rem] border border-[rgba(53,92,38,0.08)] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,0.98))] px-4 py-4"
             >
               {activeCategorySlug ? (
                 <input type="hidden" name="category" value={activeCategorySlug} />
@@ -1139,9 +1147,9 @@ export function CatalogPage({
                     return (
                   <article
                     key={product.id}
-                    className="flex h-full flex-col rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-5 shadow-[var(--shadow-panel)]"
+                    className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-[rgba(53,92,38,0.1)] bg-white/92 p-5 shadow-[0_22px_60px_rgba(38,76,34,0.08)] transition duration-200 hover:-translate-y-1"
                   >
-                    <div className="flex min-h-48 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-6">
+                    <div className="flex min-h-48 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-6">
                       {productImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1185,7 +1193,7 @@ export function CatalogPage({
                         </Link>
                       </h2>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-[var(--color-surface-panel-strong)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-primary)]">
+                        <span className="rounded-full bg-[rgba(47,125,50,0.08)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-primary)]">
                           {savingsPercent !== null
                             && savingsPercent > 0
                             ? copy.catalogCardOfferLabel
@@ -1240,7 +1248,7 @@ export function CatalogPage({
                             }),
                             culture,
                           )}
-                          className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-brand-strong)]"
                         >
                           {copy.viewDetails}
                         </Link>

@@ -13,6 +13,11 @@ namespace Darwin.Application.Catalog.Validators
         public AddOnGroupCreateValidator()
         {
             RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
+            RuleForEach(x => x.Translations).ChildRules(t =>
+            {
+                t.RuleFor(x => x.Culture).NotEmpty().MaximumLength(16);
+                t.RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            });
             RuleFor(x => x.Currency).NotEmpty().Length(3);
             RuleFor(x => x.MinSelections).GreaterThanOrEqualTo(0);
             RuleFor(x => x.MaxSelections).GreaterThanOrEqualTo(0).When(x => x.MaxSelections.HasValue);
@@ -30,6 +35,11 @@ namespace Darwin.Application.Catalog.Validators
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotNull();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
+            RuleForEach(x => x.Translations).ChildRules(t =>
+            {
+                t.RuleFor(x => x.Culture).NotEmpty().MaximumLength(16);
+                t.RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            });
             RuleFor(x => x.Currency).NotEmpty().Length(3);
             RuleFor(x => x.MinSelections).GreaterThanOrEqualTo(0);
             RuleFor(x => x.MaxSelections).GreaterThanOrEqualTo(0).When(x => x.MaxSelections.HasValue);
@@ -43,6 +53,11 @@ namespace Darwin.Application.Catalog.Validators
         {
             RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
             RuleFor(x => x.Label).NotEmpty().MaximumLength(256);
+            RuleForEach(x => x.Translations).ChildRules(t =>
+            {
+                t.RuleFor(x => x.Culture).NotEmpty().MaximumLength(16);
+                t.RuleFor(x => x.Label).NotEmpty().MaximumLength(200);
+            });
             RuleForEach(x => x.Values).SetValidator(new AddOnOptionValueValidator());
         }
     }
@@ -53,6 +68,11 @@ namespace Darwin.Application.Catalog.Validators
         {
             RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
             RuleFor(x => x.Label).NotEmpty().MaximumLength(256);
+            RuleForEach(x => x.Translations).ChildRules(t =>
+            {
+                t.RuleFor(x => x.Culture).NotEmpty().MaximumLength(16);
+                t.RuleFor(x => x.Label).NotEmpty().MaximumLength(200);
+            });
             RuleFor(x => x.PriceDeltaMinor);
             RuleFor(x => x.Hint).MaximumLength(256).When(x => x.Hint != null);
         }

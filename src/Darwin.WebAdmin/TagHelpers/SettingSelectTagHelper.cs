@@ -162,13 +162,14 @@ namespace Darwin.WebAdmin.TagHelpers
 
         private string GetOptionLabel(string option)
         {
-            var normalizedCulture = AdminCultureCatalog.NormalizeUiCulture(option);
-            if (string.Equals(normalizedCulture, AdminCultureCatalog.German, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(option, AdminCultureCatalog.German, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(option, "de", StringComparison.OrdinalIgnoreCase))
             {
                 return _textLocalizer.T("LocaleGermanGermany");
             }
 
-            if (string.Equals(normalizedCulture, AdminCultureCatalog.English, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(option, AdminCultureCatalog.English, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(option, "en", StringComparison.OrdinalIgnoreCase))
             {
                 return _textLocalizer.T("LocaleEnglishUnitedStates");
             }

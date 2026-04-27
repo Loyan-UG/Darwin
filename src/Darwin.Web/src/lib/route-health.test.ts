@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildStorefrontHealthSummary,
   getLanguageAlternateState,
   getSeoIndexability,
   getSeoMetadataState,
+  summarizePromotionLaneHealth,
   summarizeCommerceRouteHealth,
   summarizeCatalogRouteHealth,
   summarizeAccountPageHealth,
@@ -46,6 +48,23 @@ import {
 } from "@/lib/route-health";
 import type { PublicStorefrontContext } from "@/features/storefront/public-storefront-context";
 
+function createProduct(
+  slug: string,
+  priceMinor: number,
+  compareAtPriceMinor: number | null,
+) {
+  return {
+    id: slug,
+    slug,
+    name: slug,
+    shortDescription: null,
+    priceMinor,
+    compareAtPriceMinor,
+    currency: "EUR",
+    primaryImageUrl: null,
+  };
+}
+
 function createStorefrontContext(): PublicStorefrontContext {
   return {
     cmsPagesResult: { data: null, status: "ok" },
@@ -81,7 +100,7 @@ test("summarizeStorefrontSupportFootprint compacts storefront support state", ()
     }),
     "cms:ok:1|categories:degraded:1|products:ok:3|cart:not-found",
   );
-});
+
   assert.equal(
     summarizeStorefrontSupportFootprint({
       cmsStatus: "unknown",
@@ -94,6 +113,83 @@ test("summarizeStorefrontSupportFootprint compacts storefront support state", ()
     }),
     "cms:unknown:0|categories:unknown:0|products:unknown:0|cart:unknown",
   );
+});
+
+test("storefront helper builders keep merchandising and optional cart state explicit", () => {
+  assert.deepEqual(
+    summarizePromotionLaneHealth([
+      createProduct("hero-1", 500, 900),
+      createProduct("value-1", 400, 700),
+      createProduct("base-1", 300, null),
+    ]),
+    {
+      heroOfferCount: 1,
+      valueOfferCount: 1,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:1|live:2|base:1",
+    },
+  );
+
+  assert.deepEqual(
+    buildStorefrontHealthSummary({
+      cmsStatus: "ok",
+      cmsCount: 2,
+      categoriesStatus: "fallback",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      products: [
+        createProduct("hero-1", 500, 900),
+        createProduct("value-1", 400, 700),
+        createProduct("base-1", 300, null),
+      ],
+      cartStatus: "present",
+      cartLinkedCount: 2,
+    }),
+    {
+      cmsStatus: "ok",
+      cmsCount: 2,
+      categoriesStatus: "fallback",
+      categoryCount: 1,
+      productsStatus: "ok",
+      productCount: 3,
+      heroOfferCount: 1,
+      valueOfferCount: 1,
+      liveOfferCount: 2,
+      baseAssortmentCount: 1,
+      promotionLaneFootprint: "hero:1|value:1|live:2|base:1",
+      cartStatus: "present",
+      cartLinkedCount: 2,
+    },
+  );
+
+  assert.deepEqual(
+    buildStorefrontHealthSummary({
+      cmsStatus: "unknown",
+      cmsCount: 0,
+      categoriesStatus: "unknown",
+      categoryCount: 0,
+      productsStatus: "unknown",
+      productCount: 0,
+      products: [],
+    }),
+    {
+      cmsStatus: "unknown",
+      cmsCount: 0,
+      categoriesStatus: "unknown",
+      categoryCount: 0,
+      productsStatus: "unknown",
+      productCount: 0,
+      heroOfferCount: 0,
+      valueOfferCount: 0,
+      liveOfferCount: 0,
+      baseAssortmentCount: 0,
+      promotionLaneFootprint: "hero:0|value:0|live:0|base:0",
+    },
+  );
+});
+
 test("summarizePublicStorefrontHealth exposes canonical storefront statuses and counts", () => {
   assert.deepEqual(summarizePublicStorefrontHealth(createStorefrontContext()), {
     cmsStatus: "ok",

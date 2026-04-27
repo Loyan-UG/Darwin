@@ -134,7 +134,7 @@ function countItems(data?: { items?: unknown[] } | null) {
   return data?.items?.length ?? 0;
 }
 
-function summarizePromotionLaneHealth(products: ProductPromotionSummaryLike[]) {
+export function summarizePromotionLaneHealth(products: ProductPromotionSummaryLike[]) {
   const lanes = summarizeCatalogPromotionLanes(products);
   const heroOfferCount = lanes.find((entry) => entry.lane === "hero-offers")?.count ?? 0;
   const valueOfferCount = lanes.find((entry) => entry.lane === "value-offers")?.count ?? 0;
@@ -152,20 +152,88 @@ function summarizePromotionLaneHealth(products: ProductPromotionSummaryLike[]) {
   };
 }
 
+type StorefrontHealthSummaryInput = {
+  cmsStatus: string;
+  cmsCount: number;
+  categoriesStatus: string;
+  categoryCount: number;
+  productsStatus: string;
+  productCount: number;
+  products: ProductPromotionSummaryLike[];
+};
+
+type StorefrontHealthSummaryWithCart = StorefrontHealthSummaryInput & {
+  cartStatus?: string;
+  cartLinkedCount?: number;
+};
+
+export function buildStorefrontHealthSummary(
+  input: StorefrontHealthSummaryInput & {
+    cartStatus: string;
+    cartLinkedCount?: number;
+  },
+): {
+  cmsStatus: string;
+  cmsCount: number;
+  categoriesStatus: string;
+  categoryCount: number;
+  productsStatus: string;
+  productCount: number;
+  heroOfferCount: number;
+  valueOfferCount: number;
+  liveOfferCount: number;
+  baseAssortmentCount: number;
+  promotionLaneFootprint: string;
+  cartStatus: string;
+  cartLinkedCount: number;
+};
+export function buildStorefrontHealthSummary(
+  input: StorefrontHealthSummaryInput,
+): {
+  cmsStatus: string;
+  cmsCount: number;
+  categoriesStatus: string;
+  categoryCount: number;
+  productsStatus: string;
+  productCount: number;
+  heroOfferCount: number;
+  valueOfferCount: number;
+  liveOfferCount: number;
+  baseAssortmentCount: number;
+  promotionLaneFootprint: string;
+};
+export function buildStorefrontHealthSummary(input: StorefrontHealthSummaryWithCart) {
+  return {
+    cmsStatus: input.cmsStatus,
+    cmsCount: input.cmsCount,
+    categoriesStatus: input.categoriesStatus,
+    categoryCount: input.categoryCount,
+    productsStatus: input.productsStatus,
+    productCount: input.productCount,
+    ...summarizePromotionLaneHealth(input.products),
+    ...(input.cartStatus !== undefined
+      ? {
+          cartStatus: input.cartStatus,
+          cartLinkedCount: input.cartLinkedCount ?? 0,
+        }
+      : {}),
+  };
+}
+
 export function summarizePublicStorefrontHealth(
   storefrontContext: PublicStorefrontContext,
 ) {
-  return {
+  return buildStorefrontHealthSummary({
     cmsStatus: storefrontContext.cmsPagesStatus,
     cmsCount: storefrontContext.cmsPages.length,
     categoriesStatus: storefrontContext.categoriesStatus,
     categoryCount: storefrontContext.categories.length,
     productsStatus: storefrontContext.productsStatus,
     productCount: storefrontContext.products.length,
-    ...summarizePromotionLaneHealth(storefrontContext.products),
+    products: storefrontContext.products,
     cartStatus: storefrontContext.storefrontCartStatus,
     cartLinkedCount: storefrontContext.cartLinkedProductSlugs.length,
-  };
+  });
 }
 
 
@@ -197,15 +265,15 @@ export function summarizeStorefrontContinuationHealth(result: {
     primaryImageUrl?: string | null;
   }>;
 }) {
-  return {
+  return buildStorefrontHealthSummary({
     cmsStatus: result.cmsPagesStatus,
     cmsCount: result.cmsPages.length,
     categoriesStatus: result.categoriesStatus,
     categoryCount: result.categories.length,
     productsStatus: result.productsStatus,
     productCount: result.products.length,
-    ...summarizePromotionLaneHealth(result.products),
-  };
+    products: result.products,
+  });
 }
 
 export function summarizeCatalogRouteHealth(

@@ -27,6 +27,7 @@ public sealed class GetPublishedPagesPageHandler
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
+        var defaultCulture = SiteSettingDto.DefaultCultureDefault;
 
         var nowUtc = DateTime.UtcNow;
         var baseQuery = _db.Set<Page>()
@@ -45,10 +46,18 @@ public sealed class GetPublishedPagesPageHandler
             .Select(x => new PublicPageSummaryDto
             {
                 Id = x.Id,
-                Title = x.Translations.Where(t => t.Culture == culture).Select(t => t.Title).FirstOrDefault() ?? x.Title,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault() ?? x.Slug,
-                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault() ?? x.MetaTitle,
-                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault() ?? x.MetaDescription
+                Title = x.Translations.Where(t => t.Culture == culture).Select(t => t.Title).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Title).FirstOrDefault()
+                    ?? x.Title,
+                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Slug,
+                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.MetaTitle,
+                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.MetaDescription
             })
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -80,6 +89,7 @@ public sealed class GetPublishedPageBySlugHandler
         }
 
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
+        var defaultCulture = SiteSettingDto.DefaultCultureDefault;
         var normalizedSlug = slug.Trim();
         var nowUtc = DateTime.UtcNow;
 
@@ -90,15 +100,26 @@ public sealed class GetPublishedPageBySlugHandler
                 x.Status == PageStatus.Published &&
                 (!x.PublishStartUtc.HasValue || x.PublishStartUtc <= nowUtc) &&
                 (!x.PublishEndUtc.HasValue || x.PublishEndUtc >= nowUtc) &&
-                (x.Slug == normalizedSlug || x.Translations.Any(t => t.Culture == culture && t.Slug == normalizedSlug)))
+                (x.Slug == normalizedSlug ||
+                 x.Translations.Any(t => t.Slug == normalizedSlug && (t.Culture == culture || t.Culture == defaultCulture))))
             .Select(x => new PublicPageDetailDto
             {
                 Id = x.Id,
-                Title = x.Translations.Where(t => t.Culture == culture).Select(t => t.Title).FirstOrDefault() ?? x.Title,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault() ?? x.Slug,
-                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault() ?? x.MetaTitle,
-                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault() ?? x.MetaDescription,
-                ContentHtml = x.Translations.Where(t => t.Culture == culture).Select(t => t.ContentHtml).FirstOrDefault() ?? x.ContentHtml
+                Title = x.Translations.Where(t => t.Culture == culture).Select(t => t.Title).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Title).FirstOrDefault()
+                    ?? x.Title,
+                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Slug,
+                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.MetaTitle,
+                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.MetaDescription,
+                ContentHtml = x.Translations.Where(t => t.Culture == culture).Select(t => t.ContentHtml).FirstOrDefault()
+                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.ContentHtml).FirstOrDefault()
+                    ?? x.ContentHtml
             })
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
@@ -128,6 +149,7 @@ public sealed class GetPublicMenuByNameHandler
         }
 
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
+        var defaultCulture = SiteSettingDto.DefaultCultureDefault;
         var normalizedName = name.Trim();
 
         return await _db.Set<Menu>()
@@ -144,7 +166,9 @@ public sealed class GetPublicMenuByNameHandler
                     {
                         Id = item.Id,
                         ParentId = item.ParentId,
-                        Label = item.Translations.Where(t => t.Culture == culture).Select(t => t.Label).FirstOrDefault() ?? item.Title,
+                        Label = item.Translations.Where(t => t.Culture == culture).Select(t => t.Label).FirstOrDefault()
+                            ?? item.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
+                            ?? item.Title,
                         Url = item.Url,
                         SortOrder = item.SortOrder
                     })

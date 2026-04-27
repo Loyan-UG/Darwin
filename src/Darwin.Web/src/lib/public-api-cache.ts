@@ -27,6 +27,25 @@ export type PublicApiRequestPlan = {
   fetchCacheOptions: PublicApiFetchCacheOptions;
 };
 
+export type PublicApiPathCharacteristics = {
+  hasSearch: boolean;
+  hasCategorySlug: boolean;
+  hasVisibleState: boolean;
+  hasVisibleSort: boolean;
+  hasMediaState: boolean;
+  hasSavingsBand: boolean;
+  page?: number;
+  pageSize?: number;
+};
+
+export type PublicApiCacheProfile =
+  | "stable"
+  | "detail"
+  | "category-heavy"
+  | "discovery-filtered"
+  | "discovery-paged"
+  | "default";
+
 const PUBLIC_API_REVALIDATE_BY_KEY: Record<string, number> = {
   "cms-menu": 900,
   "cms-page": 300,
@@ -68,47 +87,109 @@ function getNumericQueryParam(path: string, key: string) {
   return Number.isFinite(value) ? value : undefined;
 }
 
-function getPublicApiPathAwareRevalidate(key: string, path: string) {
-  const pageSize = getNumericQueryParam(path, "pageSize");
-  const page = getNumericQueryParam(path, "page");
+export function getPublicApiPathCharacteristics(
+  path: string,
+): PublicApiPathCharacteristics {
+  return {
+    hasSearch: hasQueryParam(path, "search"),
+    hasCategorySlug: hasQueryParam(path, "categorySlug"),
+    hasVisibleState: hasQueryParam(path, "visibleState"),
+    hasVisibleSort: hasQueryParam(path, "visibleSort"),
+    hasMediaState: hasQueryParam(path, "mediaState"),
+    hasSavingsBand: hasQueryParam(path, "savingsBand"),
+    page: getNumericQueryParam(path, "page"),
+    pageSize: getNumericQueryParam(path, "pageSize"),
+  };
+}
+
+export function getPublicApiCacheProfile(
+  key: string,
+  path: string,
+): PublicApiCacheProfile {
+  const characteristics = getPublicApiPathCharacteristics(path);
+  const { page, pageSize } = characteristics;
 
   if (key === "cms-page") {
-    return 180;
+    return "detail";
   }
 
   if (key === "catalog-product-detail") {
-    return 120;
+    return "detail";
   }
 
   if (
     key === "catalog-categories" &&
     ((pageSize !== undefined && pageSize > 24) || (page !== undefined && page > 1))
   ) {
-    return 300;
+    return "category-heavy";
   }
 
   if (
     key === "cms-pages" &&
-    (hasQueryParam(path, "search") || (pageSize !== undefined && pageSize > 24) || (page !== undefined && page > 1))
+    characteristics.hasSearch
   ) {
-    return 120;
+    return "discovery-filtered";
+  }
+
+  if (
+    key === "cms-pages" &&
+    ((pageSize !== undefined && pageSize > 24) ||
+      (page !== undefined && page > 1))
+  ) {
+    return "discovery-paged";
   }
 
   if (
     key === "catalog-products" &&
-    (hasQueryParam(path, "search") ||
-      hasQueryParam(path, "categorySlug") ||
-      hasQueryParam(path, "visibleState") ||
-      hasQueryParam(path, "visibleSort") ||
-      hasQueryParam(path, "mediaState") ||
-      hasQueryParam(path, "savingsBand") ||
-      (pageSize !== undefined && pageSize > 24) ||
-      (page !== undefined && page > 1))
+    (characteristics.hasSearch ||
+      characteristics.hasCategorySlug ||
+      characteristics.hasVisibleState ||
+      characteristics.hasVisibleSort ||
+      characteristics.hasMediaState ||
+      characteristics.hasSavingsBand ||
+      characteristics.hasCategorySlug)
   ) {
-    return 90;
+    return "discovery-filtered";
   }
 
-  return getPublicApiRevalidate(key);
+  if (
+    key === "catalog-products" &&
+    ((pageSize !== undefined && pageSize > 24) ||
+      (page !== undefined && page > 1))
+  ) {
+    return "discovery-paged";
+  }
+
+  if (key === "cms-menu" || key === "catalog-categories") {
+    return "stable";
+  }
+
+  return "default";
+}
+
+export function getPublicApiProfileRevalidate(
+  key: string,
+  profile: PublicApiCacheProfile,
+) {
+  switch (profile) {
+    case "stable":
+      return getPublicApiRevalidate(key);
+    case "detail":
+      return key === "catalog-product-detail" ? 120 : 180;
+    case "category-heavy":
+      return 300;
+    case "discovery-filtered":
+      return key === "cms-pages" ? 120 : 90;
+    case "discovery-paged":
+      return key === "cms-pages" ? 120 : key === "catalog-categories" ? 300 : 90;
+    default:
+      return getPublicApiRevalidate(key);
+  }
+}
+
+function getPublicApiPathAwareRevalidate(key: string, path: string) {
+  const profile = getPublicApiCacheProfile(key, path);
+  return getPublicApiProfileRevalidate(key, profile);
 }
 
 export function normalizePublicApiCachePath(path: string) {
@@ -172,7 +253,7 @@ export function getPublicApiFetchCacheOptions(
   identity: PublicApiCacheIdentity,
   method?: string,
 ): PublicApiFetchCacheOptions {
-  if (method && method !== "GET") {
+  if (method && method.toUpperCase() !== "GET") {
     return {
       cache: "no-store",
     };

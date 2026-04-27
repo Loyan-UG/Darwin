@@ -14,6 +14,9 @@ namespace Darwin.Domain.Entities.Catalog
         /// <summary>Administrative name of the group shown in Admin (not public-facing).</summary>
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>Culture-specific public names for the group.</summary>
+        public List<AddOnGroupTranslation> Translations { get; set; } = new();
+
         /// <summary>ISO 4217 currency of price deltas (phase 1 typically "EUR").</summary>
     public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
@@ -48,6 +51,9 @@ namespace Darwin.Domain.Entities.Catalog
         /// <summary>Display label shown to end-users.</summary>
         public string Label { get; set; } = string.Empty;
 
+        /// <summary>Culture-specific labels shown to end-users.</summary>
+        public List<AddOnOptionTranslation> Translations { get; set; } = new();
+
         /// <summary>Ordering within the group.</summary>
         public int SortOrder { get; set; } = 0;
 
@@ -65,6 +71,9 @@ namespace Darwin.Domain.Entities.Catalog
         /// <summary>Human-readable label (e.g., "Black Sunglass Lens").</summary>
         public string Label { get; set; } = string.Empty;
 
+        /// <summary>Culture-specific labels shown to end-users.</summary>
+        public List<AddOnOptionValueTranslation> Translations { get; set; } = new();
+
         /// <summary>Price delta (minor units, net). Can be negative for discounts.</summary>
         public long PriceDeltaMinor { get; set; } = 0;
 
@@ -76,6 +85,27 @@ namespace Darwin.Domain.Entities.Catalog
 
         /// <summary>Whether this value is currently selectable.</summary>
         public bool IsActive { get; set; } = true;
+    }
+
+    public sealed class AddOnGroupTranslation : BaseEntity
+    {
+        public Guid AddOnGroupId { get; set; }
+        public string Culture { get; set; } = DomainDefaults.DefaultCulture;
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public sealed class AddOnOptionTranslation : BaseEntity
+    {
+        public Guid AddOnOptionId { get; set; }
+        public string Culture { get; set; } = DomainDefaults.DefaultCulture;
+        public string Label { get; set; } = string.Empty;
+    }
+
+    public sealed class AddOnOptionValueTranslation : BaseEntity
+    {
+        public Guid AddOnOptionValueId { get; set; }
+        public string Culture { get; set; } = DomainDefaults.DefaultCulture;
+        public string Label { get; set; } = string.Empty;
     }
 
     /// <summary>

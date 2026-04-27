@@ -29,18 +29,16 @@ namespace Darwin.Application.Shipping.Queries
 
             var options = new List<ShippingOptionDto>();
 
-            var q = _db.Set<ShippingMethod>().AsNoTracking()
+            var methods = await _db.Set<ShippingMethod>().AsNoTracking()
                 .Include(m => m.Rates)
                 .Where(m => m.IsActive)
-                .Where(m => m.Carrier == "DHL");
+                .Where(m => m.Carrier == "DHL")
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
 
-            // Countries filter
-            q = q.Where(m => m.CountriesCsv == null
-                             || m.CountriesCsv == string.Empty
-                             || m.CountriesCsv.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                                .Contains(input.Country));
-
-            var methods = await q.ToListAsync(ct);
+            methods = methods
+                .Where(m => SupportsCountry(m.CountriesCsv, input.Country))
+                .ToList();
 
             foreach (var m in methods)
             {
@@ -74,6 +72,18 @@ namespace Darwin.Application.Shipping.Queries
             }
 
             return options.OrderBy(o => o.PriceMinor).ToList();
+        }
+
+        private static bool SupportsCountry(string? countriesCsv, string country)
+        {
+            if (string.IsNullOrWhiteSpace(countriesCsv))
+            {
+                return true;
+            }
+
+            return countriesCsv
+                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Contains(country, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

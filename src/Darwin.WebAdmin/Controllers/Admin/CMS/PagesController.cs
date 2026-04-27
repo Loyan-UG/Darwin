@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -95,11 +96,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         public async Task<IActionResult> Create(CancellationToken ct)
         {
             await LoadCulturesAsync(ct).ConfigureAwait(false);
-            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
-            return RenderCreateEditor(new PageCreateVm
-            {
-                Translations = new() { new PageTranslationVm { Culture = defaultCulture } }
-            });
+            var vm = new PageCreateVm();
+            await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
+            return RenderCreateEditor(vm);
         }
 
         [ValidateAntiForgeryToken]
@@ -108,6 +107,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         {
             vm.Translations ??= new();
             if (vm.Translations.Count == 0)
+                ModelState.AddModelError(nameof(vm.Translations), T("PageTranslationRequired"));
+
+            var translations = FilterCompleteTranslations(vm.Translations);
+            if (translations.Count == 0)
                 ModelState.AddModelError(nameof(vm.Translations), T("PageTranslationRequired"));
 
             if (!ModelState.IsValid)
@@ -122,7 +125,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 Status = vm.Status,
                 PublishStartUtc = vm.PublishStartUtc,
                 PublishEndUtc = vm.PublishEndUtc,
-                Translations = vm.Translations.Select(t => new PageTranslationDto
+                Translations = translations.Select(t => new PageTranslationDto
                 {
                     Culture = t.Culture,
                     Title = t.Title,
@@ -179,6 +182,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             };
 
             await LoadCulturesAsync(ct).ConfigureAwait(false);
+            await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
 
             return RenderEditEditor(vm);
         }
@@ -196,6 +200,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 return RenderEditEditor(vm);
             }
 
+            var translations = FilterCompleteTranslations(vm.Translations);
+            if (translations.Count == 0)
+            {
+                ModelState.AddModelError(nameof(vm.Translations), T("PageTranslationRequired"));
+                await LoadCulturesAsync(ct).ConfigureAwait(false);
+                await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
+                return RenderEditEditor(vm);
+            }
+
             var dto = new PageEditDto
             {
                 Id = vm.Id,
@@ -203,7 +216,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 Status = vm.Status,
                 PublishStartUtc = vm.PublishStartUtc,
                 PublishEndUtc = vm.PublishEndUtc,
-                Translations = vm.Translations.Select(t => new PageTranslationDto
+                Translations = translations.Select(t => new PageTranslationDto
                 {
                     Culture = t.Culture,
                     Title = t.Title,
@@ -308,11 +321,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
 
         private async Task EnsureTranslationsAsync(PageEditorVm vm, CancellationToken ct)
         {
-            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
-            if (vm.Translations.Count == 0)
+            var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            var orderedCultures = cultures
+                .Prepend(defaultCulture)
+                .Where(static x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (orderedCultures.Length == 0)
             {
-                vm.Translations.Add(new PageTranslationVm { Culture = defaultCulture });
+                orderedCultures = [defaultCulture];
             }
+
+            foreach (var culture in orderedCultures)
+            {
+                if (vm.Translations.All(x => !string.Equals(x.Culture, culture, StringComparison.OrdinalIgnoreCase)))
+                {
+                    vm.Translations.Add(new PageTranslationVm { Culture = culture });
+                }
+            }
+        }
+
+        private static List<PageTranslationVm> FilterCompleteTranslations(IEnumerable<PageTranslationVm> translations)
+        {
+            return translations
+                .Where(static t =>
+                    !string.IsNullOrWhiteSpace(t.Culture) &&
+                    !string.IsNullOrWhiteSpace(t.Title) &&
+                    !string.IsNullOrWhiteSpace(t.Slug))
+                .ToList();
         }
 
         private PagePlaybookVm[] BuildPagePlaybooks()

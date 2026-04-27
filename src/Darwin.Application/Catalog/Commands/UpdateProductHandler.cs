@@ -111,13 +111,6 @@ namespace Darwin.Application.Catalog.Commands
                 translation.IsDeleted = false;
             }
 
-            foreach (var existing in product.Translations.Where(t => !t.IsDeleted).ToList())
-            {
-                if (!requestedCultures.Contains(existing.Culture))
-                {
-                    existing.IsDeleted = true;
-                }
-            }
         }
 
         private void SyncVariants(Product product, ProductEditDto dto)

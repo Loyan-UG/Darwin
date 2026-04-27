@@ -1071,7 +1071,7 @@ export function OrderConfirmationPage({
                 currency={confirmation.currency}
                 memberOrdersHref={memberOrdersHref}
                 signInHref={signInHref}
-                accountHref="/account"
+                accountHref={localizeHref("/account", culture)}
                 memberOrders={memberOrders}
                 memberInvoices={memberInvoices}
                 memberLoyaltyOverview={memberLoyaltyOverview}

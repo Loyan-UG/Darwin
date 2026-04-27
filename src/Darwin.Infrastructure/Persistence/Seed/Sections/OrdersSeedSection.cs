@@ -1,4 +1,4 @@
-ï»¿using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Common;
 using Darwin.Domain.Enums;
 using Darwin.Infrastructure.Persistence.Db;
@@ -49,7 +49,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 return;
             }
 
-            // Ensure product variants are available â€” orders are seeded only if variants exist.
+            // Ensure product variants are available — orders are seeded only if variants exist.
             var variants = await db.ProductVariants
                 .OrderBy(v => v.Sku)
                 .ToListAsync(ct);
@@ -63,7 +63,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var orders = new List<Order>();
             var refunds = new List<Refund>(); // Refunds are collected separately because Order has no Refunds nav.
 
-            // Build sample orders with full child graphs.
+            // Build demo orders with full child graphs.
             for (var i = 0; i < 10; i++)
             {
                 var variant = variants[i % variants.Count];
@@ -94,9 +94,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     DiscountTotalMinor = 0,
                     GrandTotalGrossMinor = grandTotal,
                     Status = i % 2 == 0 ? OrderStatus.Paid : OrderStatus.Confirmed,
-                    BillingAddressJson = "{\"name\":\"Max Mustermann\",\"street\":\"HauptstraÃŸe 1\",\"city\":\"Berlin\",\"zip\":\"10115\"}",
-                    ShippingAddressJson = "{\"name\":\"Max Mustermann\",\"street\":\"HauptstraÃŸe 1\",\"city\":\"Berlin\",\"zip\":\"10115\"}",
-                    InternalNotes = "Seeded order for backend testing."
+                    BillingAddressJson = "{\"name\":\"Darwin Demo Customer\",\"street\":\"Hauptstraße 1\",\"city\":\"Berlin\",\"zip\":\"10115\"}",
+                    ShippingAddressJson = "{\"name\":\"Darwin Demo Customer\",\"street\":\"Hauptstraße 1\",\"city\":\"Berlin\",\"zip\":\"10115\"}",
+                    InternalNotes = "Seeded order for backend operations review."
                 };
 
                 // Create order line with explicit Id so other children (e.g., ShipmentLine) can reference it.
@@ -168,7 +168,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         OrderId = order.Id,
                         PaymentId = payment.Id,
                         AmountMinor = 500,
-                        Reason = "TeilrÃ¼ckerstattung (Test)"
+                        Reason = "Teilrückerstattung (Test)"
                     };
                     // Collect refunds separately because Order has no Refunds navigation.
                     refunds.Add(refund);

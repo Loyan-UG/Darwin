@@ -26,6 +26,29 @@ export function buildLocalizedDiscoveryLoaderDiagnostics(
   });
 }
 
+export function buildLocalizedDiscoveryLoaderObservationContext(
+  kind: LocalizedDiscoveryLoaderKind,
+  extras?: Record<string, unknown>,
+) {
+  return buildLocalizedDiscoveryLoaderBaseDiagnostics(kind, {
+    hasCanonicalCultureNormalization: true,
+    extras,
+  });
+}
+
+export function buildLocalizedDiscoveryLoaderObservationSuccessContext(
+  kind: LocalizedDiscoveryLoaderKind,
+  extras?: Record<string, unknown>,
+) {
+  return buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+    kind,
+    extras,
+    {
+      hasCanonicalCultureNormalization: true,
+    },
+  );
+}
+
 export function createLocalizedDiscoveryLoader<TResult>({
   kind,
   area,
@@ -40,17 +63,11 @@ export function createLocalizedDiscoveryLoader<TResult>({
     operation,
     thresholdMs,
     getContext: () =>
-      buildLocalizedDiscoveryLoaderBaseDiagnostics(kind, {
-        hasCanonicalCultureNormalization: true,
-        extras: getContext(),
-      }),
+      buildLocalizedDiscoveryLoaderObservationContext(kind, getContext()),
     getSuccessContext: (result: TResult) =>
-      buildLocalizedDiscoveryLoaderSuccessDiagnostics(
+      buildLocalizedDiscoveryLoaderObservationSuccessContext(
         kind,
         getSuccessContext(result),
-        {
-          hasCanonicalCultureNormalization: true,
-        },
       ),
     load,
   });

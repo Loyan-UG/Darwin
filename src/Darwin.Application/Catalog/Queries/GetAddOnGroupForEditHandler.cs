@@ -33,6 +33,13 @@ namespace Darwin.Application.Catalog.Queries
                     MinSelections = x.MinSelections,
                     MaxSelections = x.MaxSelections,
                     IsActive = x.IsActive,
+                    Translations = x.Translations
+                        .OrderBy(t => t.Culture)
+                        .Select(t => new AddOnGroupTranslationDto
+                        {
+                            Culture = t.Culture,
+                            Name = t.Name
+                        }).ToList(),
                     Options = x.Options
                         .OrderBy(o => o.SortOrder)
                         .Select(o => new AddOnOptionDto
@@ -40,6 +47,13 @@ namespace Darwin.Application.Catalog.Queries
                             Id = o.Id,
                             Label = o.Label,
                             SortOrder = o.SortOrder,
+                            Translations = o.Translations
+                                .OrderBy(t => t.Culture)
+                                .Select(t => new AddOnOptionTranslationDto
+                                {
+                                    Culture = t.Culture,
+                                    Label = t.Label
+                                }).ToList(),
                             Values = o.Values
                                 .OrderBy(v => v.SortOrder).Select(v => new AddOnOptionValueDto
                                 {
@@ -48,7 +62,14 @@ namespace Darwin.Application.Catalog.Queries
                                     PriceDeltaMinor = v.PriceDeltaMinor,
                                     Hint = v.Hint,
                                     SortOrder = v.SortOrder,
-                                    IsActive = v.IsActive
+                                    IsActive = v.IsActive,
+                                    Translations = v.Translations
+                                        .OrderBy(t => t.Culture)
+                                        .Select(t => new AddOnOptionValueTranslationDto
+                                        {
+                                            Culture = t.Culture,
+                                            Label = t.Label
+                                        }).ToList()
                                 }).ToList()
                         }).ToList()
                 }).FirstOrDefaultAsync(ct);

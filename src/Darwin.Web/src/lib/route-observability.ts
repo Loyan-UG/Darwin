@@ -9,12 +9,12 @@ type ObserveAsyncOperationInput<T> = {
   error?: (message: string, detail: Record<string, unknown>) => void;
 };
 
-function shouldLogDegradedOperations() {
+export function shouldLogDegradedOperations() {
   return process.env.NODE_ENV === "production" ||
     process.env.DARWIN_WEB_LOG_DEGRADED === "true";
 }
 
-function getDegradedStatusEntries(detail?: Record<string, unknown>) {
+export function getDegradedStatusEntries(detail?: Record<string, unknown>) {
   if (!detail) {
     return [];
   }
@@ -136,7 +136,7 @@ export function getSuggestedAction(input: {
   return "none";
 }
 
-function buildObservedOutcomeDetail(
+export function buildObservedOutcomeDetail(
   durationMs: number,
   thresholdMs: number,
   degradedStatuses: Array<[string, unknown]>,

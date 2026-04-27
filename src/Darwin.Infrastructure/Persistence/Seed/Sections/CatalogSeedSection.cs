@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -15,19 +15,21 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
     /// Seeds baseline Catalog data for a German electronics shop:
     /// - Brands (Apple, Samsung, Google, ...).
     /// - Categories (smartphones, laptops, components, accessories).
-    /// - Sample products (â‰¥ 20) with one default variant each.
-    /// - A sample Add-on group (Extended Warranty) attached to relevant categories.
+    /// - Storefront products (>= 20) with one default variant each.
+    /// - A demo Add-on group (Extended Warranty) attached to relevant categories.
     /// 
     /// All money is persisted as NET amounts in minor units (long), see ProductVariant fields.
     /// Dimensions are stored as SI units (mm / g) per domain guidance.
     /// </summary>
-    public sealed class CatalogSeedSection
+public sealed class CatalogSeedSection
+{
+    private const string EnglishCulture = "en-US";
+
+    /// <summary>
+    /// Entry point for Catalog seeding. Idempotent by design.
+    /// </summary>
+    public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
     {
-        /// <summary>
-        /// Entry point for Catalog seeding. Idempotent by design.
-        /// </summary>
-        public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
-        {
             // Brands
             if (!await db.Brands.AnyAsync(ct))
                 await CreateBrandsDeAsync(db, ct);
@@ -37,10 +39,12 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 await CreateCategoriesDeAsync(db, ct);
 
             // Products (create if none exist)
-            if (!await db.Products.AnyAsync(ct))
-                await CreateProductsDeAsync(db, ct);
+        if (!await db.Products.AnyAsync(ct))
+            await CreateProductsDeAsync(db, ct);
 
-            await EnsureStorefrontSeedMediaAsync(db, ct);
+        await EnsureEnglishCatalogTranslationsAsync(db, ct);
+
+        await EnsureStorefrontSeedMediaAsync(db, ct);
 
             // Add-ons (create if none exist)
             if (!await db.Set<AddOnGroup>().AnyAsync(ct))
@@ -50,10 +54,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         /// <summary>
         /// Creates a minimal but meaningful set of German brands used by the seed products.
         /// </summary>
-        private static async Task CreateBrandsDeAsync(DarwinDbContext db, CancellationToken ct)
+    private static async Task CreateBrandsDeAsync(DarwinDbContext db, CancellationToken ct)
+    {
+        var brands = new (string Slug, string Name)[]
         {
-            var brands = new (string Slug, string Name)[]
-            {
                 ("apple","Apple"),
                 ("samsung","Samsung"),
                 ("google","Google"),
@@ -72,7 +76,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 ("anker","Anker"),
                 ("razer","Razer"),
                 ("kingston","Kingston"),
-                // one placeholder used in items for Anker line (brand slot 'sandisk' not used anymore)
+                // Anker line is represented directly; the retired Sandisk slot is intentionally not seeded
             };
 
             foreach (var b in brands)
@@ -81,6 +85,11 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 brand.Translations.Add(new BrandTranslation
                 {
                     Culture = DomainDefaults.DefaultCulture,
+                    Name = b.Name
+                });
+                brand.Translations.Add(new BrandTranslation
+                {
+                    Culture = EnglishCulture,
                     Name = b.Name
                 });
                 db.Add(brand);
@@ -92,24 +101,24 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         /// <summary>
         /// Creates a set of categories with German translations and SEO-friendly slugs.
         /// </summary>
-        private static async Task CreateCategoriesDeAsync(DarwinDbContext db, CancellationToken ct)
+    private static async Task CreateCategoriesDeAsync(DarwinDbContext db, CancellationToken ct)
+    {
+        // Flat taxonomy for now; can be extended to a tree using ParentId/SortOrder.
+        var cats = new (string Slug, string Name, string? Desc, string EnName, string? EnDesc)[]
         {
-            // Flat taxonomy for now; can be extended to a tree using ParentId/SortOrder.
-            var cats = new (string Slug, string Name, string? Desc)[]
-            {
-                ("iphones",            "iPhones",                 "Apple iPhone Modelle"),
-                ("android-phones",     "Android-Smartphones",     "Android GerÃ¤te von fÃ¼hrenden Herstellern"),
-                ("ultrabooks",         "Ultrabooks",              "Leichte, mobile Notebooks"),
-                ("business-laptops",   "Business-Laptops",        "ZuverlÃ¤ssige Laptops fÃ¼r den Arbeitsalltag"),
-                ("gaming-laptops",     "Gaming-Laptops",          "Leistungsstarke Laptops fÃ¼r Gaming"),
-                ("mice",               "MÃ¤use",                   "PrÃ¤zise Computer-MÃ¤use"),
-                ("keyboards",          "Tastaturen",              "Mechanische und Office-Tastaturen"),
-                ("storage",            "Speicher",                "NVMe/SSD/HDD SpeicherlÃ¶sungen"),
-                ("monitors",           "Monitore",                "4K/144Hz/Ultrawide Monitore"),
-                ("headphones",         "KopfhÃ¶rer",               "Over-Ear/ANC/BT KopfhÃ¶rer"),
-                ("power-banks",        "Powerbanks",              "Mobile LadegerÃ¤te"),
-                ("pc-komponenten",     "PC-Komponenten",          "RAM, Mainboards, Netzteile u. a.")
-            };
+                ("iphones",            "iPhones",                 "Apple iPhone Modelle",                             "iPhones",              "Apple iPhone models"),
+                ("android-phones",     "Android-Smartphones",     "Android Geräte von führenden Herstellern",         "Android phones",       "Android devices from leading manufacturers"),
+                ("ultrabooks",         "Ultrabooks",              "Leichte, mobile Notebooks",                        "Ultrabooks",           "Lightweight, mobile notebooks"),
+                ("business-laptops",   "Business-Laptops",        "Zuverlässige Laptops für den Arbeitsalltag",       "Business laptops",     "Reliable laptops for everyday work"),
+                ("gaming-laptops",     "Gaming-Laptops",          "Leistungsstarke Laptops für Gaming",               "Gaming laptops",       "High-performance laptops for gaming"),
+                ("mice",               "Mäuse",                   "Präzise Computer-Mäuse",                           "Mice",                 "Precise computer mice"),
+                ("keyboards",          "Tastaturen",              "Mechanische und Office-Tastaturen",                "Keyboards",            "Mechanical and office keyboards"),
+                ("storage",            "Speicher",                "NVMe/SSD/HDD Speicherlösungen",                    "Storage",              "NVMe/SSD/HDD storage solutions"),
+                ("monitors",           "Monitore",                "4K/144Hz/Ultrawide Monitore",                      "Monitors",             "4K, 144Hz, and ultrawide monitors"),
+                ("headphones",         "Kopfhörer",               "Over-Ear/ANC/BT Kopfhörer",                        "Headphones",           "Over-ear, ANC, and Bluetooth headphones"),
+                ("power-banks",        "Powerbanks",              "Mobile Ladegeräte",                                "Power banks",          "Portable chargers"),
+                ("pc-komponenten",     "PC-Komponenten",          "RAM, Mainboards, Netzteile u. a.",                 "PC components",        "RAM, motherboards, power supplies, and more")
+        };
 
             foreach (var c in cats)
             {
@@ -121,6 +130,13 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Slug = c.Slug,
                     Description = c.Desc
                 });
+                cat.Translations.Add(new CategoryTranslation
+                {
+                    Culture = EnglishCulture,
+                    Name = c.EnName,
+                    Slug = c.Slug,
+                    Description = c.EnDesc
+                });
                 db.Add(cat);
             }
 
@@ -128,7 +144,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         }
 
         /// <summary>
-        /// Creates â‰¥ 20 sample products (German locale), each with one simple variant.
+        /// Creates >= 20 storefront products (German locale), each with one simple variant.
         /// Prices are stored in NET minor units (EUR cents).
         /// Two variants get fixed GUIDs to align with Inventory/Cart seeds.
         /// </summary>
@@ -154,35 +170,35 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var standardTax = await EnsureStandardTaxCategoryAsync(db, ct);
 
             // Strongly-typed tuple array to avoid CS0826 while keeping the same item set.
-            var items = new (string Name, string Slug, string Brand, string Cat, decimal Price, decimal? Compare, string SKU)[]
+            var items = new (string Name, string EnName, string Slug, string Brand, string Cat, decimal Price, decimal? Compare, string SKU)[]
             {
                 // Smartphones
-                ("iPhone 15 Pro 128GB",            "iphone-15-pro-128",     "apple",          "iphones",           1199m,  null,           "APL-IP15P-128-001"),
-                ("Samsung Galaxy S24 256GB",       "galaxy-s24-256",         "samsung",        "android-phones",     999m,   1099m,         "SMS-S24-256-001"),
-                ("Google Pixel 9 128GB",           "pixel-9-128",            "google",         "android-phones",     799m,   869m,          "GGL-PX9-128-001"),
-                ("Xiaomi 14 Pro 256GB",            "xiaomi-14-pro-256",      "xiaomi",         "android-phones",     799m,   null,           "XMI-14P-256-001"),
-                ("OnePlus 12 256GB",               "oneplus-12-256",         "oneplus",        "android-phones",     869m,   949m,          "1P-12-256-001"),
+                ("iPhone 15 Pro 128GB",            "iPhone 15 Pro 128GB",    "iphone-15-pro-128",     "apple",          "iphones",           1199m,  null,           "APL-IP15P-128-001"),
+                ("Samsung Galaxy S24 256GB",       "Samsung Galaxy S24 256GB","galaxy-s24-256",        "samsung",        "android-phones",     999m,   1099m,         "SMS-S24-256-001"),
+                ("Google Pixel 9 128GB",           "Google Pixel 9 128GB",   "pixel-9-128",           "google",         "android-phones",     799m,   869m,          "GGL-PX9-128-001"),
+                ("Xiaomi 14 Pro 256GB",            "Xiaomi 14 Pro 256GB",    "xiaomi-14-pro-256",     "xiaomi",         "android-phones",     799m,   null,           "XMI-14P-256-001"),
+                ("OnePlus 12 256GB",               "OnePlus 12 256GB",       "oneplus-12-256",        "oneplus",        "android-phones",     869m,   949m,          "1P-12-256-001"),
 
                 // Laptops
-                ("MacBook Air 13 M3 8/256",        "macbook-air-13-m3",      "apple",          "ultrabooks",        1299m,   1399m,         "APL-MBA13-M3-001"),
-                ("Dell XPS 13 16/512",             "dell-xps-13-2025",       "dell",           "ultrabooks",        1599m,   null,          "DEL-XPS13-001"),
-                ("HP Envy 15",                     "hp-envy-15",             "hp",             "business-laptops",  1199m,   1299m,         "HP-ENVY15-001"),
-                ("Lenovo ThinkPad X1 Carbon",      "thinkpad-x1-carbon",     "lenovo",         "business-laptops",  1899m,   1999m,         "LNV-X1C-001"),
-                ("ASUS ROG Zephyrus G14",          "rog-g14-2025",           "asus",           "gaming-laptops",    1799m,   1899m,         "ASU-G14-001"),
+                ("MacBook Air 13 M3 8/256",        "MacBook Air 13 M3 8/256","macbook-air-13-m3",     "apple",          "ultrabooks",        1299m,   1399m,         "APL-MBA13-M3-001"),
+                ("Dell XPS 13 16/512",             "Dell XPS 13 16/512",     "dell-xps-13-2025",      "dell",           "ultrabooks",        1599m,   null,          "DEL-XPS13-001"),
+                ("HP Envy 15",                     "HP Envy 15",             "hp-envy-15",            "hp",             "business-laptops",  1199m,   1299m,         "HP-ENVY15-001"),
+                ("Lenovo ThinkPad X1 Carbon",      "Lenovo ThinkPad X1 Carbon","thinkpad-x1-carbon",  "lenovo",         "business-laptops",  1899m,   1999m,         "LNV-X1C-001"),
+                ("ASUS ROG Zephyrus G14",          "ASUS ROG Zephyrus G14",  "rog-g14-2025",          "asus",           "gaming-laptops",    1799m,   1899m,         "ASU-G14-001"),
 
                 // Components & Peripherals
-                ("Logitech MX Master 3S",          "logitech-mx-master-3s",  "logitech",       "mice",               119m,   139m,          "LOG-MX3S-001"),
-                ("Corsair K70 RGB Pro",            "corsair-k70-rgb-pro",    "corsair",        "keyboards",          179m,   null,          "COR-K70-RGBP-001"),
-                ("Samsung 980 Pro 1TB NVMe",       "samsung-980-pro-1tb",    "samsung",        "storage",            129m,   159m,          "SMS-980PRO-1TB-001"),
-                ("Seagate BarraCuda 4TB",          "seagate-barracuda-4tb",  "seagate",        "storage",             99m,   null,          "SEA-BC-4TB-001"),
-                ("WD Black SN850X 2TB",            "wd-black-sn850x-2tb",    "western-digital","storage",            229m,   259m,          "WD-SN850X-2TB-001"),
+                ("Logitech MX Master 3S",          "Logitech MX Master 3S",  "logitech-mx-master-3s", "logitech",       "mice",               119m,   139m,          "LOG-MX3S-001"),
+                ("Corsair K70 RGB Pro",            "Corsair K70 RGB Pro",    "corsair-k70-rgb-pro",   "corsair",        "keyboards",          179m,   null,          "COR-K70-RGBP-001"),
+                ("Samsung 980 Pro 1TB NVMe",       "Samsung 980 Pro 1TB NVMe","samsung-980-pro-1tb", "samsung",        "storage",            129m,   159m,          "SMS-980PRO-1TB-001"),
+                ("Seagate BarraCuda 4TB",          "Seagate BarraCuda 4TB",  "seagate-barracuda-4tb", "seagate",        "storage",             99m,   null,          "SEA-BC-4TB-001"),
+                ("WD Black SN850X 2TB",            "WD Black SN850X 2TB",    "wd-black-sn850x-2tb",   "western-digital","storage",            229m,   259m,          "WD-SN850X-2TB-001"),
 
                 // Monitors & Accessories
-                ("LG 27UL850 27\" 4K",             "lg-27ul850-4k",          "lg",             "monitors",           349m,   399m,          "LG-27UL850-001"),
-                ("Sony WH-1000XM5",                "sony-wh-1000xm5",        "sony",           "headphones",         329m,   379m,          "SNY-WH1000XM5-001"),
-                ("Anker PowerCore 20K",            "anker-powercore-20k",    "anker",          "power-banks",         59m,    69m,          "ANK-PWRCR20K-001"),
-                ("Razer DeathAdder V3",            "razer-deathadder-v3",    "razer",          "mice",                89m,   109m,          "RZR-DA-V3-001"),
-                ("Kingston Fury 32GB DDR5",        "kingston-fury-32gb-ddr5","kingston",       "pc-komponenten",     129m,   149m,          "KNG-FURY-32G-001")
+                ("LG 27UL850 27\" 4K",             "LG 27UL850 27\" 4K",     "lg-27ul850-4k",         "lg",             "monitors",           349m,   399m,          "LG-27UL850-001"),
+                ("Sony WH-1000XM5",                "Sony WH-1000XM5",        "sony-wh-1000xm5",       "sony",           "headphones",         329m,   379m,          "SNY-WH1000XM5-001"),
+                ("Anker PowerCore 20K",            "Anker PowerCore 20K",    "anker-powercore-20k",   "anker",          "power-banks",         59m,    69m,          "ANK-PWRCR20K-001"),
+                ("Razer DeathAdder V3",            "Razer DeathAdder V3",    "razer-deathadder-v3",   "razer",          "mice",                89m,   109m,          "RZR-DA-V3-001"),
+                ("Kingston Fury 32GB DDR5",        "Kingston Fury 32GB DDR5","kingston-fury-32gb-ddr5","kingston",      "pc-komponenten",     129m,   149m,          "KNG-FURY-32G-001")
             };
 
             foreach (var it in items)
@@ -209,11 +225,21 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     MetaTitle = null,
                     MetaDescription = null
                 });
+                p.Translations.Add(new ProductTranslation
+                {
+                    Culture = EnglishCulture,
+                    Name = it.EnName,
+                    Slug = it.Slug,
+                    ShortDescription = null,
+                    FullDescriptionHtml = null,
+                    MetaTitle = it.EnName,
+                    MetaDescription = null
+                });
 
                 db.Add(p);
                 await db.SaveChangesAsync(ct); // ensure Product.Id for the variant FK
 
-                // Map major (decimal NET) â†’ minor (long) using domain Money helper.
+                // Map major (decimal NET) ? minor (long) using domain Money helper.
                 long priceMinor = Money.FromMajor(it.Price, DomainDefaults.DefaultCurrency).AmountMinor;
                 long? compareMinor = it.Compare.HasValue
                     ? Money.FromMajor(it.Compare.Value, DomainDefaults.DefaultCurrency).AmountMinor
@@ -244,7 +270,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     IsDigital = false
                 };
 
-                // Adjust dimensions for laptops/monitors/storage to avoid decimalâ†’int? issues.
+                // Adjust dimensions for laptops/monitors/storage to avoid decimal?int? issues.
                 if (it.Cat is "ultrabooks" or "business-laptops" or "gaming-laptops")
                 {
                     v.PackageWeight = 1800; // 1.8 kg
@@ -272,6 +298,85 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             }
         }
 
+        private static async Task EnsureEnglishCatalogTranslationsAsync(DarwinDbContext db, CancellationToken ct)
+        {
+            var categoryMap = new Dictionary<string, (string Name, string? Description)>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["iphones"] = ("iPhones", "Apple iPhone models"),
+                ["android-phones"] = ("Android phones", "Android devices from leading manufacturers"),
+                ["ultrabooks"] = ("Ultrabooks", "Lightweight, mobile notebooks"),
+                ["business-laptops"] = ("Business laptops", "Reliable laptops for everyday work"),
+                ["gaming-laptops"] = ("Gaming laptops", "High-performance laptops for gaming"),
+                ["mice"] = ("Mice", "Precise computer mice"),
+                ["keyboards"] = ("Keyboards", "Mechanical and office keyboards"),
+                ["storage"] = ("Storage", "NVMe/SSD/HDD storage solutions"),
+                ["monitors"] = ("Monitors", "4K, 144Hz, and ultrawide monitors"),
+                ["headphones"] = ("Headphones", "Over-ear, ANC, and Bluetooth headphones"),
+                ["power-banks"] = ("Power banks", "Portable chargers"),
+                ["pc-komponenten"] = ("PC components", "RAM, motherboards, power supplies, and more")
+            };
+
+            var categories = await db.Categories
+                .Include(x => x.Translations)
+                .Where(x => x.Translations.Any(t => t.Culture == DomainDefaults.DefaultCulture))
+                .ToListAsync(ct);
+
+            foreach (var category in categories)
+            {
+                var defaultTranslation = category.Translations.FirstOrDefault(t => t.Culture == DomainDefaults.DefaultCulture);
+                if (defaultTranslation == null || string.IsNullOrWhiteSpace(defaultTranslation.Slug))
+                {
+                    continue;
+                }
+
+                if (!categoryMap.TryGetValue(defaultTranslation.Slug, out var english))
+                {
+                    english = (defaultTranslation.Name, defaultTranslation.Description);
+                }
+
+                var englishTranslation = category.Translations.FirstOrDefault(t => t.Culture == EnglishCulture);
+                if (englishTranslation == null)
+                {
+                    englishTranslation = new CategoryTranslation { Culture = EnglishCulture };
+                    category.Translations.Add(englishTranslation);
+                }
+
+                englishTranslation.Name = string.IsNullOrWhiteSpace(englishTranslation.Name) ? english.Name : englishTranslation.Name;
+                englishTranslation.Slug = string.IsNullOrWhiteSpace(englishTranslation.Slug) ? defaultTranslation.Slug : englishTranslation.Slug;
+                englishTranslation.Description = string.IsNullOrWhiteSpace(englishTranslation.Description) ? english.Description : englishTranslation.Description;
+            }
+
+            var products = await db.Products
+                .Include(x => x.Translations)
+                .Where(x => x.Translations.Any(t => t.Culture == DomainDefaults.DefaultCulture))
+                .ToListAsync(ct);
+
+            foreach (var product in products)
+            {
+                var defaultTranslation = product.Translations.FirstOrDefault(t => t.Culture == DomainDefaults.DefaultCulture);
+                if (defaultTranslation == null || string.IsNullOrWhiteSpace(defaultTranslation.Slug))
+                {
+                    continue;
+                }
+
+                var englishTranslation = product.Translations.FirstOrDefault(t => t.Culture == EnglishCulture);
+                if (englishTranslation == null)
+                {
+                    englishTranslation = new ProductTranslation { Culture = EnglishCulture };
+                    product.Translations.Add(englishTranslation);
+                }
+
+                englishTranslation.Name = string.IsNullOrWhiteSpace(englishTranslation.Name) ? defaultTranslation.Name : englishTranslation.Name;
+                englishTranslation.Slug = string.IsNullOrWhiteSpace(englishTranslation.Slug) ? defaultTranslation.Slug : englishTranslation.Slug;
+                englishTranslation.ShortDescription = string.IsNullOrWhiteSpace(englishTranslation.ShortDescription) ? defaultTranslation.ShortDescription : englishTranslation.ShortDescription;
+                englishTranslation.FullDescriptionHtml = string.IsNullOrWhiteSpace(englishTranslation.FullDescriptionHtml) ? defaultTranslation.FullDescriptionHtml : englishTranslation.FullDescriptionHtml;
+                englishTranslation.MetaTitle = string.IsNullOrWhiteSpace(englishTranslation.MetaTitle) ? defaultTranslation.MetaTitle ?? defaultTranslation.Name : englishTranslation.MetaTitle;
+                englishTranslation.MetaDescription = string.IsNullOrWhiteSpace(englishTranslation.MetaDescription) ? defaultTranslation.MetaDescription : englishTranslation.MetaDescription;
+            }
+
+            await db.SaveChangesAsync(ct);
+        }
+
         /// <summary>
         /// Ensures a representative subset of public products has primary media attached so storefront browsing
         /// has real image data even before a content team curates the full catalog.
@@ -280,14 +385,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         {
             var desiredAssignments = new[]
             {
-                new { ProductSlug = "iphone-15-pro-128", MediaUrl = "/media/sample/hero-electronics.jpg", Role = "Primary" },
-                new { ProductSlug = "galaxy-s24-256", MediaUrl = "/media/sample/smartphones.jpg", Role = "Primary" },
-                new { ProductSlug = "pixel-9-128", MediaUrl = "/media/sample/smartphones.jpg", Role = "Gallery" },
-                new { ProductSlug = "macbook-air-13-m3", MediaUrl = "/media/sample/laptops-collection.jpg", Role = "Primary" },
-                new { ProductSlug = "dell-xps-13-2025", MediaUrl = "/media/sample/laptops-collection.jpg", Role = "Gallery" },
-                new { ProductSlug = "logitech-mx-master-3s", MediaUrl = "/media/sample/accessories.jpg", Role = "Primary" },
-                new { ProductSlug = "sony-wh-1000xm5", MediaUrl = "/media/sample/accessories.jpg", Role = "Gallery" },
-                new { ProductSlug = "anker-powercore-20k", MediaUrl = "/media/sample/accessories.jpg", Role = "Gallery" }
+                new { ProductSlug = "iphone-15-pro-128", MediaUrl = "/media/storefront/hero-electronics.jpg", Role = "Primary" },
+                new { ProductSlug = "galaxy-s24-256", MediaUrl = "/media/storefront/smartphones.jpg", Role = "Primary" },
+                new { ProductSlug = "pixel-9-128", MediaUrl = "/media/storefront/smartphones.jpg", Role = "Gallery" },
+                new { ProductSlug = "macbook-air-13-m3", MediaUrl = "/media/storefront/laptops-collection.jpg", Role = "Primary" },
+                new { ProductSlug = "dell-xps-13-2025", MediaUrl = "/media/storefront/laptops-collection.jpg", Role = "Gallery" },
+                new { ProductSlug = "logitech-mx-master-3s", MediaUrl = "/media/storefront/accessories.jpg", Role = "Primary" },
+                new { ProductSlug = "sony-wh-1000xm5", MediaUrl = "/media/storefront/accessories.jpg", Role = "Gallery" },
+                new { ProductSlug = "anker-powercore-20k", MediaUrl = "/media/storefront/accessories.jpg", Role = "Gallery" }
             };
 
             var mediaUrls = desiredAssignments.Select(x => x.MediaUrl).Distinct().ToArray();

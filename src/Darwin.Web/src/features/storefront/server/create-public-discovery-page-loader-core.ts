@@ -30,6 +30,47 @@ type CreatePublicDiscoveryPageLoaderOptions<
   sliceOptions?: SliceOptions;
 };
 
+export function buildPublicDiscoveryPageLoaderObservationContext(
+  context?: Record<string, unknown>,
+  options?: {
+    hasCanonicalNormalization?: boolean;
+  },
+) {
+  return buildPageLoaderBaseDiagnostics("public-discovery", {
+    hasCanonicalNormalization: options?.hasCanonicalNormalization,
+    extras: context,
+  });
+}
+
+export function buildPublicDiscoveryPageLoaderSuccessContext(
+  continuationSlice: ReturnType<typeof createStorefrontContinuationSlice>,
+  context?: Record<string, unknown>,
+  options?: {
+    hasCanonicalNormalization?: boolean;
+  },
+) {
+  const continuationCartState = continuationSlice.cartSummary
+    ? "present"
+    : "missing";
+
+  return buildPageLoaderBaseDiagnostics("public-discovery", {
+    hasCanonicalNormalization: options?.hasCanonicalNormalization,
+    extras: {
+      continuationCmsCount: continuationSlice.cmsPages.length,
+      continuationCategoryCount: continuationSlice.categories.length,
+      continuationProductCount: continuationSlice.products.length,
+      continuationCartState,
+      continuationSurfaceFootprint: buildContinuationSliceFootprint({
+        cmsCount: continuationSlice.cmsPages.length,
+        categoryCount: continuationSlice.categories.length,
+        productCount: continuationSlice.products.length,
+        cartState: continuationCartState,
+      }),
+      ...(context ?? {}),
+    },
+  });
+}
+
 export function createPublicDiscoveryPageLoaderCore<
   TArgs extends unknown[],
   TRouteContext extends { storefrontContext: Parameters<typeof createStorefrontContinuationSlice>[0] },
@@ -49,10 +90,12 @@ export function createPublicDiscoveryPageLoaderCore<
     thresholdMs,
     normalizeArgs,
     getContext: (...args: TArgs) =>
-      buildPageLoaderBaseDiagnostics("public-discovery", {
-        hasCanonicalNormalization: Boolean(normalizeArgs),
-        extras: getContext(...args) ?? {},
-      }),
+      buildPublicDiscoveryPageLoaderObservationContext(
+        getContext(...args) ?? {},
+        {
+          hasCanonicalNormalization: Boolean(normalizeArgs),
+        },
+      ),
     load: async (...args: TArgs) => {
       const routeContext = await loadRouteContext(...args);
       const continuationSlice = createStorefrontContinuationSlice(
@@ -70,27 +113,13 @@ export function createPublicDiscoveryPageLoaderCore<
         continuationSlice: ReturnType<typeof createStorefrontContinuationSlice>;
       },
       ...args: TArgs
-    ) => {
-      const continuationCartState = result.continuationSlice.cartSummary
-        ? "present"
-        : "missing";
-
-      return buildPageLoaderBaseDiagnostics("public-discovery", {
-        hasCanonicalNormalization: Boolean(normalizeArgs),
-        extras: {
-          continuationCmsCount: result.continuationSlice.cmsPages.length,
-          continuationCategoryCount: result.continuationSlice.categories.length,
-          continuationProductCount: result.continuationSlice.products.length,
-          continuationCartState,
-          continuationSurfaceFootprint: buildContinuationSliceFootprint({
-            cmsCount: result.continuationSlice.cmsPages.length,
-            categoryCount: result.continuationSlice.categories.length,
-            productCount: result.continuationSlice.products.length,
-            cartState: continuationCartState,
-          }),
-          ...(getSuccessContext(result, ...args) ?? {}),
+    ) =>
+      buildPublicDiscoveryPageLoaderSuccessContext(
+        result.continuationSlice,
+        getSuccessContext(result, ...args) ?? {},
+        {
+          hasCanonicalNormalization: Boolean(normalizeArgs),
         },
-      });
-    },
+      ),
   });
 }

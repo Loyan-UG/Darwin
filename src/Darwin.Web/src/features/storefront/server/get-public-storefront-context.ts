@@ -10,24 +10,29 @@ import {
 import { createSharedContextLoader } from "@/lib/shared-context-loader";
 import { publicStorefrontObservationContext } from "@/lib/route-observation-context";
 
+export function buildPublicStorefrontSuccessContext(
+  result: Parameters<typeof summarizePublicStorefrontHealth>[0],
+) {
+  const summary = summarizePublicStorefrontHealth(result);
+
+  return {
+    ...summary,
+    sharedContextFootprint: buildPublicStorefrontFootprint({
+      cmsStatus: summary.cmsStatus,
+      categoriesStatus: summary.categoriesStatus,
+      productsStatus: summary.productsStatus,
+      cartStatus: summary.cartStatus,
+    }),
+  };
+}
+
 const getCachedPublicStorefrontContext = createSharedContextLoader({
   kind: "public-storefront",
   area: "public-storefront",
   operation: "load-context",
   normalizeArgs: normalizeCultureArg,
   getContext: (culture: string) => publicStorefrontObservationContext(culture),
-  getSuccessContext: (result) => {
-    const summary = summarizePublicStorefrontHealth(result);
-    return {
-      ...summary,
-      sharedContextFootprint: buildPublicStorefrontFootprint({
-        cmsStatus: summary.cmsStatus,
-        categoriesStatus: summary.categoriesStatus,
-        productsStatus: summary.productsStatus,
-        cartStatus: summary.cartStatus,
-      }),
-    };
-  },
+  getSuccessContext: (result) => buildPublicStorefrontSuccessContext(result),
   load: async (culture: string) => {
     const [continuationContext, shoppingContext] = await Promise.all([
       getStorefrontContinuationContext(culture),

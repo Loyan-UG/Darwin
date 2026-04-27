@@ -60,23 +60,6 @@ namespace Darwin.Application.Catalog.Commands
 
             var sanitizer = HtmlSanitizerFactory.Create();
 
-            var submittedTranslationIds = dto.Translations
-                .Where(t => t.Id.HasValue && t.Id.Value != Guid.Empty)
-                .Select(t => t.Id!.Value)
-                .ToHashSet();
-
-            foreach (var existing in brand.Translations.Where(t => !t.IsDeleted))
-            {
-                var stillSubmittedById = submittedTranslationIds.Contains(existing.Id);
-                var stillSubmittedByCulture = dto.Translations.Any(t =>
-                    (!t.Id.HasValue || t.Id.Value == Guid.Empty) &&
-                    string.Equals(t.Culture.Trim(), existing.Culture, StringComparison.OrdinalIgnoreCase));
-                if (!stillSubmittedById && !stillSubmittedByCulture)
-                {
-                    existing.IsDeleted = true;
-                }
-            }
-
             foreach (var tr in dto.Translations)
             {
                 var culture = tr.Culture.Trim();

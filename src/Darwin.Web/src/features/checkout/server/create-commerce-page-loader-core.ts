@@ -13,6 +13,30 @@ type CreateCommercePageLoaderOptions<TArgs extends unknown[], TResult> = {
   load: (...args: TArgs) => Promise<TResult>;
 };
 
+export function buildCommercePageLoaderObservationContext(
+  context?: Record<string, unknown>,
+  options?: {
+    hasCanonicalNormalization?: boolean;
+  },
+) {
+  return buildPageLoaderBaseDiagnostics("commerce", {
+    hasCanonicalNormalization: options?.hasCanonicalNormalization,
+    extras: context,
+  });
+}
+
+export function buildCommercePageLoaderSuccessContext(
+  context?: Record<string, unknown>,
+  options?: {
+    hasCanonicalNormalization?: boolean;
+  },
+) {
+  return buildPageLoaderBaseDiagnostics("commerce", {
+    hasCanonicalNormalization: options?.hasCanonicalNormalization,
+    extras: context,
+  });
+}
+
 export function createCommercePageLoaderCore<TArgs extends unknown[], TResult>({
   operation,
   thresholdMs = 325,
@@ -27,15 +51,19 @@ export function createCommercePageLoaderCore<TArgs extends unknown[], TResult>({
     thresholdMs,
     normalizeArgs,
     getContext: (...args: TArgs) =>
-      buildPageLoaderBaseDiagnostics("commerce", {
-        hasCanonicalNormalization: Boolean(normalizeArgs),
-        extras: getContext(...args) ?? {},
-      }),
+      buildCommercePageLoaderObservationContext(
+        getContext(...args) ?? {},
+        {
+          hasCanonicalNormalization: Boolean(normalizeArgs),
+        },
+      ),
     getSuccessContext: (result: TResult, ...args: TArgs) =>
-      buildPageLoaderBaseDiagnostics("commerce", {
-        hasCanonicalNormalization: Boolean(normalizeArgs),
-        extras: getSuccessContext(result, ...args) ?? {},
-      }),
+      buildCommercePageLoaderSuccessContext(
+        getSuccessContext(result, ...args) ?? {},
+        {
+          hasCanonicalNormalization: Boolean(normalizeArgs),
+        },
+      ),
     load,
   });
 }

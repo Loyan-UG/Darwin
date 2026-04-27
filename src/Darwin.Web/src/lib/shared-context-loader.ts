@@ -18,6 +18,32 @@ type CreateSharedContextLoaderOptions<TArgs extends unknown[], TResult> = {
   load: (...args: TArgs) => Promise<TResult>;
 };
 
+export function buildSharedContextLoaderObservationContext(
+  kind: SharedContextKind,
+  context?: Record<string, unknown>,
+  options?: {
+    hasCanonicalNormalization?: boolean;
+  },
+) {
+  return buildSharedContextBaseDiagnostics(kind, {
+    hasCanonicalNormalization: options?.hasCanonicalNormalization,
+    extras: context,
+  });
+}
+
+export function buildSharedContextLoaderSuccessContext(
+  kind: SharedContextKind,
+  context?: Record<string, unknown>,
+  options?: {
+    hasCanonicalNormalization?: boolean;
+  },
+) {
+  return buildSharedContextBaseDiagnostics(kind, {
+    hasCanonicalNormalization: options?.hasCanonicalNormalization,
+    extras: context,
+  });
+}
+
 export function createSharedContextLoader<TArgs extends unknown[], TResult>({
   kind,
   area,
@@ -34,15 +60,17 @@ export function createSharedContextLoader<TArgs extends unknown[], TResult>({
     thresholdMs,
     normalizeArgs,
     getContext: (...args: TArgs) =>
-      buildSharedContextBaseDiagnostics(kind, {
+      buildSharedContextLoaderObservationContext(kind, getContext(...args) ?? {}, {
         hasCanonicalNormalization: Boolean(normalizeArgs),
-        extras: getContext(...args) ?? {},
       }),
     getSuccessContext: (result: TResult, ...args: TArgs) =>
-      buildSharedContextBaseDiagnostics(kind, {
-        hasCanonicalNormalization: Boolean(normalizeArgs),
-        extras: getSuccessContext(result, ...args) ?? {},
-      }),
+      buildSharedContextLoaderSuccessContext(
+        kind,
+        getSuccessContext(result, ...args) ?? {},
+        {
+          hasCanonicalNormalization: Boolean(normalizeArgs),
+        },
+      ),
     load,
   });
 }

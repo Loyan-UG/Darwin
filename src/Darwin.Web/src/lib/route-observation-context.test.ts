@@ -2,52 +2,89 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   catalogBrowseObservationContext,
+  catalogIndexRouteObservationContext,
   catalogLocalizedInventoryObservationContext,
   cmsBrowseObservationContext,
   cmsDetailObservationContext,
-  cmsIndexRouteObservationContext,
-  homeDiscoveryObservationContext,
-  homeSeoObservationContext,
-  productDetailObservationContext,
-  productDetailRouteObservationContext,
-  publicStorefrontObservationContext,
-  storefrontContinuationObservationContext,
-  catalogIndexRouteObservationContext,
   cmsDetailRouteObservationContext,
+  cmsIndexRouteObservationContext,
   cmsLocalizedInventoryObservationContext,
   commerceRouteObservationContext,
   homeCategorySpotlightsObservationContext,
+  homeDiscoveryObservationContext,
+  homeSeoObservationContext,
   localizedDiscoveryInventoryObservationContext,
   memberRouteObservationContext,
   memberSummaryObservationContext,
-  publicSitemapObservationContext,
+  productDetailObservationContext,
   productDetailRelatedObservationContext,
+  productDetailRouteObservationContext,
+  publicSitemapObservationContext,
+  publicStorefrontObservationContext,
   shellObservationContext,
+  storefrontContinuationObservationContext,
 } from "@/lib/route-observation-context";
 
-test("catalog browse observation context normalizes missing category to null", () => {
-  assert.deepEqual(catalogBrowseObservationContext("de-DE", 2), {
+test("basic storefront, shell, and home observation contexts stay explicit", () => {
+  assert.deepEqual(publicStorefrontObservationContext("de-DE"), {
     culture: "de-DE",
-    page: 2,
-    categorySlug: null,
-    search: null,
+  });
+
+  assert.deepEqual(storefrontContinuationObservationContext("en-US"), {
+    culture: "en-US",
+  });
+
+  assert.deepEqual(shellObservationContext("main-navigation"), {
+    menuName: "main-navigation",
+  });
+
+  assert.deepEqual(homeDiscoveryObservationContext("de-DE"), {
+    culture: "de-DE",
+  });
+
+  assert.deepEqual(homeSeoObservationContext("en-US"), {
+    culture: "en-US",
+    route: "/",
+  });
+
+  assert.deepEqual(homeCategorySpotlightsObservationContext("de-DE", 3), {
+    culture: "de-DE",
+    categoryCount: 3,
   });
 });
 
-test("catalog route observation context carries route and category context together", () => {
-  assert.deepEqual(
-    catalogIndexRouteObservationContext("en-US", 1, "snacks"),
-    {
-      culture: "en-US",
-      page: 1,
-      categorySlug: "snacks",
-      search: null,
-      route: "/catalog",
-    },
-  );
-});
+test("CMS observation contexts keep browse, detail, and route metadata together", () => {
+  assert.deepEqual(cmsBrowseObservationContext("de-DE", 2, "story"), {
+    culture: "de-DE",
+    page: 2,
+    search: "story",
+  });
 
-test("cms detail route observation context keeps slug and canonical route key", () => {
+  assert.deepEqual(cmsBrowseObservationContext("en-US", 1), {
+    culture: "en-US",
+    page: 1,
+    search: null,
+  });
+
+  assert.deepEqual(cmsIndexRouteObservationContext("en-US", 1), {
+    culture: "en-US",
+    page: 1,
+    search: null,
+    route: "/cms",
+  });
+
+  assert.deepEqual(cmsIndexRouteObservationContext("de-DE", 3, "faq"), {
+    culture: "de-DE",
+    page: 3,
+    search: "faq",
+    route: "/cms",
+  });
+
+  assert.deepEqual(cmsDetailObservationContext("de-DE", "faq"), {
+    culture: "de-DE",
+    slug: "faq",
+  });
+
   assert.deepEqual(cmsDetailRouteObservationContext("de-DE", "faq"), {
     culture: "de-DE",
     slug: "faq",
@@ -55,7 +92,92 @@ test("cms detail route observation context keeps slug and canonical route key", 
   });
 });
 
-test("commerce route observation context merges route-specific metadata", () => {
+test("catalog observation contexts keep browse filters and route metadata explicit", () => {
+  assert.deepEqual(catalogBrowseObservationContext("de-DE", 2), {
+    culture: "de-DE",
+    page: 2,
+    categorySlug: null,
+    search: null,
+  });
+
+  assert.deepEqual(
+    catalogBrowseObservationContext("en-US", 1, "snacks", "chips"),
+    {
+      culture: "en-US",
+      page: 1,
+      categorySlug: "snacks",
+      search: "chips",
+    },
+  );
+
+  assert.deepEqual(catalogIndexRouteObservationContext("en-US", 1, "snacks"), {
+    culture: "en-US",
+    page: 1,
+    categorySlug: "snacks",
+    search: null,
+    route: "/catalog",
+  });
+
+  assert.deepEqual(
+    catalogIndexRouteObservationContext("de-DE", 3, undefined, "coffee"),
+    {
+      culture: "de-DE",
+      page: 3,
+      categorySlug: null,
+      search: "coffee",
+      route: "/catalog",
+    },
+  );
+});
+
+test("product detail observation contexts keep slug and category follow-up context explicit", () => {
+  assert.deepEqual(productDetailObservationContext("en-US", "sea-salt-chips"), {
+    culture: "en-US",
+    slug: "sea-salt-chips",
+  });
+
+  assert.deepEqual(
+    productDetailRelatedObservationContext(
+      "en-US",
+      "sea-salt-chips",
+      "snacks",
+    ),
+    {
+      culture: "en-US",
+      slug: "sea-salt-chips",
+      categorySlug: "snacks",
+    },
+  );
+
+  assert.deepEqual(
+    productDetailRouteObservationContext("de-DE", "coffee-machine"),
+    {
+      culture: "de-DE",
+      slug: "coffee-machine",
+      route: "/catalog/[slug]",
+    },
+  );
+});
+
+test("commerce observation contexts keep all active route families serializable", () => {
+  assert.deepEqual(commerceRouteObservationContext("en-US", "/cart"), {
+    culture: "en-US",
+    route: "/cart",
+  });
+
+  assert.deepEqual(
+    commerceRouteObservationContext("de-DE", "/checkout", {
+      cartState: "present",
+      itemCount: 2,
+    }),
+    {
+      culture: "de-DE",
+      route: "/checkout",
+      cartState: "present",
+      itemCount: 2,
+    },
+  );
+
   assert.deepEqual(
     commerceRouteObservationContext(
       "de-DE",
@@ -72,52 +194,36 @@ test("commerce route observation context merges route-specific metadata", () => 
       hasOrderNumber: true,
     },
   );
+
+  assert.deepEqual(
+    commerceRouteObservationContext("en-US", "/mock-checkout", {
+      returnTarget: "/checkout/orders/123/confirmation/finalize",
+    }),
+    {
+      culture: "en-US",
+      route: "/mock-checkout",
+      returnTarget: "/checkout/orders/123/confirmation/finalize",
+    },
+  );
 });
 
-test("basic storefront, home, CMS, and product observation contexts stay explicit", () => {
-  assert.deepEqual(publicStorefrontObservationContext("de-DE"), {
-    culture: "de-DE",
-  });
-  assert.deepEqual(storefrontContinuationObservationContext("en-US"), {
-    culture: "en-US",
-  });
-  assert.deepEqual(homeDiscoveryObservationContext("de-DE"), {
-    culture: "de-DE",
-  });
-  assert.deepEqual(homeSeoObservationContext("en-US"), {
-    culture: "en-US",
-    route: "/",
-  });
-  assert.deepEqual(cmsBrowseObservationContext("de-DE", 2, "story"), {
-    culture: "de-DE",
-    page: 2,
-    search: "story",
-  });
-  assert.deepEqual(cmsIndexRouteObservationContext("en-US", 1), {
-    culture: "en-US",
-    page: 1,
-    search: null,
-    route: "/cms",
-  });
-  assert.deepEqual(cmsDetailObservationContext("de-DE", "faq"), {
-    culture: "de-DE",
-    slug: "faq",
-  });
-  assert.deepEqual(productDetailObservationContext("en-US", "sea-salt-chips"), {
-    culture: "en-US",
-    slug: "sea-salt-chips",
-  });
-  assert.deepEqual(productDetailRouteObservationContext("de-DE", "coffee-machine"), {
-    culture: "de-DE",
-    slug: "coffee-machine",
-    route: "/catalog/[slug]",
-  });
-});
-
-test("member summary and member route observation contexts keep explicit operational scope", () => {
+test("member observation contexts keep summary scopes and route families explicit", () => {
   assert.deepEqual(memberSummaryObservationContext("identity"), {
     scope: "identity",
   });
+
+  assert.deepEqual(
+    memberSummaryObservationContext("commerce-summary", {
+      orderCount: 4,
+      invoiceCount: 2,
+    }),
+    {
+      scope: "commerce-summary",
+      orderCount: 4,
+      invoiceCount: 2,
+    },
+  );
+
   assert.deepEqual(
     memberRouteObservationContext("de-DE", "/orders", {
       page: 3,
@@ -130,46 +236,36 @@ test("member summary and member route observation contexts keep explicit operati
       pageSize: 20,
     },
   );
-});
 
-
-test("commerce and member observation contexts keep bare route branches explicit", () => {
-  assert.deepEqual(commerceRouteObservationContext("en-US", "/cart"), {
-    culture: "en-US",
-    route: "/cart",
-  });
-  assert.deepEqual(memberSummaryObservationContext("commerce-summary", {
-    orderCount: 4,
-    invoiceCount: 2,
-  }), {
-    scope: "commerce-summary",
-    orderCount: 4,
-    invoiceCount: 2,
-  });
   assert.deepEqual(memberRouteObservationContext("en-US", "/orders/[id]"), {
     culture: "en-US",
     route: "/orders/[id]",
   });
-});
-test("home, shell, and product-related observation contexts stay serializable and precise", () => {
-  assert.deepEqual(shellObservationContext("main-navigation"), {
-    menuName: "main-navigation",
-  });
-  assert.deepEqual(homeCategorySpotlightsObservationContext("de-DE", 3), {
-    culture: "de-DE",
-    categoryCount: 3,
-  });
+
   assert.deepEqual(
-    productDetailRelatedObservationContext("en-US", "sea-salt-chips", "snacks"),
+    memberRouteObservationContext("de-DE", "/invoices/[id]", {
+      invoiceId: "inv-1",
+    }),
+    {
+      culture: "de-DE",
+      route: "/invoices/[id]",
+      invoiceId: "inv-1",
+    },
+  );
+
+  assert.deepEqual(
+    memberRouteObservationContext("en-US", "/loyalty/[businessId]", {
+      businessId: "biz-1",
+    }),
     {
       culture: "en-US",
-      slug: "sea-salt-chips",
-      categorySlug: "snacks",
+      route: "/loyalty/[businessId]",
+      businessId: "biz-1",
     },
   );
 });
 
-test("localized discovery observation contexts canonicalize culture lists", () => {
+test("localized observation contexts canonicalize culture lists across every active scope", () => {
   assert.deepEqual(
     localizedDiscoveryInventoryObservationContext([
       " en-US ",
@@ -213,14 +309,16 @@ test("localized discovery observation contexts canonicalize culture lists", () =
       scope: "localized-product-inventory",
     },
   );
+});
 
+test("localized observation contexts keep empty culture lists explicit across every active scope", () => {
   assert.deepEqual(publicSitemapObservationContext(["", "  "]), {
     cultures: "",
     cultureCount: 0,
     cultureFootprint: "none",
     scope: "public-sitemap",
   });
-});
+
   assert.deepEqual(localizedDiscoveryInventoryObservationContext(["", "  "]), {
     cultures: "",
     cultureCount: 0,
@@ -241,5 +339,4 @@ test("localized discovery observation contexts canonicalize culture lists", () =
     cultureFootprint: "none",
     scope: "localized-product-inventory",
   });
-
-
+});

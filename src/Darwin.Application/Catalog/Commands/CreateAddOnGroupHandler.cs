@@ -33,17 +33,32 @@ namespace Darwin.Application.Catalog.Commands
                 MinSelections = dto.MinSelections,
                 MaxSelections = dto.MaxSelections,
                 IsActive = dto.IsActive,
+                Translations = dto.Translations.Select(t => new AddOnGroupTranslation
+                {
+                    Culture = t.Culture.Trim(),
+                    Name = t.Name.Trim()
+                }).ToList(),
                 Options = dto.Options.Select(o => new AddOnOption
                 {
                     Label = o.Label.Trim(),
                     SortOrder = o.SortOrder,
+                    Translations = o.Translations.Select(t => new AddOnOptionTranslation
+                    {
+                        Culture = t.Culture.Trim(),
+                        Label = t.Label.Trim()
+                    }).ToList(),
                     Values = o.Values.Select(v => new AddOnOptionValue
                     {
                         Label = v.Label.Trim(),
                         PriceDeltaMinor = v.PriceDeltaMinor,
                         Hint = string.IsNullOrWhiteSpace(v.Hint) ? null : v.Hint.Trim(),
                         SortOrder = v.SortOrder,
-                        IsActive = v.IsActive
+                        IsActive = v.IsActive,
+                        Translations = v.Translations.Select(t => new AddOnOptionValueTranslation
+                        {
+                            Culture = t.Culture.Trim(),
+                            Label = t.Label.Trim()
+                        }).ToList()
                     }).ToList()
                 }).ToList()
             };

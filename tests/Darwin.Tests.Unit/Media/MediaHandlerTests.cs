@@ -5,6 +5,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CMS.Media.Commands;
 using Darwin.Application.CMS.Media.DTOs;
 using Darwin.Application.CMS.Media.Queries;
+using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
 using FluentAssertions;
 using FluentValidation;
@@ -524,6 +525,58 @@ public sealed class MediaHandlerTests
         items.Should().HaveCount(1);
     }
 
+    [Fact]
+    public async Task GetMediaAssetsPage_Should_Apply_UsedInProducts_Filter_And_ProductReferenceCounts()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var usedAsset = BuildAsset("https://cdn.example.com/used.jpg", "used.jpg");
+        var unusedAsset = BuildAsset("https://cdn.example.com/unused.jpg", "unused.jpg");
+        db.Set<MediaAsset>().AddRange(usedAsset, unusedAsset);
+        db.Set<ProductMedia>().Add(new ProductMedia
+        {
+            Id = Guid.NewGuid(),
+            ProductId = Guid.NewGuid(),
+            MediaAssetId = usedAsset.Id,
+            SortOrder = 0
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetMediaAssetsPageHandler(db);
+        var (items, total) = await handler.HandleAsync(
+            1, 20, filter: MediaAssetQueueFilter.UsedInProducts, ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(1);
+        items.Should().ContainSingle();
+        items.Single().OriginalFileName.Should().Be("used.jpg");
+        items.Single().ProductReferenceCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetMediaAssetsPage_Should_Apply_Unused_Filter()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var usedAsset = BuildAsset("https://cdn.example.com/used.jpg", "used.jpg");
+        var unusedAsset = BuildAsset("https://cdn.example.com/unused.jpg", "unused.jpg");
+        db.Set<MediaAsset>().AddRange(usedAsset, unusedAsset);
+        db.Set<ProductMedia>().Add(new ProductMedia
+        {
+            Id = Guid.NewGuid(),
+            ProductId = Guid.NewGuid(),
+            MediaAssetId = usedAsset.Id,
+            SortOrder = 0
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetMediaAssetsPageHandler(db);
+        var (items, total) = await handler.HandleAsync(
+            1, 20, filter: MediaAssetQueueFilter.Unused, ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(1);
+        items.Should().ContainSingle();
+        items.Single().OriginalFileName.Should().Be("unused.jpg");
+        items.Single().ProductReferenceCount.Should().Be(0);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // GetMediaAssetOpsSummaryHandler
     // ─────────────────────────────────────────────────────────────────────────
@@ -564,6 +617,13 @@ public sealed class MediaHandlerTests
         var deleted = BuildAsset("https://cdn.example.com/del.jpg", "del.jpg", isDeleted: true);
 
         db.Set<MediaAsset>().AddRange(lib, editor, deleted);
+        db.Set<ProductMedia>().Add(new ProductMedia
+        {
+            Id = Guid.NewGuid(),
+            ProductId = Guid.NewGuid(),
+            MediaAssetId = editor.Id,
+            SortOrder = 0
+        });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new GetMediaAssetOpsSummaryHandler(db);
@@ -574,6 +634,8 @@ public sealed class MediaHandlerTests
         summary.MissingTitleCount.Should().Be(1, "one asset has no title");
         summary.EditorAssetCount.Should().Be(1, "one asset has the EditorAsset role");
         summary.LibraryAssetCount.Should().Be(1, "one asset has the LibraryAsset role");
+        summary.ProductReferencedCount.Should().Be(1, "one asset is linked to a product");
+        summary.UnusedCount.Should().Be(1, "one non-deleted asset remains unused");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -613,6 +675,16 @@ public sealed class MediaHandlerTests
                 b.Property(x => x.Role).HasMaxLength(64);
                 b.Property(x => x.IsDeleted);
                 b.Property(x => x.RowVersion).IsRowVersion();
+            });
+
+            modelBuilder.Entity<ProductMedia>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.ProductId).IsRequired();
+                b.Property(x => x.MediaAssetId).IsRequired();
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.Role).HasMaxLength(64);
+                b.Property(x => x.IsDeleted);
             });
         }
     }

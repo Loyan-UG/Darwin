@@ -29,6 +29,7 @@ namespace Darwin.Application.CMS.Queries
                     RowVersion = m.RowVersion,
                     Name = m.Name,
                     Items = m.Items
+                        .Where(i => !i.IsDeleted)
                         .OrderBy(i => i.ParentId).ThenBy(i => i.SortOrder).ThenBy(i => i.Url)
                         .Select(i => new MenuItemDto
                         {
@@ -38,6 +39,7 @@ namespace Darwin.Application.CMS.Queries
                             SortOrder = i.SortOrder,
                             IsActive = i.IsActive,
                             Translations = i.Translations
+                                .Where(t => !t.IsDeleted)
                                 .OrderBy(t => t.Culture)
                                 .Select(t => new MenuItemTranslationDto
                                 {

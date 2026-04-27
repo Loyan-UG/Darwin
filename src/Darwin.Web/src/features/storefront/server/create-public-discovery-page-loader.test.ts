@@ -1,7 +1,58 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createPublicDiscoveryPageLoaderCore } from "@/features/storefront/server/create-public-discovery-page-loader-core";
+import {
+  buildPublicDiscoveryPageLoaderObservationContext,
+  buildPublicDiscoveryPageLoaderSuccessContext,
+  createPublicDiscoveryPageLoaderCore,
+} from "@/features/storefront/server/create-public-discovery-page-loader-core";
 import { buildContinuationSliceFootprint } from "@/lib/page-loader-diagnostics";
+
+test("public-discovery page loader helper builders keep canonical observation and continuation diagnostics explicit", () => {
+  assert.deepEqual(
+    buildPublicDiscoveryPageLoaderObservationContext(
+      {
+        culture: "de-DE",
+        slug: "faq",
+      },
+      {
+        hasCanonicalNormalization: true,
+      },
+    ),
+    {
+      pageLoaderKind: "public-discovery",
+      pageLoaderNormalization: "canonical",
+      culture: "de-DE",
+      slug: "faq",
+    },
+  );
+
+  assert.deepEqual(
+    buildPublicDiscoveryPageLoaderSuccessContext(
+      {
+        cmsPages: [{ slug: "faq" }],
+        categories: [{ slug: "bakery" }],
+        products: [{ slug: "bread" }],
+        cartSummary: null,
+      } as never,
+      {
+        slug: "faq",
+      },
+      {
+        hasCanonicalNormalization: true,
+      },
+    ),
+    {
+      pageLoaderKind: "public-discovery",
+      pageLoaderNormalization: "canonical",
+      continuationCmsCount: 1,
+      continuationCategoryCount: 1,
+      continuationProductCount: 1,
+      continuationCartState: "missing",
+      continuationSurfaceFootprint: "cms:1|categories:1|products:1|cart:missing",
+      slug: "faq",
+    },
+  );
+});
 
 test("createPublicDiscoveryPageLoader keeps route context and adds the configured continuation slice", async () => {
   let executions = 0;

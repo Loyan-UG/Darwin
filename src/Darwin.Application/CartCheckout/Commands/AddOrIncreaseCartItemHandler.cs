@@ -81,11 +81,16 @@ namespace Darwin.Application.CartCheckout.Commands
 
             var selJson = JsonSerializer.Serialize(selIds);
 
-            // Try merge with existing line (same variant + same add-on configuration)
-            var existing = cart.Items.FirstOrDefault(i =>
-                i.VariantId == dto.VariantId &&
-                i.SelectedAddOnValueIdsJson == selJson &&
-                !i.IsDeleted);
+            // Try merge with existing line (same variant + same add-on configuration).
+            // Do not rely on cart.Items here because the cart query does not eager-load items.
+            var existing = await _db.Set<CartItem>()
+                .FirstOrDefaultAsync(i =>
+                    !i.IsDeleted &&
+                    i.CartId == cart.Id &&
+                    i.VariantId == dto.VariantId &&
+                    i.SelectedAddOnValueIdsJson == selJson,
+                    ct)
+                .ConfigureAwait(false);
 
             if (existing != null)
             {

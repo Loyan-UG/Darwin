@@ -10,6 +10,7 @@
 //
 // Comments are descriptive and intended to document why each registration exists.
 using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Security;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Catalog.Services;             // IAddOnPricingService, AddOnPricingService
 using Darwin.Application.Common.Html;                  // IHtmlSanitizer + HtmlSanitizerFactory
@@ -86,6 +87,10 @@ namespace Darwin.WebApi.Extensions
 
             // Data Protection (persisted key ring for shared hosting).
             services.AddSharedHostingDataProtection(configuration);
+
+            // Auth anti-bot verifier used by sign-in handlers during startup/runtime validation.
+            services.Configure<AuthAntiBotOptions>(configuration.GetSection("Security:AuthAntiBot"));
+            services.AddSingleton<IAuthAntiBotVerifier, ProtectedAuthAntiBotVerifier>();
 
             // ------------------------------------------------------------
             // 4) Identity & Security infrastructure

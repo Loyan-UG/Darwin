@@ -1,6 +1,57 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createSharedContextLoader } from "@/lib/shared-context-loader";
+import {
+  buildSharedContextLoaderObservationContext,
+  buildSharedContextLoaderSuccessContext,
+  createSharedContextLoader,
+} from "@/lib/shared-context-loader";
+
+test("shared-context loader helper builders keep canonical and raw diagnostics explicit", () => {
+  assert.deepEqual(
+    buildSharedContextLoaderObservationContext(
+      "storefront-continuation",
+      {
+        culture: "de-DE",
+        route: "/catalog",
+      },
+      {
+        hasCanonicalNormalization: true,
+      },
+    ),
+    {
+      sharedContextKind: "storefront-continuation",
+      sharedContextNormalization: "canonical",
+      culture: "de-DE",
+      route: "/catalog",
+    },
+  );
+
+  assert.deepEqual(
+    buildSharedContextLoaderSuccessContext(
+      "member-summary",
+      {
+        culture: "en-US",
+        scope: "orders-page",
+        primaryStatus: "ok",
+      },
+    ),
+    {
+      sharedContextKind: "member-summary",
+      sharedContextNormalization: "raw",
+      culture: "en-US",
+      scope: "orders-page",
+      primaryStatus: "ok",
+    },
+  );
+
+  assert.deepEqual(
+    buildSharedContextLoaderObservationContext("public-storefront"),
+    {
+      sharedContextKind: "public-storefront",
+      sharedContextNormalization: "raw",
+    },
+  );
+});
 
 test("createSharedContextLoader wraps context and success diagnostics with shared context metadata", async () => {
   let contextSnapshot: Record<string, unknown> | undefined;

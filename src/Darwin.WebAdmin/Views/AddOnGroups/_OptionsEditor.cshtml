@@ -29,6 +29,20 @@
                                 </div>
                             </div>
 
+                            @if (opt.Translations.Count > 0)
+                            {
+                                <div class="row g-2 mt-2">
+                                    @for (var ti = 0; ti < opt.Translations.Count; ti++)
+                                    {
+                                        <div class="col-md-6">
+                                            <input type="hidden" name="Options[@i].Translations[@ti].Culture" value="@opt.Translations[ti].Culture" />
+                                            <label class="form-label">@T.T("AddOnOptionLabel") @opt.Translations[ti].Culture</label>
+                                            <input class="form-control" name="Options[@i].Translations[@ti].Label" value="@opt.Translations[ti].Label" />
+                                        </div>
+                                    }
+                                </div>
+                            }
+
                             <div class="mt-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <strong>@T.T("Values")</strong>
@@ -68,6 +82,17 @@
                                                         <label class="form-label">@T.T("Hint")</label>
                                                         <input class="form-control" name="Options[@i].Values[@j].Hint" value="@val.Hint" />
                                                     </div>
+                                                    @if (val.Translations.Count > 0)
+                                                    {
+                                                        for (var vti = 0; vti < val.Translations.Count; vti++)
+                                                        {
+                                                            <div class="col-md-6">
+                                                                <input type="hidden" name="Options[@i].Values[@j].Translations[@vti].Culture" value="@val.Translations[vti].Culture" />
+                                                                <label class="form-label">@T.T("AddOnValueLabel") @val.Translations[vti].Culture</label>
+                                                                <input class="form-control" name="Options[@i].Values[@j].Translations[@vti].Label" value="@val.Translations[vti].Label" />
+                                                            </div>
+                                                        }
+                                                    }
                                                 </div>
 
                                                 <div class="text-end mt-2">

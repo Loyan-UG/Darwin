@@ -47,18 +47,20 @@ namespace Darwin.Application.CMS.Commands
             entity.PublishStartUtc = dto.PublishStartUtc;
             entity.PublishEndUtc = dto.PublishEndUtc;
 
-            entity.Translations.Clear();
             foreach (var t in dto.Translations)
             {
-                entity.Translations.Add(new PageTranslation
+                var translation = entity.Translations.FirstOrDefault(x => x.Culture == t.Culture);
+                if (translation == null)
                 {
-                    Culture = t.Culture,
-                    Title = t.Title,
-                    Slug = t.Slug,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription,
-                    ContentHtml = sanitizer.Sanitize(t.ContentHtml ?? string.Empty)
-                });
+                    translation = new PageTranslation { Culture = t.Culture };
+                    entity.Translations.Add(translation);
+                }
+
+                translation.Title = t.Title;
+                translation.Slug = t.Slug;
+                translation.MetaTitle = t.MetaTitle;
+                translation.MetaDescription = t.MetaDescription;
+                translation.ContentHtml = sanitizer.Sanitize(t.ContentHtml ?? string.Empty);
             }
 
             await _db.SaveChangesAsync(ct);

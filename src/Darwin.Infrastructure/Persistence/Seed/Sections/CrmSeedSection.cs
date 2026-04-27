@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 namespace Darwin.Infrastructure.Persistence.Seed.Sections
 {
     /// <summary>
-    /// Seeds CRM reference and sample operational data for German back-office scenarios.
+    /// Seeds CRM reference and demo operational data for German back-office scenarios.
     /// The section intentionally focuses on non-cart, non-session CRM records such as customers,
     /// leads, opportunities, notes, and invoices.
     /// </summary>
@@ -48,7 +48,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         }
 
         /// <summary>
-        /// Seeds CRM customers, segments, lead pipeline, interactions, and invoice samples.
+        /// Seeds CRM customers, segments, lead pipeline, interactions, and invoice demos.
         /// </summary>
         public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
         {
@@ -539,24 +539,24 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
         private static GuestCustomerSeed[] GetGuestCustomerSeeds() => new[]
         {
-            new GuestCustomerSeed("Frieda", "Hartwig", "frieda.hartwig@beispiel.de", "+49 30 4001001", null, "Prenzlauer Allee 88", "10405", "Berlin"),
-            new GuestCustomerSeed("Johann", "Küster", "johann.kuester@beispiel.de", "+49 89 4001002", "Küster Handel GmbH", "Tal 14", "80331", "München"),
-            new GuestCustomerSeed("Greta", "Mahler", "greta.mahler@beispiel.de", "+49 221 4001003", null, "Apostelnstraße 21", "50667", "Köln"),
-            new GuestCustomerSeed("Emil", "Voss", "emil.voss@beispiel.de", "+49 40 4001004", "Voss Gastroservice", "Steinstraße 19", "20095", "Hamburg"),
-            new GuestCustomerSeed("Helene", "Graf", "helene.graf@beispiel.de", "+49 69 4001005", null, "Kaiserstraße 34", "60329", "Frankfurt am Main")
+            new GuestCustomerSeed("Frieda", "Hartwig", "frieda.hartwig@darwin-demo.de", "+49 30 4001001", null, "Prenzlauer Allee 88", "10405", "Berlin"),
+            new GuestCustomerSeed("Johann", "Küster", "johann.kuester@darwin-demo.de", "+49 89 4001002", "Küster Handel GmbH", "Tal 14", "80331", "München"),
+            new GuestCustomerSeed("Greta", "Mahler", "greta.mahler@darwin-demo.de", "+49 221 4001003", null, "Apostelnstraße 21", "50667", "Köln"),
+            new GuestCustomerSeed("Emil", "Voss", "emil.voss@darwin-demo.de", "+49 40 4001004", "Voss Gastroservice", "Steinstraße 19", "20095", "Hamburg"),
+            new GuestCustomerSeed("Helene", "Graf", "helene.graf@darwin-demo.de", "+49 69 4001005", null, "Kaiserstraße 34", "60329", "Frankfurt am Main")
         };
 
         private static LeadSeed[] GetLeadSeeds() => new[]
         {
             new LeadSeed("Carla", "Sommer", "Sommer Events GmbH", "carla.sommer@sommer-events.de", "+49 30 5550101", "Messe Berlin", "Anfrage zu Kundenbindungsaktionen."),
-            new LeadSeed("Matthias", "Brandner", null, "matthias.brandner@beispiel.de", "+49 89 5550102", "Website Kontaktformular", "Interesse an CRM- und Loyalty-Einführung."),
+            new LeadSeed("Matthias", "Brandner", null, "matthias.brandner@darwin-demo.de", "+49 89 5550102", "Website Kontaktformular", "Interesse an CRM- und Loyalty-Einführung."),
             new LeadSeed("Nele", "Pohl", "Pohl Retail KG", "nele.pohl@pohl-retail.de", "+49 221 5550103", "Empfehlung", "Benötigt Multi-Standort-Funktionen."),
-            new LeadSeed("Sebastian", "Reuter", null, "sebastian.reuter@beispiel.de", "+49 40 5550104", "LinkedIn", "Fragt nach Integrationen in bestehende Systeme."),
+            new LeadSeed("Sebastian", "Reuter", null, "sebastian.reuter@darwin-demo.de", "+49 40 5550104", "LinkedIn", "Fragt nach Integrationen in bestehende Systeme."),
             new LeadSeed("Hannah", "Kraft", "Kraft Feinkost GmbH", "hannah.kraft@kraft-feinkost.de", "+49 69 5550105", "Roadshow Frankfurt", "Möchte Demo für Back-Office und Front-Office."),
-            new LeadSeed("Oliver", "Behnke", null, "oliver.behnke@beispiel.de", "+49 341 5550106", "Telefon", "Preisrahmen derzeit zu hoch."),
+            new LeadSeed("Oliver", "Behnke", null, "oliver.behnke@darwin-demo.de", "+49 341 5550106", "Telefon", "Preisrahmen derzeit zu hoch."),
             new LeadSeed("Marlene", "Schaper", "Schaper Wellness", "marlene.schaper@schaper-wellness.de", "+49 351 5550107", "Instagram", "Benötigt CRM mit einfacher Kampagnensteuerung."),
             new LeadSeed("Niklas", "Faber", "Faber Technik OHG", "niklas.faber@faber-technik.de", "+49 911 5550108", "Partnernetzwerk", "Lead wurde bereits in einen CRM-Kunden konvertiert."),
-            new LeadSeed("Lotte", "Riemer", null, "lotte.riemer@beispiel.de", "+49 511 5550109", "E-Mail Kampagne", "Konvertierter Lead mit Angebotsnachverfolgung."),
+            new LeadSeed("Lotte", "Riemer", null, "lotte.riemer@darwin-demo.de", "+49 511 5550109", "E-Mail Kampagne", "Konvertierter Lead mit Angebotsnachverfolgung."),
             new LeadSeed("Philipp", "Thiele", "Thiele Service GmbH", "philipp.thiele@thiele-service.de", "+49 201 5550110", "Bestandskunde", "Konvertierter Lead für Erweiterungsverkauf.")
         };
     }

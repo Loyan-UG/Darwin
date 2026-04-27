@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildLocalizedDiscoveryLoaderDiagnostics,
+  buildLocalizedDiscoveryLoaderObservationContext,
+  buildLocalizedDiscoveryLoaderObservationSuccessContext,
   createLocalizedDiscoveryLoader,
 } from "@/lib/localized-discovery-loader";
 import { getLocalizedDiscoveryNormalizationMode } from "@/lib/localized-discovery-loader-diagnostics";
@@ -42,6 +44,45 @@ test("buildLocalizedDiscoveryLoaderDiagnostics keeps localized discovery kind ex
     localizedDiscoveryKind: "sitemap",
     localizedDiscoveryNormalization: "canonical-cultures",
   });
+});
+
+test("localized-discovery loader helper builders keep canonical observation and success diagnostics explicit", () => {
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderObservationContext("inventory", {
+      supportedCultures: "de-DE|en-US",
+    }),
+    {
+      localizedDiscoveryKind: "inventory",
+      localizedDiscoveryNormalization: "canonical-cultures",
+      supportedCultures: "de-DE|en-US",
+    },
+  );
+
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderObservationSuccessContext("sitemap", {
+      totalEntryCount: 8,
+      sitemapSummaryFootprint: "total:8|static:6|cms:1|products:1",
+      sitemapCompositionFootprint: "static:6|cms:1|products:1",
+    }),
+    {
+      localizedDiscoveryKind: "sitemap",
+      localizedDiscoveryNormalization: "canonical-cultures",
+      localizedDiscoveryState: "present",
+      localizedDiscoveryDetailFootprint: "static:6|cms:1|products:1",
+      localizedDiscoverySummaryFootprint: "total:8|static:6|cms:1|products:1",
+      totalEntryCount: 8,
+      sitemapSummaryFootprint: "total:8|static:6|cms:1|products:1",
+      sitemapCompositionFootprint: "static:6|cms:1|products:1",
+    },
+  );
+
+  assert.deepEqual(
+    buildLocalizedDiscoveryLoaderObservationContext("sitemap"),
+    {
+      localizedDiscoveryKind: "sitemap",
+      localizedDiscoveryNormalization: "canonical-cultures",
+    },
+  );
 });
 
 test("createLocalizedDiscoveryLoader forwards inventory results through the shared loader wrapper", async () => {

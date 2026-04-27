@@ -26,6 +26,7 @@ namespace Darwin.Application.Catalog.DTOs
         public int MinSelections { get; set; } = 0;
         public int? MaxSelections { get; set; }
         public bool IsActive { get; set; } = true;
+        public List<AddOnGroupTranslationDto> Translations { get; set; } = new();
         public List<AddOnOptionDto> Options { get; set; } = new();
     }
 
@@ -44,6 +45,7 @@ namespace Darwin.Application.Catalog.DTOs
         public int MinSelections { get; set; } = 0;
         public int? MaxSelections { get; set; }
         public bool IsActive { get; set; } = true;
+        public List<AddOnGroupTranslationDto> Translations { get; set; } = new();
         public List<AddOnOptionDto> Options { get; set; } = new();
     }
 
@@ -55,6 +57,7 @@ namespace Darwin.Application.Catalog.DTOs
         public Guid? Id { get; set; }
         public string Label { get; set; } = string.Empty;
         public int SortOrder { get; set; } = 0;
+        public List<AddOnOptionTranslationDto> Translations { get; set; } = new();
         public List<AddOnOptionValueDto> Values { get; set; } = new();
     }
 
@@ -69,6 +72,25 @@ namespace Darwin.Application.Catalog.DTOs
         public string? Hint { get; set; }
         public int SortOrder { get; set; } = 0;
         public bool IsActive { get; set; } = true;
+        public List<AddOnOptionValueTranslationDto> Translations { get; set; } = new();
+    }
+
+    public sealed class AddOnGroupTranslationDto
+    {
+        public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public sealed class AddOnOptionTranslationDto
+    {
+        public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
+        public string Label { get; set; } = string.Empty;
+    }
+
+    public sealed class AddOnOptionValueTranslationDto
+    {
+        public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
+        public string Label { get; set; } = string.Empty;
     }
 
     /// <summary>

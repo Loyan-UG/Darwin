@@ -18,7 +18,7 @@ namespace Darwin.Application.CMS.Validators
     }
 
     /// <summary>
-    /// Validation for editing a menu (replace items strategy).
+    /// Validation for editing a menu.
     /// </summary>
     public sealed class MenuEditDtoValidator : AbstractValidator<MenuEditDto>
     {

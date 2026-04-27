@@ -44,6 +44,12 @@ public sealed class PlaceOrderFromCartHandlerTests
             Currency = "EUR",
             TaxCategoryId = taxCategoryId
         });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
 
         db.Set<TaxCategory>().Add(new TaxCategory
         {
@@ -87,6 +93,7 @@ public sealed class PlaceOrderFromCartHandlerTests
             Name = "DHL Paket",
             Carrier = "DHL",
             Service = "Paket",
+            IsActive = true,
             CountriesCsv = "DE",
             Currency = "EUR",
             Rates =
@@ -187,6 +194,12 @@ public sealed class PlaceOrderFromCartHandlerTests
             Currency = "EUR",
             TaxCategoryId = taxCategoryId
         });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
 
         db.Set<TaxCategory>().Add(new TaxCategory
         {
@@ -243,6 +256,7 @@ public sealed class PlaceOrderFromCartHandlerTests
             Name = "DHL Standard",
             Carrier = "DHL",
             Service = "Standard",
+            IsActive = true,
             CountriesCsv = "DE",
             Currency = "EUR",
             Rates =
@@ -303,6 +317,12 @@ public sealed class PlaceOrderFromCartHandlerTests
             BasePriceNetMinor = 1000,
             Currency = "EUR",
             TaxCategoryId = taxCategoryId
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
         });
 
         db.Set<TaxCategory>().Add(new TaxCategory
@@ -430,6 +450,12 @@ public sealed class PlaceOrderFromCartHandlerTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Sku).IsRequired();
                 builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Product>(builder =>
+            {
+                builder.HasKey(x => x.Id);
                 builder.Property(x => x.RowVersion).IsRequired();
             });
 

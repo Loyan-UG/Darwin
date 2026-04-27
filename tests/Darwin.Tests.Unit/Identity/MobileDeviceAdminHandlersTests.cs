@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.Commands;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Identity;
@@ -58,7 +59,7 @@ public sealed class MobileDeviceAdminHandlersTests
         db.Set<UserDevice>().Add(device);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new DeactivateUserDeviceHandler(db, new TestStringLocalizer<ValidationResource>());
+        var handler = new DeactivateUserDeviceHandler(db, new TestClock(), new TestStringLocalizer<ValidationResource>());
         var result = await handler.HandleAsync(device.Id, device.RowVersion, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
@@ -109,5 +110,10 @@ public sealed class MobileDeviceAdminHandlersTests
         public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => Array.Empty<LocalizedString>();
 
         public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
+    }
+
+    private sealed class TestClock : IClock
+    {
+        public DateTime UtcNow => new(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     }
 }

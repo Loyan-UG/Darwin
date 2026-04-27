@@ -13,7 +13,7 @@ export function SiteShell({ children, model }: SiteShellProps) {
     <div className="relative flex min-h-screen flex-col">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[28rem] bg-[radial-gradient(circle_at_top_right,rgba(62,107,61,0.18),transparent_26rem)]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_top_right,rgba(76,175,80,0.16),transparent_28rem),radial-gradient(circle_at_top_left,rgba(255,152,0,0.12),transparent_24rem)]"
       />
       <SiteHeader
         navigation={model.primaryNavigation}

@@ -1,6 +1,43 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createCommercePageLoaderCore } from "@/features/checkout/server/create-commerce-page-loader-core";
+import {
+  buildCommercePageLoaderObservationContext,
+  buildCommercePageLoaderSuccessContext,
+  createCommercePageLoaderCore,
+} from "@/features/checkout/server/create-commerce-page-loader-core";
+
+test("commerce page loader helper builders keep canonical and raw diagnostics explicit", () => {
+  assert.deepEqual(
+    buildCommercePageLoaderObservationContext(
+      {
+        culture: "de-DE",
+        page: "checkout",
+      },
+      {
+        hasCanonicalNormalization: true,
+      },
+    ),
+    {
+      pageLoaderKind: "commerce",
+      pageLoaderNormalization: "canonical",
+      culture: "de-DE",
+      page: "checkout",
+    },
+  );
+
+  assert.deepEqual(
+    buildCommercePageLoaderSuccessContext({
+      step: "ready:checkout",
+      cartState: "present",
+    }),
+    {
+      pageLoaderKind: "commerce",
+      pageLoaderNormalization: "raw",
+      step: "ready:checkout",
+      cartState: "present",
+    },
+  );
+});
 
 test("createCommercePageLoader keeps argument-specific commerce results distinct", async () => {
   let executions = 0;

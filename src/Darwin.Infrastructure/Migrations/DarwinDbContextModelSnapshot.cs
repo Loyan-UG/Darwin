@@ -2701,6 +2701,54 @@ namespace Darwin.Infrastructure.Migrations
                     b.ToTable("AddOnGroupProducts", "Catalog");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnGroupTranslation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AddOnGroupId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Culture")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddOnGroupId", "Culture")
+                        .IsUnique();
+
+                    b.ToTable("AddOnGroupTranslations", "Catalog");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnGroupVariant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2789,6 +2837,54 @@ namespace Darwin.Infrastructure.Migrations
                     b.ToTable("AddOnOptions", "Catalog");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOptionTranslation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AddOnOptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Culture")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddOnOptionId", "Culture")
+                        .IsUnique();
+
+                    b.ToTable("AddOnOptionTranslations", "Catalog");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOptionValue", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2848,6 +2944,54 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("AddOnOptionId", "SortOrder");
 
                     b.ToTable("AddOnOptionValues", "Catalog");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOptionValueTranslation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AddOnOptionValueId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Culture")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddOnOptionValueId", "Culture")
+                        .IsUnique();
+
+                    b.ToTable("AddOnOptionValueTranslations", "Catalog");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.Brand", b =>
@@ -7951,6 +8095,15 @@ namespace Darwin.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnGroupTranslation", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Catalog.AddOnGroup", null)
+                        .WithMany("Translations")
+                        .HasForeignKey("AddOnGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOption", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Catalog.AddOnGroup", null)
@@ -7960,11 +8113,29 @@ namespace Darwin.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOptionTranslation", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Catalog.AddOnOption", null)
+                        .WithMany("Translations")
+                        .HasForeignKey("AddOnOptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOptionValue", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Catalog.AddOnOption", null)
                         .WithMany("Values")
                         .HasForeignKey("AddOnOptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOptionValueTranslation", b =>
+                {
+                    b.HasOne("Darwin.Domain.Entities.Catalog.AddOnOptionValue", null)
+                        .WithMany("Translations")
+                        .HasForeignKey("AddOnOptionValueId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -8389,11 +8560,20 @@ namespace Darwin.Infrastructure.Migrations
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnGroup", b =>
                 {
                     b.Navigation("Options");
+
+                    b.Navigation("Translations");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOption", b =>
                 {
+                    b.Navigation("Translations");
+
                     b.Navigation("Values");
+                });
+
+            modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOptionValue", b =>
+                {
+                    b.Navigation("Translations");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.Brand", b =>

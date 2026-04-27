@@ -2,6 +2,7 @@ using Darwin.Application.Catalog.Commands;
 // Application layer
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
+using Darwin.Application.Settings.Queries;
 using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Catalog;
@@ -49,6 +50,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private readonly GetAddOnGroupAttachedCategoryIdsHandler _getAttachedCategories;
         private readonly GetAddOnGroupAttachedBrandIdsHandler _getAttachedBrands;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly GetCulturesHandler _getCultures;
 
         public AddOnGroupsController(
             GetAddOnGroupsPageHandler getPage,
@@ -69,7 +71,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             GetAddOnGroupAttachedVariantIdsHandler getAttachedVariants,
             GetAddOnGroupAttachedCategoryIdsHandler getAttachedCategories,
             GetAddOnGroupAttachedBrandIdsHandler getAttachedBrands,
-            ISiteSettingCache siteSettingCache
+            ISiteSettingCache siteSettingCache,
+            GetCulturesHandler getCultures
             )
         {
             _getPage = getPage;
@@ -94,6 +97,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             _getAttachedCategories = getAttachedCategories;
             _getAttachedBrands = getAttachedBrands;
             _siteSettingCache = siteSettingCache;
+            _getCultures = getCultures;
         }
 
         // ---------------- List ----------------
@@ -145,16 +149,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         // ---------------- Create ----------------
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(CancellationToken ct = default)
         {
-            var defaultCurrency = _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCurrency;
+            var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
 
             // A simple example for user convenience (Option + a Value)
-            return RenderCreateEditor(new AddOnGroupCreateVm
+            var vm = new AddOnGroupCreateVm
             {
                 Currency = defaultCurrency,
                 Options = { new AddOnOptionVm { Label = "Option", Values = { new AddOnOptionValueVm { Label = "Value" } } } }
-            });
+            };
+            await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
+            return RenderCreateEditor(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -163,8 +169,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             vm.Options ??= new();
             foreach (var o in vm.Options) o.Values ??= new();
             var defaultCurrency = (await _siteSettingCache.GetAsync(ct)).DefaultCurrency;
+            await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
 
             if (!ModelState.IsValid) return RenderCreateEditor(vm);
+
+            var groupTranslations = FilterCompleteGroupTranslations(vm.Translations);
+            var optionDtos = BuildOptionDtos(vm.Options);
+            if (groupTranslations.Count > 0)
+            {
+                vm.Name = groupTranslations[0].Name;
+            }
 
             var dto = new AddOnGroupCreateDto
             {
@@ -177,19 +191,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 MinSelections = vm.MinSelections,
                 MaxSelections = vm.MaxSelections,
                 IsActive = vm.IsActive,
-                Options = vm.Options.Select(o => new AddOnOptionDto
-                {
-                    Label = o.Label?.Trim() ?? string.Empty,
-                    SortOrder = o.SortOrder,
-                    Values = o.Values.Select(v => new AddOnOptionValueDto
-                    {
-                        Label = v.Label?.Trim() ?? string.Empty,
-                        PriceDeltaMinor = v.PriceDeltaMinor,
-                        Hint = string.IsNullOrWhiteSpace(v.Hint) ? null : v.Hint.Trim(),
-                        SortOrder = v.SortOrder,
-                        IsActive = v.IsActive
-                    }).ToList()
-                }).ToList()
+                Translations = groupTranslations,
+                Options = optionDtos
             };
 
             try
@@ -233,11 +236,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 MinSelections = dto.MinSelections,
                 MaxSelections = dto.MaxSelections,
                 IsActive = dto.IsActive,
+                Translations = dto.Translations.Select(t => new AddOnGroupTranslationVm
+                {
+                    Culture = t.Culture,
+                    Name = t.Name
+                }).ToList(),
                 Options = dto.Options.Select(o => new AddOnOptionVm
                 {
                     Id = o.Id,
                     Label = o.Label,
                     SortOrder = o.SortOrder,
+                    Translations = o.Translations.Select(t => new AddOnOptionTranslationVm
+                    {
+                        Culture = t.Culture,
+                        Label = t.Label
+                    }).ToList(),
                     Values = o.Values.Select(v => new AddOnOptionValueVm
                     {
                         Id = v.Id,
@@ -245,10 +258,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                         PriceDeltaMinor = v.PriceDeltaMinor,
                         Hint = v.Hint,
                         SortOrder = v.SortOrder,
-                        IsActive = v.IsActive
+                        IsActive = v.IsActive,
+                        Translations = v.Translations.Select(t => new AddOnOptionValueTranslationVm
+                        {
+                            Culture = t.Culture,
+                            Label = t.Label
+                        }).ToList()
                     }).ToList()
                 }).ToList()
             };
+            await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
             return RenderEditEditor(vm);
         }
 
@@ -258,8 +277,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             vm.Options ??= new();
             foreach (var o in vm.Options) o.Values ??= new();
             var defaultCurrency = (await _siteSettingCache.GetAsync(ct)).DefaultCurrency;
+            await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
 
             if (!ModelState.IsValid) return RenderEditEditor(vm);
+
+            var groupTranslations = FilterCompleteGroupTranslations(vm.Translations);
+            var optionDtos = BuildOptionDtos(vm.Options);
+            if (groupTranslations.Count > 0)
+            {
+                vm.Name = groupTranslations[0].Name;
+            }
 
             var dto = new AddOnGroupEditDto
             {
@@ -274,21 +301,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 MinSelections = vm.MinSelections,
                 MaxSelections = vm.MaxSelections,
                 IsActive = vm.IsActive,
-                Options = vm.Options.Select(o => new AddOnOptionDto
-                {
-                    Id = o.Id,
-                    Label = o.Label?.Trim() ?? string.Empty,
-                    SortOrder = o.SortOrder,
-                    Values = o.Values.Select(v => new AddOnOptionValueDto
-                    {
-                        Id = v.Id,
-                        Label = v.Label?.Trim() ?? string.Empty,
-                        PriceDeltaMinor = v.PriceDeltaMinor,
-                        Hint = string.IsNullOrWhiteSpace(v.Hint) ? null : v.Hint.Trim(),
-                        SortOrder = v.SortOrder,
-                        IsActive = v.IsActive
-                    }).ToList()
-                }).ToList()
+                Translations = groupTranslations,
+                Options = optionDtos
             };
 
             try
@@ -676,6 +690,111 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private bool IsHtmxRequest()
         {
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task EnsureTranslationsAsync(AddOnGroupEditorVm vm, CancellationToken ct)
+        {
+            var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            var orderedCultures = cultures
+                .Prepend(defaultCulture)
+                .Where(static x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (orderedCultures.Length == 0)
+            {
+                orderedCultures = [defaultCulture];
+            }
+
+            foreach (var culture in orderedCultures)
+            {
+                if (vm.Translations.All(x => !string.Equals(x.Culture, culture, StringComparison.OrdinalIgnoreCase)))
+                {
+                    vm.Translations.Add(new AddOnGroupTranslationVm
+                    {
+                        Culture = culture,
+                        Name = string.Equals(culture, defaultCulture, StringComparison.OrdinalIgnoreCase) ? vm.Name : string.Empty
+                    });
+                }
+
+                foreach (var option in vm.Options)
+                {
+                    option.Translations ??= new();
+                    if (option.Translations.All(x => !string.Equals(x.Culture, culture, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        option.Translations.Add(new AddOnOptionTranslationVm
+                        {
+                            Culture = culture,
+                            Label = string.Equals(culture, defaultCulture, StringComparison.OrdinalIgnoreCase) ? option.Label : string.Empty
+                        });
+                    }
+
+                    option.Values ??= new();
+                    foreach (var value in option.Values)
+                    {
+                        value.Translations ??= new();
+                        if (value.Translations.All(x => !string.Equals(x.Culture, culture, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            value.Translations.Add(new AddOnOptionValueTranslationVm
+                            {
+                                Culture = culture,
+                                Label = string.Equals(culture, defaultCulture, StringComparison.OrdinalIgnoreCase) ? value.Label : string.Empty
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        private static List<AddOnGroupTranslationDto> FilterCompleteGroupTranslations(IEnumerable<AddOnGroupTranslationVm> translations)
+        {
+            return translations
+                .Where(static t => !string.IsNullOrWhiteSpace(t.Culture) && !string.IsNullOrWhiteSpace(t.Name))
+                .Select(static t => new AddOnGroupTranslationDto
+                {
+                    Culture = t.Culture.Trim(),
+                    Name = t.Name.Trim()
+                })
+                .ToList();
+        }
+
+        private static List<AddOnOptionDto> BuildOptionDtos(IEnumerable<AddOnOptionVm> options)
+        {
+            return options.Select(o =>
+            {
+                var optionTranslations = o.Translations
+                    .Where(static t => !string.IsNullOrWhiteSpace(t.Culture) && !string.IsNullOrWhiteSpace(t.Label))
+                    .Select(static t => new AddOnOptionTranslationDto { Culture = t.Culture.Trim(), Label = t.Label.Trim() })
+                    .ToList();
+                var optionLabel = optionTranslations.FirstOrDefault()?.Label ?? o.Label?.Trim() ?? string.Empty;
+
+                return new AddOnOptionDto
+                {
+                    Id = o.Id,
+                    Label = optionLabel,
+                    SortOrder = o.SortOrder,
+                    Translations = optionTranslations,
+                    Values = o.Values.Select(v =>
+                    {
+                        var valueTranslations = v.Translations
+                            .Where(static t => !string.IsNullOrWhiteSpace(t.Culture) && !string.IsNullOrWhiteSpace(t.Label))
+                            .Select(static t => new AddOnOptionValueTranslationDto { Culture = t.Culture.Trim(), Label = t.Label.Trim() })
+                            .ToList();
+                        var valueLabel = valueTranslations.FirstOrDefault()?.Label ?? v.Label?.Trim() ?? string.Empty;
+
+                        return new AddOnOptionValueDto
+                        {
+                            Id = v.Id,
+                            Label = valueLabel,
+                            PriceDeltaMinor = v.PriceDeltaMinor,
+                            Hint = string.IsNullOrWhiteSpace(v.Hint) ? null : v.Hint.Trim(),
+                            SortOrder = v.SortOrder,
+                            IsActive = v.IsActive,
+                            Translations = valueTranslations
+                        };
+                    }).ToList()
+                };
+            }).ToList();
         }
 
         private IEnumerable<SelectListItem> BuildFilterItems(AddOnGroupQueueFilter selected)

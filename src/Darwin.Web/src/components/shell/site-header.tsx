@@ -48,7 +48,7 @@ export function SiteHeader({
   const copy = getShellCopy(culture);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--color-border-soft)] bg-[rgba(248,244,231,0.9)] backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-[var(--color-border-soft)] bg-[rgba(252,255,247,0.9)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-col gap-4 px-5 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
@@ -56,7 +56,7 @@ export function SiteHeader({
               href={localizeHref("/", culture)}
               className="inline-flex items-center gap-3"
             >
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-brand)] text-lg font-bold text-[var(--color-brand-contrast)]">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--color-brand),var(--color-accent))] text-lg font-bold text-[var(--color-brand-contrast)] shadow-[0_14px_30px_rgba(47,125,50,0.24)]">
                 D
               </span>
               <span>
@@ -74,8 +74,8 @@ export function SiteHeader({
             {navigation.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
-                className="rounded-full border border-transparent px-4 py-2 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:border-[var(--color-border-soft)] hover:bg-[var(--color-surface-panel)] hover:text-[var(--color-brand)]"
+                href={localizeHref(link.href, culture)}
+                className="rounded-full border border-transparent px-4 py-2 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:border-[rgba(47,125,50,0.12)] hover:bg-white hover:text-[var(--color-brand)]"
               >
                 {link.label}
               </Link>
@@ -90,10 +90,10 @@ export function SiteHeader({
             {utilityLinks.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
+                href={localizeHref(link.href, culture)}
                 aria-label={link.label}
                 title={link.label}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-soft)] text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)] hover:text-[var(--color-brand)]"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-soft)] bg-white/86 text-[var(--color-text-primary)] transition hover:border-[rgba(47,125,50,0.18)] hover:bg-white hover:text-[var(--color-brand)]"
               >
                 {getUtilityIcon(link.href)}
                 <span className="sr-only">{link.label}</span>

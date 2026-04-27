@@ -31,6 +31,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
                 .WithOne()
                 .HasForeignKey(o => o.AddOnGroupId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder
+                .HasMany(x => x.Translations)
+                .WithOne()
+                .HasForeignKey(t => t.AddOnGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 
@@ -48,6 +54,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
             builder.Property(x => x.SortOrder).HasDefaultValue(0);
 
             builder.HasIndex(x => new { x.AddOnGroupId, x.SortOrder });
+
+            builder
+                .HasMany(x => x.Translations)
+                .WithOne()
+                .HasForeignKey(t => t.AddOnOptionId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 
@@ -69,6 +81,48 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 
             builder.HasIndex(x => new { x.AddOnOptionId, x.SortOrder });
             builder.HasIndex(x => x.IsActive);
+
+            builder
+                .HasMany(x => x.Translations)
+                .WithOne()
+                .HasForeignKey(t => t.AddOnOptionValueId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+
+    public sealed class AddOnGroupTranslationConfiguration : IEntityTypeConfiguration<AddOnGroupTranslation>
+    {
+        public void Configure(EntityTypeBuilder<AddOnGroupTranslation> builder)
+        {
+            builder.ToTable("AddOnGroupTranslations", schema: "Catalog");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Culture).HasMaxLength(16).IsRequired();
+            builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            builder.HasIndex(x => new { x.AddOnGroupId, x.Culture }).IsUnique();
+        }
+    }
+
+    public sealed class AddOnOptionTranslationConfiguration : IEntityTypeConfiguration<AddOnOptionTranslation>
+    {
+        public void Configure(EntityTypeBuilder<AddOnOptionTranslation> builder)
+        {
+            builder.ToTable("AddOnOptionTranslations", schema: "Catalog");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Culture).HasMaxLength(16).IsRequired();
+            builder.Property(x => x.Label).HasMaxLength(200).IsRequired();
+            builder.HasIndex(x => new { x.AddOnOptionId, x.Culture }).IsUnique();
+        }
+    }
+
+    public sealed class AddOnOptionValueTranslationConfiguration : IEntityTypeConfiguration<AddOnOptionValueTranslation>
+    {
+        public void Configure(EntityTypeBuilder<AddOnOptionValueTranslation> builder)
+        {
+            builder.ToTable("AddOnOptionValueTranslations", schema: "Catalog");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Culture).HasMaxLength(16).IsRequired();
+            builder.Property(x => x.Label).HasMaxLength(200).IsRequired();
+            builder.HasIndex(x => new { x.AddOnOptionValueId, x.Culture }).IsUnique();
         }
     }
 

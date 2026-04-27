@@ -45,7 +45,7 @@ export function __resetApiFailureLogForTests() {
   loggedDiagnosticFailures.clear();
 }
 
-function readHeader(
+export function readHeader(
   response: Pick<Response, "headers">,
   names: string[],
 ) {
@@ -57,6 +57,30 @@ function readHeader(
   }
 
   return undefined;
+}
+
+export function buildApiSurfaceDiagnostics(
+  area: string,
+  path: string,
+): Pick<ApiDiagnostics, "area" | "path" | "apiKind" | "surfaceFamily" | "surfaceArea"> {
+  return {
+    area,
+    path,
+    apiKind: getApiKind(path),
+    surfaceFamily: getSurfaceFamily(path, area),
+    surfaceArea: getSurfaceArea(path, area),
+  };
+}
+
+export function buildApiResponseMetadata(
+  response: Pick<Response, "status" | "headers">,
+): Pick<ApiDiagnostics, "statusCode" | "statusFamily" | "requestId" | "traceparent"> {
+  return {
+    statusCode: response.status,
+    statusFamily: getStatusFamily(response.status),
+    requestId: readHeader(response, ["x-request-id", "request-id", "x-correlation-id"]),
+    traceparent: readHeader(response, ["traceparent"]),
+  };
 }
 
 export function getStatusFamily(statusCode?: number): ApiStatusFamily | undefined {
@@ -232,25 +256,14 @@ export function getResponseDiagnostics(
   response: Pick<Response, "status" | "headers">,
 ): ApiDiagnostics {
   return {
-    area,
-    path,
-    apiKind: getApiKind(path),
-    surfaceFamily: getSurfaceFamily(path, area),
-    surfaceArea: getSurfaceArea(path, area),
-    statusCode: response.status,
-    statusFamily: getStatusFamily(response.status),
-    requestId: readHeader(response, ["x-request-id", "request-id", "x-correlation-id"]),
-    traceparent: readHeader(response, ["traceparent"]),
+    ...buildApiSurfaceDiagnostics(area, path),
+    ...buildApiResponseMetadata(response),
   };
 }
 
 export function createDiagnostics(area: string, path: string): ApiDiagnostics {
   return {
-    area,
-    path,
-    apiKind: getApiKind(path),
-    surfaceFamily: getSurfaceFamily(path, area),
-    surfaceArea: getSurfaceArea(path, area),
+    ...buildApiSurfaceDiagnostics(area, path),
     statusFamily: "network-error",
   };
 }

@@ -74,6 +74,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             if (!await db.Set<ScanSession>().AnyAsync(ct))
                 await SeedScanSessionsAsync(db, ct);
 
+            await EnsurePrimaryConsumerLoyaltyCoverageAsync(db, businesses, users, ct);
+
             _logger.LogInformation("Loyalty seeding done.");
         }
 
@@ -404,6 +406,172 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             db.AddRange(sessions);
             await db.SaveChangesAsync(ct);
+        }
+
+        /// <summary>
+        /// Keeps the default consumer demo account rich enough to exercise the main
+        /// loyalty UI surfaces without requiring a fresh database reset.
+        /// </summary>
+        private static async Task EnsurePrimaryConsumerLoyaltyCoverageAsync(
+            DarwinDbContext db,
+            IReadOnlyList<Business> businesses,
+            IReadOnlyList<User> users,
+            CancellationToken ct)
+        {
+            var primaryConsumer = users.FirstOrDefault(x =>
+                string.Equals(x.Email, "cons1@darwin.de", StringComparison.OrdinalIgnoreCase));
+            if (primaryConsumer is null)
+            {
+                return;
+            }
+
+            var locations = await db.Set<BusinessLocation>()
+                .Where(x => !x.IsDeleted)
+                .ToListAsync(ct);
+            var programs = await db.Set<LoyaltyProgram>()
+                .Where(x => !x.IsDeleted && x.IsActive)
+                .OrderBy(x => x.BusinessId)
+                .ToListAsync(ct);
+            var rewardTiers = await db.Set<LoyaltyRewardTier>()
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.PointsRequired)
+                .ToListAsync(ct);
+
+            var targetBusinesses = businesses.Take(3).ToList();
+            if (targetBusinesses.Count == 0)
+            {
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            var requiresSave = false;
+
+            for (var i = 0; i < targetBusinesses.Count; i++)
+            {
+                var business = targetBusinesses[i];
+                var account = await db.Set<LoyaltyAccount>()
+                    .FirstOrDefaultAsync(
+                        x => x.BusinessId == business.Id &&
+                             x.UserId == primaryConsumer.Id &&
+                             !x.IsDeleted,
+                        ct);
+
+                if (account is null)
+                {
+                    account = new LoyaltyAccount
+                    {
+                        BusinessId = business.Id,
+                        UserId = primaryConsumer.Id,
+                        Status = LoyaltyAccountStatus.Active,
+                        PointsBalance = 10 + (i * 4),
+                        LifetimePoints = 40 + (i * 20),
+                        LastAccrualAtUtc = now.AddDays(-(i + 1))
+                    };
+                    db.Add(account);
+                    await db.SaveChangesAsync(ct);
+                    requiresSave = false;
+                }
+                else
+                {
+                    if (account.Status != LoyaltyAccountStatus.Active)
+                    {
+                        account.Status = LoyaltyAccountStatus.Active;
+                        requiresSave = true;
+                    }
+
+                    var expectedBalance = 10 + (i * 4);
+                    if (account.PointsBalance < expectedBalance)
+                    {
+                        account.PointsBalance = expectedBalance;
+                        requiresSave = true;
+                    }
+
+                    var expectedLifetime = 40 + (i * 20);
+                    if (account.LifetimePoints < expectedLifetime)
+                    {
+                        account.LifetimePoints = expectedLifetime;
+                        requiresSave = true;
+                    }
+
+                    if (!account.LastAccrualAtUtc.HasValue)
+                    {
+                        account.LastAccrualAtUtc = now.AddDays(-(i + 1));
+                        requiresSave = true;
+                    }
+                }
+
+                var businessLocation = locations.FirstOrDefault(x => x.BusinessId == business.Id && x.IsPrimary)
+                    ?? locations.FirstOrDefault(x => x.BusinessId == business.Id);
+
+                var accrualARef = $"CONS1-{business.Id:N}-A";
+                var accrualBRef = $"CONS1-{business.Id:N}-B";
+
+                var hasAccrualA = await db.Set<LoyaltyPointsTransaction>()
+                    .AnyAsync(x => x.LoyaltyAccountId == account.Id && x.Reference == accrualARef && !x.IsDeleted, ct);
+                if (!hasAccrualA)
+                {
+                    db.Add(new LoyaltyPointsTransaction
+                    {
+                        LoyaltyAccountId = account.Id,
+                        BusinessId = business.Id,
+                        Type = LoyaltyPointsTransactionType.Accrual,
+                        PointsDelta = 3 + i,
+                        BusinessLocationId = businessLocation?.Id,
+                        Reference = accrualARef,
+                        Notes = "Self-healed accrual event for primary consumer loyalty UI coverage."
+                    });
+                    requiresSave = true;
+                }
+
+                var hasAccrualB = await db.Set<LoyaltyPointsTransaction>()
+                    .AnyAsync(x => x.LoyaltyAccountId == account.Id && x.Reference == accrualBRef && !x.IsDeleted, ct);
+                if (!hasAccrualB)
+                {
+                    db.Add(new LoyaltyPointsTransaction
+                    {
+                        LoyaltyAccountId = account.Id,
+                        BusinessId = business.Id,
+                        Type = LoyaltyPointsTransactionType.Accrual,
+                        PointsDelta = 1 + i,
+                        BusinessLocationId = businessLocation?.Id,
+                        Reference = accrualBRef,
+                        Notes = "Self-healed repeat accrual for timeline and paging coverage."
+                    });
+                    requiresSave = true;
+                }
+
+                var program = programs.FirstOrDefault(x => x.BusinessId == business.Id);
+                var redeemableTier = rewardTiers.FirstOrDefault(x => x.LoyaltyProgramId == program?.Id);
+                if (redeemableTier is not null)
+                {
+                    var hasRedemption = await db.Set<LoyaltyRewardRedemption>()
+                        .AnyAsync(x =>
+                            x.LoyaltyAccountId == account.Id &&
+                            x.LoyaltyRewardTierId == redeemableTier.Id &&
+                            !x.IsDeleted,
+                            ct);
+
+                    if (!hasRedemption)
+                    {
+                        db.Add(new LoyaltyRewardRedemption
+                        {
+                            LoyaltyAccountId = account.Id,
+                            BusinessId = business.Id,
+                            LoyaltyRewardTierId = redeemableTier.Id,
+                            PointsSpent = redeemableTier.PointsRequired,
+                            Status = LoyaltyRedemptionStatus.Confirmed,
+                            BusinessLocationId = businessLocation?.Id,
+                            MetadataJson = "{\"source\":\"self-healed-seed\",\"channel\":\"web\"}"
+                        });
+                        requiresSave = true;
+                    }
+                }
+            }
+
+            if (requiresSave)
+            {
+                await db.SaveChangesAsync(ct);
+            }
         }
     }
 }

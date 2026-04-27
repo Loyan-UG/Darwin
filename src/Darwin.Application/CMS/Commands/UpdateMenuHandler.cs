@@ -11,7 +11,7 @@ using Microsoft.Extensions.Localization;
 namespace Darwin.Application.CMS.Commands
 {
     /// <summary>
-    /// Updates a menu. Phase 1 strategy replaces the entire items collection for simplicity.
+    /// Updates a menu while preserving item and translation identities where possible.
     /// </summary>
     public sealed class UpdateMenuHandler
     {
@@ -43,35 +43,62 @@ namespace Darwin.Application.CMS.Commands
             if (!menu.RowVersion.SequenceEqual(dto.RowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
-            // Update scalar
             menu.Name = dto.Name.Trim();
-
-            // Replace items (simple and predictable for phase 1)
-            // Remove existing
-            menu.Items.Clear();
-
-            // Add new
-            foreach (var item in dto.Items)
-            {
-                var entity = new MenuItem
-                {
-                    ParentId = item.ParentId,
-                    Url = item.Url.Trim(),
-                    SortOrder = item.SortOrder,
-                    IsActive = item.IsActive
-                };
-                foreach (var tr in item.Translations)
-                {
-                    entity.Translations.Add(new MenuItemTranslation
-                    {
-                        Culture = tr.Culture.Trim(),
-                        Label = tr.Label.Trim()
-                    });
-                }
-                menu.Items.Add(entity);
-            }
+            SyncItems(menu, dto);
 
             await _db.SaveChangesAsync(ct);
+        }
+
+        private static void SyncItems(Menu menu, MenuEditDto dto)
+        {
+            var retainedItemIds = dto.Items
+                .Where(static i => i.Id.HasValue && i.Id.Value != System.Guid.Empty)
+                .Select(static i => i.Id!.Value)
+                .ToHashSet();
+
+            foreach (var item in dto.Items)
+            {
+                var url = item.Url.Trim();
+                var entity = item.Id.HasValue && item.Id.Value != System.Guid.Empty
+                    ? menu.Items.FirstOrDefault(i => i.Id == item.Id.Value)
+                    : menu.Items.FirstOrDefault(i => !i.IsDeleted && string.Equals(i.Url, url, System.StringComparison.OrdinalIgnoreCase));
+
+                if (entity is null)
+                {
+                    entity = new MenuItem();
+                    menu.Items.Add(entity);
+                }
+
+                entity.ParentId = item.ParentId;
+                entity.Url = url;
+                entity.SortOrder = item.SortOrder;
+                entity.IsActive = item.IsActive;
+                entity.IsDeleted = false;
+                SyncTranslations(entity, item);
+                retainedItemIds.Add(entity.Id);
+            }
+
+            foreach (var existing in menu.Items.Where(i => !i.IsDeleted && !retainedItemIds.Contains(i.Id)).ToList())
+            {
+                existing.IsDeleted = true;
+            }
+        }
+
+        private static void SyncTranslations(MenuItem entity, MenuItemDto item)
+        {
+            foreach (var tr in item.Translations)
+            {
+                var culture = tr.Culture.Trim();
+                var translation = entity.Translations.FirstOrDefault(t => string.Equals(t.Culture, culture, System.StringComparison.OrdinalIgnoreCase));
+                if (translation is null)
+                {
+                    translation = new MenuItemTranslation { Culture = culture };
+                    entity.Translations.Add(translation);
+                }
+
+                translation.Label = tr.Label.Trim();
+                translation.IsDeleted = false;
+            }
         }
     }
 }

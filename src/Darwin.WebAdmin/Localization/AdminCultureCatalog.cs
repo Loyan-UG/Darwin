@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Darwin.Application.Settings.DTOs;
 
@@ -38,6 +39,17 @@ namespace Darwin.WebAdmin.Localization
                 string.Equals(culture, English, StringComparison.OrdinalIgnoreCase))
             {
                 return English;
+            }
+
+            if (!string.IsNullOrWhiteSpace(culture))
+            {
+                try
+                {
+                    return CultureInfo.GetCultureInfo(culture.Trim()).Name;
+                }
+                catch (CultureNotFoundException)
+                {
+                }
             }
 
             return DefaultCulture;

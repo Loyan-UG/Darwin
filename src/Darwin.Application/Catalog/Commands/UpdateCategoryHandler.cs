@@ -48,18 +48,20 @@ namespace Darwin.Application.Catalog.Commands
             entity.IsActive = dto.IsActive;
             entity.SortOrder = dto.SortOrder;
 
-            entity.Translations.Clear();
             foreach (var t in dto.Translations)
             {
-                entity.Translations.Add(new CategoryTranslation
+                var translation = entity.Translations.FirstOrDefault(x => x.Culture == t.Culture);
+                if (translation == null)
                 {
-                    Culture = t.Culture,
-                    Name = t.Name,
-                    Slug = t.Slug,
-                    Description = t.Description,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription
-                });
+                    translation = new CategoryTranslation { Culture = t.Culture };
+                    entity.Translations.Add(translation);
+                }
+
+                translation.Name = t.Name;
+                translation.Slug = t.Slug;
+                translation.Description = t.Description;
+                translation.MetaTitle = t.MetaTitle;
+                translation.MetaDescription = t.MetaDescription;
             }
 
             await _db.SaveChangesAsync(ct);

@@ -1,13 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildObservedOutcomeDetail,
   buildObservedOperationKey,
+  getDegradedStatusEntries,
   getAttentionLevel,
   getDegradedSurfaceFootprint,
   getDurationBand,
   getSignalKind,
   getSuggestedAction,
   observeAsyncOperation,
+  shouldLogDegradedOperations,
 } from "@/lib/route-observability";
 
 test("route observability helpers classify duration, signal, attention, and suggested action directly", () => {
@@ -78,6 +81,94 @@ test("route observability helpers classify duration, signal, attention, and sugg
     "inspect-slow-and-degraded-dependencies",
   );
   assert.equal(getSuggestedAction({ failed: true }), "inspect-failure-cause");
+});
+
+test("route observability helper internals keep degraded extraction and outcome shape explicit", () => {
+  assert.deepEqual(
+    getDegradedStatusEntries({
+      menuStatus: "fallback",
+      productsStatus: "ok",
+      shell: "fallback",
+      cartStatus: "missing",
+      itemCount: 3,
+    }),
+    [
+      ["menuStatus", "fallback"],
+      ["cartStatus", "missing"],
+    ],
+  );
+
+  assert.deepEqual(getDegradedStatusEntries(), []);
+
+  assert.deepEqual(
+    buildObservedOutcomeDetail(40, 50, []),
+    {
+      durationBand: "within-threshold",
+      healthState: "healthy",
+      outcomeKind: "success",
+      signalKind: "normal",
+      attentionLevel: "low",
+      suggestedAction: "none",
+      degradedStatusCount: 0,
+      degradedStatuses: undefined,
+      degradedStatusKeys: undefined,
+      degradedSurfaceCount: 0,
+      degradedSurfaceKeys: undefined,
+      degradedSurfaceFootprint: undefined,
+      primaryDegradedStatusKey: undefined,
+      primaryDegradedSurface: undefined,
+    },
+  );
+
+  assert.deepEqual(
+    buildObservedOutcomeDetail(60, 50, [["menuStatus", "fallback"]]),
+    {
+      durationBand: "slow",
+      healthState: "degraded",
+      outcomeKind: "slow-degraded-success",
+      signalKind: "performance-and-health",
+      attentionLevel: "medium",
+      suggestedAction: "inspect-slow-and-degraded-dependencies",
+      degradedStatusCount: 1,
+      degradedStatuses: { menuStatus: "fallback" },
+      degradedStatusKeys: ["menuStatus"],
+      degradedSurfaceCount: 1,
+      degradedSurfaceKeys: ["menu"],
+      degradedSurfaceFootprint: "menu:fallback",
+      primaryDegradedStatusKey: "menuStatus",
+      primaryDegradedSurface: "menu",
+    },
+  );
+});
+
+test("route observability degraded log gate stays explicit across env modes", () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousDegraded = process.env.DARWIN_WEB_LOG_DEGRADED;
+
+  try {
+    process.env.NODE_ENV = "test";
+    delete process.env.DARWIN_WEB_LOG_DEGRADED;
+    assert.equal(shouldLogDegradedOperations(), false);
+
+    process.env.DARWIN_WEB_LOG_DEGRADED = "true";
+    assert.equal(shouldLogDegradedOperations(), true);
+
+    delete process.env.DARWIN_WEB_LOG_DEGRADED;
+    process.env.NODE_ENV = "production";
+    assert.equal(shouldLogDegradedOperations(), true);
+  } finally {
+    if (previousNodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+
+    if (previousDegraded === undefined) {
+      delete process.env.DARWIN_WEB_LOG_DEGRADED;
+    } else {
+      process.env.DARWIN_WEB_LOG_DEGRADED = previousDegraded;
+    }
+  }
 });
 
 test("observeAsyncOperation reports slow operations above the threshold", async () => {
@@ -252,6 +343,52 @@ test("observeAsyncOperation reports degraded successful operations even when the
       delete process.env.DARWIN_WEB_LOG_DEGRADED;
     } else {
       process.env.DARWIN_WEB_LOG_DEGRADED = previous;
+    }
+  }
+});
+
+test("observeAsyncOperation keeps degraded successes silent when the degraded gate is off", async () => {
+  const warnings: Array<Record<string, unknown>> = [];
+  let tick = 500;
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousDegraded = process.env.DARWIN_WEB_LOG_DEGRADED;
+
+  try {
+    process.env.NODE_ENV = "test";
+    delete process.env.DARWIN_WEB_LOG_DEGRADED;
+
+    const result = await observeAsyncOperation(
+      {
+        area: "shell",
+        operation: "menu",
+        context: { culture: "de-DE", route: "/" },
+        getSuccessDetail: () => ({
+          menuStatus: "fallback",
+          menuItemCount: 3,
+        }),
+        thresholdMs: 500,
+        now: () => {
+          tick += 20;
+          return tick;
+        },
+        warn: (_message, detail) => warnings.push(detail),
+      },
+      async () => "ok",
+    );
+
+    assert.equal(result, "ok");
+    assert.deepEqual(warnings, []);
+  } finally {
+    if (previousNodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+
+    if (previousDegraded === undefined) {
+      delete process.env.DARWIN_WEB_LOG_DEGRADED;
+    } else {
+      process.env.DARWIN_WEB_LOG_DEGRADED = previousDegraded;
     }
   }
 });

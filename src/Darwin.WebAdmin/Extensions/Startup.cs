@@ -88,7 +88,8 @@ namespace Darwin.WebAdmin.Extensions
             var cultureNames = AdminCultureCatalog.NormalizeSupportedCultureNames(settings.SupportedCulturesCsv);
 
             var supportedCultures = cultureNames.Select(static x => new CultureInfo(x)).ToArray();
-            var defaultCulture = supportedCultures.FirstOrDefault(static x => string.Equals(x.Name, AdminCultureCatalog.DefaultCulture, StringComparison.OrdinalIgnoreCase))?.Name
+            var configuredDefaultCulture = AdminCultureCatalog.NormalizeUiCulture(settings.DefaultCulture);
+            var defaultCulture = supportedCultures.FirstOrDefault(x => string.Equals(x.Name, configuredDefaultCulture, StringComparison.OrdinalIgnoreCase))?.Name
                                  ?? supportedCultures[0].Name;
             return (supportedCultures, defaultCulture);
         }

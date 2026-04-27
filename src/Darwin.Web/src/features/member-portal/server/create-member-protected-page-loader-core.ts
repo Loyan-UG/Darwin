@@ -31,6 +31,71 @@ type CreateMemberProtectedPageLoaderOptions<
   loadRouteContext: (...args: TArgs) => Promise<TRouteContext>;
 };
 
+export function buildMemberProtectedPageLoaderObservationContext(
+  entryRoute: string,
+  context?: Record<string, unknown>,
+  options?: {
+    hasCanonicalNormalization?: boolean;
+  },
+) {
+  return buildPageLoaderBaseDiagnostics("member-protected", {
+    hasCanonicalNormalization: options?.hasCanonicalNormalization,
+    extras: {
+      entryRoute,
+      ...(context ?? {}),
+    },
+  });
+}
+
+export function buildMemberProtectedPageLoaderSuccessContext<
+  TEntryContext extends {
+    session: unknown | null;
+    storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0] | null;
+  },
+  TRouteContext,
+>(
+  entryRoute: string,
+  result: ProtectedPageContext<TEntryContext, TRouteContext>,
+  summarizeAuthorized: (
+    routeContext: TRouteContext,
+    result: ProtectedPageContext<TEntryContext, TRouteContext>,
+  ) => Record<string, unknown>,
+  options?: {
+    hasCanonicalNormalization?: boolean;
+  },
+) {
+  const authGate = result.entryContext.session
+    ? "authorized"
+    : "guest-fallback";
+  const routeContextState = result.routeContext
+    ? "loaded"
+    : "guest-fallback";
+  const storefrontFallbackState = result.entryContext.storefrontContext
+    ? "present"
+    : "missing";
+
+  return buildPageLoaderBaseDiagnostics("member-protected", {
+    hasCanonicalNormalization: options?.hasCanonicalNormalization,
+    extras: {
+      entryRoute,
+      authGate,
+      sessionState: result.entryContext.session ? "present" : "missing",
+      routeContextState,
+      storefrontFallbackState,
+      protectedRouteFootprint: buildProtectedRouteFootprint({
+        authGate,
+        routeContextState,
+        storefrontFallbackState,
+      }),
+      ...(result.routeContext
+        ? summarizeAuthorized(result.routeContext, result)
+        : summarizePublicStorefrontHealth(
+            result.entryContext.storefrontContext!,
+          )),
+    },
+  });
+}
+
 export function createMemberProtectedPageLoaderCore<
   TArgs extends [string, ...unknown[]],
   TEntryContext extends {
@@ -54,49 +119,25 @@ export function createMemberProtectedPageLoaderCore<
     thresholdMs,
     normalizeArgs,
     getContext: (...args: TArgs) =>
-      buildPageLoaderBaseDiagnostics("member-protected", {
-        hasCanonicalNormalization: Boolean(normalizeArgs),
-        extras: {
-          entryRoute: getEntryRoute(...args),
-          ...(getContext(...args) ?? {}),
+      buildMemberProtectedPageLoaderObservationContext(
+        getEntryRoute(...args),
+        getContext(...args) ?? {},
+        {
+          hasCanonicalNormalization: Boolean(normalizeArgs),
         },
-      }),
+      ),
     getSuccessContext: (
       result: ProtectedPageContext<TEntryContext, TRouteContext>,
       ...args: TArgs
-    ) => {
-      void args;
-      const authGate = result.entryContext.session
-        ? "authorized"
-        : "guest-fallback";
-      const routeContextState = result.routeContext
-        ? "loaded"
-        : "guest-fallback";
-      const storefrontFallbackState = result.entryContext.storefrontContext
-        ? "present"
-        : "missing";
-
-      return buildPageLoaderBaseDiagnostics("member-protected", {
-        hasCanonicalNormalization: Boolean(normalizeArgs),
-        extras: {
-          entryRoute: getEntryRoute(...args),
-          authGate,
-          sessionState: result.entryContext.session ? "present" : "missing",
-          routeContextState,
-          storefrontFallbackState,
-          protectedRouteFootprint: buildProtectedRouteFootprint({
-            authGate,
-            routeContextState,
-            storefrontFallbackState,
-          }),
-          ...(result.routeContext
-            ? summarizeAuthorized(result.routeContext, result)
-            : summarizePublicStorefrontHealth(
-                result.entryContext.storefrontContext!,
-              )),
+    ) =>
+      buildMemberProtectedPageLoaderSuccessContext(
+        getEntryRoute(...args),
+        result,
+        summarizeAuthorized,
+        {
+          hasCanonicalNormalization: Boolean(normalizeArgs),
         },
-      });
-    },
+      ),
     load: async (...args: TArgs) => {
       const [culture] = args;
       const entryContext = await loadEntryContext(culture, getEntryRoute(...args));

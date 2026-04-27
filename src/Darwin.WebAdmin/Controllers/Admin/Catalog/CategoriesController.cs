@@ -7,6 +7,7 @@ using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -99,10 +100,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public async Task<IActionResult> Create(CancellationToken ct)
         {
             await LoadLookupsAsync(ct);
-            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
             var vm = new CategoryCreateVm();
             vm.Translations ??= new();
-            if (vm.Translations.Count == 0) vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });
+            await EnsureCreateTranslationsAsync(vm, ct).ConfigureAwait(false);
             return RenderCreateEditor(vm);
         }
 
@@ -112,6 +112,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             vm.Translations ??= new();
             if (vm.Translations.Count == 0)
+                ModelState.AddModelError(nameof(vm.Translations), T("CategoryAtLeastOneTranslationRequired"));
+
+            var translations = FilterCompleteTranslations(vm.Translations);
+            if (translations.Count == 0)
                 ModelState.AddModelError(nameof(vm.Translations), T("CategoryAtLeastOneTranslationRequired"));
 
             if (!ModelState.IsValid)
@@ -126,7 +130,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 ParentId = vm.ParentId,
                 SortOrder = vm.SortOrder,
                 IsActive = vm.IsActive,
-                Translations = vm.Translations.Select(t => new CategoryTranslationDto
+                Translations = translations.Select(t => new CategoryTranslationDto
                 {
                     Culture = t.Culture,
                     Name = t.Name,
@@ -179,6 +183,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             };
 
             await LoadLookupsAsync(ct);
+            await EnsureEditTranslationsAsync(vm, ct).ConfigureAwait(false);
             return RenderEditEditor(vm);
         }
 
@@ -195,6 +200,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RenderEditEditor(vm);
             }
 
+            var translations = FilterCompleteTranslations(vm.Translations);
+            if (translations.Count == 0)
+            {
+                ModelState.AddModelError(nameof(vm.Translations), T("CategoryAtLeastOneTranslationRequired"));
+                await LoadLookupsAsync(ct);
+                await EnsureEditTranslationsAsync(vm, ct);
+                return RenderEditEditor(vm);
+            }
+
             var dto = new CategoryEditDto
             {
                 Id = vm.Id,
@@ -202,7 +216,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 ParentId = vm.ParentId,
                 SortOrder = vm.SortOrder,
                 IsActive = vm.IsActive,
-                Translations = vm.Translations.Select(t => new CategoryTranslationDto
+                Translations = translations.Select(t => new CategoryTranslationDto
                 {
                     Culture = t.Culture,
                     Name = t.Name,
@@ -317,20 +331,45 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         private async Task EnsureCreateTranslationsAsync(CategoryCreateVm vm, CancellationToken ct)
         {
-            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
-            if (vm.Translations.Count == 0)
-            {
-                vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });
-            }
+            await EnsureTranslationsAsync(vm.Translations, ct).ConfigureAwait(false);
         }
 
         private async Task EnsureEditTranslationsAsync(CategoryEditVm vm, CancellationToken ct)
         {
-            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
-            if (vm.Translations.Count == 0)
+            await EnsureTranslationsAsync(vm.Translations, ct).ConfigureAwait(false);
+        }
+
+        private async Task EnsureTranslationsAsync(List<CategoryTranslationVm> translations, CancellationToken ct)
+        {
+            var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            var orderedCultures = cultures
+                .Prepend(defaultCulture)
+                .Where(static x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (orderedCultures.Length == 0)
             {
-                vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });
+                orderedCultures = [defaultCulture];
             }
+
+            foreach (var culture in orderedCultures)
+            {
+                if (translations.All(x => !string.Equals(x.Culture, culture, StringComparison.OrdinalIgnoreCase)))
+                {
+                    translations.Add(new CategoryTranslationVm { Culture = culture });
+                }
+            }
+        }
+
+        private static List<CategoryTranslationVm> FilterCompleteTranslations(IEnumerable<CategoryTranslationVm> translations)
+        {
+            return translations
+                .Where(static t =>
+                    !string.IsNullOrWhiteSpace(t.Culture) &&
+                    !string.IsNullOrWhiteSpace(t.Name) &&
+                    !string.IsNullOrWhiteSpace(t.Slug))
+                .ToList();
         }
 
         private OperationalPlaybookVm[] BuildCategoryPlaybooks()
