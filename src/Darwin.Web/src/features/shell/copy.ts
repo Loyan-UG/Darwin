@@ -7,6 +7,7 @@ type ShellCopy = {
   footerTitle: string;
   footerDescription: string;
   footerNavigationTitle: string;
+  primaryNavigationLabel: string;
   fallbackPrimaryNavigation: ShellLink[];
   utilityLinks: ShellLink[];
   footerGroups: ShellLinkGroup[];

@@ -23,7 +23,7 @@ namespace Darwin.Application.CartCheckout.Queries
             _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
         }
 
-        public async Task<CartSummaryDto?> HandleAsync(Guid? userId, string? anonId, CancellationToken ct = default)
+        public async Task<CartSummaryDto?> HandleAsync(Guid? userId, string? anonId, string? culture = null, CancellationToken ct = default)
         {
             var cart = await _db.Set<Cart>()
                 .AsNoTracking()
@@ -35,7 +35,7 @@ namespace Darwin.Application.CartCheckout.Queries
 
             return cart is null
                 ? null
-                : await _computeCartSummaryHandler.HandleAsync(cart.Id, ct).ConfigureAwait(false);
+                : await _computeCartSummaryHandler.HandleAsync(cart.Id, culture, ct).ConfigureAwait(false);
         }
     }
 }

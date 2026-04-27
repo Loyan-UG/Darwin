@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CmsPageDetail } from "@/components/cms/cms-page-detail";
 import {
   readCmsMetadataFocus,
@@ -8,19 +8,58 @@ import {
 import { getCmsDetailPageContext } from "@/features/cms/server/get-cms-page-context";
 import { getCmsSeoMetadata } from "@/features/cms/server/get-cms-seo-metadata";
 import { readSearchTextParam } from "@/features/checkout/helpers";
-import { getRequestCulture } from "@/lib/request-culture";
+import {
+  INFERRED_CULTURE_SEARCH_PARAM,
+  localizeHref,
+} from "@/lib/locale-routing";
+import { getRequestCulture, getSupportedCultures } from "@/lib/request-culture";
+
+type CmsSearchParams = {
+  visibleQuery?: string;
+  visibleState?: string;
+  visibleSort?: string;
+  metadataFocus?: string;
+};
 
 type CmsPageProps = {
   params: Promise<{
     slug: string;
   }>;
-  searchParams?: Promise<{
-    visibleQuery?: string;
-    visibleState?: string;
-    visibleSort?: string;
-    metadataFocus?: string;
-  }>;
+  searchParams?: Promise<CmsSearchParams>;
 };
+
+function appendSearchParams(
+  href: string,
+  searchParams: CmsSearchParams | undefined,
+  extraParams?: Record<string, string | undefined>,
+) {
+  if (!searchParams) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(extraParams ?? {})) {
+      if (value) {
+        params.set(key, value);
+      }
+    }
+
+    const query = params.toString();
+    return query ? `${href}?${query}` : href;
+  }
+
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+  for (const [key, value] of Object.entries(extraParams ?? {})) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  const query = params.toString();
+  return query ? `${href}?${query}` : href;
+}
 
 export async function generateMetadata({ params }: CmsPageProps) {
   const culture = await getRequestCulture();
@@ -49,7 +88,38 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
   const page = pageResult.data;
 
   if (!page && pageResult.status === "not-found") {
+    for (const alternateCulture of getSupportedCultures()) {
+      if (alternateCulture === culture) {
+        continue;
+      }
+
+      const alternateContext = await getCmsDetailPageContext(
+        alternateCulture,
+        slug,
+        visibleQuery,
+        visibleState,
+        visibleSort,
+        metadataFocus,
+      );
+
+      const alternatePage = alternateContext.detailContext.pageResult.data;
+      if (alternatePage) {
+        redirect(
+          appendSearchParams(`/cms/${slug}`, resolvedSearchParams, {
+            culture: alternateCulture,
+            [INFERRED_CULTURE_SEARCH_PARAM]: "1",
+          }),
+        );
+      }
+    }
+
     notFound();
+  }
+
+  if (page?.slug && page.slug !== slug) {
+    redirect(
+      appendSearchParams(localizeHref(`/cms/${page.slug}`, culture), resolvedSearchParams),
+    );
   }
 
   return (

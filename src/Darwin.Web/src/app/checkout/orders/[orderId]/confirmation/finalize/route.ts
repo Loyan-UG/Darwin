@@ -73,7 +73,7 @@ function readFailureReason(
   return (
     readSearchTextParam(searchParams.get("failureReason") ?? undefined, 240) ||
     (outcome === "Cancelled"
-      ? "Shopper cancelled hosted checkout."
+      ? toLocalizedQueryMessage("checkoutPaymentCancelledReason")
       : undefined)
   );
 }

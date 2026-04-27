@@ -82,6 +82,16 @@ namespace Darwin.Application.CartCheckout.DTOs
         public long LineVatMinor { get; set; }
         public long LineGrossMinor { get; set; }
         public string SelectedAddOnValueIdsJson { get; set; } = "[]";
+        public List<CartSelectedAddOnDto> SelectedAddOns { get; set; } = new();
+    }
+
+    public sealed class CartSelectedAddOnDto
+    {
+        public Guid ValueId { get; set; }
+        public Guid OptionId { get; set; }
+        public string OptionLabel { get; set; } = string.Empty;
+        public string ValueLabel { get; set; } = string.Empty;
+        public long PriceDeltaMinor { get; set; }
     }
 
     public sealed class CartSummaryDto

@@ -44,7 +44,8 @@ namespace Darwin.Application.CMS.Commands
                     entity.Translations.Add(new MenuItemTranslation
                     {
                         Culture = tr.Culture.Trim(),
-                        Label = tr.Label.Trim()
+                        Label = tr.Label.Trim(),
+                        Url = string.IsNullOrWhiteSpace(tr.Url) ? null : tr.Url.Trim()
                     });
                 }
                 menu.Items.Add(entity);

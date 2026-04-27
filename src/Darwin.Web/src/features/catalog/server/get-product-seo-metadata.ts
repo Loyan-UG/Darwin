@@ -19,7 +19,7 @@ export const getProductSeoMetadata = createCachedObservedSeoMetadataLoader({
     const { detailContext } = await getCatalogDetailRouteContext(culture, slug);
     const { productResult } = detailContext;
     const product = productResult.data;
-    const canonicalPath = `/catalog/${encodeURIComponent(slug)}`;
+    const requestedPath = `/catalog/${encodeURIComponent(slug)}`;
 
     if (!product) {
       return {
@@ -27,10 +27,10 @@ export const getProductSeoMetadata = createCachedObservedSeoMetadataLoader({
           culture,
           title: copy.productUnavailableMetaTitle,
           description: copy.productFallbackMetaDescription,
-          path: canonicalPath,
+          path: requestedPath,
           noIndex: true,
         }),
-        canonicalPath,
+        canonicalPath: requestedPath,
         noIndex: true,
         languageAlternates: {},
       };
@@ -38,6 +38,7 @@ export const getProductSeoMetadata = createCachedObservedSeoMetadataLoader({
 
     const alternates = await getProductLanguageAlternatesMap();
     const languageAlternates = alternates.get(product.id) ?? {};
+    const canonicalPath = `/catalog/${encodeURIComponent(product.slug)}`;
     const noIndex = productResult.status !== "ok";
 
     return {

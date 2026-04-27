@@ -2,6 +2,8 @@ import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { buildQuerySuffix, serializeQueryParams } from "@/lib/query-params";
 
 export const REQUEST_CULTURE_HEADER = "x-darwin-request-culture";
+export const REQUEST_PATHNAME_HEADER = "x-darwin-request-pathname";
+export const INFERRED_CULTURE_SEARCH_PARAM = "_darwinInferredCulture";
 
 function normalizePathname(pathname: string) {
   if (!pathname || pathname === "/") {
@@ -100,20 +102,13 @@ export function isPublicLocalizedPath(pathname: string) {
 }
 
 export function buildLocalizedPath(pathname: string, culture: string) {
-  const runtimeConfig = getSiteRuntimeConfig();
   const normalizedPath = stripCulturePrefix(pathname).pathname;
 
   if (!isPublicLocalizedPath(normalizedPath)) {
     return normalizedPath;
   }
 
-  if (culture === runtimeConfig.defaultCulture) {
-    return normalizedPath;
-  }
-
-  return normalizedPath === "/"
-    ? `/${culture}`
-    : `/${culture}${normalizedPath}`;
+  return normalizedPath;
 }
 
 export function localizeHref(href: string, culture: string) {

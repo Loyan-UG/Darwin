@@ -3,6 +3,7 @@ using Darwin.Application.CartCheckout.Commands;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.CartCheckout.Queries;
 using Darwin.Contracts.Cart;
+using Darwin.Application.Settings.DTOs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -55,7 +56,7 @@ public sealed class PublicCartController : ApiControllerBase
     [ProducesResponseType(typeof(PublicCartSummary), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAsync([FromQuery] string? anonymousId, CancellationToken ct = default)
+    public async Task<IActionResult> GetAsync([FromQuery] string? anonymousId, [FromQuery] string? culture, CancellationToken ct = default)
     {
         var userId = GetCurrentUserId();
         var normalizedAnonymousId = NormalizeAnonymousId(anonymousId);
@@ -64,7 +65,8 @@ public sealed class PublicCartController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["EitherUserIdOrAnonymousIdRequired"]);
         }
 
-        var dto = await _getCartSummaryHandler.HandleAsync(userId, normalizedAnonymousId, ct).ConfigureAwait(false);
+        var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
+        var dto = await _getCartSummaryHandler.HandleAsync(userId, normalizedAnonymousId, normalizedCulture, ct).ConfigureAwait(false);
         return dto is null ? NotFoundProblem(_validationLocalizer["CartNotFound"]) : Ok(MapSummary(dto));
     }
 
@@ -118,7 +120,7 @@ public sealed class PublicCartController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["CartItemAddFailed"], ex.Message);
         }
 
-        var summary = await _getCartSummaryHandler.HandleAsync(userId, normalizedAnonymousId, ct).ConfigureAwait(false);
+        var summary = await _getCartSummaryHandler.HandleAsync(userId, normalizedAnonymousId, null, ct).ConfigureAwait(false);
         return summary is null ? NotFoundProblem(_validationLocalizer["CartNotFoundAfterMutation"]) : Ok(MapSummary(summary));
     }
 
@@ -258,7 +260,15 @@ public sealed class PublicCartController : ApiControllerBase
                 LineNetMinor = item.LineNetMinor,
                 LineVatMinor = item.LineVatMinor,
                 LineGrossMinor = item.LineGrossMinor,
-                SelectedAddOnValueIdsJson = item.SelectedAddOnValueIdsJson
+                SelectedAddOnValueIdsJson = item.SelectedAddOnValueIdsJson,
+                SelectedAddOns = item.SelectedAddOns.Select(addOn => new PublicCartSelectedAddOn
+                {
+                    ValueId = addOn.ValueId,
+                    OptionId = addOn.OptionId,
+                    OptionLabel = addOn.OptionLabel,
+                    ValueLabel = addOn.ValueLabel,
+                    PriceDeltaMinor = addOn.PriceDeltaMinor
+                }).ToList()
             }).ToList()
         };
 }

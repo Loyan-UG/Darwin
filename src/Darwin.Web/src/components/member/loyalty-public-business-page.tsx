@@ -272,7 +272,9 @@ export function LoyaltyPublicBusinessPage({
                           ) : null}
                         </div>
                         <span className="rounded-full bg-[var(--color-surface-panel)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-accent)]">
-                          {reward.pointsRequired} pts
+                          {formatResource(copy.pointsValueLabel, {
+                            value: reward.pointsRequired,
+                          })}
                         </span>
                       </div>
                       <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">

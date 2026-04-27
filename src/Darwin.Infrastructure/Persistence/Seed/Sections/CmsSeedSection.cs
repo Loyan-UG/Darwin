@@ -83,7 +83,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 new()
                 {
                     Url = "/media/storefront/hero-electronics.jpg",
-                    Alt = "Elektronik – Angebote",
+                    Alt = "Elektronik â€“ Angebote",
                     Title = "Elektronik",
                     OriginalFileName = "hero-electronics.jpg",
                     SizeBytes = 256_000,
@@ -117,8 +117,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 new()
                 {
                     Url = "/media/storefront/accessories.jpg",
-                    Alt = "Zubehör",
-                    Title = "Zubehör",
+                    Alt = "ZubehÃ¶r",
+                    Title = "ZubehÃ¶r",
                     OriginalFileName = "accessories.jpg",
                     SizeBytes = 220_000,
                     Width = 1920,
@@ -178,7 +178,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         Url = "/de/ueber-uns",
                         SortOrder = 2,
                         IsActive = true,
-                        Translations = { new MenuItemTranslation { Culture = DomainDefaults.DefaultCulture, Label = "Über uns" } }
+                        Translations = { new MenuItemTranslation { Culture = DomainDefaults.DefaultCulture, Label = "Ãœber uns" } }
                     },
 
                     // Children under "Shop"
@@ -223,15 +223,15 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var desiredItems = new[]
             {
-                new { Url = "/", Label = "Home", DeLabel = "Start", SortOrder = 0 },
-                new { Url = "/catalog", Label = "Catalog", DeLabel = "Katalog", SortOrder = 1 },
-                new { Url = "/cms", Label = "CMS", DeLabel = "Inhalte", SortOrder = 2 },
-                new { Url = "/account", Label = "Account", DeLabel = "Konto", SortOrder = 3 },
-                new { Url = "/cart", Label = "Cart", DeLabel = "Warenkorb", SortOrder = 4 },
-                new { Url = "/checkout", Label = "Checkout", DeLabel = "Kasse", SortOrder = 5 },
-                new { Url = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 6 },
-                new { Url = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 7 },
-                new { Url = "/loyalty", Label = "Loyalty", DeLabel = "Treue", SortOrder = 8 }
+                new { Url = "/", DeUrl = "/", Label = "Home", DeLabel = "Start", SortOrder = 0 },
+                new { Url = "/catalog", DeUrl = "/catalog", Label = "Catalog", DeLabel = "Katalog", SortOrder = 1 },
+                new { Url = "/cms", DeUrl = "/cms", Label = "CMS", DeLabel = "Inhalte", SortOrder = 2 },
+                new { Url = "/account", DeUrl = "/account", Label = "Account", DeLabel = "Konto", SortOrder = 3 },
+                new { Url = "/cart", DeUrl = "/cart", Label = "Cart", DeLabel = "Warenkorb", SortOrder = 4 },
+                new { Url = "/checkout", DeUrl = "/checkout", Label = "Checkout", DeLabel = "Kasse", SortOrder = 5 },
+                new { Url = "/orders", DeUrl = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 6 },
+                new { Url = "/invoices", DeUrl = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 7 },
+                new { Url = "/loyalty", DeUrl = "/loyalty", Label = "Loyalty", DeLabel = "Treue", SortOrder = 8 }
             };
 
             if (menu == null)
@@ -259,12 +259,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         new MenuItemTranslation
                         {
                             Culture = "en-US",
-                            Label = item.Label
+                            Label = item.Label,
+                            Url = item.Url
                         },
                         new MenuItemTranslation
                         {
                             Culture = DomainDefaults.DefaultCulture,
-                            Label = item.DeLabel
+                            Label = item.DeLabel,
+                            Url = item.DeUrl
                         }
                     }
                 });
@@ -282,20 +284,20 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var desiredItems = new[]
             {
-                new { Url = "/cms/impressum", Label = "Legal notice", DeLabel = "Impressum", SortOrder = 0 },
-                new { Url = "/cms/datenschutz", Label = "Privacy", DeLabel = "Datenschutz", SortOrder = 1 },
-                new { Url = "/cms/agb", Label = "Terms", DeLabel = "AGB", SortOrder = 2 },
-                new { Url = "/cms/widerruf", Label = "Cancellation", DeLabel = "Widerruf", SortOrder = 3 },
-                new { Url = "/cms/kontakt", Label = "Contact", DeLabel = "Kontakt", SortOrder = 4 },
-                new { Url = "/account/sign-in", Label = "Sign in", DeLabel = "Anmelden", SortOrder = 5 },
-                new { Url = "/account/register", Label = "Register", DeLabel = "Registrieren", SortOrder = 6 },
-                new { Url = "/account/profile", Label = "Profile", DeLabel = "Profil", SortOrder = 7 },
-                new { Url = "/account/preferences", Label = "Preferences", DeLabel = "Praeferenzen", SortOrder = 8 },
-                new { Url = "/account/addresses", Label = "Addresses", DeLabel = "Adressen", SortOrder = 9 },
-                new { Url = "/account/security", Label = "Security", DeLabel = "Sicherheit", SortOrder = 10 },
-                new { Url = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 11 },
-                new { Url = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 12 },
-                new { Url = "/checkout", Label = "Checkout", DeLabel = "Kasse", SortOrder = 13 }
+                new { Url = "/cms/legal-notice", DeUrl = "/cms/impressum", Label = "Legal notice", DeLabel = "Impressum", SortOrder = 0 },
+                new { Url = "/cms/privacy-policy", DeUrl = "/cms/datenschutz", Label = "Privacy", DeLabel = "Datenschutz", SortOrder = 1 },
+                new { Url = "/cms/terms-and-conditions", DeUrl = "/cms/agb", Label = "Terms", DeLabel = "AGB", SortOrder = 2 },
+                new { Url = "/cms/cancellation-policy", DeUrl = "/cms/widerruf", Label = "Cancellation", DeLabel = "Widerruf", SortOrder = 3 },
+                new { Url = "/cms/contact", DeUrl = "/cms/kontakt", Label = "Contact", DeLabel = "Kontakt", SortOrder = 4 },
+                new { Url = "/account/sign-in", DeUrl = "/account/sign-in", Label = "Sign in", DeLabel = "Anmelden", SortOrder = 5 },
+                new { Url = "/account/register", DeUrl = "/account/register", Label = "Register", DeLabel = "Registrieren", SortOrder = 6 },
+                new { Url = "/account/profile", DeUrl = "/account/profile", Label = "Profile", DeLabel = "Profil", SortOrder = 7 },
+                new { Url = "/account/preferences", DeUrl = "/account/preferences", Label = "Preferences", DeLabel = "Praeferenzen", SortOrder = 8 },
+                new { Url = "/account/addresses", DeUrl = "/account/addresses", Label = "Addresses", DeLabel = "Adressen", SortOrder = 9 },
+                new { Url = "/account/security", DeUrl = "/account/security", Label = "Security", DeLabel = "Sicherheit", SortOrder = 10 },
+                new { Url = "/orders", DeUrl = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 11 },
+                new { Url = "/invoices", DeUrl = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 12 },
+                new { Url = "/checkout", DeUrl = "/checkout", Label = "Checkout", DeLabel = "Kasse", SortOrder = 13 }
             };
 
             if (menu == null)
@@ -323,12 +325,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         new MenuItemTranslation
                         {
                             Culture = "en-US",
-                            Label = item.Label
+                            Label = item.Label,
+                            Url = item.Url
                         },
                         new MenuItemTranslation
                         {
                             Culture = DomainDefaults.DefaultCulture,
-                            Label = item.DeLabel
+                            Label = item.DeLabel,
+                            Url = item.DeUrl
                         }
                     }
                 });
@@ -372,28 +376,28 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         /// </summary>
         private static async Task SeedPagesAsync(DarwinDbContext db, CancellationToken ct)
         {
-            const string oldImpressumHtml = "<h1>Impressum</h1><p>Angaben gemäß §5 TMG.</p>";
-            const string oldDatenschutzHtml = "<h1>Datenschutz</h1><p>Informationen gemäß DSGVO.</p>";
-            const string oldAgbHtml = "<h1>Allgemeine Geschäftsbedingungen</h1><p>Bitte lesen Sie unsere Bedingungen.</p>";
-            const string oldKontaktHtml = "<h1>Kontakt</h1><p>Wir sind für Sie da.</p>";
+            const string oldImpressumHtml = "<h1>Impressum</h1><p>Angaben gemÃ¤ÃŸ Â§5 TMG.</p>";
+            const string oldDatenschutzHtml = "<h1>Datenschutz</h1><p>Informationen gemÃ¤ÃŸ DSGVO.</p>";
+            const string oldAgbHtml = "<h1>Allgemeine GeschÃ¤ftsbedingungen</h1><p>Bitte lesen Sie unsere Bedingungen.</p>";
+            const string oldKontaktHtml = "<h1>Kontakt</h1><p>Wir sind fÃ¼r Sie da.</p>";
             const string oldWiderrufHtml = "<h1>Widerruf</h1><p>Formular & Informationen.</p>";
 
             const string impressumHtml = @"<h1>Impressum</h1>
 <p>Diese Seite stellt die zentralen Unternehmens- und Kontaktinformationen des Darwin Storefronts bereit.</p>
-<h2>Angaben gemäß § 5 TMG</h2>
+<h2>Angaben gemÃ¤ÃŸ Â§ 5 TMG</h2>
 <p><strong>Darwin GmbH</strong><br>Alexanderplatz 1<br>10115 Berlin<br>Deutschland</p>
 <h2>Vertreten durch</h2>
-<p>Darwin Management, Geschäftsführung</p>
+<p>Darwin Management, GeschÃ¤ftsfÃ¼hrung</p>
 <h2>Kontakt</h2>
 <p>Telefon: +49 30 123456-0<br>E-Mail: info@darwin.de</p>
 <h2>Registereintrag</h2>
 <p>Eintragung im Handelsregister.<br>Registergericht: Amtsgericht Berlin-Charlottenburg<br>Registernummer: HRB 123456</p>
 <h2>Umsatzsteuer-ID</h2>
-<p>Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz: DE123456789</p>
-<h2>Verantwortlich für den Inhalt</h2>
+<p>Umsatzsteuer-Identifikationsnummer gemÃ¤ÃŸ Â§ 27 a Umsatzsteuergesetz: DE123456789</p>
+<h2>Verantwortlich fÃ¼r den Inhalt</h2>
 <p>Darwin Management<br>Alexanderplatz 1<br>10115 Berlin</p>
 <h2>Hinweis</h2>
-<p>Bitte prüfen Sie vor dem Go-live gemeinsam mit Ihrer Rechtsberatung, ob weitere Pflichtangaben für Ihr Geschäftsmodell erforderlich sind.</p>";
+<p>Bitte prÃ¼fen Sie vor dem Go-live gemeinsam mit Ihrer Rechtsberatung, ob weitere Pflichtangaben fÃ¼r Ihr GeschÃ¤ftsmodell erforderlich sind.</p>";
 
             const string impressumEnHtml = @"<h1>Legal notice</h1>
 <p>This legal notice page provides the core company and contact information for the Darwin storefront.</p>
@@ -412,26 +416,26 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 <h2>Note</h2>
 <p>Please review this page with legal counsel before going live to ensure that all mandatory disclosures for your business are covered.</p>";
 
-            const string datenschutzHtml = @"<h1>Datenschutzerklärung</h1>
-<p>Diese Datenschutzerklärung beschreibt die zentralen Datenverarbeitungen des Darwin Storefronts.</p>
+            const string datenschutzHtml = @"<h1>DatenschutzerklÃ¤rung</h1>
+<p>Diese DatenschutzerklÃ¤rung beschreibt die zentralen Datenverarbeitungen des Darwin Storefronts.</p>
 <h2>1. Verantwortliche Stelle</h2>
 <p>Darwin GmbH, Alexanderplatz 1, 10115 Berlin, Deutschland<br>E-Mail: privacy@darwin.de</p>
 <h2>2. Verarbeitete Daten</h2>
-<p>Beim Besuch dieser Website können insbesondere Bestandsdaten, Bestellinformationen, Kommunikationsdaten, Zahlungsinformationen sowie technische Zugriffsdaten verarbeitet werden.</p>
+<p>Beim Besuch dieser Website kÃ¶nnen insbesondere Bestandsdaten, Bestellinformationen, Kommunikationsdaten, Zahlungsinformationen sowie technische Zugriffsdaten verarbeitet werden.</p>
 <h2>3. Zwecke der Verarbeitung</h2>
-<p>Wir verarbeiten Daten zur Bereitstellung der Website, zur Vertragsabwicklung, für Kundenkommunikation, Betrugsprävention, Abrechnung und zur Verbesserung unseres Angebots.</p>
+<p>Wir verarbeiten Daten zur Bereitstellung der Website, zur Vertragsabwicklung, fÃ¼r Kundenkommunikation, BetrugsprÃ¤vention, Abrechnung und zur Verbesserung unseres Angebots.</p>
 <h2>4. Rechtsgrundlagen</h2>
 <p>Je nach Vorgang erfolgt die Verarbeitung auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO, lit. c DSGVO, lit. f DSGVO oder einer erteilten Einwilligung nach lit. a DSGVO.</p>
-<h2>5. Empfänger</h2>
-<p>Daten können an Hosting-, Zahlungs-, Versand- und Kommunikationsdienstleister weitergegeben werden, soweit dies zur Erfüllung der jeweiligen Zwecke erforderlich ist.</p>
+<h2>5. EmpfÃ¤nger</h2>
+<p>Daten kÃ¶nnen an Hosting-, Zahlungs-, Versand- und Kommunikationsdienstleister weitergegeben werden, soweit dies zur ErfÃ¼llung der jeweiligen Zwecke erforderlich ist.</p>
 <h2>6. Speicherdauer</h2>
-<p>Personenbezogene Daten werden nur so lange gespeichert, wie dies für den jeweiligen Zweck oder aufgrund gesetzlicher Aufbewahrungspflichten notwendig ist.</p>
+<p>Personenbezogene Daten werden nur so lange gespeichert, wie dies fÃ¼r den jeweiligen Zweck oder aufgrund gesetzlicher Aufbewahrungspflichten notwendig ist.</p>
 <h2>7. Ihre Rechte</h2>
-<p>Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch gegen bestimmte Verarbeitungen.</p>
+<p>Sie haben das Recht auf Auskunft, Berichtigung, LÃ¶schung, EinschrÃ¤nkung der Verarbeitung, DatenÃ¼bertragbarkeit sowie Widerspruch gegen bestimmte Verarbeitungen.</p>
 <h2>8. Beschwerden</h2>
-<p>Sie können sich bei einer Datenschutzaufsichtsbehörde beschweren, wenn Sie der Auffassung sind, dass die Verarbeitung Ihrer personenbezogenen Daten rechtswidrig erfolgt.</p>
+<p>Sie kÃ¶nnen sich bei einer DatenschutzaufsichtsbehÃ¶rde beschweren, wenn Sie der Auffassung sind, dass die Verarbeitung Ihrer personenbezogenen Daten rechtswidrig erfolgt.</p>
 <h2>9. Stand und Anpassungen</h2>
-<p>Weitere Hinweise zu eingesetzten Tools, Cookie-Einstellungen, Newsletter-Prozessen und internationalen Datenübermittlungen werden je nach aktivierten Funktionen angezeigt.</p>";
+<p>Weitere Hinweise zu eingesetzten Tools, Cookie-Einstellungen, Newsletter-Prozessen und internationalen DatenÃ¼bermittlungen werden je nach aktivierten Funktionen angezeigt.</p>";
 
             const string datenschutzEnHtml = @"<h1>Privacy policy</h1>
 <p>This privacy policy page explains the core data processing areas used by the Darwin storefront. Review it with legal counsel before production use.</p>
@@ -454,24 +458,24 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 <h2>9. Review and adjustments</h2>
 <p>Additional details about tools, cookie settings, newsletter processes and international data transfers are shown according to the enabled storefront features.</p>";
 
-            const string agbHtml = @"<h1>Allgemeine Geschäftsbedingungen</h1>
-<p>Diese AGB beschreiben die zentralen Regeln für Bestellung, Zahlung, Lieferung, Gewährleistung und Haftung im Darwin Storefront.</p>
+            const string agbHtml = @"<h1>Allgemeine GeschÃ¤ftsbedingungen</h1>
+<p>Diese AGB beschreiben die zentralen Regeln fÃ¼r Bestellung, Zahlung, Lieferung, GewÃ¤hrleistung und Haftung im Darwin Storefront.</p>
 <h2>1. Geltungsbereich</h2>
-<p>Diese Bedingungen gelten für alle Bestellungen, die Verbraucher und Unternehmen über unseren Online-Shop mit der Darwin GmbH abschließen.</p>
+<p>Diese Bedingungen gelten fÃ¼r alle Bestellungen, die Verbraucher und Unternehmen Ã¼ber unseren Online-Shop mit der Darwin GmbH abschlieÃŸen.</p>
 <h2>2. Vertragspartner und Vertragsschluss</h2>
-<p>Die Produktdarstellungen im Shop stellen noch kein bindendes Angebot dar. Ein Vertrag kommt erst zustande, wenn wir die Bestellung ausdrücklich bestätigen oder die Ware versenden.</p>
+<p>Die Produktdarstellungen im Shop stellen noch kein bindendes Angebot dar. Ein Vertrag kommt erst zustande, wenn wir die Bestellung ausdrÃ¼cklich bestÃ¤tigen oder die Ware versenden.</p>
 <h2>3. Preise und Zahlung</h2>
-<p>Alle Preise verstehen sich inklusive gesetzlicher Mehrwertsteuer zuzüglich gegebenenfalls ausgewiesener Versandkosten. Die verfügbaren Zahlungsarten werden im Checkout angezeigt.</p>
+<p>Alle Preise verstehen sich inklusive gesetzlicher Mehrwertsteuer zuzÃ¼glich gegebenenfalls ausgewiesener Versandkosten. Die verfÃ¼gbaren Zahlungsarten werden im Checkout angezeigt.</p>
 <h2>4. Lieferung</h2>
-<p>Lieferzeiten und Lieferbeschränkungen werden auf den jeweiligen Produktseiten und im Checkout ausgewiesen.</p>
+<p>Lieferzeiten und LieferbeschrÃ¤nkungen werden auf den jeweiligen Produktseiten und im Checkout ausgewiesen.</p>
 <h2>5. Eigentumsvorbehalt</h2>
-<p>Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum.</p>
-<h2>6. Gewährleistung</h2>
-<p>Es gelten die gesetzlichen Mängelhaftungsrechte, soweit nicht ausdrücklich etwas anderes vereinbart wurde.</p>
+<p>Die Ware bleibt bis zur vollstÃ¤ndigen Bezahlung unser Eigentum.</p>
+<h2>6. GewÃ¤hrleistung</h2>
+<p>Es gelten die gesetzlichen MÃ¤ngelhaftungsrechte, soweit nicht ausdrÃ¼cklich etwas anderes vereinbart wurde.</p>
 <h2>7. Haftung</h2>
-<p>Wir haften unbeschränkt bei Vorsatz, grober Fahrlässigkeit, Verletzung von Leben, Körper oder Gesundheit sowie nach den zwingenden gesetzlichen Vorschriften.</p>
+<p>Wir haften unbeschrÃ¤nkt bei Vorsatz, grober FahrlÃ¤ssigkeit, Verletzung von Leben, KÃ¶rper oder Gesundheit sowie nach den zwingenden gesetzlichen Vorschriften.</p>
 <h2>8. Streitbeilegung</h2>
-<p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit. Darwin informiert Kunden transparent über verfügbare Kontakt- und Klärungswege.</p>";
+<p>Die EuropÃ¤ische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit. Darwin informiert Kunden transparent Ã¼ber verfÃ¼gbare Kontakt- und KlÃ¤rungswege.</p>";
 
             const string agbEnHtml = @"<h1>Terms and conditions</h1>
 <p>These terms describe the core ordering, payment, delivery and liability rules for the Darwin storefront. Review them with legal counsel before production use.</p>
@@ -493,17 +497,17 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 <p>The European Commission provides an online dispute resolution platform. Darwin provides transparent contact and resolution channels for customers.</p>";
 
             const string widerrufHtml = @"<h1>Widerrufsbelehrung</h1>
-<p>Diese Widerrufsbelehrung beschreibt den zentralen Ablauf für Verbraucherwiderrufe im Darwin Storefront.</p>
+<p>Diese Widerrufsbelehrung beschreibt den zentralen Ablauf fÃ¼r Verbraucherwiderrufe im Darwin Storefront.</p>
 <h2>Widerrufsrecht</h2>
-<p>Verbraucher haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen.</p>
+<p>Verbraucher haben das Recht, binnen vierzehn Tagen ohne Angabe von GrÃ¼nden diesen Vertrag zu widerrufen.</p>
 <h2>Widerrufsfrist</h2>
-<p>Die Frist beträgt vierzehn Tage ab dem Tag, an dem der Verbraucher oder ein von ihm benannter Dritter die Waren in Besitz genommen hat.</p>
-<h2>Ausübung des Widerrufs</h2>
-<p>Um das Widerrufsrecht auszuüben, muss eine eindeutige Erklärung an die Darwin GmbH, Alexanderplatz 1, 10115 Berlin, E-Mail: widerruf@darwin.de gesendet werden.</p>
+<p>Die Frist betrÃ¤gt vierzehn Tage ab dem Tag, an dem der Verbraucher oder ein von ihm benannter Dritter die Waren in Besitz genommen hat.</p>
+<h2>AusÃ¼bung des Widerrufs</h2>
+<p>Um das Widerrufsrecht auszuÃ¼ben, muss eine eindeutige ErklÃ¤rung an die Darwin GmbH, Alexanderplatz 1, 10115 Berlin, E-Mail: widerruf@darwin.de gesendet werden.</p>
 <h2>Folgen des Widerrufs</h2>
-<p>Im Falle eines wirksamen Widerrufs sind alle Zahlungen einschließlich der Lieferkosten unverzüglich und spätestens binnen vierzehn Tagen zurückzuzahlen, vorbehaltlich gesetzlich zulässiger Abzüge.</p>
+<p>Im Falle eines wirksamen Widerrufs sind alle Zahlungen einschlieÃŸlich der Lieferkosten unverzÃ¼glich und spÃ¤testens binnen vierzehn Tagen zurÃ¼ckzuzahlen, vorbehaltlich gesetzlich zulÃ¤ssiger AbzÃ¼ge.</p>
 <h2>Widerrufsformular</h2>
-<p>An die Darwin GmbH, Alexanderplatz 1, 10115 Berlin, widerruf@darwin.de:<br>Hiermit widerrufe ich den von mir abgeschlossenen Vertrag über den Kauf der folgenden Waren / die Erbringung der folgenden Dienstleistung ...</p>";
+<p>An die Darwin GmbH, Alexanderplatz 1, 10115 Berlin, widerruf@darwin.de:<br>Hiermit widerrufe ich den von mir abgeschlossenen Vertrag Ã¼ber den Kauf der folgenden Waren / die Erbringung der folgenden Dienstleistung ...</p>";
 
             const string widerrufEnHtml = @"<h1>Cancellation policy</h1>
 <p>This cancellation policy describes the core withdrawal process for consumer orders in the Darwin storefront. Review it with legal counsel before production use.</p>
@@ -541,29 +545,29 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 <p>Support channels, response times and escalation paths are collected here for customer transparency.</p>";
 
             // Common e-commerce pages for electronics
-            var pages = new (string Slug, string Title, string Html, string? EnTitle, string? EnHtml)[]
+            var pages = new (string Slug, string Title, string Html, string? EnTitle, string? EnHtml, string? EnSlug)[]
             {
-                ("startseite","Startseite","<h1>Willkommen</h1><p>Elektronik & Computer - Top-Angebote.</p>", "Home", "<h1>Welcome</h1><p>Electronics and computers - top deals for your home, office and mobile setup.</p>"),
-                ("ueber-uns","Ueber uns","<h1>Ueber uns</h1><p>Kompetenz fuer Technik seit 2010.</p>", "About us", "<h1>About us</h1><p>Technology expertise since 2010, with practical advice for electronics, computers and connected services.</p>"),
-                ("kontakt","Kontakt", kontaktHtml, "Contact", kontaktEnHtml),
-                ("impressum","Impressum", impressumHtml, "Legal notice", impressumEnHtml),
-                ("datenschutz","Datenschutz", datenschutzHtml, "Privacy policy", datenschutzEnHtml),
-                ("agb","AGB", agbHtml, "Terms and conditions", agbEnHtml),
-                ("versand","Versand","<h1>Versand</h1><p>Lieferzeiten & -kosten.</p>", "Shipping", "<h1>Shipping</h1><p>Delivery times, shipping costs and available delivery options for your order.</p>"),
-                ("rueckgabe","Rueckgabe","<h1>Rueckgabe</h1><p>30 Tage Rueckgaberecht.</p>", "Returns", "<h1>Returns</h1><p>You can return eligible products within 30 days according to the published return conditions.</p>"),
-                ("faq","FAQ","<h1>Haeufige Fragen</h1><p>Antworten auf Ihre Fragen.</p>", "FAQ", "<h1>Frequently asked questions</h1><p>Answers to common questions about products, orders, shipping, returns and customer accounts.</p>"),
-                ("zahlung","Zahlung","<h1>Zahlung</h1><p>Alle gaengigen Zahlungsmethoden.</p>", "Payment", "<h1>Payment</h1><p>All common payment methods are shown during checkout, including any available invoice or card options.</p>"),
-                ("reparatur-service","Reparatur-Service","<h1>Reparatur</h1><p>Fachwerkstatt fuer Geraete.</p>", "Repair service", "<h1>Repair service</h1><p>Specialist workshop support for selected devices, diagnostics and service requests.</p>"),
-                ("garantie","Garantie","<h1>Garantie</h1><p>2 Jahre Herstellergarantie.</p>", "Warranty", "<h1>Warranty</h1><p>Information about manufacturer warranty, statutory rights and how to start a support request.</p>"),
-                ("filialen","Filialen","<h1>Filialen</h1><p>Standorte & Oeffnungszeiten.</p>", "Stores", "<h1>Stores</h1><p>Locations, opening hours and service points for in-person advice and pickup.</p>"),
-                ("jobs","Jobs","<h1>Jobs</h1><p>Werde Teil unseres Teams.</p>", "Jobs", "<h1>Jobs</h1><p>Join our team and help build practical commerce experiences for technology customers.</p>"),
-                ("news","News","<h1>News</h1><p>Neuigkeiten & Angebote.</p>", "News", "<h1>News</h1><p>Latest updates, product launches, service announcements and current offers.</p>"),
-                ("marken","Marken","<h1>Marken</h1><p>Beliebte Hersteller im Ueberblick.</p>", "Brands", "<h1>Brands</h1><p>An overview of popular manufacturers and selected technology brands in the catalog.</p>"),
-                ("kundenkonto","Kundenkonto","<h1>Mein Konto</h1><p>Einstellungen & Bestellungen.</p>", "Customer account", "<h1>My account</h1><p>Manage your profile, preferences, addresses, orders and account security settings.</p>"),
-                ("widerruf","Widerruf", widerrufHtml, "Cancellation policy", widerrufEnHtml),
-                ("datensicherheit","Datensicherheit","<h1>Datensicherheit</h1><p>Schutz Ihrer Daten.</p>", "Data security", "<h1>Data security</h1><p>How we protect account, order and communication data across the storefront.</p>"),
-                ("lieferstatus","Lieferstatus","<h1>Lieferstatus</h1><p>Sendungsverfolgung.</p>", "Delivery status", "<h1>Delivery status</h1><p>Track shipments and review delivery progress for your recent orders.</p>"),
-                ("geschenkkarten","Geschenkkarten","<h1>Geschenkkarten</h1><p>Das ideale Geschenk.</p>", "Gift cards", "<h1>Gift cards</h1><p>A flexible gift option for electronics, accessories and future purchases.</p>")
+                ("startseite","Startseite","<h1>Willkommen</h1><p>Elektronik & Computer - Top-Angebote.</p>", "Home", "<h1>Welcome</h1><p>Electronics and computers - top deals for your home, office and mobile setup.</p>", "home"),
+                ("ueber-uns","Ueber uns","<h1>Ueber uns</h1><p>Kompetenz fuer Technik seit 2010.</p>", "About us", "<h1>About us</h1><p>Technology expertise since 2010, with practical advice for electronics, computers and connected services.</p>", "about-us"),
+                ("kontakt","Kontakt", kontaktHtml, "Contact", kontaktEnHtml, "contact"),
+                ("impressum","Impressum", impressumHtml, "Legal notice", impressumEnHtml, "legal-notice"),
+                ("datenschutz","Datenschutz", datenschutzHtml, "Privacy policy", datenschutzEnHtml, "privacy-policy"),
+                ("agb","AGB", agbHtml, "Terms and conditions", agbEnHtml, "terms-and-conditions"),
+                ("versand","Versand","<h1>Versand</h1><p>Lieferzeiten & -kosten.</p>", "Shipping", "<h1>Shipping</h1><p>Delivery times, shipping costs and available delivery options for your order.</p>", "shipping"),
+                ("rueckgabe","Rueckgabe","<h1>Rueckgabe</h1><p>30 Tage Rueckgaberecht.</p>", "Returns", "<h1>Returns</h1><p>You can return eligible products within 30 days according to the published return conditions.</p>", "returns"),
+                ("faq","FAQ","<h1>Haeufige Fragen</h1><p>Antworten auf Ihre Fragen.</p>", "FAQ", "<h1>Frequently asked questions</h1><p>Answers to common questions about products, orders, shipping, returns and customer accounts.</p>", "faq"),
+                ("zahlung","Zahlung","<h1>Zahlung</h1><p>Alle gaengigen Zahlungsmethoden.</p>", "Payment", "<h1>Payment</h1><p>All common payment methods are shown during checkout, including any available invoice or card options.</p>", "payment"),
+                ("reparatur-service","Reparatur-Service","<h1>Reparatur</h1><p>Fachwerkstatt fuer Geraete.</p>", "Repair service", "<h1>Repair service</h1><p>Specialist workshop support for selected devices, diagnostics and service requests.</p>", "repair-service"),
+                ("garantie","Garantie","<h1>Garantie</h1><p>2 Jahre Herstellergarantie.</p>", "Warranty", "<h1>Warranty</h1><p>Information about manufacturer warranty, statutory rights and how to start a support request.</p>", "warranty"),
+                ("filialen","Filialen","<h1>Filialen</h1><p>Standorte & Oeffnungszeiten.</p>", "Stores", "<h1>Stores</h1><p>Locations, opening hours and service points for in-person advice and pickup.</p>", "stores"),
+                ("jobs","Jobs","<h1>Jobs</h1><p>Werde Teil unseres Teams.</p>", "Jobs", "<h1>Jobs</h1><p>Join our team and help build practical commerce experiences for technology customers.</p>", "jobs"),
+                ("news","News","<h1>News</h1><p>Neuigkeiten & Angebote.</p>", "News", "<h1>News</h1><p>Latest updates, product launches, service announcements and current offers.</p>", "news"),
+                ("marken","Marken","<h1>Marken</h1><p>Beliebte Hersteller im Ueberblick.</p>", "Brands", "<h1>Brands</h1><p>An overview of popular manufacturers and selected technology brands in the catalog.</p>", "brands"),
+                ("kundenkonto","Kundenkonto","<h1>Mein Konto</h1><p>Einstellungen & Bestellungen.</p>", "Customer account", "<h1>My account</h1><p>Manage your profile, preferences, addresses, orders and account security settings.</p>", "customer-account"),
+                ("widerruf","Widerruf", widerrufHtml, "Cancellation policy", widerrufEnHtml, "cancellation-policy"),
+                ("datensicherheit","Datensicherheit","<h1>Datensicherheit</h1><p>Schutz Ihrer Daten.</p>", "Data security", "<h1>Data security</h1><p>How we protect account, order and communication data across the storefront.</p>", "data-security"),
+                ("lieferstatus","Lieferstatus","<h1>Lieferstatus</h1><p>Sendungsverfolgung.</p>", "Delivery status", "<h1>Delivery status</h1><p>Track shipments and review delivery progress for your recent orders.</p>", "delivery-status"),
+                ("geschenkkarten","Geschenkkarten","<h1>Geschenkkarten</h1><p>Das ideale Geschenk.</p>", "Gift cards", "<h1>Gift cards</h1><p>A flexible gift option for electronics, accessories and future purchases.</p>", "gift-cards")
             };
 
             var publishStartUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -596,7 +600,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
                 page.MetaTitle = string.IsNullOrWhiteSpace(page.MetaTitle) ? p.Title : page.MetaTitle;
                 page.MetaDescription = string.IsNullOrWhiteSpace(page.MetaDescription)
-                    ? $"{p.Title} – Informationen & Details."
+                    ? $"{p.Title} â€“ Informationen & Details."
                     : page.MetaDescription;
                 page.IsPublished = true;
                 page.Status = PageStatus.Published;
@@ -623,7 +627,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
                 translation.MetaTitle = string.IsNullOrWhiteSpace(translation.MetaTitle) ? p.Title : translation.MetaTitle;
                 translation.MetaDescription = string.IsNullOrWhiteSpace(translation.MetaDescription)
-                    ? $"{p.Title} – Informationen & Details."
+                    ? $"{p.Title} â€“ Informationen & Details."
                     : translation.MetaDescription;
 
                 if (!string.IsNullOrWhiteSpace(p.EnTitle) && !string.IsNullOrWhiteSpace(p.EnHtml))
@@ -638,8 +642,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     englishTranslation.Title = string.IsNullOrWhiteSpace(englishTranslation.Title)
                         ? p.EnTitle
                         : englishTranslation.Title;
-                    englishTranslation.Slug = string.IsNullOrWhiteSpace(englishTranslation.Slug)
-                        ? p.Slug
+                    englishTranslation.Slug = string.IsNullOrWhiteSpace(englishTranslation.Slug) || englishTranslation.Slug == p.Slug
+                        ? (p.EnSlug ?? p.Slug)
                         : englishTranslation.Slug;
                     if (ShouldRefreshStarterPageContent(p.Slug, englishTranslation.ContentHtml))
                     {
@@ -650,7 +654,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         ? p.EnTitle
                         : englishTranslation.MetaTitle;
                     englishTranslation.MetaDescription = string.IsNullOrWhiteSpace(englishTranslation.MetaDescription)
-                        ? $"{p.EnTitle} – information and guidance."
+                        ? $"{p.EnTitle} â€“ information and guidance."
                         : englishTranslation.MetaDescription;
                 }
             }

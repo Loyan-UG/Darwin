@@ -491,6 +491,18 @@ export function CartPage({
                           {item.addOnPriceDeltaMinor > 0 ? (
                             <p>{copy.addOnsLabel} {formatMoney(item.addOnPriceDeltaMinor, cart.currency, culture)}</p>
                           ) : null}
+                          {(item.selectedAddOns ?? []).length > 0 ? (
+                            <div className="mt-2 space-y-1">
+                              {(item.selectedAddOns ?? []).map((addOn) => (
+                                <p key={addOn.valueId}>
+                                  {addOn.optionLabel}: {addOn.valueLabel}
+                                  {addOn.priceDeltaMinor !== 0
+                                    ? ` (+${formatMoney(addOn.priceDeltaMinor, cart.currency, culture)})`
+                                    : ""}
+                                </p>
+                              ))}
+                            </div>
+                          ) : null}
                           <p>{copy.vatRateLabel} {(item.vatRate * 100).toFixed(0)}%</p>
                           <p>{copy.lineNetLabel} {formatMoney(item.lineNetMinor, cart.currency, culture)}</p>
                           <p>{copy.lineTotalLabel} {formatMoney(item.lineGrossMinor, cart.currency, culture)}</p>

@@ -64,7 +64,7 @@ const getCachedCartRouteContext = createCachedObservedLoader({
   }),
   load: async (culture: string) => {
     const [model, memberSession, storefrontContext] = await Promise.all([
-      getCartViewModel(),
+      getCartViewModel(culture),
       getMemberSession(),
       getPublicStorefrontContext(culture),
     ]);
@@ -93,7 +93,7 @@ const getCachedCheckoutRouteContext = createCachedObservedLoader({
   }),
   load: async (culture: string) => {
     const [model, memberSession, storefrontContext] = await Promise.all([
-      getCartViewModel(),
+      getCartViewModel(culture),
       getMemberSession(),
       getPublicStorefrontContext(culture),
     ]);

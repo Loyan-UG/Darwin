@@ -8,6 +8,15 @@ export type PublicCartItemRow = {
   lineVatMinor: number;
   lineGrossMinor: number;
   selectedAddOnValueIdsJson: string;
+  selectedAddOns?: PublicCartSelectedAddOn[];
+};
+
+export type PublicCartSelectedAddOn = {
+  valueId: string;
+  optionId: string;
+  optionLabel: string;
+  valueLabel: string;
+  priceDeltaMinor: number;
 };
 
 export type PublicCartSummary = {

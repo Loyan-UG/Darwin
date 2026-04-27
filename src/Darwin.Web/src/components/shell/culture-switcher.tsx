@@ -2,28 +2,76 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { getCultureDisplayName, getCultureShortCode } from "@/lib/culture";
-import { buildLocalizedPath, isPublicLocalizedPath, stripCulturePrefix } from "@/lib/locale-routing";
+import {
+  INFERRED_CULTURE_SEARCH_PARAM,
+  isPublicLocalizedPath,
+  stripCulturePrefix,
+} from "@/lib/locale-routing";
 import { cloneSearchParams } from "@/lib/query-params";
 
 type CultureSwitcherProps = {
   currentCulture: string;
   supportedCultures: string[];
+  languageAlternates?: Record<string, string>;
 };
+
+function toLanguageAlternateMap(values?: Record<string, string>) {
+  const alternates = new Map<string, string>();
+
+  for (const [culture, path] of Object.entries(values ?? {})) {
+    if (path) {
+      alternates.set(culture, path);
+    }
+  }
+
+  return alternates;
+}
+
+function readDocumentLanguageAlternates(supportedCultures: string[]) {
+  const alternates = new Map<string, string>();
+
+  for (const culture of supportedCultures) {
+    const link = document.querySelector<HTMLLinkElement>(
+      `link[rel="alternate"][hreflang="${culture}"]`,
+    );
+
+    if (!link?.href) {
+      continue;
+    }
+
+    try {
+      const url = new URL(link.href, window.location.origin);
+      if (url.origin === window.location.origin) {
+        alternates.set(culture, `${url.pathname}${url.search}${url.hash}`);
+      }
+    } catch {
+      // Ignore malformed alternate URLs and fall back to the current route.
+    }
+  }
+
+  return alternates;
+}
 
 function buildCultureHref(
   pathname: string,
   searchParams: URLSearchParams,
   culture: string,
+  languageAlternates: Map<string, string>,
 ) {
   const params = cloneSearchParams(searchParams);
+  params.delete(INFERRED_CULTURE_SEARCH_PARAM);
   const strippedPath = stripCulturePrefix(pathname).pathname;
+  const alternatePath = languageAlternates.get(culture);
+  const targetPath = alternatePath
+    ? stripCulturePrefix(alternatePath).pathname
+    : strippedPath;
 
-  if (isPublicLocalizedPath(strippedPath)) {
-    params.delete("culture");
+  if (isPublicLocalizedPath(targetPath)) {
+    params.set("culture", culture);
     const query = params.toString();
-    const localizedPath = buildLocalizedPath(strippedPath, culture);
-    return query ? `${localizedPath}?${query}` : localizedPath;
+    return query ? `${targetPath}?${query}` : targetPath;
   }
 
   params.set("culture", culture);
@@ -34,9 +82,22 @@ function buildCultureHref(
 export function CultureSwitcher({
   currentCulture,
   supportedCultures,
+  languageAlternates: serverLanguageAlternates,
 }: CultureSwitcherProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [languageAlternates, setLanguageAlternates] = useState<
+    Map<string, string>
+  >(() => toLanguageAlternateMap(serverLanguageAlternates));
+
+  useEffect(() => {
+    setLanguageAlternates(
+      new Map([
+        ...toLanguageAlternateMap(serverLanguageAlternates),
+        ...readDocumentLanguageAlternates(supportedCultures),
+      ]),
+    );
+  }, [pathname, serverLanguageAlternates, supportedCultures]);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -46,7 +107,12 @@ export function CultureSwitcher({
         return (
           <Link
             key={culture}
-            href={buildCultureHref(pathname, searchParams, culture)}
+            href={buildCultureHref(
+              pathname,
+              searchParams,
+              culture,
+              languageAlternates,
+            )}
             aria-label={getCultureDisplayName(culture)}
             title={getCultureDisplayName(culture)}
             className={

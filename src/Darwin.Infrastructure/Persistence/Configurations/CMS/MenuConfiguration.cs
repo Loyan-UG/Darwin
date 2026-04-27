@@ -73,6 +73,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
                    .IsRequired()
                    .HasMaxLength(256);
 
+            builder.Property(t => t.Url)
+                   .HasMaxLength(1024);
+
             // Each MenuItem can have at most one translation per culture
             builder.HasIndex(t => new { t.MenuItemId, t.Culture }).IsUnique();
         }

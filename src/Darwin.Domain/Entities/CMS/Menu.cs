@@ -61,6 +61,7 @@ namespace Darwin.Domain.Entities.CMS
         public Guid MenuItemId { get; set; }
     public string Culture { get; set; } = DomainDefaults.DefaultCulture;
         public string Label { get; set; } = string.Empty;
+        public string? Url { get; set; }
 
         // New-model alias.
         public string Title

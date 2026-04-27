@@ -6,9 +6,14 @@ import type { ShellModel } from "@/features/shell/types";
 type SiteShellProps = {
   children: ReactNode;
   model: ShellModel;
+  languageAlternates?: Record<string, string>;
 };
 
-export function SiteShell({ children, model }: SiteShellProps) {
+export function SiteShell({
+  children,
+  model,
+  languageAlternates,
+}: SiteShellProps) {
   return (
     <div className="relative flex min-h-screen flex-col">
       <div
@@ -20,6 +25,7 @@ export function SiteShell({ children, model }: SiteShellProps) {
         utilityLinks={model.utilityLinks}
         culture={model.culture}
         supportedCultures={model.supportedCultures}
+        languageAlternates={languageAlternates}
       />
       <main className="flex flex-1 flex-col">{children}</main>
       <SiteFooter groups={model.footerGroups} culture={model.culture} />

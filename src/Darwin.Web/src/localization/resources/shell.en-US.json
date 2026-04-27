@@ -4,6 +4,7 @@
     "footerTitle":  "Public storefront and member portal foundation",
     "footerDescription":  "Theme-isolated shell, CMS-backed navigation, and route scaffolding are now in place so later storefront and member slices can land without restarting the architecture.",
     "footerNavigationTitle":  "Service",
+    "primaryNavigationLabel":  "Primary navigation",
     "fallbackPrimaryNavigation":  [
                                       {
                                           "label":  "Home",
@@ -58,19 +59,19 @@
                              "links":  [
                                            {
                                                "label":  "Legal notice",
-                                               "href":  "/cms/impressum"
+                                               "href":  "/cms/legal-notice"
                                            },
                                            {
                                                "label":  "Privacy",
-                                               "href":  "/cms/datenschutz"
+                                               "href":  "/cms/privacy-policy"
                                            },
                                            {
                                                "label":  "Terms",
-                                               "href":  "/cms/agb"
+                                               "href":  "/cms/terms-and-conditions"
                                            },
                                            {
                                                "label":  "Cancellation",
-                                               "href":  "/cms/widerruf"
+                                               "href":  "/cms/cancellation-policy"
                                            }
                                        ]
                          },
@@ -111,7 +112,7 @@
                                            },
                                            {
                                                "label":  "Contact",
-                                               "href":  "/cms/kontakt"
+                                               "href":  "/cms/contact"
                                            }
                                        ]
                          },

@@ -53,6 +53,10 @@ namespace Darwin.Application.CMS.Validators
             {
                 tr.RuleFor(t => t.Culture).NotEmpty().MaximumLength(16);
                 tr.RuleFor(t => t.Label).NotEmpty().MaximumLength(256);
+                tr.RuleFor(t => t.Url)
+                    .MaximumLength(1024)
+                    .Must(url => string.IsNullOrWhiteSpace(url) || BeSupportedMenuUrl(url))
+                    .WithMessage(localizer["MenuUrlMustBeSupported"]);
             });
         }
 

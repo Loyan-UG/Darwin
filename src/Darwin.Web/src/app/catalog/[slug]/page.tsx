@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { ProductDetailPage } from "@/components/catalog/product-detail-page";
 import {
   readCatalogMediaState,
@@ -10,21 +11,60 @@ import { getProductSeoMetadata } from "@/features/catalog/server/get-product-seo
 import {
   readSearchTextParam,
 } from "@/features/checkout/helpers";
-import { getRequestCulture } from "@/lib/request-culture";
+import {
+  INFERRED_CULTURE_SEARCH_PARAM,
+  localizeHref,
+} from "@/lib/locale-routing";
+import { getRequestCulture, getSupportedCultures } from "@/lib/request-culture";
+
+type ProductSearchParams = {
+  category?: string;
+  visibleQuery?: string;
+  visibleState?: string;
+  visibleSort?: string;
+  mediaState?: string;
+  savingsBand?: string;
+};
 
 type ProductDetailRouteProps = {
   params: Promise<{
     slug: string;
   }>;
-  searchParams?: Promise<{
-    category?: string;
-    visibleQuery?: string;
-    visibleState?: string;
-    visibleSort?: string;
-    mediaState?: string;
-    savingsBand?: string;
-  }>;
+  searchParams?: Promise<ProductSearchParams>;
 };
+
+function appendSearchParams(
+  href: string,
+  searchParams: ProductSearchParams | undefined,
+  extraParams?: Record<string, string | undefined>,
+) {
+  if (!searchParams) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(extraParams ?? {})) {
+      if (value) {
+        params.set(key, value);
+      }
+    }
+
+    const query = params.toString();
+    return query ? `${href}?${query}` : href;
+  }
+
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+  for (const [key, value] of Object.entries(extraParams ?? {})) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  const query = params.toString();
+  return query ? `${href}?${query}` : href;
+}
 
 export async function generateMetadata({ params }: ProductDetailRouteProps) {
   const culture = await getRequestCulture();
@@ -70,11 +110,50 @@ export default async function ProductDetailRoute({
     reviewProductsResult,
     reviewProducts,
   } = detailContext;
+  const product = productResult.data;
+
+  if (!product && productResult.status === "not-found") {
+    for (const alternateCulture of getSupportedCultures()) {
+      if (alternateCulture === culture) {
+        continue;
+      }
+
+      const alternateContext = await getCatalogDetailPageContext(
+        alternateCulture,
+        slug,
+        category,
+        visibleQuery,
+        visibleState,
+        visibleSort,
+        mediaState,
+        savingsBand,
+      );
+
+      const alternateProduct = alternateContext.detailContext.productResult.data;
+      if (alternateProduct) {
+        redirect(
+          appendSearchParams(`/catalog/${slug}`, resolvedSearchParams, {
+            culture: alternateCulture,
+            [INFERRED_CULTURE_SEARCH_PARAM]: "1",
+          }),
+        );
+      }
+    }
+  }
+
+  if (product?.slug && product.slug !== slug) {
+    redirect(
+      appendSearchParams(
+        localizeHref(`/catalog/${product.slug}`, culture),
+        resolvedSearchParams,
+      ),
+    );
+  }
 
   return (
     <ProductDetailPage
       culture={culture}
-      product={productResult.data}
+      product={product}
       categories={categoriesResult.data?.items ?? []}
       primaryCategory={activeCategory}
       reviewWindow={{

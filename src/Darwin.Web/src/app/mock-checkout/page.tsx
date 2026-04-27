@@ -99,10 +99,10 @@ export default async function MockCheckoutRoute({
   return (
     <MockCheckoutPage
       culture={culture}
-      orderId={orderId || "missing-order-id"}
-      paymentId={paymentId || "missing-payment-id"}
+      orderId={orderId || copy.mockCheckoutMissingOrderId}
+      paymentId={paymentId || copy.mockCheckoutMissingPaymentId}
       provider={provider}
-      sessionToken={sessionToken || "missing-session-token"}
+      sessionToken={sessionToken || copy.mockCheckoutMissingSessionToken}
       returnUrl={tryParseAbsoluteUrl(returnUrl)?.toString() ?? null}
       cancelUrl={tryParseAbsoluteUrl(cancelUrl)?.toString() ?? null}
       successUrl={successUrl}

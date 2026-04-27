@@ -86,9 +86,16 @@ function getTimelineValue(
   entry: LoyaltyTimelineEntry,
   copy: ReturnType<typeof getMemberResource>,
 ) {
-  if (entry.pointsSpent) return `-${entry.pointsSpent} pts`;
+  if (entry.pointsSpent) {
+    return formatResource(copy.pointsValueLabel, {
+      value: `-${entry.pointsSpent}`,
+    });
+  }
+
   if (typeof entry.pointsDelta === "number") {
-    return `${entry.pointsDelta >= 0 ? "+" : ""}${entry.pointsDelta} pts`;
+    return formatResource(copy.pointsValueLabel, {
+      value: `${entry.pointsDelta >= 0 ? "+" : ""}${entry.pointsDelta}`,
+    });
   }
 
   return copy.activityFallback;
@@ -392,7 +399,7 @@ export function LoyaltyBusinessPage({
                               <label key={reward.loyaltyRewardTierId} className="rounded-[1.25rem] border border-[var(--color-border-soft)] bg-white/70 px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                                 <input type="checkbox" name="selectedRewardTierIds" value={reward.loyaltyRewardTierId} className="mr-3" />
                                 <span className="font-semibold text-[var(--color-text-primary)]">{reward.name}</span>
-                                <p>{reward.requiredPoints} pts</p>
+                                <p>{formatResource(copy.pointsValueLabel, { value: reward.requiredPoints })}</p>
                                 {reward.description ? <p>{reward.description}</p> : null}
                               </label>
                             ))}
@@ -408,7 +415,13 @@ export function LoyaltyBusinessPage({
                           {qrCodeDataUrl ? (
                             <div className="rounded-[1.5rem] bg-white/85 p-4">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={qrCodeDataUrl} alt={`QR code for ${preparedScanSession.mode.toLowerCase()} scan token`} className="mx-auto h-auto w-full max-w-64 rounded-[1rem]" />
+                              <img
+                                src={qrCodeDataUrl}
+                                alt={formatResource(copy.scanTokenQrAlt, {
+                                  mode: preparedScanSession.mode,
+                                })}
+                                className="mx-auto h-auto w-full max-w-64 rounded-[1rem]"
+                              />
                             </div>
                           ) : null}
                           <div>
@@ -420,7 +433,7 @@ export function LoyaltyBusinessPage({
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{copy.scanTokenLabel}</p>
                             <code className="mt-2 block break-all text-sm font-semibold text-[var(--color-text-primary)]">{preparedScanSession.scanSessionToken}</code>
                           </div>
-                          {preparedScanSession.selectedRewards.length > 0 ? <div><p className="font-semibold text-[var(--color-text-primary)]">{copy.selectedRewardsTitle}</p><div className="mt-2 flex flex-col gap-2">{preparedScanSession.selectedRewards.map((reward) => <div key={reward.loyaltyRewardTierId} className="rounded-[1rem] bg-white/70 px-3 py-3"><p className="font-semibold text-[var(--color-text-primary)]">{reward.name}</p><p>{reward.requiredPoints} pts</p></div>)}</div></div> : null}
+                          {preparedScanSession.selectedRewards.length > 0 ? <div><p className="font-semibold text-[var(--color-text-primary)]">{copy.selectedRewardsTitle}</p><div className="mt-2 flex flex-col gap-2">{preparedScanSession.selectedRewards.map((reward) => <div key={reward.loyaltyRewardTierId} className="rounded-[1rem] bg-white/70 px-3 py-3"><p className="font-semibold text-[var(--color-text-primary)]">{reward.name}</p><p>{formatResource(copy.pointsValueLabel, { value: reward.requiredPoints })}</p></div>)}</div></div> : null}
                           <p>{copy.scanTokenNote}</p>
                         </div>
                       ) : <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noActiveScanTokenMessage}</p>}
@@ -439,7 +452,7 @@ export function LoyaltyBusinessPage({
                               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{reward.name}</h3>
                               {reward.description ? <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">{reward.description}</p> : null}
                             </div>
-                            <span className="rounded-full bg-[var(--color-surface-panel)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">{reward.requiredPoints} pts</span>
+                            <span className="rounded-full bg-[var(--color-surface-panel)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">{formatResource(copy.pointsValueLabel, { value: reward.requiredPoints })}</span>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">
                             <span>{reward.isSelectable ? copy.redeemableLabel : copy.lockedLabel}</span>
@@ -636,7 +649,7 @@ export function LoyaltyBusinessPage({
                 />
                 <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.recentTransactionsTitle}</p>
-                  {dashboard.recentTransactions.length ? <div className="mt-5 flex flex-col gap-4">{dashboard.recentTransactions.map((transaction) => <article key={`${transaction.occurredAtUtc}-${transaction.type}-${transaction.delta}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{transaction.type}</p><p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{formatDateTime(transaction.occurredAtUtc, culture)}</p>{transaction.notes ? <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{transaction.notes}</p> : null}</div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{transaction.delta >= 0 ? "+" : ""}{transaction.delta} pts</p></div></article>)}</div> : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noRecentTransactionsMessage}</p>}
+                  {dashboard.recentTransactions.length ? <div className="mt-5 flex flex-col gap-4">{dashboard.recentTransactions.map((transaction) => <article key={`${transaction.occurredAtUtc}-${transaction.type}-${transaction.delta}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{transaction.type}</p><p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{formatDateTime(transaction.occurredAtUtc, culture)}</p>{transaction.notes ? <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{transaction.notes}</p> : null}</div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{formatResource(copy.pointsValueLabel, { value: `${transaction.delta >= 0 ? "+" : ""}${transaction.delta}` })}</p></div></article>)}</div> : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noRecentTransactionsMessage}</p>}
                 </aside>
                 {promotions ? <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.feedDiagnosticsTitle}</p><div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]"><div className="flex items-center justify-between gap-4"><span>{copy.initialCandidatesLabel}</span><span>{promotions.diagnostics.initialCandidates}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.suppressedLabel}</span><span>{promotions.diagnostics.suppressedByFrequency}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.deduplicatedLabel}</span><span>{promotions.diagnostics.deduplicated}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.trimmedByCapLabel}</span><span>{promotions.diagnostics.trimmedByCap}</span></div></div></aside> : null}
               </div>

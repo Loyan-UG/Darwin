@@ -132,4 +132,19 @@ public sealed class PublicCartItemRow
 
     /// <summary>Gets or sets the serialized add-on selection key.</summary>
     public string SelectedAddOnValueIdsJson { get; set; } = "[]";
+
+    /// <summary>Gets or sets localized selected add-on labels for display.</summary>
+    public IReadOnlyList<PublicCartSelectedAddOn> SelectedAddOns { get; set; } = Array.Empty<PublicCartSelectedAddOn>();
+}
+
+/// <summary>
+/// Localized selected add-on display row for a cart line.
+/// </summary>
+public sealed class PublicCartSelectedAddOn
+{
+    public Guid ValueId { get; set; }
+    public Guid OptionId { get; set; }
+    public string OptionLabel { get; set; } = string.Empty;
+    public string ValueLabel { get; set; } = string.Empty;
+    public long PriceDeltaMinor { get; set; }
 }

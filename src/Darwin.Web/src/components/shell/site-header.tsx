@@ -9,6 +9,7 @@ type SiteHeaderProps = {
   utilityLinks: ShellLink[];
   culture: string;
   supportedCultures: string[];
+  languageAlternates?: Record<string, string>;
 };
 
 function getUtilityIcon(href: string) {
@@ -44,6 +45,7 @@ export function SiteHeader({
   utilityLinks,
   culture,
   supportedCultures,
+  languageAlternates,
 }: SiteHeaderProps) {
   const copy = getShellCopy(culture);
 
@@ -70,7 +72,7 @@ export function SiteHeader({
             </Link>
           </div>
 
-          <nav aria-label="Primary" className="flex flex-wrap items-center gap-2">
+          <nav aria-label={copy.primaryNavigationLabel} className="flex flex-wrap items-center gap-2">
             {navigation.map((link) => (
               <Link
                 key={link.href}
@@ -86,6 +88,7 @@ export function SiteHeader({
             <CultureSwitcher
               currentCulture={culture}
               supportedCultures={supportedCultures}
+              languageAlternates={languageAlternates}
             />
             {utilityLinks.map((link) => (
               <Link

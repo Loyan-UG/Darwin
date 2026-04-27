@@ -420,7 +420,7 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
                     href={localizeHref("/catalog", culture)}
                     className="hidden rounded-full border border-[rgba(53,92,38,0.12)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] sm:inline-flex"
                   >
-                    Browse all
+                    {shared.catalogBrowseAllCta}
                   </Link>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">

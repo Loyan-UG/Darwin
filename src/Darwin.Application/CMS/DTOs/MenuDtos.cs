@@ -24,7 +24,7 @@ namespace Darwin.Application.CMS.DTOs
     }
 
     /// <summary>
-    /// Menu item DTO with per-culture translations for label.
+    /// Menu item DTO with per-culture translations for label and optional URL override.
     /// </summary>
     public sealed class MenuItemDto
     {
@@ -37,12 +37,13 @@ namespace Darwin.Application.CMS.DTOs
     }
 
     /// <summary>
-    /// Localized label for a menu item.
+    /// Localized label and optional URL override for a menu item.
     /// </summary>
     public sealed class MenuItemTranslationDto
     {
         public string Culture { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCultureDefault;
         public string Label { get; set; } = string.Empty;
+        public string? Url { get; set; }
     }
 
     /// <summary>

@@ -19,7 +19,7 @@ export const getCmsSeoMetadata = createCachedObservedSeoMetadataLoader({
     const { detailContext } = await getCmsDetailRouteContext(culture, slug);
     const { pageResult } = detailContext;
     const page = pageResult.data;
-    const canonicalPath = `/cms/${encodeURIComponent(slug)}`;
+    const requestedPath = `/cms/${encodeURIComponent(slug)}`;
 
     if (!page) {
       return {
@@ -30,10 +30,10 @@ export const getCmsSeoMetadata = createCachedObservedSeoMetadataLoader({
               ? shared.cmsPageNotFoundTitle
               : shared.cmsPageUnavailableTitle,
           description: shared.cmsFallbackMetaDescription,
-          path: canonicalPath,
+          path: requestedPath,
           noIndex: true,
         }),
-        canonicalPath,
+        canonicalPath: requestedPath,
         noIndex: true,
         languageAlternates: {},
       };
@@ -41,6 +41,7 @@ export const getCmsSeoMetadata = createCachedObservedSeoMetadataLoader({
 
     const alternates = await getCmsLanguageAlternatesMap();
     const languageAlternates = alternates.get(page.id) ?? {};
+    const canonicalPath = `/cms/${encodeURIComponent(page.slug)}`;
     const noIndex = pageResult.status !== "ok";
 
     return {

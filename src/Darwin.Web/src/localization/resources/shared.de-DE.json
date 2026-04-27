@@ -350,6 +350,7 @@
   "cmsPaginationMessage": "Bewege dich durch die veroefentlichten CMS-Ergebnisfenster und behalte dabei die aktuelle CMS-Suche und Browse-Linse bei.",
   "cmsFirstPageCta": "Erste Seite",
   "cmsLastPageCta": "Letzte Seite",
+  "catalogBrowseAllCta": "Alle durchsuchen",
   "openLinkCta": "Oeffnen",
   "statusOkLabel": "Stabil",
   "statusWarningLabel": "Degradiert",

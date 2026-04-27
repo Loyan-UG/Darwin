@@ -1108,6 +1108,18 @@ export function CheckoutPage({
                                 quantity: item.quantity,
                               })}
                             </p>
+                            {(item.selectedAddOns ?? []).length > 0 ? (
+                              <div className="mt-2 space-y-1 text-xs text-[var(--color-text-secondary)]">
+                                {(item.selectedAddOns ?? []).map((addOn) => (
+                                  <p key={addOn.valueId}>
+                                    {addOn.optionLabel}: {addOn.valueLabel}
+                                    {addOn.priceDeltaMinor !== 0
+                                      ? ` (+${formatMoney(addOn.priceDeltaMinor, cart.currency, culture)})`
+                                      : ""}
+                                  </p>
+                                ))}
+                              </div>
+                            ) : null}
                           </div>
                           <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                             {formatMoney(item.lineGrossMinor, cart.currency, culture)}

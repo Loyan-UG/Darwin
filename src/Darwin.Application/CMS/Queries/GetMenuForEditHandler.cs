@@ -44,7 +44,8 @@ namespace Darwin.Application.CMS.Queries
                                 .Select(t => new MenuItemTranslationDto
                                 {
                                     Culture = t.Culture,
-                                    Label = t.Label
+                                    Label = t.Label,
+                                    Url = t.Url
                                 }).ToList()
                         }).ToList()
                 })

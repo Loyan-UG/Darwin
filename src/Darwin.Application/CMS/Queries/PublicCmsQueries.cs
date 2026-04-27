@@ -169,7 +169,9 @@ public sealed class GetPublicMenuByNameHandler
                         Label = item.Translations.Where(t => t.Culture == culture).Select(t => t.Label).FirstOrDefault()
                             ?? item.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
                             ?? item.Title,
-                        Url = item.Url,
+                        Url = item.Translations.Where(t => t.Culture == culture).Select(t => t.Url).FirstOrDefault()
+                            ?? item.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Url).FirstOrDefault()
+                            ?? item.Url,
                         SortOrder = item.SortOrder
                     })
                     .ToList()

@@ -97,6 +97,7 @@ namespace Darwin.Application.CMS.Commands
                 }
 
                 translation.Label = tr.Label.Trim();
+                translation.Url = string.IsNullOrWhiteSpace(tr.Url) ? null : tr.Url.Trim();
                 translation.IsDeleted = false;
             }
         }

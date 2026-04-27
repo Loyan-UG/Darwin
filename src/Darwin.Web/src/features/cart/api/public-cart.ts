@@ -64,9 +64,9 @@ async function fetchCartJson<T>(
   }
 }
 
-export async function getPublicCart(anonymousId: string) {
+export async function getPublicCart(anonymousId: string, culture?: string) {
   return fetchCartJson<PublicCartSummary>(
-    `/api/v1/public/cart?${serializeQueryParams({ anonymousId })}`,
+    `/api/v1/public/cart?${serializeQueryParams({ anonymousId, culture })}`,
   );
 }
 

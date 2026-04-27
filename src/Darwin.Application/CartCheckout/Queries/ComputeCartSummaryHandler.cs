@@ -1,6 +1,7 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.Pricing;
+using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Pricing;
@@ -38,8 +39,13 @@ namespace Darwin.Application.CartCheckout.Queries
             _localizer = localizer;
         }
 
-        public async Task<CartSummaryDto> HandleAsync(Guid cartId, CancellationToken ct = default)
+        public Task<CartSummaryDto> HandleAsync(Guid cartId, CancellationToken ct = default)
+            => HandleAsync(cartId, culture: null, ct);
+
+        public async Task<CartSummaryDto> HandleAsync(Guid cartId, string? culture = null, CancellationToken ct = default)
         {
+            var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
+            var defaultCulture = SiteSettingDto.DefaultCultureDefault;
             var cart = await _db.Set<Cart>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == cartId && !c.IsDeleted, ct)
@@ -126,12 +132,26 @@ namespace Darwin.Application.CartCheckout.Queries
             }
 
             var addOnValues = allSelectedAddOnValueIds.Count == 0
-                ? new Dictionary<Guid, long>()
+                ? new Dictionary<Guid, CartSelectedAddOnDto>()
                 : await _db.Set<AddOnOptionValue>()
                     .AsNoTracking()
                     .Where(v => allSelectedAddOnValueIds.Contains(v.Id) && !v.IsDeleted && v.IsActive)
-                    .Select(v => new { v.Id, v.PriceDeltaMinor })
-                    .ToDictionaryAsync(v => v.Id, v => v.PriceDeltaMinor, ct);
+                    .Select(v => new CartSelectedAddOnDto
+                    {
+                        ValueId = v.Id,
+                        OptionId = v.AddOnOptionId,
+                        PriceDeltaMinor = v.PriceDeltaMinor,
+                        ValueLabel = v.Translations.Where(t => t.Culture == normalizedCulture).Select(t => t.Label).FirstOrDefault()
+                            ?? v.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
+                            ?? v.Label,
+                        OptionLabel = _db.Set<AddOnOption>()
+                            .Where(o => o.Id == v.AddOnOptionId && !o.IsDeleted)
+                            .Select(o => o.Translations.Where(t => t.Culture == normalizedCulture).Select(t => t.Label).FirstOrDefault()
+                                ?? o.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
+                                ?? o.Label)
+                            .FirstOrDefault() ?? string.Empty
+                    })
+                    .ToDictionaryAsync(v => v.ValueId, v => v, ct);
 
             long subtotalNet = 0;
             long vatTotal = 0;
@@ -143,11 +163,18 @@ namespace Darwin.Application.CartCheckout.Queries
                 // Sum add-on deltas for this line
                 long addOnDelta = 0;
                 string addOnJson = line.SelectedAddOnValueIdsJson ?? "[]";
+                var selectedAddOns = new List<CartSelectedAddOnDto>();
                 try
                 {
                     var ids = JsonSerializer.Deserialize<List<Guid>>(addOnJson) ?? new();
                     foreach (var id in ids)
-                        if (addOnValues.TryGetValue(id, out var delta)) addOnDelta += delta;
+                    {
+                        if (addOnValues.TryGetValue(id, out var addOn))
+                        {
+                            addOnDelta += addOn.PriceDeltaMinor;
+                            selectedAddOns.Add(addOn);
+                        }
+                    }
                 }
                 catch { /* ignore, already defensive above */ }
 
@@ -175,7 +202,8 @@ namespace Darwin.Application.CartCheckout.Queries
                     LineNetMinor = lineNet,
                     LineVatMinor = lineVat,
                     LineGrossMinor = lineGross,
-                    SelectedAddOnValueIdsJson = addOnJson
+                    SelectedAddOnValueIdsJson = addOnJson,
+                    SelectedAddOns = selectedAddOns
                 });
 
                 subtotalNet += lineNet;

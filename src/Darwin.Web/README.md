@@ -397,9 +397,9 @@ The repository has moved beyond the raw front-office starting line:
 
 If the API or configured CMS menu is unavailable, the shell falls back to built-in navigation links so local development and builds still succeed.
 That fallback is intentionally visible in the UI and should be treated as a degraded state, not as the normal operating path.
-If `culture=<supported-culture>` is present in the query string, middleware persists it into the configured culture cookie and redirects back to the clean URL.
-Public Home/CMS/catalog routes now also support locale-prefixed URLs such as `/en-US/catalog` through middleware rewrite. The sitemap still emits default-culture canonical URLs only, because true per-language detail-page inventory needs a backend slug-mapping contract before alternates can be generated safely across all CMS/product pages.
-For the public index-level routes that already have unambiguous paths (`/`, `/cms`, `/catalog`), sitemap now emits the crawlable locale-prefixed variants as well. Detail-page sitemap inventory still stays on the default-culture canonical set until backend slug mapping exists.
+If `culture=<supported-culture>` is present in the query string, the Next.js proxy persists it into the configured culture cookie and redirects back to the clean URL.
+Public Home/CMS/catalog routes also accept legacy locale-prefixed URLs such as `/en-US/catalog`; the proxy canonicalizes them back to the clean public path while persisting the requested culture.
+Sitemap output uses clean canonical paths and emits `hreflang` alternates from backend-provided localized CMS and catalog slugs where available.
 
 ## Recommended Growth Structure
 

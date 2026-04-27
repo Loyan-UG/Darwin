@@ -4,6 +4,7 @@
     "footerTitle":  "Grundlage fuer den oeffentlichen Storefront und das Member-Portal",
     "footerDescription":  "Theme-isolierte Shell, CMS-gestuetzte Navigation und Route-Struktur stehen bereit, damit weitere Storefront- und Member-Slices ohne Architektur-Neustart landen koennen.",
     "footerNavigationTitle":  "Service",
+    "primaryNavigationLabel":  "Hauptnavigation",
     "fallbackPrimaryNavigation":  [
                                       {
                                           "label":  "Start",

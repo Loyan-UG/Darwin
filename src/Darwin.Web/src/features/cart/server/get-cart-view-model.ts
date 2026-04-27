@@ -32,11 +32,12 @@ const getCachedCartViewModel = createCachedObservedLoader({
   area: "cart",
   operation: "load-view-model",
   thresholdMs: 250,
-  getContext: (anonymousId: string | null) => ({
+  getContext: (anonymousId: string | null, culture: string) => ({
     anonymousCartState: anonymousId ? "present" : "missing",
+    culture,
   }),
   getSuccessContext: summarizeCartViewModelHealth,
-  load: async (anonymousId: string | null): Promise<CartViewModel> => {
+  load: async (anonymousId: string | null, culture: string): Promise<CartViewModel> => {
     if (!anonymousId) {
       return {
         anonymousId: null,
@@ -46,7 +47,7 @@ const getCachedCartViewModel = createCachedObservedLoader({
     }
 
     const [cartResult, displaySnapshots] = await Promise.all([
-      getPublicCart(anonymousId),
+      getPublicCart(anonymousId, culture),
       readCartDisplaySnapshots(),
     ]);
 
@@ -83,7 +84,7 @@ const getCachedCartViewModel = createCachedObservedLoader({
   },
 });
 
-export async function getCartViewModel(): Promise<CartViewModel> {
+export async function getCartViewModel(culture: string): Promise<CartViewModel> {
   const anonymousId = await getAnonymousCartId();
-  return getCachedCartViewModel(anonymousId);
+  return getCachedCartViewModel(anonymousId, culture);
 }

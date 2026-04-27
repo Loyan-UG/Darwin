@@ -350,6 +350,7 @@
   "cmsPaginationMessage": "Move across the published CMS result windows while preserving the current CMS search and browse lens.",
   "cmsFirstPageCta": "First page",
   "cmsLastPageCta": "Last page",
+  "catalogBrowseAllCta": "Browse all",
   "openLinkCta": "Open",
   "statusOkLabel": "Healthy",
   "statusWarningLabel": "Degraded",

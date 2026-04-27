@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/shell/site-shell";
 import { getShellModel } from "@/features/shell/get-shell-model";
+import { getRequestLanguageAlternates } from "@/features/shell/server/get-request-language-alternates";
 import { getSharedResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 import { getSiteMetadataBase } from "@/lib/seo";
@@ -27,7 +28,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const culture = await getRequestCulture();
-  const shellModel = await getShellModel(culture);
+  const [shellModel, languageAlternates] = await Promise.all([
+    getShellModel(culture),
+    getRequestLanguageAlternates(),
+  ]);
   const runtimeConfig = getSiteRuntimeConfig();
 
   return (
@@ -38,7 +42,9 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full bg-[var(--color-surface-canvas)] text-[var(--color-text-primary)]">
-        <SiteShell model={shellModel}>{children}</SiteShell>
+        <SiteShell model={shellModel} languageAlternates={languageAlternates}>
+          {children}
+        </SiteShell>
       </body>
     </html>
   );
