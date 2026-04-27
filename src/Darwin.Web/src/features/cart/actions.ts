@@ -45,6 +45,12 @@ export async function addToCartAction(formData: FormData) {
   const productImageUrl = String(formData.get("productImageUrl") ?? "").trim();
   const productImageAlt = String(formData.get("productImageAlt") ?? "").trim();
   const productSku = String(formData.get("productSku") ?? "").trim();
+  const selectedAddOnValueIds = Array.from(formData.entries())
+    .filter(([key]) =>
+      key === "selectedAddOnValueIds" ||
+      key.startsWith("selectedAddOnValueIds:"))
+    .map(([, value]) => String(value).trim())
+    .filter(Boolean);
 
   if (!variantId || !Number.isFinite(quantity) || quantity <= 0) {
     redirect(
@@ -61,6 +67,7 @@ export async function addToCartAction(formData: FormData) {
     anonymousId,
     variantId,
     quantity,
+    selectedAddOnValueIds,
   });
 
   if (!result.data) {

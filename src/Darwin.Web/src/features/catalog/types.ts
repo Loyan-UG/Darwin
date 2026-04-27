@@ -49,6 +49,31 @@ export type PublicProductMedia = {
   sortOrder: number;
 };
 
+export type PublicProductAddOnValue = {
+  id: string;
+  label: string;
+  priceDeltaMinor: number;
+  hint?: string | null;
+  sortOrder: number;
+};
+
+export type PublicProductAddOnOption = {
+  id: string;
+  label: string;
+  sortOrder: number;
+  values: PublicProductAddOnValue[];
+};
+
+export type PublicProductAddOnGroup = {
+  id: string;
+  name: string;
+  currency: string;
+  selectionMode: string;
+  minSelections: number;
+  maxSelections?: number | null;
+  options: PublicProductAddOnOption[];
+};
+
 export type PublicProductDetail = PublicProductSummary & {
   fullDescriptionHtml?: string | null;
   metaTitle?: string | null;
@@ -56,6 +81,7 @@ export type PublicProductDetail = PublicProductSummary & {
   primaryCategoryId?: string | null;
   variants: PublicProductVariant[];
   media: PublicProductMedia[];
+  applicableAddOns?: PublicProductAddOnGroup[];
 };
 
 export type CatalogVisibleSort =

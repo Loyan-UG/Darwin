@@ -19,6 +19,7 @@ public sealed class PublicCatalogController : ApiControllerBase
     private readonly GetPublishedCategoriesHandler _getPublishedCategoriesHandler;
     private readonly GetPublishedProductsPageHandler _getPublishedProductsPageHandler;
     private readonly GetPublishedProductBySlugHandler _getPublishedProductBySlugHandler;
+    private readonly GetApplicableAddOnGroupsForProductHandler _getApplicableAddOnGroupsForProductHandler;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     /// <summary>
@@ -28,11 +29,13 @@ public sealed class PublicCatalogController : ApiControllerBase
         GetPublishedCategoriesHandler getPublishedCategoriesHandler,
         GetPublishedProductsPageHandler getPublishedProductsPageHandler,
         GetPublishedProductBySlugHandler getPublishedProductBySlugHandler,
+        GetApplicableAddOnGroupsForProductHandler getApplicableAddOnGroupsForProductHandler,
         IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getPublishedCategoriesHandler = getPublishedCategoriesHandler ?? throw new ArgumentNullException(nameof(getPublishedCategoriesHandler));
         _getPublishedProductsPageHandler = getPublishedProductsPageHandler ?? throw new ArgumentNullException(nameof(getPublishedProductsPageHandler));
         _getPublishedProductBySlugHandler = getPublishedProductBySlugHandler ?? throw new ArgumentNullException(nameof(getPublishedProductBySlugHandler));
+        _getApplicableAddOnGroupsForProductHandler = getApplicableAddOnGroupsForProductHandler ?? throw new ArgumentNullException(nameof(getApplicableAddOnGroupsForProductHandler));
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
@@ -128,13 +131,21 @@ public sealed class PublicCatalogController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProductBySlugAsync([FromRoute] string slug, [FromQuery] string? culture, CancellationToken ct = default)
     {
+        var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var dto = await _getPublishedProductBySlugHandler
-            .HandleAsync(slug, string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim(), ct)
+            .HandleAsync(slug, normalizedCulture, ct)
             .ConfigureAwait(false);
 
-        return dto is null
-            ? NotFoundProblem(_validationLocalizer["ProductNotFound"])
-            : Ok(MapProductDetail(dto));
+        if (dto is null)
+        {
+            return NotFoundProblem(_validationLocalizer["ProductNotFound"]);
+        }
+
+        var addOns = await _getApplicableAddOnGroupsForProductHandler
+            .HandleAsync(dto.Id, variantId: null, normalizedCulture, ct)
+            .ConfigureAwait(false);
+
+        return Ok(MapProductDetail(dto, addOns));
     }
 
     private static PublicCategorySummary MapCategory(PublicCategorySummaryDto dto)
@@ -161,7 +172,9 @@ public sealed class PublicCatalogController : ApiControllerBase
             PrimaryImageUrl = dto.PrimaryImageUrl
         };
 
-    private static PublicProductDetail MapProductDetail(PublicProductDetailDto dto)
+    private static PublicProductDetail MapProductDetail(
+        PublicProductDetailDto dto,
+        IReadOnlyList<ApplicableAddOnGroupDto> addOns)
         => new()
         {
             Id = dto.Id,
@@ -194,6 +207,29 @@ public sealed class PublicCatalogController : ApiControllerBase
                 Title = media.Title,
                 Role = media.Role,
                 SortOrder = media.SortOrder
+            }).ToList(),
+            ApplicableAddOns = addOns.Select(group => new PublicProductAddOnGroup
+            {
+                Id = group.Id,
+                Name = group.Name,
+                Currency = group.Currency,
+                SelectionMode = group.SelectionMode.ToString(),
+                MinSelections = group.MinSelections,
+                MaxSelections = group.MaxSelections,
+                Options = group.Options.Select(option => new PublicProductAddOnOption
+                {
+                    Id = option.Id,
+                    Label = option.Label,
+                    SortOrder = option.SortOrder,
+                    Values = option.Values.Select(value => new PublicProductAddOnValue
+                    {
+                        Id = value.Id,
+                        Label = value.Label,
+                        PriceDeltaMinor = value.PriceDeltaMinor,
+                        Hint = value.Hint,
+                        SortOrder = value.SortOrder
+                    }).ToList()
+                }).ToList()
             }).ToList()
         };
 }

@@ -135,6 +135,21 @@ export function ProductDetailPage({
     ? buildAppQueryPath("/catalog", { category: primaryCategory.slug })
     : "/catalog";
   const primaryVariant = product.variants[0] ?? null;
+  const addToCartFormId = primaryVariant ? `add-to-cart-${primaryVariant.id}` : undefined;
+  const applicableAddOns = product.applicableAddOns ?? [];
+  const addOnOptionCount = applicableAddOns.reduce(
+    (count, group) => count + group.options.length,
+    0,
+  );
+  const addOnValueCount = applicableAddOns.reduce(
+    (count, group) =>
+      count +
+      group.options.reduce(
+        (optionCount, option) => optionCount + option.values.length,
+        0,
+      ),
+    0,
+  );
   const priceMinor = primaryVariant?.basePriceNetMinor ?? product.priceMinor;
   const hasOffer =
     typeof product.compareAtPriceMinor === "number" &&
@@ -219,6 +234,7 @@ export function ProductDetailPage({
   const sectionLinks = [
     { href: "#product-overview", label: copy.productRouteSummaryTitle },
     { href: "#product-readiness", label: copy.productReadinessTitle },
+    { href: "#product-add-ons", label: copy.productAddOnsTitle },
     { href: "#product-review", label: copy.productReviewQueueTitle },
     { href: "#product-composition", label: copy.productCrossSurfaceGridTitle },
     { href: "#product-related", label: copy.relatedProductsTitle },
@@ -708,6 +724,137 @@ export function ProductDetailPage({
             )}
           </div>
 
+          <div
+            id="product-add-ons"
+            className="mt-8 scroll-mt-28 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-5"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                  {copy.productAddOnsTitle}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  {applicableAddOns.length > 0
+                    ? formatResource(copy.productAddOnsMessage, {
+                        groupCount: applicableAddOns.length,
+                        optionCount: addOnOptionCount,
+                        valueCount: addOnValueCount,
+                      })
+                    : copy.productAddOnsEmptyMessage}
+                </p>
+              </div>
+            </div>
+
+            {applicableAddOns.length > 0 ? (
+              <div className="mt-5 grid gap-4">
+                {applicableAddOns.map((group) => {
+                  const selectionLabel =
+                    group.selectionMode.toLowerCase() === "multiple"
+                      ? copy.productAddOnsMultipleSelection
+                      : copy.productAddOnsSingleSelection;
+                  const selectionInputType =
+                    group.selectionMode.toLowerCase() === "multiple"
+                      ? "checkbox"
+                      : "radio";
+                  const selectionInputName =
+                    selectionInputType === "radio"
+                      ? `selectedAddOnValueIds:${group.id}`
+                      : "selectedAddOnValueIds";
+
+                  return (
+                    <article
+                      key={group.id}
+                      className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                            {group.name}
+                          </h2>
+                          <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            {formatResource(copy.productAddOnsRuleMessage, {
+                              selectionMode: selectionLabel,
+                              minSelections: group.minSelections,
+                              maxSelections:
+                                group.maxSelections ?? copy.productAddOnsNoMaximum,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-3">
+                        {selectionInputType === "radio" && group.minSelections <= 0 ? (
+                          <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                            <input
+                              form={addToCartFormId}
+                              type="radio"
+                              name={selectionInputName}
+                              value=""
+                              defaultChecked
+                              className="mt-1 h-4 w-4 accent-[var(--color-brand)]"
+                            />
+                            <span>{copy.productAddOnsNoSelection}</span>
+                          </label>
+                        ) : null}
+                        {group.options.map((option) => (
+                          <div
+                            key={option.id}
+                            className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                          >
+                            <p className="font-semibold text-[var(--color-text-primary)]">
+                              {option.label}
+                            </p>
+                            {option.values.length > 0 ? (
+                              <div className="mt-3 grid gap-2">
+                                {option.values.map((value) => (
+                                  <div
+                                    key={value.id}
+                                    className="flex flex-wrap items-start justify-between gap-3 rounded-xl bg-white/80 px-3 py-3 text-sm leading-6 text-[var(--color-text-secondary)]"
+                                  >
+                                    <label className="flex cursor-pointer items-start gap-3">
+                                      <input
+                                        form={addToCartFormId}
+                                        type={selectionInputType}
+                                        name={selectionInputName}
+                                        value={value.id}
+                                        className="mt-1 h-4 w-4 accent-[var(--color-brand)]"
+                                      />
+                                      <div>
+                                      <p className="font-semibold text-[var(--color-text-primary)]">
+                                        {value.label}
+                                      </p>
+                                      {value.hint ? (
+                                        <p className="mt-1">{value.hint}</p>
+                                      ) : null}
+                                      </div>
+                                    </label>
+                                    <p className="font-semibold text-[var(--color-text-primary)]">
+                                      {value.priceDeltaMinor === 0
+                                        ? copy.productAddOnsIncludedPrice
+                                        : `+${formatMoney(
+                                            value.priceDeltaMinor,
+                                            group.currency,
+                                            culture,
+                                          )}`}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+                                {copy.productAddOnsNoValuesMessage}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+
           <div className="mt-8 flex flex-wrap gap-3">
               {primaryVariant ? (
                 <AddToCartForm
@@ -719,6 +866,7 @@ export function ProductDetailPage({
                   productImageAlt={gallery[0]?.alt ?? product.name}
                   productSku={primaryVariant.sku}
                   returnPath={localizeHref(`/catalog/${product.slug}`, culture)}
+                  formId={addToCartFormId}
                 />
             ) : (
               <StatusBanner

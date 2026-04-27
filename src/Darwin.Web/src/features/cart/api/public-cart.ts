@@ -74,6 +74,7 @@ export async function addItemToPublicCart(input: {
   anonymousId: string;
   variantId: string;
   quantity: number;
+  selectedAddOnValueIds?: string[];
 }) {
   return fetchCartJson<PublicCartSummary>("/api/v1/public/cart/items", {
     method: "POST",
@@ -81,6 +82,7 @@ export async function addItemToPublicCart(input: {
       anonymousId: input.anonymousId,
       variantId: input.variantId,
       quantity: input.quantity,
+      selectedAddOnValueIds: input.selectedAddOnValueIds ?? [],
     }),
   });
 }

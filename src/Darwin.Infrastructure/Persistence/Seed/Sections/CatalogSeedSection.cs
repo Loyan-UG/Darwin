@@ -46,9 +46,7 @@ public sealed class CatalogSeedSection
 
         await EnsureStorefrontSeedMediaAsync(db, ct);
 
-            // Add-ons (create if none exist)
-            if (!await db.Set<AddOnGroup>().AnyAsync(ct))
-                await SeedExtendedWarrantyAddOnsAsync(db, ct);
+        await SeedExtendedWarrantyAddOnsAsync(db, ct);
         }
 
         /// <summary>
@@ -107,16 +105,16 @@ public sealed class CatalogSeedSection
         var cats = new (string Slug, string Name, string? Desc, string EnName, string? EnDesc)[]
         {
                 ("iphones",            "iPhones",                 "Apple iPhone Modelle",                             "iPhones",              "Apple iPhone models"),
-                ("android-phones",     "Android-Smartphones",     "Android Geräte von führenden Herstellern",         "Android phones",       "Android devices from leading manufacturers"),
+                ("android-phones",     "Android-Smartphones",     "Android Geraete von fuehrenden Herstellern",         "Android phones",       "Android devices from leading manufacturers"),
                 ("ultrabooks",         "Ultrabooks",              "Leichte, mobile Notebooks",                        "Ultrabooks",           "Lightweight, mobile notebooks"),
-                ("business-laptops",   "Business-Laptops",        "Zuverlässige Laptops für den Arbeitsalltag",       "Business laptops",     "Reliable laptops for everyday work"),
-                ("gaming-laptops",     "Gaming-Laptops",          "Leistungsstarke Laptops für Gaming",               "Gaming laptops",       "High-performance laptops for gaming"),
-                ("mice",               "Mäuse",                   "Präzise Computer-Mäuse",                           "Mice",                 "Precise computer mice"),
+                ("business-laptops",   "Business-Laptops",        "Zuverlaessige Laptops fuer den Arbeitsalltag",       "Business laptops",     "Reliable laptops for everyday work"),
+                ("gaming-laptops",     "Gaming-Laptops",          "Leistungsstarke Laptops fuer Gaming",               "Gaming laptops",       "High-performance laptops for gaming"),
+                ("mice",               "Maeuse",                   "Praezise Computer-Maeuse",                           "Mice",                 "Precise computer mice"),
                 ("keyboards",          "Tastaturen",              "Mechanische und Office-Tastaturen",                "Keyboards",            "Mechanical and office keyboards"),
-                ("storage",            "Speicher",                "NVMe/SSD/HDD Speicherlösungen",                    "Storage",              "NVMe/SSD/HDD storage solutions"),
+                ("storage",            "Speicher",                "NVMe/SSD/HDD Speicherloesungen",                    "Storage",              "NVMe/SSD/HDD storage solutions"),
                 ("monitors",           "Monitore",                "4K/144Hz/Ultrawide Monitore",                      "Monitors",             "4K, 144Hz, and ultrawide monitors"),
-                ("headphones",         "Kopfhörer",               "Over-Ear/ANC/BT Kopfhörer",                        "Headphones",           "Over-ear, ANC, and Bluetooth headphones"),
-                ("power-banks",        "Powerbanks",              "Mobile Ladegeräte",                                "Power banks",          "Portable chargers"),
+                ("headphones",         "Kopfhoerer",               "Over-Ear/ANC/BT Kopfhoerer",                        "Headphones",           "Over-ear, ANC, and Bluetooth headphones"),
+                ("power-banks",        "Powerbanks",              "Mobile Ladegeraete",                                "Power banks",          "Portable chargers"),
                 ("pc-komponenten",     "PC-Komponenten",          "RAM, Mainboards, Netzteile u. a.",                 "PC components",        "RAM, motherboards, power supplies, and more")
         };
 
@@ -461,58 +459,49 @@ public sealed class CatalogSeedSection
         /// </summary>
         private static async Task SeedExtendedWarrantyAddOnsAsync(DarwinDbContext db, CancellationToken ct)
         {
-            // Skip if a group with same name already exists.
-            var anyGroup = await db.Set<AddOnGroup>()
-                .AnyAsync(g => g.Name == "Extended Warranty" && !g.IsDeleted, ct);
-            if (anyGroup) return;
-
-            var group = new AddOnGroup
+            var group = await db.Set<AddOnGroup>()
+                .Include(g => g.Translations)
+                .FirstOrDefaultAsync(g => g.Name == "Extended Warranty" && !g.IsDeleted, ct);
+            if (group == null)
             {
-                Name = "Extended Warranty",
-                Currency = DomainDefaults.DefaultCurrency,
-                SelectionMode = Domain.Enums.AddOnSelectionMode.Single
-            };
-            db.Add(group);
+                group = new AddOnGroup
+                {
+                    Name = "Extended Warranty",
+                    Currency = DomainDefaults.DefaultCurrency,
+                    SelectionMode = Domain.Enums.AddOnSelectionMode.Single
+                };
+                db.Add(group);
+            }
+
+            group.Currency = DomainDefaults.DefaultCurrency;
+            group.SelectionMode = Domain.Enums.AddOnSelectionMode.Single;
+            UpsertAddOnGroupTranslation(group, DomainDefaults.DefaultCulture, "Erweiterte Garantie");
+            UpsertAddOnGroupTranslation(group, EnglishCulture, "Extended Warranty");
             await db.SaveChangesAsync(ct);
 
-            var option = new AddOnOption
+            var option = await db.Set<AddOnOption>()
+                .Include(o => o.Translations)
+                .FirstOrDefaultAsync(o => o.AddOnGroupId == group.Id && o.SortOrder == 0 && !o.IsDeleted, ct);
+            if (option == null)
             {
-                AddOnGroupId = group.Id,
-                Label = "Duration",
-                SortOrder = 0
-            };
-            db.Add(option);
+                option = new AddOnOption
+                {
+                    AddOnGroupId = group.Id,
+                    SortOrder = 0
+                };
+                db.Add(option);
+            }
+
+            option.Label = "Duration";
+            UpsertAddOnOptionTranslation(option, DomainDefaults.DefaultCulture, "Laufzeit");
+            UpsertAddOnOptionTranslation(option, EnglishCulture, "Duration");
             await db.SaveChangesAsync(ct);
 
             // Values: price delta in minor units (NET)
-            db.AddRange(
-                new AddOnOptionValue
-                {
-                    AddOnOptionId = option.Id,
-                    Label = "1 Jahr",
-                    PriceDeltaMinor = Money.FromMajor(0m, DomainDefaults.DefaultCurrency).AmountMinor,
-                    SortOrder = 0,
-                    IsActive = true
-                },
-                new AddOnOptionValue
-                {
-                    AddOnOptionId = option.Id,
-                    Label = "2 Jahre",
-                    PriceDeltaMinor = Money.FromMajor(49.99m, DomainDefaults.DefaultCurrency).AmountMinor,
-                    SortOrder = 1,
-                    IsActive = true
-                },
-                new AddOnOptionValue
-                {
-                    AddOnOptionId = option.Id,
-                    Label = "3 Jahre",
-                    PriceDeltaMinor = Money.FromMajor(89.99m, DomainDefaults.DefaultCurrency).AmountMinor,
-                    SortOrder = 2,
-                    IsActive = true
-                }
-            );
+            await UpsertAddOnValueAsync(db, option.Id, 0, "1 Jahr", "1 Jahr", "1 year", 0m, ct);
+            await UpsertAddOnValueAsync(db, option.Id, 1, "2 Jahre", "2 Jahre", "2 years", 49.99m, ct);
+            await UpsertAddOnValueAsync(db, option.Id, 2, "3 Jahre", "3 Jahre", "3 years", 89.99m, ct);
             await db.SaveChangesAsync(ct);
-
             // Attach to relevant categories
             var attachSlugs = new[] { "iphones", "android-phones", "ultrabooks", "business-laptops", "gaming-laptops" };
             var categories = await db.Categories
@@ -535,6 +524,72 @@ public sealed class CatalogSeedSection
                 }
             }
             await db.SaveChangesAsync(ct);
+        }
+
+        private static void UpsertAddOnGroupTranslation(AddOnGroup group, string culture, string name)
+        {
+            var translation = group.Translations.FirstOrDefault(x => x.Culture == culture);
+            if (translation == null)
+            {
+                translation = new AddOnGroupTranslation { Culture = culture };
+                group.Translations.Add(translation);
+            }
+
+            translation.Name = name;
+        }
+
+        private static void UpsertAddOnOptionTranslation(AddOnOption option, string culture, string label)
+        {
+            var translation = option.Translations.FirstOrDefault(x => x.Culture == culture);
+            if (translation == null)
+            {
+                translation = new AddOnOptionTranslation { Culture = culture };
+                option.Translations.Add(translation);
+            }
+
+            translation.Label = label;
+        }
+
+        private static void UpsertAddOnOptionValueTranslation(AddOnOptionValue value, string culture, string label)
+        {
+            var translation = value.Translations.FirstOrDefault(x => x.Culture == culture);
+            if (translation == null)
+            {
+                translation = new AddOnOptionValueTranslation { Culture = culture };
+                value.Translations.Add(translation);
+            }
+
+            translation.Label = label;
+        }
+
+        private static async Task UpsertAddOnValueAsync(
+            DarwinDbContext db,
+            Guid optionId,
+            int sortOrder,
+            string fallbackLabel,
+            string germanLabel,
+            string englishLabel,
+            decimal priceDeltaMajor,
+            CancellationToken ct)
+        {
+            var value = await db.Set<AddOnOptionValue>()
+                .Include(v => v.Translations)
+                .FirstOrDefaultAsync(v => v.AddOnOptionId == optionId && v.SortOrder == sortOrder && !v.IsDeleted, ct);
+            if (value == null)
+            {
+                value = new AddOnOptionValue
+                {
+                    AddOnOptionId = optionId,
+                    SortOrder = sortOrder
+                };
+                db.Add(value);
+            }
+
+            value.Label = fallbackLabel;
+            value.PriceDeltaMinor = Money.FromMajor(priceDeltaMajor, DomainDefaults.DefaultCurrency).AmountMinor;
+            value.IsActive = true;
+            UpsertAddOnOptionValueTranslation(value, DomainDefaults.DefaultCulture, germanLabel);
+            UpsertAddOnOptionValueTranslation(value, EnglishCulture, englishLabel);
         }
     }
 }

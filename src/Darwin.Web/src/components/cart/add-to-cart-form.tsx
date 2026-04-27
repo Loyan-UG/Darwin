@@ -11,6 +11,7 @@ type AddToCartFormProps = {
   productSku?: string | null;
   returnPath: string;
   quantity?: number;
+  formId?: string;
 };
 
 export function AddToCartForm({
@@ -23,11 +24,12 @@ export function AddToCartForm({
   productSku,
   returnPath,
   quantity = 1,
+  formId,
 }: AddToCartFormProps) {
   const copy = getCommerceResource(culture);
 
   return (
-    <form action={addToCartAction} className="contents">
+    <form id={formId} action={addToCartAction} className="contents">
       <input type="hidden" name="variantId" value={variantId} />
       <input type="hidden" name="quantity" value={quantity} />
       <input type="hidden" name="returnPath" value={returnPath} />

@@ -78,6 +78,46 @@ public sealed class PublicProductDetail : PublicProductSummary
 
     /// <summary>Gets or sets the media gallery items.</summary>
     public IReadOnlyList<PublicProductMedia> Media { get; set; } = Array.Empty<PublicProductMedia>();
+
+    /// <summary>Gets or sets add-on groups applicable to this product.</summary>
+    public IReadOnlyList<PublicProductAddOnGroup> ApplicableAddOns { get; set; } = Array.Empty<PublicProductAddOnGroup>();
+}
+
+/// <summary>
+/// Public add-on group shown on product detail pages.
+/// </summary>
+public sealed class PublicProductAddOnGroup
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Currency { get; set; } = ContractDefaults.DefaultCurrency;
+    public string SelectionMode { get; set; } = string.Empty;
+    public int MinSelections { get; set; }
+    public int? MaxSelections { get; set; }
+    public IReadOnlyList<PublicProductAddOnOption> Options { get; set; } = Array.Empty<PublicProductAddOnOption>();
+}
+
+/// <summary>
+/// Public add-on option shown on product detail pages.
+/// </summary>
+public sealed class PublicProductAddOnOption
+{
+    public Guid Id { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public int SortOrder { get; set; }
+    public IReadOnlyList<PublicProductAddOnValue> Values { get; set; } = Array.Empty<PublicProductAddOnValue>();
+}
+
+/// <summary>
+/// Public add-on value shown on product detail pages.
+/// </summary>
+public sealed class PublicProductAddOnValue
+{
+    public Guid Id { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public long PriceDeltaMinor { get; set; }
+    public string? Hint { get; set; }
+    public int SortOrder { get; set; }
 }
 
 /// <summary>
