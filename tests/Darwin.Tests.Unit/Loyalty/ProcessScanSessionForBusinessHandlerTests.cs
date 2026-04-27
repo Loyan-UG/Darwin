@@ -108,10 +108,12 @@ public sealed class ProcessScanSessionForBusinessHandlerTests
         var user = CreateUser("missing-account@darwin.test", firstName: "Sara");
         var missingAccountId = Guid.NewGuid();
 
+        var tokenId = Guid.NewGuid();
+
         db.Set<User>().Add(user);
         db.Set<QrCodeToken>().Add(new QrCodeToken
         {
-            Id = Guid.NewGuid(),
+            Id = tokenId,
             Token = "scan-token-3",
             UserId = user.Id,
             LoyaltyAccountId = missingAccountId,
@@ -120,7 +122,6 @@ public sealed class ProcessScanSessionForBusinessHandlerTests
             ExpiresAtUtc = FixedUtcNow.AddMinutes(5),
             RowVersion = [1]
         });
-        var tokenId = await db.Set<QrCodeToken>().Select(x => x.Id).SingleAsync(TestContext.Current.CancellationToken);
         db.Set<ScanSession>().Add(new ScanSession
         {
             Id = Guid.NewGuid(),
