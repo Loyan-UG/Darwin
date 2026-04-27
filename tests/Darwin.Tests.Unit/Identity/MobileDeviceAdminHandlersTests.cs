@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.Commands;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Identity;
@@ -58,7 +59,7 @@ public sealed class MobileDeviceAdminHandlersTests
         db.Set<UserDevice>().Add(device);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new DeactivateUserDeviceHandler(db, new TestStringLocalizer<ValidationResource>());
+        var handler = new DeactivateUserDeviceHandler(db, new StubClock(), new TestStringLocalizer<ValidationResource>());
         var result = await handler.HandleAsync(device.Id, device.RowVersion, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
@@ -97,6 +98,11 @@ public sealed class MobileDeviceAdminHandlersTests
                 builder.Ignore(x => x.User);
             });
         }
+    }
+
+    private sealed class StubClock : IClock
+    {
+        public DateTime UtcNow => new(2030, 1, 1, 8, 0, 0, DateTimeKind.Utc);
     }
 
     private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>
