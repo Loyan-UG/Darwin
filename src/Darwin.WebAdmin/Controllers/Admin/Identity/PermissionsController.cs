@@ -20,7 +20,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
     /// Provides list with paging/search, create/edit forms and soft delete.
     /// Key and IsSystem values are immutable once created.
     /// </summary>
-    [Route("Admin/[controller]/[action]")]
     [PermissionAuthorize("FullAdminAccess")]
     public sealed class PermissionsController : AdminBaseController
     {

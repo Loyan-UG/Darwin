@@ -1,3 +1,17 @@
+## 2026-04-27 - WebAdmin navigation runtime smoke pass
+Done:
+- Ran an authenticated runtime smoke pass across every primary sidebar GET route in WebAdmin using the seeded admin account.
+- Found and fixed the only broken navigation route: `/Permissions` returned 404 because `PermissionsController` had a custom `Admin/[controller]/[action]` route while the sidebar and permission views use the conventional `/Permissions` routes.
+- Re-ran the full sidebar smoke after the fix; all 39 navigation routes returned HTTP 200.
+
+Verification:
+- `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore /p:UseSharedCompilation=false` succeeded with 0 warnings and 0 errors after the route fix.
+- Authenticated navigation smoke: 39 routes checked, 0 failures.
+- `git diff --check` passed; it only reported LF-to-CRLF working-copy warnings.
+
+Notes:
+- No tests were added or expanded per the current WebAdmin-only instruction.
+- Destructive POST actions were not executed during this pass.
 ## 2026-04-27 - WebAdmin runtime smoke pass
 Done:
 - Ran WebAdmin through the real ASP.NET Core host against local SQL Server using the seeded admin account.
