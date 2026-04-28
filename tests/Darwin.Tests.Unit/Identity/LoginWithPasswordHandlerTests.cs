@@ -143,24 +143,23 @@ public sealed class LoginWithPasswordHandlerTests
     {
         public int IssueTokensCalls { get; private set; }
 
-        public (string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc) IssueTokens(
+        public Task<(string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc)> IssueTokensAsync(
             Guid userId,
             string email,
             string? deviceId,
             IEnumerable<string>? scopes = null,
-            Guid? preferredBusinessId = null)
+            Guid? preferredBusinessId = null,
+            CancellationToken ct = default)
         {
             IssueTokensCalls++;
-            return ("access-token", DateTime.UtcNow.AddMinutes(30), "refresh-token", DateTime.UtcNow.AddDays(7));
+            return Task.FromResult(("access-token", DateTime.UtcNow.AddMinutes(30), "refresh-token", DateTime.UtcNow.AddDays(7)));
         }
 
-        public Guid? ValidateRefreshToken(string refreshToken, string? deviceId) => null;
+        public Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, string? deviceId, CancellationToken ct = default) => Task.FromResult<Guid?>(null);
 
-        public void RevokeRefreshToken(string refreshToken, string? deviceId)
-        {
-        }
+        public Task RevokeRefreshTokenAsync(string refreshToken, string? deviceId, CancellationToken ct = default) => Task.CompletedTask;
 
-        public int RevokeAllForUser(Guid userId) => 0;
+        public Task<int> RevokeAllForUserAsync(Guid userId, CancellationToken ct = default) => Task.FromResult(0);
     }
 
     private sealed class TestStringLocalizer<TResource> : IStringLocalizer<TResource>

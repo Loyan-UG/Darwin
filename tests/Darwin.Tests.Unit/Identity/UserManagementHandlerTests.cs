@@ -368,15 +368,15 @@ public sealed class UserManagementHandlerTests
 
     private sealed class FakeJwtService : IJwtTokenService
     {
-        public (string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc) IssueTokens(
+        public Task<(string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc)> IssueTokensAsync(
             Guid userId, string email, string? deviceId,
             System.Collections.Generic.IEnumerable<string>? scopes = null,
-            Guid? preferredBusinessId = null)
-            => ("at", DateTime.UtcNow.AddMinutes(30), "rt", DateTime.UtcNow.AddDays(7));
+            Guid? preferredBusinessId = null, CancellationToken ct = default)
+            => Task.FromResult(("at", DateTime.UtcNow.AddMinutes(30), "rt", DateTime.UtcNow.AddDays(7)));
 
-        public Guid? ValidateRefreshToken(string refreshToken, string? deviceId) => null;
-        public void RevokeRefreshToken(string refreshToken, string? deviceId) { }
-        public int RevokeAllForUser(Guid userId) => 0;
+        public Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, string? deviceId, CancellationToken ct = default) => Task.FromResult<Guid?>(null);
+        public Task RevokeRefreshTokenAsync(string refreshToken, string? deviceId, CancellationToken ct = default) => Task.CompletedTask;
+        public Task<int> RevokeAllForUserAsync(Guid userId, CancellationToken ct = default) => Task.FromResult(0);
     }
 
     private sealed class FakeCurrentUser : ICurrentUserService
