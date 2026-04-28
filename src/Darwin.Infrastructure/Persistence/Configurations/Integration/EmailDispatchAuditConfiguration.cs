@@ -11,7 +11,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
     {
         public void Configure(EntityTypeBuilder<EmailDispatchAudit> builder)
         {
-            builder.ToTable("EmailDispatchAudits");
+            builder.ToTable("EmailDispatchAudits", schema: "Integration");
 
             builder.Property(x => x.Provider)
                 .IsRequired()

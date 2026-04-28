@@ -36,11 +36,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             UpdatePermissionHandler update,
             SoftDeletePermissionHandler softDelete)
         {
-            _getPage = getPage;
-            _getForEdit = getForEdit;
-            _create = create;
-            _update = update;
-            _softDelete = softDelete;
+            _getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
+            _getForEdit = getForEdit ?? throw new ArgumentNullException(nameof(getForEdit));
+            _create = create ?? throw new ArgumentNullException(nameof(create));
+            _update = update ?? throw new ArgumentNullException(nameof(update));
+            _softDelete = softDelete ?? throw new ArgumentNullException(nameof(softDelete));
         }
 
         /// <summary>
@@ -170,6 +170,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetWarningMessage("PermissionNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var result = await _getForEdit.HandleAsync(id, ct);
             if (!result.Succeeded || result.Value is null)
             {
@@ -198,6 +204,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(PermissionEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetWarningMessage("PermissionNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 SetWarningMessage("ValidationErrorsRetry");
@@ -231,6 +243,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("PermissionDeleteFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };

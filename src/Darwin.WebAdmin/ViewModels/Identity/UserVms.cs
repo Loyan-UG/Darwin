@@ -173,6 +173,8 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         /// <summary>Active flag; deactivating disables login.</summary>
         public bool IsActive { get; set; } = true;
 
+        public UserAddressesSectionVm AddressesSection { get; set; } = new();
+
         /// <summary>Returns whether the user is currently locked out.</summary>
         public bool IsLockedOut => LockoutEndUtc.HasValue && LockoutEndUtc.Value > DateTime.UtcNow;
     }

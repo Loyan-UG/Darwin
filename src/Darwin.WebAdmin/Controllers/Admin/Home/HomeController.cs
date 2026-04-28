@@ -13,6 +13,7 @@ using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Admin;
 using Darwin.WebAdmin.ViewModels.CRM;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Linq;
 using Darwin.Domain.Enums;
 
@@ -89,10 +90,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
         [HttpGet]
         public async Task<IActionResult> Index(Guid? businessId = null, CancellationToken ct = default)
         {
-            var businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId: businessId, ct).ConfigureAwait(false);
-            var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
-
-            businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
+            var (selectedBusinessId, businessOptions) = await BuildBusinessSelectionAsync(businessId, ct).ConfigureAwait(false);
 
             var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var crmSummary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
@@ -177,9 +175,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
 
         private async Task<AdminDashboardVm> BuildCommunicationOpsCardVmAsync(Guid? businessId, CancellationToken ct)
         {
-            var businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId: businessId, ct).ConfigureAwait(false);
-            var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
-            businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
+            var (selectedBusinessId, businessOptions) = await BuildBusinessSelectionAsync(businessId, ct).ConfigureAwait(false);
 
             var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
             var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);
@@ -196,9 +192,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
 
         private async Task<AdminDashboardVm> BuildBusinessSupportCardVmAsync(Guid? businessId, CancellationToken ct)
         {
-            var businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId: businessId, ct).ConfigureAwait(false);
-            var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
-            businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
+            var (selectedBusinessId, businessOptions) = await BuildBusinessSelectionAsync(businessId, ct).ConfigureAwait(false);
 
             var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
 
@@ -208,6 +202,13 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 SelectedBusinessLabel = businessOptions.FirstOrDefault(x => x.Selected)?.Text ?? string.Empty,
                 BusinessSupport = MapBusinessSupportSummary(businessSupport)
             };
+        }
+
+        private async Task<(Guid? SelectedBusinessId, List<SelectListItem> BusinessOptions)> BuildBusinessSelectionAsync(Guid? businessId, CancellationToken ct)
+        {
+            var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
+            return (selectedBusinessId, businessOptions);
         }
 
         private static CrmSummaryVm MapCrmSummary(CrmSummaryDto dto, string currency)

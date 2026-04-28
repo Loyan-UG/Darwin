@@ -20,6 +20,7 @@ namespace Darwin.WebAdmin.ViewModels.CMS
         public DateTime? PublishStartUtc { get; set; }
         public DateTime? PublishEndUtc { get; set; }
         public List<PageTranslationVm> Translations { get; set; } = new();
+        public IReadOnlyList<string> Cultures { get; set; } = Array.Empty<string>();
     }
 
     public sealed class PageCreateVm : PageEditorVm

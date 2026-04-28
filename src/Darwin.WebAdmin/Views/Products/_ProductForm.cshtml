@@ -7,6 +7,8 @@
             Value = option.Value,
             Text = T.T(option.Text)
         });
+    var cultures = Model.Cultures ?? Array.Empty<string>();
+    var currencies = Model.Currencies ?? Array.Empty<string>();
     string ProductsIndexUrl() => Url.Action("Index", "Products") ?? string.Empty;
 }
 
@@ -19,12 +21,12 @@
             <div class="col-md-4">
                 <label class="form-label">@T.T("Brand")</label>
                 <select asp-for="BrandId" class="form-select"
-                        asp-items="@(new SelectList(ViewBag.Brands, "Id", "Name"))"></select>
+                        asp-items="Model.BrandOptions"></select>
             </div>
             <div class="col-md-4">
                 <label class="form-label">@T.T("PrimaryCategory")</label>
                 <select asp-for="PrimaryCategoryId" class="form-select"
-                        asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))"></select>
+                        asp-items="Model.CategoryOptions"></select>
             </div>
             <div class="col-md-4">
                 <label class="form-label">@T.T("Kind")</label>
@@ -44,7 +46,7 @@
                     <div class="col-md-2">
                         <label class="form-label">@T.T("Culture")</label>
                         <select asp-for="Translations[@i].Culture" class="form-select">
-                            @foreach (var cul in (IEnumerable<string>)ViewBag.Cultures)
+                            @foreach (var cul in cultures)
                             {
                                 <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
                             }
@@ -127,7 +129,7 @@
                     <div class="col-md-3">
                         <label class="form-label">@T.T("Currency")</label>
                         <select asp-for="Variants[@j].Currency" class="form-select">
-                            @foreach (var cur in (IEnumerable<string>)ViewBag.Currencies)
+                            @foreach (var cur in currencies)
                             {
                                 <option value="@cur" selected="@(Model.Variants[j].Currency == cur)">@cur</option>
                             }
@@ -136,7 +138,7 @@
                     <div class="col-md-3">
                         <label class="form-label">@T.T("TaxCategory")</label>
                         <select asp-for="Variants[@j].TaxCategoryId" class="form-select"
-                                asp-items="@(new SelectList(ViewBag.TaxCategories, "Id", "Name"))"></select>
+                                asp-items="Model.TaxCategoryOptions"></select>
                     </div>
 
                     <div class="col-md-3">

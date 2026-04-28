@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: darwin-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: darwin_dev
+      POSTGRES_USER: darwin
+      POSTGRES_PASSWORD: Darwin_Postgres_Dev_123!
+    ports:
+      - "5432:5432"
+    volumes:
+      - darwin-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U darwin -d darwin_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: darwin-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@darwin.dev.example.com
+      PGADMIN_DEFAULT_PASSWORD: Darwin_pgAdmin_Dev_123!
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - darwin-pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  darwin-postgres-data:
+  darwin-pgadmin-data:

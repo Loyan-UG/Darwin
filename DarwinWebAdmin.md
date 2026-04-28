@@ -1,3 +1,17 @@
+## 2026-04-28 - WebAdmin PostgreSQL default persistence update
+Done:
+- WebAdmin now uses configuration-driven persistence through `Persistence:Provider`.
+- PostgreSQL is the preferred Development provider via `Darwin.Infrastructure.PostgreSql` and `ConnectionStrings:PostgreSql`.
+- SQL Server remains selectable via `Persistence:Provider=SqlServer` and the explicit `Darwin.Infrastructure.SqlServer` provider project.
+- Development startup now applies migrations and seed before loading database-backed localization settings, so a fresh PostgreSQL database can bootstrap correctly.
+- See `docs/persistence-providers.md` for provider commands, Docker services, and migration verification rules.
+
+Verification:
+- `dotnet build src\Darwin.WebAdmin\Darwin.WebAdmin.csproj --no-restore` succeeded.
+- PostgreSQL startup seed was validated against the Docker `darwin_dev` database.
+
+Remaining persistence work:
+- Continue provider-specific audit for collation/search behavior, decimal precision, JSON/text columns, DateTime semantics, and future migration SQL.
 ## 2026-04-27 - Web bilingual runtime smoke and route fix
 Done:
 - Ran a real WebApi + Next runtime smoke pass for German and English storefront routes.

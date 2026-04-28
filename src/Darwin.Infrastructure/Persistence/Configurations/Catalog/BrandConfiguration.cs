@@ -52,8 +52,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
                    .IsRequired()
                    .HasMaxLength(256);
 
-            // DescriptionHtml can be long; store as nvarchar(max) by default (no explicit max length).
-            // If you want, you can add .HasColumnType("nvarchar(max)") explicitly.
+            // DescriptionHtml can be long; let the active EF provider choose the native long text type.
 
             // Unique translation per (BrandId, Culture)
             builder.HasIndex(t => new { t.BrandId, t.Culture })

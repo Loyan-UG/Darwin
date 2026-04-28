@@ -409,7 +409,7 @@
     <value>Identity-Support-Playbooks</value>
   </data>
   <data name="UsersPlaybooksQueueColumn" xml:space="preserve">
-    <value>Queue</value>
+    <value>Warteschlange</value>
   </data>
   <data name="UsersPlaybooksScopeColumn" xml:space="preserve">
     <value>Umfang</value>
@@ -754,7 +754,7 @@
     <value>Alle</value>
   </data>
   <data name="IdentityFilterSystem" xml:space="preserve">
-    <value>System</value>
+    <value>Systemrollen</value>
   </data>
   <data name="IdentityFilterCustom" xml:space="preserve">
     <value>Benutzerdefiniert</value>
@@ -1045,13 +1045,13 @@
     <value>Stripe aktivieren</value>
   </data>
   <data name="SiteSettingStripePublishableKey" xml:space="preserve">
-    <value>Stripe Publishable Key</value>
+    <value>Stripe veroeffentlichbarer Schluessel</value>
   </data>
   <data name="SiteSettingStripeSecretKey" xml:space="preserve">
-    <value>Stripe Secret Key</value>
+    <value>Stripe geheimer Schluessel</value>
   </data>
   <data name="SiteSettingStripeWebhookSecret" xml:space="preserve">
-    <value>Stripe Webhook Secret</value>
+    <value>Stripe-Webhook-Geheimnis</value>
   </data>
   <data name="SiteSettingStripeMerchantDisplayName" xml:space="preserve">
     <value>Stripe-Haendlername</value>
@@ -1186,10 +1186,10 @@
     <value>WhatsApp aktivieren</value>
   </data>
   <data name="SiteSettingWhatsAppBusinessPhoneId" xml:space="preserve">
-    <value>Business Phone ID</value>
+    <value>Business-Telefon-ID</value>
   </data>
   <data name="SiteSettingWhatsAppAccessToken" xml:space="preserve">
-    <value>Access Token</value>
+    <value>Zugriffstoken</value>
   </data>
   <data name="SiteSettingWhatsAppFromPhoneE164" xml:space="preserve">
     <value>Absendertelefon (E.164)</value>
@@ -1348,7 +1348,7 @@
     <value>Start</value>
   </data>
   <data name="Dashboard" xml:space="preserve">
-    <value>Dashboard</value>
+    <value>Uebersicht</value>
   </data>
   <data name="Catalog" xml:space="preserve">
     <value>Katalog</value>
@@ -1393,7 +1393,7 @@
     <value>Kunden</value>
   </data>
   <data name="Leads" xml:space="preserve">
-    <value>Leads</value>
+    <value>Interessenten</value>
   </data>
   <data name="Opportunities" xml:space="preserve">
     <value>Chancen</value>
@@ -1444,7 +1444,7 @@
     <value>Bestaende</value>
   </data>
   <data name="Transfers" xml:space="preserve">
-    <value>Transfers</value>
+    <value>Umbuchungen</value>
   </data>
   <data name="PurchaseOrders" xml:space="preserve">
     <value>Bestellauftraege</value>
@@ -1471,7 +1471,7 @@
     <value>Unternehmen</value>
   </data>
   <data name="MobileOps" xml:space="preserve">
-    <value>Mobile Ops</value>
+    <value>Mobile Betrieb</value>
   </data>
   <data name="Communications" xml:space="preserve">
     <value>Kommunikation</value>
@@ -1522,7 +1522,7 @@
     <value>Code bestätigen</value>
   </data>
   <data name="LoginTwoFactorCodeLabel" xml:space="preserve">
-    <value>Code</value>
+    <value>Code eingeben</value>
   </data>
   <data name="LoginTwoFactorConfirmAction" xml:space="preserve">
     <value>Bestätigen</value>
@@ -1675,7 +1675,7 @@
     <value>Kanal</value>
   </data>
   <data name="Flow" xml:space="preserve">
-    <value>Flow</value>
+    <value>Ablauf</value>
   </data>
   <data name="Recipient" xml:space="preserve">
     <value>Empfaenger</value>
@@ -1807,7 +1807,7 @@
     <value>Nicht ausgewaehlt</value>
   </data>
   <data name="CarrierService" xml:space="preserve">
-    <value>Carrier/Service</value>
+    <value>Versanddienst/Service</value>
   </data>
   <data name="WarehouseAuto" xml:space="preserve">
     <value>Lager (Auto)</value>
@@ -1924,7 +1924,7 @@
     <value>Leeren</value>
   </data>
   <data name="Provider" xml:space="preserve">
-    <value>Provider</value>
+    <value>Anbieter</value>
   </data>
   <data name="Reference" xml:space="preserve">
     <value>Referenz</value>
@@ -2014,10 +2014,10 @@
     <value>Tracking ueberfaellig</value>
   </data>
   <data name="Carrier" xml:space="preserve">
-    <value>Carrier</value>
+    <value>Versanddienst</value>
   </data>
   <data name="Tracking" xml:space="preserve">
-    <value>Tracking</value>
+    <value>Sendungsverfolgung</value>
   </data>
   <data name="NoShipments" xml:space="preserve">
     <value>Keine Sendungen.</value>
@@ -2026,19 +2026,19 @@
     <value>Tracking ueberfaellig</value>
   </data>
   <data name="ProviderShipmentReference" xml:space="preserve">
-    <value>Provider Shipment Ref</value>
+    <value>Anbieter-Sendungsreferenz</value>
   </data>
   <data name="CarrierLabel" xml:space="preserve">
-    <value>Carrier Label</value>
+    <value>Versandlabel</value>
   </data>
   <data name="CarrierLabelUrl" xml:space="preserve">
-    <value>Carrier Label URL</value>
+    <value>Versandlabel-URL</value>
   </data>
   <data name="GenerateCarrierLabel" xml:space="preserve">
     <value>Carrier-Label erzeugen</value>
   </data>
   <data name="LastCarrierEventKey" xml:space="preserve">
-    <value>Last Carrier Event Key</value>
+    <value>Letzter Versandereignis-Schluessel</value>
   </data>
   <data name="ReturnedParcel" xml:space="preserve">
     <value>Retournierte Sendung</value>
@@ -2260,7 +2260,7 @@
     <value>Keine Kunden gefunden.</value>
   </data>
   <data name="Fallback" xml:space="preserve">
-    <value>Fallback</value>
+    <value>Ersatzwert</value>
   </data>
   <data name="UserLocale" xml:space="preserve">
     <value>Benutzer-Locale</value>
@@ -2320,7 +2320,7 @@
     <value>Verantwortlich</value>
   </data>
   <data name="Manager" xml:space="preserve">
-    <value>Manager</value>
+    <value>Verantwortliche Person</value>
   </data>
   <data name="Staff" xml:space="preserve">
     <value>Mitarbeiter</value>
@@ -2545,10 +2545,10 @@
     <value>Nein</value>
   </data>
   <data name="PublishableKey" xml:space="preserve">
-    <value>Publishable Key</value>
+    <value>Veroeffentlichbarer Schluessel</value>
   </data>
   <data name="SecretKey" xml:space="preserve">
-    <value>Secret Key</value>
+    <value>Geheimer Schluessel</value>
   </data>
   <data name="WebhookSecret" xml:space="preserve">
     <value>Webhook-Secret</value>
@@ -2716,7 +2716,7 @@
     <value>Rueckgabe</value>
   </data>
   <data name="Ledger" xml:space="preserve">
-    <value>Ledger</value>
+    <value>Buchungsjournal</value>
   </data>
   <data name="WarehouseOpsPlaybooks" xml:space="preserve">
     <value>Lager-Playbooks</value>
@@ -2767,7 +2767,7 @@
     <value>Transfer-Playbooks</value>
   </data>
   <data name="Playbook" xml:space="preserve">
-    <value>Playbook</value>
+    <value>Arbeitsanweisung</value>
   </data>
   <data name="WhenItApplies" xml:space="preserve">
     <value>Wann es gilt</value>
@@ -3196,7 +3196,7 @@
     <value>Segment-Playbooks</value>
   </data>
   <data name="Queue" xml:space="preserve">
-    <value>Queue</value>
+    <value>Warteschlange</value>
   </data>
   <data name="Scope" xml:space="preserve">
     <value>Umfang</value>
@@ -3721,7 +3721,7 @@
     <value>Queue-Umfang</value>
   </data>
   <data name="Global" xml:space="preserve">
-    <value>Global</value>
+    <value>Global gueltig</value>
   </data>
   <data name="WebhookSupportPlaybooks" xml:space="preserve">
     <value>Webhook-Support-Playbooks</value>
@@ -3751,7 +3751,7 @@
     <value>Alle</value>
   </data>
   <data name="Callback" xml:space="preserve">
-    <value>Callback</value>
+    <value>Rueckruf</value>
   </data>
   <data name="Attempts" xml:space="preserve">
     <value>Versuche</value>
@@ -3820,7 +3820,7 @@
     <value>Offenes Alter</value>
   </data>
   <data name="Reconciliation" xml:space="preserve">
-    <value>Reconciliation</value>
+    <value>Abgleich</value>
   </data>
   <data name="DisputeReview" xml:space="preserve">
     <value>Dispute-Pruefung</value>
@@ -5396,7 +5396,7 @@
     <value>Unterkategorie</value>
   </data>
   <data name="Parent" xml:space="preserve">
-    <value>Parent</value>
+    <value>Übergeordnet</value>
   </data>
   <data name="ParentCategory" xml:space="preserve">
     <value>Parent-Kategorie</value>
@@ -5639,7 +5639,7 @@
     <value>Priorisiere push-aktivierte Kampagnen bei der Rollout-Pruefung, damit Content, Transport und Geraetediagnostik zusammenpassen.</value>
   </data>
   <data name="MobileBootstrapTitle" xml:space="preserve">
-    <value>Mobile Bootstrap</value>
+    <value>Mobile Ersteinrichtung</value>
   </data>
   <data name="DeviceFleetSnapshotTitle" xml:space="preserve">
     <value>Geraeteflotte</value>
@@ -5738,7 +5738,7 @@
     <value>Alle Kampagnen</value>
   </data>
   <data name="MobileOperationsTitle" xml:space="preserve">
-    <value>Mobile Operations</value>
+    <value>Mobile Betrieb</value>
   </data>
   <data name="AdminDashboardTitle" xml:space="preserve">
     <value>Admin-Dashboard</value>
@@ -5783,7 +5783,7 @@
     <value>Kunden</value>
   </data>
   <data name="DashboardLeadsLabel" xml:space="preserve">
-    <value>Leads</value>
+    <value>Interessenten</value>
   </data>
   <data name="DashboardQualifiedLeadsLabel" xml:space="preserve">
     <value>Qualifizierte Leads</value>
@@ -6158,7 +6158,7 @@
     <value>Owner-Override-Audit</value>
   </data>
   <data name="BusinessMembersBadgeAction" xml:space="preserve">
-    <value>Badge</value>
+    <value>Ausweis</value>
   </data>
   <data name="BusinessSetupMembersPreviewNoAttention" xml:space="preserve">
     <value>Aktuell benoetigt kein Mitglied Aktivierungs- oder Lockout-Support.</value>
@@ -6368,16 +6368,16 @@
     <value>Kunden</value>
   </data>
   <data name="DashboardQuickLinkLeadsAction" xml:space="preserve">
-    <value>Leads</value>
+    <value>Interessenten</value>
   </data>
   <data name="DashboardQuickLinkLoyaltyAction" xml:space="preserve">
     <value>Loyalty</value>
   </data>
   <data name="DashboardQuickLinkBusinessesAction" xml:space="preserve">
-    <value>Businesses</value>
+    <value>Betriebe</value>
   </data>
   <data name="DashboardQuickLinkMobileOpsAction" xml:space="preserve">
-    <value>Mobile Ops</value>
+    <value>Mobile Betrieb</value>
   </data>
   <data name="DashboardQuickLinkWarehousesAction" xml:space="preserve">
     <value>Lager</value>
@@ -7577,7 +7577,7 @@
     <value>Diese Matrix ist bewusst operativ, nicht visionär. Sie zeigt, was Operatoren heute bereits prüfen können und wo Communication-Core-Arbeit noch fehlt.</value>
   </data>
   <data name="Capability" xml:space="preserve">
-    <value>Capability</value>
+    <value>Faehigkeit</value>
   </data>
   <data name="CurrentState" xml:space="preserve">
     <value>Aktueller Stand</value>
@@ -8009,7 +8009,7 @@
     <value>Kettenversuche</value>
   </data>
   <data name="ChannelAuditFollowUpLabel" xml:space="preserve">
-    <value>Follow-up</value>
+    <value>Nachverfolgung</value>
   </data>
   <data name="ChannelAuditChainProfileLabel" xml:space="preserve">
     <value>Kettenprofil</value>
@@ -8159,7 +8159,7 @@
     <value>Retry-Wartezeit</value>
   </data>
   <data name="EmailAuditsRetryRateLimitedLabel" xml:space="preserve">
-    <value>Retry rate-limited</value>
+    <value>Wiederholung begrenzt</value>
   </data>
   <data name="EmailAuditsRetryAvailableAtUtc" xml:space="preserve">
     <value>Retry verfügbar {0} UTC</value>
@@ -8171,7 +8171,7 @@
     <value>Neuere Business-E-Mail-Aktivität</value>
   </data>
   <data name="FollowUp" xml:space="preserve">
-    <value>Follow-up</value>
+    <value>Nachverfolgung</value>
   </data>
   <data name="BusinessCommunicationNoRecentBusinessEmailActivity" xml:space="preserve">
     <value>Keine neuere businessbezogene E-Mail-Aktivität.</value>
@@ -8255,7 +8255,7 @@
     <value>Transaktional</value>
   </data>
   <data name="BusinessCommunicationMarketingShort" xml:space="preserve">
-    <value>Marketing</value>
+    <value>Werbung</value>
   </data>
   <data name="BusinessCommunicationAlertsShort" xml:space="preserve">
     <value>Alarme</value>
@@ -8273,13 +8273,13 @@
     <value>Absender-Standards</value>
   </data>
   <data name="BusinessCommunicationSupportShort" xml:space="preserve">
-    <value>Support</value>
+    <value>Kundendienst</value>
   </data>
   <data name="BusinessCommunicationSenderShort" xml:space="preserve">
     <value>Absender</value>
   </data>
   <data name="BusinessCommunicationReplyToShort" xml:space="preserve">
-    <value>Reply-To</value>
+    <value>Antwort an</value>
   </data>
   <data name="BusinessCommunicationProfileSupportSignalsTitle" xml:space="preserve">
     <value>Support-Signale</value>
@@ -8456,7 +8456,7 @@
     <value>Hosted-Link fehlt</value>
   </data>
   <data name="BusinessSubscriptionQueueColumn" xml:space="preserve">
-    <value>Queue</value>
+    <value>Warteschlange</value>
   </data>
   <data name="BusinessSubscriptionCancellationPolicy" xml:space="preserve">
     <value>Kündigungsrichtlinie</value>
@@ -8522,10 +8522,10 @@
     <value>Alle</value>
   </data>
   <data name="CommonProvider" xml:space="preserve">
-    <value>Provider</value>
+    <value>Anbieter</value>
   </data>
   <data name="CommonPlan" xml:space="preserve">
-    <value>Plan</value>
+    <value>Tarif</value>
   </data>
   <data name="CommonAmount" xml:space="preserve">
     <value>Betrag</value>
@@ -8546,7 +8546,7 @@
     <value>Bezahlt: {0}</value>
   </data>
   <data name="CommonHosted" xml:space="preserve">
-    <value>Hosted</value>
+    <value>Gehostet</value>
   </data>
   <data name="CommonPdf" xml:space="preserve">
     <value>PDF</value>
@@ -8591,7 +8591,7 @@
     <value>Nutzen Sie Audit-Trail zusammen mit Members- und Merchant-Readiness-Signalen, bevor Sie einen Ersatz-Owner zuweisen oder den Support eskalieren.</value>
   </data>
   <data name="CommonSetup" xml:space="preserve">
-    <value>Setup</value>
+    <value>Einrichtung</value>
   </data>
   <data name="CommonMembers" xml:space="preserve">
     <value>Mitglieder</value>
@@ -8843,7 +8843,7 @@
     <value>E-Mail</value>
   </data>
   <data name="TaxComplianceOpportunitiesColumn" xml:space="preserve">
-    <value>Opportunities</value>
+    <value>Chancen</value>
   </data>
   <data name="TaxComplianceUpdatedColumn" xml:space="preserve">
     <value>Aktualisiert</value>
@@ -8984,10 +8984,10 @@
     <value>Aktuell benötigen keine Merchant-Zeilen weitere Readiness-Nachverfolgung.</value>
   </data>
   <data name="MerchantReadinessSetupColumn" xml:space="preserve">
-    <value>Setup</value>
+    <value>Einrichtung</value>
   </data>
   <data name="MerchantReadinessSubscriptionColumn" xml:space="preserve">
-    <value>Subscription</value>
+    <value>Abonnement</value>
   </data>
   <data name="MerchantReadinessSetupMissing" xml:space="preserve">
     <value>Setup noch unvollständig</value>
@@ -9029,7 +9029,7 @@
     <value>Hier beginnt das Tenant-Setup. Nach dem Speichern mit Owner-Zuweisung und Primary Location fortfahren.</value>
   </data>
   <data name="BusinessEditorSubscription" xml:space="preserve">
-    <value>Subscription</value>
+    <value>Abonnement</value>
   </data>
   <data name="BusinessEditorLocations" xml:space="preserve">
     <value>Standorte</value>
@@ -9167,7 +9167,7 @@
     <value>Steuer- / USt-ID</value>
   </data>
   <data name="BusinessFormWebsite" xml:space="preserve">
-    <value>Website</value>
+    <value>Webseite</value>
   </data>
   <data name="BusinessFormContactEmail" xml:space="preserve">
     <value>Kontakt-E-Mail</value>
@@ -9263,7 +9263,7 @@
     <value>Stadt</value>
   </data>
   <data name="BusinessLocationRegion" xml:space="preserve">
-    <value>Region</value>
+    <value>Bundesland/Region</value>
   </data>
   <data name="BusinessLocationCountryCode" xml:space="preserve">
     <value>Laendercode</value>
@@ -9338,10 +9338,10 @@
     <value>Kein zusaetzliches Provider-Geheimnis ist erforderlich, aber die externe Abrechnungsuebergabe haengt von der Bereitschaft der Business-Management-Website ab.</value>
   </data>
   <data name="BillingPlansQueueColumn" xml:space="preserve">
-    <value>Queue</value>
+    <value>Warteschlange</value>
   </data>
   <data name="BillingPlansScopeColumn" xml:space="preserve">
-    <value>Scope</value>
+    <value>Bereich</value>
   </data>
   <data name="BillingPlansSearchPlaceholder" xml:space="preserve">
     <value>Nach Code, Name oder Beschreibung suchen</value>
@@ -9902,7 +9902,7 @@
     <value>Business-spezifische Admin-Textüberschreibungen gelten nur, wenn Operatoren in diesem Business-Kontext arbeiten. Priorität: Business-Override, dann Plattform-Site-Setting-Override, dann Shared-Resource-Text.</value>
   </data>
   <data name="Branding" xml:space="preserve">
-    <value>Branding</value>
+    <value>Markenauftritt</value>
   </data>
   <data name="BrandDisplayName" xml:space="preserve">
     <value>Markenanzeigename</value>
@@ -10592,7 +10592,7 @@
     <value>letzter Erfolg</value>
   </data>
   <data name="ChannelAuditRecoveryInlineLabel" xml:space="preserve">
-    <value>Recovery</value>
+    <value>Wiederherstellung</value>
   </data>
   <data name="ChannelAuditAttempts24hInlineLabel" xml:space="preserve">
     <value>Versuche 24h</value>

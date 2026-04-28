@@ -50,6 +50,13 @@ namespace Darwin.Infrastructure.Extensions
                 });
             });
 
+            services.AddDarwinPersistenceCoreServices();
+
+            return services;
+        }
+
+        public static IServiceCollection AddDarwinPersistenceCoreServices(this IServiceCollection services)
+        {
             // Expose DbContext via IAppDbContext for Application layer
             services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<DarwinDbContext>());
 

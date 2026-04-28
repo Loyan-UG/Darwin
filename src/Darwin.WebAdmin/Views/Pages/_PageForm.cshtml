@@ -1,5 +1,6 @@
 @model Darwin.WebAdmin.ViewModels.CMS.PageEditorVm
 @{
+    var cultures = Model.Cultures ?? Array.Empty<string>();
     string PagesIndexUrl() => Url.Action("Index", "Pages") ?? string.Empty;
 }
 
@@ -44,12 +45,9 @@
                     <div class="col-md-2">
                         <label class="form-label">@T.T("Culture")</label>
                         <select asp-for="Translations[@i].Culture" class="form-select">
-                            @if (ViewBag.Cultures is IEnumerable<string> cultures)
+                            @foreach (var cul in cultures)
                             {
-                                foreach (var cul in cultures)
-                                {
-                                    <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
-                                }
+                                <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
                             }
                         </select>
                     </div>

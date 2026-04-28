@@ -83,7 +83,7 @@ namespace Darwin.WebApi.Extensions
             // 3) Persistence + DataProtection
             // ------------------------------------------------------------
             // Register EF Core DbContext, IAppDbContext mapping and seeder orchestration.
-            services.AddPersistence(configuration);
+services.AddConfiguredPersistence(configuration);
 
             // Data Protection (persisted key ring for shared hosting).
             services.AddSharedHostingDataProtection(configuration);

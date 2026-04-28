@@ -924,7 +924,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 vm.Timezone = string.IsNullOrWhiteSpace(vm.Timezone) ? (settings.TimeZone ?? string.Empty) : vm.Timezone;
             }
 
-            ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);
+            vm.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);
 
             if (IsHtmxRequest())
             {

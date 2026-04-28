@@ -17,8 +17,9 @@ namespace Darwin.WebAdmin.Services.Security
 
         public ProtectedAuthAntiBotChallengeService(IDataProtectionProvider dataProtection, IOptionsMonitor<AuthAntiBotOptions> options)
         {
+            ArgumentNullException.ThrowIfNull(dataProtection);
             _protector = dataProtection.CreateProtector(Purpose);
-            _options = options;
+            _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         public string CreateChallengeToken()

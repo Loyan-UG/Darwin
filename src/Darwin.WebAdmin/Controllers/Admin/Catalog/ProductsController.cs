@@ -5,6 +5,7 @@ using Darwin.Application.Settings.Queries;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -60,15 +61,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             SoftDeleteProductHandler softDeleteProduct,
             ISiteSettingCache siteSettingCache)
         {
-            _createProduct = createProduct;
-            _updateProduct = updateProduct;
-            _getProductsPage = getProductsPage;
-            _getProductOpsSummary = getProductOpsSummary;
-            _getProductForEdit = getProductForEdit;
-            _getLookups = getLookups;
-            _getCultures = getCultures;
-            _softDeleteProduct = softDeleteProduct;
-            _siteSettingCache = siteSettingCache;
+            _createProduct = createProduct ?? throw new ArgumentNullException(nameof(createProduct));
+            _updateProduct = updateProduct ?? throw new ArgumentNullException(nameof(updateProduct));
+            _getProductsPage = getProductsPage ?? throw new ArgumentNullException(nameof(getProductsPage));
+            _getProductOpsSummary = getProductOpsSummary ?? throw new ArgumentNullException(nameof(getProductOpsSummary));
+            _getProductForEdit = getProductForEdit ?? throw new ArgumentNullException(nameof(getProductForEdit));
+            _getLookups = getLookups ?? throw new ArgumentNullException(nameof(getLookups));
+            _getCultures = getCultures ?? throw new ArgumentNullException(nameof(getCultures));
+            _softDeleteProduct = softDeleteProduct ?? throw new ArgumentNullException(nameof(softDeleteProduct));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         [HttpGet]
@@ -103,10 +104,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken ct)
         {
-            await LoadLookupsAsync(ct);
             var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var defaultCurrency = siteSettings.DefaultCurrency;
             var vm = new ProductCreateVm();
+            await PopulateProductLookupsAsync(vm, siteSettings.DefaultCulture, defaultCurrency, ct).ConfigureAwait(false);
             vm.Translations ??= new();
             await EnsureProductTranslationsAsync(vm, ct).ConfigureAwait(false);
 
@@ -134,7 +135,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             if (!ModelState.IsValid)
             {
-                await LoadLookupsAsync(ct);
                 await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCreateEditor(vm);
             }
@@ -190,7 +190,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
-                await LoadLookupsAsync(ct);
                 await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCreateEditor(vm);
             }
@@ -199,6 +198,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("ProductNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getProductForEdit.HandleAsync(id, ct);
             if (dto == null)
             {
@@ -249,7 +254,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 }).ToList() ?? new()
             };
 
-            await LoadLookupsAsync(ct);
+            await PopulateProductLookupsAsync(vm, ct).ConfigureAwait(false);
             await EnsureProductTranslationsAsync(vm, ct).ConfigureAwait(false);
             return RenderEditEditor(vm);
         }
@@ -261,9 +266,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             vm.Translations ??= new();
             vm.Variants ??= new();
 
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("ProductNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
-                await LoadLookupsAsync(ct);
                 await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
@@ -272,7 +282,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (translations.Count == 0)
             {
                 ModelState.AddModelError(nameof(vm.Translations), T("ProductAtLeastOneTranslationRequired"));
-                await LoadLookupsAsync(ct);
                 await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
@@ -329,7 +338,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, T("ProductConcurrencyConflict"));
-                await LoadLookupsAsync(ct);
                 await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
@@ -338,7 +346,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
-                await LoadLookupsAsync(ct);
                 await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
@@ -348,23 +355,51 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("ProductDeleteFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try { await _softDeleteProduct.HandleAsync(id, ct); SetSuccessMessage("ProductDeleted"); }
             catch { SetErrorMessage("ProductDeleteFailed"); }
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
-        private async Task LoadLookupsAsync(CancellationToken ct)
+        private async Task PopulateProductLookupsAsync(ProductEditorVm vm, CancellationToken ct)
         {
-            var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
+            var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            await PopulateProductLookupsAsync(vm, siteSettings.DefaultCulture, siteSettings.DefaultCurrency, ct).ConfigureAwait(false);
+        }
+
+        private async Task PopulateProductLookupsAsync(ProductEditorVm vm, string defaultCulture, string defaultCurrency, CancellationToken ct)
+        {
             var lookups = await _getLookups.HandleAsync(defaultCulture, ct);
-            ViewBag.Brands = lookups.Brands;
-            ViewBag.Categories = lookups.Categories;
-            ViewBag.TaxCategories = lookups.TaxCategories;
+            vm.BrandOptions = BuildLookupItems(lookups.Brands, includeEmpty: true);
+            vm.CategoryOptions = BuildLookupItems(lookups.Categories, includeEmpty: true);
+            vm.TaxCategoryOptions = BuildLookupItems(lookups.TaxCategories, includeEmpty: false);
 
-            var (_, cultures) = await _getCultures.HandleAsync(ct);
-            ViewBag.Cultures = cultures;
+            var (_, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            vm.Cultures = cultures;
 
-            ViewBag.Currencies = BuildCurrencyOptions((await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency);
+            vm.Currencies = BuildCurrencyOptions(defaultCurrency);
+        }
+
+        private static List<SelectListItem> BuildLookupItems(IEnumerable<LookupItem> items, bool includeEmpty)
+        {
+            var result = new List<SelectListItem>();
+            if (includeEmpty)
+            {
+                result.Add(new SelectListItem { Value = string.Empty, Text = string.Empty });
+            }
+
+            result.AddRange(items.Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name
+            }));
+
+            return result;
         }
 
         private static IReadOnlyList<string> BuildCurrencyOptions(string defaultCurrency)
@@ -437,6 +472,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
 
+            await PopulateProductLookupsAsync(vm, siteSettings.DefaultCulture, siteSettings.DefaultCurrency, ct).ConfigureAwait(false);
             await EnsureProductTranslationsAsync(vm, ct).ConfigureAwait(false);
 
             if (vm.Variants.Count == 0)
@@ -472,6 +508,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 orderedCultures = [defaultCulture];
             }
+
+            vm.Cultures = orderedCultures;
 
             foreach (var culture in orderedCultures)
             {

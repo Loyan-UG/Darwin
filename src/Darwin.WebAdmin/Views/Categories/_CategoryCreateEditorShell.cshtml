@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.CategoryCreateVm
 @{
     ViewData["Title"] = T.T("CreateCategory");
+    var cultures = Model.Cultures ?? Array.Empty<string>();
     string CategoriesIndexUrl() => Url.Action("Index", "Categories") ?? string.Empty;
 }
 
@@ -24,7 +25,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">@T.T("Parent")</label>
-                        <select asp-for="ParentId" class="form-select" asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))">
+                        <select asp-for="ParentId" class="form-select" asp-items="Model.ParentCategoryOptions">
                             <option value="">@T.T("RootCategoryOption")</option>
                         </select>
                     </div>
@@ -49,7 +50,7 @@
                             <div class="col-md-2">
                                 <label class="form-label">@T.T("Culture")</label>
                                 <select asp-for="Translations[@i].Culture" class="form-select">
-                                    @foreach (var cul in (IEnumerable<string>)ViewBag.Cultures)
+                                    @foreach (var cul in cultures)
                                     {
                                         <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
                                     }

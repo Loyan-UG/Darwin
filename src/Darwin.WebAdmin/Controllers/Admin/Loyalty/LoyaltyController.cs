@@ -161,7 +161,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var vm = new LoyaltyProgramEditVm { BusinessId = businessId ?? Guid.Empty, IsActive = true };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateProgramOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderProgramEditor(vm, isCreate: true);
         }
 
@@ -177,7 +177,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateProgramOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderProgramEditor(vm, isCreate: true);
             }
 
@@ -199,7 +199,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             catch (ValidationException)
             {
                 AddLocalizedModelError("LoyaltyProgramCreateFailed");
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateProgramOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderProgramEditor(vm, isCreate: true);
             }
         }
@@ -231,7 +231,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RulesJson = dto.RulesJson,
                 RowVersion = dto.RowVersion
             };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateProgramOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderProgramEditor(vm, isCreate: false);
         }
 
@@ -247,7 +247,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateProgramOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderProgramEditor(vm, isCreate: false);
             }
 
@@ -271,7 +271,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             catch (ValidationException)
             {
                 AddLocalizedModelError("LoyaltyProgramUpdateFailed");
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateProgramOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderProgramEditor(vm, isCreate: false);
             }
         }
@@ -383,6 +383,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 return RedirectOrHtmx(nameof(Programs), new { });
             }
 
+            if (!ModelState.IsValid)
+            {
+                if (!await TryPopulateRewardTierProgramContextAsync(vm, ct).ConfigureAwait(false))
+                {
+                    SetErrorMessage("LoyaltyProgramNotFound");
+                    return RedirectOrHtmx(nameof(Programs), new { });
+                }
+
+                return RenderRewardTierEditor(vm, isCreate: true);
+            }
+
             try
             {
                 var id = await _createRewardTier.HandleAsync(new LoyaltyRewardTierCreateDto
@@ -401,9 +412,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }
             catch (ValidationException)
             {
-                var program = await _getProgramForEdit.HandleAsync(vm.LoyaltyProgramId, ct).ConfigureAwait(false);
-                vm.ProgramName = program?.Name ?? vm.ProgramName;
-                vm.BusinessId = program?.BusinessId ?? vm.BusinessId;
+                await TryPopulateRewardTierProgramContextAsync(vm, ct).ConfigureAwait(false);
                 AddLocalizedModelError("LoyaltyRewardTierCreateFailed");
                 return RenderRewardTierEditor(vm, isCreate: true);
             }
@@ -460,6 +469,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                     : RedirectOrHtmx(nameof(RewardTiers), new { loyaltyProgramId = vm.LoyaltyProgramId });
             }
 
+            if (!ModelState.IsValid)
+            {
+                if (!await TryPopulateRewardTierProgramContextAsync(vm, ct).ConfigureAwait(false))
+                {
+                    SetErrorMessage("LoyaltyProgramNotFound");
+                    return RedirectOrHtmx(nameof(Programs), new { });
+                }
+
+                return RenderRewardTierEditor(vm, isCreate: false);
+            }
+
             try
             {
                 await _updateRewardTier.HandleAsync(new LoyaltyRewardTierEditDto
@@ -480,9 +500,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }
             catch (ValidationException)
             {
-                var program = await _getProgramForEdit.HandleAsync(vm.LoyaltyProgramId, ct).ConfigureAwait(false);
-                vm.ProgramName = program?.Name ?? vm.ProgramName;
-                vm.BusinessId = program?.BusinessId ?? vm.BusinessId;
+                await TryPopulateRewardTierProgramContextAsync(vm, ct).ConfigureAwait(false);
                 AddLocalizedModelError("LoyaltyRewardTierUpdateFailed");
                 return RenderRewardTierEditor(vm, isCreate: false);
             }
@@ -569,8 +587,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             {
                 BusinessId = businessId ?? Guid.Empty
             };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false);
-            vm.UserOptions = await _referenceData.GetUserOptionsAsync(null, includeEmpty: false, ct).ConfigureAwait(false);
+            await PopulateAccountCreateOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderAccountCreateEditor(vm);
         }
 
@@ -578,10 +595,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAccount(CreateLoyaltyAccountVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty || vm.UserId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyAccountCreateFailed");
+                return RedirectOrHtmx(nameof(Accounts), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId == Guid.Empty ? null : vm.UserId, includeEmpty: false, ct).ConfigureAwait(false);
+                await PopulateAccountCreateOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderAccountCreateEditor(vm);
             }
 
@@ -594,8 +616,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (!result.Succeeded || result.Value is null)
             {
                 AddLocalizedModelError("LoyaltyAccountCreateFailed", result.Error);
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId == Guid.Empty ? null : vm.UserId, includeEmpty: false, ct).ConfigureAwait(false);
+                await PopulateAccountCreateOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderAccountCreateEditor(vm);
             }
 
@@ -666,7 +687,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var vm = new LoyaltyCampaignEditVm { BusinessId = businessId ?? Guid.Empty };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateCampaignOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderCampaignEditor(vm, isCreate: true);
         }
 
@@ -674,9 +695,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateCampaign(LoyaltyCampaignEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyCampaignCreateFailed");
+                return RedirectOrHtmx(nameof(Campaigns), new { });
+            }
+
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateCampaignOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCampaignEditor(vm, isCreate: true);
             }
 
@@ -699,7 +726,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (!result.Succeeded)
             {
                 AddLocalizedModelError("LoyaltyCampaignCreateFailed", result.Error);
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateCampaignOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCampaignEditor(vm, isCreate: true);
             }
 
@@ -710,6 +737,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [HttpGet]
         public async Task<IActionResult> EditCampaign(Guid id, Guid businessId, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyCampaignNotFound");
+                return RedirectOrHtmx(nameof(Campaigns), new { businessId = businessId == Guid.Empty ? (Guid?)null : businessId });
+            }
+
             var result = await _getCampaigns.HandleAsync(businessId, 1, 200, LoyaltyCampaignQueueFilter.All, ct).ConfigureAwait(false);
             var campaign = result.Succeeded ? result.Value?.Items.FirstOrDefault(x => x.Id == id) : null;
             if (campaign is null)
@@ -737,7 +770,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 PayloadJson = campaign.PayloadJson,
                 RowVersion = campaign.RowVersion
             };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateCampaignOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderCampaignEditor(vm, isCreate: false);
         }
 
@@ -745,9 +778,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditCampaign(LoyaltyCampaignEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "LoyaltyCampaignNotFound" : "LoyaltyCampaignUpdateFailed");
+                return RedirectOrHtmx(nameof(Campaigns), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateCampaignOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCampaignEditor(vm, isCreate: false);
             }
 
@@ -772,7 +811,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (!result.Succeeded)
             {
                 AddLocalizedModelError("LoyaltyCampaignUpdateFailed", result.Error);
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateCampaignOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCampaignEditor(vm, isCreate: false);
             }
 
@@ -784,6 +823,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetCampaignActivation(Guid id, Guid businessId, bool isActive, byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyCampaignActivationFailed");
+                return RedirectOrHtmx(nameof(Campaigns), new { businessId = businessId == Guid.Empty ? (Guid?)null : businessId });
+            }
+
             var result = await _setCampaignActivation.HandleAsync(new SetCampaignActivationDto
             {
                 Id = id,
@@ -878,6 +923,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             LoyaltyCampaignDeliveryQueueFilter filter = LoyaltyCampaignDeliveryQueueFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("CampaignDeliveryStatusUpdateFailed");
+                return RedirectOrHtmx(nameof(CampaignDeliveries), new { businessId, campaignId, page, pageSize, filter });
+            }
+
+            if (!Enum.IsDefined(status))
+            {
+                SetErrorMessage("CampaignDeliveryStatusUpdateFailed");
+                return RedirectOrHtmx(nameof(CampaignDeliveries), new { businessId, campaignId, page, pageSize, filter });
+            }
+
             var result = await _updateCampaignDeliveryStatus.HandleAsync(new UpdateCampaignDeliveryStatusDto
             {
                 Id = id,
@@ -958,6 +1015,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExpireScanSession(Guid id, Guid businessId, byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyScanSessionExpireFailed");
+                return RedirectOrHtmx(nameof(ScanSessions), new { businessId = businessId == Guid.Empty ? (Guid?)null : businessId });
+            }
+
             var result = await _expireScanSession.HandleAsync(new ExpireLoyaltyScanSessionDto
             {
                 Id = id,
@@ -973,6 +1036,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExpireExpiredScanSessions(Guid businessId, CancellationToken ct = default)
         {
+            if (businessId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyScanSessionExpireFailed");
+                return RedirectOrHtmx(nameof(ScanSessions), new { });
+            }
+
             var result = await _expireScanSession.HandleExpiredAsync(new ExpireExpiredLoyaltyScanSessionsDto
             {
                 BusinessId = businessId
@@ -1046,6 +1115,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [HttpGet]
         public async Task<IActionResult> AccountDetails(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyAccountNotFound");
+                return RedirectOrHtmx(nameof(Accounts), new { });
+            }
+
             var account = await _getAccountForAdmin.HandleAsync(id, ct).ConfigureAwait(false);
             if (account is null)
             {
@@ -1096,6 +1171,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [HttpGet]
         public async Task<IActionResult> AdjustPoints(Guid loyaltyAccountId, CancellationToken ct = default)
         {
+            if (loyaltyAccountId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyAccountNotFound");
+                return RedirectOrHtmx(nameof(Accounts), new { });
+            }
+
             var account = await _getAccountForAdmin.HandleAsync(loyaltyAccountId, ct).ConfigureAwait(false);
             if (account is null)
             {
@@ -1117,6 +1198,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AdjustPoints(AdjustLoyaltyPointsVm vm, CancellationToken ct = default)
         {
+            if (vm.LoyaltyAccountId == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyPointsAdjustFailed");
+                return RedirectOrHtmx(nameof(Accounts), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                if (!await TryPopulateAdjustPointsAccountContextAsync(vm, ct).ConfigureAwait(false))
+                {
+                    SetErrorMessage("LoyaltyAccountNotFound");
+                    return RedirectOrHtmx(nameof(Accounts), new { businessId = vm.BusinessId });
+                }
+
+                return RenderAdjustPointsEditor(vm);
+            }
+
             try
             {
                 await _adjustPoints.HandleAsync(new AdjustLoyaltyPointsDto
@@ -1135,8 +1233,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }
             catch (ValidationException)
             {
-                var account = await _getAccountForAdmin.HandleAsync(vm.LoyaltyAccountId, ct).ConfigureAwait(false);
-                vm.AccountLabel = account is null ? vm.AccountLabel : $"{account.UserDisplayName} ({account.UserEmail})";
+                await TryPopulateAdjustPointsAccountContextAsync(vm, ct).ConfigureAwait(false);
                 AddLocalizedModelError("LoyaltyPointsAdjustFailed");
                 return RenderAdjustPointsEditor(vm);
             }
@@ -1146,6 +1243,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SuspendAccount(Guid id, byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyAccountSuspendFailed");
+                return RedirectOrHtmx(nameof(Accounts), new { });
+            }
+
             var result = await _suspendAccount.HandleAsync(new SuspendLoyaltyAccountDto
             {
                 Id = id,
@@ -1160,6 +1263,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActivateAccount(Guid id, byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyAccountActivateFailed");
+                return RedirectOrHtmx(nameof(Accounts), new { });
+            }
+
             var result = await _activateAccount.HandleAsync(new ActivateLoyaltyAccountDto
             {
                 Id = id,
@@ -1174,6 +1283,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmRedemption(Guid redemptionId, Guid businessId, Guid loyaltyAccountId, byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (redemptionId == Guid.Empty || businessId == Guid.Empty || loyaltyAccountId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyRedemptionConfirmFailed");
+                return loyaltyAccountId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Redemptions), new { businessId = businessId == Guid.Empty ? (Guid?)null : businessId })
+                    : RedirectOrHtmx(nameof(AccountDetails), new { id = loyaltyAccountId });
+            }
+
             var result = await _confirmRedemption.HandleAsync(new ConfirmLoyaltyRewardRedemptionDto
             {
                 RedemptionId = redemptionId,
@@ -1412,6 +1529,50 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 .Select(x => new SelectListItem(T(x.ToString()), x.ToString(), selected == x)));
 
             return items;
+        }
+
+        private async Task PopulateProgramOptionsAsync(LoyaltyProgramEditVm vm, CancellationToken ct)
+        {
+            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+        }
+
+        private async Task PopulateAccountCreateOptionsAsync(CreateLoyaltyAccountVm vm, CancellationToken ct)
+        {
+            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId == Guid.Empty ? null : vm.UserId, includeEmpty: false, ct).ConfigureAwait(false);
+        }
+
+        private async Task PopulateCampaignOptionsAsync(LoyaltyCampaignEditVm vm, CancellationToken ct)
+        {
+            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+        }
+
+        private async Task<bool> TryPopulateRewardTierProgramContextAsync(LoyaltyRewardTierEditVm vm, CancellationToken ct)
+        {
+            var program = await _getProgramForEdit.HandleAsync(vm.LoyaltyProgramId, ct).ConfigureAwait(false);
+            if (program is null)
+            {
+                return false;
+            }
+
+            vm.ProgramName = program.Name;
+            vm.BusinessId = program.BusinessId;
+            return true;
+        }
+
+        private async Task<bool> TryPopulateAdjustPointsAccountContextAsync(AdjustLoyaltyPointsVm vm, CancellationToken ct)
+        {
+            var account = await _getAccountForAdmin.HandleAsync(vm.LoyaltyAccountId, ct).ConfigureAwait(false);
+            if (account is null)
+            {
+                return false;
+            }
+
+            vm.BusinessId = account.BusinessId;
+            vm.UserId = account.UserId;
+            vm.AccountLabel = $"{account.UserDisplayName} ({account.UserEmail})";
+            vm.RowVersion ??= account.RowVersion;
+            return true;
         }
 
         private IActionResult RenderProgramEditor(LoyaltyProgramEditVm vm, bool isCreate)

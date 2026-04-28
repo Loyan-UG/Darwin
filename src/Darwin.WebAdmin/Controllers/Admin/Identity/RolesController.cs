@@ -44,13 +44,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             GetRoleWithPermissionsForEditHandler getRolePerms,
             UpdateRolePermissionsHandler updateRolePerms)
         {
-            _getRole = getRole;
-            _getRoleForEdit = getRoleForEdit;
-            _create = create;
-            _update = update;
-            _delete = delete;
-            _getRolePerms = getRolePerms;
-            _updateRolePerms = updateRolePerms;
+            _getRole = getRole ?? throw new ArgumentNullException(nameof(getRole));
+            _getRoleForEdit = getRoleForEdit ?? throw new ArgumentNullException(nameof(getRoleForEdit));
+            _create = create ?? throw new ArgumentNullException(nameof(create));
+            _update = update ?? throw new ArgumentNullException(nameof(update));
+            _delete = delete ?? throw new ArgumentNullException(nameof(delete));
+            _getRolePerms = getRolePerms ?? throw new ArgumentNullException(nameof(getRolePerms));
+            _updateRolePerms = updateRolePerms ?? throw new ArgumentNullException(nameof(updateRolePerms));
         }
 
         /// <summary>
@@ -153,6 +153,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetWarningMessage("RoleNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getRoleForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -207,6 +213,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(RoleEditVm model, CancellationToken ct = default)
         {
+            if (model.Id == Guid.Empty)
+            {
+                SetWarningMessage("RoleNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 SetWarningMessage("ValidationErrorsRetry");
@@ -242,6 +254,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("RoleDeleteFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _delete.HandleAsync(id, ct);
@@ -313,6 +331,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> Permissions(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("RolePermissionsLoadFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var vm = await BuildRolePermissionsVmAsync(id, null, null, ct);
             if (vm is null)
             {
@@ -330,6 +354,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Permissions(RolePermissionsEditVm vm, CancellationToken ct = default)
         {
+            if (vm.RoleId == Guid.Empty)
+            {
+                SetErrorMessage("RolePermissionsLoadFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 var invalidVm = await BuildRolePermissionsVmAsync(vm.RoleId, vm.SelectedPermissionIds, vm.RowVersion, ct);
@@ -371,6 +401,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             byte[]? rowVersion,
             CancellationToken ct)
         {
+            if (roleId == Guid.Empty)
+            {
+                return null;
+            }
+
             var result = await _getRolePerms.HandleAsync(roleId, ct);
             if (!result.Succeeded || result.Value is null)
             {

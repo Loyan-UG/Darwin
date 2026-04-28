@@ -67,9 +67,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
             builder.Property(x => x.MetaTitle).HasMaxLength(300);
             builder.Property(x => x.MetaDescription).HasMaxLength(500);
 
-            // ContentHtml per-culture (long text)
+            // ContentHtml per-culture (long text). Let the active EF provider choose the native long text type.
             builder.Property(x => x.ContentHtml)
-                   .HasColumnType("nvarchar(max)")  // SQL Server
                    .IsRequired();
 
             // Unique slug per (Page, Culture)

@@ -8,7 +8,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
     {
         public void Configure(EntityTypeBuilder<ChannelDispatchAudit> builder)
         {
-            builder.ToTable("ChannelDispatchAudits");
+            builder.ToTable("ChannelDispatchAudits", schema: "Integration");
 
             builder.Property(x => x.Channel)
                 .IsRequired()

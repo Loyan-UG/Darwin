@@ -5,7 +5,7 @@ using Darwin.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddApplication();
-builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddConfiguredPersistence(builder.Configuration);
 builder.Services.AddNotificationsInfrastructure(builder.Configuration);
 builder.Services.AddHttpClient();
 builder.Services.Configure<InactiveReminderWorkerOptions>(builder.Configuration.GetSection("InactiveReminderWorker"));

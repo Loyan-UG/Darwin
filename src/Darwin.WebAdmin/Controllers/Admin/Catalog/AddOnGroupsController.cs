@@ -75,29 +75,29 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             GetCulturesHandler getCultures
             )
         {
-            _getPage = getPage;
-            _getSummary = getSummary;
-            _getForEdit = getForEdit;
-            _create = create;
-            _update = update;
-            _softDelete = softDelete;
+            _getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
+            _getSummary = getSummary ?? throw new ArgumentNullException(nameof(getSummary));
+            _getForEdit = getForEdit ?? throw new ArgumentNullException(nameof(getForEdit));
+            _create = create ?? throw new ArgumentNullException(nameof(create));
+            _update = update ?? throw new ArgumentNullException(nameof(update));
+            _softDelete = softDelete ?? throw new ArgumentNullException(nameof(softDelete));
 
-            _attachVariants = attachVariants;
-            _attachProducts = attachProducts;
-            _attachCategories = attachCategories;
-            _attachBrands = attachBrands;
+            _attachVariants = attachVariants ?? throw new ArgumentNullException(nameof(attachVariants));
+            _attachProducts = attachProducts ?? throw new ArgumentNullException(nameof(attachProducts));
+            _attachCategories = attachCategories ?? throw new ArgumentNullException(nameof(attachCategories));
+            _attachBrands = attachBrands ?? throw new ArgumentNullException(nameof(attachBrands));
 
-            _getProductsPage = getProductsPage;
-            _getCategoriesPage = getCategoriesPage;
-            _getBrandsPage = getBrandsPage;
-            _getVariantsPage = getVariantsPage;
+            _getProductsPage = getProductsPage ?? throw new ArgumentNullException(nameof(getProductsPage));
+            _getCategoriesPage = getCategoriesPage ?? throw new ArgumentNullException(nameof(getCategoriesPage));
+            _getBrandsPage = getBrandsPage ?? throw new ArgumentNullException(nameof(getBrandsPage));
+            _getVariantsPage = getVariantsPage ?? throw new ArgumentNullException(nameof(getVariantsPage));
 
-            _getAttachedProducts = getAttachedProducts;
-            _getAttachedVariants = getAttachedVariants;
-            _getAttachedCategories = getAttachedCategories;
-            _getAttachedBrands = getAttachedBrands;
-            _siteSettingCache = siteSettingCache;
-            _getCultures = getCultures;
+            _getAttachedProducts = getAttachedProducts ?? throw new ArgumentNullException(nameof(getAttachedProducts));
+            _getAttachedVariants = getAttachedVariants ?? throw new ArgumentNullException(nameof(getAttachedVariants));
+            _getAttachedCategories = getAttachedCategories ?? throw new ArgumentNullException(nameof(getAttachedCategories));
+            _getAttachedBrands = getAttachedBrands ?? throw new ArgumentNullException(nameof(getAttachedBrands));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
+            _getCultures = getCultures ?? throw new ArgumentNullException(nameof(getCultures));
         }
 
         // ---------------- List ----------------
@@ -218,6 +218,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getForEdit.HandleAsync(id, ct); // returns DTO directly
             if (dto is null)
             {
@@ -279,6 +285,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var defaultCurrency = (await _siteSettingCache.GetAsync(ct)).DefaultCurrency;
             await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
 
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid) return RenderEditEditor(vm);
 
             var groupTranslations = FilterCompleteGroupTranslations(vm.Translations);
@@ -333,6 +345,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupDeleteFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 var dto = new AddOnGroupDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
@@ -358,6 +376,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> AttachToProducts(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
             {
@@ -395,6 +419,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> AttachToProducts(AddOnGroupAttachToProductsVm vm, CancellationToken ct = default)
         {
+            if (vm.AddOnGroupId == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupAttachProductsFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = new AddOnGroupAttachToProductsDto
             {
                 AddOnGroupId = vm.AddOnGroupId,
@@ -418,6 +448,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> AttachToCategories(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
             {
@@ -454,6 +490,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> AttachToCategories(AddOnGroupAttachToCategoriesVm vm, CancellationToken ct = default)
         {
+            if (vm.AddOnGroupId == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupAttachCategoriesFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _attachCategories.HandleAsync(
@@ -476,6 +518,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> AttachToBrands(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
             {
@@ -512,6 +560,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> AttachToBrands(AddOnGroupAttachToBrandsVm vm, CancellationToken ct = default)
         {
+            if (vm.AddOnGroupId == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupAttachBrandsFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _attachBrands.HandleAsync(
@@ -542,6 +596,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             int pageSize = 20,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -588,6 +648,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> AttachToVariants(AddOnGroupAttachToVariantsVm vm, CancellationToken ct = default)
         {
+            if (vm.AddOnGroupId == Guid.Empty)
+            {
+                SetErrorMessage("AddOnGroupAttachVariantsFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = new AddOnGroupAttachToVariantsDto
             {
                 AddOnGroupId = vm.AddOnGroupId,

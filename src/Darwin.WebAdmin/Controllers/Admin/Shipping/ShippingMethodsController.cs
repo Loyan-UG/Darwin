@@ -182,6 +182,12 @@ public sealed class ShippingMethodsController : AdminBaseController
     public async Task<IActionResult> Edit(ShippingMethodEditVm vm, CancellationToken ct = default)
     {
         EnsureRates(vm);
+        if (vm.Id == Guid.Empty)
+        {
+            SetErrorMessage("ShippingMethodNotFoundMessage");
+            return RedirectOrHtmx(nameof(Index), new { });
+        }
+
         if (!ModelState.IsValid)
         {
             return RenderEditor(vm, false);

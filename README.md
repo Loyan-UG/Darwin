@@ -36,6 +36,7 @@ Use this README as the product and delivery overview, then continue with the foc
 - [`DarwinMobile.md`](DarwinMobile.md): MAUI app responsibilities, onboarding/account lifecycle dependencies, and mobile/backend coupling
 - [`DarwinWebApi.md`](DarwinWebApi.md): HTTP surfaces, contract boundaries, audience split, and integration direction
 - [`DarwinTesting.md`](DarwinTesting.md): testing strategy and validation expectations
+- [`docs/persistence-providers.md`](docs/persistence-providers.md): PostgreSQL/SQL Server provider architecture, local Docker setup, migration commands, and provider verification rules
 - [`howto-identity-access.md`](howto-identity-access.md): identity, roles, permissions, and admin identity operations
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): engineering rules and contribution standards
 
@@ -76,7 +77,7 @@ Practical meaning:
 | Pillar | Status | Notes |
 | --- | --- | --- |
 | Domain & Application | Completed foundation / In Progress refinement | Core CRM, loyalty, inventory, billing, and warehouse-aware fulfillment exist; payment, shipping, onboarding, communication, tax, and settings domains still need deeper refinement. |
-| Infrastructure | Active | EF Core persistence, migrations, seed pipeline, security wiring, and module mappings are in place. |
+| Infrastructure | Active | Shared EF Core model, provider-specific PostgreSQL/SQL Server registration, migrations, seed pipeline, security wiring, and module mappings are in place. PostgreSQL is the preferred local/default provider. |
 | WebAdmin | In Progress and highest priority | MVC/Razor + HTMX back-office is the current delivery focus and is being completed as the first operational control center. |
 | WebApi | Active | Mobile-used endpoints must remain stable; broader public/member/admin surface separation continues after critical admin/backend work. |
 | Front-Office (`Darwin.Web`) | In Progress but not current priority | Next.js storefront/member portal direction is defined, but execution is intentionally secondary to WebAdmin completion. |
@@ -93,7 +94,10 @@ Practical meaning:
 src/
 |-- Darwin.Domain          - Entities, value objects, enums, and aggregate rules
 |-- Darwin.Application     - Use cases, handlers, DTOs, validators, and orchestration
-|-- Darwin.Infrastructure  - EF Core, DbContext, migrations, seed pipeline, and infrastructure services
+|-- Darwin.Infrastructure  - Shared EF Core model, DbContext, seed pipeline, and infrastructure services
+|-- Darwin.Infrastructure.PostgreSql - PostgreSQL provider registration and PostgreSQL migrations
+|-- Darwin.Infrastructure.SqlServer  - SQL Server provider registration and legacy SQL Server migration lane
+|-- Darwin.Infrastructure.PersistenceProviders - Neutral runtime selector for PostgreSQL/SQL Server
 |-- Darwin.WebAdmin        - MVC + Razor + HTMX back-office
 |-- Darwin.WebApi          - REST API for public, member, business, admin, and future integrations
 |-- Darwin.Web             - Next.js React front-office (SSR/SSG/ISR)
@@ -111,6 +115,24 @@ Important delivery rules:
 - `Darwin.Web` is managed by Node/npm and does not build through `dotnet build`
 - `Darwin.WebApi` is the delivery boundary for storefront, member, mobile, and future external consumers
 - `Darwin.Contracts` is the contract boundary; admin DTOs must not leak into public/member delivery
+
+## Persistence Providers
+
+PostgreSQL is the preferred local/default database provider. SQL Server remains supported for customer deployments that require it.
+
+Provider selection is configuration-driven:
+
+```json
+{
+  "Persistence": {
+    "Provider": "PostgreSql"
+  }
+}
+```
+
+Use `PostgreSql`/`Postgres`/`Npgsql` for PostgreSQL and `SqlServer`/`MSSQL` for SQL Server. The shared EF model and seed pipeline live in `Darwin.Infrastructure`; provider-specific registration lives in `Darwin.Infrastructure.PostgreSql` and `Darwin.Infrastructure.SqlServer`; neutral runtime selection lives in `Darwin.Infrastructure.PersistenceProviders`.
+
+See [`docs/persistence-providers.md`](docs/persistence-providers.md) for Docker setup, migration commands, and provider verification rules.
 
 ## User Interface Segments
 
@@ -241,7 +263,8 @@ Required direction:
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/)
 - [Node.js 18.0+](https://nodejs.org/)
-- SQL Server
+- Docker Desktop for local PostgreSQL development
+- SQL Server only when validating SQL Server customer deployments or the legacy SQL Server migration lane
 - MAUI workloads for mobile work
 
 ### Local Setup
@@ -253,12 +276,18 @@ git clone https://github.com/shahramvafadar/Darwin.git
 cd Darwin
 ```
 
-Configure the .NET connection string in `src/Darwin.WebAdmin/appsettings.Development.json` and/or `src/Darwin.WebApi/appsettings.Development.json`.
-
-Apply migrations:
+Start the preferred local PostgreSQL services:
 
 ```bash
-dotnet ef database update --project src/Darwin.Infrastructure --startup-project src/Darwin.WebAdmin
+docker compose -f docker-compose.postgres.yml up -d
+```
+
+Configure the .NET provider and connection string in `src/Darwin.WebAdmin/appsettings.Development.json`, `src/Darwin.WebApi/appsettings.Development.json`, and/or `src/Darwin.Worker/appsettings.Development.json`.
+
+Apply PostgreSQL migrations:
+
+```bash
+dotnet ef database update --project src/Darwin.Infrastructure.PostgreSql --startup-project src/Darwin.WebAdmin --context Darwin.Infrastructure.Persistence.Db.DarwinDbContext
 ```
 
 Run the back-office:

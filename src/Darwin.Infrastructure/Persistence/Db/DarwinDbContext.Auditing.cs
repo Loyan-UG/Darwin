@@ -41,6 +41,8 @@ namespace Darwin.Infrastructure.Persistence.Db
         private void ApplyAudit()
         {
             var now = DateTime.UtcNow;
+            var usesClientManagedRowVersion =
+                Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
 
             // Try to obtain the current user id from ICurrentUserService.
             // If the current user service is not available or throws (e.g. when no authenticated user),
@@ -72,13 +74,19 @@ namespace Darwin.Infrastructure.Persistence.Db
                         entry.Entity.ModifiedAtUtc = null;
                         entry.Entity.CreatedByUserId = userId;
                         entry.Entity.ModifiedByUserId = userId;
-                        if (entry.Entity.RowVersion == null || entry.Entity.RowVersion.Length == 0)
-                            entry.Entity.RowVersion = Array.Empty<byte>();
+                        if (usesClientManagedRowVersion)
+                        {
+                            entry.Entity.RowVersion = Guid.NewGuid().ToByteArray();
+                        }
                         break;
 
                     case EntityState.Modified:
                         entry.Entity.ModifiedAtUtc = now;
                         entry.Entity.ModifiedByUserId = userId;
+                        if (usesClientManagedRowVersion)
+                        {
+                            entry.Entity.RowVersion = Guid.NewGuid().ToByteArray();
+                        }
                         break;
                 }
             }

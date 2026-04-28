@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
 namespace Darwin.Infrastructure.Persistence.Db
@@ -56,7 +55,7 @@ namespace Darwin.Infrastructure.Persistence.Db
     ///         Keep this factory in the same namespace as the runtime DbContext to avoid EF discovering multiple contexts.
     ///     </para>
     /// </remarks>
-    public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<DarwinDbContext>
+    public sealed class DesignTimeDbContextFactory
     {
         public DarwinDbContext CreateDbContext(string[] args)
         {

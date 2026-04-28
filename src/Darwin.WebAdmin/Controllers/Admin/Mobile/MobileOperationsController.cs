@@ -29,13 +29,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             ClearUserDevicePushTokenHandler clearDevicePushToken,
             DeactivateUserDeviceHandler deactivateDevice)
         {
-            _getSiteSettings = getSiteSettings;
-            _getBusinessSupportSummary = getBusinessSupportSummary;
-            _getCommunicationSummary = getCommunicationSummary;
-            _getDeviceSummary = getDeviceSummary;
-            _getDevicesPage = getDevicesPage;
-            _clearDevicePushToken = clearDevicePushToken;
-            _deactivateDevice = deactivateDevice;
+            _getSiteSettings = getSiteSettings ?? throw new ArgumentNullException(nameof(getSiteSettings));
+            _getBusinessSupportSummary = getBusinessSupportSummary ?? throw new ArgumentNullException(nameof(getBusinessSupportSummary));
+            _getCommunicationSummary = getCommunicationSummary ?? throw new ArgumentNullException(nameof(getCommunicationSummary));
+            _getDeviceSummary = getDeviceSummary ?? throw new ArgumentNullException(nameof(getDeviceSummary));
+            _getDevicesPage = getDevicesPage ?? throw new ArgumentNullException(nameof(getDevicesPage));
+            _clearDevicePushToken = clearDevicePushToken ?? throw new ArgumentNullException(nameof(clearDevicePushToken));
+            _deactivateDevice = deactivateDevice ?? throw new ArgumentNullException(nameof(deactivateDevice));
         }
 
         [HttpGet]
@@ -138,6 +138,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("MobilePushTokenClearFailed");
+                return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
+            }
+
             var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
             if (result.Succeeded)
             {
@@ -155,6 +161,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("MobileDeviceDeactivateFailed");
+                return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
+            }
+
             var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
             if (result.Succeeded)
             {

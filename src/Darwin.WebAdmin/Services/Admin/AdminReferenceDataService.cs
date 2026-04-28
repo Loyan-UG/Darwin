@@ -44,22 +44,24 @@ namespace Darwin.WebAdmin.Services.Admin
         public async Task<Guid?> ResolveBusinessIdAsync(Guid? requestedBusinessId, CancellationToken ct = default)
         {
             var items = await _getBusinesses.HandleAsync(ct).ConfigureAwait(false);
-            return ResolveSelectedId(items.Select(x => x.Id).ToList(), requestedBusinessId);
+            return ResolveSelectedId(items.Select(x => x.Id).ToList(), NormalizeSelectedId(requestedBusinessId));
         }
 
         public async Task<Guid?> ResolveWarehouseIdAsync(Guid? requestedWarehouseId, Guid? businessId = null, CancellationToken ct = default)
         {
+            businessId = NormalizeSelectedId(businessId);
             var items = await _getWarehouses.HandleAsync(ct).ConfigureAwait(false);
             if (businessId.HasValue)
             {
                 items = items.Where(x => x.BusinessId == businessId.Value).ToList();
             }
 
-            return ResolveSelectedId(items.Select(x => x.Id).ToList(), requestedWarehouseId);
+            return ResolveSelectedId(items.Select(x => x.Id).ToList(), NormalizeSelectedId(requestedWarehouseId));
         }
 
         public async Task<List<SelectListItem>> GetBusinessOptionsAsync(Guid? selectedBusinessId, CancellationToken ct = default)
         {
+            selectedBusinessId = NormalizeSelectedId(selectedBusinessId);
             var items = await _getBusinesses.HandleAsync(ct).ConfigureAwait(false);
             return items
                 .Select(x => new SelectListItem(
@@ -71,6 +73,8 @@ namespace Darwin.WebAdmin.Services.Admin
 
         public async Task<List<SelectListItem>> GetWarehouseOptionsAsync(Guid? selectedWarehouseId, Guid? businessId = null, CancellationToken ct = default)
         {
+            selectedWarehouseId = NormalizeSelectedId(selectedWarehouseId);
+            businessId = NormalizeSelectedId(businessId);
             var items = await _getWarehouses.HandleAsync(ct).ConfigureAwait(false);
             if (businessId.HasValue)
             {
@@ -88,43 +92,58 @@ namespace Darwin.WebAdmin.Services.Admin
         public async Task<List<SelectListItem>> GetUserOptionsAsync(Guid? selectedUserId, bool includeEmpty = true, CancellationToken ct = default)
         {
             var items = await _getUsers.HandleAsync(ct).ConfigureAwait(false);
-            return BuildOptions(items, selectedUserId, includeEmpty, "Unassigned");
+            return BuildOptions(items, NormalizeSelectedId(selectedUserId), includeEmpty, "Unassigned");
         }
 
         public async Task<List<SelectListItem>> GetCustomerOptionsAsync(Guid? selectedCustomerId, bool includeEmpty = false, CancellationToken ct = default)
         {
             var items = await _getCustomers.HandleAsync(ct).ConfigureAwait(false);
-            return BuildOptions(items, selectedCustomerId, includeEmpty, "Select customer");
+            return BuildOptions(items, NormalizeSelectedId(selectedCustomerId), includeEmpty, "Select customer");
         }
 
         public async Task<List<SelectListItem>> GetCustomerSegmentOptionsAsync(Guid? selectedSegmentId, bool includeEmpty = false, CancellationToken ct = default)
         {
             var items = await _getCustomerSegments.HandleAsync(ct).ConfigureAwait(false);
-            return BuildOptions(items, selectedSegmentId, includeEmpty, "Select segment");
+            return BuildOptions(items, NormalizeSelectedId(selectedSegmentId), includeEmpty, "Select segment");
         }
 
         public async Task<List<SelectListItem>> GetVariantOptionsAsync(Guid? selectedVariantId, CancellationToken ct = default)
         {
             var items = await _getVariants.HandleAsync(ct).ConfigureAwait(false);
-            return BuildOptions(items, selectedVariantId, false, "Select variant");
+            return BuildOptions(items, NormalizeSelectedId(selectedVariantId), false, "Select variant");
         }
 
         public async Task<List<SelectListItem>> GetSupplierOptionsAsync(Guid businessId, Guid? selectedSupplierId, bool includeEmpty = false, CancellationToken ct = default)
         {
+            if (businessId == Guid.Empty)
+            {
+                return BuildOptions([], NormalizeSelectedId(selectedSupplierId), includeEmpty, "Select supplier");
+            }
+
             var items = await _getSuppliers.HandleAsync(businessId, ct).ConfigureAwait(false);
-            return BuildOptions(items, selectedSupplierId, includeEmpty, "Select supplier");
+            return BuildOptions(items, NormalizeSelectedId(selectedSupplierId), includeEmpty, "Select supplier");
         }
 
         public async Task<List<SelectListItem>> GetFinancialAccountOptionsAsync(Guid businessId, Guid? selectedAccountId, bool includeEmpty = false, CancellationToken ct = default)
         {
+            if (businessId == Guid.Empty)
+            {
+                return BuildOptions([], NormalizeSelectedId(selectedAccountId), includeEmpty, "Select account");
+            }
+
             var items = await _getAccounts.HandleAsync(businessId, ct).ConfigureAwait(false);
-            return BuildOptions(items, selectedAccountId, includeEmpty, "Select account");
+            return BuildOptions(items, NormalizeSelectedId(selectedAccountId), includeEmpty, "Select account");
         }
 
         public async Task<List<SelectListItem>> GetPaymentOptionsAsync(Guid? selectedPaymentId, bool includeEmpty = false, CancellationToken ct = default)
         {
             var items = await _getPayments.HandleAsync(ct).ConfigureAwait(false);
-            return BuildOptions(items, selectedPaymentId, includeEmpty, "Select payment");
+            return BuildOptions(items, NormalizeSelectedId(selectedPaymentId), includeEmpty, "Select payment");
+        }
+
+        private static Guid? NormalizeSelectedId(Guid? id)
+        {
+            return id is null || id == Guid.Empty ? null : id;
         }
 
         private static Guid? ResolveSelectedId(IReadOnlyCollection<Guid> availableIds, Guid? requestedId)

@@ -53,14 +53,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             SoftDeletePageHandler softDeletePage,
             ISiteSettingCache siteSettingCache)
         {
-            _create = create;
-            _update = update;
-            _list = list;
-            _getPageOpsSummary = getPageOpsSummary;
-            _get = get;
-            _getCultures = getCultures;
-            _softDeletePage = softDeletePage;
-            _siteSettingCache = siteSettingCache;
+            _create = create ?? throw new ArgumentNullException(nameof(create));
+            _update = update ?? throw new ArgumentNullException(nameof(update));
+            _list = list ?? throw new ArgumentNullException(nameof(list));
+            _getPageOpsSummary = getPageOpsSummary ?? throw new ArgumentNullException(nameof(getPageOpsSummary));
+            _get = get ?? throw new ArgumentNullException(nameof(get));
+            _getCultures = getCultures ?? throw new ArgumentNullException(nameof(getCultures));
+            _softDeletePage = softDeletePage ?? throw new ArgumentNullException(nameof(softDeletePage));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         [HttpGet]
@@ -95,7 +95,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken ct)
         {
-            await LoadCulturesAsync(ct).ConfigureAwait(false);
             var vm = new PageCreateVm();
             await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
             return RenderCreateEditor(vm);
@@ -115,7 +114,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
 
             if (!ModelState.IsValid)
             {
-                await LoadCulturesAsync(ct).ConfigureAwait(false);
                 await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCreateEditor(vm);
             }
@@ -147,7 +145,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
-                await LoadCulturesAsync(ct).ConfigureAwait(false);
                 await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderCreateEditor(vm);
             }
@@ -156,6 +153,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("PageNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _get.HandleAsync(id, ct);
             if (dto == null)
             {
@@ -181,7 +184,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 }).ToList()
             };
 
-            await LoadCulturesAsync(ct).ConfigureAwait(false);
             await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
 
             return RenderEditEditor(vm);
@@ -193,9 +195,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         {
             vm.Translations ??= new();
 
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("PageNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
-                await LoadCulturesAsync(ct).ConfigureAwait(false);
                 await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
@@ -204,7 +211,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             if (translations.Count == 0)
             {
                 ModelState.AddModelError(nameof(vm.Translations), T("PageTranslationRequired"));
-                await LoadCulturesAsync(ct).ConfigureAwait(false);
                 await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
@@ -236,7 +242,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, T("PageConcurrencyConflict"));
-                await LoadCulturesAsync(ct).ConfigureAwait(false);
                 await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
@@ -245,7 +250,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
-                await LoadCulturesAsync(ct).ConfigureAwait(false);
                 await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);
                 return RenderEditEditor(vm);
             }
@@ -255,6 +259,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("PageDeleteFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _softDeletePage.HandleAsync(id, rowVersion, ct);
@@ -265,12 +275,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 SetErrorMessage("PageDeleteFailed");
             }
             return RedirectOrHtmx(nameof(Index), new { });
-        }
-
-        private async Task LoadCulturesAsync(CancellationToken ct)
-        {
-            var (_, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
-            ViewBag.Cultures = cultures;
         }
 
         private IActionResult RenderIndex(PagesIndexVm vm)
@@ -332,6 +336,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             {
                 orderedCultures = [defaultCulture];
             }
+
+            vm.Cultures = orderedCultures;
 
             foreach (var culture in orderedCultures)
             {

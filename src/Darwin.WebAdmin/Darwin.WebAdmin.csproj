@@ -44,6 +44,7 @@
     <ProjectReference Include="..\Darwin.Application\Darwin.Application.csproj" />
     <ProjectReference Include="..\Darwin.Infrastructure\Darwin.Infrastructure.csproj" />
     <ProjectReference Include="..\Darwin.Shared\Darwin.Shared.csproj" />
+    <ProjectReference Include="..\Darwin.Infrastructure.PersistenceProviders\Darwin.Infrastructure.PersistenceProviders.csproj" />
   </ItemGroup>
 
   <ItemGroup>

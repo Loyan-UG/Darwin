@@ -383,15 +383,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 return RedirectOrHtmx(nameof(Payments), new { businessId, page, pageSize, q, queue });
             }
 
-            byte[] version;
-            try
-            {
-                version = Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+            var version = DecodeRowVersion(rowVersion);
 
             var result = await _updatePaymentDisputeReview
                 .HandleAsync(new UpdatePaymentDisputeReviewDto
@@ -545,15 +537,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 return RedirectOrHtmx(nameof(Webhooks), new { page, pageSize, q, queue });
             }
 
-            byte[] version;
-            try
-            {
-                version = Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+            var version = DecodeRowVersion(rowVersion);
 
             var result = await _updateBillingWebhookDelivery
                 .HandleAsync(new UpdateBillingWebhookDeliveryDto
@@ -1210,7 +1194,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 BusinessId = businessId ?? Guid.Empty
             };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateFinancialAccountOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderFinancialAccountEditor(vm, isCreate: true);
         }
 
@@ -1226,7 +1210,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
 
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateFinancialAccountOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderFinancialAccountEditor(vm, isCreate: true);
             }
 
@@ -1247,7 +1231,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             catch (Exception)
             {
                 AddModelErrorMessage("FinancialAccountCreateFailedMessage");
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateFinancialAccountOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderFinancialAccountEditor(vm, isCreate: true);
             }
         }
@@ -1277,7 +1261,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Type = dto.Type,
                 Code = dto.Code
             };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateFinancialAccountOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderFinancialAccountEditor(vm, isCreate: false);
         }
 
@@ -1293,7 +1277,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
 
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateFinancialAccountOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderFinancialAccountEditor(vm, isCreate: false);
             }
 
@@ -1321,7 +1305,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             catch (Exception)
             {
                 AddModelErrorMessage("FinancialAccountUpdateFailedMessage");
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateFinancialAccountOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderFinancialAccountEditor(vm, isCreate: false);
             }
         }
@@ -1703,6 +1687,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId, includeEmpty: true, ct).ConfigureAwait(false);
         }
 
+        private async Task PopulateFinancialAccountOptionsAsync(FinancialAccountEditVm vm, CancellationToken ct)
+        {
+            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+        }
+
         private async Task PopulateExpenseOptionsAsync(ExpenseEditVm vm, CancellationToken ct)
         {
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -1724,10 +1713,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         private static void EnsureJournalEntryRows(JournalEntryEditVm vm)
         {
             vm.Lines ??= new List<JournalEntryLineVm>();
-            if (vm.Lines.Count == 0)
+            while (vm.Lines.Count < 2)
             {
                 vm.Lines.Add(new JournalEntryLineVm());
-                vm.Lines.Add(new JournalEntryLineVm());
+            }
+        }
+
+        private static byte[] DecodeRowVersion(string? rowVersion)
+        {
+            if (string.IsNullOrWhiteSpace(rowVersion))
+            {
+                return Array.Empty<byte>();
+            }
+
+            try
+            {
+                return Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                return Array.Empty<byte>();
             }
         }
 

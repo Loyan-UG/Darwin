@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.WebAdmin.ViewModels.Catalog
 {
@@ -40,6 +41,8 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public bool IsActive { get; set; } = true;
         public int SortOrder { get; set; } = 0;
         public List<CategoryTranslationVm> Translations { get; set; } = new();
+        public List<SelectListItem> ParentCategoryOptions { get; set; } = new();
+        public IReadOnlyList<string> Cultures { get; set; } = Array.Empty<string>();
     }
 
     public sealed class CategoryEditVm
@@ -50,5 +53,6 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public int SortOrder { get; set; } = 0;
         public byte[]? RowVersion { get; set; }
         public List<CategoryTranslationVm> Translations { get; set; } = new();
+        public List<SelectListItem> ParentCategoryOptions { get; set; } = new();
     }
 }

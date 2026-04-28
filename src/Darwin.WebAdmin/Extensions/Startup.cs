@@ -44,6 +44,18 @@ namespace Darwin.WebAdmin.Extensions
     {
         public static async Task UseWebStartupAsync(this WebApplication app)
         {
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                // Apply migrations + seed before any middleware reads settings from a fresh database.
+                await app.Services.MigrateAndSeedAsync();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                app.UseHsts();
+            }
+
             var localizationSettings = await LoadLocalizationSettingsAsync(app.Services);
             var requestLocalizationOptions = new RequestLocalizationOptions
             {
@@ -55,18 +67,6 @@ namespace Darwin.WebAdmin.Extensions
             requestLocalizationOptions.RequestCultureProviders.Insert(1, new CookieRequestCultureProvider());
             app.UseForwardedHeaders();
             app.UseRequestLocalization(requestLocalizationOptions);
-
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-                // Apply migrations + seed in dev
-                await app.Services.MigrateAndSeedAsync();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                app.UseHsts();
-            }
 
             app.UseHttpsRedirection();
             app.UseWebAdminSecurityHeaders();

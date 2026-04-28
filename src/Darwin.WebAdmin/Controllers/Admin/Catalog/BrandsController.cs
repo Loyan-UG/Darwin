@@ -41,14 +41,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             ISiteSettingCache siteSettingCache,
             GetCulturesHandler getCultures)
         {
-            _getPage = getPage;
-            _getBrandOpsSummary = getBrandOpsSummary;
-            _getForEdit = getForEdit;
-            _create = create;
-            _update = update;
-            _softDelete = softDelete;
-            _siteSettingCache = siteSettingCache;
-            _getCultures = getCultures;
+            _getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
+            _getBrandOpsSummary = getBrandOpsSummary ?? throw new ArgumentNullException(nameof(getBrandOpsSummary));
+            _getForEdit = getForEdit ?? throw new ArgumentNullException(nameof(getForEdit));
+            _create = create ?? throw new ArgumentNullException(nameof(create));
+            _update = update ?? throw new ArgumentNullException(nameof(update));
+            _softDelete = softDelete ?? throw new ArgumentNullException(nameof(softDelete));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
+            _getCultures = getCultures ?? throw new ArgumentNullException(nameof(getCultures));
         }
 
         /// <summary>
@@ -145,6 +145,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BrandNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -174,6 +180,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(BrandEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("BrandNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await EnsureTranslationsAsync(vm, ct);
@@ -228,6 +240,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BrandDeleteFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = new BrandDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
             Result result = await _softDelete.HandleAsync(dto, ct);
 

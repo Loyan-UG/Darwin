@@ -90,42 +90,42 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             AdminReferenceDataService referenceData,
             ISiteSettingCache siteSettingCache)
         {
-            _getCustomersPage = getCustomersPage;
-            _getCustomerForEdit = getCustomerForEdit;
-            _getCrmSummary = getCrmSummary;
-            _getCustomerInteractionsPage = getCustomerInteractionsPage;
-            _getCustomerConsentsPage = getCustomerConsentsPage;
-            _getCustomerSegmentMemberships = getCustomerSegmentMemberships;
-            _createCustomer = createCustomer;
-            _updateCustomer = updateCustomer;
-            _getLeadsPage = getLeadsPage;
-            _getLeadForEdit = getLeadForEdit;
-            _getLeadInteractionsPage = getLeadInteractionsPage;
-            _createLead = createLead;
-            _updateLead = updateLead;
-            _convertLeadToCustomer = convertLeadToCustomer;
-            _updateLeadLifecycle = updateLeadLifecycle;
-            _getOpportunitiesPage = getOpportunitiesPage;
-            _getOpportunityForEdit = getOpportunityForEdit;
-            _getOpportunityInteractionsPage = getOpportunityInteractionsPage;
-            _createOpportunity = createOpportunity;
-            _updateOpportunity = updateOpportunity;
-            _updateOpportunityLifecycle = updateOpportunityLifecycle;
-            _getCustomerSegmentsPage = getCustomerSegmentsPage;
-            _getCustomerSegmentForEdit = getCustomerSegmentForEdit;
-            _getInvoicesPage = getInvoicesPage;
-            _getInvoiceForEdit = getInvoiceForEdit;
-            _createCustomerSegment = createCustomerSegment;
-            _updateCustomerSegment = updateCustomerSegment;
-            _updateInvoice = updateInvoice;
-            _transitionInvoiceStatus = transitionInvoiceStatus;
-            _createInvoiceRefund = createInvoiceRefund;
-            _createInteraction = createInteraction;
-            _createConsent = createConsent;
-            _assignCustomerSegment = assignCustomerSegment;
-            _removeCustomerSegmentMembership = removeCustomerSegmentMembership;
-            _referenceData = referenceData;
-            _siteSettingCache = siteSettingCache;
+            _getCustomersPage = getCustomersPage ?? throw new ArgumentNullException(nameof(getCustomersPage));
+            _getCustomerForEdit = getCustomerForEdit ?? throw new ArgumentNullException(nameof(getCustomerForEdit));
+            _getCrmSummary = getCrmSummary ?? throw new ArgumentNullException(nameof(getCrmSummary));
+            _getCustomerInteractionsPage = getCustomerInteractionsPage ?? throw new ArgumentNullException(nameof(getCustomerInteractionsPage));
+            _getCustomerConsentsPage = getCustomerConsentsPage ?? throw new ArgumentNullException(nameof(getCustomerConsentsPage));
+            _getCustomerSegmentMemberships = getCustomerSegmentMemberships ?? throw new ArgumentNullException(nameof(getCustomerSegmentMemberships));
+            _createCustomer = createCustomer ?? throw new ArgumentNullException(nameof(createCustomer));
+            _updateCustomer = updateCustomer ?? throw new ArgumentNullException(nameof(updateCustomer));
+            _getLeadsPage = getLeadsPage ?? throw new ArgumentNullException(nameof(getLeadsPage));
+            _getLeadForEdit = getLeadForEdit ?? throw new ArgumentNullException(nameof(getLeadForEdit));
+            _getLeadInteractionsPage = getLeadInteractionsPage ?? throw new ArgumentNullException(nameof(getLeadInteractionsPage));
+            _createLead = createLead ?? throw new ArgumentNullException(nameof(createLead));
+            _updateLead = updateLead ?? throw new ArgumentNullException(nameof(updateLead));
+            _convertLeadToCustomer = convertLeadToCustomer ?? throw new ArgumentNullException(nameof(convertLeadToCustomer));
+            _updateLeadLifecycle = updateLeadLifecycle ?? throw new ArgumentNullException(nameof(updateLeadLifecycle));
+            _getOpportunitiesPage = getOpportunitiesPage ?? throw new ArgumentNullException(nameof(getOpportunitiesPage));
+            _getOpportunityForEdit = getOpportunityForEdit ?? throw new ArgumentNullException(nameof(getOpportunityForEdit));
+            _getOpportunityInteractionsPage = getOpportunityInteractionsPage ?? throw new ArgumentNullException(nameof(getOpportunityInteractionsPage));
+            _createOpportunity = createOpportunity ?? throw new ArgumentNullException(nameof(createOpportunity));
+            _updateOpportunity = updateOpportunity ?? throw new ArgumentNullException(nameof(updateOpportunity));
+            _updateOpportunityLifecycle = updateOpportunityLifecycle ?? throw new ArgumentNullException(nameof(updateOpportunityLifecycle));
+            _getCustomerSegmentsPage = getCustomerSegmentsPage ?? throw new ArgumentNullException(nameof(getCustomerSegmentsPage));
+            _getCustomerSegmentForEdit = getCustomerSegmentForEdit ?? throw new ArgumentNullException(nameof(getCustomerSegmentForEdit));
+            _getInvoicesPage = getInvoicesPage ?? throw new ArgumentNullException(nameof(getInvoicesPage));
+            _getInvoiceForEdit = getInvoiceForEdit ?? throw new ArgumentNullException(nameof(getInvoiceForEdit));
+            _createCustomerSegment = createCustomerSegment ?? throw new ArgumentNullException(nameof(createCustomerSegment));
+            _updateCustomerSegment = updateCustomerSegment ?? throw new ArgumentNullException(nameof(updateCustomerSegment));
+            _updateInvoice = updateInvoice ?? throw new ArgumentNullException(nameof(updateInvoice));
+            _transitionInvoiceStatus = transitionInvoiceStatus ?? throw new ArgumentNullException(nameof(transitionInvoiceStatus));
+            _createInvoiceRefund = createInvoiceRefund ?? throw new ArgumentNullException(nameof(createInvoiceRefund));
+            _createInteraction = createInteraction ?? throw new ArgumentNullException(nameof(createInteraction));
+            _createConsent = createConsent ?? throw new ArgumentNullException(nameof(createConsent));
+            _assignCustomerSegment = assignCustomerSegment ?? throw new ArgumentNullException(nameof(assignCustomerSegment));
+            _removeCustomerSegmentMembership = removeCustomerSegmentMembership ?? throw new ArgumentNullException(nameof(removeCustomerSegmentMembership));
+            _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         [HttpGet]
@@ -235,6 +235,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> EditCustomer(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("CustomerNotFoundMessage");
+                return RedirectOrHtmx(nameof(Customers), new { });
+            }
+
             var dto = await _getCustomerForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -314,6 +320,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditCustomer(CustomerEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("CustomerNotFoundMessage");
+                return RedirectOrHtmx(nameof(Customers), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 EnsureCustomerAddressRows(vm);
@@ -405,6 +417,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> EditInvoice(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("InvoiceNotFoundMessage");
+                return RedirectOrHtmx(nameof(Invoices), new { });
+            }
+
             var dto = await _getInvoiceForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -459,6 +477,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             vm.IsFinancialContentLocked = IsInvoiceFinancialContentLocked(vm.Status);
             vm.FinancialEditLockReason = vm.IsFinancialContentLocked ? T("InvoiceFinancialEditLockReason") : string.Empty;
+
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("InvoiceNotFoundMessage");
+                return RedirectOrHtmx(nameof(Invoices), new { });
+            }
 
             if (!ModelState.IsValid)
             {
@@ -518,6 +542,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TransitionInvoiceStatus(InvoiceStatusTransitionVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("InvoiceStatusUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Invoices), new { });
+            }
+
             try
             {
                 await _transitionInvoiceStatus.HandleAsync(new InvoiceStatusTransitionDto
@@ -546,6 +576,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RefundInvoice(InvoiceRefundCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.InvoiceId == Guid.Empty)
+            {
+                SetErrorMessage("InvoiceRefundRecordFailedMessage");
+                return RedirectOrHtmx(nameof(Invoices), new { });
+            }
+
             try
             {
                 await _createInvoiceRefund.HandleAsync(new InvoiceRefundCreateDto
@@ -657,6 +693,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> EditLead(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("LeadNotFoundMessage");
+                return RedirectOrHtmx(nameof(Leads), new { });
+            }
+
             var dto = await _getLeadForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -698,6 +740,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditLead(LeadEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("LeadNotFoundMessage");
+                return RedirectOrHtmx(nameof(Leads), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -790,15 +838,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             LeadQueueFilter filter = LeadQueueFilter.All,
             CancellationToken ct = default)
         {
-            byte[] version;
-            try
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
             {
-                version = Convert.FromBase64String(rowVersion);
+                SetErrorMessage("LeadLifecycleUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Leads), new { page, pageSize, q, filter });
             }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+
+            var version = DecodeRowVersion(rowVersion);
 
             var result = await _updateLeadLifecycle
                 .HandleAsync(new UpdateLeadLifecycleDto
@@ -839,15 +885,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             OpportunityQueueFilter filter = OpportunityQueueFilter.All,
             CancellationToken ct = default)
         {
-            byte[] version;
-            try
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
             {
-                version = Convert.FromBase64String(rowVersion);
+                SetErrorMessage("OpportunityLifecycleUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Opportunities), new { page, pageSize, q, filter });
             }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+
+            var version = DecodeRowVersion(rowVersion);
 
             var result = await _updateOpportunityLifecycle
                 .HandleAsync(new UpdateOpportunityLifecycleDto
@@ -880,6 +924,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> CreateOpportunity(Guid? customerId = null, CancellationToken ct = default)
         {
+            if (customerId == Guid.Empty)
+            {
+                customerId = null;
+            }
+
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var vm = new OpportunityEditVm
             {
@@ -938,6 +987,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> EditOpportunity(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("OpportunityNotFoundMessage");
+                return RedirectOrHtmx(nameof(Opportunities), new { });
+            }
+
             var dto = await _getOpportunityForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -979,6 +1034,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public async Task<IActionResult> EditOpportunity(OpportunityEditVm vm, CancellationToken ct = default)
         {
             await EnsureOpportunityCurrencyAsync(vm, ct).ConfigureAwait(false);
+
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("OpportunityNotFoundMessage");
+                return RedirectOrHtmx(nameof(Opportunities), new { });
+            }
 
             if (!ModelState.IsValid)
             {
@@ -1067,6 +1128,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConvertLead(ConvertLeadVm vm, CancellationToken ct = default)
         {
+            if (vm.LeadId == Guid.Empty)
+            {
+                SetErrorMessage("LeadConvertFailedMessage");
+                return RedirectOrHtmx(nameof(Leads), new { });
+            }
+
             try
             {
                 var customerId = await _convertLeadToCustomer.HandleAsync(new ConvertLeadToCustomerDto
@@ -1125,6 +1192,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> EditSegment(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("SegmentNotFoundMessage");
+                return RedirectOrHtmx(nameof(Segments), new { });
+            }
+
             var dto = await _getCustomerSegmentForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1145,6 +1218,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditSegment(CustomerSegmentEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("SegmentNotFoundMessage");
+                return RedirectOrHtmx(nameof(Segments), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 return RenderSegmentEditor(vm, nameof(EditSegment));
@@ -1178,6 +1257,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> CustomerInteractions(Guid customerId, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
+            if (customerId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
             var (items, total) = await _getCustomerInteractionsPage.HandleAsync(customerId, page, pageSize, ct).ConfigureAwait(false);
             return PartialView("~/Views/Crm/_InteractionsSection.cshtml", new InteractionsPageVm
             {
@@ -1194,6 +1278,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CustomerInteractions(InteractionCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.CustomerId is null || vm.CustomerId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("InteractionAddFailedMessage");
+                return await CustomerInteractions(vm.CustomerId.Value, ct: ct).ConfigureAwait(false);
+            }
+
             try
             {
                 await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
@@ -1210,6 +1305,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> LeadInteractions(Guid leadId, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
+            if (leadId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
             var (items, total) = await _getLeadInteractionsPage.HandleAsync(leadId, page, pageSize, ct).ConfigureAwait(false);
             return PartialView("~/Views/Crm/_InteractionsSection.cshtml", new InteractionsPageVm
             {
@@ -1226,6 +1326,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LeadInteractions(InteractionCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.LeadId is null || vm.LeadId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("InteractionAddFailedMessage");
+                return await LeadInteractions(vm.LeadId.Value, ct: ct).ConfigureAwait(false);
+            }
+
             try
             {
                 await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
@@ -1242,6 +1353,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> OpportunityInteractions(Guid opportunityId, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
+            if (opportunityId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
             var (items, total) = await _getOpportunityInteractionsPage.HandleAsync(opportunityId, page, pageSize, ct).ConfigureAwait(false);
             return PartialView("~/Views/Crm/_InteractionsSection.cshtml", new InteractionsPageVm
             {
@@ -1258,6 +1374,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> OpportunityInteractions(InteractionCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.OpportunityId is null || vm.OpportunityId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("InteractionAddFailedMessage");
+                return await OpportunityInteractions(vm.OpportunityId.Value, ct: ct).ConfigureAwait(false);
+            }
+
             try
             {
                 await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
@@ -1274,6 +1401,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> CustomerConsents(Guid customerId, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
+            if (customerId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
             var (items, total) = await _getCustomerConsentsPage.HandleAsync(customerId, page, pageSize, ct).ConfigureAwait(false);
             return PartialView("~/Views/Crm/_ConsentsSection.cshtml", new ConsentsPageVm
             {
@@ -1296,6 +1428,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CustomerConsents(ConsentCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.CustomerId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("ConsentAddFailedMessage");
+                return await CustomerConsents(vm.CustomerId, ct: ct).ConfigureAwait(false);
+            }
+
             try
             {
                 await _createConsent.HandleAsync(new ConsentCreateDto
@@ -1320,6 +1463,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [HttpGet]
         public async Task<IActionResult> CustomerSegmentMemberships(Guid customerId, CancellationToken ct = default)
         {
+            if (customerId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
             var items = await _getCustomerSegmentMemberships.HandleAsync(customerId, ct).ConfigureAwait(false);
             return PartialView("~/Views/Crm/_CustomerSegmentsSection.cshtml", new CustomerMembershipsVm
             {
@@ -1338,6 +1486,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CustomerSegmentMemberships(AssignCustomerSegmentVm vm, CancellationToken ct = default)
         {
+            if (vm.CustomerId == Guid.Empty || vm.CustomerSegmentId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("SegmentAssignFailedMessage");
+                return await CustomerSegmentMemberships(vm.CustomerId, ct).ConfigureAwait(false);
+            }
+
             try
             {
                 await _assignCustomerSegment.HandleAsync(new AssignCustomerSegmentDto
@@ -1360,6 +1519,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveCustomerSegmentMembership(Guid customerId, Guid membershipId, CancellationToken ct = default)
         {
+            if (customerId == Guid.Empty || membershipId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
             try
             {
                 await _removeCustomerSegmentMembership.HandleAsync(membershipId, ct).ConfigureAwait(false);
@@ -1413,6 +1577,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
             vm.CustomerOptions = await _referenceData.GetCustomerOptionsAsync(vm.CustomerId, includeEmpty: true, ct).ConfigureAwait(false);
             vm.PaymentOptions = await _referenceData.GetPaymentOptionsAsync(vm.PaymentId, includeEmpty: true, ct).ConfigureAwait(false);
+        }
+
+        private static byte[] DecodeRowVersion(string? rowVersion)
+        {
+            if (string.IsNullOrWhiteSpace(rowVersion))
+            {
+                return Array.Empty<byte>();
+            }
+
+            try
+            {
+                return Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                return Array.Empty<byte>();
+            }
         }
 
         private void AddLocalizedModelError(string fallbackKey, Exception ex)

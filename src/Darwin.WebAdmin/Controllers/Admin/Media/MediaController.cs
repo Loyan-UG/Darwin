@@ -53,14 +53,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             SoftDeleteMediaAssetHandler softDelete,
             PurgeUnusedMediaAssetHandler purgeUnused)
         {
-            _env = env;
-            _getPage = getPage;
-            _getSummary = getSummary;
-            _getForEdit = getForEdit;
-            _create = create;
-            _update = update;
-            _softDelete = softDelete;
-            _purgeUnused = purgeUnused;
+            _env = env ?? throw new ArgumentNullException(nameof(env));
+            _getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
+            _getSummary = getSummary ?? throw new ArgumentNullException(nameof(getSummary));
+            _getForEdit = getForEdit ?? throw new ArgumentNullException(nameof(getForEdit));
+            _create = create ?? throw new ArgumentNullException(nameof(create));
+            _update = update ?? throw new ArgumentNullException(nameof(update));
+            _softDelete = softDelete ?? throw new ArgumentNullException(nameof(softDelete));
+            _purgeUnused = purgeUnused ?? throw new ArgumentNullException(nameof(purgeUnused));
         }
 
         /// <summary>
@@ -211,6 +211,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("MediaAssetNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -241,6 +247,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(MediaAssetEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("MediaAssetNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 return RenderEditEditor(vm);
@@ -279,6 +291,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("MediaAssetNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             await _softDelete.HandleAsync(id, ct).ConfigureAwait(false);
             SetSuccessMessage("MediaDeleted");
             return RedirectOrHtmx(nameof(Index), new { });
@@ -291,6 +309,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PurgeUnused([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("MediaAssetNotFound");
+                return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
+            }
+
             var dto = await _getForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -502,7 +526,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
 
             var relative = url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
             var fullPath = Path.GetFullPath(Path.Combine(GetWebRootPath(), relative));
-            var uploadsRoot = Path.GetFullPath(Path.Combine(GetWebRootPath(), "uploads"));
+            var uploadsRoot = Path.GetFullPath(Path.Combine(GetWebRootPath(), "uploads")) + Path.DirectorySeparatorChar;
             return fullPath.StartsWith(uploadsRoot, StringComparison.OrdinalIgnoreCase) ? fullPath : null;
         }
 

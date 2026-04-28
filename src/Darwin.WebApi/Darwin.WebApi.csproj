@@ -22,6 +22,7 @@
     <ProjectReference Include="..\Darwin.Application\Darwin.Application.csproj" />
     <ProjectReference Include="..\Darwin.Contracts\Darwin.Contracts.csproj" />
     <ProjectReference Include="..\Darwin.Infrastructure\Darwin.Infrastructure.csproj" />
+    <ProjectReference Include="..\Darwin.Infrastructure.PersistenceProviders\Darwin.Infrastructure.PersistenceProviders.csproj" />
   </ItemGroup>
 
 </Project>

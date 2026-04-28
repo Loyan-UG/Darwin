@@ -8,6 +8,8 @@ public sealed class ShipmentCarrierEventConfiguration : IEntityTypeConfiguration
 {
     public void Configure(EntityTypeBuilder<ShipmentCarrierEvent> builder)
     {
+        builder.ToTable("ShipmentCarrierEvents", schema: "Shipping");
+
         builder.Property(x => x.Carrier).HasMaxLength(64).IsRequired();
         builder.Property(x => x.ProviderShipmentReference).HasMaxLength(128).IsRequired();
         builder.Property(x => x.CarrierEventKey).HasMaxLength(128).IsRequired();

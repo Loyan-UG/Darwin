@@ -30,15 +30,8 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">@T.T("ParentCategory")</label>
-                        <select asp-for="ParentId" class="form-select">
+                        <select asp-for="ParentId" class="form-select" asp-items="Model.ParentCategoryOptions">
                             <option value="">@T.T("NoParentOption")</option>
-                            @if (ViewBag.Categories is IEnumerable<Darwin.Application.Catalog.Queries.LookupItem> cats)
-                            {
-                                foreach (var c in cats)
-                                {
-                                    <option value="@c.Id" selected="@(Model.ParentId == c.Id)">@c.Name</option>
-                                }
-                            }
                         </select>
                     </div>
                     <div class="col-md-3">

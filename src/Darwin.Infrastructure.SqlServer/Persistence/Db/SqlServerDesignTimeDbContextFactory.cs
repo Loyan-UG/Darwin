@@ -1,0 +1,69 @@
+using Darwin.Infrastructure.Persistence.Db;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
+
+namespace Darwin.Infrastructure.SqlServer.Persistence.Db;
+
+public sealed class SqlServerDesignTimeDbContextFactory : IDesignTimeDbContextFactory<DarwinDbContext>
+{
+    public DarwinDbContext CreateDbContext(string[] args)
+    {
+        var configuration = BuildConfiguration();
+        var connectionString =
+            Environment.GetEnvironmentVariable("ConnectionStrings__SqlServer") ??
+            Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ??
+            configuration.GetConnectionString("SqlServer") ??
+            configuration.GetConnectionString("DefaultConnection") ??
+            "Server=(localdb)\\MSSQLLocalDB;Database=Darwin;Trusted_Connection=True;MultipleActiveResultSets=true";
+
+        var options = new DbContextOptionsBuilder<DarwinDbContext>()
+            .UseSqlServer(connectionString, sql =>
+            {
+                sql.EnableRetryOnFailure();
+                sql.MigrationsAssembly(typeof(DarwinDbContext).Assembly.FullName);
+            })
+            .Options;
+
+        return new DarwinDbContext(options);
+    }
+
+    private static IConfigurationRoot BuildConfiguration()
+    {
+        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+        var currentDirectory = Directory.GetCurrentDirectory();
+
+        var probeRoots = new[]
+        {
+            currentDirectory,
+            Path.Combine(currentDirectory, ".."),
+            Path.Combine(currentDirectory, "../Darwin.WebAdmin"),
+            Path.Combine(currentDirectory, "../../Darwin.WebAdmin"),
+            Path.Combine(currentDirectory, "../Darwin.WebApi"),
+            Path.Combine(currentDirectory, "../../Darwin.WebApi")
+        }
+        .Select(Path.GetFullPath)
+        .Distinct()
+        .ToArray();
+
+        var builder = new ConfigurationBuilder()
+            .AddEnvironmentVariables();
+
+        foreach (var root in probeRoots)
+        {
+            var appsettings = Path.Combine(root, "appsettings.json");
+            var appsettingsEnv = Path.Combine(root, $"appsettings.{env}.json");
+            if (!File.Exists(appsettings) && !File.Exists(appsettingsEnv))
+            {
+                continue;
+            }
+
+            builder.SetBasePath(root);
+            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
+            builder.AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: false);
+            break;
+        }
+
+        return builder.Build();
+    }
+}

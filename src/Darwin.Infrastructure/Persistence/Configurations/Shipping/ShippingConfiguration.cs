@@ -50,7 +50,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Shipping
         /// <inheritdoc />
         public void Configure(EntityTypeBuilder<ShippingRate> builder)
         {
-            builder.ToTable("ShippingRates");
+            builder.ToTable("ShippingRates", schema: "Shipping");
             builder.HasKey(r => r.Id);
             // Nullable columns don't need explicit configuration. Prices and sort
             // order should always be specified.

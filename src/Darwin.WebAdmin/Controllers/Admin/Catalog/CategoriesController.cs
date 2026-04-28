@@ -5,6 +5,7 @@ using Darwin.Application.Settings.Queries;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -99,7 +100,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken ct)
         {
-            await LoadLookupsAsync(ct);
             var vm = new CategoryCreateVm();
             vm.Translations ??= new();
             await EnsureCreateTranslationsAsync(vm, ct).ConfigureAwait(false);
@@ -120,7 +120,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             if (!ModelState.IsValid)
             {
-                await LoadLookupsAsync(ct);
                 await EnsureCreateTranslationsAsync(vm, ct);
                 return RenderCreateEditor(vm);
             }
@@ -152,7 +151,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
-                await LoadLookupsAsync(ct);
                 await EnsureCreateTranslationsAsync(vm, ct);
                 return RenderCreateEditor(vm);
             }
@@ -192,7 +190,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 }).ToList()
             };
 
-            await LoadLookupsAsync(ct);
             await EnsureEditTranslationsAsync(vm, ct).ConfigureAwait(false);
             return RenderEditEditor(vm);
         }
@@ -203,9 +200,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             vm.Translations ??= new();
 
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("CategoryNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
-                await LoadLookupsAsync(ct);
                 await EnsureEditTranslationsAsync(vm, ct);
                 return RenderEditEditor(vm);
             }
@@ -214,7 +216,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (translations.Count == 0)
             {
                 ModelState.AddModelError(nameof(vm.Translations), T("CategoryAtLeastOneTranslationRequired"));
-                await LoadLookupsAsync(ct);
                 await EnsureEditTranslationsAsync(vm, ct);
                 return RenderEditEditor(vm);
             }
@@ -246,7 +247,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, T("CategoryConcurrencyConflict"));
-                await LoadLookupsAsync(ct);
                 await EnsureEditTranslationsAsync(vm, ct);
                 return RenderEditEditor(vm);
             }
@@ -255,7 +255,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
-                await LoadLookupsAsync(ct);
                 await EnsureEditTranslationsAsync(vm, ct);
                 return RenderEditEditor(vm);
             }
@@ -271,6 +270,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("CategoryDeleteFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _softDelete.HandleAsync(id, ct);
@@ -285,14 +290,32 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         }
 
 
-        private async Task LoadLookupsAsync(CancellationToken ct)
+        private async Task PopulateCategoryLookupsAsync(CategoryCreateVm vm, CancellationToken ct)
+        {
+            var (options, cultures) = await BuildCategoryEditorLookupsAsync(ct).ConfigureAwait(false);
+            vm.ParentCategoryOptions = options;
+            vm.Cultures = cultures;
+        }
+
+        private async Task PopulateCategoryLookupsAsync(CategoryEditVm vm, CancellationToken ct)
+        {
+            var (options, _) = await BuildCategoryEditorLookupsAsync(ct).ConfigureAwait(false);
+            vm.ParentCategoryOptions = options;
+        }
+
+        private async Task<(List<SelectListItem> ParentCategoryOptions, IReadOnlyList<string> Cultures)> BuildCategoryEditorLookupsAsync(CancellationToken ct)
         {
             var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;
             var lookups = await _getLookups.HandleAsync(defaultCulture, ct);
-            ViewBag.Categories = lookups.Categories;
 
-            var (_, cultures) = await _getCultures.HandleAsync(ct);
-            ViewBag.Cultures = cultures;
+            var parentCategoryOptions = lookups.Categories.Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name
+            }).ToList();
+
+            var (_, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            return (parentCategoryOptions, cultures);
         }
 
         private IActionResult RenderIndexWorkspace(CategoriesIndexVm vm)
@@ -343,11 +366,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         private async Task EnsureCreateTranslationsAsync(CategoryCreateVm vm, CancellationToken ct)
         {
+            await PopulateCategoryLookupsAsync(vm, ct).ConfigureAwait(false);
             await EnsureTranslationsAsync(vm.Translations, ct).ConfigureAwait(false);
         }
 
         private async Task EnsureEditTranslationsAsync(CategoryEditVm vm, CancellationToken ct)
         {
+            await PopulateCategoryLookupsAsync(vm, ct).ConfigureAwait(false);
             await EnsureTranslationsAsync(vm.Translations, ct).ConfigureAwait(false);
         }
 

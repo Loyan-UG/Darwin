@@ -8,6 +8,8 @@ public sealed class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
 {
     public void Configure(EntityTypeBuilder<Shipment> builder)
     {
+        builder.ToTable("Shipments", schema: "Orders");
+
         builder.Property(x => x.Carrier).HasMaxLength(64).IsRequired();
         builder.Property(x => x.Service).HasMaxLength(64).IsRequired();
         builder.Property(x => x.ProviderShipmentReference).HasMaxLength(128);

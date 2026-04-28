@@ -21,8 +21,13 @@
 - composition root: `src/Darwin.WebApi/Extensions/DependencyInjection.cs`
 - controllers: `src/Darwin.WebApi/Controllers`
 - business logic: `src/Darwin.Application`
-- persistence/security: `src/Darwin.Infrastructure`
+- shared persistence/security: `src/Darwin.Infrastructure`
+- PostgreSQL provider: `src/Darwin.Infrastructure.PostgreSql`
+- SQL Server provider: `src/Darwin.Infrastructure.SqlServer`
+- persistence provider selector: `src/Darwin.Infrastructure.PersistenceProviders`
 - API contracts: `src/Darwin.Contracts`
+
+Persistence provider selection is configuration-driven through `Persistence:Provider`. PostgreSQL is the preferred local/default provider; SQL Server remains available for customer deployments that require it. See `docs/persistence-providers.md` for provider names, Docker setup, migration commands, and required verification.
 
 ## Audience Segmentation
 

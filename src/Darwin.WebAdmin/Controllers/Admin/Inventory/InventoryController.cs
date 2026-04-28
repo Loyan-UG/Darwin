@@ -161,7 +161,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var vm = new WarehouseEditVm { BusinessId = businessId ?? Guid.Empty };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateWarehouseOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderWarehouseEditor(vm, isCreate: true);
         }
 
@@ -177,7 +177,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateWarehouseOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderWarehouseEditor(vm, isCreate: true);
             }
 
@@ -199,7 +199,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             catch (Exception)
             {
                 AddModelErrorMessage("WarehouseCreateFailedMessage");
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateWarehouseOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderWarehouseEditor(vm, isCreate: true);
             }
         }
@@ -230,7 +230,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Location = dto.Location,
                 IsDefault = dto.IsDefault
             };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateWarehouseOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderWarehouseEditor(vm, isCreate: false);
         }
 
@@ -246,7 +246,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateWarehouseOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderWarehouseEditor(vm, isCreate: false);
             }
 
@@ -275,7 +275,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             catch (Exception)
             {
                 AddModelErrorMessage("WarehouseUpdateFailedMessage");
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateWarehouseOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderWarehouseEditor(vm, isCreate: false);
             }
         }
@@ -333,7 +333,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var vm = new SupplierEditVm { BusinessId = businessId ?? Guid.Empty };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateSupplierOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderSupplierEditor(vm, isCreate: true);
         }
 
@@ -349,7 +349,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateSupplierOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderSupplierEditor(vm, isCreate: true);
             }
 
@@ -372,7 +372,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             catch (Exception)
             {
                 AddModelErrorMessage("SupplierCreateFailedMessage");
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateSupplierOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderSupplierEditor(vm, isCreate: true);
             }
         }
@@ -404,7 +404,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Address = dto.Address,
                 Notes = dto.Notes
             };
-            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            await PopulateSupplierOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderSupplierEditor(vm, isCreate: false);
         }
 
@@ -420,7 +420,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             if (!ModelState.IsValid)
             {
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateSupplierOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderSupplierEditor(vm, isCreate: false);
             }
 
@@ -450,7 +450,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             catch (Exception)
             {
                 AddModelErrorMessage("SupplierUpdateFailedMessage");
-                vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+                await PopulateSupplierOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderSupplierEditor(vm, isCreate: false);
             }
         }
@@ -496,7 +496,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Total = total,
                 Items = items
             };
-            ViewBag.BusinessId = businessId;
             return RenderStockLevelsWorkspace(vm);
         }
 
@@ -899,6 +898,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             var vm = new StockTransfersListVm
             {
+                BusinessId = businessId,
                 WarehouseId = warehouseId,
                 Query = q ?? string.Empty,
                 Filter = filter,
@@ -911,7 +911,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Total = total,
                 Items = items
             };
-            ViewBag.BusinessId = businessId;
             return RenderStockTransfersWorkspace(vm);
         }
 
@@ -1707,6 +1706,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             yield return new SelectListItem(T("AllSuppliers"), SupplierQueueFilter.All.ToString(), selectedFilter == SupplierQueueFilter.All);
             yield return new SelectListItem(T("MissingAddress"), SupplierQueueFilter.MissingAddress.ToString(), selectedFilter == SupplierQueueFilter.MissingAddress);
             yield return new SelectListItem(T("HasPurchaseOrders"), SupplierQueueFilter.HasPurchaseOrders.ToString(), selectedFilter == SupplierQueueFilter.HasPurchaseOrders);
+        }
+
+        private async Task PopulateWarehouseOptionsAsync(WarehouseEditVm vm, CancellationToken ct)
+        {
+            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+        }
+
+        private async Task PopulateSupplierOptionsAsync(SupplierEditVm vm, CancellationToken ct)
+        {
+            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
         }
 
         private async Task PopulateStockTransferOptionsAsync(StockTransferEditVm vm, Guid? businessId, CancellationToken ct)

@@ -3324,7 +3324,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductMedia");
+                    b.ToTable("ProductMedia", "Catalog");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.ProductOption", b =>
@@ -3415,7 +3415,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("ProductOptionId");
 
-                    b.ToTable("ProductOptionValues");
+                    b.ToTable("ProductOptionValues", "Catalog");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.ProductTranslation", b =>
@@ -3629,7 +3629,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("VariantId");
 
-                    b.ToTable("VariantOptionValues");
+                    b.ToTable("VariantOptionValues", "Catalog");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Identity.Address", b =>
@@ -4808,7 +4808,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("Status");
 
-                    b.ToTable("ChannelDispatchAudits", (string)null);
+                    b.ToTable("ChannelDispatchAudits", "Integration");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.ChannelDispatchOperation", b =>
@@ -5001,7 +5001,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("Status");
 
-                    b.ToTable("EmailDispatchAudits", (string)null);
+                    b.ToTable("EmailDispatchAudits", "Integration");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.EmailDispatchOperation", b =>
@@ -6752,7 +6752,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Refunds");
+                    b.ToTable("Refunds", "Orders");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.Shipment", b =>
@@ -6832,7 +6832,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("ProviderShipmentReference");
 
-                    b.ToTable("Shipments");
+                    b.ToTable("Shipments", "Orders");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.ShipmentCarrierEvent", b =>
@@ -6913,7 +6913,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("ProviderShipmentReference", "Carrier", "OccurredAtUtc");
 
-                    b.ToTable("ShipmentCarrierEvents");
+                    b.ToTable("ShipmentCarrierEvents", "Shipping");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Orders.ShipmentLine", b =>
@@ -6956,7 +6956,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("ShipmentId");
 
-                    b.ToTable("ShipmentLines");
+                    b.ToTable("ShipmentLines", "Orders");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Pricing.Promotion", b =>
@@ -7811,7 +7811,7 @@ namespace Darwin.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
-                    b.ToTable("ShippingRates", (string)null);
+                    b.ToTable("ShippingRates", "Shipping");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BusinessSubscription", b =>

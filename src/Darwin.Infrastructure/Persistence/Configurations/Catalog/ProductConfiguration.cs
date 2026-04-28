@@ -96,12 +96,36 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
         }
     }
 
+    public sealed class ProductMediaConfiguration : IEntityTypeConfiguration<ProductMedia>
+    {
+        public void Configure(EntityTypeBuilder<ProductMedia> b)
+        {
+            b.ToTable("ProductMedia", schema: "Catalog");
+        }
+    }
+
     public sealed class ProductOptionConfiguration : IEntityTypeConfiguration<ProductOption>
     {
         public void Configure(EntityTypeBuilder<ProductOption> b)
         {
             b.ToTable("ProductOptions", schema: "Catalog");
             b.HasMany(o => o.Values).WithOne().HasForeignKey(v => v.ProductOptionId).OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+
+    public sealed class ProductOptionValueConfiguration : IEntityTypeConfiguration<ProductOptionValue>
+    {
+        public void Configure(EntityTypeBuilder<ProductOptionValue> b)
+        {
+            b.ToTable("ProductOptionValues", schema: "Catalog");
+        }
+    }
+
+    public sealed class VariantOptionValueConfiguration : IEntityTypeConfiguration<VariantOptionValue>
+    {
+        public void Configure(EntityTypeBuilder<VariantOptionValue> b)
+        {
+            b.ToTable("VariantOptionValues", schema: "Catalog");
         }
     }
 }

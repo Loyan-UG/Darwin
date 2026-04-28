@@ -524,7 +524,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddSharedHostingDataProtection(config);
 
             // Persistence (DbContext + IAppDbContext + Seeder)
-            services.AddPersistence(config);
+            services.AddConfiguredPersistence(config);
 
 
 

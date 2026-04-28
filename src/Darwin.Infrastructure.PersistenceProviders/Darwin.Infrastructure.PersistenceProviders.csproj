@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Darwin.Infrastructure.PostgreSql\Darwin.Infrastructure.PostgreSql.csproj" />
+    <ProjectReference Include="..\Darwin.Infrastructure.SqlServer\Darwin.Infrastructure.SqlServer.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

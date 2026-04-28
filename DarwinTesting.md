@@ -90,6 +90,8 @@ Use for persistence/infrastructure correctness:
 - Design-time DbContext factory.
 - Mapping/configuration safety checks.
 - Migration-related guard tests where feasible.
+- Provider-selection safety for `PostgreSql` and `SqlServer` registration.
+- Provider-specific migration guard checks for PostgreSQL and SQL Server lanes.
 
 ### 3.4 WebApi lane (`Darwin.WebApi.Tests`)
 
@@ -215,8 +217,21 @@ This separation improves diagnosability and keeps regressions localized to a spe
 
 ### Integration tests
 
-- Integration lane in CI expects SQL Server service availability and testing environment configuration.
+- Integration lane in CI currently expects SQL Server service availability and testing environment configuration unless a lane explicitly opts into PostgreSQL.
+- PostgreSQL is now the preferred local/default provider for application startup validation. Use `docker-compose.postgres.yml` for local PostgreSQL and pgAdmin.
 - Keep tests resettable/deterministic and avoid hidden shared mutable state.
+
+### Persistence provider validation backlog
+
+Do not expand test projects until the current implementation slice calls for it, but track these required coverage additions:
+
+- Add provider-selection smoke coverage proving `Persistence:Provider=PostgreSql` resolves Npgsql and `Persistence:Provider=SqlServer` resolves SQL Server.
+- Add PostgreSQL migration/seed verification against a fresh PostgreSQL database.
+- Add a guard that shared EF mappings do not introduce SQL Server-only column types such as `uniqueidentifier` or `nvarchar(max)`.
+- Add filtered-index SQL coverage for PostgreSQL so SQL Server filters are normalized before migrations are applied.
+- Add concurrency coverage for `RowVersion`: SQL Server native rowversion and PostgreSQL client-managed bytea concurrency.
+- Add schema-placement coverage proving no application tables are created in PostgreSQL `public` or SQL Server `dbo`.
+- Add PostgreSQL extension/index coverage proving `pg_trgm` and the expected `IX_PG_*` GIN indexes exist after migration.
 
 ### Mobile.Shared tests
 

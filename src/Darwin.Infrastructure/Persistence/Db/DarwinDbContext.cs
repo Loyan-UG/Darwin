@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection.Emit;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -147,8 +148,11 @@ namespace Darwin.Infrastructure.Persistence.Db
             // 2) Global soft-delete filter for entities that have a bool IsDeleted property
             ApplySoftDeleteQueryFilters(modelBuilder);
 
-            // 3) Mark "RowVersion" (byte[]) as rowversion/concurrency token when present
+            // 3) Mark "RowVersion" (byte[]) as provider-appropriate concurrency token when present.
             ApplyRowVersionConcurrency(modelBuilder);
+
+            // 4) Keep explicit SQL Server filtered indexes usable when the active provider is PostgreSQL.
+            NormalizeProviderSpecificIndexFilters(modelBuilder);
 
             // 5) Optional: register global value converters/protectors (only if class exists in project).
             //    If you are using the SecretProtectionConverterFactory we created earlier, uncomment:
@@ -179,10 +183,12 @@ namespace Darwin.Infrastructure.Persistence.Db
         }
 
         /// <summary>
-        /// Configures byte[] RowVersion properties to be proper rowversion concurrency tokens.
+        /// Configures byte[] RowVersion properties to be provider-appropriate concurrency tokens.
         /// </summary>
-        private static void ApplyRowVersionConcurrency(ModelBuilder modelBuilder)
+        private void ApplyRowVersionConcurrency(ModelBuilder modelBuilder)
         {
+            var isPostgreSql = Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
+
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 var rv = entityType.FindProperty("RowVersion");
@@ -190,9 +196,63 @@ namespace Darwin.Infrastructure.Persistence.Db
 
                 // Use the non-generic builder to avoid reflection gymnastics
                 var builder = modelBuilder.Entity(entityType.ClrType);
-                builder.Property<byte[]>("RowVersion").IsRowVersion();
-                // (.IsRowVersion() sets concurrency token and value generation appropriately)
+                var property = builder.Property<byte[]>("RowVersion");
+                if (isPostgreSql)
+                {
+                    property.IsConcurrencyToken().ValueGeneratedNever().IsRequired();
+                }
+                else
+                {
+                    property.IsRowVersion();
+                    // (.IsRowVersion() sets concurrency token and value generation appropriately)
+                }
             }
+        }
+
+        private void NormalizeProviderSpecificIndexFilters(ModelBuilder modelBuilder)
+        {
+            var providerName = Database.ProviderName;
+            if (providerName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) != true)
+            {
+                return;
+            }
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var index in entityType.GetIndexes())
+                {
+                    var filter = index.GetFilter();
+                    if (string.IsNullOrWhiteSpace(filter))
+                    {
+                        continue;
+                    }
+
+                    ((IMutableIndex)index).SetFilter(ConvertSqlServerFilterToPostgreSql(filter));
+                }
+            }
+        }
+
+        private static string ConvertSqlServerFilterToPostgreSql(string filter)
+        {
+            var converted = Regex.Replace(
+                filter,
+                @"\[([A-Za-z_][A-Za-z0-9_]*)\]",
+                static match => $"\"{match.Groups[1].Value}\"",
+                RegexOptions.CultureInvariant);
+
+            converted = Regex.Replace(
+                converted,
+                @"(""[A-Za-z_][A-Za-z0-9_]*"")\s*=\s*0",
+                "$1 = FALSE",
+                RegexOptions.CultureInvariant);
+
+            converted = Regex.Replace(
+                converted,
+                @"(""[A-Za-z_][A-Za-z0-9_]*"")\s*=\s*1",
+                "$1 = TRUE",
+                RegexOptions.CultureInvariant);
+
+            return converted;
         }
     }
 }

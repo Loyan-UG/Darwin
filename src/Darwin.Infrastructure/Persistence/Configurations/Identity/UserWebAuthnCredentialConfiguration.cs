@@ -24,8 +24,7 @@ namespace Darwin.Infrastructure.Persistence.Configuration.Identity
             b.Property(x => x.PublicKey)
                 .IsRequired();
 
-            b.Property(x => x.AaGuid)
-                .HasColumnType("uniqueidentifier"); // nullable
+            b.Property(x => x.AaGuid);
 
             b.Property(x => x.CredentialType)
                 .HasMaxLength(50)

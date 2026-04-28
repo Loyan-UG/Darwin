@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.WebAdmin.ViewModels.Catalog
 {
@@ -46,6 +47,11 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public string Kind { get; set; } = "Simple";
         public List<ProductTranslationVm> Translations { get; set; } = new();
         public List<ProductVariantCreateVm> Variants { get; set; } = new();
+        public List<SelectListItem> BrandOptions { get; set; } = new();
+        public List<SelectListItem> CategoryOptions { get; set; } = new();
+        public List<SelectListItem> TaxCategoryOptions { get; set; } = new();
+        public IReadOnlyList<string> Cultures { get; set; } = Array.Empty<string>();
+        public IReadOnlyList<string> Currencies { get; set; } = Array.Empty<string>();
     }
 
     public sealed class ProductCreateVm : ProductEditorVm

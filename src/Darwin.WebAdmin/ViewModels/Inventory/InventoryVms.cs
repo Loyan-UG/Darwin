@@ -403,6 +403,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
     public sealed class StockTransfersListVm
     {
+        public Guid? BusinessId { get; set; }
         public Guid? WarehouseId { get; set; }
         public string Query { get; set; } = string.Empty;
         public StockTransferQueueFilter Filter { get; set; } = StockTransferQueueFilter.All;

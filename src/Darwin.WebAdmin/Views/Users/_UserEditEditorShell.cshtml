@@ -2,7 +2,7 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("EditUserTitle");
-    var addressesSection = ViewBag.AddressesSection as Darwin.WebAdmin.ViewModels.Identity.UserAddressesSectionVm;
+    var addressesSection = Model.AddressesSection;
     var needsActivationFollowUp = !Model.EmailConfirmed;
     var needsPasswordResetFollowUp = Model.IsLockedOut;
     var needsInactiveFollowUp = !Model.IsActive;

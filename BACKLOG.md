@@ -70,6 +70,22 @@ Active entries:
 
 ## 1. Current Delivery Focus
 
+### PostgreSQL Primary Persistence Track
+
+- `Completed foundation`: PostgreSQL is now the preferred local/default database provider while the current SQL Server infrastructure and migrations remain available for customer deployments that still require SQL Server.
+- `Completed foundation`: the provider-specific project is named `Darwin.Infrastructure.PostgreSql`; it references the existing `Darwin.Infrastructure` DbContext/model instead of copying mappings, and owns PostgreSQL registration plus PostgreSQL-specific migrations.
+- `Completed foundation`: the SQL Server provider now has the explicit project name `Darwin.Infrastructure.SqlServer`; it owns SQL Server registration while the existing SQL Server migration lane remains in `Darwin.Infrastructure.Migrations` for compatibility.
+- `Completed foundation`: runtime provider selection now lives in the neutral `Darwin.Infrastructure.PersistenceProviders` project so PostgreSQL and SQL Server provider projects do not depend on each other.
+- `Completed foundation`: WebAdmin, WebApi, and Worker now use a single runtime selector through configuration (`Persistence:Provider`) and can choose `PostgreSql` or `SqlServer` without code changes per customer.
+- `Completed foundation`: Docker Desktop development services now provide PostgreSQL plus pgAdmin; local defaults use `ConnectionStrings:PostgreSql` while leaving the existing SQL Server connection string in place.
+- `Completed foundation`: PostgreSQL initial migration was generated, applied to the Docker PostgreSQL database, and validated with WebAdmin development startup seeding.
+- `Completed foundation`: the first provider-specific EF issues are handled: SQL Server-only column types were removed from shared mappings, filtered index SQL is normalized for PostgreSQL, and `RowVersion` is provider-aware so SQL Server keeps native rowversion while PostgreSQL uses client-managed concurrency bytes.
+- `Completed foundation`: module schema naming was normalized for application tables that previously fell into provider defaults (`public`/`dbo`), including communication audits, shipping rates, catalog option/media tables, shipments, shipment lines, carrier events, and refunds.
+- `Completed foundation`: PostgreSQL now enables `pg_trgm` plus GIN trigram indexes for high-value text search surfaces in catalog, CMS, business, and identity data.
+- `Planned / Near-term`: continue auditing provider-specific EF assumptions such as string comparison/collation behavior, decimal precision, JSON/text columns, date/time handling, and future migration SQL before calling PostgreSQL production-ready.
+- `Completed documentation`: `DarwinTesting.md` now records the provider-selection, PostgreSQL migration/seed, provider SQL-type, filtered-index, and RowVersion coverage backlog without expanding test projects in this implementation slice.
+- `Future / Later phase`: after PostgreSQL is stable as primary, back-port future schema changes to the SQL Server migration lane when customers need SQL Server deployments.
+
 ### Storefront Readiness Audit
 
 - `Completed foundation`: the local development seed now covers the minimum storefront graph needed for realistic front-office testing: seeded identity roles and demo users with default addresses, 10+ businesses, 10+ business locations, 20+ CMS pages, 10+ marketing campaigns, 20+ catalog products across multiple categories, shipping methods plus rates, pricing promotions such as `WELCOME10` / `FIVER` / `SEASONAL`, sample carts, and seeded orders with payments, shipments, and refunds
