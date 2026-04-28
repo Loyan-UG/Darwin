@@ -36,14 +36,16 @@ namespace Darwin.Application.CMS.Commands
             {
                 entity.Translations.Add(new PageTranslation
                 {
-                    Culture = t.Culture,
-                    Title = t.Title,
-                    Slug = t.Slug,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription,
+                    Culture = t.Culture.Trim(),
+                    Title = t.Title.Trim(),
+                    Slug = t.Slug.Trim(),
+                    MetaTitle = t.MetaTitle?.Trim(),
+                    MetaDescription = t.MetaDescription?.Trim(),
                     ContentHtml = sanitizer.Sanitize(t.ContentHtml ?? string.Empty)
                 });
             }
+
+            PageRootSnapshot.SyncFromPrimaryTranslation(entity);
 
             _db.Set<Page>().Add(entity);
             await _db.SaveChangesAsync(ct);

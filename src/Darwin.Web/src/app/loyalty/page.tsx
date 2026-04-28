@@ -12,7 +12,7 @@ import {
 } from "@/features/checkout/helpers";
 import {
   getCurrentMemberLoyaltyBusinesses,
-  getCurrentMemberLoyaltyOverview,
+  getCurrentMemberLoyaltyOverviewForCulture,
 } from "@/features/member-portal/api/member-portal";
 import { getLoyaltyOverviewSeoMetadata } from "@/features/member-portal/server/get-loyalty-seo-metadata";
 import { getMemberSession } from "@/features/member-session/cookies";
@@ -68,12 +68,13 @@ export default async function LoyaltyPage({ searchParams }: LoyaltyPageProps) {
   const [overviewResult, businessesResult, discoveryResult, categoryKindsResult, cmsPagesResult, categoriesResult] =
     await Promise.all([
       session
-        ? getCurrentMemberLoyaltyOverview()
+        ? getCurrentMemberLoyaltyOverviewForCulture(culture)
         : Promise.resolve({ data: null, status: "unauthenticated" as const }),
       session
         ? getCurrentMemberLoyaltyBusinesses({
             page: safeJoinedPage,
             pageSize: 8,
+            culture,
           })
         : Promise.resolve({ data: null, status: "unauthenticated" as const }),
       getPublicBusinessesForDiscovery({
@@ -92,6 +93,7 @@ export default async function LoyaltyPage({ searchParams }: LoyaltyPageProps) {
           typeof safeRadiusKm === "number"
             ? safeRadiusKm * 1000
             : undefined,
+        culture,
       }),
       getPublicBusinessCategoryKinds(),
       getPublishedPages({ page: 1, pageSize: 2, culture }),

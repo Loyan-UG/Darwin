@@ -28,7 +28,7 @@ namespace Darwin.Application.Businesses.Commands
             }
 
             var message = await _db.Set<ProviderCallbackInboxMessage>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (message is null)

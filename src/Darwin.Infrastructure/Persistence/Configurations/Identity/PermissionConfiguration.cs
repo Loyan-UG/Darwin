@@ -22,7 +22,10 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
             builder.Property(p => p.Description).HasMaxLength(2000);
             builder.Property(p => p.IsSystem).HasDefaultValue(false);
 
-            builder.HasIndex(p => p.Key).IsUnique().HasDatabaseName("UX_Permission_Key");
+            builder.HasIndex(p => p.Key)
+                .IsUnique()
+                .HasDatabaseName("UX_Permission_Key")
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 }

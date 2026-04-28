@@ -70,7 +70,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
 
             // Provider invoice id should be unique per provider when present.
             builder.HasIndex(x => new { x.Provider, x.ProviderInvoiceId })
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[ProviderInvoiceId] IS NOT NULL AND [IsDeleted] = 0");
         }
     }
 }

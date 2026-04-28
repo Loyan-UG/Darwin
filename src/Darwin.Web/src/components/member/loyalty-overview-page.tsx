@@ -6,6 +6,7 @@ import type { PublicPageSummary } from "@/features/cms/types";
 import { LoyaltyDiscoverySection } from "@/components/member/loyalty-discovery-section";
 import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import type { BusinessCategoryKind, BusinessSummary } from "@/features/businesses/types";
+import { buildCmsPagePath, buildLoyaltyBusinessPath } from "@/lib/entity-paths";
 import type {
   MyLoyaltyBusinessSummary,
   MyLoyaltyOverview,
@@ -48,6 +49,22 @@ type LoyaltyOverviewPageProps = {
 
 function buildLoyaltyHref(page = 1) {
   return page > 1 ? `/loyalty?joinedPage=${page}` : "/loyalty";
+}
+
+function localizeLoyaltyAccountStatus(
+  status: string | null | undefined,
+  copy: ReturnType<typeof getMemberResource>,
+) {
+  switch (status?.toLowerCase()) {
+    case "active":
+      return copy.loyaltyAccountStatusActiveLabel;
+    case "suspended":
+      return copy.loyaltyAccountStatusSuspendedLabel;
+    case "closed":
+      return copy.loyaltyAccountStatusClosedLabel;
+    default:
+      return status ?? copy.activityFallback;
+  }
 }
 
 export function LoyaltyOverviewPage({
@@ -206,7 +223,7 @@ export function LoyaltyOverviewPage({
               <div className="mt-5 flex flex-wrap gap-3">
                 {primaryRewardAccount ? (
                   <Link
-                    href={localizeHref(`/loyalty/${primaryRewardAccount.businessId}`, culture)}
+            href={localizeHref(buildLoyaltyBusinessPath(primaryRewardAccount.businessId), culture)}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.loyaltyReadinessPrimaryCta}
@@ -272,7 +289,7 @@ export function LoyaltyOverviewPage({
                       {cmsPages.map((page) => (
                         <Link
                           key={page.id}
-                          href={localizeHref(`/cms/${page.slug}`, culture)}
+                    href={localizeHref(buildCmsPagePath(page.slug), culture)}
                           className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                         >
                           <p className="font-semibold text-[var(--color-text-primary)]">
@@ -386,7 +403,7 @@ export function LoyaltyOverviewPage({
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                              {business.status}
+                              {localizeLoyaltyAccountStatus(business.status, copy)}
                             </p>
                             <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
                               {business.businessName}
@@ -414,7 +431,7 @@ export function LoyaltyOverviewPage({
                         </div>
                         <div className="mt-5">
                           <Link
-                            href={localizeHref(`/loyalty/${business.businessId}`, culture)}
+              href={localizeHref(buildLoyaltyBusinessPath(business.businessId), culture)}
                             className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                           >
                             {copy.openPlaceDetailsCta}
@@ -456,7 +473,7 @@ export function LoyaltyOverviewPage({
                   className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                    {account.status}
+                    {localizeLoyaltyAccountStatus(account.status, copy)}
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
                     {account.businessName}
@@ -492,7 +509,7 @@ export function LoyaltyOverviewPage({
                   </div>
                   <div className="mt-5">
                     <Link
-                      href={localizeHref(`/loyalty/${account.businessId}`, culture)}
+                    href={localizeHref(buildLoyaltyBusinessPath(account.businessId), culture)}
                       className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                     >
                       {copy.openBusinessDetailsCta}
@@ -577,7 +594,7 @@ export function LoyaltyOverviewPage({
                     {cmsPages.map((page) => (
                       <Link
                         key={page.id}
-                        href={localizeHref(`/cms/${page.slug}`, culture)}
+                href={localizeHref(buildCmsPagePath(page.slug), culture)}
                         className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                       >
                         <p className="font-semibold text-[var(--color-text-primary)]">

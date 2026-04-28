@@ -26,7 +26,10 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
             builder.Property(u => u.Email).HasMaxLength(256);
             builder.Property(u => u.NormalizedEmail).HasMaxLength(256);
 
-            builder.HasIndex(u => u.NormalizedUserName).IsUnique().HasDatabaseName("UX_User_NormalizedUserName");
+            builder.HasIndex(u => u.NormalizedUserName)
+                .IsUnique()
+                .HasDatabaseName("UX_User_NormalizedUserName")
+                .HasFilter("[IsDeleted] = 0");
             builder.HasIndex(u => u.NormalizedEmail).HasDatabaseName("IX_User_NormalizedEmail");
 
             // Flags

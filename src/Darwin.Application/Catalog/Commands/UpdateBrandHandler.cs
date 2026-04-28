@@ -37,7 +37,7 @@ namespace Darwin.Application.Catalog.Commands
 
             var brand = await _db.Set<Brand>()
                 .Include(b => b.Translations)
-                .FirstOrDefaultAsync(b => b.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(b => b.Id == dto.Id && !b.IsDeleted, ct);
 
             if (brand is null) throw new InvalidOperationException(_localizer["BrandNotFound"]);
 
@@ -46,16 +46,17 @@ namespace Darwin.Application.Catalog.Commands
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             // Unique slug check if changed
-            if (!string.Equals(brand.Slug, dto.Slug, StringComparison.OrdinalIgnoreCase) &&
-                !string.IsNullOrWhiteSpace(dto.Slug))
+            var normalizedSlug = string.IsNullOrWhiteSpace(dto.Slug) ? null : dto.Slug.Trim();
+            if (!string.Equals(brand.Slug, normalizedSlug, StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(normalizedSlug))
             {
                 var slugExists = await _db.Set<Brand>()
-                    .AnyAsync(b => b.Id != brand.Id && b.Slug == dto.Slug, ct);
+                    .AnyAsync(b => !b.IsDeleted && b.Id != brand.Id && b.Slug == normalizedSlug, ct);
                 if (slugExists)
                     throw new FluentValidation.ValidationException(_localizer["BrandSlugMustBeUnique"]);
             }
 
-            brand.Slug = string.IsNullOrWhiteSpace(dto.Slug) ? null : dto.Slug.Trim();
+            brand.Slug = normalizedSlug;
             brand.LogoMediaId = dto.LogoMediaId;
 
             var sanitizer = HtmlSanitizerFactory.Create();

@@ -37,10 +37,17 @@ namespace Darwin.Application.Loyalty.Commands
             if (!vr.IsValid) throw new ValidationException(vr.Errors);
 
             var entity = await _db.Set<LoyaltyRewardTier>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
 
-            if (entity is null || entity.IsDeleted)
+            if (entity is null)
                 throw new ValidationException(_localizer["RewardTierNotFound"]);
+
+            var programExists = await _db.Set<LoyaltyProgram>()
+                .AnyAsync(x => x.Id == dto.LoyaltyProgramId && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (!programExists)
+                throw new ValidationException(_localizer["LoyaltyProgramNotFound"]);
 
             if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
                 throw new ValidationException(_localizer["ConcurrencyConflictRewardTierModified"]);

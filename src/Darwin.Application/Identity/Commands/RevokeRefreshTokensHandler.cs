@@ -24,21 +24,21 @@ namespace Darwin.Application.Identity.Commands
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
-        public Task<Result<int>> HandleAsync(RevokeRefreshRequestDto dto, CancellationToken ct = default)
+        public async Task<Result<int>> HandleAsync(RevokeRefreshRequestDto dto, CancellationToken ct = default)
         {
             if (!string.IsNullOrWhiteSpace(dto.RefreshToken))
             {
-                _jwt.RevokeRefreshToken(dto.RefreshToken!, dto.DeviceId);
-                return Task.FromResult(Result<int>.Ok(1));
+                await _jwt.RevokeRefreshTokenAsync(dto.RefreshToken!, dto.DeviceId, ct).ConfigureAwait(false);
+                return Result<int>.Ok(1);
             }
 
             if (dto.UserId.HasValue)
             {
-                var count = _jwt.RevokeAllForUser(dto.UserId.Value);
-                return Task.FromResult(Result<int>.Ok(count));
+                var count = await _jwt.RevokeAllForUserAsync(dto.UserId.Value, ct).ConfigureAwait(false);
+                return Result<int>.Ok(count);
             }
 
-            return Task.FromResult(Result<int>.Fail(_localizer["NothingToRevoke"]));
+            return Result<int>.Fail(_localizer["NothingToRevoke"]);
         }
     }
 }

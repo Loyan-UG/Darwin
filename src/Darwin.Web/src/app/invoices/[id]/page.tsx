@@ -3,6 +3,7 @@ import { InvoiceDetailPage } from "@/components/member/invoice-detail-page";
 import { getMemberInvoiceDetailPageContext } from "@/features/member-portal/server/get-member-protected-page-context";
 import { getInvoiceDetailSeoMetadata } from "@/features/member-portal/server/get-member-route-seo-metadata";
 import { getMemberResource } from "@/localization";
+import { buildInvoicePath } from "@/lib/entity-paths";
 import { getRequestCulture } from "@/lib/request-culture";
 
 export async function generateMetadata({ params }: InvoiceDetailRouteProps) {
@@ -43,7 +44,7 @@ export default async function InvoiceDetailRoute({
         culture={culture}
         title={copy.invoiceDetailAuthRequiredTitle}
         message={copy.invoiceDetailAuthRequiredMessage}
-        returnPath={`/invoices/${id}`}
+        returnPath={buildInvoicePath(id)}
         cmsPages={authStorefrontContext!.cmsPages}
         cmsPagesStatus={authStorefrontContext!.cmsPagesStatus}
         categories={authStorefrontContext!.categories}

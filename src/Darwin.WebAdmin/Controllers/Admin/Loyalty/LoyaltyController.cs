@@ -75,35 +75,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             UpdateCampaignDeliveryStatusHandler updateCampaignDeliveryStatus,
             AdminReferenceDataService referenceData)
         {
-            _getProgramsPage = getProgramsPage;
-            _getProgramForEdit = getProgramForEdit;
-            _createProgram = createProgram;
-            _updateProgram = updateProgram;
-            _deleteProgram = deleteProgram;
-            _getRewardTiersPage = getRewardTiersPage;
-            _getRewardTierForEdit = getRewardTierForEdit;
-            _createRewardTier = createRewardTier;
-            _updateRewardTier = updateRewardTier;
-            _deleteRewardTier = deleteRewardTier;
-            _getAccountsPage = getAccountsPage;
-            _getScanSessionsPage = getScanSessionsPage;
-            _getRedemptionsPage = getRedemptionsPage;
-            _getAccountForAdmin = getAccountForAdmin;
-            _createAccountByAdmin = createAccountByAdmin;
-            _getTransactions = getTransactions;
-            _getRedemptions = getRedemptions;
-            _confirmRedemption = confirmRedemption;
-            _adjustPoints = adjustPoints;
-            _suspendAccount = suspendAccount;
-            _activateAccount = activateAccount;
-            _expireScanSession = expireScanSession;
-            _getCampaigns = getCampaigns;
-            _createCampaign = createCampaign;
-            _updateCampaign = updateCampaign;
-            _setCampaignActivation = setCampaignActivation;
-            _getCampaignDeliveriesPage = getCampaignDeliveriesPage;
-            _updateCampaignDeliveryStatus = updateCampaignDeliveryStatus;
-            _referenceData = referenceData;
+            _getProgramsPage = getProgramsPage ?? throw new ArgumentNullException(nameof(getProgramsPage));
+            _getProgramForEdit = getProgramForEdit ?? throw new ArgumentNullException(nameof(getProgramForEdit));
+            _createProgram = createProgram ?? throw new ArgumentNullException(nameof(createProgram));
+            _updateProgram = updateProgram ?? throw new ArgumentNullException(nameof(updateProgram));
+            _deleteProgram = deleteProgram ?? throw new ArgumentNullException(nameof(deleteProgram));
+            _getRewardTiersPage = getRewardTiersPage ?? throw new ArgumentNullException(nameof(getRewardTiersPage));
+            _getRewardTierForEdit = getRewardTierForEdit ?? throw new ArgumentNullException(nameof(getRewardTierForEdit));
+            _createRewardTier = createRewardTier ?? throw new ArgumentNullException(nameof(createRewardTier));
+            _updateRewardTier = updateRewardTier ?? throw new ArgumentNullException(nameof(updateRewardTier));
+            _deleteRewardTier = deleteRewardTier ?? throw new ArgumentNullException(nameof(deleteRewardTier));
+            _getAccountsPage = getAccountsPage ?? throw new ArgumentNullException(nameof(getAccountsPage));
+            _getScanSessionsPage = getScanSessionsPage ?? throw new ArgumentNullException(nameof(getScanSessionsPage));
+            _getRedemptionsPage = getRedemptionsPage ?? throw new ArgumentNullException(nameof(getRedemptionsPage));
+            _getAccountForAdmin = getAccountForAdmin ?? throw new ArgumentNullException(nameof(getAccountForAdmin));
+            _createAccountByAdmin = createAccountByAdmin ?? throw new ArgumentNullException(nameof(createAccountByAdmin));
+            _getTransactions = getTransactions ?? throw new ArgumentNullException(nameof(getTransactions));
+            _getRedemptions = getRedemptions ?? throw new ArgumentNullException(nameof(getRedemptions));
+            _confirmRedemption = confirmRedemption ?? throw new ArgumentNullException(nameof(confirmRedemption));
+            _adjustPoints = adjustPoints ?? throw new ArgumentNullException(nameof(adjustPoints));
+            _suspendAccount = suspendAccount ?? throw new ArgumentNullException(nameof(suspendAccount));
+            _activateAccount = activateAccount ?? throw new ArgumentNullException(nameof(activateAccount));
+            _expireScanSession = expireScanSession ?? throw new ArgumentNullException(nameof(expireScanSession));
+            _getCampaigns = getCampaigns ?? throw new ArgumentNullException(nameof(getCampaigns));
+            _createCampaign = createCampaign ?? throw new ArgumentNullException(nameof(createCampaign));
+            _updateCampaign = updateCampaign ?? throw new ArgumentNullException(nameof(updateCampaign));
+            _setCampaignActivation = setCampaignActivation ?? throw new ArgumentNullException(nameof(setCampaignActivation));
+            _getCampaignDeliveriesPage = getCampaignDeliveriesPage ?? throw new ArgumentNullException(nameof(getCampaignDeliveriesPage));
+            _updateCampaignDeliveryStatus = updateCampaignDeliveryStatus ?? throw new ArgumentNullException(nameof(updateCampaignDeliveryStatus));
+            _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
         }
 
         [HttpGet]
@@ -169,6 +169,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateProgram(LoyaltyProgramEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyProgramCreateFailed");
+                return RedirectOrHtmx(nameof(Programs), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -201,6 +207,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [HttpGet]
         public async Task<IActionResult> EditProgram(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyProgramNotFound");
+                return RedirectOrHtmx(nameof(Programs), new { });
+            }
+
             var dto = await _getProgramForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -227,6 +239,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProgram(LoyaltyProgramEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "LoyaltyProgramNotFound" : "LoyaltyProgramUpdateFailed");
+                return RedirectOrHtmx(nameof(Programs), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -262,6 +280,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteProgram(Guid id, Guid businessId, byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyProgramDeleteFailed");
+                return RedirectOrHtmx(nameof(Programs), new { businessId = businessId == Guid.Empty ? (Guid?)null : businessId });
+            }
+
             var result = await _deleteProgram.HandleAsync(new LoyaltyProgramDeleteDto
             {
                 Id = id,
@@ -275,6 +299,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [HttpGet]
         public async Task<IActionResult> RewardTiers(Guid loyaltyProgramId, int page = 1, int pageSize = 20, LoyaltyRewardTierQueueFilter filter = LoyaltyRewardTierQueueFilter.All, CancellationToken ct = default)
         {
+            if (loyaltyProgramId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyProgramNotFound");
+                return RedirectOrHtmx(nameof(Programs), new { });
+            }
+
             var program = await _getProgramForEdit.HandleAsync(loyaltyProgramId, ct).ConfigureAwait(false);
             if (program is null)
             {
@@ -321,6 +351,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [HttpGet]
         public async Task<IActionResult> CreateRewardTier(Guid loyaltyProgramId, CancellationToken ct = default)
         {
+            if (loyaltyProgramId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyProgramNotFound");
+                return RedirectOrHtmx(nameof(Programs), new { });
+            }
+
             var program = await _getProgramForEdit.HandleAsync(loyaltyProgramId, ct).ConfigureAwait(false);
             if (program is null)
             {
@@ -341,6 +377,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateRewardTier(LoyaltyRewardTierEditVm vm, CancellationToken ct = default)
         {
+            if (vm.LoyaltyProgramId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyRewardTierCreateFailed");
+                return RedirectOrHtmx(nameof(Programs), new { });
+            }
+
             try
             {
                 var id = await _createRewardTier.HandleAsync(new LoyaltyRewardTierCreateDto
@@ -370,6 +412,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [HttpGet]
         public async Task<IActionResult> EditRewardTier(Guid id, Guid loyaltyProgramId, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || loyaltyProgramId == Guid.Empty)
+            {
+                SetErrorMessage(id == Guid.Empty ? "LoyaltyRewardTierNotFound" : "LoyaltyProgramNotFound");
+                return RedirectOrHtmx(nameof(Programs), new { });
+            }
+
             var program = await _getProgramForEdit.HandleAsync(loyaltyProgramId, ct).ConfigureAwait(false);
             if (program is null)
             {
@@ -404,6 +452,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditRewardTier(LoyaltyRewardTierEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.LoyaltyProgramId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "LoyaltyRewardTierNotFound" : "LoyaltyRewardTierUpdateFailed");
+                return vm.LoyaltyProgramId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Programs), new { })
+                    : RedirectOrHtmx(nameof(RewardTiers), new { loyaltyProgramId = vm.LoyaltyProgramId });
+            }
+
             try
             {
                 await _updateRewardTier.HandleAsync(new LoyaltyRewardTierEditDto
@@ -436,6 +492,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteRewardTier(Guid id, Guid loyaltyProgramId, byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || loyaltyProgramId == Guid.Empty)
+            {
+                SetErrorMessage("LoyaltyRewardTierDeleteFailed");
+                return loyaltyProgramId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Programs), new { })
+                    : RedirectOrHtmx(nameof(RewardTiers), new { loyaltyProgramId });
+            }
+
             var result = await _deleteRewardTier.HandleAsync(new LoyaltyRewardTierDeleteDto
             {
                 Id = id,

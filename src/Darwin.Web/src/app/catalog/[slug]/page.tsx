@@ -15,6 +15,7 @@ import {
   INFERRED_CULTURE_SEARCH_PARAM,
   localizeHref,
 } from "@/lib/locale-routing";
+import { buildCatalogProductPath } from "@/lib/entity-paths";
 import { getRequestCulture, getSupportedCultures } from "@/lib/request-culture";
 
 type ProductSearchParams = {
@@ -132,7 +133,7 @@ export default async function ProductDetailRoute({
       const alternateProduct = alternateContext.detailContext.productResult.data;
       if (alternateProduct) {
         redirect(
-          appendSearchParams(`/catalog/${slug}`, resolvedSearchParams, {
+    appendSearchParams(buildCatalogProductPath(slug), resolvedSearchParams, {
             culture: alternateCulture,
             [INFERRED_CULTURE_SEARCH_PARAM]: "1",
           }),
@@ -144,7 +145,7 @@ export default async function ProductDetailRoute({
   if (product?.slug && product.slug !== slug) {
     redirect(
       appendSearchParams(
-        localizeHref(`/catalog/${product.slug}`, culture),
+      localizeHref(buildCatalogProductPath(product.slug), culture),
         resolvedSearchParams,
       ),
     );

@@ -4,7 +4,6 @@ using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.CartCheckout.Queries;
 using Darwin.Contracts.Cart;
 using Darwin.Application.Settings.DTOs;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
@@ -111,8 +110,11 @@ public sealed class PublicCartController : ApiControllerBase
                 Quantity = request.Quantity,
                 UnitPriceNetMinor = request.UnitPriceNetMinor,
                 VatRate = request.VatRate,
-                Currency = request.Currency,
-                SelectedAddOnValueIds = request.SelectedAddOnValueIds.ToList()
+                Currency = NormalizeNullable(request.Currency),
+                SelectedAddOnValueIds = request.SelectedAddOnValueIds
+                    .Where(id => id != Guid.Empty)
+                    .Distinct()
+                    .ToList()
             }, ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
@@ -150,7 +152,7 @@ public sealed class PublicCartController : ApiControllerBase
                 CartId = request.CartId,
                 VariantId = request.VariantId,
                 Quantity = request.Quantity,
-                SelectedAddOnValueIdsJson = request.SelectedAddOnValueIdsJson
+                SelectedAddOnValueIdsJson = NormalizeNullable(request.SelectedAddOnValueIdsJson)
             }, ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
@@ -184,7 +186,7 @@ public sealed class PublicCartController : ApiControllerBase
         {
             CartId = request.CartId,
             VariantId = request.VariantId,
-            SelectedAddOnValueIdsJson = request.SelectedAddOnValueIdsJson
+            SelectedAddOnValueIdsJson = NormalizeNullable(request.SelectedAddOnValueIdsJson)
         }, ct).ConfigureAwait(false);
 
         return await ReloadCartAsync(request.CartId, ct).ConfigureAwait(false);
@@ -214,7 +216,7 @@ public sealed class PublicCartController : ApiControllerBase
             await _applyCouponHandler.HandleAsync(new CartApplyCouponDto
             {
                 CartId = request.CartId,
-                CouponCode = request.CouponCode
+                CouponCode = NormalizeNullable(request.CouponCode)
             }, ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
@@ -240,6 +242,9 @@ public sealed class PublicCartController : ApiControllerBase
 
     private static string? NormalizeAnonymousId(string? anonymousId)
         => string.IsNullOrWhiteSpace(anonymousId) ? null : anonymousId.Trim();
+
+    private static string? NormalizeNullable(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static PublicCartSummary MapSummary(CartSummaryDto dto)
         => new()

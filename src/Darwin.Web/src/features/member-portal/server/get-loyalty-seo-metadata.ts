@@ -1,5 +1,6 @@
 import "server-only";
 import { getPublicBusinessDetail } from "@/features/businesses/api/public-businesses";
+import { buildLoyaltyBusinessPath } from "@/lib/entity-paths";
 import { memberRouteObservationContext } from "@/lib/route-observation-context";
 import { normalizeEntityRouteArgs } from "@/lib/route-context-normalization";
 import { buildNoIndexMetadata, deriveSeoDescription } from "@/lib/seo";
@@ -49,7 +50,7 @@ const getCachedLoyaltySeoMetadata = createCachedObservedSeoMetadataLoader({
     }
 
     const businessId = canonicalPath.split("/").filter(Boolean).at(-1) ?? "";
-    const businessResult = await getPublicBusinessDetail(businessId);
+    const businessResult = await getPublicBusinessDetail(businessId, culture);
     const business = businessResult.data;
 
     return {
@@ -80,5 +81,5 @@ export const getLoyaltyBusinessSeoMetadata = (
   getCachedLoyaltySeoMetadata(
     culture,
     "/loyalty/[businessId]",
-    `/loyalty/${businessId}`,
+    buildLoyaltyBusinessPath(businessId),
   );

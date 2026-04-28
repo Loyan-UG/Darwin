@@ -20,6 +20,7 @@ import {
   formatResource,
   getMemberResource,
   matchesLocalizedQueryMessageKey,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { getCultureDisplayName } from "@/lib/culture";
@@ -90,6 +91,7 @@ export function ProfilePage({
   const copy = getMemberResource(culture);
   const resolvedProfileError = resolveLocalizedQueryMessage(profileError, copy);
   const resolvedPhoneError = resolveLocalizedQueryMessage(phoneError, copy);
+  const localizedStatus = resolveApiStatusLabel(status, copy) ?? status;
   const phoneBanner = getPhoneStatusBanner(
     copy,
     phoneStatus,
@@ -147,8 +149,8 @@ export function ProfilePage({
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
                 {profile
-                  ? formatResource(copy.profileRouteSummaryMessage, { status })
-                  : formatResource(copy.profileRouteSummaryUnavailableMessage, { status })}
+                  ? formatResource(copy.profileRouteSummaryMessage, { status: localizedStatus })
+                  : formatResource(copy.profileRouteSummaryUnavailableMessage, { status: localizedStatus })}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
@@ -228,7 +230,7 @@ export function ProfilePage({
                 title={copy.profileNeedsAttentionTitle}
                 message={
                   resolvedProfileError ??
-                  formatResource(copy.profileNeedsAttentionMessage, { status })
+                  formatResource(copy.profileNeedsAttentionMessage, { status: localizedStatus })
                 }
               />
             </div>
@@ -342,7 +344,7 @@ export function ProfilePage({
               {copy.profileReadinessTitle}
             </p>
             <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {formatResource(copy.profileReadinessMessage, { status })}
+              {formatResource(copy.profileReadinessMessage, { status: localizedStatus })}
             </p>
             <div className="mt-6 grid gap-3">
               <article className="rounded-2xl bg-[var(--color-surface-panel-strong)] px-4 py-4">
@@ -389,8 +391,8 @@ export function ProfilePage({
             </p>
             <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
               {profile
-                ? formatResource(copy.profileRouteSummaryMessage, { status })
-                : formatResource(copy.profileRouteSummaryUnavailableMessage, { status })}
+                ? formatResource(copy.profileRouteSummaryMessage, { status: localizedStatus })
+                : formatResource(copy.profileRouteSummaryUnavailableMessage, { status: localizedStatus })}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href={localizeHref("/account/preferences", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
@@ -419,7 +421,7 @@ export function ProfilePage({
                 label: copy.accountCompositionJourneyCurrentLabel,
                 title: copy.accountCompositionJourneyProfileTitle,
                 description: formatResource(copy.accountCompositionJourneyProfileDescription, {
-                  status,
+                  status: localizedStatus,
                 }),
                 href: "/account/profile",
                 ctaLabel: copy.accountCompositionJourneyCurrentCta,
@@ -436,7 +438,7 @@ export function ProfilePage({
                   label: copy.accountCompositionRouteMapProfileLabel,
                   title: copy.accountCompositionRouteMapProfileTitle,
                   description: formatResource(copy.accountCompositionRouteMapProfileDescription, {
-                    status,
+                    status: localizedStatus,
                   }),
                   href: "/account/profile",
                   ctaLabel: copy.accountCompositionRouteMapProfileCta,

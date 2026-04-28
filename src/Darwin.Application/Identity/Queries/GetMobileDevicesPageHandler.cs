@@ -42,7 +42,7 @@ public sealed class GetMobileDevicesPageHandler
         var baseQuery =
             from device in _db.Set<UserDevice>().AsNoTracking()
             join user in _db.Set<User>().AsNoTracking() on device.UserId equals user.Id
-            where !device.IsDeleted
+            where !device.IsDeleted && !user.IsDeleted
             select new
             {
                 device,

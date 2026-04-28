@@ -21,7 +21,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
 
             builder.HasIndex(p => new { p.UserId, p.Token })
                    .IsUnique()
-                   .HasDatabaseName("UX_ResetToken_User_Token");
+                   .HasDatabaseName("UX_ResetToken_User_Token")
+                   .HasFilter("[IsDeleted] = 0");
 
             builder.HasOne(p => p.User)
                    .WithMany()

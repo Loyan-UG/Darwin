@@ -74,7 +74,7 @@ namespace Darwin.Application.Loyalty.Commands
             }
 
             var account = await _db.Set<LoyaltyAccount>()
-                .FirstOrDefaultAsync(a => a.Id == dto.LoyaltyAccountId, ct)
+                .FirstOrDefaultAsync(a => a.Id == dto.LoyaltyAccountId && !a.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (account is null)

@@ -47,16 +47,17 @@ namespace Darwin.Application.Catalog.Queries
             var productsQuery = _db.Set<Product>()
                 .AsNoTracking()
                 .Where(p =>
-                    query == null ||
-                    p.Translations.Any(t => t.Name.Contains(query)) ||
-                    p.Translations.Any(t => t.Slug != null && t.Slug.Contains(query)) ||
-                    p.Variants.Any(v => v.Sku.Contains(query)));
+                    !p.IsDeleted &&
+                    (query == null ||
+                     p.Translations.Any(t => !t.IsDeleted && t.Name.Contains(query)) ||
+                     p.Translations.Any(t => !t.IsDeleted && t.Slug != null && t.Slug.Contains(query)) ||
+                     p.Variants.Any(v => !v.IsDeleted && v.Sku.Contains(query))));
 
             productsQuery = filter switch
             {
                 "inactive" => productsQuery.Where(p => !p.IsActive),
                 "hidden" => productsQuery.Where(p => !p.IsVisible),
-                "single-variant" => productsQuery.Where(p => p.Variants.Count == 1),
+                "single-variant" => productsQuery.Where(p => p.Variants.Count(v => !v.IsDeleted) == 1),
                 "scheduled" => productsQuery.Where(p => p.PublishStartUtc != null || p.PublishEndUtc != null),
                 _ => productsQuery
             };
@@ -65,12 +66,12 @@ namespace Darwin.Application.Catalog.Queries
             {
                 Id = p.Id,
                 DefaultName = p.Translations
-                    .Where(t => t.Culture == culture)
+                    .Where(t => !t.IsDeleted && t.Culture == culture)
                     .Select(t => t.Name)
-                    .FirstOrDefault() ?? p.Translations.Select(t => t.Name).FirstOrDefault(),
+                    .FirstOrDefault() ?? p.Translations.Where(t => !t.IsDeleted).Select(t => t.Name).FirstOrDefault(),
                 IsActive = p.IsActive,
                 IsVisible = p.IsVisible,
-                VariantCount = p.Variants.Count,
+                VariantCount = p.Variants.Count(v => !v.IsDeleted),
                 PublishStartUtc = p.PublishStartUtc,
                 PublishEndUtc = p.PublishEndUtc,
                 ModifiedAtUtc = p.ModifiedAtUtc ?? p.CreatedAtUtc,
@@ -99,14 +100,14 @@ namespace Darwin.Application.Catalog.Queries
 
         public async Task<ProductOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {
-            var products = _db.Set<Product>().AsNoTracking();
+            var products = _db.Set<Product>().AsNoTracking().Where(p => !p.IsDeleted);
 
             return new ProductOpsSummaryDto
             {
                 TotalCount = await products.CountAsync(ct),
                 InactiveCount = await products.CountAsync(p => !p.IsActive, ct),
                 HiddenCount = await products.CountAsync(p => !p.IsVisible, ct),
-                SingleVariantCount = await products.CountAsync(p => p.Variants.Count == 1, ct),
+                SingleVariantCount = await products.CountAsync(p => p.Variants.Count(v => !v.IsDeleted) == 1, ct),
                 ScheduledCount = await products.CountAsync(p => p.PublishStartUtc != null || p.PublishEndUtc != null, ct)
             };
         }

@@ -100,7 +100,7 @@ const getCachedCheckoutRouteContext = createCachedObservedLoader({
     const [identityContext, commerceSummaryContext] = memberSession
       ? await Promise.all([
           getMemberIdentityContext(),
-          getMemberCommerceSummaryContext(),
+          getMemberCommerceSummaryContext(culture),
         ])
       : [null, null];
 
@@ -141,7 +141,7 @@ const getCachedConfirmationRouteContext = createCachedObservedLoader({
         getPublicStorefrontContext(culture),
       ]);
     const commerceSummaryContext = memberSession
-      ? await getMemberCommerceSummaryContext()
+      ? await getMemberCommerceSummaryContext(culture)
       : null;
 
     return {

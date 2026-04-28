@@ -73,6 +73,14 @@
                                     <field-help title="@T.T("Description")" content="@T.T("CategoryDescriptionHelp")" placement="right"></field-help>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@T.T("MetaTitle")</label>
+                                <input asp-for="Translations[@i].MetaTitle" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@T.T("MetaDescription")</label>
+                                <input asp-for="Translations[@i].MetaDescription" class="form-control" />
+                            </div>
                         </div>
                     </div>
                 }

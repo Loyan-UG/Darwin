@@ -14,15 +14,18 @@ namespace Darwin.Application.Pricing.Queries
     /// </summary>
     public sealed class GetPromotionsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetPromotionsPageHandler(IAppDbContext db) => _db = db;
+        public GetPromotionsPageHandler(IAppDbContext db) => _db = db ?? throw new System.ArgumentNullException(nameof(db));
 
         public async Task<(List<PromotionListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var baseQuery = _db.Set<Promotion>().AsNoTracking();
+            var baseQuery = _db.Set<Promotion>().AsNoTracking().Where(p => !p.IsDeleted);
             var total = await baseQuery.CountAsync(ct);
 
             var items = await baseQuery

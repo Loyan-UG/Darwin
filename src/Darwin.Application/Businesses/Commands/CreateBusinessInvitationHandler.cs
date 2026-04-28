@@ -59,7 +59,7 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var business = await _db.Set<Business>()
-                .FirstOrDefaultAsync(x => x.Id == dto.BusinessId, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.BusinessId && !x.IsDeleted, ct);
             if (business is null)
                 throw new InvalidOperationException(_localizer["BusinessNotFound"]);
 
@@ -70,14 +70,15 @@ namespace Darwin.Application.Businesses.Commands
                 join member in _db.Set<BusinessMember>() on user.Id equals member.UserId
                 where user.NormalizedEmail == normalizedEmail &&
                       !user.IsDeleted &&
-                      member.BusinessId == dto.BusinessId
+                      member.BusinessId == dto.BusinessId &&
+                      !member.IsDeleted
                 select member.Id)
                 .AnyAsync(ct);
             if (existingMember)
                 throw new InvalidOperationException(_localizer["BusinessInvitationEmailAlreadyBelongsToExistingMember"]);
 
             var existingInvitation = await _db.Set<BusinessInvitation>()
-                .Where(x => x.BusinessId == dto.BusinessId && x.NormalizedEmail == normalizedEmail)
+                .Where(x => x.BusinessId == dto.BusinessId && x.NormalizedEmail == normalizedEmail && !x.IsDeleted)
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .FirstOrDefaultAsync(ct);
 

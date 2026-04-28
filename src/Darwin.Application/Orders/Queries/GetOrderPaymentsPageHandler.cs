@@ -19,8 +19,10 @@ namespace Darwin.Application.Orders.Queries
     /// </summary>
     public sealed class GetOrderPaymentsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetOrderPaymentsPageHandler(IAppDbContext db) => _db = db;
+        public GetOrderPaymentsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
         /// <summary>
         /// Executes a paged query over payments of a given order.
@@ -29,8 +31,9 @@ namespace Darwin.Application.Orders.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var baseQuery = _db.Set<Payment>().AsNoTracking().Where(p => p.OrderId == orderId);
+            var baseQuery = _db.Set<Payment>().AsNoTracking().Where(p => p.OrderId == orderId && !p.IsDeleted);
             baseQuery = filter switch
             {
                 PaymentQueueFilter.Failed => baseQuery.Where(p => p.Status == PaymentStatus.Failed),
@@ -64,13 +67,13 @@ namespace Darwin.Application.Orders.Queries
             {
                 var invoiceMap = await _db.Set<Invoice>()
                     .AsNoTracking()
-                    .Where(x => x.PaymentId.HasValue && paymentIds.Contains(x.PaymentId.Value))
+                    .Where(x => x.PaymentId.HasValue && paymentIds.Contains(x.PaymentId.Value) && !x.IsDeleted)
                     .Select(x => new { PaymentId = x.PaymentId!.Value, x.Id, x.Status })
                     .ToDictionaryAsync(x => x.PaymentId, ct)
                     .ConfigureAwait(false);
                 var refundTotals = await _db.Set<Refund>()
                     .AsNoTracking()
-                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId) && !x.IsDeleted)
                     .GroupBy(x => x.PaymentId)
                     .Select(x => new { PaymentId = x.Key, AmountMinor = x.Sum(r => r.AmountMinor) })
                     .ToDictionaryAsync(x => x.PaymentId, x => x.AmountMinor, ct)

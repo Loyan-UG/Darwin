@@ -98,7 +98,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Culture).HasMaxLength(16).IsRequired();
             builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
-            builder.HasIndex(x => new { x.AddOnGroupId, x.Culture }).IsUnique();
+            builder.HasIndex(x => new { x.AddOnGroupId, x.Culture })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 
@@ -110,7 +112,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Culture).HasMaxLength(16).IsRequired();
             builder.Property(x => x.Label).HasMaxLength(200).IsRequired();
-            builder.HasIndex(x => new { x.AddOnOptionId, x.Culture }).IsUnique();
+            builder.HasIndex(x => new { x.AddOnOptionId, x.Culture })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 
@@ -122,7 +126,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Culture).HasMaxLength(16).IsRequired();
             builder.Property(x => x.Label).HasMaxLength(200).IsRequired();
-            builder.HasIndex(x => new { x.AddOnOptionValueId, x.Culture }).IsUnique();
+            builder.HasIndex(x => new { x.AddOnOptionValueId, x.Culture })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 
@@ -136,7 +142,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 
             builder.HasKey(x => x.Id);
 
-            builder.HasIndex(x => new { x.AddOnGroupId, x.ProductId }).IsUnique();
+            builder.HasIndex(x => new { x.AddOnGroupId, x.ProductId })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 
@@ -150,7 +158,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 
             builder.HasKey(x => x.Id);
 
-            builder.HasIndex(x => new { x.AddOnGroupId, x.CategoryId }).IsUnique();
+            builder.HasIndex(x => new { x.AddOnGroupId, x.CategoryId })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 
@@ -164,7 +174,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 
             builder.HasKey(x => x.Id);
 
-            builder.HasIndex(x => new { x.AddOnGroupId, x.BrandId }).IsUnique();
+            builder.HasIndex(x => new { x.AddOnGroupId, x.BrandId })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 
@@ -181,7 +193,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
             builder.HasKey(x => x.Id);
 
             // Ensure no duplicate active link exists for a (Group, Variant) pair.
-            builder.HasIndex(x => new { x.AddOnGroupId, x.VariantId }).IsUnique();
+            builder.HasIndex(x => new { x.AddOnGroupId, x.VariantId })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 }

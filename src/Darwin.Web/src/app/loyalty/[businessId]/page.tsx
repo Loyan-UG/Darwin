@@ -48,7 +48,7 @@ export default async function LoyaltyBusinessRoute({
   const [{ businessId }, cursor] = await Promise.all([params, searchParams]);
   const hasValidCursor = Boolean(cursor.beforeAtUtc && cursor.beforeId);
   const [publicBusinessResult, cmsPagesResult, categoriesResult] = await Promise.all([
-    getPublicBusinessDetail(businessId),
+    getPublicBusinessDetail(businessId, culture),
     getPublishedPages({ page: 1, pageSize: 2, culture }),
     getPublicCategories(culture),
   ]);
@@ -71,7 +71,10 @@ export default async function LoyaltyBusinessRoute({
     );
   }
 
-  const memberBusinessResult = await getCurrentMemberBusinessWithMyAccount(businessId);
+  const memberBusinessResult = await getCurrentMemberBusinessWithMyAccount(
+    businessId,
+    culture,
+  );
   const businessDetail =
     memberBusinessResult.data?.business ?? publicBusinessResult.data;
 
@@ -101,17 +104,19 @@ export default async function LoyaltyBusinessRoute({
   }
 
   const [dashboardResult, rewardsResult, timelineResult, promotionsResult, preparedScanSession] = await Promise.all([
-    getCurrentMemberLoyaltyBusinessDashboard(businessId),
-    getCurrentMemberLoyaltyRewards(businessId),
+    getCurrentMemberLoyaltyBusinessDashboard(businessId, culture),
+    getCurrentMemberLoyaltyRewards(businessId, culture),
     getCurrentMemberLoyaltyTimeline({
       businessId,
       pageSize: 10,
       beforeAtUtc: hasValidCursor ? cursor.beforeAtUtc : undefined,
       beforeId: hasValidCursor ? cursor.beforeId : undefined,
+      culture,
     }),
     getCurrentMemberPromotions({
       businessId,
       maxItems: 4,
+      culture,
     }),
     readPreparedMemberLoyaltyScanSession(businessId),
   ]);

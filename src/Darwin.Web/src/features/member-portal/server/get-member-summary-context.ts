@@ -3,13 +3,14 @@ import {
   getCurrentMemberAddresses,
   getCurrentMemberCustomerContext,
   getCurrentMemberInvoices,
-  getCurrentMemberLoyaltyOverview,
+  getCurrentMemberLoyaltyOverviewForCulture,
   getCurrentMemberOrders,
   getCurrentMemberPreferences,
   getCurrentMemberProfile,
 } from "@/features/member-portal/api/member-portal";
 import { createSharedContextLoader } from "@/lib/shared-context-loader";
 import {
+  normalizeCultureArg,
   normalizePagingArgs,
 } from "@/lib/route-context-normalization";
 import {
@@ -64,7 +65,9 @@ export const getMemberCommerceSummaryContext = createSharedContextLoader({
   kind: "member-summary",
   area: "member-summary",
   operation: "load-commerce-summary",
-  getContext: () => memberSummaryObservationContext("commerce-summary"),
+  normalizeArgs: normalizeCultureArg,
+  getContext: (culture: string) =>
+    memberSummaryObservationContext("commerce-summary", { culture }),
   getSuccessContext: (result) => {
     const summary = summarizeMemberCommerceSummaryHealth(result);
     return {
@@ -77,17 +80,19 @@ export const getMemberCommerceSummaryContext = createSharedContextLoader({
       }),
     };
   },
-  load: () =>
+  load: (culture: string) =>
     Promise.all([
       getCurrentMemberOrders({
         page: 1,
         pageSize: 3,
+        culture,
       }),
       getCurrentMemberInvoices({
         page: 1,
         pageSize: 3,
+        culture,
       }),
-      getCurrentMemberLoyaltyOverview(),
+      getCurrentMemberLoyaltyOverviewForCulture(culture),
     ]).then(([ordersResult, invoicesResult, loyaltyOverviewResult]) => ({
       ordersResult,
       invoicesResult,
@@ -99,9 +104,15 @@ export const getMemberOrdersPageContext = createSharedContextLoader({
   kind: "member-summary",
   area: "member-summary",
   operation: "load-orders-page",
-  normalizeArgs: normalizePagingArgs,
-  getContext: (page: number, pageSize: number) =>
+  normalizeArgs: (culture: string, page: number, pageSize: number) =>
+    [normalizeCultureArg(culture)[0], ...normalizePagingArgs(page, pageSize)] as [
+      string,
+      number,
+      number,
+    ],
+  getContext: (culture: string, page: number, pageSize: number) =>
     memberSummaryObservationContext("commerce-summary", {
+      culture,
       page,
       pageSize,
       collection: "orders",
@@ -116,10 +127,11 @@ export const getMemberOrdersPageContext = createSharedContextLoader({
       }),
     };
   },
-  load: (page: number, pageSize: number) =>
+  load: (culture: string, page: number, pageSize: number) =>
     getCurrentMemberOrders({
       page,
       pageSize,
+      culture,
     }),
 });
 
@@ -127,9 +139,15 @@ export const getMemberInvoicesPageContext = createSharedContextLoader({
   kind: "member-summary",
   area: "member-summary",
   operation: "load-invoices-page",
-  normalizeArgs: normalizePagingArgs,
-  getContext: (page: number, pageSize: number) =>
+  normalizeArgs: (culture: string, page: number, pageSize: number) =>
+    [normalizeCultureArg(culture)[0], ...normalizePagingArgs(page, pageSize)] as [
+      string,
+      number,
+      number,
+    ],
+  getContext: (culture: string, page: number, pageSize: number) =>
     memberSummaryObservationContext("commerce-summary", {
+      culture,
       page,
       pageSize,
       collection: "invoices",
@@ -144,9 +162,10 @@ export const getMemberInvoicesPageContext = createSharedContextLoader({
       }),
     };
   },
-  load: (page: number, pageSize: number) =>
+  load: (culture: string, page: number, pageSize: number) =>
     getCurrentMemberInvoices({
       page,
       pageSize,
+      culture,
     }),
 });

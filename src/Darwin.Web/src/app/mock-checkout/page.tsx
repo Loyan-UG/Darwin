@@ -22,7 +22,7 @@ export function tryParseAbsoluteUrl(value: string) {
 
   try {
     const url = new URL(value);
-    return url;
+    return url.protocol === "http:" || url.protocol === "https:" ? url : null;
   } catch {
     return null;
   }

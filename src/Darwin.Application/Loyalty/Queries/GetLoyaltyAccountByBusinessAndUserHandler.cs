@@ -28,7 +28,7 @@ namespace Darwin.Application.Loyalty.Queries
         {
             var entity = await _db.Set<LoyaltyAccount>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.BusinessId == businessId && a.UserId == userId, ct);
+                .FirstOrDefaultAsync(a => a.BusinessId == businessId && a.UserId == userId && !a.IsDeleted, ct);
 
             if (entity is null)
                 return null;

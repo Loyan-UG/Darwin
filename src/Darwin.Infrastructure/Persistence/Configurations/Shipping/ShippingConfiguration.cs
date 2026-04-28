@@ -30,7 +30,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Shipping
             // ensures administrators cannot create duplicate methods for the
             // same carrier/service combination. Note: This constraint
             // complements the unique name validators in the application layer.
-            builder.HasIndex(sm => new { sm.Name, sm.Carrier, sm.Service }).IsUnique();
+            builder.HasIndex(sm => new { sm.Name, sm.Carrier, sm.Service })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             // One-to-many relationship to rate tiers. Cascade delete so that
             // removing a shipping method removes its rates. Use DeleteBehavior
@@ -56,7 +58,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Shipping
             builder.Property(r => r.SortOrder).IsRequired();
 
             // Unique sort order per method ensures predictable rate evaluation
-            builder.HasIndex(r => new { r.ShippingMethodId, r.SortOrder }).IsUnique();
+            builder.HasIndex(r => new { r.ShippingMethodId, r.SortOrder })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             // Relationships are configured on the ShippingMethod side; no further
             // configuration is required here.

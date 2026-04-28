@@ -7,6 +7,7 @@ import type {
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { formatMoney } from "@/lib/formatting";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getMemberResource } from "@/localization";
 
@@ -58,7 +59,7 @@ export function PublicAuthCompositionWindow({
             ),
           },
         ),
-        href: `/catalog/${strongestProduct.slug}`,
+        href: buildCatalogProductPath(strongestProduct.slug),
         ctaLabel: copy.publicAuthCompositionJourneyStorefrontCta,
       }
     : strongestCategory
@@ -113,7 +114,7 @@ export function PublicAuthCompositionWindow({
       description:
         strongestPage?.metaDescription ??
         copy.publicAuthCompositionRouteMapContentFallbackDescription,
-      href: strongestPage ? `/cms/${strongestPage.slug}` : "/cms",
+      href: strongestPage ? buildCmsPagePath(strongestPage.slug) : "/cms",
       ctaLabel: copy.publicAuthCompositionRouteMapContentCta,
       meta: formatResource(copy.publicAuthCompositionRouteMapContentMeta, {
         count: cmsPages.length,

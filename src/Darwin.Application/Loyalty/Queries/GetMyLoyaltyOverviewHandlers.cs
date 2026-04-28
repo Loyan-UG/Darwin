@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application;
+using Darwin.Application.Businesses;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Loyalty;
@@ -33,7 +34,15 @@ public sealed class GetMyLoyaltyOverviewHandler
     /// <summary>
     /// Loads the aggregated loyalty overview for the current member.
     /// </summary>
-    public async Task<Result<MyLoyaltyOverviewDto>> HandleAsync(CancellationToken ct = default)
+    public Task<Result<MyLoyaltyOverviewDto>> HandleAsync(CancellationToken ct = default)
+    {
+        return HandleAsync(culture: null, ct);
+    }
+
+    /// <summary>
+    /// Loads the aggregated loyalty overview for the current member with localized business names when available.
+    /// </summary>
+    public async Task<Result<MyLoyaltyOverviewDto>> HandleAsync(string? culture = null, CancellationToken ct = default)
     {
         var userId = _currentUserService.GetCurrentUserId();
         if (userId == Guid.Empty)
@@ -51,6 +60,8 @@ public sealed class GetMyLoyaltyOverviewHandler
                 Id = account.Id,
                 BusinessId = business.Id,
                 BusinessName = business.Name,
+                BusinessAdminTextOverridesJson = business.AdminTextOverridesJson,
+                BusinessDefaultCulture = business.DefaultCulture,
                 PointsBalance = account.PointsBalance,
                 LifetimePoints = account.LifetimePoints,
                 Status = account.Status,
@@ -65,6 +76,12 @@ public sealed class GetMyLoyaltyOverviewHandler
 
         foreach (var account in accounts)
         {
+            account.BusinessName = BusinessPublicTextResolver.ResolveName(
+                account.BusinessName ?? string.Empty,
+                account.BusinessAdminTextOverridesJson,
+                culture,
+                account.BusinessDefaultCulture);
+
             LoyaltyRewardProgressProjection.ApplyToAccount(
                 account,
                 thresholdsByBusiness.TryGetValue(account.BusinessId, out var thresholds)
@@ -109,7 +126,15 @@ public sealed class GetMyLoyaltyBusinessDashboardHandler
     /// <summary>
     /// Loads the current member's dashboard for a single business loyalty context.
     /// </summary>
-    public async Task<Result<MyLoyaltyBusinessDashboardDto?>> HandleAsync(Guid businessId, CancellationToken ct = default)
+    public Task<Result<MyLoyaltyBusinessDashboardDto?>> HandleAsync(Guid businessId, CancellationToken ct = default)
+    {
+        return HandleAsync(businessId, culture: null, ct);
+    }
+
+    /// <summary>
+    /// Loads the current member's dashboard with localized business name when available.
+    /// </summary>
+    public async Task<Result<MyLoyaltyBusinessDashboardDto?>> HandleAsync(Guid businessId, string? culture = null, CancellationToken ct = default)
     {
         if (businessId == Guid.Empty)
         {
@@ -134,6 +159,8 @@ public sealed class GetMyLoyaltyBusinessDashboardHandler
                 Id = loyaltyAccount.Id,
                 BusinessId = business.Id,
                 BusinessName = business.Name,
+                BusinessAdminTextOverridesJson = business.AdminTextOverridesJson,
+                BusinessDefaultCulture = business.DefaultCulture,
                 PointsBalance = loyaltyAccount.PointsBalance,
                 LifetimePoints = loyaltyAccount.LifetimePoints,
                 Status = loyaltyAccount.Status,
@@ -147,30 +174,58 @@ public sealed class GetMyLoyaltyBusinessDashboardHandler
             return Result<MyLoyaltyBusinessDashboardDto?>.Ok(null);
         }
 
+        account.BusinessName = BusinessPublicTextResolver.ResolveName(
+            account.BusinessName ?? string.Empty,
+            account.BusinessAdminTextOverridesJson,
+            culture,
+            account.BusinessDefaultCulture);
+
         var program = await _db.Set<LoyaltyProgram>()
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.BusinessId == businessId && !x.IsDeleted && x.IsActive, ct)
             .ConfigureAwait(false);
 
-        var rewards = program is null
-            ? new List<LoyaltyRewardSummaryDto>()
-            : await _db.Set<LoyaltyRewardTier>()
+        var rewards = new List<LoyaltyRewardSummaryDto>();
+        if (program is not null)
+        {
+            var tierRows = await _db.Set<LoyaltyRewardTier>()
                 .AsNoTracking()
                 .Where(x => x.LoyaltyProgramId == program.Id && !x.IsDeleted)
                 .OrderBy(x => x.PointsRequired)
-                .Select(x => new LoyaltyRewardSummaryDto
+                .Select(x => new
                 {
-                    LoyaltyRewardTierId = x.Id,
-                    BusinessId = businessId,
-                    Name = !string.IsNullOrWhiteSpace(x.Description) ? x.Description : program.Name,
-                    Description = x.Description,
-                    RequiredPoints = x.PointsRequired,
-                    IsActive = program.IsActive,
-                    RequiresConfirmation = !x.AllowSelfRedemption,
-                    IsSelectable = account.Status == LoyaltyAccountStatus.Active && account.PointsBalance >= x.PointsRequired
+                    x.Id,
+                    x.Description,
+                    x.MetadataJson,
+                    x.PointsRequired,
+                    x.AllowSelfRedemption
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
+            rewards = tierRows
+                .Select(x =>
+                {
+                    var description = LoyaltyLocalizedTextResolver.Resolve(
+                        x.MetadataJson,
+                        culture,
+                        "description",
+                        x.Description ?? program.Name);
+
+                    return new LoyaltyRewardSummaryDto
+                    {
+                        LoyaltyRewardTierId = x.Id,
+                        BusinessId = businessId,
+                        Name = description,
+                        Description = description,
+                        RequiredPoints = x.PointsRequired,
+                        IsActive = program.IsActive,
+                        RequiresConfirmation = !x.AllowSelfRedemption,
+                        IsSelectable = account.Status == LoyaltyAccountStatus.Active && account.PointsBalance >= x.PointsRequired
+                    };
+                })
+                .ToList();
+        }
 
         var transactions = await _db.Set<LoyaltyPointsTransaction>()
             .AsNoTracking()

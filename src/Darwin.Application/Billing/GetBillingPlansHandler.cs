@@ -20,7 +20,7 @@ public sealed class GetBillingPlansHandler
         _db = db ?? throw new ArgumentNullException(nameof(db));
     }
 
-    public async Task<GetBillingPlansDto> HandleAsync(bool activeOnly, CancellationToken ct = default)
+    public async Task<GetBillingPlansDto> HandleAsync(bool activeOnly, string? culture = null, CancellationToken ct = default)
     {
         var query = _db.Set<BillingPlan>()
             .AsNoTracking()
@@ -31,10 +31,10 @@ public sealed class GetBillingPlansHandler
             query = query.Where(x => x.IsActive);
         }
 
-        var items = await query
+        var planRows = await query
             .OrderBy(x => x.PriceMinor)
             .ThenBy(x => x.Name)
-            .Select(x => new BillingPlanSummaryDto
+            .Select(x => new
             {
                 Id = x.Id,
                 Code = x.Code,
@@ -45,14 +45,29 @@ public sealed class GetBillingPlansHandler
                 Interval = x.Interval.ToString(),
                 IntervalCount = x.IntervalCount,
                 TrialDays = x.TrialDays,
-                IsActive = x.IsActive
+                IsActive = x.IsActive,
+                FeaturesJson = x.FeaturesJson
             })
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
         return new GetBillingPlansDto
         {
-            Items = items
+            Items = planRows
+                .Select(x => new BillingPlanSummaryDto
+                {
+                    Id = x.Id,
+                    Code = x.Code,
+                    Name = BillingLocalizedTextResolver.ResolvePlanName(x.Name, x.FeaturesJson, culture),
+                    Description = BillingLocalizedTextResolver.ResolvePlanDescription(x.Description, x.FeaturesJson, culture),
+                    PriceMinor = x.PriceMinor,
+                    Currency = x.Currency,
+                    Interval = x.Interval,
+                    IntervalCount = x.IntervalCount,
+                    TrialDays = x.TrialDays,
+                    IsActive = x.IsActive
+                })
+                .ToList()
         };
     }
 }

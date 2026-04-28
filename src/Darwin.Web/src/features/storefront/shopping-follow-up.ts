@@ -1,11 +1,14 @@
 import type { PublicProductSummary } from "@/features/catalog/types";
+import { buildCatalogProductPath } from "@/lib/entity-paths";
 
 export function filterProductsByExcludedCatalogPaths(
   products: PublicProductSummary[],
   excludedCatalogPaths: Iterable<string>,
 ) {
   const excluded = new Set(excludedCatalogPaths);
-  return products.filter((product) => !excluded.has(`/catalog/${product.slug}`));
+  return products.filter(
+    (product) => !excluded.has(buildCatalogProductPath(product.slug)),
+  );
 }
 
 export function filterProductsByPurchasedNames(

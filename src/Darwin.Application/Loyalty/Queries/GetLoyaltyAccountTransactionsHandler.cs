@@ -68,13 +68,13 @@ namespace Darwin.Application.Loyalty.Queries
 
             // Base query: all transactions for the given account.
             var txQuery = _db.Set<LoyaltyPointsTransaction>().AsNoTracking()
-                .Where(t => t.LoyaltyAccountId == loyaltyAccountId);
+                .Where(t => t.LoyaltyAccountId == loyaltyAccountId && !t.IsDeleted);
 
             // Join with account to obtain the consumer user id.
-            var accountQuery = _db.Set<LoyaltyAccount>().AsNoTracking();
+            var accountQuery = _db.Set<LoyaltyAccount>().AsNoTracking().Where(a => !a.IsDeleted);
 
             // Optional join with scan sessions to expose ScanSessionId via ResultingTransactionId.
-            var scanQuery = _db.Set<ScanSession>().AsNoTracking();
+            var scanQuery = _db.Set<ScanSession>().AsNoTracking().Where(s => !s.IsDeleted);
 
             var query =
                 from tx in txQuery

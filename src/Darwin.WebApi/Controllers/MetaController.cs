@@ -177,20 +177,20 @@ namespace Darwin.WebApi.Controllers
         [AllowAnonymous]
         [ProducesResponseType(typeof(AppBootstrapResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<AppBootstrapResponse>> GetBootstrapAsync(CancellationToken ct)
+        public async Task<IActionResult> GetBootstrapAsync(CancellationToken ct)
         {
             var result = await _getAppBootstrap.HandleAsync(ct).ConfigureAwait(false);
 
             if (!result.Succeeded)
             {
                 // Keep response intentionally small and consistent.
-                return BadRequest(new { error = result.Error ?? _validationLocalizer["BootstrapRequestFailed"].Value });
+                return BadRequestProblem(result.Error ?? _validationLocalizer["BootstrapRequestFailed"]);
             }
 
             if (result.Value is null)
             {
                 // Defensive: success with null payload should not happen, but we must be null-safe.
-                return BadRequest(new { error = _validationLocalizer["BootstrapPayloadEmpty"].Value });
+                return BadRequestProblem(_validationLocalizer["BootstrapPayloadEmpty"]);
             }
 
             var dto = result.Value;

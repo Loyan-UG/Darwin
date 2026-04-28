@@ -23,7 +23,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
 
             builder.HasIndex(x => new { x.UserId, x.BusinessId })
                 .IsUnique()
-                .HasDatabaseName("UX_BusinessLikes_User_Business");
+                .HasDatabaseName("UX_BusinessLikes_User_Business")
+                .HasFilter("[IsDeleted] = 0");
 
             builder.HasIndex(x => x.BusinessId);
             builder.HasIndex(x => x.UserId);

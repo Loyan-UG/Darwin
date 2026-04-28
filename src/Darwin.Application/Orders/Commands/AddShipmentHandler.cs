@@ -39,11 +39,11 @@ namespace Darwin.Application.Orders.Commands
             if (!v.IsValid) throw new ValidationException(v.Errors);
 
             var order = await _db.Set<Order>().Include(o => o.Lines)
-                .FirstOrDefaultAsync(o => o.Id == dto.OrderId, ct);
+                .FirstOrDefaultAsync(o => o.Id == dto.OrderId && !o.IsDeleted, ct);
             if (order is null) throw new InvalidOperationException(_localizer["OrderNotFound"]);
 
             // Validate lines belong to this order
-            var lineIds = order.Lines.Select(l => l.Id).ToHashSet();
+            var lineIds = order.Lines.Where(l => !l.IsDeleted).Select(l => l.Id).ToHashSet();
             foreach (var sl in dto.Lines)
                 if (!lineIds.Contains(sl.OrderLineId))
                     throw new ValidationException(_localizer["InvalidShipmentLineOrderMismatch"]);

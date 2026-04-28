@@ -28,8 +28,8 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
 
         public Fido2WebAuthnService(IAppDbContext db, IRelyingPartyFromSiteSettingsProvider rp)
         {
-            _db = db;
-            _rp = rp;
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _rp = rp ?? throw new ArgumentNullException(nameof(rp));
         }
 
         /// <inheritdoc />
@@ -94,12 +94,6 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
                 Origins = new HashSet<string>(origins)
             });
 
-            var attestation = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(clientResponseJson);
-            var originalOptions = JsonSerializer.Deserialize<CredentialCreateOptions>(optionsJson);
-
-            if (attestation is null || originalOptions is null)
-                return (false, Array.Empty<byte>(), Array.Empty<byte>(), null, "public-key", null, 0, false, "Invalid JSON payload(s).");
-
             async Task<bool> IsUniqueAsync(IsCredentialIdUniqueToUserParams p, CancellationToken _)
             {
                 var exists = await _db.Set<UserWebAuthnCredential>()
@@ -109,6 +103,12 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
 
             try
             {
+                var attestation = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(clientResponseJson);
+                var originalOptions = JsonSerializer.Deserialize<CredentialCreateOptions>(optionsJson);
+
+                if (attestation is null || originalOptions is null)
+                    return (false, Array.Empty<byte>(), Array.Empty<byte>(), null, "public-key", null, 0, false, "Invalid JSON payload(s).");
+
                 var reg = await fido.MakeNewCredentialAsync(new MakeNewCredentialParams
                 {
                     AttestationResponse = attestation,
@@ -129,6 +129,10 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
             catch (Fido2VerificationException ex)
             {
                 return (false, Array.Empty<byte>(), Array.Empty<byte>(), null, "public-key", null, 0, false, ex.Message);
+            }
+            catch (JsonException)
+            {
+                return (false, Array.Empty<byte>(), Array.Empty<byte>(), null, "public-key", null, 0, false, "Invalid JSON payload(s).");
             }
             catch (Exception ex)
             {
@@ -179,14 +183,14 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
                 Origins = new HashSet<string>(origins)
             });
 
-            var assertion = JsonSerializer.Deserialize<AuthenticatorAssertionRawResponse>(clientResponseJson);
-            var originalOptions = JsonSerializer.Deserialize<AssertionOptions>(optionsJson);
-
-            if (assertion is null || originalOptions is null)
-                return (false, Array.Empty<byte>(), 0, "Invalid JSON payload(s).");
-
             try
             {
+                var assertion = JsonSerializer.Deserialize<AuthenticatorAssertionRawResponse>(clientResponseJson);
+                var originalOptions = JsonSerializer.Deserialize<AssertionOptions>(optionsJson);
+
+                if (assertion is null || originalOptions is null)
+                    return (false, Array.Empty<byte>(), 0, "Invalid JSON payload(s).");
+
                 // Base64Url decode credential id from client
                 var credentialId = WebEncoders.Base64UrlDecode(assertion.Id);
 
@@ -221,6 +225,14 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
             catch (Fido2VerificationException ex)
             {
                 return (false, Array.Empty<byte>(), 0, ex.Message);
+            }
+            catch (JsonException)
+            {
+                return (false, Array.Empty<byte>(), 0, "Invalid JSON payload(s).");
+            }
+            catch (FormatException)
+            {
+                return (false, Array.Empty<byte>(), 0, "Invalid credential id.");
             }
             catch (Exception ex)
             {

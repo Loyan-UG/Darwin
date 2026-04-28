@@ -62,7 +62,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
             // Optional idempotency key; uniqueness per business prevents duplicates.
             builder.HasIndex(x => new { x.BusinessId, x.IdempotencyKey })
                 .IsUnique()
-                .HasDatabaseName("UX_AnalyticsExportJobs_Business_IdempotencyKey");
+                .HasDatabaseName("UX_AnalyticsExportJobs_Business_IdempotencyKey")
+                .HasFilter("[IdempotencyKey] IS NOT NULL AND [IsDeleted] = 0");
         }
     }
 }

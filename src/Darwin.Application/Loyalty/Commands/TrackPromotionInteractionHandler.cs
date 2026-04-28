@@ -66,7 +66,7 @@ public sealed class TrackPromotionInteractionHandler
         }
 
         var snapshot = await _db.Set<UserEngagementSnapshot>()
-            .FirstOrDefaultAsync(x => x.UserId == userId, ct)
+            .FirstOrDefaultAsync(x => x.UserId == userId && !x.IsDeleted, ct)
             .ConfigureAwait(false);
 
         if (snapshot is null)

@@ -11,6 +11,8 @@ namespace Darwin.Application.CRM.Queries
 {
     public sealed class GetInvoicesPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetInvoicesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -24,8 +26,9 @@ namespace Darwin.Application.CRM.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var baseQuery = _db.Set<Invoice>().AsNoTracking();
+            var baseQuery = _db.Set<Invoice>().AsNoTracking().Where(x => !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
                 var q = query.Trim();
@@ -42,8 +45,8 @@ namespace Darwin.Application.CRM.Queries
                 InvoiceQueueFilter.Draft => baseQuery.Where(x => x.Status == InvoiceStatus.Draft),
                 InvoiceQueueFilter.DueSoon => baseQuery.Where(x => x.Status != InvoiceStatus.Paid && x.DueDateUtc >= DateTime.UtcNow.Date && x.DueDateUtc <= dueSoonThresholdUtc),
                 InvoiceQueueFilter.Overdue => baseQuery.Where(x => x.Status != InvoiceStatus.Paid && x.DueDateUtc < DateTime.UtcNow.Date),
-                InvoiceQueueFilter.MissingVatId => baseQuery.Where(x => x.CustomerId.HasValue && _db.Set<Customer>().Any(customer => customer.Id == x.CustomerId.Value && customer.TaxProfileType == CustomerTaxProfileType.Business && (customer.VatId == null || customer.VatId == string.Empty))),
-                InvoiceQueueFilter.Refunded => baseQuery.Where(x => x.PaymentId.HasValue && _db.Set<Refund>().Any(refund => refund.PaymentId == x.PaymentId.Value && refund.Status == RefundStatus.Completed)),
+                InvoiceQueueFilter.MissingVatId => baseQuery.Where(x => x.CustomerId.HasValue && _db.Set<Customer>().Any(customer => !customer.IsDeleted && customer.Id == x.CustomerId.Value && customer.TaxProfileType == CustomerTaxProfileType.Business && (customer.VatId == null || customer.VatId == string.Empty))),
+                InvoiceQueueFilter.Refunded => baseQuery.Where(x => x.PaymentId.HasValue && _db.Set<Refund>().Any(refund => !refund.IsDeleted && refund.PaymentId == x.PaymentId.Value && refund.Status == RefundStatus.Completed)),
                 _ => baseQuery
             };
 
@@ -88,25 +91,25 @@ namespace Darwin.Application.CRM.Queries
 
             var customers = customerIds.Count == 0
                 ? new List<Customer>()
-                : await _db.Set<Customer>().AsNoTracking().Where(x => customerIds.Contains(x.Id)).ToListAsync(ct).ConfigureAwait(false);
+                : await _db.Set<Customer>().AsNoTracking().Where(x => customerIds.Contains(x.Id) && !x.IsDeleted).ToListAsync(ct).ConfigureAwait(false);
 
             var userIds = customers.Where(x => x.UserId.HasValue).Select(x => x.UserId!.Value).Distinct().ToList();
             var users = userIds.Count == 0
                 ? new Dictionary<Guid, User>()
-                : await _db.Set<User>().AsNoTracking().Where(x => userIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, ct).ConfigureAwait(false);
+                : await _db.Set<User>().AsNoTracking().Where(x => userIds.Contains(x.Id) && !x.IsDeleted).ToDictionaryAsync(x => x.Id, ct).ConfigureAwait(false);
 
             var orders = orderIds.Count == 0
                 ? new Dictionary<Guid, string>()
-                : await _db.Set<Order>().AsNoTracking().Where(x => orderIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct).ConfigureAwait(false);
+                : await _db.Set<Order>().AsNoTracking().Where(x => orderIds.Contains(x.Id) && !x.IsDeleted).ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct).ConfigureAwait(false);
 
             var payments = paymentIds.Count == 0
                 ? new Dictionary<Guid, Payment>()
-                : await _db.Set<Payment>().AsNoTracking().Where(x => paymentIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, ct).ConfigureAwait(false);
+                : await _db.Set<Payment>().AsNoTracking().Where(x => paymentIds.Contains(x.Id) && !x.IsDeleted).ToDictionaryAsync(x => x.Id, ct).ConfigureAwait(false);
             var refundTotals = paymentIds.Count == 0
                 ? new Dictionary<Guid, long>()
                 : await _db.Set<Refund>()
                     .AsNoTracking()
-                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .Where(x => !x.IsDeleted && x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
                     .GroupBy(x => x.PaymentId)
                     .Select(x => new { PaymentId = x.Key, AmountMinor = x.Sum(r => r.AmountMinor) })
                     .ToDictionaryAsync(x => x.PaymentId, x => x.AmountMinor, ct)

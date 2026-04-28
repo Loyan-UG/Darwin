@@ -13,6 +13,8 @@ namespace Darwin.Application.Billing.Queries
 {
     public sealed class GetPaymentsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetPaymentsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -27,10 +29,11 @@ namespace Darwin.Application.Billing.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var paymentsQuery = _db.Set<Payment>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             if (filter.HasValue)
             {
@@ -41,7 +44,7 @@ namespace Darwin.Application.Billing.Queries
                     PaymentQueueFilter.Failed => paymentsQuery.Where(x => x.Status == PaymentStatus.Failed),
                     PaymentQueueFilter.Refunded => paymentsQuery.Where(x =>
                         x.Status == PaymentStatus.Refunded ||
-                        _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)),
+                        _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed)),
                     PaymentQueueFilter.Unlinked => paymentsQuery.Where(x => !x.OrderId.HasValue && !x.InvoiceId.HasValue),
                     PaymentQueueFilter.ProviderLinked => paymentsQuery.Where(x =>
                         (x.ProviderTransactionRef != null && x.ProviderTransactionRef != string.Empty) ||
@@ -61,12 +64,12 @@ namespace Darwin.Application.Billing.Queries
                          (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty) &&
                          (x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty) &&
                          (x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty)) ||
-                        _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)),
+                        _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed)),
                     PaymentQueueFilter.DisputeFollowUp => paymentsQuery.Where(x =>
                         x.Provider == "Stripe" &&
                         (x.Status == PaymentStatus.Failed ||
                          x.Status == PaymentStatus.Refunded ||
-                         _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
+                         _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
                         (x.FailureReason == null ||
                          (!x.FailureReason.Contains("[DisputeReview:Won;") &&
                           !x.FailureReason.Contains("[DisputeReview:Lost;")))),
@@ -83,15 +86,17 @@ namespace Darwin.Application.Billing.Queries
                     (x.ProviderTransactionRef != null && x.ProviderTransactionRef.Contains(term)) ||
                     (x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef.Contains(term)) ||
                     (x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef.Contains(term)) ||
-                    (x.OrderId.HasValue && _db.Set<Order>().Any(o => o.Id == x.OrderId.Value && o.OrderNumber.Contains(term))) ||
+                    (x.OrderId.HasValue && _db.Set<Order>().Any(o => o.Id == x.OrderId.Value && !o.IsDeleted && o.OrderNumber.Contains(term))) ||
                     (x.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
                         c.Id == x.CustomerId.Value &&
+                        !c.IsDeleted &&
                         (c.FirstName.Contains(term) ||
                          c.LastName.Contains(term) ||
                          c.Email.Contains(term) ||
                          (c.CompanyName != null && c.CompanyName.Contains(term))))) ||
                     (x.UserId.HasValue && _db.Set<User>().Any(u =>
                         u.Id == x.UserId.Value &&
+                        !u.IsDeleted &&
                         (u.Email.Contains(term) ||
                          (u.FirstName != null && u.FirstName.Contains(term)) ||
                          (u.LastName != null && u.LastName.Contains(term))))));
@@ -147,7 +152,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new Dictionary<Guid, string>()
                 : await _db.Set<Order>()
                     .AsNoTracking()
-                    .Where(x => orderIds.Contains(x.Id))
+                    .Where(x => orderIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct)
                     .ConfigureAwait(false);
 
@@ -155,7 +160,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new Dictionary<Guid, Invoice>()
                 : await _db.Set<Invoice>()
                     .AsNoTracking()
-                    .Where(x => invoiceIds.Contains(x.Id))
+                    .Where(x => invoiceIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, ct)
                     .ConfigureAwait(false);
             var paymentIds = items.Select(x => x.Id).ToList();
@@ -163,7 +168,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new Dictionary<Guid, long>()
                 : await _db.Set<Refund>()
                     .AsNoTracking()
-                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId) && !x.IsDeleted)
                     .GroupBy(x => x.PaymentId)
                     .Select(x => new { PaymentId = x.Key, AmountMinor = x.Sum(r => r.AmountMinor) })
                     .ToDictionaryAsync(x => x.PaymentId, x => x.AmountMinor, ct)
@@ -172,7 +177,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new Dictionary<Guid, DateTime?>()
                 : await _db.Set<Refund>()
                     .AsNoTracking()
-                    .Where(x => paymentIds.Contains(x.PaymentId))
+                    .Where(x => paymentIds.Contains(x.PaymentId) && !x.IsDeleted)
                     .GroupBy(x => x.PaymentId)
                     .Select(x => new
                     {
@@ -194,7 +199,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new List<Customer>()
                 : await _db.Set<Customer>()
                     .AsNoTracking()
-                    .Where(x => customerIds.Contains(x.Id))
+                    .Where(x => customerIds.Contains(x.Id) && !x.IsDeleted)
                     .ToListAsync(ct)
                     .ConfigureAwait(false);
 
@@ -208,7 +213,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new Dictionary<Guid, User>()
                 : await _db.Set<User>()
                     .AsNoTracking()
-                    .Where(x => identityUserIds.Contains(x.Id))
+                    .Where(x => identityUserIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, ct)
                     .ConfigureAwait(false);
 
@@ -295,14 +300,14 @@ namespace Darwin.Application.Billing.Queries
         {
             var payments = _db.Set<Payment>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             var paymentIds = await payments.Select(x => x.Id).ToListAsync(ct).ConfigureAwait(false);
             var refundedPaymentIds = paymentIds.Count == 0
                 ? new HashSet<Guid>()
                 : (await _db.Set<Refund>()
                     .AsNoTracking()
-                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId) && !x.IsDeleted)
                     .Select(x => x.PaymentId)
                     .Distinct()
                     .ToListAsync(ct)
@@ -342,12 +347,12 @@ namespace Darwin.Application.Billing.Queries
                      (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty) &&
                      (x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty) &&
                      (x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty)) ||
-                    _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed), ct).ConfigureAwait(false),
+                    _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed), ct).ConfigureAwait(false),
                 DisputeFollowUpCount = await payments.CountAsync(x =>
                     x.Provider == "Stripe" &&
                     (x.Status == PaymentStatus.Failed ||
                      x.Status == PaymentStatus.Refunded ||
-                     _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
+                     _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
                     (x.FailureReason == null ||
                      (!x.FailureReason.Contains("[DisputeReview:Won;") &&
                       !x.FailureReason.Contains("[DisputeReview:Lost;"))), ct).ConfigureAwait(false)
@@ -371,7 +376,7 @@ namespace Darwin.Application.Billing.Queries
         {
             var dto = await _db.Set<Payment>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new PaymentEditDto
                 {
                     Id = x.Id,
@@ -405,7 +410,7 @@ namespace Darwin.Application.Billing.Queries
             {
                 dto.OrderNumber = await _db.Set<Order>()
                     .AsNoTracking()
-                    .Where(x => x.Id == dto.OrderId.Value)
+                    .Where(x => x.Id == dto.OrderId.Value && !x.IsDeleted)
                     .Select(x => x.OrderNumber)
                     .FirstOrDefaultAsync(ct)
                     .ConfigureAwait(false);
@@ -415,7 +420,7 @@ namespace Darwin.Application.Billing.Queries
             {
                 var invoice = await _db.Set<Invoice>()
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.Id == dto.InvoiceId.Value, ct)
+                    .FirstOrDefaultAsync(x => x.Id == dto.InvoiceId.Value && !x.IsDeleted, ct)
                     .ConfigureAwait(false);
 
                 if (invoice is not null)
@@ -435,13 +440,13 @@ namespace Darwin.Application.Billing.Queries
                 dto.AmountMinor,
                 await _db.Set<Refund>()
                     .AsNoTracking()
-                    .Where(x => x.PaymentId == dto.Id && x.Status == RefundStatus.Completed)
+                    .Where(x => x.PaymentId == dto.Id && x.Status == RefundStatus.Completed && !x.IsDeleted)
                     .SumAsync(x => (long?)x.AmountMinor, ct)
                     .ConfigureAwait(false) ?? 0L);
             dto.NetCapturedAmountMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(dto.AmountMinor, dto.RefundedAmountMinor);
             dto.Refunds = await _db.Set<Refund>()
                 .AsNoTracking()
-                .Where(x => x.PaymentId == dto.Id)
+                .Where(x => x.PaymentId == dto.Id && !x.IsDeleted)
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .Select(x => new PaymentRefundHistoryItemDto
                 {
@@ -490,7 +495,7 @@ namespace Darwin.Application.Billing.Queries
             {
                 paymentUser = await _db.Set<User>()
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.Id == dto.UserId.Value, ct)
+                    .FirstOrDefaultAsync(x => x.Id == dto.UserId.Value && !x.IsDeleted, ct)
                     .ConfigureAwait(false);
 
                 if (paymentUser is not null)
@@ -504,7 +509,7 @@ namespace Darwin.Application.Billing.Queries
             {
                 var customer = await _db.Set<Customer>()
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.Id == dto.CustomerId.Value, ct)
+                    .FirstOrDefaultAsync(x => x.Id == dto.CustomerId.Value && !x.IsDeleted, ct)
                     .ConfigureAwait(false);
 
                 if (customer is not null)
@@ -516,7 +521,7 @@ namespace Darwin.Application.Billing.Queries
                             ? paymentUser
                             : await _db.Set<User>()
                                 .AsNoTracking()
-                                .FirstOrDefaultAsync(x => x.Id == customer.UserId.Value, ct)
+                                .FirstOrDefaultAsync(x => x.Id == customer.UserId.Value && !x.IsDeleted, ct)
                                 .ConfigureAwait(false);
                     }
 
@@ -585,6 +590,8 @@ namespace Darwin.Application.Billing.Queries
 
     public sealed class GetRefundsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetRefundsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -599,11 +606,12 @@ namespace Darwin.Application.Billing.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var refundsQuery =
                 from refund in _db.Set<Refund>().AsNoTracking()
                 join payment in _db.Set<Payment>().AsNoTracking() on refund.PaymentId equals payment.Id
-                where payment.BusinessId == businessId
+                where payment.BusinessId == businessId && !refund.IsDeleted && !payment.IsDeleted
                 select new { Refund = refund, Payment = payment };
 
             if (filter.HasValue)
@@ -634,9 +642,10 @@ namespace Darwin.Application.Billing.Queries
                     (x.Payment.ProviderTransactionRef != null && x.Payment.ProviderTransactionRef.Contains(term)) ||
                     (x.Payment.ProviderPaymentIntentRef != null && x.Payment.ProviderPaymentIntentRef.Contains(term)) ||
                     (x.Payment.ProviderCheckoutSessionRef != null && x.Payment.ProviderCheckoutSessionRef.Contains(term)) ||
-                    _db.Set<Order>().Any(o => o.Id == x.Refund.OrderId && o.OrderNumber.Contains(term)) ||
+                    _db.Set<Order>().Any(o => o.Id == x.Refund.OrderId && !o.IsDeleted && o.OrderNumber.Contains(term)) ||
                     (x.Payment.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
                         c.Id == x.Payment.CustomerId.Value &&
+                        !c.IsDeleted &&
                         (c.FirstName.Contains(term) ||
                          c.LastName.Contains(term) ||
                          c.Email.Contains(term) ||
@@ -690,7 +699,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new Dictionary<Guid, string>()
                 : await _db.Set<Order>()
                     .AsNoTracking()
-                    .Where(x => orderIds.Contains(x.Id))
+                    .Where(x => orderIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct)
                     .ConfigureAwait(false);
 
@@ -698,7 +707,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new List<Customer>()
                 : await _db.Set<Customer>()
                     .AsNoTracking()
-                    .Where(x => customerIds.Contains(x.Id))
+                    .Where(x => customerIds.Contains(x.Id) && !x.IsDeleted)
                     .ToListAsync(ct)
                     .ConfigureAwait(false);
 
@@ -707,7 +716,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new Dictionary<Guid, User>()
                 : await _db.Set<User>()
                     .AsNoTracking()
-                    .Where(x => userIds.Contains(x.Id))
+                    .Where(x => userIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, ct)
                     .ConfigureAwait(false);
 
@@ -757,7 +766,7 @@ namespace Darwin.Application.Billing.Queries
             var refundsQuery =
                 from refund in _db.Set<Refund>().AsNoTracking()
                 join payment in _db.Set<Payment>().AsNoTracking() on refund.PaymentId equals payment.Id
-                where payment.BusinessId == businessId
+                where payment.BusinessId == businessId && !refund.IsDeleted && !payment.IsDeleted
                 select new { Refund = refund, Payment = payment };
 
             return new RefundOpsSummaryDto
@@ -779,6 +788,8 @@ namespace Darwin.Application.Billing.Queries
 
     public sealed class GetFinancialAccountsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetFinancialAccountsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -793,10 +804,11 @@ namespace Darwin.Application.Billing.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var accountsQuery = _db.Set<FinancialAccount>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             if (type.HasValue)
             {
@@ -837,7 +849,7 @@ namespace Darwin.Application.Billing.Queries
         {
             var accountsQuery = _db.Set<FinancialAccount>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             return new FinancialAccountOpsSummaryDto
             {
@@ -860,7 +872,7 @@ namespace Darwin.Application.Billing.Queries
         {
             return _db.Set<FinancialAccount>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new FinancialAccountEditDto
                 {
                     Id = x.Id,
@@ -876,6 +888,8 @@ namespace Darwin.Application.Billing.Queries
 
     public sealed class GetExpensesPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetExpensesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -889,10 +903,11 @@ namespace Darwin.Application.Billing.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var expensesQuery = _db.Set<Expense>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -929,7 +944,7 @@ namespace Darwin.Application.Billing.Queries
         {
             var expensesQuery = _db.Set<Expense>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             var recentCutoffUtc = DateTime.UtcNow.AddDays(-30);
             const long highValueThresholdMinor = 100_00L;
@@ -954,7 +969,7 @@ namespace Darwin.Application.Billing.Queries
         {
             return _db.Set<Expense>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new ExpenseEditDto
                 {
                     Id = x.Id,
@@ -972,6 +987,8 @@ namespace Darwin.Application.Billing.Queries
 
     public sealed class GetJournalEntriesPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetJournalEntriesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -986,17 +1003,18 @@ namespace Darwin.Application.Billing.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var journalEntriesQuery = _db.Set<JournalEntry>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             if (filter.HasValue)
             {
                 journalEntriesQuery = filter.Value switch
                 {
                     JournalEntryQueueFilter.Recent => journalEntriesQuery.Where(x => x.EntryDateUtc >= DateTime.UtcNow.AddDays(-7)),
-                    JournalEntryQueueFilter.MultiLine => journalEntriesQuery.Where(x => x.Lines.Count > 2),
+                    JournalEntryQueueFilter.MultiLine => journalEntriesQuery.Where(x => x.Lines.Count(l => !l.IsDeleted) > 2),
                     _ => journalEntriesQuery
                 };
             }
@@ -1007,8 +1025,10 @@ namespace Darwin.Application.Billing.Queries
                 journalEntriesQuery = journalEntriesQuery.Where(x =>
                     x.Description.Contains(term) ||
                     x.Lines.Any(l =>
+                        !l.IsDeleted &&
                         _db.Set<FinancialAccount>().Any(a =>
                             a.Id == l.AccountId &&
+                            !a.IsDeleted &&
                             (a.Name.Contains(term) ||
                              (a.Code != null && a.Code.Contains(term))))));
             }
@@ -1025,9 +1045,9 @@ namespace Darwin.Application.Billing.Queries
                     BusinessId = x.BusinessId,
                     EntryDateUtc = x.EntryDateUtc,
                     Description = x.Description,
-                    LineCount = x.Lines.Count,
-                    TotalDebitMinor = x.Lines.Sum(l => l.DebitMinor),
-                    TotalCreditMinor = x.Lines.Sum(l => l.CreditMinor),
+                    LineCount = x.Lines.Count(l => !l.IsDeleted),
+                    TotalDebitMinor = x.Lines.Where(l => !l.IsDeleted).Sum(l => l.DebitMinor),
+                    TotalCreditMinor = x.Lines.Where(l => !l.IsDeleted).Sum(l => l.CreditMinor),
                     RowVersion = x.RowVersion
                 })
                 .ToListAsync(ct)
@@ -1040,7 +1060,7 @@ namespace Darwin.Application.Billing.Queries
         {
             var journalEntriesQuery = _db.Set<JournalEntry>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             var recentCutoffUtc = DateTime.UtcNow.AddDays(-7);
 
@@ -1048,7 +1068,7 @@ namespace Darwin.Application.Billing.Queries
             {
                 TotalCount = await journalEntriesQuery.CountAsync(ct).ConfigureAwait(false),
                 RecentCount = await journalEntriesQuery.CountAsync(x => x.EntryDateUtc >= recentCutoffUtc, ct).ConfigureAwait(false),
-                MultiLineCount = await journalEntriesQuery.CountAsync(x => x.Lines.Count > 2, ct).ConfigureAwait(false)
+                MultiLineCount = await journalEntriesQuery.CountAsync(x => x.Lines.Count(l => !l.IsDeleted) > 2, ct).ConfigureAwait(false)
             };
         }
     }
@@ -1064,7 +1084,7 @@ namespace Darwin.Application.Billing.Queries
             var entry = await _db.Set<JournalEntry>()
                 .AsNoTracking()
                 .Include(x => x.Lines)
-                .FirstOrDefaultAsync(x => x.Id == id, ct)
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (entry is null)
@@ -1080,6 +1100,7 @@ namespace Darwin.Application.Billing.Queries
                 EntryDateUtc = entry.EntryDateUtc,
                 Description = entry.Description,
                 Lines = entry.Lines
+                    .Where(x => !x.IsDeleted)
                     .OrderBy(x => x.CreatedAtUtc)
                     .Select(x => new JournalEntryLineDto
                     {

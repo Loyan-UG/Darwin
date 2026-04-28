@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.Commands;
 using Darwin.Domain.Entities.Integration;
+using Darwin.Domain.Entities.Orders;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -18,9 +19,9 @@ public sealed class ShipmentProviderOperationBackgroundService : BackgroundServi
         IOptions<ShipmentProviderOperationWorkerOptions> options,
         ILogger<ShipmentProviderOperationBackgroundService> logger)
     {
-        _scopeFactory = scopeFactory;
-        _options = options;
-        _logger = logger;
+        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -59,6 +60,7 @@ public sealed class ShipmentProviderOperationBackgroundService : BackgroundServi
 
         var items = await db.Set<ShipmentProviderOperation>()
             .Where(x => !x.IsDeleted)
+            .Where(x => db.Set<Shipment>().Any(s => s.Id == x.ShipmentId && !s.IsDeleted && db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted)))
             .Where(x => x.Status == "Pending" || x.Status == "Failed")
             .Where(x => x.AttemptCount < options.MaxAttempts)
             .Where(x => !x.LastAttemptAtUtc.HasValue || x.LastAttemptAtUtc <= retryCutoffUtc)
@@ -83,12 +85,12 @@ public sealed class ShipmentProviderOperationBackgroundService : BackgroundServi
             catch (ValidationException ex)
             {
                 item.Status = "Failed";
-                item.FailureReason = ex.Message;
+                item.FailureReason = WorkerFailureText.Truncate(ex.Message);
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
             {
                 item.Status = "Failed";
-                item.FailureReason = ex.Message.Length > 1024 ? ex.Message[..1024] : ex.Message;
+                item.FailureReason = WorkerFailureText.Truncate(ex.Message);
                 _logger.LogWarning(ex, "Shipment provider operation {OperationId} failed.", item.Id);
             }
 

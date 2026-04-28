@@ -21,7 +21,7 @@ namespace Darwin.Application.Orders.Queries
         {
             var o = await _db.Set<Order>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new OrderDetailDto
                 {
                     Id = x.Id,
@@ -42,7 +42,7 @@ namespace Darwin.Application.Orders.Queries
                     BillingAddressJson = x.BillingAddressJson,
                     ShippingAddressJson = x.ShippingAddressJson,
                     RowVersion = x.RowVersion,
-                    Lines = x.Lines.Select(l => new OrderLineDetailDto
+                    Lines = x.Lines.Where(l => !l.IsDeleted).Select(l => new OrderLineDetailDto
                     {
                         Id = l.Id,
                         VariantId = l.VariantId,
@@ -56,7 +56,7 @@ namespace Darwin.Application.Orders.Queries
                         LineTaxMinor = l.LineTaxMinor,
                         LineGrossMinor = l.LineGrossMinor
                     }).ToList(),
-                    Payments = x.Payments.Select(p => new PaymentDetailDto
+                    Payments = x.Payments.Where(p => !p.IsDeleted).Select(p => new PaymentDetailDto
                     {
                         Id = p.Id,
                         Provider = p.Provider,
@@ -67,7 +67,7 @@ namespace Darwin.Application.Orders.Queries
                         CapturedAtUtc = p.PaidAtUtc,
                         FailureReason = p.FailureReason
                     }).ToList(),
-                    Shipments = x.Shipments.Select(s => new ShipmentDetailDto
+                    Shipments = x.Shipments.Where(s => !s.IsDeleted).Select(s => new ShipmentDetailDto
                     {
                         Id = s.Id,
                         Carrier = s.Carrier,

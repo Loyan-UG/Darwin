@@ -22,7 +22,7 @@ namespace Darwin.Application.Businesses.Queries
         {
             return await _db.Set<Business>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new BusinessEditDto
                 {
                     Id = x.Id,
@@ -54,11 +54,11 @@ namespace Darwin.Application.Businesses.Queries
                     ApprovedAtUtc = x.ApprovedAtUtc,
                     SuspendedAtUtc = x.SuspendedAtUtc,
                     SuspensionReason = x.SuspensionReason,
-                    MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id),
-                    ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner),
+                    MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && !m.IsDeleted),
+                    ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner),
                     LocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted),
                     PrimaryLocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary),
-                    InvitationCount = _db.Set<BusinessInvitation>().Count(i => i.BusinessId == x.Id && i.Status == BusinessInvitationStatus.Pending),
+                    InvitationCount = _db.Set<BusinessInvitation>().Count(i => i.BusinessId == x.Id && !i.IsDeleted && i.Status == BusinessInvitationStatus.Pending),
                     HasContactEmailConfigured = !string.IsNullOrWhiteSpace(x.ContactEmail),
                     HasLegalNameConfigured = !string.IsNullOrWhiteSpace(x.LegalName)
                 })

@@ -7,6 +7,7 @@ import type {
 } from "@/features/catalog/types";
 import { buildCmsReviewTargetHref } from "@/features/review/review-window";
 import type { PublicPageDetail, PublicPageSummary } from "@/features/cms/types";
+import { buildCatalogProductPath } from "@/lib/entity-paths";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getSharedResource } from "@/localization";
@@ -75,7 +76,7 @@ export function CmsContentCompositionWindow({
   const commerceHref = cartSummary && cartSummary.itemCount > 0
     ? "/checkout"
     : strongestProduct
-      ? `/catalog/${strongestProduct.slug}`
+      ? buildCatalogProductPath(strongestProduct.slug)
       : strongestCategory
         ? buildAppQueryPath("/catalog", { category: strongestCategory.slug })
         : "/catalog";
@@ -174,7 +175,7 @@ export function CmsContentCompositionWindow({
             ),
           })
         : copy.cmsCompositionRouteMapProductFallbackDescription,
-      href: strongestProduct ? `/catalog/${strongestProduct.slug}` : "/catalog",
+      href: strongestProduct ? buildCatalogProductPath(strongestProduct.slug) : "/catalog",
       ctaLabel: copy.cmsCompositionRouteMapProductCta,
       meta: formatResource(copy.cmsCompositionRouteMapProductMeta, {
         count: products.length,

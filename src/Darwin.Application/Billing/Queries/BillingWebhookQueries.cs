@@ -11,6 +11,8 @@ namespace Darwin.Application.Billing.Queries;
 
 public sealed class GetBillingWebhookSubscriptionsPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
 
     public GetBillingWebhookSubscriptionsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -23,6 +25,7 @@ public sealed class GetBillingWebhookSubscriptionsPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
         var subscriptions = _db.Set<WebhookSubscription>().AsNoTracking().Where(x => !x.IsDeleted);
 
@@ -58,6 +61,8 @@ public sealed class GetBillingWebhookSubscriptionsPageHandler
 
 public sealed class GetBillingWebhookDeliveriesPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
 
     public GetBillingWebhookDeliveriesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -71,6 +76,7 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
         var deliveries = from delivery in _db.Set<WebhookDelivery>().AsNoTracking()
                          join subscription in _db.Set<WebhookSubscription>().AsNoTracking()

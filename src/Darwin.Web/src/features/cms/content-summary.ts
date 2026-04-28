@@ -48,6 +48,14 @@ function slugifyHeading(value: string) {
   return base || "section";
 }
 
+function replaceHeadingIdAttribute(rawAttributes: string, id: string) {
+  if (/\sid=(['"]).*?\1/i.test(rawAttributes)) {
+    return rawAttributes.replace(/\sid=(['"]).*?\1/i, ` id="${id}"`);
+  }
+
+  return `${rawAttributes} id="${id}"`;
+}
+
 export function summarizeCmsContent(contentHtml: string): CmsContentSummary {
   const headings: CmsHeading[] = [];
   const slugCounts = new Map<string, number>();
@@ -76,11 +84,8 @@ export function summarizeCmsContent(contentHtml: string): CmsContentSummary {
         level,
       });
 
-      if (existingIdMatch) {
-        return fullMatch;
-      }
-
-      return `<${tagName}${rawAttributes} id="${id}">${innerHtml}</${tagName}>`;
+      const attributes = replaceHeadingIdAttribute(rawAttributes, id);
+      return `<${tagName}${attributes}>${innerHtml}</${tagName}>`;
     },
   );
 

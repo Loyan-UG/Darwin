@@ -57,7 +57,7 @@ namespace Darwin.Application.Catalog.Commands
             var product = await _db.Set<Product>()
                 .Include(p => p.Translations)
                 .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Id == dto.Id, ct)
+                .FirstOrDefaultAsync(p => p.Id == dto.Id && !p.IsDeleted, ct)
                 ?? throw new ValidationException(_localizer["ProductNotFound"]);
 
 
@@ -80,7 +80,8 @@ namespace Darwin.Application.Catalog.Commands
         {
             var requestedCultures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var translationsByCulture = product.Translations
-                .Where(t => !t.IsDeleted)
+                .GroupBy(t => t.Culture, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.OrderBy(t => t.IsDeleted).First())
                 .ToDictionary(t => t.Culture, StringComparer.OrdinalIgnoreCase);
 
             foreach (var input in dto.Translations)
@@ -116,12 +117,10 @@ namespace Darwin.Application.Catalog.Commands
         private void SyncVariants(Product product, ProductEditDto dto)
         {
             var existingById = product.Variants
-                .Where(v => !v.IsDeleted)
                 .ToDictionary(v => v.Id);
             var existingBySku = product.Variants
-                .Where(v => !v.IsDeleted)
                 .GroupBy(v => v.Sku, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+                .ToDictionary(g => g.Key, g => g.OrderBy(v => v.IsDeleted).First(), StringComparer.OrdinalIgnoreCase);
             var retainedVariantIds = new HashSet<Guid>();
             var requestedSkus = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 

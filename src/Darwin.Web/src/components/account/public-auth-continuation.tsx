@@ -21,7 +21,11 @@ import {
 import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
 import { localizeHref } from "@/lib/locale-routing";
-import { formatResource, getMemberResource } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type PublicAuthContinuationProps = {
   culture: string;
@@ -47,6 +51,12 @@ export function PublicAuthContinuation({
   storefrontCartStatus,
 }: PublicAuthContinuationProps) {
   const copy = getMemberResource(culture);
+  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const productsStatusLabel = resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
+  const storefrontCartStatusLabel =
+    resolveApiStatusLabel(storefrontCartStatus, copy) ?? storefrontCartStatus;
   const cartLineCount =
     storefrontCart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const {
@@ -185,7 +195,7 @@ export function PublicAuthContinuation({
                 storefrontCart.currency,
                 culture,
               ),
-              status: storefrontCartStatus,
+              status: storefrontCartStatusLabel,
             }),
             href: "/cart",
             ctaLabel: copy.publicAuthCartCta,
@@ -200,7 +210,7 @@ export function PublicAuthContinuation({
               storefrontCartStatus === "ok"
                 ? copy.publicAuthCartFallbackDescription
                 : formatResource(copy.publicAuthCartEmptyMessage, {
-                    status: storefrontCartStatus,
+                    status: storefrontCartStatusLabel,
                   }),
             href: "/cart",
             ctaLabel: copy.publicAuthCartCta,
@@ -232,7 +242,7 @@ export function PublicAuthContinuation({
               cmsPagesStatus === "ok"
                 ? copy.publicAuthCmsFallbackDescription
                 : formatResource(copy.publicAuthCmsEmptyMessage, {
-                    status: cmsPagesStatus,
+                    status: cmsPagesStatusLabel,
                   }),
             href: "/cms",
             ctaLabel: copy.accountHubCmsCta,
@@ -256,7 +266,7 @@ export function PublicAuthContinuation({
               categoriesStatus === "ok"
                 ? copy.publicAuthCatalogFallbackDescription
                 : formatResource(copy.publicAuthCatalogEmptyMessage, {
-                    status: categoriesStatus,
+                    status: categoriesStatusLabel,
                   }),
             href: "/catalog",
             ctaLabel: copy.memberCrossSurfaceCatalogCta,
@@ -282,7 +292,7 @@ export function PublicAuthContinuation({
               productsStatus === "ok"
                 ? copy.publicAuthProductFallbackDescription
                 : formatResource(copy.publicAuthProductEmptyMessage, {
-                    status: productsStatus,
+                    status: productsStatusLabel,
                   }),
             href: "/catalog",
             ctaLabel: copy.publicAuthProductCta,
@@ -297,11 +307,11 @@ export function PublicAuthContinuation({
         eyebrow={copy.memberCrossSurfaceTitle}
         title={copy.accountHubRouteMapTitle}
         description={formatResource(copy.publicAuthStorefrontWindowMessage, {
-          cartStatus: storefrontCartStatus,
+          cartStatus: storefrontCartStatusLabel,
           cartLineCount,
-          cmsStatus: cmsPagesStatus,
-          categoriesStatus,
-          productsStatus,
+          cmsStatus: cmsPagesStatusLabel,
+          categoriesStatus: categoriesStatusLabel,
+          productsStatus: productsStatusLabel,
           pageCount: cmsPages.length,
           categoryCount: categories.length,
           productCount: products.length,
@@ -324,8 +334,8 @@ export function PublicAuthContinuation({
           {formatResource(copy.publicAuthCampaignMessage, {
             categoryCount: categories.length,
             productCount: products.length,
-            categoriesStatus,
-            productsStatus,
+            categoriesStatus: categoriesStatusLabel,
+            productsStatus: productsStatusLabel,
           })}
         </p>
         <div className="mt-4 rounded-[1.25rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
@@ -339,8 +349,8 @@ export function PublicAuthContinuation({
             culture={culture}
             cards={promotionLaneCards}
             emptyMessage={formatResource(copy.publicAuthCampaignEmptyMessage, {
-              categoriesStatus,
-              productsStatus,
+              categoriesStatus: categoriesStatusLabel,
+              productsStatus: productsStatusLabel,
             })}
             cardClassName="bg-[var(--color-surface-panel)]"
           />
@@ -349,8 +359,8 @@ export function PublicAuthContinuation({
           culture={culture}
           cards={campaignCards}
           emptyMessage={formatResource(copy.publicAuthCampaignEmptyMessage, {
-            categoriesStatus,
-            productsStatus,
+            categoriesStatus: categoriesStatusLabel,
+            productsStatus: productsStatusLabel,
           })}
           cardClassName="bg-[var(--color-surface-panel-strong)]"
         />

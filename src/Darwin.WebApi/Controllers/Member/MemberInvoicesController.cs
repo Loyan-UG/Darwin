@@ -8,6 +8,7 @@ using Darwin.Contracts.Common;
 using Darwin.Contracts.Invoices;
 using Darwin.Contracts.Orders;
 using Darwin.Domain.Enums;
+using Darwin.WebApi.Controllers.Businesses;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -53,7 +54,7 @@ public sealed class MemberInvoicesController : ApiControllerBase
     [HttpGet("/api/v1/invoices")]
     [ProducesResponseType(typeof(PagedResponse<MemberInvoiceSummary>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetMyInvoicesAsync([FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct = default)
+    public async Task<IActionResult> GetMyInvoicesAsync([FromQuery] int? page, [FromQuery] int? pageSize, [FromQuery] string? culture = null, CancellationToken ct = default)
     {
         var normalizedPage = page.GetValueOrDefault(1);
         if (normalizedPage <= 0)
@@ -67,8 +68,9 @@ public sealed class MemberInvoicesController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And200"]);
         }
 
+        var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);
         var (items, total) = await _getMyInvoicesPageHandler
-            .HandleAsync(normalizedPage, normalizedPageSize, ct)
+            .HandleAsync(normalizedPage, normalizedPageSize, normalizedCulture, ct)
             .ConfigureAwait(false);
 
         return Ok(new PagedResponse<MemberInvoiceSummary>
@@ -91,14 +93,15 @@ public sealed class MemberInvoicesController : ApiControllerBase
     [HttpGet("/api/v1/invoices/{id:guid}")]
     [ProducesResponseType(typeof(MemberInvoiceDetail), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetMyInvoiceAsync(Guid id, CancellationToken ct = default)
+    public async Task<IActionResult> GetMyInvoiceAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
-        var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);
+        var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, normalizedCulture, ct).ConfigureAwait(false);
         if (dto is null)
         {
             return NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);
@@ -115,14 +118,15 @@ public sealed class MemberInvoicesController : ApiControllerBase
     [ProducesResponseType(typeof(CreateStorefrontPaymentIntentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromBody] CreateStorefrontPaymentIntentRequest? request, CancellationToken ct = default)
+    public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromQuery] string? culture = null, [FromBody] CreateStorefrontPaymentIntentRequest? request = null, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
-        var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);
+        var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, normalizedCulture, ct).ConfigureAwait(false);
         if (dto is null)
         {
             return NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);
@@ -158,6 +162,8 @@ public sealed class MemberInvoicesController : ApiControllerBase
                 PaymentId = result.PaymentId,
                 Provider = result.Provider,
                 ProviderReference = result.ProviderReference,
+                ProviderPaymentIntentReference = result.ProviderPaymentIntentReference,
+                ProviderCheckoutSessionReference = result.ProviderCheckoutSessionReference,
                 AmountMinor = result.AmountMinor,
                 Currency = result.Currency,
                 Status = result.Status.ToString(),
@@ -181,14 +187,15 @@ public sealed class MemberInvoicesController : ApiControllerBase
     [Produces("text/plain")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DownloadDocumentAsync(Guid id, CancellationToken ct = default)
+    public async Task<IActionResult> DownloadDocumentAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
-        var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);
+        var dto = await _getMyInvoiceDetailHandler.HandleAsync(id, normalizedCulture, ct).ConfigureAwait(false);
         if (dto is null)
         {
             return NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);

@@ -17,6 +17,7 @@ import {
   formatResource,
   getMemberResource,
   matchesLocalizedQueryMessageKey,
+  resolveApiStatusLabel,
   resolveStatusMappedMessage,
   resolveLocalizedQueryMessage,
 } from "@/localization";
@@ -54,6 +55,7 @@ export function SecurityPage({
   productsStatus,
 }: SecurityPageProps) {
   const copy = getMemberResource(culture);
+  const localizedProfileStatus = resolveApiStatusLabel(profileStatus, copy) ?? profileStatus;
   const resolvedSecurityError = resolveLocalizedQueryMessage(securityError, copy);
   const profileWarningMessage = resolveStatusMappedMessage(profileStatus, copy, {
     "not-found": "memberResourceNotFoundMessage",
@@ -343,7 +345,7 @@ export function SecurityPage({
                 label: copy.accountCompositionJourneyCurrentLabel,
                 title: copy.accountCompositionJourneySecurityTitle,
                 description: formatResource(copy.accountCompositionJourneySecurityDescription, {
-                  profileStatus,
+                  profileStatus: localizedProfileStatus,
                 }),
                 href: "/account/security",
                 ctaLabel: copy.accountCompositionJourneyCurrentCta,
@@ -367,7 +369,7 @@ export function SecurityPage({
                   label: copy.accountCompositionRouteMapNextLabel,
                   title: copy.accountCompositionRouteMapProfileTitle,
                   description: formatResource(copy.accountCompositionRouteMapSecurityNextDescription, {
-                    profileStatus,
+                    profileStatus: localizedProfileStatus,
                   }),
                   href: "/account/profile",
                   ctaLabel: copy.accountCompositionRouteMapProfileCta,

@@ -84,15 +84,15 @@ public sealed class ProfileAddressesController : ApiControllerBase
 
         var createResult = await _createCurrentUserAddressHandler.HandleAsync(new AddressCreateDto
         {
-            FullName = request.FullName,
-            Company = request.Company,
-            Street1 = request.Street1,
-            Street2 = request.Street2,
-            PostalCode = request.PostalCode,
-            City = request.City,
-            State = request.State,
-            CountryCode = request.CountryCode,
-            PhoneE164 = request.PhoneE164,
+            FullName = NormalizeRequired(request.FullName),
+            Company = NormalizeNullable(request.Company),
+            Street1 = NormalizeRequired(request.Street1),
+            Street2 = NormalizeNullable(request.Street2),
+            PostalCode = NormalizeRequired(request.PostalCode),
+            City = NormalizeRequired(request.City),
+            State = NormalizeNullable(request.State),
+            CountryCode = NormalizeRequired(request.CountryCode).ToUpperInvariant(),
+            PhoneE164 = NormalizeNullable(request.PhoneE164),
             IsDefaultBilling = request.IsDefaultBilling,
             IsDefaultShipping = request.IsDefaultShipping
         }, ct).ConfigureAwait(false);
@@ -129,15 +129,15 @@ public sealed class ProfileAddressesController : ApiControllerBase
         {
             Id = id,
             RowVersion = request.RowVersion,
-            FullName = request.FullName,
-            Company = request.Company,
-            Street1 = request.Street1,
-            Street2 = request.Street2,
-            PostalCode = request.PostalCode,
-            City = request.City,
-            State = request.State,
-            CountryCode = request.CountryCode,
-            PhoneE164 = request.PhoneE164,
+            FullName = NormalizeRequired(request.FullName),
+            Company = NormalizeNullable(request.Company),
+            Street1 = NormalizeRequired(request.Street1),
+            Street2 = NormalizeNullable(request.Street2),
+            PostalCode = NormalizeRequired(request.PostalCode),
+            City = NormalizeRequired(request.City),
+            State = NormalizeNullable(request.State),
+            CountryCode = NormalizeRequired(request.CountryCode).ToUpperInvariant(),
+            PhoneE164 = NormalizeNullable(request.PhoneE164),
             IsDefaultBilling = request.IsDefaultBilling,
             IsDefaultShipping = request.IsDefaultShipping
         }, ct).ConfigureAwait(false);
@@ -164,6 +164,11 @@ public sealed class ProfileAddressesController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem(_validationLocalizer["AddressIdRequired"]);
+        }
+
         var result = await _deleteCurrentUserAddressHandler.HandleAsync(new AddressDeleteDto
         {
             Id = id,
@@ -185,6 +190,11 @@ public sealed class ProfileAddressesController : ApiControllerBase
         if (request is null)
         {
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
+        }
+
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem(_validationLocalizer["AddressIdRequired"]);
         }
 
         var result = await _setCurrentUserDefaultAddressHandler
@@ -236,6 +246,12 @@ public sealed class ProfileAddressesController : ApiControllerBase
         var address = result.Value.FirstOrDefault(x => x.Id == id);
         return address is null ? NotFoundProblem(_validationLocalizer["AddressNotFound"]) : Ok(MapAddress(address));
     }
+
+    private static string NormalizeRequired(string? value)
+        => value?.Trim() ?? string.Empty;
+
+    private static string? NormalizeNullable(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static MemberAddress MapAddress(AddressListItemDto dto)
         => new()

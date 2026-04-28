@@ -27,11 +27,17 @@ import {
   sanitizeAppPath,
 } from "@/lib/locale-routing";
 import {
+  buildInvoicePath,
+  buildLoyaltyBusinessPath,
+  buildOrderPath,
+} from "@/lib/entity-paths";
+import {
   resolveProblemQueryMessage,
   toLocalizedQueryMessage,
 } from "@/localization";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { buildWebApiFetchInit } from "@/lib/webapi-fetch";
+import { toSafeHttpUrl } from "@/lib/webapi-url";
 
 function withFlash(path: string, key: string, value: string) {
   return appendAppQueryParam(path, key, value);
@@ -39,6 +45,11 @@ function withFlash(path: string, key: string, value: string) {
 
 function normalizeId(value: FormDataEntryValue | null) {
   return String(value ?? "").trim();
+}
+
+function buildPaymentIntentPath(resource: "orders" | "invoices", id: string, culture: string) {
+  const path = `/api/v1/member/${resource}/${encodeURIComponent(id)}/payment-intent`;
+  return culture ? `${path}?culture=${encodeURIComponent(culture)}` : path;
 }
 
 async function createPaymentIntent(path: string) {
@@ -83,11 +94,24 @@ async function createPaymentIntent(path: string) {
       };
     }
 
-    const payload = (await response.json()) as { checkoutUrl?: string };
-    return payload.checkoutUrl
+    let payload: { checkoutUrl?: string };
+    try {
+      payload = (await response.json()) as { checkoutUrl?: string };
+    } catch {
+      return {
+        ok: false,
+        message: toLocalizedQueryMessage("memberPaymentHandoffInvalidPayloadMessage"),
+      };
+    }
+
+    const checkoutUrl = payload.checkoutUrl
+      ? toSafeHttpUrl(payload.checkoutUrl)
+      : "";
+
+    return checkoutUrl
       ? {
           ok: true,
-          checkoutUrl: payload.checkoutUrl,
+          checkoutUrl,
         }
       : {
           ok: false,
@@ -103,18 +127,18 @@ async function createPaymentIntent(path: string) {
 
 export async function createMemberOrderPaymentIntentAction(formData: FormData) {
   const orderId = String(formData.get("orderId") ?? "").trim();
+  const culture = String(formData.get("culture") ?? "").trim();
+  const fallbackPath = buildOrderPath(orderId);
   const failurePath = sanitizeAppPath(
-    String(formData.get("failurePath") ?? `/orders/${orderId}`),
-    `/orders/${orderId}`,
+    String(formData.get("failurePath") ?? fallbackPath),
+    fallbackPath,
   );
 
   if (!orderId) {
     redirect("/orders");
   }
 
-  const result = await createPaymentIntent(
-    `/api/v1/member/orders/${orderId}/payment-intent`,
-  );
+  const result = await createPaymentIntent(buildPaymentIntentPath("orders", orderId, culture));
 
   if (!result.ok || !result.checkoutUrl) {
     redirect(
@@ -546,9 +570,10 @@ export async function trackMemberPromotionInteractionAction(formData: FormData) 
 export async function joinMemberLoyaltyBusinessAction(formData: FormData) {
   const businessId = normalizeId(formData.get("businessId"));
   const businessLocationId = normalizeId(formData.get("businessLocationId"));
+  const fallbackPath = buildLoyaltyBusinessPath(businessId);
   const returnPath = sanitizeAppPath(
-    String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
-    `/loyalty/${businessId}`,
+    String(formData.get("returnPath") ?? fallbackPath),
+    fallbackPath,
   );
 
   if (!businessId) {
@@ -587,9 +612,10 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
   const businessId = normalizeId(formData.get("businessId"));
   const businessLocationId = normalizeId(formData.get("businessLocationId"));
   const mode = String(formData.get("mode") ?? "Accrual").trim();
+  const fallbackPath = buildLoyaltyBusinessPath(businessId);
   const returnPath = sanitizeAppPath(
-    String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
-    `/loyalty/${businessId}`,
+    String(formData.get("returnPath") ?? fallbackPath),
+    fallbackPath,
   );
   const selectedRewardTierIds = formData
     .getAll("selectedRewardTierIds")
@@ -650,9 +676,10 @@ export async function prepareMemberLoyaltyScanSessionAction(formData: FormData) 
 
 export async function clearMemberLoyaltyScanSessionAction(formData: FormData) {
   const businessId = normalizeId(formData.get("businessId"));
+  const fallbackPath = buildLoyaltyBusinessPath(businessId);
   const returnPath = sanitizeAppPath(
-    String(formData.get("returnPath") ?? `/loyalty/${businessId}`),
-    `/loyalty/${businessId}`,
+    String(formData.get("returnPath") ?? fallbackPath),
+    fallbackPath,
   );
 
   if (!businessId) {
@@ -671,9 +698,11 @@ export async function clearMemberLoyaltyScanSessionAction(formData: FormData) {
 
 export async function createMemberInvoicePaymentIntentAction(formData: FormData) {
   const invoiceId = String(formData.get("invoiceId") ?? "").trim();
+  const culture = String(formData.get("culture") ?? "").trim();
+  const fallbackPath = buildInvoicePath(invoiceId);
   const failurePath = sanitizeAppPath(
-    String(formData.get("failurePath") ?? `/invoices/${invoiceId}`),
-    `/invoices/${invoiceId}`,
+    String(formData.get("failurePath") ?? fallbackPath),
+    fallbackPath,
   );
 
   if (!invoiceId) {
@@ -681,7 +710,7 @@ export async function createMemberInvoicePaymentIntentAction(formData: FormData)
   }
 
   const result = await createPaymentIntent(
-    `/api/v1/member/invoices/${invoiceId}/payment-intent`,
+    buildPaymentIntentPath("invoices", invoiceId, culture),
   );
 
   if (!result.ok || !result.checkoutUrl) {

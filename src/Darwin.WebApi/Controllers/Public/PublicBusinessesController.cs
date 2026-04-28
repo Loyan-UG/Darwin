@@ -87,7 +87,8 @@ public sealed class PublicBusinessesController : ApiControllerBase
             MinRating = minRating,
             HasActiveLoyaltyProgram = request.HasActiveLoyaltyProgram,
             Coordinate = coordinate,
-            RadiusKm = radiusKm
+            RadiusKm = radiusKm,
+            Culture = BusinessControllerConventions.NormalizeNullable(request.Culture)
         };
 
         var (items, total) = await _getBusinessesForDiscovery.HandleAsync(appRequest, ct).ConfigureAwait(false);
@@ -142,6 +143,7 @@ public sealed class PublicBusinessesController : ApiControllerBase
             Query = BusinessControllerConventions.NormalizeNullable(request.Query),
             CountryCode = BusinessControllerConventions.NormalizeNullable(request.CountryCode),
             Category = categoryKind,
+            Culture = BusinessControllerConventions.NormalizeNullable(request.Culture),
             Bounds = new GeoBoundsDto
             {
                 NorthLat = request.Bounds.NorthLat,
@@ -172,14 +174,19 @@ public sealed class PublicBusinessesController : ApiControllerBase
     [ProducesResponseType(typeof(BusinessDetail), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetAsync([FromRoute] Guid id, CancellationToken ct = default)
+    public async Task<IActionResult> GetAsync(
+        [FromRoute] Guid id,
+        [FromQuery] string? culture = null,
+        CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return BadRequestProblem(_validationLocalizer["BusinessIdValidWhenProvided"]);
         }
 
-        var dto = await _getBusinessPublicDetail.HandleAsync(id, ct).ConfigureAwait(false);
+        var dto = await _getBusinessPublicDetail
+            .HandleAsync(id, BusinessControllerConventions.NormalizeNullable(culture), ct)
+            .ConfigureAwait(false);
         if (dto is null)
         {
             return NotFoundProblem(_validationLocalizer["BusinessNotFound"]);

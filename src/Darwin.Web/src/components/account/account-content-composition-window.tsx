@@ -7,6 +7,7 @@ import type {
 import type { PublicPageSummary } from "@/features/cms/types";
 import { buildPromotionLaneRouteMapItem } from "@/components/composition-window-promotion-lane";
 import { formatMoney } from "@/lib/formatting";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getMemberResource } from "@/localization";
 
@@ -58,7 +59,7 @@ export function AccountContentCompositionWindow({
             ),
           },
         ),
-        href: `/catalog/${strongestProduct.slug}`,
+        href: buildCatalogProductPath(strongestProduct.slug),
         ctaLabel: copy.accountCompositionJourneyStorefrontCta,
       }
     : strongestCategory
@@ -113,7 +114,7 @@ export function AccountContentCompositionWindow({
       description:
         strongestPage?.metaDescription ??
         copy.accountCompositionRouteMapContentFallbackDescription,
-      href: strongestPage ? `/cms/${strongestPage.slug}` : "/cms",
+      href: strongestPage ? buildCmsPagePath(strongestPage.slug) : "/cms",
       ctaLabel: copy.accountCompositionRouteMapContentCta,
       meta: formatResource(copy.accountCompositionRouteMapContentMeta, {
         count: cmsPages.length,

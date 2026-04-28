@@ -18,6 +18,7 @@ export async function getPublicBusinessesForDiscovery(input?: {
   latitude?: number;
   longitude?: number;
   radiusMeters?: number;
+  culture?: string;
 }) {
   return postPublicJson<PagedResponse<BusinessSummary>>(
     "/api/v1/public/businesses/list",
@@ -38,6 +39,7 @@ export async function getPublicBusinessesForDiscovery(input?: {
             }
           : null,
       radiusMeters: input?.radiusMeters ?? null,
+      culture: input?.culture ?? null,
     },
   );
 }
@@ -49,9 +51,13 @@ export async function getPublicBusinessCategoryKinds() {
   );
 }
 
-export async function getPublicBusinessDetail(businessId: string) {
+export async function getPublicBusinessDetail(businessId: string, culture?: string) {
+  const cultureQuery = culture
+    ? `?culture=${encodeURIComponent(culture)}`
+    : "";
+
   return fetchPublicJson<BusinessDetail>(
-    `/api/v1/public/businesses/${encodeURIComponent(businessId)}`,
+    `/api/v1/public/businesses/${encodeURIComponent(businessId)}${cultureQuery}`,
     "business-detail",
   );
 }

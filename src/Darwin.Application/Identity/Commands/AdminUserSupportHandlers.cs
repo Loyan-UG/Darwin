@@ -119,7 +119,7 @@ namespace Darwin.Application.Identity.Commands
             user.AccessFailedCount = 0;
             user.SecurityStamp = _stamps.NewStamp();
             await _db.SaveChangesAsync(ct);
-            _jwt.RevokeAllForUser(user.Id);
+            await _jwt.RevokeAllForUserAsync(user.Id, ct);
             return Result.Ok();
         }
     }

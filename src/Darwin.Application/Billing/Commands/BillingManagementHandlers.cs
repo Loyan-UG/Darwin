@@ -69,7 +69,7 @@ namespace Darwin.Application.Billing.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var payment = await _db.Set<Payment>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (payment is null)
@@ -156,7 +156,7 @@ namespace Darwin.Application.Billing.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var account = await _db.Set<FinancialAccount>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (account is null)
@@ -233,7 +233,7 @@ namespace Darwin.Application.Billing.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var expense = await _db.Set<Expense>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (expense is null)
@@ -317,7 +317,7 @@ namespace Darwin.Application.Billing.Commands
 
             var entry = await _db.Set<JournalEntry>()
                 .Include(x => x.Lines)
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (entry is null)

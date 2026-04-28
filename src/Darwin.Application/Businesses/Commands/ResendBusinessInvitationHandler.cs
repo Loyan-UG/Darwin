@@ -53,7 +53,7 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var invitation = await _db.Set<BusinessInvitation>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
             if (invitation is null)
                 throw new InvalidOperationException(_localizer["InvitationNotFound"]);
 
@@ -65,7 +65,7 @@ namespace Darwin.Application.Businesses.Commands
 
             var business = await _db.Set<Business>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == invitation.BusinessId, ct);
+                .FirstOrDefaultAsync(x => x.Id == invitation.BusinessId && !x.IsDeleted, ct);
             if (business is null)
                 throw new InvalidOperationException(_localizer["BusinessNotFound"]);
 

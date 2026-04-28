@@ -30,13 +30,30 @@ namespace Darwin.Application.Catalog.Commands
             var groupExists = await _db.Set<AddOnGroup>().AnyAsync(g => g.Id == groupId && !g.IsDeleted, ct);
             if (!groupExists) throw new InvalidOperationException(_localizer["AddOnGroupNotFound"]);
 
+            var requested = (brandIds ?? Array.Empty<Guid>())
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToArray();
+
+            var validBrandIds = await _db.Set<Brand>()
+                .AsNoTracking()
+                .Where(b => requested.Contains(b.Id) && !b.IsDeleted)
+                .Select(b => b.Id)
+                .ToListAsync(ct);
+
+            if (validBrandIds.Count != requested.Length)
+            {
+                throw new InvalidOperationException(_localizer["BrandsNotFoundOrDeleted"]);
+            }
+
             var existing = await _db.Set<AddOnGroupBrand>()
+                .IgnoreQueryFilters()
                 .Where(x => x.AddOnGroupId == groupId)
                 .ToListAsync(ct);
 
             _db.Set<AddOnGroupBrand>().RemoveRange(existing);
 
-            var toAdd = brandIds.Distinct().Select(bid => new AddOnGroupBrand
+            var toAdd = validBrandIds.Select(bid => new AddOnGroupBrand
             {
                 AddOnGroupId = groupId,
                 BrandId = bid

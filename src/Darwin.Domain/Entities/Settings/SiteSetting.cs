@@ -1,7 +1,4 @@
 ﻿using Darwin.Domain.Common;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-
 namespace Darwin.Domain.Entities.Settings
 {
     /// <summary>

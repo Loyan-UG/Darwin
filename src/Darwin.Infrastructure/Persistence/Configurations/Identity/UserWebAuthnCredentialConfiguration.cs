@@ -38,7 +38,9 @@ namespace Darwin.Infrastructure.Persistence.Configuration.Identity
                 .IsRequired();
 
             // Unique per user + credential id
-            b.HasIndex(x => new { x.UserId, x.CredentialId }).IsUnique();
+            b.HasIndex(x => new { x.UserId, x.CredentialId })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             // Fast lookup by CredentialId during login
             b.HasIndex(x => x.CredentialId);

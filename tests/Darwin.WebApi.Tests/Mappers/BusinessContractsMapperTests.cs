@@ -200,6 +200,50 @@ public sealed class BusinessContractsMapperTests
     }
 
     /// <summary>
+    ///     Ensures distance projection remains null for discovery entries without
+    ///     explicit distance values.
+    /// </summary>
+    [Fact]
+    public void ToContract_DiscoveryItem_Should_HandleNullDistance()
+    {
+        // Arrange
+        var dto = new BusinessDiscoveryListItemDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Darwin NoGPS",
+            Category = BusinessCategoryKind.Cafe,
+            DistanceKm = null
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.DistanceMeters.Should().BeNull();
+    }
+
+    /// <summary>
+    ///     Ensures discovery items without names map to empty contract names.
+    /// </summary>
+    [Fact]
+    public void ToContract_DiscoveryItem_Should_DefaultNameToEmpty_WhenMissing()
+    {
+        // Arrange
+        var dto = new BusinessDiscoveryListItemDto
+        {
+            Id = Guid.NewGuid(),
+            Name = null,
+            Category = BusinessCategoryKind.Cafe
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.Name.Should().BeEmpty();
+    }
+
+    /// <summary>
     ///     Ensures business-detail projection falls back to the first location when
     ///     no location is marked as primary, keeping city/coordinate fields populated.
     /// </summary>
@@ -243,6 +287,80 @@ public sealed class BusinessContractsMapperTests
         contract.Coordinate.Should().NotBeNull();
         contract.Coordinate!.Latitude.Should().Be(50.9375);
         contract.Coordinate.Longitude.Should().Be(6.9603);
+    }
+
+    /// <summary>
+    ///     Ensures business-detail projection uses the explicitly primary location
+    ///     when it is present.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetail_Should_UsePrimaryLocation_WhenAvailable()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Darwin Hub",
+            Category = BusinessCategoryKind.Cafe,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            Locations =
+            [
+                new BusinessPublicLocationDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Branch A",
+                    IsPrimary = false,
+                    City = "Stuttgart",
+                    Coordinate = new GeoCoordinateDto { Latitude = 48.7758, Longitude = 9.1829 }
+                },
+                new BusinessPublicLocationDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Primary",
+                    IsPrimary = true,
+                    City = "Dresden",
+                    Coordinate = new GeoCoordinateDto { Latitude = 51.0504, Longitude = 13.7373 }
+                }
+            ]
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.City.Should().Be("Dresden");
+        contract.Coordinate.Should().NotBeNull();
+        contract.Coordinate!.Latitude.Should().Be(51.0504);
+        contract.Coordinate.Longitude.Should().Be(13.7373);
+    }
+
+    /// <summary>
+    ///     Ensures business-detail projection handles empty location sets with empty
+    ///     city/coordinate and a non-null image list.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetail_Should_KeepCityCoordinateUnset_WhenNoLocations()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Darwin Silent Shop",
+            Category = BusinessCategoryKind.Cafe,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            GalleryImageUrls = []
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.City.Should().BeNull();
+        contract.Coordinate.Should().BeNull();
+        contract.ImageUrls.Should().NotBeNull();
+        contract.ImageUrls.Should().BeEmpty();
     }
 
     /// <summary>
@@ -296,6 +414,37 @@ public sealed class BusinessContractsMapperTests
         contract.MyAccount.Should().NotBeNull();
         contract.MyAccount!.PointsBalance.Should().Be(88);
         contract.MyAccount.BusinessName.Should().Be("Darwin Market");
+    }
+
+    /// <summary>
+    ///     Ensures a detail-with-account payload can explicitly indicate no active
+    ///     account and keep MyAccount null without throwing.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetailWithMyAccount_Should_KeepMyAccountNull_WhenHasAccountIsFalse()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailWithMyAccountDto
+        {
+            Business = new BusinessPublicDetailDto
+            {
+                Id = Guid.NewGuid(),
+                Name = "Darwin Express",
+                Category = BusinessCategoryKind.Cafe,
+                DefaultCurrency = "EUR",
+                DefaultCulture = "de-DE"
+            },
+            HasAccount = false,
+            MyAccount = null
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.HasAccount.Should().BeFalse();
+        contract.MyAccount.Should().BeNull();
+        contract.Business.Name.Should().Be("Darwin Express");
     }
 
     /// <summary>
@@ -388,6 +537,28 @@ public sealed class BusinessContractsMapperTests
         // Assert
         contract.Coordinate.Should().BeNull();
         contract.City.Should().Be("Leipzig");
+    }
+
+    /// <summary>
+    ///     Ensures location name always maps to a non-null contract value.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessLocation_Should_DefaultNameToEmpty_WhenNameMissing()
+    {
+        // Arrange
+        var dto = new BusinessPublicLocationDto
+        {
+            Id = Guid.NewGuid(),
+            Name = null,
+            City = "Leipzig",
+            IsPrimary = false
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.Name.Should().BeEmpty();
     }
 
     /// <summary>

@@ -31,6 +31,10 @@ namespace Darwin.Application.Loyalty.DTOs
         /// </summary>
         public string? BusinessName { get; set; }
 
+        public string? BusinessAdminTextOverridesJson { get; set; }
+
+        public string? BusinessDefaultCulture { get; set; }
+
         /// <summary>
         /// Gets or sets the current spendable points balance for this account.
         /// </summary>

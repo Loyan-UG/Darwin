@@ -35,7 +35,7 @@ namespace Darwin.Application.Orders.Commands
             await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
 
             var order = await _db.Set<Order>()
-                .FirstOrDefaultAsync(x => x.Id == dto.OrderId, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.OrderId && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (order is null)
@@ -44,7 +44,7 @@ namespace Darwin.Application.Orders.Commands
             }
 
             var payment = await _db.Set<Payment>()
-                .FirstOrDefaultAsync(x => x.Id == dto.PaymentId && x.OrderId == dto.OrderId, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.PaymentId && x.OrderId == dto.OrderId && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (payment is null)
@@ -64,7 +64,7 @@ namespace Darwin.Application.Orders.Commands
 
             var refundedAmount = await _db.Set<Refund>()
                 .AsNoTracking()
-                .Where(x => x.PaymentId == dto.PaymentId && x.Status == RefundStatus.Completed)
+                .Where(x => x.PaymentId == dto.PaymentId && x.Status == RefundStatus.Completed && !x.IsDeleted)
                 .SumAsync(x => (long?)x.AmountMinor, ct)
                 .ConfigureAwait(false) ?? 0L;
 
@@ -88,7 +88,7 @@ namespace Darwin.Application.Orders.Commands
 
             var totalRefundedForOrder = await _db.Set<Refund>()
                 .AsNoTracking()
-                .Where(x => x.OrderId == dto.OrderId && x.Status == RefundStatus.Completed)
+                .Where(x => x.OrderId == dto.OrderId && x.Status == RefundStatus.Completed && !x.IsDeleted)
                 .SumAsync(x => (long?)x.AmountMinor, ct)
                 .ConfigureAwait(false) ?? 0L;
 
@@ -111,7 +111,7 @@ namespace Darwin.Application.Orders.Commands
             if (payment.InvoiceId.HasValue)
             {
                 var invoice = await _db.Set<Invoice>()
-                    .FirstOrDefaultAsync(x => x.Id == payment.InvoiceId.Value, ct)
+                    .FirstOrDefaultAsync(x => x.Id == payment.InvoiceId.Value && !x.IsDeleted, ct)
                     .ConfigureAwait(false);
 
                 if (invoice is not null && resultingRefundedForPayment >= payment.AmountMinor && invoice.Status == InvoiceStatus.Cancelled)
@@ -150,7 +150,7 @@ namespace Darwin.Application.Orders.Commands
 
             var order = await _db.Set<Order>()
                 .Include(x => x.Lines)
-                .FirstOrDefaultAsync(x => x.Id == dto.OrderId, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.OrderId && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (order is null)
@@ -163,7 +163,7 @@ namespace Darwin.Application.Orders.Commands
             {
                 customerId = await _db.Set<Customer>()
                     .AsNoTracking()
-                    .Where(x => x.UserId == order.UserId.Value)
+                    .Where(x => x.UserId == order.UserId.Value && !x.IsDeleted)
                     .Select(x => (Guid?)x.Id)
                     .FirstOrDefaultAsync(ct)
                     .ConfigureAwait(false);
@@ -173,7 +173,7 @@ namespace Darwin.Application.Orders.Commands
             if (dto.PaymentId.HasValue)
             {
                 payment = await _db.Set<Payment>()
-                    .FirstOrDefaultAsync(x => x.Id == dto.PaymentId.Value && x.OrderId == dto.OrderId, ct)
+                    .FirstOrDefaultAsync(x => x.Id == dto.PaymentId.Value && x.OrderId == dto.OrderId && !x.IsDeleted, ct)
                     .ConfigureAwait(false);
 
                 if (payment is null)
@@ -205,7 +205,7 @@ namespace Darwin.Application.Orders.Commands
                 TotalGrossMinor = order.GrandTotalGrossMinor,
                 DueDateUtc = dto.DueAtUtc ?? DateTime.UtcNow.AddDays(14),
                 PaidAtUtc = dto.PaymentId.HasValue ? DateTime.UtcNow : null,
-                Lines = order.Lines.Select(x => new InvoiceLine
+                Lines = order.Lines.Where(x => !x.IsDeleted).Select(x => new InvoiceLine
                 {
                     Description = string.IsNullOrWhiteSpace(x.Name) ? x.Sku : x.Name,
                     Quantity = x.Quantity,

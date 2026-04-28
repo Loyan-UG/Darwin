@@ -27,7 +27,7 @@ namespace Darwin.Application.Settings.Queries
         {
             var s = await _db.Set<SiteSetting>()
                 .AsNoTracking()
-                .SingleOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(x => !x.IsDeleted, ct);
 
             if (s is null) return null;
 

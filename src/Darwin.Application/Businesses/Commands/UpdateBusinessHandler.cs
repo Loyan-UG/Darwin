@@ -36,7 +36,7 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var entity = await _db.Set<Business>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
 
             if (entity is null)
                 throw new InvalidOperationException(_localizer["BusinessNotFound"]);

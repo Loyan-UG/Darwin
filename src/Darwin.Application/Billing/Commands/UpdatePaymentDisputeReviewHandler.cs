@@ -36,7 +36,7 @@ namespace Darwin.Application.Billing.Commands
             }
 
             var payment = await _db.Set<Payment>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (payment is null)

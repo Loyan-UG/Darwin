@@ -41,7 +41,7 @@ public sealed class CreateStorefrontPaymentIntentHandler
 
         var order = await _db.Set<Order>()
             .Include(x => x.Payments)
-            .FirstOrDefaultAsync(x => x.Id == dto.OrderId, ct)
+            .FirstOrDefaultAsync(x => x.Id == dto.OrderId && !x.IsDeleted, ct)
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException(_localizer["OrderNotFound"]);
 
@@ -55,7 +55,7 @@ public sealed class CreateStorefrontPaymentIntentHandler
             throw new InvalidOperationException(_localizer["PaymentCannotBeInitiatedForCancelledOrRefundedOrder"]);
         }
 
-        if (order.Payments.Any(x => x.Status is PaymentStatus.Captured or PaymentStatus.Completed))
+        if (order.Payments.Any(x => !x.IsDeleted && x.Status is PaymentStatus.Captured or PaymentStatus.Completed))
         {
             throw new InvalidOperationException(_localizer["OrderIsAlreadySettled"]);
         }
@@ -74,7 +74,7 @@ public sealed class CreateStorefrontPaymentIntentHandler
             var customerId = order.UserId.HasValue
                 ? await _db.Set<Customer>()
                     .AsNoTracking()
-                    .Where(x => x.UserId == order.UserId.Value)
+                    .Where(x => x.UserId == order.UserId.Value && !x.IsDeleted)
                     .Select(x => (Guid?)x.Id)
                     .FirstOrDefaultAsync(ct)
                     .ConfigureAwait(false)
@@ -165,7 +165,7 @@ public sealed class CompleteStorefrontPaymentHandler
 
         var order = await _db.Set<Order>()
             .Include(x => x.Payments)
-            .FirstOrDefaultAsync(x => x.Id == dto.OrderId, ct)
+            .FirstOrDefaultAsync(x => x.Id == dto.OrderId && !x.IsDeleted, ct)
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException(_localizer["OrderNotFound"]);
 

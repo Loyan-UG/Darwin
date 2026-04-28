@@ -43,12 +43,13 @@ public sealed class BusinessAuthController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PreviewInvitationAsync([FromQuery] string? token, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(token))
+        var normalizedToken = NormalizeText(token);
+        if (normalizedToken is null)
         {
             return BadRequestProblem(_validationLocalizer["InvitationTokenRequired"]);
         }
 
-        var result = await _getBusinessInvitationPreviewHandler.HandleAsync(token, ct).ConfigureAwait(false);
+        var result = await _getBusinessInvitationPreviewHandler.HandleAsync(normalizedToken, ct).ConfigureAwait(false);
         if (!result.Succeeded || result.Value is null)
         {
             return ProblemFromResult(result);
@@ -81,10 +82,10 @@ public sealed class BusinessAuthController : ApiControllerBase
 
         var result = await _acceptBusinessInvitationHandler.HandleAsync(new BusinessInvitationAcceptDto
         {
-            Token = request.Token ?? string.Empty,
-            DeviceId = request.DeviceId,
-            FirstName = request.FirstName,
-            LastName = request.LastName,
+            Token = NormalizeText(request.Token) ?? string.Empty,
+            DeviceId = NormalizeText(request.DeviceId),
+            FirstName = NormalizeText(request.FirstName),
+            LastName = NormalizeText(request.LastName),
             Password = request.Password
         }, ct).ConfigureAwait(false);
 
@@ -103,4 +104,7 @@ public sealed class BusinessAuthController : ApiControllerBase
             Email = result.Value.Email
         });
     }
+
+    private static string? NormalizeText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

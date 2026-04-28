@@ -12,6 +12,8 @@ namespace Darwin.Application.Orders.Queries;
 /// </summary>
 public sealed class GetMyOrdersPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
 
@@ -31,11 +33,12 @@ public sealed class GetMyOrdersPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
         var userId = _currentUser.GetCurrentUserId();
         var baseQuery = _db.Set<Order>()
             .AsNoTracking()
-            .Where(x => x.UserId == userId);
+            .Where(x => !x.IsDeleted && x.UserId == userId);
 
         var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
         var items = await baseQuery
@@ -78,13 +81,18 @@ public sealed class GetMyOrderForViewHandler
     /// <summary>
     /// Returns the member-owned order detail or <c>null</c> when the order is not accessible.
     /// </summary>
-    public async Task<MemberOrderDetailDto?> HandleAsync(Guid id, CancellationToken ct = default)
+    public async Task<MemberOrderDetailDto?> HandleAsync(Guid id, string? culture = null, CancellationToken ct = default)
     {
+        if (id == Guid.Empty)
+        {
+            return null;
+        }
+
         var userId = _currentUser.GetCurrentUserId();
 
         var order = await _db.Set<Order>()
             .AsNoTracking()
-            .Where(x => x.Id == id && x.UserId == userId)
+            .Where(x => x.Id == id && !x.IsDeleted && x.UserId == userId)
             .Select(x => new MemberOrderDetailDto
             {
                 Id = x.Id,
@@ -104,17 +112,18 @@ public sealed class GetMyOrderForViewHandler
                 BillingAddressJson = x.BillingAddressJson,
                 ShippingAddressJson = x.ShippingAddressJson,
                 CreatedAtUtc = x.CreatedAtUtc,
-                Lines = x.Lines.Select(line => new MemberOrderLineDto
+                Lines = x.Lines.Where(line => !line.IsDeleted).Select(line => new MemberOrderLineDto
                 {
                     Id = line.Id,
                     VariantId = line.VariantId,
-                    Name = line.Name,
+                    Name = MemberOrderPresentationResolver.ResolveLineName(line.Name, culture),
                     Sku = line.Sku,
                     Quantity = line.Quantity,
                     UnitPriceGrossMinor = line.UnitPriceGrossMinor,
                     LineGrossMinor = line.LineGrossMinor
                 }).ToList(),
                 Payments = x.Payments
+                    .Where(payment => !payment.IsDeleted)
                     .OrderByDescending(payment => payment.CreatedAtUtc)
                     .Select(payment => new MemberOrderPaymentDto
                 {
@@ -129,7 +138,7 @@ public sealed class GetMyOrderForViewHandler
                     Status = payment.Status,
                     PaidAtUtc = payment.PaidAtUtc
                 }).ToList(),
-                Shipments = x.Shipments.Select(shipment => new MemberOrderShipmentDto
+                Shipments = x.Shipments.Where(shipment => !shipment.IsDeleted).Select(shipment => new MemberOrderShipmentDto
                 {
                     Id = shipment.Id,
                     Carrier = shipment.Carrier,
@@ -151,7 +160,7 @@ public sealed class GetMyOrderForViewHandler
 
         order.Invoices = await _db.Set<Invoice>()
             .AsNoTracking()
-            .Where(x => x.OrderId == order.Id)
+            .Where(x => !x.IsDeleted && x.OrderId == order.Id)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Select(x => new MemberOrderInvoiceDto
             {

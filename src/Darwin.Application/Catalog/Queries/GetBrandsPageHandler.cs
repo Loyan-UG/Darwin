@@ -14,11 +14,13 @@ namespace Darwin.Application.Catalog.Queries
     /// </summary>
     public sealed class GetBrandsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetBrandsPageHandler(IAppDbContext db)
         {
-            _db = db;
+            _db = db ?? throw new System.ArgumentNullException(nameof(db));
         }
 
         public async Task<(List<BrandListItemDto> Items, int Total)> HandleAsync(
@@ -40,15 +42,18 @@ namespace Darwin.Application.Catalog.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
             query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
 
             var baseQuery = _db.Set<Brand>()
                 .AsNoTracking()
                 .Where(b =>
-                    query == null ||
-                    (b.Slug != null && b.Slug.Contains(query)) ||
-                    b.Translations.Any(t => t.Name.Contains(query)));
+                    !b.IsDeleted &&
+                    (query == null ||
+                     (b.Slug != null && b.Slug.Contains(query)) ||
+                     b.Translations.Any(t => !t.IsDeleted && t.Name.Contains(query))));
 
             baseQuery = filter switch
             {
@@ -62,15 +67,15 @@ namespace Darwin.Application.Catalog.Queries
 
             var items = await baseQuery
                 .OrderBy(b => b.Translations
-                    .Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
-                    ?? b.Translations.Select(t => t.Name).FirstOrDefault())
+                    .Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                    ?? b.Translations.Where(t => !t.IsDeleted).Select(t => t.Name).FirstOrDefault())
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(b => new BrandListItemDto
                 {
                     Id = b.Id,
-                    Name = b.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
-                           ?? b.Translations.Select(t => t.Name).FirstOrDefault()
+                    Name = b.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                           ?? b.Translations.Where(t => !t.IsDeleted).Select(t => t.Name).FirstOrDefault()
                            ?? "?",
                     Slug = b.Slug,
                     LogoMediaId = b.LogoMediaId,
@@ -90,12 +95,12 @@ namespace Darwin.Application.Catalog.Queries
 
         public GetBrandOpsSummaryHandler(IAppDbContext db)
         {
-            _db = db;
+            _db = db ?? throw new System.ArgumentNullException(nameof(db));
         }
 
         public async Task<BrandOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {
-            var brands = _db.Set<Brand>().AsNoTracking();
+            var brands = _db.Set<Brand>().AsNoTracking().Where(b => !b.IsDeleted);
 
             return new BrandOpsSummaryDto
             {

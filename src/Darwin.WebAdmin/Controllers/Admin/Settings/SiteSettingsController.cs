@@ -30,9 +30,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             ISiteSettingCache cache,
             IBusinessEffectiveSettingsCache businessEffectiveSettingsCache)
         {
-            _update = update;
-            _cache = cache;
-            _businessEffectiveSettingsCache = businessEffectiveSettingsCache;
+            _update = update ?? throw new ArgumentNullException(nameof(update));
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _businessEffectiveSettingsCache = businessEffectiveSettingsCache ?? throw new ArgumentNullException(nameof(businessEffectiveSettingsCache));
         }
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             TimeZone = dto.TimeZone,
             DateFormat = dto.DateFormat,
             TimeFormat = dto.TimeFormat,
-                AdminTextOverridesJson = dto.AdminTextOverridesJson,
+            AdminTextOverridesJson = dto.AdminTextOverridesJson,
 
             // Security / JWT
             JwtEnabled = dto.JwtEnabled,
@@ -293,7 +293,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             TimeZone = vm.TimeZone,
             DateFormat = vm.DateFormat,
             TimeFormat = vm.TimeFormat,
-                AdminTextOverridesJson = vm.AdminTextOverridesJson,
+            AdminTextOverridesJson = vm.AdminTextOverridesJson,
 
             // Security / JWT
             JwtEnabled = vm.JwtEnabled,

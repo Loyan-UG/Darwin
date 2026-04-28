@@ -60,7 +60,7 @@ public sealed class BillingController : ApiControllerBase
     [ProducesResponseType(typeof(BusinessSubscriptionStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetCurrentBusinessSubscriptionAsync(CancellationToken ct = default)
+    public async Task<IActionResult> GetCurrentBusinessSubscriptionAsync([FromQuery] string? culture = null, CancellationToken ct = default)
     {
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);
         if (!hasBusinessAccess)
@@ -69,7 +69,7 @@ public sealed class BillingController : ApiControllerBase
         }
 
         var result = await _getBusinessSubscriptionStatusHandler
-            .HandleAsync(businessId, ct)
+            .HandleAsync(businessId, BusinessControllerConventions.NormalizeNullable(culture), ct)
             .ConfigureAwait(false);
 
         if (!result.Succeeded || result.Value is null)
@@ -89,7 +89,7 @@ public sealed class BillingController : ApiControllerBase
     [ProducesResponseType(typeof(SetCancelAtPeriodEndResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> SetCancelAtPeriodEndAsync([FromBody] SetCancelAtPeriodEndRequest request, CancellationToken ct = default)
+    public async Task<IActionResult> SetCancelAtPeriodEndAsync([FromBody] SetCancelAtPeriodEndRequest? request, CancellationToken ct = default)
     {
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);
         if (!hasBusinessAccess)
@@ -133,7 +133,7 @@ public sealed class BillingController : ApiControllerBase
     [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
     [ProducesResponseType(typeof(GetBillingPlansResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetBillingPlansAsync([FromQuery] bool activeOnly = true, CancellationToken ct = default)
+    public async Task<IActionResult> GetBillingPlansAsync([FromQuery] bool activeOnly = true, [FromQuery] string? culture = null, CancellationToken ct = default)
     {
         // Business claim gate remains explicit to keep endpoint visibility consistent with other business billing operations.
         var (hasBusinessAccess, _, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);
@@ -143,7 +143,7 @@ public sealed class BillingController : ApiControllerBase
         }
 
         var dto = await _getBillingPlansHandler
-            .HandleAsync(activeOnly, ct)
+            .HandleAsync(activeOnly, BusinessControllerConventions.NormalizeNullable(culture), ct)
             .ConfigureAwait(false);
 
         var response = new GetBillingPlansResponse
@@ -178,7 +178,7 @@ public sealed class BillingController : ApiControllerBase
     [ProducesResponseType(typeof(CreateSubscriptionCheckoutIntentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> CreateSubscriptionCheckoutIntentAsync([FromBody] CreateSubscriptionCheckoutIntentRequest request, CancellationToken ct = default)
+    public async Task<IActionResult> CreateSubscriptionCheckoutIntentAsync([FromBody] CreateSubscriptionCheckoutIntentRequest? request, CancellationToken ct = default)
     {
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);
         if (!hasBusinessAccess)
@@ -189,6 +189,11 @@ public sealed class BillingController : ApiControllerBase
         if (request is null)
         {
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
+        }
+
+        if (request.PlanId == Guid.Empty)
+        {
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
         var validation = await _createSubscriptionCheckoutIntentHandler

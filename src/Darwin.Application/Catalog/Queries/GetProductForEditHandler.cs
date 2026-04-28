@@ -19,7 +19,7 @@ namespace Darwin.Application.Catalog.Queries
             var product = await _db.Set<Product>()
                 .Include(p => p.Translations)
                 .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Id == id, ct);
+                .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, ct);
 
             if (product == null) return null;
 
@@ -30,7 +30,7 @@ namespace Darwin.Application.Catalog.Queries
                 PrimaryCategoryId = product.PrimaryCategoryId,
                 Kind = product.Kind.ToString(),
                 RowVersion = product.RowVersion,
-                Translations = product.Translations.Select(t => new ProductTranslationDto
+                Translations = product.Translations.Where(t => !t.IsDeleted).Select(t => new ProductTranslationDto
                 {
                     Culture = t.Culture,
                     Name = t.Name,
@@ -41,7 +41,7 @@ namespace Darwin.Application.Catalog.Queries
                     MetaDescription = t.MetaDescription,
                     SearchKeywords = t.SearchKeywords
                 }).ToList(),
-                Variants = product.Variants.Select(v => new ProductVariantCreateDto
+                Variants = product.Variants.Where(v => !v.IsDeleted).Select(v => new ProductVariantCreateDto
                 {
                     Id = v.Id,
                     Sku = v.Sku,

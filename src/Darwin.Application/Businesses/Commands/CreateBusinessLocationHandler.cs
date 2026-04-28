@@ -34,14 +34,14 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var businessExists = await _db.Set<Business>()
-                .AnyAsync(x => x.Id == dto.BusinessId, ct);
+                .AnyAsync(x => x.Id == dto.BusinessId && !x.IsDeleted, ct);
             if (!businessExists)
                 throw new InvalidOperationException(_localizer["BusinessNotFound"]);
 
             if (dto.IsPrimary)
             {
                 var existingPrimaryLocations = await _db.Set<BusinessLocation>()
-                    .Where(x => x.BusinessId == dto.BusinessId && x.IsPrimary)
+                    .Where(x => x.BusinessId == dto.BusinessId && x.IsPrimary && !x.IsDeleted)
                     .ToListAsync(ct);
 
                 foreach (var existingPrimary in existingPrimaryLocations)

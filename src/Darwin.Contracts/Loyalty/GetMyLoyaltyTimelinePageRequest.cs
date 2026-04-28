@@ -39,5 +39,10 @@ namespace Darwin.Contracts.Loyalty
         /// Gets or sets the cursor id (tie-breaker for entries with same timestamp).
         /// </summary>
         public Guid? BeforeId { get; init; }
+
+        /// <summary>
+        /// Gets or sets the requested presentation culture for future localized timeline fields.
+        /// </summary>
+        public string? Culture { get; init; }
     }
 }

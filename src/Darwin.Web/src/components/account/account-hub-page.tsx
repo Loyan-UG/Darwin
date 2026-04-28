@@ -19,11 +19,16 @@ import {
 } from "@/features/storefront/storefront-campaigns";
 import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
+import { buildCatalogProductPath } from "@/lib/entity-paths";
 import {
   buildLocalizedAuthHref,
   localizeHref,
 } from "@/lib/locale-routing";
-import { formatResource, getMemberResource } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type AccountHubPageProps = {
   culture: string;
@@ -51,6 +56,16 @@ export function AccountHubPage({
   returnPath,
 }: AccountHubPageProps) {
   const copy = getMemberResource(culture);
+  const localizedCmsPagesStatus =
+    resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const localizedCategoriesStatus =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const localizedProductsStatus =
+    resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
+  const localizedStorefrontCartStatus = resolveApiStatusLabel(
+    storefrontCartStatus,
+    copy,
+  ) ?? storefrontCartStatus;
   const cartLineCount =
     storefrontCart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const preferredReturnPath = returnPath || (cartLineCount > 0 ? "/checkout" : "/account");
@@ -288,10 +303,10 @@ export function AccountHubPage({
           </p>
           <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.accountHubReadinessMessage, {
-              cartStatus: storefrontCartStatus,
+              cartStatus: localizedStorefrontCartStatus,
               cartLineCount,
-              cmsStatus: cmsPagesStatus,
-              categoriesStatus,
+              cmsStatus: localizedCmsPagesStatus,
+              categoriesStatus: localizedCategoriesStatus,
             })}
           </p>
           <dl className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)] sm:grid-cols-2">
@@ -325,7 +340,7 @@ export function AccountHubPage({
               <dd>
                 {formatResource(copy.accountHubReadinessCmsValue, {
                   count: cmsPages.length,
-                  status: cmsPagesStatus,
+                  status: localizedCmsPagesStatus,
                 })}
               </dd>
             </div>
@@ -336,7 +351,7 @@ export function AccountHubPage({
               <dd>
                 {formatResource(copy.accountHubReadinessCatalogValue, {
                   count: categories.length,
-                  status: categoriesStatus,
+                  status: localizedCategoriesStatus,
                 })}
               </dd>
             </div>
@@ -487,7 +502,7 @@ export function AccountHubPage({
               <div className="mt-4">
                 <Link
                   href={localizeHref(
-                    spotlightProduct ? `/catalog/${spotlightProduct.slug}` : "/catalog",
+                    spotlightProduct ? buildCatalogProductPath(spotlightProduct.slug) : "/catalog",
                     culture,
                   )}
                   className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
@@ -509,14 +524,14 @@ export function AccountHubPage({
           <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.accountHubOfferBoardMessage, {
               productCount: products.length,
-              status: productsStatus,
+              status: localizedProductsStatus,
             })}
           </p>
           <StorefrontOfferBoard
             culture={culture}
             cards={offerBoardCards}
             emptyMessage={formatResource(copy.accountHubOfferBoardEmptyMessage, {
-              status: productsStatus,
+              status: localizedProductsStatus,
             })}
           />
           <div className="mt-8">

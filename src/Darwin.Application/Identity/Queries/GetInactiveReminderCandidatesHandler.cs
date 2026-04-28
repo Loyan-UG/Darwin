@@ -57,9 +57,15 @@ public sealed class GetInactiveReminderCandidatesHandler
         var inactiveCutoffUtc = nowUtc.AddDays(-request.InactiveThresholdDays);
         var cooldown = TimeSpan.FromHours(request.CooldownHours);
 
-        var snapshots = await _db.Set<UserEngagementSnapshot>()
-            .AsNoTracking()
-            .Where(x => x.LastActivityAtUtc.HasValue && x.LastActivityAtUtc.Value <= inactiveCutoffUtc)
+        var snapshots = await (
+                from snapshot in _db.Set<UserEngagementSnapshot>().AsNoTracking()
+                join user in _db.Set<User>().AsNoTracking() on snapshot.UserId equals user.Id
+                where !snapshot.IsDeleted &&
+                      !user.IsDeleted &&
+                      user.IsActive &&
+                      snapshot.LastActivityAtUtc.HasValue &&
+                      snapshot.LastActivityAtUtc.Value <= inactiveCutoffUtc
+                select snapshot)
             .OrderBy(x => x.LastActivityAtUtc)
             .Take(maxItems * 4)
             .ToListAsync(ct)
@@ -74,6 +80,7 @@ public sealed class GetInactiveReminderCandidatesHandler
         var pushDevices = await _db.Set<UserDevice>()
             .AsNoTracking()
             .Where(x => userIds.Contains(x.UserId)
+                        && !x.IsDeleted
                         && x.IsActive
                         && x.NotificationsEnabled
                         && x.PushToken != null

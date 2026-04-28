@@ -17,8 +17,10 @@ namespace Darwin.Application.Businesses.Queries
     /// </summary>
     public sealed class GetBusinessesPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetBusinessesPageHandler(IAppDbContext db) => _db = db;
+        public GetBusinessesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
         public async Task<(List<BusinessListItemDto> Items, int Total)> HandleAsync(
             int page,
@@ -31,8 +33,9 @@ namespace Darwin.Application.Businesses.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var baseQuery = _db.Set<Business>().AsNoTracking();
+            var baseQuery = _db.Set<Business>().AsNoTracking().Where(x => !x.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -52,7 +55,7 @@ namespace Darwin.Application.Businesses.Queries
                 baseQuery = baseQuery.Where(x =>
                     x.OperationalStatus != BusinessOperationalStatus.Approved ||
                     !x.IsActive ||
-                    !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner) ||
+                    !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner) ||
                     !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary) ||
                     string.IsNullOrWhiteSpace(x.ContactEmail) ||
                     string.IsNullOrWhiteSpace(x.LegalName));
@@ -61,7 +64,7 @@ namespace Darwin.Application.Businesses.Queries
             if (readinessFilter == BusinessReadinessQueueFilter.MissingOwner)
             {
                 baseQuery = baseQuery.Where(x =>
-                    !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner));
+                    !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner));
             }
             else if (readinessFilter == BusinessReadinessQueueFilter.MissingPrimaryLocation)
             {
@@ -79,7 +82,7 @@ namespace Darwin.Application.Businesses.Queries
             else if (readinessFilter == BusinessReadinessQueueFilter.PendingInvites)
             {
                 baseQuery = baseQuery.Where(x =>
-                    _db.Set<BusinessInvitation>().Any(i => i.BusinessId == x.Id && i.Status == BusinessInvitationStatus.Pending));
+                    _db.Set<BusinessInvitation>().Any(i => i.BusinessId == x.Id && !i.IsDeleted && i.Status == BusinessInvitationStatus.Pending));
             }
             else if (readinessFilter == BusinessReadinessQueueFilter.ApprovedInactive)
             {
@@ -102,11 +105,11 @@ namespace Darwin.Application.Businesses.Queries
                     Category = x.Category,
                     IsActive = x.IsActive,
                     OperationalStatus = x.OperationalStatus,
-                    MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id),
-                    ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner),
+                    MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && !m.IsDeleted),
+                    ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner),
                     LocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted),
                     PrimaryLocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary),
-                    InvitationCount = _db.Set<BusinessInvitation>().Count(i => i.BusinessId == x.Id && i.Status == BusinessInvitationStatus.Pending),
+                    InvitationCount = _db.Set<BusinessInvitation>().Count(i => i.BusinessId == x.Id && !i.IsDeleted && i.Status == BusinessInvitationStatus.Pending),
                     HasContactEmailConfigured = !string.IsNullOrWhiteSpace(x.ContactEmail),
                     HasLegalNameConfigured = !string.IsNullOrWhiteSpace(x.LegalName),
                     ModifiedAtUtc = x.ModifiedAtUtc,

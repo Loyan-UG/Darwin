@@ -25,7 +25,7 @@ internal static class BusinessControllerConventions
         }
 
         var id = user.FindFirstValue("business_id");
-        if (!Guid.TryParse(id, out var parsed))
+        if (!Guid.TryParse(id, out var parsed) || parsed == Guid.Empty)
         {
             return false;
         }
@@ -48,7 +48,7 @@ internal static class BusinessControllerConventions
             user.FindFirstValue("sub") ??
             user.FindFirstValue("uid");
 
-        if (!Guid.TryParse(id, out var parsed))
+        if (!Guid.TryParse(id, out var parsed) || parsed == Guid.Empty)
         {
             return false;
         }

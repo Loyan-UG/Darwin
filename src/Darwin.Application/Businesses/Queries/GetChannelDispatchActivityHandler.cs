@@ -29,7 +29,7 @@ namespace Darwin.Application.Businesses.Queries
                 take = 10;
             }
 
-            var query = _db.Set<ChannelDispatchAudit>().AsNoTracking();
+            var query = _db.Set<ChannelDispatchAudit>().AsNoTracking().Where(x => !x.IsDeleted);
             if (businessId.HasValue)
             {
                 query = query.Where(x => x.BusinessId == businessId.Value);
@@ -113,7 +113,7 @@ namespace Darwin.Application.Businesses.Queries
                 pageSize = 20;
             }
 
-            var query = _db.Set<ChannelDispatchAudit>().AsNoTracking();
+            var query = _db.Set<ChannelDispatchAudit>().AsNoTracking().Where(x => !x.IsDeleted);
             if (filter.BusinessId.HasValue)
             {
                 query = query.Where(x => x.BusinessId == filter.BusinessId.Value);

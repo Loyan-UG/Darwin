@@ -14,8 +14,10 @@ namespace Darwin.Application.Orders.Queries
     /// </summary>
     public sealed class GetOrdersPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetOrdersPageHandler(IAppDbContext db) => _db = db;
+        public GetOrdersPageHandler(IAppDbContext db) => _db = db ?? throw new System.ArgumentNullException(nameof(db));
 
         public async Task<(List<OrderListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, CancellationToken ct = default)
         {
@@ -26,10 +28,13 @@ namespace Darwin.Application.Orders.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
             query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
 
             var baseQuery = _db.Set<Order>()
                 .AsNoTracking()
+                .Where(o => !o.IsDeleted)
                 .Where(o =>
                     query == null ||
                     o.OrderNumber.Contains(query) ||
@@ -43,7 +48,7 @@ namespace Darwin.Application.Orders.Queries
                     o.Status != Domain.Enums.OrderStatus.Completed),
                 OrderQueueFilter.PaymentIssues => baseQuery.Where(o =>
                     o.Status != Domain.Enums.OrderStatus.Cancelled &&
-                    o.Payments.Any(p => p.Status == Domain.Enums.PaymentStatus.Failed)),
+                    o.Payments.Any(p => !p.IsDeleted && p.Status == Domain.Enums.PaymentStatus.Failed)),
                 OrderQueueFilter.FulfillmentAttention => baseQuery.Where(o =>
                     o.Status == Domain.Enums.OrderStatus.Paid ||
                     o.Status == Domain.Enums.OrderStatus.PartiallyShipped),
@@ -62,9 +67,9 @@ namespace Darwin.Application.Orders.Queries
                     Currency = o.Currency,
                     GrandTotalGrossMinor = o.GrandTotalGrossMinor,
                     Status = o.Status,
-                    PaymentCount = o.Payments.Count,
-                    FailedPaymentCount = o.Payments.Count(p => p.Status == Domain.Enums.PaymentStatus.Failed),
-                    ShipmentCount = o.Shipments.Count,
+                    PaymentCount = o.Payments.Count(p => !p.IsDeleted),
+                    FailedPaymentCount = o.Payments.Count(p => !p.IsDeleted && p.Status == Domain.Enums.PaymentStatus.Failed),
+                    ShipmentCount = o.Shipments.Count(s => !s.IsDeleted),
                     CreatedAtUtc = o.CreatedAtUtc,
                     RowVersion = o.RowVersion
                 })

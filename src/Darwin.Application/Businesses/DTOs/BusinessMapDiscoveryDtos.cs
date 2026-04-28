@@ -41,5 +41,10 @@ namespace Darwin.Application.Businesses.DTOs
         public string? CountryCode { get; set; }
 
         public BusinessCategoryKind? Category { get; set; }
+
+        /// <summary>
+        /// Optional requested content culture for map pin card text.
+        /// </summary>
+        public string? Culture { get; set; }
     }
 }

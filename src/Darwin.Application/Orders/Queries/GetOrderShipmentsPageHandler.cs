@@ -18,8 +18,10 @@ namespace Darwin.Application.Orders.Queries
     /// </summary>
     public sealed class GetOrderShipmentsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetOrderShipmentsPageHandler(IAppDbContext db) => _db = db;
+        public GetOrderShipmentsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
         /// <summary>
         /// Executes a paged query over shipments of a given order.
@@ -35,6 +37,7 @@ namespace Darwin.Application.Orders.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
             if (attentionDelayHours < 1) attentionDelayHours = 24;
             if (trackingGraceHours < 1) trackingGraceHours = 12;
 
@@ -42,7 +45,7 @@ namespace Darwin.Application.Orders.Queries
             var handoffThresholdUtc = nowUtc.AddHours(-attentionDelayHours);
             var trackingThresholdUtc = nowUtc.AddHours(-trackingGraceHours);
 
-            var baseQuery = _db.Set<Shipment>().AsNoTracking().Where(s => s.OrderId == orderId);
+            var baseQuery = _db.Set<Shipment>().AsNoTracking().Where(s => s.OrderId == orderId && !s.IsDeleted);
             baseQuery = filter switch
             {
                 ShipmentQueueFilter.Pending => baseQuery.Where(s => s.Status == Domain.Enums.ShipmentStatus.Pending || s.Status == Domain.Enums.ShipmentStatus.Packed),
@@ -73,7 +76,7 @@ namespace Darwin.Application.Orders.Queries
                     Id = s.Id,
                     OrderId = s.OrderId,
                     OrderNumber = _db.Set<Order>()
-                        .Where(o => o.Id == s.OrderId)
+                        .Where(o => o.Id == s.OrderId && !o.IsDeleted)
                         .Select(o => o.OrderNumber)
                         .FirstOrDefault() ?? string.Empty,
                     Carrier = s.Carrier,
@@ -102,6 +105,7 @@ namespace Darwin.Application.Orders.Queries
                     TrackingGraceHours = trackingGraceHours,
                     DefaultRefundPaymentId = _db.Set<Payment>()
                         .Where(p => p.OrderId == s.OrderId &&
+                            !p.IsDeleted &&
                             (p.Status == PaymentStatus.Captured ||
                              p.Status == PaymentStatus.Completed ||
                              p.Status == PaymentStatus.Refunded))

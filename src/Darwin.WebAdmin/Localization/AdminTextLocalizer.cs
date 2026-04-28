@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.Linq;
 using Darwin.WebAdmin;
-using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Localization;
 
@@ -21,20 +20,14 @@ namespace Darwin.WebAdmin.Localization
     public sealed class AdminTextLocalizer : IAdminTextLocalizer
     {
         private readonly IStringLocalizer<SharedResource> _localizer;
-        private readonly ISiteSettingCache _siteSettingCache;
-        private readonly IBusinessEffectiveSettingsCache _businessEffectiveSettings;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AdminTextLocalizer(
             IStringLocalizer<SharedResource> localizer,
-            ISiteSettingCache siteSettingCache,
-            IBusinessEffectiveSettingsCache businessEffectiveSettings,
             IHttpContextAccessor httpContextAccessor)
         {
-            _localizer = localizer;
-            _siteSettingCache = siteSettingCache;
-            _businessEffectiveSettings = businessEffectiveSettings;
-            _httpContextAccessor = httpContextAccessor;
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         }
 
         public string T(string key)
@@ -69,20 +62,12 @@ namespace Darwin.WebAdmin.Localization
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext is not null)
             {
-                if (httpContext.Items.TryGetValue(typeof(AdminTextOverrideCatalog), out var cached) &&
-                    cached is IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> parsed)
-                {
-                    return parsed;
-                }
-
-                var settings = _siteSettingCache.GetAsync().GetAwaiter().GetResult();
-                var parsedOverrides = AdminTextOverrideCatalog.Parse(settings.AdminTextOverridesJson);
-                httpContext.Items[typeof(AdminTextOverrideCatalog)] = parsedOverrides;
-                return parsedOverrides;
+                return AdminTextOverrideRequestContext.GetOverrides(
+                    httpContext.Items,
+                    AdminTextOverrideRequestContext.PlatformOverridesItemKey);
             }
 
-            var fallbackSettings = _siteSettingCache.GetAsync().GetAwaiter().GetResult();
-            return AdminTextOverrideCatalog.Parse(fallbackSettings.AdminTextOverridesJson);
+            return AdminTextOverrideCatalog.Empty;
         }
 
         private IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> GetCurrentBusinessOverrides()
@@ -93,75 +78,9 @@ namespace Darwin.WebAdmin.Localization
                 return AdminTextOverrideCatalog.Empty;
             }
 
-            const string cacheKey = "AdminTextLocalizer.BusinessOverrides";
-            if (httpContext.Items.TryGetValue(cacheKey, out var cached) &&
-                cached is IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> parsed)
-            {
-                return parsed;
-            }
-
-            var businessId = TryResolveCurrentBusinessId(httpContext);
-            if (!businessId.HasValue)
-            {
-                httpContext.Items[cacheKey] = AdminTextOverrideCatalog.Empty;
-                return AdminTextOverrideCatalog.Empty;
-            }
-
-            var businessSettings = _businessEffectiveSettings
-                .GetAsync(businessId.Value)
-                .GetAwaiter()
-                .GetResult();
-
-            var businessOverrides = AdminTextOverrideCatalog.Parse(businessSettings?.AdminTextOverridesJson);
-            httpContext.Items[cacheKey] = businessOverrides;
-            return businessOverrides;
-        }
-
-        private static Guid? TryResolveCurrentBusinessId(HttpContext httpContext)
-        {
-            if (TryParseGuid(httpContext.Request.RouteValues["businessId"]?.ToString(), out var routeBusinessId))
-            {
-                return routeBusinessId;
-            }
-
-            var controller = httpContext.Request.RouteValues["controller"]?.ToString();
-            if (string.Equals(controller, "Businesses", StringComparison.OrdinalIgnoreCase) &&
-                TryParseGuid(httpContext.Request.RouteValues["id"]?.ToString(), out var routeId))
-            {
-                return routeId;
-            }
-
-            if (TryParseGuid(httpContext.Request.Query["businessId"].ToString(), out var queryBusinessId))
-            {
-                return queryBusinessId;
-            }
-
-            if (string.Equals(controller, "Businesses", StringComparison.OrdinalIgnoreCase) &&
-                TryParseGuid(httpContext.Request.Query["id"].ToString(), out var queryId))
-            {
-                return queryId;
-            }
-
-            if (httpContext.Request.HasFormContentType)
-            {
-                if (TryParseGuid(httpContext.Request.Form["BusinessId"].ToString(), out var formBusinessId))
-                {
-                    return formBusinessId;
-                }
-
-                if (string.Equals(controller, "Businesses", StringComparison.OrdinalIgnoreCase) &&
-                    TryParseGuid(httpContext.Request.Form["Id"].ToString(), out var formId))
-                {
-                    return formId;
-                }
-            }
-
-            return null;
-        }
-
-        private static bool TryParseGuid(string? value, out Guid id)
-        {
-            return Guid.TryParse(value, out id) && id != Guid.Empty;
+            return AdminTextOverrideRequestContext.GetOverrides(
+                httpContext.Items,
+                AdminTextOverrideRequestContext.BusinessOverridesItemKey);
         }
     }
 }

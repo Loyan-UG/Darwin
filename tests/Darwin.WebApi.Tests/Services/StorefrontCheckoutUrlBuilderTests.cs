@@ -45,6 +45,99 @@ public sealed class StorefrontCheckoutUrlBuilderTests
         url.Should().Be($"https://shop.example/checkout/orders/{orderId:D}/confirmation?orderNumber=ORD-999&cancelled=true");
     }
 
+    /// <summary>
+    ///     Ensures front-office base URL must be a valid absolute URI.
+    /// </summary>
+    [Fact]
+    public void BuildFrontOfficeConfirmationUrl_Should_Throw_WhenBaseUrlIsInvalid()
+    {
+        // Arrange
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["StorefrontCheckout:FrontOfficeBaseUrl"] = "not-a-valid-uri"
+            })
+            .Build();
+        var sut = new StorefrontCheckoutUrlBuilder(configuration, new KeyLocalizer());
+
+        // Act
+        Action act = () => sut.BuildFrontOfficeConfirmationUrl(Guid.NewGuid(), "ORD-1", cancelled: false);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("StorefrontFrontOfficeBaseUrlNotConfigured");
+    }
+
+    /// <summary>
+    ///     Ensures empty/whitespace order numbers are intentionally omitted from query.
+    /// </summary>
+    [Fact]
+    public void BuildFrontOfficeConfirmationUrl_Should_OmitOrderNumber_WhenOrderNumberIsWhitespace()
+    {
+        // Arrange
+        var orderId = Guid.NewGuid();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["StorefrontCheckout:FrontOfficeBaseUrl"] = "https://shop.example"
+            })
+            .Build();
+        var sut = new StorefrontCheckoutUrlBuilder(configuration, new KeyLocalizer());
+
+        // Act
+        var url = sut.BuildFrontOfficeConfirmationUrl(orderId, "   ", cancelled: false);
+
+        // Assert
+        url.Should().Be($"https://shop.example/checkout/orders/{orderId:D}/confirmation");
+    }
+
+    /// <summary>
+    ///     Ensures constructor null-checks are explicit and deterministic.
+    /// </summary>
+    [Fact]
+    public void Ctor_Should_Throw_WhenDependenciesAreMissing()
+    {
+        // Act
+        Action noConfig = () => new StorefrontCheckoutUrlBuilder(null!, new KeyLocalizer());
+        Action noLocalizer = () => new StorefrontCheckoutUrlBuilder(
+            new ConfigurationBuilder().AddInMemoryCollection().Build(),
+            null!);
+
+        // Assert
+        noConfig.Should().Throw<ArgumentNullException>();
+        noLocalizer.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    ///     Ensures invalid stripe checkout base URL also raises not-configured error.
+    /// </summary>
+    [Fact]
+    public void BuildStripeCheckoutUrl_Should_Throw_WhenStripeBaseUrlIsInvalid()
+    {
+        // Arrange
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["StorefrontCheckout:StripeCheckoutBaseUrl"] = "://bad-url"
+            })
+            .Build();
+        var sut = new StorefrontCheckoutUrlBuilder(configuration, new KeyLocalizer());
+        var result = new StorefrontPaymentIntentResultDto
+        {
+            Provider = "Stripe",
+            OrderId = Guid.NewGuid(),
+            PaymentId = Guid.NewGuid(),
+            ProviderReference = "pi_ref"
+        };
+
+        // Act
+        Action act = () => sut.BuildStripeCheckoutUrl(result, "https://shop.example/return", "https://shop.example/cancel");
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("StorefrontStripeCheckoutBaseUrlNotConfigured");
+    }
+
     [Fact]
     public void BuildStripeCheckoutUrl_Should_Throw_WhenProviderIsNotStripe()
     {

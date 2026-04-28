@@ -39,7 +39,7 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var invitation = await _db.Set<BusinessInvitation>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
             if (invitation is null)
                 throw new InvalidOperationException(_localizer["InvitationNotFound"]);
 

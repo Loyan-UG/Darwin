@@ -16,6 +16,7 @@ namespace Darwin.Application.Inventory.Queries
         {
             return _db.Set<Warehouse>()
                 .AsNoTracking()
+                .Where(x => !x.IsDeleted)
                 .OrderByDescending(x => x.IsDefault)
                 .ThenBy(x => x.Name)
                 .Select(x => new WarehouseLookupItemDto
@@ -32,6 +33,8 @@ namespace Darwin.Application.Inventory.Queries
 
     public sealed class GetWarehousesPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetWarehousesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -40,8 +43,9 @@ namespace Darwin.Application.Inventory.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var warehousesQuery = _db.Set<Warehouse>().AsNoTracking().Where(x => x.BusinessId == businessId);
+            var warehousesQuery = _db.Set<Warehouse>().AsNoTracking().Where(x => x.BusinessId == businessId && !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
                 var term = query.Trim();
@@ -54,7 +58,7 @@ namespace Darwin.Application.Inventory.Queries
             warehousesQuery = filter switch
             {
                 WarehouseQueueFilter.Default => warehousesQuery.Where(x => x.IsDefault),
-                WarehouseQueueFilter.NoStockLevels => warehousesQuery.Where(x => !x.StockLevels.Any()),
+                WarehouseQueueFilter.NoStockLevels => warehousesQuery.Where(x => !x.StockLevels.Any(stockLevel => !stockLevel.IsDeleted)),
                 _ => warehousesQuery
             };
 
@@ -73,7 +77,7 @@ namespace Darwin.Application.Inventory.Queries
                     Description = x.Description,
                     Location = x.Location,
                     IsDefault = x.IsDefault,
-                    StockLevelCount = x.StockLevels.Count,
+                    StockLevelCount = x.StockLevels.Count(stockLevel => !stockLevel.IsDeleted),
                     RowVersion = x.RowVersion
                 })
                 .ToListAsync(ct)
@@ -86,13 +90,13 @@ namespace Darwin.Application.Inventory.Queries
         {
             var warehousesQuery = _db.Set<Warehouse>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             return new WarehouseOpsSummaryDto
             {
                 TotalCount = await warehousesQuery.CountAsync(ct).ConfigureAwait(false),
                 DefaultCount = await warehousesQuery.CountAsync(x => x.IsDefault, ct).ConfigureAwait(false),
-                NoStockLevelsCount = await warehousesQuery.CountAsync(x => !x.StockLevels.Any(), ct).ConfigureAwait(false)
+                NoStockLevelsCount = await warehousesQuery.CountAsync(x => !x.StockLevels.Any(stockLevel => !stockLevel.IsDeleted), ct).ConfigureAwait(false)
             };
         }
     }
@@ -107,7 +111,7 @@ namespace Darwin.Application.Inventory.Queries
         {
             return _db.Set<Warehouse>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new WarehouseEditDto
                 {
                     Id = x.Id,
@@ -124,6 +128,8 @@ namespace Darwin.Application.Inventory.Queries
 
     public sealed class GetSuppliersPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetSuppliersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -132,8 +138,9 @@ namespace Darwin.Application.Inventory.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var suppliersQuery = _db.Set<Supplier>().AsNoTracking().Where(x => x.BusinessId == businessId);
+            var suppliersQuery = _db.Set<Supplier>().AsNoTracking().Where(x => x.BusinessId == businessId && !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
                 var term = query.Trim();
@@ -147,7 +154,7 @@ namespace Darwin.Application.Inventory.Queries
             suppliersQuery = filter switch
             {
                 SupplierQueueFilter.MissingAddress => suppliersQuery.Where(x => x.Address == null || x.Address == string.Empty),
-                SupplierQueueFilter.HasPurchaseOrders => suppliersQuery.Where(x => x.PurchaseOrders.Any()),
+                SupplierQueueFilter.HasPurchaseOrders => suppliersQuery.Where(x => x.PurchaseOrders.Any(order => !order.IsDeleted)),
                 _ => suppliersQuery
             };
 
@@ -165,7 +172,7 @@ namespace Darwin.Application.Inventory.Queries
                     Email = x.Email,
                     Phone = x.Phone,
                     Address = x.Address,
-                    PurchaseOrderCount = x.PurchaseOrders.Count,
+                    PurchaseOrderCount = x.PurchaseOrders.Count(order => !order.IsDeleted),
                     RowVersion = x.RowVersion
                 })
                 .ToListAsync(ct)
@@ -178,13 +185,13 @@ namespace Darwin.Application.Inventory.Queries
         {
             var suppliersQuery = _db.Set<Supplier>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             return new SupplierOpsSummaryDto
             {
                 TotalCount = await suppliersQuery.CountAsync(ct).ConfigureAwait(false),
                 MissingAddressCount = await suppliersQuery.CountAsync(x => x.Address == null || x.Address == string.Empty, ct).ConfigureAwait(false),
-                HasPurchaseOrdersCount = await suppliersQuery.CountAsync(x => x.PurchaseOrders.Any(), ct).ConfigureAwait(false)
+                HasPurchaseOrdersCount = await suppliersQuery.CountAsync(x => x.PurchaseOrders.Any(order => !order.IsDeleted), ct).ConfigureAwait(false)
             };
         }
     }
@@ -199,7 +206,7 @@ namespace Darwin.Application.Inventory.Queries
         {
             return _db.Set<Supplier>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new SupplierEditDto
                 {
                     Id = x.Id,
@@ -217,6 +224,8 @@ namespace Darwin.Application.Inventory.Queries
 
     public sealed class GetStockLevelsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetStockLevelsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -225,12 +234,16 @@ namespace Darwin.Application.Inventory.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var stockLevelsQuery =
                 from stockLevel in _db.Set<StockLevel>().AsNoTracking()
                 join warehouse in _db.Set<Warehouse>().AsNoTracking() on stockLevel.WarehouseId equals warehouse.Id
                 join variant in _db.Set<ProductVariant>().AsNoTracking() on stockLevel.ProductVariantId equals variant.Id
-                where stockLevel.WarehouseId == warehouseId
+                where stockLevel.WarehouseId == warehouseId &&
+                      !stockLevel.IsDeleted &&
+                      !warehouse.IsDeleted &&
+                      !variant.IsDeleted
                 select new { stockLevel, warehouse, variant };
 
             if (!string.IsNullOrWhiteSpace(query))
@@ -286,7 +299,7 @@ namespace Darwin.Application.Inventory.Queries
         {
             return _db.Set<StockLevel>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new StockLevelEditDto
                 {
                     Id = x.Id,
@@ -306,6 +319,7 @@ namespace Darwin.Application.Inventory.Queries
     public sealed class GetStockTransfersPageHandler
     {
         private static readonly TimeSpan StaleInTransitAge = TimeSpan.FromDays(14);
+        private const int MaxPageSize = 200;
         private readonly IAppDbContext _db;
 
         public GetStockTransfersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -314,13 +328,17 @@ namespace Darwin.Application.Inventory.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var staleInTransitCutoffUtc = DateTime.UtcNow.Subtract(StaleInTransitAge);
             var stockTransfersQuery =
                 from transfer in _db.Set<StockTransfer>().AsNoTracking()
                 join fromWarehouse in _db.Set<Warehouse>().AsNoTracking() on transfer.FromWarehouseId equals fromWarehouse.Id
                 join toWarehouse in _db.Set<Warehouse>().AsNoTracking() on transfer.ToWarehouseId equals toWarehouse.Id
-                where transfer.FromWarehouseId == warehouseId || transfer.ToWarehouseId == warehouseId
+                where (transfer.FromWarehouseId == warehouseId || transfer.ToWarehouseId == warehouseId) &&
+                      !transfer.IsDeleted &&
+                      !fromWarehouse.IsDeleted &&
+                      !toWarehouse.IsDeleted
                 select new { transfer, fromWarehouse, toWarehouse };
 
             if (!string.IsNullOrWhiteSpace(query))
@@ -356,7 +374,7 @@ namespace Darwin.Application.Inventory.Queries
                     FromWarehouseName = x.fromWarehouse.Name,
                     ToWarehouseName = x.toWarehouse.Name,
                     Status = x.transfer.Status.ToString(),
-                    LineCount = x.transfer.Lines.Count,
+                    LineCount = x.transfer.Lines.Count(line => !line.IsDeleted),
                     CreatedAtUtc = x.transfer.CreatedAtUtc,
                     IsStale = x.transfer.Status == Domain.Enums.TransferStatus.InTransit && x.transfer.CreatedAtUtc <= staleInTransitCutoffUtc,
                     RowVersion = x.transfer.RowVersion
@@ -372,7 +390,7 @@ namespace Darwin.Application.Inventory.Queries
             var staleInTransitCutoffUtc = DateTime.UtcNow.Subtract(StaleInTransitAge);
             var transfersQuery = _db.Set<StockTransfer>()
                 .AsNoTracking()
-                .Where(x => x.FromWarehouseId == warehouseId || x.ToWarehouseId == warehouseId);
+                .Where(x => !x.IsDeleted && (x.FromWarehouseId == warehouseId || x.ToWarehouseId == warehouseId));
 
             return new StockTransferOpsSummaryDto
             {
@@ -397,7 +415,7 @@ namespace Darwin.Application.Inventory.Queries
             var transfer = await _db.Set<StockTransfer>()
                 .AsNoTracking()
                 .Include(x => x.Lines)
-                .FirstOrDefaultAsync(x => x.Id == id, ct)
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (transfer is null)
@@ -413,6 +431,7 @@ namespace Darwin.Application.Inventory.Queries
                 ToWarehouseId = transfer.ToWarehouseId,
                 Status = transfer.Status.ToString(),
                 Lines = transfer.Lines
+                    .Where(x => !x.IsDeleted)
                     .OrderBy(x => x.CreatedAtUtc)
                     .Select(x => new StockTransferLineDto
                     {
@@ -427,6 +446,7 @@ namespace Darwin.Application.Inventory.Queries
     public sealed class GetPurchaseOrdersPageHandler
     {
         private static readonly TimeSpan StaleIssuedAge = TimeSpan.FromDays(14);
+        private const int MaxPageSize = 200;
         private readonly IAppDbContext _db;
 
         public GetPurchaseOrdersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -435,12 +455,15 @@ namespace Darwin.Application.Inventory.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var staleIssuedCutoffUtc = DateTime.UtcNow.Subtract(StaleIssuedAge);
             var purchaseOrdersQuery =
                 from order in _db.Set<PurchaseOrder>().AsNoTracking()
                 join supplier in _db.Set<Supplier>().AsNoTracking() on order.SupplierId equals supplier.Id
-                where order.BusinessId == businessId
+                where order.BusinessId == businessId &&
+                      !order.IsDeleted &&
+                      !supplier.IsDeleted
                 select new { order, supplier };
 
             if (!string.IsNullOrWhiteSpace(query))
@@ -477,7 +500,7 @@ namespace Darwin.Application.Inventory.Queries
                     SupplierName = x.supplier.Name,
                     Status = x.order.Status.ToString(),
                     OrderedAtUtc = x.order.OrderedAtUtc,
-                    LineCount = x.order.Lines.Count,
+                    LineCount = x.order.Lines.Count(line => !line.IsDeleted),
                     IsStale = x.order.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.order.OrderedAtUtc <= staleIssuedCutoffUtc,
                     RowVersion = x.order.RowVersion
                 })
@@ -492,7 +515,7 @@ namespace Darwin.Application.Inventory.Queries
             var staleIssuedCutoffUtc = DateTime.UtcNow.Subtract(StaleIssuedAge);
             var ordersQuery = _db.Set<PurchaseOrder>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             return new PurchaseOrderOpsSummaryDto
             {
@@ -517,7 +540,7 @@ namespace Darwin.Application.Inventory.Queries
             var order = await _db.Set<PurchaseOrder>()
                 .AsNoTracking()
                 .Include(x => x.Lines)
-                .FirstOrDefaultAsync(x => x.Id == id, ct)
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (order is null)
@@ -535,6 +558,7 @@ namespace Darwin.Application.Inventory.Queries
                 OrderedAtUtc = order.OrderedAtUtc,
                 Status = order.Status.ToString(),
                 Lines = order.Lines
+                    .Where(x => !x.IsDeleted)
                     .OrderBy(x => x.CreatedAtUtc)
                     .Select(x => new PurchaseOrderLineDto
                     {

@@ -37,5 +37,10 @@ namespace Darwin.Contracts.Businesses
         /// Optional ISO country code filter (e.g. "DE").
         /// </summary>
         public string? CountryCode { get; set; }
+
+        /// <summary>
+        /// Optional requested culture for localized public business map text.
+        /// </summary>
+        public string? Culture { get; set; }
     }
 }

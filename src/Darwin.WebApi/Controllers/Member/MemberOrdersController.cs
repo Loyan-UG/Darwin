@@ -6,6 +6,7 @@ using Darwin.Application.Orders.Queries;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Orders;
 using Darwin.Domain.Enums;
+using Darwin.WebApi.Controllers.Businesses;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -89,14 +90,15 @@ public sealed class MemberOrdersController : ApiControllerBase
     [HttpGet("/api/v1/orders/{id:guid}")]
     [ProducesResponseType(typeof(MemberOrderDetail), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetMyOrderAsync(Guid id, CancellationToken ct = default)
+    public async Task<IActionResult> GetMyOrderAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
-        var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);
+        var dto = await _getMyOrderForViewHandler.HandleAsync(id, normalizedCulture, ct).ConfigureAwait(false);
         if (dto is null)
         {
             return NotFoundProblem(_validationLocalizer["OrderNotFound"]);
@@ -113,14 +115,15 @@ public sealed class MemberOrdersController : ApiControllerBase
     [ProducesResponseType(typeof(CreateStorefrontPaymentIntentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromBody] CreateStorefrontPaymentIntentRequest? request, CancellationToken ct = default)
+    public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromQuery] string? culture = null, [FromBody] CreateStorefrontPaymentIntentRequest? request = null, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
-        var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);
+        var dto = await _getMyOrderForViewHandler.HandleAsync(id, normalizedCulture, ct).ConfigureAwait(false);
         if (dto is null)
         {
             return NotFoundProblem(_validationLocalizer["OrderNotFound"]);
@@ -176,21 +179,22 @@ public sealed class MemberOrdersController : ApiControllerBase
     [Produces("text/plain")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DownloadDocumentAsync(Guid id, CancellationToken ct = default)
+    public async Task<IActionResult> DownloadDocumentAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
-        var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);
+        var dto = await _getMyOrderForViewHandler.HandleAsync(id, normalizedCulture, ct).ConfigureAwait(false);
         if (dto is null)
         {
             return NotFoundProblem(_validationLocalizer["OrderNotFound"]);
         }
 
         var fileName = $"order-{SanitizeFileToken(dto.OrderNumber)}.txt";
-        var bytes = Encoding.UTF8.GetBytes(RenderOrderDocument(dto));
+        var bytes = Encoding.UTF8.GetBytes(RenderOrderDocument(dto, normalizedCulture));
         return File(bytes, "text/plain; charset=utf-8", fileName);
     }
 
@@ -306,11 +310,11 @@ public sealed class MemberOrdersController : ApiControllerBase
         return string.IsNullOrWhiteSpace(sanitized) ? "order" : sanitized;
     }
 
-    private static string RenderOrderDocument(MemberOrderDetailDto dto)
+    private static string RenderOrderDocument(MemberOrderDetailDto dto, string? culture)
     {
         var builder = new StringBuilder();
         builder.AppendLine($"Order: {dto.OrderNumber}");
-        builder.AppendLine($"Status: {dto.Status}");
+        builder.AppendLine($"Status: {Darwin.Application.Orders.MemberOrderPresentationResolver.ResolveOrderStatus(dto.Status, culture)}");
         builder.AppendLine($"CreatedAtUtc: {dto.CreatedAtUtc:O}");
         builder.AppendLine($"Currency: {dto.Currency}");
         builder.AppendLine($"SubtotalNetMinor: {dto.SubtotalNetMinor}");
@@ -338,21 +342,21 @@ public sealed class MemberOrdersController : ApiControllerBase
         builder.AppendLine("Payments:");
         foreach (var payment in dto.Payments)
         {
-            builder.AppendLine($"- {payment.Provider} | {payment.Status} | {payment.Currency} {payment.AmountMinor} | CreatedAtUtc: {payment.CreatedAtUtc:O} | Ref: {payment.ProviderReference ?? "N/A"} | PaidAtUtc: {payment.PaidAtUtc:O}");
+            builder.AppendLine($"- {payment.Provider} | {Darwin.Application.Orders.MemberOrderPresentationResolver.ResolvePaymentStatus(payment.Status, culture)} | {payment.Currency} {payment.AmountMinor} | CreatedAtUtc: {payment.CreatedAtUtc:O} | Ref: {payment.ProviderReference ?? "N/A"} | PaidAtUtc: {payment.PaidAtUtc:O}");
         }
 
         builder.AppendLine();
         builder.AppendLine("Shipments:");
         foreach (var shipment in dto.Shipments)
         {
-            builder.AppendLine($"- {shipment.Carrier} | {shipment.Service} | {shipment.Status} | Tracking: {shipment.TrackingNumber ?? "N/A"} | TrackingUrl: {shipment.TrackingUrl ?? "N/A"} | ShippedAtUtc: {shipment.ShippedAtUtc:O} | DeliveredAtUtc: {shipment.DeliveredAtUtc:O}");
+            builder.AppendLine($"- {shipment.Carrier} | {shipment.Service} | {Darwin.Application.Orders.MemberOrderPresentationResolver.ResolveShipmentStatus(shipment.Status, culture)} | Tracking: {shipment.TrackingNumber ?? "N/A"} | TrackingUrl: {shipment.TrackingUrl ?? "N/A"} | ShippedAtUtc: {shipment.ShippedAtUtc:O} | DeliveredAtUtc: {shipment.DeliveredAtUtc:O}");
         }
 
         builder.AppendLine();
         builder.AppendLine("Invoices:");
         foreach (var invoice in dto.Invoices)
         {
-            builder.AppendLine($"- {invoice.Id:D} | {invoice.Status} | {invoice.Currency} {invoice.TotalGrossMinor} | DueDateUtc: {invoice.DueDateUtc:O} | PaidAtUtc: {invoice.PaidAtUtc:O}");
+            builder.AppendLine($"- {invoice.Id:D} | {Darwin.Application.Orders.MemberOrderPresentationResolver.ResolveInvoiceStatus(invoice.Status, culture)} | {invoice.Currency} {invoice.TotalGrossMinor} | DueDateUtc: {invoice.DueDateUtc:O} | PaidAtUtc: {invoice.PaidAtUtc:O}");
         }
 
         return builder.ToString();

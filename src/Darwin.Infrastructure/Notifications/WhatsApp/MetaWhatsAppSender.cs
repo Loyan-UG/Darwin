@@ -25,9 +25,9 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
         IHttpClientFactory httpClientFactory,
         ILogger<MetaWhatsAppSender> logger)
     {
-        _db = db;
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task SendTextAsync(
@@ -36,6 +36,9 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
         CancellationToken ct = default,
         ChannelDispatchContext? context = null)
     {
+        if (string.IsNullOrWhiteSpace(toPhoneE164)) throw new ArgumentNullException(nameof(toPhoneE164));
+        if (string.IsNullOrWhiteSpace(text)) throw new ArgumentNullException(nameof(text));
+
         var settings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
         if (settings is null || !settings.WhatsAppEnabled)
         {
@@ -66,42 +69,59 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
         };
         _db.Set<ChannelDispatchAudit>().Add(audit);
 
-        var client = _httpClientFactory.CreateClient(nameof(MetaWhatsAppSender));
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", settings.WhatsAppAccessToken.Trim());
-
-        var payload = new
+        try
         {
-            messaging_product = "whatsapp",
-            to = NormalizeRecipient(toPhoneE164),
-            type = "text",
-            text = new
+            var client = _httpClientFactory.CreateClient(nameof(MetaWhatsAppSender));
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"https://graph.facebook.com/v22.0/{settings.WhatsAppBusinessPhoneId.Trim()}/messages")
             {
-                preview_url = false,
-                body = text
+                Content = JsonContent.Create(new
+                {
+                    messaging_product = "whatsapp",
+                    to = NormalizeRecipient(toPhoneE164),
+                    type = "text",
+                    text = new
+                    {
+                        preview_url = false,
+                        body = text
+                    }
+                })
+            };
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", settings.WhatsAppAccessToken.Trim());
+
+            using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
+
+            var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                audit.Status = "Failed";
+                audit.CompletedAtUtc = DateTime.UtcNow;
+                audit.FailureMessage = BuildFailure(body);
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                _logger.LogError("WhatsApp send failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
+                throw new InvalidOperationException("WhatsApp send failed.");
             }
-        };
 
-        using var response = await client.PostAsJsonAsync(
-            $"https://graph.facebook.com/v22.0/{settings.WhatsAppBusinessPhoneId.Trim()}/messages",
-            payload,
-            ct);
-
-        var body = await response.Content.ReadAsStringAsync(ct);
-        if (!response.IsSuccessStatusCode)
+            audit.ProviderMessageId = ExtractProviderMessageId(body);
+            audit.Status = "Sent";
+            audit.CompletedAtUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (audit.Status == "Pending")
         {
             audit.Status = "Failed";
             audit.CompletedAtUtc = DateTime.UtcNow;
-            audit.FailureMessage = BuildFailure(body);
+            audit.FailureMessage = BuildFailure(ex.Message);
             await _db.SaveChangesAsync(ct);
-            _logger.LogError("WhatsApp send failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
-            throw new InvalidOperationException("WhatsApp send failed.");
+            _logger.LogError(ex, "WhatsApp send failed before receiving a provider response.");
+            throw;
         }
-
-        audit.ProviderMessageId = ExtractProviderMessageId(body);
-        audit.Status = "Sent";
-        audit.CompletedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
     }
 
     private static string NormalizeRecipient(string phoneE164)

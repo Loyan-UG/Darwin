@@ -73,5 +73,10 @@ namespace Darwin.Contracts.Businesses
         /// </summary>
         public int? RadiusMeters { get; init; }
 
+        /// <summary>
+        /// Optional requested culture for localized public business card text.
+        /// </summary>
+        public string? Culture { get; init; }
+
     }
 }

@@ -3,6 +3,7 @@ using Darwin.Infrastructure.Extensions;
 using Darwin.WebAdmin.Localization;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.DependencyInjection;
@@ -72,6 +73,7 @@ namespace Darwin.WebAdmin.Extensions
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseAdminTextOverrides();
             app.UseAuthentication();
             app.UseAuthorization();
 
@@ -92,6 +94,45 @@ namespace Darwin.WebAdmin.Extensions
             var defaultCulture = supportedCultures.FirstOrDefault(x => string.Equals(x.Name, configuredDefaultCulture, StringComparison.OrdinalIgnoreCase))?.Name
                                  ?? supportedCultures[0].Name;
             return (supportedCultures, defaultCulture);
+        }
+
+        private static void UseAdminTextOverrides(this WebApplication app)
+        {
+            app.Use(async (context, next) =>
+            {
+                var siteSettingCache = context.RequestServices.GetRequiredService<ISiteSettingCache>();
+                var settings = await siteSettingCache.GetAsync(context.RequestAborted).ConfigureAwait(false);
+                context.Items[AdminTextOverrideRequestContext.PlatformOverridesItemKey] =
+                    AdminTextOverrideCatalog.Parse(settings.AdminTextOverridesJson);
+
+                IFormCollection? form = null;
+                if (CanReadBusinessOverrideForm(context.Request))
+                {
+                    form = await context.Request.ReadFormAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+
+                var businessId = AdminTextOverrideRequestContext.TryResolveCurrentBusinessId(context, form);
+                if (businessId.HasValue)
+                {
+                    var businessSettingsCache = context.RequestServices.GetRequiredService<IBusinessEffectiveSettingsCache>();
+                    var businessSettings = await businessSettingsCache.GetAsync(businessId.Value, context.RequestAborted).ConfigureAwait(false);
+                    context.Items[AdminTextOverrideRequestContext.BusinessOverridesItemKey] =
+                        AdminTextOverrideCatalog.Parse(businessSettings?.AdminTextOverridesJson);
+                }
+                else
+                {
+                    context.Items[AdminTextOverrideRequestContext.BusinessOverridesItemKey] =
+                        AdminTextOverrideCatalog.Empty;
+                }
+
+                await next().ConfigureAwait(false);
+            });
+        }
+
+        private static bool CanReadBusinessOverrideForm(HttpRequest request)
+        {
+            return request.HasFormContentType &&
+                   request.ContentType?.StartsWith("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase) == true;
         }
 
         private static void UseWebAdminSecurityHeaders(this WebApplication app)

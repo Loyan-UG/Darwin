@@ -27,7 +27,7 @@ namespace Darwin.Application.CMS.Queries
         {
             var p = await _db.Set<Page>()
                 .Include(x => x.Translations)
-                .FirstOrDefaultAsync(x => x.Id == id, ct);
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
 
             if (p == null) return null;
 

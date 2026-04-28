@@ -36,12 +36,12 @@ namespace Darwin.Application.Catalog.Commands
             {
                 entity.Translations.Add(new CategoryTranslation
                 {
-                    Culture = t.Culture,
-                    Name = t.Name,
-                    Slug = t.Slug,
-                    Description = t.Description,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription
+                    Culture = t.Culture.Trim(),
+                    Name = t.Name.Trim(),
+                    Slug = t.Slug.Trim(),
+                    Description = t.Description?.Trim(),
+                    MetaTitle = t.MetaTitle?.Trim(),
+                    MetaDescription = t.MetaDescription?.Trim()
                 });
             }
 

@@ -84,8 +84,14 @@ public sealed class PublicCmsController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPageBySlugAsync([FromRoute] string slug, [FromQuery] string? culture, CancellationToken ct = default)
     {
+        var normalizedSlug = string.IsNullOrWhiteSpace(slug) ? null : slug.Trim();
+        if (normalizedSlug is null)
+        {
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
+        }
+
         var dto = await _getPublishedPageBySlugHandler
-            .HandleAsync(slug, string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim(), ct)
+            .HandleAsync(normalizedSlug, string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim(), ct)
             .ConfigureAwait(false);
 
         return dto is null
@@ -102,8 +108,14 @@ public sealed class PublicCmsController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMenuByNameAsync([FromRoute] string name, [FromQuery] string? culture, CancellationToken ct = default)
     {
+        var normalizedName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+        if (normalizedName is null)
+        {
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
+        }
+
         var dto = await _getPublicMenuByNameHandler
-            .HandleAsync(name, string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim(), ct)
+            .HandleAsync(normalizedName, string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim(), ct)
             .ConfigureAwait(false);
 
         return dto is null

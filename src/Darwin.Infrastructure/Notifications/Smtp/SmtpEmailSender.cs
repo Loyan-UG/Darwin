@@ -32,7 +32,8 @@ namespace Darwin.Infrastructure.Notifications.Smtp
             ILogger<SmtpEmailSender> logger,
             IAppDbContext db)
         {
-            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+            _options = (options ?? throw new ArgumentNullException(nameof(options))).Value
+                       ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _db = db ?? throw new ArgumentNullException(nameof(db));
         }
@@ -69,27 +70,27 @@ namespace Darwin.Infrastructure.Notifications.Smtp
             };
             _db.Set<EmailDispatchAudit>().Add(audit);
 
-            using var message = new MailMessage
-            {
-                From = new MailAddress(_options.FromAddress, _options.FromDisplayName),
-                Subject = subject ?? string.Empty,
-                Body = htmlBody ?? string.Empty,
-                IsBodyHtml = true
-            };
-            message.To.Add(new MailAddress(toEmail));
-
-            using var client = new SmtpClient(_options.Host, _options.Port)
-            {
-                EnableSsl = _options.EnableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false
-            };
-
-            if (!string.IsNullOrWhiteSpace(_options.Username))
-                client.Credentials = new NetworkCredential(_options.Username, _options.Password);
-
             try
             {
+                using var message = new MailMessage
+                {
+                    From = new MailAddress(_options.FromAddress, _options.FromDisplayName),
+                    Subject = subject ?? string.Empty,
+                    Body = htmlBody ?? string.Empty,
+                    IsBodyHtml = true
+                };
+                message.To.Add(new MailAddress(toEmail));
+
+                using var client = new SmtpClient(_options.Host, _options.Port)
+                {
+                    EnableSsl = _options.EnableSsl,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
+                };
+
+                if (!string.IsNullOrWhiteSpace(_options.Username))
+                    client.Credentials = new NetworkCredential(_options.Username, _options.Password);
+
                 await client.SendMailAsync(message);
                 audit.Status = "Sent";
                 audit.CompletedAtUtc = DateTime.UtcNow;

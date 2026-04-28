@@ -1,4 +1,3 @@
-﻿using AngleSharp.Dom;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.Settings;
@@ -39,7 +38,7 @@ namespace Darwin.Application.Settings.Commands
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
-            var s = await _db.Set<SiteSetting>().FirstOrDefaultAsync(ct);
+            var s = await _db.Set<SiteSetting>().FirstOrDefaultAsync(x => !x.IsDeleted, ct);
             if (s is null)
                 throw new ValidationException(_localizer["SiteSettingRowNotFound"]);
 

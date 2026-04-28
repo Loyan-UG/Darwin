@@ -8,6 +8,8 @@ namespace Darwin.Application.CRM.Queries
 {
     public sealed class GetOpportunitiesPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetOpportunitiesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -21,6 +23,7 @@ namespace Darwin.Application.CRM.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery =
                 from opportunity in _db.Set<Opportunity>().AsNoTracking()
@@ -29,6 +32,10 @@ namespace Darwin.Application.CRM.Queries
                 from user in users.DefaultIfEmpty()
                 join assignedUser in _db.Set<User>().AsNoTracking() on opportunity.AssignedToUserId equals (Guid?)assignedUser.Id into assignedUsers
                 from assignedUser in assignedUsers.DefaultIfEmpty()
+                where !opportunity.IsDeleted &&
+                      !customer.IsDeleted &&
+                      (user == null || !user.IsDeleted) &&
+                      (assignedUser == null || !assignedUser.IsDeleted)
                 select new { opportunity, customer, user, assignedUser };
 
             if (!string.IsNullOrWhiteSpace(query))
@@ -81,8 +88,8 @@ namespace Darwin.Application.CRM.Queries
                     AssignedToUserDisplayName = x.assignedUser == null
                         ? null
                         : (((x.assignedUser.FirstName ?? string.Empty) + " " + (x.assignedUser.LastName ?? string.Empty)).Trim()),
-                    ItemCount = x.opportunity.Items.Count,
-                    InteractionCount = x.opportunity.Interactions.Count,
+                    ItemCount = x.opportunity.Items.Count(item => !item.IsDeleted),
+                    InteractionCount = x.opportunity.Interactions.Count(interaction => !interaction.IsDeleted),
                     CreatedAtUtc = x.opportunity.CreatedAtUtc,
                     ModifiedAtUtc = x.opportunity.ModifiedAtUtc,
                     RowVersion = x.opportunity.RowVersion
@@ -105,7 +112,7 @@ namespace Darwin.Application.CRM.Queries
             var opportunity = await _db.Set<Opportunity>()
                 .AsNoTracking()
                 .Include(x => x.Items)
-                .FirstOrDefaultAsync(x => x.Id == id, ct)
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (opportunity is null)
@@ -117,7 +124,9 @@ namespace Darwin.Application.CRM.Queries
                     from customer in _db.Set<Customer>().AsNoTracking()
                     join user in _db.Set<User>().AsNoTracking() on customer.UserId equals (Guid?)user.Id into users
                     from user in users.DefaultIfEmpty()
-                    where customer.Id == opportunity.CustomerId
+                    where customer.Id == opportunity.CustomerId &&
+                          !customer.IsDeleted &&
+                          (user == null || !user.IsDeleted)
                     select customer.UserId.HasValue && user != null
                         ? (((user.FirstName ?? string.Empty) + " " + (user.LastName ?? string.Empty)).Trim())
                         : ((customer.FirstName + " " + customer.LastName).Trim()))
@@ -143,9 +152,10 @@ namespace Darwin.Application.CRM.Queries
                 ExpectedCloseDateUtc = opportunity.ExpectedCloseDateUtc,
                 AssignedToUserId = opportunity.AssignedToUserId,
                 InteractionCount = await _db.Set<Interaction>().AsNoTracking()
-                    .CountAsync(x => x.OpportunityId == opportunity.Id, ct)
+                    .CountAsync(x => x.OpportunityId == opportunity.Id && !x.IsDeleted, ct)
                     .ConfigureAwait(false),
                 Items = opportunity.Items
+                    .Where(x => !x.IsDeleted)
                     .OrderBy(x => x.CreatedAtUtc)
                     .Select(x => new OpportunityItemDto
                     {

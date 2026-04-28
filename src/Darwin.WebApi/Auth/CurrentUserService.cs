@@ -65,7 +65,9 @@ namespace Darwin.WebApi.Auth
                     ?? user.FindFirstValue("sub")
                     ?? user.FindFirstValue("uid");
 
-                if (!string.IsNullOrWhiteSpace(id) && Guid.TryParse(id, out var parsed))
+                if (!string.IsNullOrWhiteSpace(id) &&
+                    Guid.TryParse(id, out var parsed) &&
+                    parsed != Guid.Empty)
                 {
                     return parsed;
                 }

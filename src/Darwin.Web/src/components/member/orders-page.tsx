@@ -18,8 +18,13 @@ import {
   buildStorefrontOfferCards,
   buildStorefrontPageSpotlightCards,
 } from "@/features/storefront/storefront-campaigns";
-import { formatResource, getMemberResource } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { buildOrderPath } from "@/lib/entity-paths";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 
 type OrdersPageProps = {
@@ -43,6 +48,26 @@ type OrdersPageProps = {
 
 function isAttentionOrder(order: MemberOrderSummary) {
   return /(pending|processing|payment|review|hold|open)/i.test(order.status);
+}
+
+function localizeOrderStatus(status: string, culture: string) {
+  if (culture.toLowerCase().startsWith("en")) {
+    return status;
+  }
+
+  const labels: Record<string, string> = {
+    Created: "Erstellt",
+    Confirmed: "Bestaetigt",
+    Paid: "Bezahlt",
+    PartiallyShipped: "Teilweise versendet",
+    Shipped: "Versendet",
+    Delivered: "Zugestellt",
+    Cancelled: "Storniert",
+    Refunded: "Erstattet",
+    PartiallyRefunded: "Teilweise erstattet",
+    Completed: "Abgeschlossen",
+  };
+  return labels[status] ?? status;
 }
 
 function buildOrdersHref(
@@ -83,6 +108,13 @@ export function OrdersPage({
   storefrontCartStatus,
 }: OrdersPageProps) {
   const copy = getMemberResource(culture);
+  const statusLabel = resolveApiStatusLabel(status, copy) ?? status;
+  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const productsStatusLabel = resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
+  const storefrontCartStatusLabel =
+    resolveApiStatusLabel(storefrontCartStatus, copy) ?? storefrontCartStatus;
   const attentionOrders = orders.filter(isAttentionOrder);
   const primaryCurrency = orders[0]?.currency ?? "EUR";
   const attentionGrossMinor = attentionOrders.reduce(
@@ -96,6 +128,7 @@ export function OrdersPage({
       [
         order.orderNumber,
         order.status,
+        localizeOrderStatus(order.status, culture),
         order.id,
       ]
         .filter(Boolean)
@@ -200,7 +233,7 @@ export function OrdersPage({
           <StatusBanner
             tone="warning"
             title={copy.ordersWarningsTitle}
-            message={formatResource(copy.ordersWarningsMessage, { status })}
+            message={formatResource(copy.ordersWarningsMessage, { status: statusLabel })}
           />
         )}
 
@@ -214,7 +247,7 @@ export function OrdersPage({
               loadedCount: orders.length,
               currentPage,
               totalPages,
-              status,
+              status: statusLabel,
             })}
           </p>
         </div>
@@ -312,7 +345,7 @@ export function OrdersPage({
           <div className="mt-5 flex flex-wrap gap-3">
             {attentionOrders[0] ? (
               <Link
-                href={localizeHref(`/orders/${attentionOrders[0].id}`, culture)}
+            href={localizeHref(buildOrderPath(attentionOrders[0].id), culture)}
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
               >
                 {copy.ordersReadinessPrimaryCta}
@@ -337,7 +370,7 @@ export function OrdersPage({
               loadedCount: orders.length,
               currentPage,
               totalPages,
-              status,
+              status: statusLabel,
             }),
             href: buildOrdersHref(currentPage, { visibleQuery, visibleState }),
             ctaLabel: copy.accountCompositionJourneyCurrentCta,
@@ -351,7 +384,7 @@ export function OrdersPage({
                   total: formatMoney(attentionGrossMinor, primaryCurrency, culture),
                 })
               : copy.invoicesPortalNote,
-            href: attentionOrders[0] ? `/orders/${attentionOrders[0].id}` : "/invoices",
+    href: attentionOrders[0] ? buildOrderPath(attentionOrders[0].id) : "/invoices",
             ctaLabel: attentionOrders[0]
               ? copy.ordersReadinessPrimaryCta
               : copy.accountCompositionJourneyAddressesCta,
@@ -382,9 +415,9 @@ export function OrdersPage({
             culture={culture}
             title={copy.ordersStorefrontWindowTitle}
             message={formatResource(copy.ordersStorefrontWindowMessage, {
-              cmsStatus: cmsPagesStatus,
-              categoriesStatus,
-              productsStatus,
+              cmsStatus: cmsPagesStatusLabel,
+              categoriesStatus: categoriesStatusLabel,
+              productsStatus: productsStatusLabel,
               pageCount: cmsPages.length,
               categoryCount: categories.length,
               productCount: products.length,
@@ -393,13 +426,13 @@ export function OrdersPage({
             cmsCtaLabel={copy.ordersStorefrontCmsCta}
             cmsCards={cmsSpotlightCards}
             cmsEmptyMessage={formatResource(copy.ordersStorefrontCmsEmptyMessage, {
-              status: cmsPagesStatus,
+              status: cmsPagesStatusLabel,
             })}
             catalogTitle={copy.ordersStorefrontCatalogTitle}
             catalogCtaLabel={copy.ordersStorefrontCatalogCta}
             categoryCards={categorySpotlightCards}
             catalogEmptyMessage={formatResource(copy.ordersStorefrontCatalogEmptyMessage, {
-              status: categoriesStatus,
+              status: categoriesStatusLabel,
             })}
             productTitle={copy.ordersStorefrontProductTitle}
             productCtaLabel={copy.ordersStorefrontProductCta}
@@ -412,7 +445,7 @@ export function OrdersPage({
             }
             productCards={storefrontOfferCards}
             productEmptyMessage={formatResource(copy.ordersStorefrontProductEmptyMessage, {
-              status: productsStatus,
+              status: productsStatusLabel,
             })}
             promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
             promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
@@ -421,11 +454,11 @@ export function OrdersPage({
             cartSectionMessage={
               storefrontCart && storefrontCart.items.length > 0
                 ? formatResource(copy.ordersStorefrontCartMessage, {
-                    status: storefrontCartStatus,
+                    status: storefrontCartStatusLabel,
                     count: storefrontCart.items.length,
                   })
                 : formatResource(copy.ordersStorefrontCartEmptyMessage, {
-                    status: storefrontCartStatus,
+                    status: storefrontCartStatusLabel,
                   })
             }
             cartSectionCartCtaLabel={copy.ordersStorefrontCartCta}
@@ -442,10 +475,10 @@ export function OrdersPage({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                    {order.status}
+                    {localizeOrderStatus(order.status, culture)}
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
-                    <Link href={localizeHref(`/orders/${order.id}`, culture)} className="transition hover:text-[var(--color-brand)]">
+                <Link href={localizeHref(buildOrderPath(order.id), culture)} className="transition hover:text-[var(--color-brand)]">
                       {order.orderNumber}
                     </Link>
                   </h2>
@@ -458,7 +491,7 @@ export function OrdersPage({
                     {formatMoney(order.grandTotalGrossMinor, order.currency, culture)}
                   </p>
                   <Link
-                    href={localizeHref(`/orders/${order.id}`, culture)}
+                    href={localizeHref(buildOrderPath(order.id), culture)}
                     className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.openOrderCta}

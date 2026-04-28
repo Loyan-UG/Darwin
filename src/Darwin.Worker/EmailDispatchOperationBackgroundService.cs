@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Infrastructure.Notifications.Smtp;
 using Microsoft.EntityFrameworkCore;
@@ -18,9 +19,9 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
         IOptions<EmailDispatchOperationWorkerOptions> options,
         ILogger<EmailDispatchOperationBackgroundService> logger)
     {
-        _scopeFactory = scopeFactory;
-        _options = options;
-        _logger = logger;
+        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -59,6 +60,7 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
 
         var items = await db.Set<EmailDispatchOperation>()
             .Where(x => !x.IsDeleted)
+            .Where(x => !x.BusinessId.HasValue || db.Set<Business>().Any(b => b.Id == x.BusinessId.Value && !b.IsDeleted))
             .Where(x => x.Status == "Pending" || x.Status == "Failed")
             .Where(x => x.AttemptCount < options.MaxAttempts)
             .Where(x => !x.LastAttemptAtUtc.HasValue || x.LastAttemptAtUtc <= retryCutoffUtc)
@@ -83,7 +85,7 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
             catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
             {
                 item.Status = "Failed";
-                item.FailureReason = ex.Message.Length > 1024 ? ex.Message[..1024] : ex.Message;
+                item.FailureReason = WorkerFailureText.Truncate(ex.Message);
                 _logger.LogWarning(ex, "Email dispatch operation {OperationId} failed.", item.Id);
             }
 

@@ -26,7 +26,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
         public CmsSeedSection(ILogger<CmsSeedSection> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -69,6 +69,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 {
                     asset.Url = targetUrl;
                 }
+            }
+
+            foreach (var asset in existingAssets)
+            {
+                asset.Alt = NormalizeCmsSeedText(asset.Alt);
+                asset.Title = string.IsNullOrWhiteSpace(asset.Title)
+                    ? asset.Title
+                    : NormalizeCmsSeedText(asset.Title);
             }
 
             if (existingAssets.Count > 0)
@@ -126,6 +134,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Role = "Collection"
                 }
             };
+
+            foreach (var asset in assets)
+            {
+                asset.Alt = NormalizeCmsSeedText(asset.Alt);
+                asset.Title = string.IsNullOrWhiteSpace(asset.Title)
+                    ? asset.Title
+                    : NormalizeCmsSeedText(asset.Title);
+            }
 
             db.MediaAssets.AddRange(assets);
             await db.SaveChangesAsync(ct);
@@ -369,7 +385,74 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 || contentHtml.Contains("Replace this", StringComparison.OrdinalIgnoreCase)
                 || contentHtml.Contains("Musterseite", StringComparison.OrdinalIgnoreCase)
                 || contentHtml.Contains("Beispielseite", StringComparison.OrdinalIgnoreCase)
-                || contentHtml.Contains("Platzhalter", StringComparison.OrdinalIgnoreCase);
+                || contentHtml.Contains("Platzhalter", StringComparison.OrdinalIgnoreCase)
+                || contentHtml.Contains("Ã", StringComparison.OrdinalIgnoreCase)
+                || contentHtml.Contains("Â", StringComparison.OrdinalIgnoreCase)
+                || contentHtml.Contains("â", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsThinStarterCmsContent(string? contentHtml)
+        {
+            if (string.IsNullOrWhiteSpace(contentHtml))
+            {
+                return true;
+            }
+
+            return contentHtml.Length < 360 && !contentHtml.Contains("<h2", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeCmsSeedText(string value)
+        {
+            return value
+                .Replace("â€“", "-", StringComparison.Ordinal)
+                .Replace("Â§", "Section ", StringComparison.Ordinal)
+                .Replace("Ã¤", "ae", StringComparison.Ordinal)
+                .Replace("Ã¶", "oe", StringComparison.Ordinal)
+                .Replace("Ã¼", "ue", StringComparison.Ordinal)
+                .Replace("Ã„", "Ae", StringComparison.Ordinal)
+                .Replace("Ã–", "Oe", StringComparison.Ordinal)
+                .Replace("Ãœ", "Ue", StringComparison.Ordinal)
+                .Replace("ÃŸ", "ss", StringComparison.Ordinal)
+                .Replace("Ã©", "e", StringComparison.Ordinal)
+                .Replace("Â", string.Empty, StringComparison.Ordinal)
+                .Replace("â", "-", StringComparison.Ordinal);
+        }
+
+        private static string BuildCmsMetaDescription(string title, bool english)
+        {
+            return english
+                ? $"{title} for Darwin customers with practical guidance, service context, and storefront information."
+                : $"{title} fuer Darwin Kunden mit praktischen Hinweisen, Servicekontext und Storefront-Informationen.";
+        }
+
+        private static string BuildExpandedCmsContent(string title, string html, bool english)
+        {
+            var normalizedHtml = NormalizeCmsSeedText(html);
+            if (!IsThinStarterCmsContent(normalizedHtml))
+            {
+                return normalizedHtml;
+            }
+
+            if (english)
+            {
+                return $@"<h1>{title}</h1>
+<p>This page gives Darwin customers a practical overview of the topic and connects the storefront, account area, order process and service channels.</p>
+<h2>What customers can expect</h2>
+<p>Customers find clear guidance, relevant next steps and the most important operational details in one place. The content is intended for browsing, search visibility and support conversations.</p>
+<h2>Storefront context</h2>
+<p>The information complements catalog browsing, checkout, account management and after-sales workflows so the public website can show useful content in English without falling back to another language.</p>
+<h2>Next steps</h2>
+<p>Use the related catalog, account or service links to continue the journey. The content team can later replace this seed copy with production-specific policies, contact paths and campaign messaging.</p>";
+            }
+
+            return $@"<h1>{title}</h1>
+<p>Diese Seite gibt Darwin Kunden einen praktischen Ueberblick zum Thema und verbindet Storefront, Kundenkonto, Bestellprozess und Servicekanaele.</p>
+<h2>Was Kunden erwarten koennen</h2>
+<p>Kunden finden klare Hinweise, relevante naechste Schritte und die wichtigsten operativen Details an einem Ort. Der Inhalt ist fuer Browsing, Suchsichtbarkeit und Supportgespraeche geeignet.</p>
+<h2>Storefront-Kontext</h2>
+<p>Die Informationen ergaenzen Katalog, Checkout, Kontoverwaltung und After-Sales-Prozesse, damit die oeffentliche Website hilfreiche deutsche Inhalte ohne leere Platzhalter anzeigen kann.</p>
+<h2>Naechste Schritte</h2>
+<p>Nutzen Sie die passenden Katalog-, Konto- oder Service-Links, um die Customer Journey fortzusetzen. Das Content-Team kann diesen Seed-Text spaeter durch produktive Richtlinien und Kampagnen ersetzen.</p>";
         }
         /// <summary>
         /// Seeds at least 20 CMS pages with de-DE translations.
@@ -573,6 +656,19 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var publishStartUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             foreach (var p in pages)
             {
+                var defaultTitle = NormalizeCmsSeedText(p.Title);
+                var defaultHtml = BuildExpandedCmsContent(defaultTitle, p.Html, english: false);
+                var defaultMetaDescription = BuildCmsMetaDescription(defaultTitle, english: false);
+                var englishTitle = !string.IsNullOrWhiteSpace(p.EnTitle)
+                    ? NormalizeCmsSeedText(p.EnTitle)
+                    : null;
+                var englishHtml = !string.IsNullOrWhiteSpace(p.EnHtml) && !string.IsNullOrWhiteSpace(englishTitle)
+                    ? BuildExpandedCmsContent(englishTitle, p.EnHtml, english: true)
+                    : null;
+                var englishMetaDescription = englishTitle is null
+                    ? null
+                    : BuildCmsMetaDescription(englishTitle, english: true);
+
                 var page = await db.Pages
                     .Include(x => x.Translations)
                     .FirstOrDefaultAsync(
@@ -586,22 +682,30 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     db.Pages.Add(page);
                 }
 
-                page.Title = string.IsNullOrWhiteSpace(page.Title) ? p.Title : page.Title;
+                page.Title = string.IsNullOrWhiteSpace(page.Title) ? defaultTitle : NormalizeCmsSeedText(page.Title);
                 page.Slug = string.IsNullOrWhiteSpace(page.Slug) ? p.Slug : page.Slug;
                 if (ShouldRefreshStarterPageContent(p.Slug, page.ContentHtml)
+                    || IsThinStarterCmsContent(page.ContentHtml)
                     || (p.Slug == "impressum" && page.ContentHtml == oldImpressumHtml)
                     || (p.Slug == "datenschutz" && page.ContentHtml == oldDatenschutzHtml)
                     || (p.Slug == "agb" && page.ContentHtml == oldAgbHtml)
                     || (p.Slug == "kontakt" && page.ContentHtml == oldKontaktHtml)
                     || (p.Slug == "widerruf" && page.ContentHtml == oldWiderrufHtml))
                 {
-                    page.ContentHtml = p.Html;
+                    page.ContentHtml = defaultHtml;
+                }
+                else
+                {
+                    page.ContentHtml = NormalizeCmsSeedText(page.ContentHtml);
                 }
 
-                page.MetaTitle = string.IsNullOrWhiteSpace(page.MetaTitle) ? p.Title : page.MetaTitle;
+                page.MetaTitle = string.IsNullOrWhiteSpace(page.MetaTitle) ? defaultTitle : NormalizeCmsSeedText(page.MetaTitle);
                 page.MetaDescription = string.IsNullOrWhiteSpace(page.MetaDescription)
-                    ? $"{p.Title} – Informationen & Details."
-                    : page.MetaDescription;
+                    ? defaultMetaDescription
+                    : NormalizeCmsSeedText(page.MetaDescription);
+                page.MetaDescription = ShouldRefreshStarterPageContent(p.Slug, page.MetaDescription)
+                    ? defaultMetaDescription
+                    : NormalizeCmsSeedText(page.MetaDescription);
                 page.IsPublished = true;
                 page.Status = PageStatus.Published;
                 page.PublishStartUtc ??= publishStartUtc;
@@ -613,24 +717,33 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     page.Translations.Add(translation);
                 }
 
-                translation.Title = string.IsNullOrWhiteSpace(translation.Title) ? p.Title : translation.Title;
+                translation.Title = string.IsNullOrWhiteSpace(translation.Title) ? defaultTitle : NormalizeCmsSeedText(translation.Title);
                 translation.Slug = string.IsNullOrWhiteSpace(translation.Slug) ? p.Slug : translation.Slug;
                 if (ShouldRefreshStarterPageContent(p.Slug, translation.ContentHtml)
+                    || IsThinStarterCmsContent(translation.ContentHtml)
                     || (p.Slug == "impressum" && translation.ContentHtml == oldImpressumHtml)
                     || (p.Slug == "datenschutz" && translation.ContentHtml == oldDatenschutzHtml)
                     || (p.Slug == "agb" && translation.ContentHtml == oldAgbHtml)
                     || (p.Slug == "kontakt" && translation.ContentHtml == oldKontaktHtml)
                     || (p.Slug == "widerruf" && translation.ContentHtml == oldWiderrufHtml))
                 {
-                    translation.ContentHtml = p.Html;
+                    translation.ContentHtml = defaultHtml;
+                }
+                else
+                {
+                    translation.ContentHtml = NormalizeCmsSeedText(translation.ContentHtml);
                 }
 
-                translation.MetaTitle = string.IsNullOrWhiteSpace(translation.MetaTitle) ? p.Title : translation.MetaTitle;
+                translation.MetaTitle = string.IsNullOrWhiteSpace(translation.MetaTitle) ? defaultTitle : NormalizeCmsSeedText(translation.MetaTitle);
                 translation.MetaDescription = string.IsNullOrWhiteSpace(translation.MetaDescription)
-                    ? $"{p.Title} – Informationen & Details."
-                    : translation.MetaDescription;
+                    ? defaultMetaDescription
+                    : NormalizeCmsSeedText(translation.MetaDescription);
 
-                if (!string.IsNullOrWhiteSpace(p.EnTitle) && !string.IsNullOrWhiteSpace(p.EnHtml))
+                translation.MetaDescription = ShouldRefreshStarterPageContent(p.Slug, translation.MetaDescription)
+                    ? defaultMetaDescription
+                    : NormalizeCmsSeedText(translation.MetaDescription);
+
+                if (!string.IsNullOrWhiteSpace(englishTitle) && !string.IsNullOrWhiteSpace(englishHtml))
                 {
                     var englishTranslation = page.Translations.FirstOrDefault(x => x.Culture == "en-US");
                     if (englishTranslation == null)
@@ -640,22 +753,31 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     }
 
                     englishTranslation.Title = string.IsNullOrWhiteSpace(englishTranslation.Title)
-                        ? p.EnTitle
-                        : englishTranslation.Title;
+                        ? englishTitle
+                        : NormalizeCmsSeedText(englishTranslation.Title);
                     englishTranslation.Slug = string.IsNullOrWhiteSpace(englishTranslation.Slug) || englishTranslation.Slug == p.Slug
                         ? (p.EnSlug ?? p.Slug)
                         : englishTranslation.Slug;
-                    if (ShouldRefreshStarterPageContent(p.Slug, englishTranslation.ContentHtml))
+                    if (ShouldRefreshStarterPageContent(p.Slug, englishTranslation.ContentHtml)
+                        || IsThinStarterCmsContent(englishTranslation.ContentHtml))
                     {
-                        englishTranslation.ContentHtml = p.EnHtml;
+                        englishTranslation.ContentHtml = englishHtml;
+                    }
+                    else
+                    {
+                        englishTranslation.ContentHtml = NormalizeCmsSeedText(englishTranslation.ContentHtml);
                     }
 
                     englishTranslation.MetaTitle = string.IsNullOrWhiteSpace(englishTranslation.MetaTitle)
-                        ? p.EnTitle
-                        : englishTranslation.MetaTitle;
+                        ? englishTitle
+                        : NormalizeCmsSeedText(englishTranslation.MetaTitle);
                     englishTranslation.MetaDescription = string.IsNullOrWhiteSpace(englishTranslation.MetaDescription)
-                        ? $"{p.EnTitle} – information and guidance."
-                        : englishTranslation.MetaDescription;
+                        ? englishMetaDescription!
+                        : NormalizeCmsSeedText(englishTranslation.MetaDescription);
+
+                    englishTranslation.MetaDescription = ShouldRefreshStarterPageContent(p.Slug, englishTranslation.MetaDescription)
+                        ? englishMetaDescription!
+                        : NormalizeCmsSeedText(englishTranslation.MetaDescription!);
                 }
             }
 

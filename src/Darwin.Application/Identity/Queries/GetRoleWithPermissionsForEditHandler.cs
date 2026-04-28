@@ -40,10 +40,11 @@ namespace Darwin.Application.Identity.Queries
             if (role is null)
                 return Result<RolePermissionsEditDto>.Fail(_localizer["RoleNotFound"]);
 
-            var currentPermIds = await _db.Set<RolePermission>()
-                .AsNoTracking()
-                .Where(rp => rp.RoleId == roleId && !rp.IsDeleted)
-                .Select(rp => rp.PermissionId)
+            var currentPermIds = await (
+                    from rolePermission in _db.Set<RolePermission>().AsNoTracking()
+                    join permission in _db.Set<Permission>().AsNoTracking() on rolePermission.PermissionId equals permission.Id
+                    where rolePermission.RoleId == roleId && !rolePermission.IsDeleted && !permission.IsDeleted
+                    select rolePermission.PermissionId)
                 .ToListAsync(ct);
 
             var allPerms = await _db.Set<Permission>()

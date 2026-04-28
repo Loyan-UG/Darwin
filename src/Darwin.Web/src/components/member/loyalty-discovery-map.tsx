@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { BusinessSummary } from "@/features/businesses/types";
+import { buildLoyaltyBusinessPath } from "@/lib/entity-paths";
 import { formatResource, getMemberResource } from "@/localization";
 import { localizeHref } from "@/lib/locale-routing";
 
@@ -82,7 +83,7 @@ export function LoyaltyDiscoveryMap({
         {positionedBusinesses.map(({ business, left, top }) => (
           <Link
             key={business.id}
-            href={localizeHref(`/loyalty/${business.id}`, culture)}
+                href={localizeHref(buildLoyaltyBusinessPath(business.id), culture)}
             className="absolute z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2"
             style={{
               left: `${Math.max(10, Math.min(90, left))}%`,
@@ -110,7 +111,7 @@ export function LoyaltyDiscoveryMap({
           {positionedBusinesses.slice(0, 6).map(({ business }) => (
             <Link
               key={business.id}
-              href={localizeHref(`/loyalty/${business.id}`, culture)}
+              href={localizeHref(buildLoyaltyBusinessPath(business.id), culture)}
               className="rounded-[1.25rem] bg-white/80 px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)] transition hover:bg-white"
             >
               <p className="font-semibold text-[var(--color-text-primary)]">

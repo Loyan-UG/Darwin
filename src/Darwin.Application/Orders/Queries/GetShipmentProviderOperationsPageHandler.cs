@@ -29,18 +29,19 @@ namespace Darwin.Application.Orders.Queries
             var now = DateTime.UtcNow;
             var staleBeforeUtc = now.Subtract(StalePendingThreshold);
             var baseQuery = _db.Set<ShipmentProviderOperation>().AsNoTracking();
+            var activeQuery = baseQuery.Where(x => !x.IsDeleted);
 
             var summary = new ShipmentProviderOperationSummaryDto
             {
-                TotalCount = await baseQuery.CountAsync(ct).ConfigureAwait(false),
-                PendingCount = await baseQuery.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
-                FailedCount = await baseQuery.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
-                ProcessedCount = await baseQuery.CountAsync(x => x.Status == "Processed", ct).ConfigureAwait(false),
-                StalePendingCount = await baseQuery.CountAsync(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
+                TotalCount = await activeQuery.CountAsync(ct).ConfigureAwait(false),
+                PendingCount = await activeQuery.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
+                FailedCount = await activeQuery.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
+                ProcessedCount = await activeQuery.CountAsync(x => x.Status == "Processed", ct).ConfigureAwait(false),
+                StalePendingCount = await activeQuery.CountAsync(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
                 CancelledCount = await baseQuery.CountAsync(x => x.IsDeleted, ct).ConfigureAwait(false)
             };
 
-            var providers = await baseQuery
+            var providers = await activeQuery
                 .Select(x => x.Provider)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct()
@@ -48,7 +49,7 @@ namespace Darwin.Application.Orders.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            var operationTypes = await baseQuery
+            var operationTypes = await activeQuery
                 .Select(x => x.OperationType)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct()
@@ -56,7 +57,7 @@ namespace Darwin.Application.Orders.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            var query = baseQuery;
+            var query = activeQuery;
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
@@ -66,9 +67,10 @@ namespace Darwin.Application.Orders.Queries
                     x.OperationType.Contains(q) ||
                     (x.FailureReason != null && x.FailureReason.Contains(q)) ||
                     _db.Set<Shipment>().Any(s => s.Id == x.ShipmentId &&
+                        !s.IsDeleted &&
                         ((s.TrackingNumber != null && s.TrackingNumber.Contains(q)) ||
                          (s.ProviderShipmentReference != null && s.ProviderShipmentReference.Contains(q)) ||
-                         _db.Set<Order>().Any(o => o.Id == s.OrderId && o.OrderNumber.Contains(q)))));
+                         _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && o.OrderNumber.Contains(q)))));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))
@@ -114,7 +116,7 @@ namespace Darwin.Application.Orders.Queries
                 ? new List<Shipment>()
                 : await _db.Set<Shipment>()
                     .AsNoTracking()
-                    .Where(x => shipmentIds.Contains(x.Id))
+                    .Where(x => shipmentIds.Contains(x.Id) && !x.IsDeleted)
                     .ToListAsync(ct)
                     .ConfigureAwait(false);
             var shipmentMap = shipments.ToDictionary(x => x.Id);
@@ -123,7 +125,7 @@ namespace Darwin.Application.Orders.Queries
                 ? new Dictionary<Guid, string>()
                 : await _db.Set<Order>()
                     .AsNoTracking()
-                    .Where(x => orderIds.Contains(x.Id))
+                    .Where(x => orderIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct)
                     .ConfigureAwait(false);
 

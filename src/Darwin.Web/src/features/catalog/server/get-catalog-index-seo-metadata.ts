@@ -5,6 +5,7 @@ import {
   readCatalogVisibleSort,
   readCatalogVisibleState,
 } from "@/features/catalog/discovery";
+import { getPublicCategories } from "@/features/catalog/api/public-catalog";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { catalogIndexRouteObservationContext } from "@/lib/route-observation-context";
 import { buildSeoMetadata, buildStablePublicLanguageAlternates } from "@/lib/seo";
@@ -69,6 +70,33 @@ function buildCatalogPath(
   });
 }
 
+async function getCategorySeoCopy(culture: string, category?: string) {
+  const slug = category?.trim();
+  if (!slug) {
+    return null;
+  }
+
+  const categoriesResult = await getPublicCategories(culture);
+  if (categoriesResult.status !== "ok" || !categoriesResult.data) {
+    return null;
+  }
+
+  const activeCategory = categoriesResult.data.items.find(
+    (item) => item.slug === slug,
+  );
+  if (!activeCategory) {
+    return null;
+  }
+
+  return {
+    title: activeCategory.metaTitle?.trim() || activeCategory.name,
+    description:
+      activeCategory.metaDescription?.trim() ||
+      activeCategory.description?.trim() ||
+      null,
+  };
+}
+
 export const getCatalogIndexSeoMetadata =
   createCachedObservedSeoMetadataLoader<CatalogIndexSeoArgs>({
   area: "catalog-seo",
@@ -121,7 +149,6 @@ export const getCatalogIndexSeoMetadata =
       normalizedSavingsBand,
     );
     const noIndex =
-      Boolean(category) ||
       page > 1 ||
       Boolean(search) ||
       Boolean(visibleQuery) ||
@@ -132,12 +159,13 @@ export const getCatalogIndexSeoMetadata =
     const languageAlternates = !noIndex
       ? buildStablePublicLanguageAlternates(canonicalPath)
       : undefined;
+    const categorySeoCopy = await getCategorySeoCopy(culture, category);
 
     return {
       metadata: buildSeoMetadata({
         culture,
-        title: copy.catalogMetaTitle,
-        description: copy.catalogMetaDescription,
+        title: categorySeoCopy?.title ?? copy.catalogMetaTitle,
+        description: categorySeoCopy?.description ?? copy.catalogMetaDescription,
         path: canonicalPath,
         noIndex,
         languageAlternates,

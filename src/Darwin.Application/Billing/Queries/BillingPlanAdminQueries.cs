@@ -8,9 +8,11 @@ namespace Darwin.Application.Billing.Queries;
 
 public sealed class GetBillingPlansAdminPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
 
-    public GetBillingPlansAdminPageHandler(IAppDbContext db) => _db = db;
+    public GetBillingPlansAdminPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
     public async Task<(List<BillingPlanListItemDto> Items, int Total)> HandleAsync(
         int page,
@@ -21,6 +23,7 @@ public sealed class GetBillingPlansAdminPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
         var baseQuery = _db.Set<BillingPlan>()
             .AsNoTracking()
@@ -47,10 +50,10 @@ public sealed class GetBillingPlansAdminPageHandler
 
         var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
 
-        var items = await baseQuery
+        var planRows = await baseQuery
             .OrderBy(x => x.PriceMinor)
             .ThenBy(x => x.Name)
-            .Select(x => new BillingPlanListItemDto
+            .Select(x => new
             {
                 Id = x.Id,
                 Code = x.Code,
@@ -63,6 +66,7 @@ public sealed class GetBillingPlansAdminPageHandler
                 TrialDays = x.TrialDays,
                 IsActive = x.IsActive,
                 HasFeatures = x.FeaturesJson != "{}" && x.FeaturesJson != "[]" && x.FeaturesJson != string.Empty,
+                FeaturesJson = x.FeaturesJson,
                 ActiveSubscriptionCount = _db.Set<BusinessSubscription>().Count(s =>
                     !s.IsDeleted &&
                     s.BillingPlanId == x.Id &&
@@ -75,6 +79,26 @@ public sealed class GetBillingPlansAdminPageHandler
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
+        var items = planRows
+            .Select(x => new BillingPlanListItemDto
+            {
+                Id = x.Id,
+                Code = x.Code,
+                Name = BillingLocalizedTextResolver.ResolvePlanName(x.Name, x.FeaturesJson),
+                Description = BillingLocalizedTextResolver.ResolvePlanDescription(x.Description, x.FeaturesJson),
+                PriceMinor = x.PriceMinor,
+                Currency = x.Currency,
+                Interval = x.Interval,
+                IntervalCount = x.IntervalCount,
+                TrialDays = x.TrialDays,
+                IsActive = x.IsActive,
+                HasFeatures = x.HasFeatures,
+                ActiveSubscriptionCount = x.ActiveSubscriptionCount,
+                ModifiedAtUtc = x.ModifiedAtUtc,
+                RowVersion = x.RowVersion
+            })
+            .ToList();
+
         return (items, total);
     }
 }
@@ -83,7 +107,7 @@ public sealed class GetBillingPlanOpsSummaryHandler
 {
     private readonly IAppDbContext _db;
 
-    public GetBillingPlanOpsSummaryHandler(IAppDbContext db) => _db = db;
+    public GetBillingPlanOpsSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
     public async Task<BillingPlanOpsSummaryDto> HandleAsync(CancellationToken ct = default)
     {
@@ -111,7 +135,7 @@ public sealed class GetBillingPlanForEditHandler
 {
     private readonly IAppDbContext _db;
 
-    public GetBillingPlanForEditHandler(IAppDbContext db) => _db = db;
+    public GetBillingPlanForEditHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
     public async Task<BillingPlanEditDto?> HandleAsync(Guid id, CancellationToken ct = default)
     {

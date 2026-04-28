@@ -13,7 +13,10 @@ import {
   getPublicApiRequestPlan,
   normalizePublicApiCachePath,
 } from "@/lib/public-api-cache";
-import { toLocalizedQueryMessage } from "@/localization";
+import {
+  resolveProblemQueryMessage,
+  toLocalizedQueryMessage,
+} from "@/localization";
 
 export type PublicApiFailureStatus =
   | "not-found"
@@ -343,11 +346,12 @@ export function logPublicApiFailureOutcome(
 export function buildPublicApiFailureResult<T>(
   status: PublicApiFailureStatus,
   diagnostics?: ApiDiagnostics,
+  message?: string,
 ): PublicApiResult<T> {
   return {
     data: null as T | null,
     status,
-    message: toLocalizedQueryMessage(getPublicApiFailureMessageKey(status)),
+    message: message ?? toLocalizedQueryMessage(getPublicApiFailureMessageKey(status)),
     diagnostics,
   };
 }
@@ -419,20 +423,23 @@ export function buildPublicApiNetworkFailureDiagnostics(
 export function buildPublicApiFailureOutcome<T>(
   status: PublicApiFailureStatus,
   diagnostics: ApiDiagnostics,
+  message?: string,
 ): PublicApiOutcome<T> {
   return {
     diagnostics,
-    result: buildPublicApiFailureResult<T>(status, diagnostics),
+    result: buildPublicApiFailureResult<T>(status, diagnostics, message),
   };
 }
 
 export function buildPublicApiResponseFailureOutcome<T>(
   responseContext: PublicJsonResponseContext,
   status: Exclude<PublicApiFailureStatus, "network-error">,
+  message?: string,
 ): PublicApiOutcome<T> {
   return buildPublicApiFailureOutcome(
     status,
     buildPublicApiResponseFailureDiagnostics(responseContext, status),
+    message,
   );
 }
 
@@ -474,11 +481,17 @@ export function buildPublicJsonParsedFailure<T>(
 export function buildPublicJsonResponseStatusFailure<T>(
   responseContext: PublicJsonResponseContext,
   failureStatus: Exclude<PublicApiFailureStatus, "network-error">,
+  failureDetail: unknown = failureStatus,
+  message?: string,
 ): PublicJsonParsedResponse<T> {
   return buildPublicJsonParsedFailure(
     failureStatus,
-    buildPublicApiResponseFailureOutcome<T>(responseContext, failureStatus),
-    failureStatus,
+    buildPublicApiResponseFailureOutcome<T>(
+      responseContext,
+      failureStatus,
+      message,
+    ),
+    failureDetail,
   );
 }
 
@@ -498,6 +511,38 @@ export function getPublicJsonResponseFailureStatus(
   responseContext: PublicJsonResponseContext,
 ) {
   return getPublicApiResponseFailureStatus(responseContext.response.status);
+}
+
+export async function buildPublicJsonResponseFailureWithDetail<T>(
+  responseContext: PublicJsonResponseContext,
+): Promise<PublicJsonParsedResponse<T> | null> {
+  const failureStatus = getPublicJsonResponseFailureStatus(responseContext);
+
+  if (!failureStatus) {
+    return null;
+  }
+
+  if (failureStatus !== "http-error") {
+    return buildPublicJsonResponseStatusFailure(responseContext, failureStatus);
+  }
+
+  try {
+    const problem = (await responseContext.response.json()) as {
+      detail?: string;
+      title?: string;
+    };
+    return buildPublicJsonResponseStatusFailure(
+      responseContext,
+      failureStatus,
+      problem,
+      resolveProblemQueryMessage(
+        problem,
+        getPublicApiFailureMessageKey(failureStatus),
+      ),
+    );
+  } catch {
+    return buildPublicJsonResponseStatusFailure(responseContext, failureStatus);
+  }
 }
 
 export function buildPublicJsonInvalidPayloadFailure<T>(
@@ -549,7 +594,7 @@ export async function parsePublicJsonResponseContext<T>(
 ): Promise<PublicJsonParsedResponse<T>> {
   return buildPublicJsonResponseContextParsedResponse(
     responseContext,
-    buildPublicJsonResponseFailure<T>(responseContext),
+    await buildPublicJsonResponseFailureWithDetail<T>(responseContext),
   );
 }
 

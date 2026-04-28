@@ -79,6 +79,14 @@
                                 <label class="form-label">@T.T("Description")</label>
                                 <textarea asp-for="Translations[@i].Description" class="form-control" rows="3"></textarea>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@T.T("MetaTitle")</label>
+                                <input asp-for="Translations[@i].MetaTitle" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@T.T("MetaDescription")</label>
+                                <input asp-for="Translations[@i].MetaDescription" class="form-control" />
+                            </div>
                         </div>
                     </div>
                 }

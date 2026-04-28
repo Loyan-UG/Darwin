@@ -225,7 +225,7 @@ namespace Darwin.Application.Businesses.Commands
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
             var (accessToken, accessTokenExpiresAtUtc, refreshToken, refreshTokenExpiresAtUtc) =
-                _jwt.IssueTokens(user.Id, user.Email, dto.DeviceId, scopes: null, preferredBusinessId: invitation.BusinessId);
+                await _jwt.IssueTokensAsync(user.Id, user.Email, dto.DeviceId, scopes: null, preferredBusinessId: invitation.BusinessId, ct).ConfigureAwait(false);
 
             return Result<BusinessInvitationAcceptanceDto>.Ok(new BusinessInvitationAcceptanceDto
             {

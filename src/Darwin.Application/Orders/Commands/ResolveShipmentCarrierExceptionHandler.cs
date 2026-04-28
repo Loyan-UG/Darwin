@@ -35,7 +35,7 @@ public sealed class ResolveShipmentCarrierExceptionHandler
         }
 
         var shipment = await _db.Set<Shipment>()
-            .FirstOrDefaultAsync(x => x.Id == dto.ShipmentId, ct)
+            .FirstOrDefaultAsync(x => x.Id == dto.ShipmentId && !x.IsDeleted, ct)
             .ConfigureAwait(false);
 
         if (shipment is null)

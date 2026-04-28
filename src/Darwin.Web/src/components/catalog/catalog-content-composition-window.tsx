@@ -5,6 +5,7 @@ import type {
   PublicProductSummary,
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getCatalogResource } from "@/localization";
@@ -50,12 +51,12 @@ export function CatalogContentCompositionWindow({
     culture,
   );
   const contentHref = localizeHref(
-    spotlightPage ? `/cms/${spotlightPage.slug}` : "/cms",
+    spotlightPage ? buildCmsPagePath(spotlightPage.slug) : "/cms",
     culture,
   );
   const storefrontHref = localizeHref(
     spotlightProduct
-      ? `/catalog/${spotlightProduct.slug}`
+      ? buildCatalogProductPath(spotlightProduct.slug)
       : activeCategory
         ? buildAppQueryPath("/catalog", { category: activeCategory.slug })
         : "/catalog",

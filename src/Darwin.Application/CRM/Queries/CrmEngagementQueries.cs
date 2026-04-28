@@ -57,10 +57,11 @@ namespace Darwin.Application.CRM.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > CrmInteractionQueryHelper.MaxPageSize) pageSize = CrmInteractionQueryHelper.MaxPageSize;
 
             var baseQuery = _db.Set<Consent>()
                 .AsNoTracking()
-                .Where(x => x.CustomerId == customerId);
+                .Where(x => x.CustomerId == customerId && !x.IsDeleted);
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
             var items = await baseQuery
@@ -97,8 +98,9 @@ namespace Darwin.Application.CRM.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > CrmInteractionQueryHelper.MaxPageSize) pageSize = CrmInteractionQueryHelper.MaxPageSize;
 
-            var baseQuery = _db.Set<CustomerSegment>().AsNoTracking();
+            var baseQuery = _db.Set<CustomerSegment>().AsNoTracking().Where(x => !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
                 var term = query.Trim();
@@ -107,8 +109,8 @@ namespace Darwin.Application.CRM.Queries
 
             baseQuery = filter switch
             {
-                CustomerSegmentQueueFilter.Empty => baseQuery.Where(x => x.Memberships.Count == 0),
-                CustomerSegmentQueueFilter.InUse => baseQuery.Where(x => x.Memberships.Count > 0),
+                CustomerSegmentQueueFilter.Empty => baseQuery.Where(x => x.Memberships.Count(membership => !membership.IsDeleted) == 0),
+                CustomerSegmentQueueFilter.InUse => baseQuery.Where(x => x.Memberships.Count(membership => !membership.IsDeleted) > 0),
                 CustomerSegmentQueueFilter.MissingDescription => baseQuery.Where(x => x.Description == null || x.Description == string.Empty),
                 _ => baseQuery
             };
@@ -123,7 +125,7 @@ namespace Darwin.Application.CRM.Queries
                     Id = x.Id,
                     Name = x.Name,
                     Description = x.Description,
-                    MemberCount = x.Memberships.Count,
+                    MemberCount = x.Memberships.Count(membership => !membership.IsDeleted),
                     HasDescription = x.Description != null && x.Description != string.Empty,
                     CreatedAtUtc = x.CreatedAtUtc,
                     RowVersion = x.RowVersion
@@ -136,13 +138,13 @@ namespace Darwin.Application.CRM.Queries
 
         public async Task<CustomerSegmentOpsSummaryDto> GetSummaryAsync(CancellationToken ct = default)
         {
-            var baseQuery = _db.Set<CustomerSegment>().AsNoTracking();
+            var baseQuery = _db.Set<CustomerSegment>().AsNoTracking().Where(x => !x.IsDeleted);
 
             return new CustomerSegmentOpsSummaryDto
             {
                 TotalCount = await baseQuery.CountAsync(ct).ConfigureAwait(false),
-                EmptyCount = await baseQuery.CountAsync(x => x.Memberships.Count == 0, ct).ConfigureAwait(false),
-                InUseCount = await baseQuery.CountAsync(x => x.Memberships.Count > 0, ct).ConfigureAwait(false),
+                EmptyCount = await baseQuery.CountAsync(x => x.Memberships.Count(membership => !membership.IsDeleted) == 0, ct).ConfigureAwait(false),
+                InUseCount = await baseQuery.CountAsync(x => x.Memberships.Count(membership => !membership.IsDeleted) > 0, ct).ConfigureAwait(false),
                 MissingDescriptionCount = await baseQuery.CountAsync(x => x.Description == null || x.Description == string.Empty, ct).ConfigureAwait(false)
             };
         }
@@ -161,7 +163,7 @@ namespace Darwin.Application.CRM.Queries
         {
             return _db.Set<CustomerSegment>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new CustomerSegmentEditDto
                 {
                     Id = x.Id,
@@ -186,9 +188,9 @@ namespace Darwin.Application.CRM.Queries
         {
             return _db.Set<CustomerSegmentMembership>()
                 .AsNoTracking()
-                .Where(x => x.CustomerId == customerId)
+                .Where(x => x.CustomerId == customerId && !x.IsDeleted)
                 .Join(
-                    _db.Set<CustomerSegment>().AsNoTracking(),
+                    _db.Set<CustomerSegment>().AsNoTracking().Where(segment => !segment.IsDeleted),
                     membership => membership.CustomerSegmentId,
                     segment => segment.Id,
                     (membership, segment) => new CustomerSegmentMembershipListItemDto
@@ -205,6 +207,8 @@ namespace Darwin.Application.CRM.Queries
 
     internal static class CrmInteractionQueryHelper
     {
+        public const int MaxPageSize = 200;
+
         public static async Task<(List<InteractionListItemDto> Items, int Total)> GetInteractionsAsync(
             IQueryable<Interaction> baseQuery,
             int page,
@@ -213,6 +217,9 @@ namespace Darwin.Application.CRM.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
+            baseQuery = baseQuery.Where(x => !x.IsDeleted);
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
             var items = await baseQuery

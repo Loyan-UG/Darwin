@@ -83,38 +83,38 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             AdminReferenceDataService referenceData,
             ISiteSettingCache siteSettingCache)
         {
-            _getPaymentsPage = getPaymentsPage;
-            _getPaymentOpsSummary = getPaymentOpsSummary;
-            _getTaxComplianceOverview = getTaxComplianceOverview;
-            _getBillingPlansAdminPage = getBillingPlansAdminPage;
-            _getBillingPlanOpsSummary = getBillingPlanOpsSummary;
-            _getBillingPlanForEdit = getBillingPlanForEdit;
-            _getBillingWebhookSubscriptionsPage = getBillingWebhookSubscriptionsPage;
-            _getBillingWebhookDeliveriesPage = getBillingWebhookDeliveriesPage;
-            _getBillingWebhookOpsSummary = getBillingWebhookOpsSummary;
-            _updateBillingWebhookDelivery = updateBillingWebhookDelivery;
-            _updatePaymentDisputeReview = updatePaymentDisputeReview;
-            _getPaymentForEdit = getPaymentForEdit;
-            _getRefundsPage = getRefundsPage;
-            _getRefundOpsSummary = getRefundOpsSummary;
-            _createBillingPlan = createBillingPlan;
-            _updateBillingPlan = updateBillingPlan;
-            _createPayment = createPayment;
-            _updatePayment = updatePayment;
-            _getAccountsPage = getAccountsPage;
-            _getAccountForEdit = getAccountForEdit;
-            _createAccount = createAccount;
-            _updateAccount = updateAccount;
-            _getExpensesPage = getExpensesPage;
-            _getExpenseForEdit = getExpenseForEdit;
-            _createExpense = createExpense;
-            _updateExpense = updateExpense;
-            _getJournalEntriesPage = getJournalEntriesPage;
-            _getJournalEntryForEdit = getJournalEntryForEdit;
-            _createJournalEntry = createJournalEntry;
-            _updateJournalEntry = updateJournalEntry;
-            _referenceData = referenceData;
-            _siteSettingCache = siteSettingCache;
+            _getPaymentsPage = getPaymentsPage ?? throw new ArgumentNullException(nameof(getPaymentsPage));
+            _getPaymentOpsSummary = getPaymentOpsSummary ?? throw new ArgumentNullException(nameof(getPaymentOpsSummary));
+            _getTaxComplianceOverview = getTaxComplianceOverview ?? throw new ArgumentNullException(nameof(getTaxComplianceOverview));
+            _getBillingPlansAdminPage = getBillingPlansAdminPage ?? throw new ArgumentNullException(nameof(getBillingPlansAdminPage));
+            _getBillingPlanOpsSummary = getBillingPlanOpsSummary ?? throw new ArgumentNullException(nameof(getBillingPlanOpsSummary));
+            _getBillingPlanForEdit = getBillingPlanForEdit ?? throw new ArgumentNullException(nameof(getBillingPlanForEdit));
+            _getBillingWebhookSubscriptionsPage = getBillingWebhookSubscriptionsPage ?? throw new ArgumentNullException(nameof(getBillingWebhookSubscriptionsPage));
+            _getBillingWebhookDeliveriesPage = getBillingWebhookDeliveriesPage ?? throw new ArgumentNullException(nameof(getBillingWebhookDeliveriesPage));
+            _getBillingWebhookOpsSummary = getBillingWebhookOpsSummary ?? throw new ArgumentNullException(nameof(getBillingWebhookOpsSummary));
+            _updateBillingWebhookDelivery = updateBillingWebhookDelivery ?? throw new ArgumentNullException(nameof(updateBillingWebhookDelivery));
+            _updatePaymentDisputeReview = updatePaymentDisputeReview ?? throw new ArgumentNullException(nameof(updatePaymentDisputeReview));
+            _getPaymentForEdit = getPaymentForEdit ?? throw new ArgumentNullException(nameof(getPaymentForEdit));
+            _getRefundsPage = getRefundsPage ?? throw new ArgumentNullException(nameof(getRefundsPage));
+            _getRefundOpsSummary = getRefundOpsSummary ?? throw new ArgumentNullException(nameof(getRefundOpsSummary));
+            _createBillingPlan = createBillingPlan ?? throw new ArgumentNullException(nameof(createBillingPlan));
+            _updateBillingPlan = updateBillingPlan ?? throw new ArgumentNullException(nameof(updateBillingPlan));
+            _createPayment = createPayment ?? throw new ArgumentNullException(nameof(createPayment));
+            _updatePayment = updatePayment ?? throw new ArgumentNullException(nameof(updatePayment));
+            _getAccountsPage = getAccountsPage ?? throw new ArgumentNullException(nameof(getAccountsPage));
+            _getAccountForEdit = getAccountForEdit ?? throw new ArgumentNullException(nameof(getAccountForEdit));
+            _createAccount = createAccount ?? throw new ArgumentNullException(nameof(createAccount));
+            _updateAccount = updateAccount ?? throw new ArgumentNullException(nameof(updateAccount));
+            _getExpensesPage = getExpensesPage ?? throw new ArgumentNullException(nameof(getExpensesPage));
+            _getExpenseForEdit = getExpenseForEdit ?? throw new ArgumentNullException(nameof(getExpenseForEdit));
+            _createExpense = createExpense ?? throw new ArgumentNullException(nameof(createExpense));
+            _updateExpense = updateExpense ?? throw new ArgumentNullException(nameof(updateExpense));
+            _getJournalEntriesPage = getJournalEntriesPage ?? throw new ArgumentNullException(nameof(getJournalEntriesPage));
+            _getJournalEntryForEdit = getJournalEntryForEdit ?? throw new ArgumentNullException(nameof(getJournalEntryForEdit));
+            _createJournalEntry = createJournalEntry ?? throw new ArgumentNullException(nameof(createJournalEntry));
+            _updateJournalEntry = updateJournalEntry ?? throw new ArgumentNullException(nameof(updateJournalEntry));
+            _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         [HttpGet]
@@ -205,6 +205,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [HttpGet]
         public async Task<IActionResult> EditPlan(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BillingPlanNotFoundMessage");
+                return RedirectOrHtmx(nameof(Plans), new { });
+            }
+
             var dto = await _getBillingPlanForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -237,6 +243,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditPlan(BillingPlanEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("BillingPlanNotFoundMessage");
+                return RedirectOrHtmx(nameof(Plans), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 PopulateBillingPlanOptions(vm);
@@ -365,6 +377,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             bool returnToEdit = false,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
+            {
+                SetErrorMessage("PaymentDisputeReviewUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Payments), new { businessId, page, pageSize, q, queue });
+            }
+
             byte[] version;
             try
             {
@@ -521,6 +539,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             BillingWebhookDeliveryQueueFilter queue = BillingWebhookDeliveryQueueFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
+            {
+                SetErrorMessage("WebhookDeliveryUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Webhooks), new { page, pageSize, q, queue });
+            }
+
             byte[] version;
             try
             {
@@ -913,6 +937,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePayment(PaymentEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("PaymentCreateFailedMessage");
+                return RedirectOrHtmx(nameof(Payments), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -953,6 +983,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [HttpGet]
         public async Task<IActionResult> EditPayment(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("PaymentNotFoundMessage");
+                return RedirectOrHtmx(nameof(Payments), new { });
+            }
+
             var dto = await _getPaymentForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1025,6 +1061,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditPayment(PaymentEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "PaymentNotFoundMessage" : "PaymentUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Payments), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -1176,6 +1218,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateFinancialAccount(FinancialAccountEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("FinancialAccountCreateFailedMessage");
+                return RedirectOrHtmx(nameof(FinancialAccounts), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -1207,6 +1255,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [HttpGet]
         public async Task<IActionResult> EditFinancialAccount(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("FinancialAccountNotFoundMessage");
+                return RedirectOrHtmx(nameof(FinancialAccounts), new { });
+            }
+
             var dto = await _getAccountForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1231,6 +1285,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditFinancialAccount(FinancialAccountEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "FinancialAccountNotFoundMessage" : "FinancialAccountUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(FinancialAccounts), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -1324,6 +1384,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateExpense(ExpenseEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("ExpenseCreateFailedMessage");
+                return RedirectOrHtmx(nameof(Expenses), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -1357,6 +1423,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [HttpGet]
         public async Task<IActionResult> EditExpense(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("ExpenseNotFoundMessage");
+                return RedirectOrHtmx(nameof(Expenses), new { });
+            }
+
             var dto = await _getExpenseForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1383,6 +1455,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditExpense(ExpenseEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "ExpenseNotFoundMessage" : "ExpenseUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Expenses), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -1484,6 +1562,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateJournalEntry(JournalEntryEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("JournalEntryCreateFailedMessage");
+                return RedirectOrHtmx(nameof(JournalEntries), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 EnsureJournalEntryRows(vm);
@@ -1524,6 +1608,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [HttpGet]
         public async Task<IActionResult> EditJournalEntry(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("JournalEntryNotFoundMessage");
+                return RedirectOrHtmx(nameof(JournalEntries), new { });
+            }
+
             var dto = await _getJournalEntryForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1556,6 +1646,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditJournalEntry(JournalEntryEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "JournalEntryNotFoundMessage" : "JournalEntryUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(JournalEntries), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 EnsureJournalEntryRows(vm);

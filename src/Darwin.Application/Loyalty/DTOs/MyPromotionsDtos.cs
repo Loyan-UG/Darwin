@@ -7,6 +7,7 @@ namespace Darwin.Application.Loyalty.DTOs
     {
         public Guid? BusinessId { get; init; }
         public int MaxItems { get; init; } = 20;
+        public string? Culture { get; init; }
         public PromotionFeedPolicyDto? Policy { get; init; }
     }
 

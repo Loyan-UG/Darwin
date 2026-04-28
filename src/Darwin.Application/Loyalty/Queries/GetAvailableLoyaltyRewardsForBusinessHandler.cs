@@ -83,6 +83,14 @@ namespace Darwin.Application.Loyalty.Queries
             Guid businessId,
             CancellationToken ct = default)
         {
+            return await HandleAsync(businessId, culture: null, ct).ConfigureAwait(false);
+        }
+
+        public async Task<Result<IReadOnlyList<LoyaltyRewardSummaryDto>>> HandleAsync(
+            Guid businessId,
+            string? culture = null,
+            CancellationToken ct = default)
+        {
             if (businessId == Guid.Empty)
             {
                 return Result<IReadOnlyList<LoyaltyRewardSummaryDto>>.Fail(_localizer["BusinessIdRequired"]);
@@ -148,7 +156,15 @@ namespace Darwin.Application.Loyalty.Queries
                 // Derive a human-friendly name. Until the domain model exposes a
                 // dedicated title field for tiers, we fall back to the description
                 // or, if that is not available, to the program's name.
-                var name = !string.IsNullOrWhiteSpace(tier.Description)
+                var localizedDescription = LoyaltyLocalizedTextResolver.Resolve(
+                    tier.MetadataJson,
+                    culture,
+                    "description",
+                    tier.Description ?? program.Name);
+
+                var name = !string.IsNullOrWhiteSpace(localizedDescription)
+                    ? localizedDescription
+                    : !string.IsNullOrWhiteSpace(tier.Description)
                     ? tier.Description
                     : program.Name;
 
@@ -161,7 +177,7 @@ namespace Darwin.Application.Loyalty.Queries
                     LoyaltyRewardTierId = tier.Id,
                     BusinessId = program.BusinessId,
                     Name = name,
-                    Description = tier.Description,
+                    Description = localizedDescription,
                     RequiredPoints = tier.PointsRequired,
                     IsActive = program.IsActive,
                     RequiresConfirmation = !tier.AllowSelfRedemption,

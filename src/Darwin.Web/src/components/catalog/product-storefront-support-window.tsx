@@ -13,7 +13,11 @@ import {
 } from "@/features/storefront/storefront-campaigns";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
-import { formatResource, getCatalogResource } from "@/localization";
+import {
+  formatResource,
+  getCatalogResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type ProductStorefrontSupportWindowProps = {
   culture: string;
@@ -42,6 +46,12 @@ export function ProductStorefrontSupportWindow({
   cartSummary,
 }: ProductStorefrontSupportWindowProps) {
   const copy = getCatalogResource(culture);
+  const cmsPagesStatusLabel =
+    resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const productsStatusLabel =
+    resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
   const rankedProducts = sortProductsByOpportunity(products);
   const cmsCards = buildStorefrontPageSpotlightCards(cmsPages, {
     prefix: "product-support-cms",
@@ -128,7 +138,7 @@ export function ProductStorefrontSupportWindow({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.productCmsWindowMessage, {
-                cmsPagesStatus,
+                cmsPagesStatus: cmsPagesStatusLabel,
                 pageCount: cmsPages.length,
               })}
             </p>
@@ -144,7 +154,7 @@ export function ProductStorefrontSupportWindow({
           culture={culture}
           cards={cmsCards}
           emptyMessage={formatResource(copy.productCmsWindowEmptyMessage, {
-            status: cmsPagesStatus,
+            status: cmsPagesStatusLabel,
           })}
         />
       </section>
@@ -157,7 +167,7 @@ export function ProductStorefrontSupportWindow({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.productCatalogWindowMessage, {
-                categoriesStatus,
+                categoriesStatus: categoriesStatusLabel,
                 categoryCount: categories.length,
               })}
             </p>
@@ -173,7 +183,7 @@ export function ProductStorefrontSupportWindow({
           culture={culture}
           cards={categoryCards}
           emptyMessage={formatResource(copy.productCatalogWindowEmptyMessage, {
-            status: categoriesStatus,
+            status: categoriesStatusLabel,
           })}
         />
       </section>
@@ -186,7 +196,7 @@ export function ProductStorefrontSupportWindow({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.productProductsWindowMessage, {
-                productsStatus,
+                productsStatus: productsStatusLabel,
                 productCount: products.length,
               })}
             </p>
@@ -202,7 +212,7 @@ export function ProductStorefrontSupportWindow({
           culture={culture}
           cards={productCards}
           emptyMessage={formatResource(copy.productProductsWindowEmptyMessage, {
-            status: productsStatus,
+            status: productsStatusLabel,
           })}
         />
       </section>
@@ -217,7 +227,9 @@ export function ProductStorefrontSupportWindow({
         <StorefrontCampaignBoard
           culture={culture}
           cards={promotionLaneCards}
-          emptyMessage={copy.campaignWindowPromotionLaneSectionMessage}
+          emptyMessage={formatResource(copy.campaignWindowPromotionLaneEmptyMessage, {
+            productsStatus: productsStatusLabel,
+          })}
         />
       </div>
 

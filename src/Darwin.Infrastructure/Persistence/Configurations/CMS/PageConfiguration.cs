@@ -74,7 +74,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
 
             // Unique slug per (Page, Culture)
             builder.HasIndex(x => new { x.PageId, x.Culture, x.Slug })
-                   .IsUnique();
+                   .IsUnique()
+                   .HasFilter("[IsDeleted] = 0");
 
             // Base
             builder.Property(x => x.CreatedAtUtc).IsRequired();

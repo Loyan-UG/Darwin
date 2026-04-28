@@ -56,15 +56,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             SoftDeleteCategoryHandler softDelete,
             ISiteSettingCache siteSettingCache)
         {
-            _create = create;
-            _update = update;
-            _list = list;
-            _getCategoryOpsSummary = getCategoryOpsSummary;
-            _getForEdit = getForEdit;
-            _getLookups = getLookups;
-            _getCultures = getCultures;
-            _softDelete = softDelete;
-            _siteSettingCache = siteSettingCache;
+            _create = create ?? throw new ArgumentNullException(nameof(create));
+            _update = update ?? throw new ArgumentNullException(nameof(update));
+            _list = list ?? throw new ArgumentNullException(nameof(list));
+            _getCategoryOpsSummary = getCategoryOpsSummary ?? throw new ArgumentNullException(nameof(getCategoryOpsSummary));
+            _getForEdit = getForEdit ?? throw new ArgumentNullException(nameof(getForEdit));
+            _getLookups = getLookups ?? throw new ArgumentNullException(nameof(getLookups));
+            _getCultures = getCultures ?? throw new ArgumentNullException(nameof(getCultures));
+            _softDelete = softDelete ?? throw new ArgumentNullException(nameof(softDelete));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         [HttpGet]
@@ -135,7 +135,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Culture = t.Culture,
                     Name = t.Name,
                     Slug = t.Slug,
-                    Description = t.Description
+                    Description = t.Description,
+                    MetaTitle = t.MetaTitle,
+                    MetaDescription = t.MetaDescription
                 }).ToList()
             };
 
@@ -159,6 +161,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("CategoryNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getForEdit.HandleAsync(id, ct);
             if (dto == null)
             {
@@ -178,7 +186,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Culture = t.Culture,
                     Name = t.Name,
                     Slug = t.Slug,
-                    Description = t.Description
+                    Description = t.Description,
+                    MetaTitle = t.MetaTitle,
+                    MetaDescription = t.MetaDescription
                 }).ToList()
             };
 
@@ -221,7 +231,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Culture = t.Culture,
                     Name = t.Name,
                     Slug = t.Slug,
-                    Description = t.Description
+                    Description = t.Description,
+                    MetaTitle = t.MetaTitle,
+                    MetaDescription = t.MetaDescription
                 }).ToList()
             };
 

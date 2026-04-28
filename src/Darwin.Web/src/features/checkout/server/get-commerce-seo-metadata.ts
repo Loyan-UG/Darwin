@@ -90,7 +90,7 @@ export const getConfirmationSeoMetadata = (culture: string, orderId: string) =>
   getCachedCommerceSeoMetadata(
     culture,
     "/checkout/orders/[orderId]/confirmation",
-    `/checkout/orders/${orderId}/confirmation`,
+    `/checkout/orders/${encodeURIComponent(orderId)}/confirmation`,
   );
 
 export const getMockCheckoutSeoMetadata = (culture: string) =>

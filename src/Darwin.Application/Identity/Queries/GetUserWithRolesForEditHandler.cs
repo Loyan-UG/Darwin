@@ -38,10 +38,11 @@ namespace Darwin.Application.Identity.Queries
             if (user is null)
                 return Result<UserRolesEditDto>.Fail(_localizer["UserNotFoundOrInactive"]);
 
-            var currentRoleIds = await _db.Set<UserRole>()
-                .AsNoTracking()
-                .Where(ur => ur.UserId == userId && !ur.IsDeleted)
-                .Select(ur => ur.RoleId)
+            var currentRoleIds = await (
+                    from userRole in _db.Set<UserRole>().AsNoTracking()
+                    join role in _db.Set<Role>().AsNoTracking() on userRole.RoleId equals role.Id
+                    where userRole.UserId == userId && !userRole.IsDeleted && !role.IsDeleted
+                    select userRole.RoleId)
                 .ToListAsync(ct);
 
             var allRoles = await _db.Set<Role>()
@@ -51,6 +52,7 @@ namespace Darwin.Application.Identity.Queries
                 .Select(r => new RoleListItemDto
                 {
                     Id = r.Id,
+                    Key = r.Key,
                     DisplayName = r.DisplayName ?? string.Empty,
                     Description = r.Description,
                     IsSystem = r.IsSystem,

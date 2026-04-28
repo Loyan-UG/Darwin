@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
-using Darwin.Application.Billing;
 using Darwin.Application.Settings.Queries;
 using Darwin.Domain.Entities.Integration;
 using Darwin.WebApi.Services;
@@ -22,8 +21,6 @@ namespace Darwin.WebApi.Controllers.Public;
 [Route("api/v1/public/billing/stripe/webhooks")]
 public sealed class StripeWebhooksController : ApiControllerBase
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
-
     private readonly IAppDbContext _db;
     private readonly GetSiteSettingHandler _getSiteSettingHandler;
     private readonly StripeWebhookSignatureVerifier _signatureVerifier;
@@ -100,8 +97,8 @@ public sealed class StripeWebhooksController : ApiControllerBase
         {
             received = true,
             duplicate = existing,
-            eventId,
-            eventType,
+            eventId = eventId.Trim(),
+            eventType = eventType.Trim(),
             instance = Request.GetDisplayUrl()
         });
     }
@@ -125,8 +122,8 @@ public sealed class StripeWebhooksController : ApiControllerBase
                 return false;
             }
 
-            eventId = idProperty.GetString() ?? string.Empty;
-            eventType = typeProperty.GetString() ?? string.Empty;
+            eventId = idProperty.GetString()?.Trim() ?? string.Empty;
+            eventType = typeProperty.GetString()?.Trim() ?? string.Empty;
             return !string.IsNullOrWhiteSpace(eventId) && !string.IsNullOrWhiteSpace(eventType);
         }
         catch (JsonException)

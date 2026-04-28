@@ -9,6 +9,7 @@ import { resolveShellMenu } from "@/features/shell/shell-menu";
 import { mapMenuItemsToLinks } from "@/features/shell/shell-menu";
 import type { ShellLink, ShellModel } from "@/features/shell/types";
 import { formatResource, getSharedResource, getShellResource } from "@/localization";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { localizeHref, sanitizeAppPath, stripCulturePrefix } from "@/lib/locale-routing";
 import { summarizeShellModelHealth } from "@/lib/route-health";
@@ -62,12 +63,12 @@ function normalizeLegacySeedHref(rawHref: string) {
   }
 
   if (pathname.startsWith("/c/")) {
-    return `/catalog/${pathname.slice(3)}${suffix}`;
+    return `${buildCatalogProductPath(pathname.slice(3))}${suffix}`;
   }
 
   const slug = pathname.startsWith("/") ? pathname.slice(1) : pathname;
   if (legacyCmsSlugs.has(slug)) {
-    return `/cms/${slug}${suffix}`;
+    return `${buildCmsPagePath(slug)}${suffix}`;
   }
 
   return rawHref;

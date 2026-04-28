@@ -102,20 +102,20 @@ public sealed class CatalogSeedSection
     private static async Task CreateCategoriesDeAsync(DarwinDbContext db, CancellationToken ct)
     {
         // Flat taxonomy for now; can be extended to a tree using ParentId/SortOrder.
-        var cats = new (string Slug, string Name, string? Desc, string EnName, string? EnDesc)[]
+        var cats = new (string Slug, string Name, string? Desc, string MetaTitle, string? MetaDescription, string EnName, string? EnDesc, string EnMetaTitle, string? EnMetaDescription)[]
         {
-                ("iphones",            "iPhones",                 "Apple iPhone Modelle",                             "iPhones",              "Apple iPhone models"),
-                ("android-phones",     "Android-Smartphones",     "Android Geraete von fuehrenden Herstellern",         "Android phones",       "Android devices from leading manufacturers"),
-                ("ultrabooks",         "Ultrabooks",              "Leichte, mobile Notebooks",                        "Ultrabooks",           "Lightweight, mobile notebooks"),
-                ("business-laptops",   "Business-Laptops",        "Zuverlaessige Laptops fuer den Arbeitsalltag",       "Business laptops",     "Reliable laptops for everyday work"),
-                ("gaming-laptops",     "Gaming-Laptops",          "Leistungsstarke Laptops fuer Gaming",               "Gaming laptops",       "High-performance laptops for gaming"),
-                ("mice",               "Maeuse",                   "Praezise Computer-Maeuse",                           "Mice",                 "Precise computer mice"),
-                ("keyboards",          "Tastaturen",              "Mechanische und Office-Tastaturen",                "Keyboards",            "Mechanical and office keyboards"),
-                ("storage",            "Speicher",                "NVMe/SSD/HDD Speicherloesungen",                    "Storage",              "NVMe/SSD/HDD storage solutions"),
-                ("monitors",           "Monitore",                "4K/144Hz/Ultrawide Monitore",                      "Monitors",             "4K, 144Hz, and ultrawide monitors"),
-                ("headphones",         "Kopfhoerer",               "Over-Ear/ANC/BT Kopfhoerer",                        "Headphones",           "Over-ear, ANC, and Bluetooth headphones"),
-                ("power-banks",        "Powerbanks",              "Mobile Ladegeraete",                                "Power banks",          "Portable chargers"),
-                ("pc-komponenten",     "PC-Komponenten",          "RAM, Mainboards, Netzteile u. a.",                 "PC components",        "RAM, motherboards, power supplies, and more")
+                ("iphones",            "iPhones",                 "Apple iPhone Modelle",                             "iPhones online kaufen",                  "Apple iPhone Modelle mit aktuellen Angeboten entdecken",                      "iPhones",              "Apple iPhone models",                                      "Shop iPhones online",                  "Discover Apple iPhone models with current offers"),
+                ("android-phones",     "Android-Smartphones",     "Android Geraete von fuehrenden Herstellern",         "Android-Smartphones kaufen",             "Android Geraete von Samsung, Google, Xiaomi und weiteren Marken vergleichen", "Android phones",       "Android devices from leading manufacturers",              "Shop Android phones",                  "Compare Android devices from Samsung, Google, Xiaomi, and more"),
+                ("ultrabooks",         "Ultrabooks",              "Leichte, mobile Notebooks",                        "Ultrabooks fuer mobiles Arbeiten",       "Leichte Notebooks fuer Alltag, Reisen und produktives Arbeiten",              "Ultrabooks",           "Lightweight, mobile notebooks",                          "Ultrabooks for mobile work",           "Lightweight notebooks for everyday work, travel, and productivity"),
+                ("business-laptops",   "Business-Laptops",        "Zuverlaessige Laptops fuer den Arbeitsalltag",       "Business-Laptops fuer Teams",            "Zuverlaessige Business-Notebooks fuer Buero, Homeoffice und unterwegs",        "Business laptops",     "Reliable laptops for everyday work",                     "Business laptops for teams",           "Reliable business notebooks for office, home office, and travel"),
+                ("gaming-laptops",     "Gaming-Laptops",          "Leistungsstarke Laptops fuer Gaming",               "Gaming-Laptops mit starker Leistung",    "Gaming-Notebooks mit performanter Grafik, Displays und Kuehlung",             "Gaming laptops",       "High-performance laptops for gaming",                    "High-performance gaming laptops",      "Gaming notebooks with strong graphics, displays, and cooling"),
+                ("mice",               "Maeuse",                   "Praezise Computer-Maeuse",                           "Computer-Maeuse fuer Arbeit und Gaming", "Praezise Maeuse fuer Office, Kreativarbeit und Gaming-Setups",                 "Mice",                 "Precise computer mice",                                  "Computer mice for work and gaming",    "Precise mice for office, creative work, and gaming setups"),
+                ("keyboards",          "Tastaturen",              "Mechanische und Office-Tastaturen",                "Tastaturen fuer jedes Setup",            "Mechanische Tastaturen und Office-Keyboards fuer produktives Arbeiten",        "Keyboards",            "Mechanical and office keyboards",                        "Keyboards for every setup",            "Mechanical and office keyboards for productive work"),
+                ("storage",            "Speicher",                "NVMe/SSD/HDD Speicherloesungen",                    "SSD, NVMe und HDD Speicher",             "Schnelle Speicherloesungen fuer PCs, Laptops und Backups",                     "Storage",              "NVMe/SSD/HDD storage solutions",                         "SSD, NVMe, and HDD storage",           "Fast storage solutions for PCs, laptops, and backups"),
+                ("monitors",           "Monitore",                "4K/144Hz/Ultrawide Monitore",                      "Monitore fuer Arbeit und Gaming",        "4K-, 144Hz- und Ultrawide-Monitore fuer moderne Arbeitsplaetze",              "Monitors",             "4K, 144Hz, and ultrawide monitors",                      "Monitors for work and gaming",         "4K, 144Hz, and ultrawide monitors for modern workspaces"),
+                ("headphones",         "Kopfhoerer",               "Over-Ear/ANC/BT Kopfhoerer",                        "Kopfhoerer mit ANC und Bluetooth",       "Over-Ear-, ANC- und Bluetooth-Kopfhoerer fuer Alltag und Reisen",              "Headphones",           "Over-ear, ANC, and Bluetooth headphones",                "ANC and Bluetooth headphones",         "Over-ear, ANC, and Bluetooth headphones for everyday use and travel"),
+                ("power-banks",        "Powerbanks",              "Mobile Ladegeraete",                                "Powerbanks fuer unterwegs",              "Mobile Ladegeraete fuer Smartphones, Tablets und Zubehoer",                    "Power banks",          "Portable chargers",                                      "Power banks for travel",               "Portable chargers for phones, tablets, and accessories"),
+                ("pc-komponenten",     "PC-Komponenten",          "RAM, Mainboards, Netzteile u. a.",                 "PC-Komponenten fuer Builds",             "RAM, Mainboards, Netzteile und weitere Komponenten fuer PC-Builds",            "PC components",        "RAM, motherboards, power supplies, and more",            "PC components for builds",             "RAM, motherboards, power supplies, and more components for PC builds")
         };
 
             foreach (var c in cats)
@@ -126,14 +126,18 @@ public sealed class CatalogSeedSection
                     Culture = DomainDefaults.DefaultCulture,
                     Name = c.Name,
                     Slug = c.Slug,
-                    Description = c.Desc
+                    Description = c.Desc,
+                    MetaTitle = c.MetaTitle,
+                    MetaDescription = c.MetaDescription
                 });
                 cat.Translations.Add(new CategoryTranslation
                 {
                     Culture = EnglishCulture,
                     Name = c.EnName,
                     Slug = c.Slug,
-                    Description = c.EnDesc
+                    Description = c.EnDesc,
+                    MetaTitle = c.EnMetaTitle,
+                    MetaDescription = c.EnMetaDescription
                 });
                 db.Add(cat);
             }
@@ -204,6 +208,9 @@ public sealed class CatalogSeedSection
                 if (!brandMap.TryGetValue(it.Brand, out var brand)) continue;
                 if (!catMap.TryGetValue(it.Cat, out var cat)) continue;
 
+                var germanCopy = BuildProductSeedCopy(it.Name, it.Cat, english: false);
+                var englishCopy = BuildProductSeedCopy(it.EnName, it.Cat, english: true);
+
                 var p = new Product
                 {
                     BrandId = brand.Id,
@@ -218,20 +225,20 @@ public sealed class CatalogSeedSection
                     Culture = DomainDefaults.DefaultCulture,
                     Name = it.Name,
                     Slug = it.Slug,
-                    ShortDescription = null,
-                    FullDescriptionHtml = null,
-                    MetaTitle = null,
-                    MetaDescription = null
+                    ShortDescription = germanCopy.ShortDescription,
+                    FullDescriptionHtml = germanCopy.FullDescriptionHtml,
+                    MetaTitle = germanCopy.MetaTitle,
+                    MetaDescription = germanCopy.MetaDescription
                 });
                 p.Translations.Add(new ProductTranslation
                 {
                     Culture = EnglishCulture,
                     Name = it.EnName,
                     Slug = it.Slug,
-                    ShortDescription = null,
-                    FullDescriptionHtml = null,
+                    ShortDescription = englishCopy.ShortDescription,
+                    FullDescriptionHtml = englishCopy.FullDescriptionHtml,
                     MetaTitle = it.EnName,
-                    MetaDescription = null
+                    MetaDescription = englishCopy.MetaDescription
                 });
 
                 db.Add(p);
@@ -298,20 +305,20 @@ public sealed class CatalogSeedSection
 
         private static async Task EnsureEnglishCatalogTranslationsAsync(DarwinDbContext db, CancellationToken ct)
         {
-            var categoryMap = new Dictionary<string, (string Name, string? Description)>(StringComparer.OrdinalIgnoreCase)
+            var categoryMap = new Dictionary<string, (string Name, string? Description, string MetaTitle, string? MetaDescription)>(StringComparer.OrdinalIgnoreCase)
             {
-                ["iphones"] = ("iPhones", "Apple iPhone models"),
-                ["android-phones"] = ("Android phones", "Android devices from leading manufacturers"),
-                ["ultrabooks"] = ("Ultrabooks", "Lightweight, mobile notebooks"),
-                ["business-laptops"] = ("Business laptops", "Reliable laptops for everyday work"),
-                ["gaming-laptops"] = ("Gaming laptops", "High-performance laptops for gaming"),
-                ["mice"] = ("Mice", "Precise computer mice"),
-                ["keyboards"] = ("Keyboards", "Mechanical and office keyboards"),
-                ["storage"] = ("Storage", "NVMe/SSD/HDD storage solutions"),
-                ["monitors"] = ("Monitors", "4K, 144Hz, and ultrawide monitors"),
-                ["headphones"] = ("Headphones", "Over-ear, ANC, and Bluetooth headphones"),
-                ["power-banks"] = ("Power banks", "Portable chargers"),
-                ["pc-komponenten"] = ("PC components", "RAM, motherboards, power supplies, and more")
+                ["iphones"] = ("iPhones", "Apple iPhone models", "Shop iPhones online", "Discover Apple iPhone models with current offers"),
+                ["android-phones"] = ("Android phones", "Android devices from leading manufacturers", "Shop Android phones", "Compare Android devices from Samsung, Google, Xiaomi, and more"),
+                ["ultrabooks"] = ("Ultrabooks", "Lightweight, mobile notebooks", "Ultrabooks for mobile work", "Lightweight notebooks for everyday work, travel, and productivity"),
+                ["business-laptops"] = ("Business laptops", "Reliable laptops for everyday work", "Business laptops for teams", "Reliable business notebooks for office, home office, and travel"),
+                ["gaming-laptops"] = ("Gaming laptops", "High-performance laptops for gaming", "High-performance gaming laptops", "Gaming notebooks with strong graphics, displays, and cooling"),
+                ["mice"] = ("Mice", "Precise computer mice", "Computer mice for work and gaming", "Precise mice for office, creative work, and gaming setups"),
+                ["keyboards"] = ("Keyboards", "Mechanical and office keyboards", "Keyboards for every setup", "Mechanical and office keyboards for productive work"),
+                ["storage"] = ("Storage", "NVMe/SSD/HDD storage solutions", "SSD, NVMe, and HDD storage", "Fast storage solutions for PCs, laptops, and backups"),
+                ["monitors"] = ("Monitors", "4K, 144Hz, and ultrawide monitors", "Monitors for work and gaming", "4K, 144Hz, and ultrawide monitors for modern workspaces"),
+                ["headphones"] = ("Headphones", "Over-ear, ANC, and Bluetooth headphones", "ANC and Bluetooth headphones", "Over-ear, ANC, and Bluetooth headphones for everyday use and travel"),
+                ["power-banks"] = ("Power banks", "Portable chargers", "Power banks for travel", "Portable chargers for phones, tablets, and accessories"),
+                ["pc-komponenten"] = ("PC components", "RAM, motherboards, power supplies, and more", "PC components for builds", "RAM, motherboards, power supplies, and more components for PC builds")
             };
 
             var categories = await db.Categories
@@ -329,7 +336,7 @@ public sealed class CatalogSeedSection
 
                 if (!categoryMap.TryGetValue(defaultTranslation.Slug, out var english))
                 {
-                    english = (defaultTranslation.Name, defaultTranslation.Description);
+                    english = (defaultTranslation.Name, defaultTranslation.Description, defaultTranslation.MetaTitle ?? defaultTranslation.Name, defaultTranslation.MetaDescription ?? defaultTranslation.Description);
                 }
 
                 var englishTranslation = category.Translations.FirstOrDefault(t => t.Culture == EnglishCulture);
@@ -342,12 +349,33 @@ public sealed class CatalogSeedSection
                 englishTranslation.Name = string.IsNullOrWhiteSpace(englishTranslation.Name) ? english.Name : englishTranslation.Name;
                 englishTranslation.Slug = string.IsNullOrWhiteSpace(englishTranslation.Slug) ? defaultTranslation.Slug : englishTranslation.Slug;
                 englishTranslation.Description = string.IsNullOrWhiteSpace(englishTranslation.Description) ? english.Description : englishTranslation.Description;
+                englishTranslation.MetaTitle = string.IsNullOrWhiteSpace(englishTranslation.MetaTitle) ? english.MetaTitle : englishTranslation.MetaTitle;
+                englishTranslation.MetaDescription = string.IsNullOrWhiteSpace(englishTranslation.MetaDescription) ? english.MetaDescription : englishTranslation.MetaDescription;
+
+                defaultTranslation.MetaTitle = string.IsNullOrWhiteSpace(defaultTranslation.MetaTitle) ? defaultTranslation.Name : defaultTranslation.MetaTitle;
+                defaultTranslation.MetaDescription = string.IsNullOrWhiteSpace(defaultTranslation.MetaDescription) ? defaultTranslation.Description : defaultTranslation.MetaDescription;
             }
 
             var products = await db.Products
                 .Include(x => x.Translations)
                 .Where(x => x.Translations.Any(t => t.Culture == DomainDefaults.DefaultCulture))
                 .ToListAsync(ct);
+
+            var primaryCategoryIds = products
+                .Where(x => x.PrimaryCategoryId.HasValue)
+                .Select(x => x.PrimaryCategoryId!.Value)
+                .Distinct()
+                .ToList();
+            var categorySlugsById = await db.Categories
+                .Include(x => x.Translations)
+                .Where(x => primaryCategoryIds.Contains(x.Id))
+                .ToDictionaryAsync(
+                    x => x.Id,
+                    x => x.Translations
+                        .Where(t => t.Culture == DomainDefaults.DefaultCulture)
+                        .Select(t => t.Slug)
+                        .FirstOrDefault() ?? string.Empty,
+                    ct);
 
             foreach (var product in products)
             {
@@ -364,15 +392,84 @@ public sealed class CatalogSeedSection
                     product.Translations.Add(englishTranslation);
                 }
 
+                var productCategorySlug =
+                    product.PrimaryCategoryId.HasValue &&
+                    categorySlugsById.TryGetValue(product.PrimaryCategoryId.Value, out var categorySlug)
+                        ? categorySlug
+                        : string.Empty;
+                var germanCopy = BuildProductSeedCopy(defaultTranslation.Name, productCategorySlug, english: false);
+                defaultTranslation.ShortDescription = string.IsNullOrWhiteSpace(defaultTranslation.ShortDescription) ? germanCopy.ShortDescription : defaultTranslation.ShortDescription;
+                defaultTranslation.FullDescriptionHtml = string.IsNullOrWhiteSpace(defaultTranslation.FullDescriptionHtml) ? germanCopy.FullDescriptionHtml : defaultTranslation.FullDescriptionHtml;
+                defaultTranslation.MetaTitle = string.IsNullOrWhiteSpace(defaultTranslation.MetaTitle) ? germanCopy.MetaTitle : defaultTranslation.MetaTitle;
+                defaultTranslation.MetaDescription = string.IsNullOrWhiteSpace(defaultTranslation.MetaDescription) ? germanCopy.MetaDescription : defaultTranslation.MetaDescription;
+
                 englishTranslation.Name = string.IsNullOrWhiteSpace(englishTranslation.Name) ? defaultTranslation.Name : englishTranslation.Name;
                 englishTranslation.Slug = string.IsNullOrWhiteSpace(englishTranslation.Slug) ? defaultTranslation.Slug : englishTranslation.Slug;
-                englishTranslation.ShortDescription = string.IsNullOrWhiteSpace(englishTranslation.ShortDescription) ? defaultTranslation.ShortDescription : englishTranslation.ShortDescription;
-                englishTranslation.FullDescriptionHtml = string.IsNullOrWhiteSpace(englishTranslation.FullDescriptionHtml) ? defaultTranslation.FullDescriptionHtml : englishTranslation.FullDescriptionHtml;
-                englishTranslation.MetaTitle = string.IsNullOrWhiteSpace(englishTranslation.MetaTitle) ? defaultTranslation.MetaTitle ?? defaultTranslation.Name : englishTranslation.MetaTitle;
-                englishTranslation.MetaDescription = string.IsNullOrWhiteSpace(englishTranslation.MetaDescription) ? defaultTranslation.MetaDescription : englishTranslation.MetaDescription;
+                var englishCopy = BuildProductSeedCopy(englishTranslation.Name, productCategorySlug, english: true);
+                englishTranslation.ShortDescription = string.IsNullOrWhiteSpace(englishTranslation.ShortDescription) ? englishCopy.ShortDescription : englishTranslation.ShortDescription;
+                englishTranslation.FullDescriptionHtml = string.IsNullOrWhiteSpace(englishTranslation.FullDescriptionHtml) ? englishCopy.FullDescriptionHtml : englishTranslation.FullDescriptionHtml;
+                englishTranslation.MetaTitle = string.IsNullOrWhiteSpace(englishTranslation.MetaTitle) ? englishCopy.MetaTitle : englishTranslation.MetaTitle;
+                englishTranslation.MetaDescription = string.IsNullOrWhiteSpace(englishTranslation.MetaDescription) ? englishCopy.MetaDescription : englishTranslation.MetaDescription;
             }
 
             await db.SaveChangesAsync(ct);
+        }
+
+        private static (string ShortDescription, string FullDescriptionHtml, string MetaTitle, string MetaDescription) BuildProductSeedCopy(
+            string name,
+            string category,
+            bool english)
+        {
+            var categoryHint = category switch
+            {
+                "iphones" => english
+                    ? "Apple iPhone with a balanced mix of performance, camera quality, and everyday reliability."
+                    : "Apple iPhone mit ausgewogener Leistung, starker Kamera und zuverlaessiger Alltagstauglichkeit.",
+                "android-phones" => english
+                    ? "Android smartphone for fast apps, modern photography, and flexible mobile workflows."
+                    : "Android-Smartphone fuer schnelle Apps, moderne Fotografie und flexible mobile Workflows.",
+                "ultrabooks" or "business-laptops" => english
+                    ? "Portable notebook for productive work, travel, meetings, and everyday business use."
+                    : "Mobiles Notebook fuer produktives Arbeiten, Reisen, Meetings und den Business-Alltag.",
+                "gaming-laptops" => english
+                    ? "Performance laptop for gaming, streaming, and demanding creative workloads."
+                    : "Leistungsstarker Laptop fuer Gaming, Streaming und anspruchsvolle Kreativarbeit.",
+                "mice" or "keyboards" => english
+                    ? "Reliable peripheral for precise control, comfortable input, and a cleaner desk setup."
+                    : "Zuverlaessiges Peripheriegeraet fuer praezise Kontrolle, komfortable Eingabe und ein sauberes Setup.",
+                "storage" or "pc-komponenten" => english
+                    ? "PC component for upgrades, fast storage, and dependable system builds."
+                    : "PC-Komponente fuer Upgrades, schnellen Speicher und zuverlaessige System-Builds.",
+                "monitors" => english
+                    ? "Display for sharp visuals, focused work, entertainment, and multi-window productivity."
+                    : "Monitor fuer scharfe Darstellung, fokussiertes Arbeiten, Entertainment und Multi-Window-Produktivitaet.",
+                "headphones" => english
+                    ? "Headphones for focused listening, calls, commuting, and everyday media."
+                    : "Kopfhoerer fuer fokussiertes Hoeren, Calls, Pendeln und taegliche Mediennutzung.",
+                "power-banks" => english
+                    ? "Portable charging companion for phones, tablets, and accessories on the go."
+                    : "Mobiler Ladebegleiter fuer Smartphones, Tablets und Zubehoer unterwegs.",
+                _ => english
+                    ? "Curated electronics product for the Darwin storefront catalog."
+                    : "Kuratierter Elektronikartikel fuer den Darwin Storefront-Katalog."
+            };
+
+            if (english)
+            {
+                var shortDescription = $"{name}: {categoryHint}";
+                return (
+                    shortDescription,
+                    $"<p>{shortDescription}</p><p>Seeded with localized storefront copy so catalog browsing, product detail pages, and SEO previews have representative English content.</p>",
+                    $"{name} | Darwin Store",
+                    $"{name} in the Darwin catalog. {categoryHint}");
+            }
+
+            var germanShortDescription = $"{name}: {categoryHint}";
+            return (
+                germanShortDescription,
+                $"<p>{germanShortDescription}</p><p>Mit lokalisiertem Storefront-Text fuer Katalog, Produktdetailseite und SEO-Vorschau im deutschen Seed-Datenbestand.</p>",
+                $"{name} | Darwin Store",
+                $"{name} im Darwin Katalog. {categoryHint}");
         }
 
         /// <summary>

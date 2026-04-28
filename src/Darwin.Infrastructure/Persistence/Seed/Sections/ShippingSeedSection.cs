@@ -18,7 +18,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
         public ShippingSeedSection(ILogger<ShippingSeedSection> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
         }
 
         public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)

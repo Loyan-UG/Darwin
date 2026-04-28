@@ -50,7 +50,7 @@ namespace Darwin.Application.Orders.Commands
             // Load target order (tracking required to update its status).
             var order = await _db.Set<Order>()
                 .Include(o => o.Payments)
-                .FirstOrDefaultAsync(o => o.Id == dto.OrderId, ct);
+                .FirstOrDefaultAsync(o => o.Id == dto.OrderId && !o.IsDeleted, ct);
             if (order is null)
                 throw new ValidationException(_localizer["OrderNotFound"]);
 

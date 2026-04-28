@@ -19,7 +19,7 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
     internal sealed class RelyingPartyFromSiteSettingsProvider : IRelyingPartyFromSiteSettingsProvider
     {
         private readonly IAppDbContext _db;
-        public RelyingPartyFromSiteSettingsProvider(IAppDbContext db) => _db = db;
+        public RelyingPartyFromSiteSettingsProvider(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
         public async Task<(string RpId, string RpName, string[] Origins, bool RequireUserVerification)> GetAsync(CancellationToken ct)
         {
@@ -32,9 +32,13 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
                              .Select(x => x.Trim())
                              .Where(x => !string.IsNullOrWhiteSpace(x))
                              .ToArray();
+            if (origins.Length == 0)
+            {
+                origins = new[] { "https://localhost:5001" };
+            }
 
-            var rpId = row.WebAuthnRelyingPartyId ?? "localhost";
-            var rpName = row.WebAuthnRelyingPartyName ?? "Darwin";
+            var rpId = string.IsNullOrWhiteSpace(row.WebAuthnRelyingPartyId) ? "localhost" : row.WebAuthnRelyingPartyId.Trim();
+            var rpName = string.IsNullOrWhiteSpace(row.WebAuthnRelyingPartyName) ? "Darwin" : row.WebAuthnRelyingPartyName.Trim();
             var require = row.WebAuthnRequireUserVerification;
 
             return (rpId, rpName, origins, require);

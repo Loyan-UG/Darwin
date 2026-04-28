@@ -51,17 +51,17 @@ namespace Darwin.WebAdmin.Controllers
             ISiteSettingCache siteSettingCache,
             IAuthAntiBotChallengeService antiBotChallenge)
         {
-            _signIn = signIn;
-            _register = register;
-            _verifyTotp = verifyTotp;
-            _webauthnBegin = webauthnBegin;
-            _webauthnFinish = webauthnFinish;
-            _getSecurityStamp = getSecurityStamp;
-            _getRoleIdByKey = getRoleIdByKey;
-            _permissions = permissions;
-            _text = text;
-            _siteSettingCache = siteSettingCache;
-            _antiBotChallenge = antiBotChallenge;
+            _signIn = signIn ?? throw new ArgumentNullException(nameof(signIn));
+            _register = register ?? throw new ArgumentNullException(nameof(register));
+            _verifyTotp = verifyTotp ?? throw new ArgumentNullException(nameof(verifyTotp));
+            _webauthnBegin = webauthnBegin ?? throw new ArgumentNullException(nameof(webauthnBegin));
+            _webauthnFinish = webauthnFinish ?? throw new ArgumentNullException(nameof(webauthnFinish));
+            _getSecurityStamp = getSecurityStamp ?? throw new ArgumentNullException(nameof(getSecurityStamp));
+            _getRoleIdByKey = getRoleIdByKey ?? throw new ArgumentNullException(nameof(getRoleIdByKey));
+            _permissions = permissions ?? throw new ArgumentNullException(nameof(permissions));
+            _text = text ?? throw new ArgumentNullException(nameof(text));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
+            _antiBotChallenge = antiBotChallenge ?? throw new ArgumentNullException(nameof(antiBotChallenge));
         }
 
         /// <summary>Renders the login page.</summary>
@@ -198,6 +198,11 @@ namespace Darwin.WebAdmin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> WebAuthnBeginLogin([FromForm] Guid userId, CancellationToken ct = default)
         {
+            if (userId == Guid.Empty)
+            {
+                return BadRequestLocalizedError("FailedToBeginPasskeyLoginMessage");
+            }
+
             var res = await _webauthnBegin.HandleAsync(new WebAuthnBeginLoginDto { UserId = userId }, ct);
             if (!res.Succeeded || res.Value is null)
                 return BadRequestLocalizedError("FailedToBeginPasskeyLoginMessage");
@@ -219,6 +224,11 @@ namespace Darwin.WebAdmin.Controllers
             [FromForm] string? returnUrl = null,
             CancellationToken ct = default)
         {
+            if (userId == Guid.Empty || challengeTokenId == Guid.Empty || string.IsNullOrWhiteSpace(clientResponseJson))
+            {
+                return BadRequestLocalizedError("PasskeyLoginFailedMessage");
+            }
+
             var res = await _webauthnFinish.HandleAsync(new WebAuthnFinishLoginDto
             {
                 ChallengeTokenId = challengeTokenId,
@@ -241,9 +251,9 @@ namespace Darwin.WebAdmin.Controllers
         /// <summary>Renders the end-user registration page.</summary>
         [AllowAnonymous]
         [HttpGet("/account/register")]
-        public IActionResult Register(string? returnUrl = null)
+        public async Task<IActionResult> Register(string? returnUrl = null, CancellationToken ct = default)
         {
-            var siteSettings = _siteSettingCache.GetAsync().GetAwaiter().GetResult();
+            var siteSettings = await _siteSettingCache.GetAsync(ct);
             ViewData["ReturnUrl"] = returnUrl;
             ViewData["DefaultCurrency"] = siteSettings.DefaultCurrency;
             ViewData["DefaultLocale"] = siteSettings.DefaultCulture;

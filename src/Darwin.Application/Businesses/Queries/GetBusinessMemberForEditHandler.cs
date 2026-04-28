@@ -26,7 +26,9 @@ namespace Darwin.Application.Businesses.Queries
                 from member in _db.Set<BusinessMember>().AsNoTracking()
                 join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id into userJoin
                 from user in userJoin.DefaultIfEmpty()
-                where member.Id == id
+                where member.Id == id &&
+                      !member.IsDeleted &&
+                      (user == null || !user.IsDeleted)
                 select new BusinessMemberDetailDto
                 {
                     Id = member.Id,
@@ -48,6 +50,7 @@ namespace Darwin.Application.Businesses.Queries
                         !_db.Set<BusinessMember>().Any(x =>
                             x.BusinessId == member.BusinessId &&
                             x.Id != member.Id &&
+                            !x.IsDeleted &&
                             x.Role == BusinessMemberRole.Owner &&
                             x.IsActive),
                     RowVersion = member.RowVersion

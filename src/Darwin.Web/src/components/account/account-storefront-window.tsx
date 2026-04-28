@@ -18,7 +18,11 @@ import {
 import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatMoney } from "@/lib/formatting";
-import { formatResource, getMemberResource } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type AccountStorefrontWindowProps = {
   culture: string;
@@ -40,6 +44,12 @@ export function AccountStorefrontWindow({
   productsStatus,
 }: AccountStorefrontWindowProps) {
   const copy = getMemberResource(culture);
+  const localizedCmsPagesStatus =
+    resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const localizedCategoriesStatus =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const localizedProductsStatus =
+    resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
   const {
     offerBoardProducts: productOpportunities,
     campaignCategories,
@@ -194,9 +204,9 @@ export function AccountStorefrontWindow({
       </p>
       <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
         {formatResource(copy.accountStorefrontWindowMessage, {
-          cmsStatus: cmsPagesStatus,
-          categoriesStatus,
-          productsStatus,
+          cmsStatus: localizedCmsPagesStatus,
+          categoriesStatus: localizedCategoriesStatus,
+          productsStatus: localizedProductsStatus,
           pageCount: cmsPages.length,
           categoryCount: categories.length,
           productCount: products.length,
@@ -219,7 +229,7 @@ export function AccountStorefrontWindow({
             culture={culture}
             cards={cmsSpotlightCards}
             emptyMessage={formatResource(copy.accountStorefrontCmsEmptyMessage, {
-              status: cmsPagesStatus,
+              status: localizedCmsPagesStatus,
             })}
           />
         </div>
@@ -240,7 +250,7 @@ export function AccountStorefrontWindow({
             culture={culture}
             cards={categorySpotlightCards}
             emptyMessage={formatResource(copy.accountStorefrontCatalogEmptyMessage, {
-              status: categoriesStatus,
+              status: localizedCategoriesStatus,
             })}
           />
         </div>
@@ -261,7 +271,7 @@ export function AccountStorefrontWindow({
             culture={culture}
             cards={productOpportunityCards}
             emptyMessage={formatResource(copy.accountStorefrontProductEmptyMessage, {
-              status: productsStatus,
+              status: localizedProductsStatus,
             })}
             columnsClassName="grid-cols-1"
           />

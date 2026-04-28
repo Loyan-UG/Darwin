@@ -52,6 +52,25 @@ public sealed class StripeWebhookSignatureVerifierTests
         errorKey.Should().Be("StripeWebhookSignatureInvalid");
     }
 
+    /// <summary>
+    ///     Ensures signature check fails deterministically when payload is missing.
+    /// </summary>
+    [Fact]
+    public void TryVerify_Should_ReturnFalse_WhenPayloadIsMissing()
+    {
+        // Arrange
+        var verifier = new StripeWebhookSignatureVerifier();
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var header = $"t={timestamp},v1=abcdef";
+
+        // Act
+        var isValid = verifier.TryVerify("  ", header, "secret", out var errorKey);
+
+        // Assert
+        isValid.Should().BeFalse();
+        errorKey.Should().Be("StripeWebhookSignatureInvalid");
+    }
+
     [Fact]
     public void TryVerify_Should_ReturnFalse_WhenTimestampIsOutsideTolerance()
     {
@@ -65,6 +84,25 @@ public sealed class StripeWebhookSignatureVerifierTests
 
         // Act
         var isValid = verifier.TryVerify(payload, header, secret, out var errorKey);
+
+        // Assert
+        isValid.Should().BeFalse();
+        errorKey.Should().Be("StripeWebhookSignatureInvalid");
+    }
+
+    /// <summary>
+    ///     Ensures hmac compare is not attempted when no v1 signatures are present.
+    /// </summary>
+    [Fact]
+    public void TryVerify_Should_ReturnFalse_WhenHeaderHasNoV1Signature()
+    {
+        // Arrange
+        var verifier = new StripeWebhookSignatureVerifier();
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var header = $"t={timestamp}";
+
+        // Act
+        var isValid = verifier.TryVerify("{}", header, "secret", out var errorKey);
 
         // Assert
         isValid.Should().BeFalse();

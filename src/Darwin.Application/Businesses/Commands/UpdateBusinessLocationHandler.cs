@@ -35,7 +35,7 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var entity = await _db.Set<BusinessLocation>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
 
             if (entity is null)
                 throw new InvalidOperationException(_localizer["BusinessLocationNotFound"]);
@@ -48,7 +48,7 @@ namespace Darwin.Application.Businesses.Commands
             if (dto.IsPrimary)
             {
                 var existingPrimaryLocations = await _db.Set<BusinessLocation>()
-                    .Where(x => x.BusinessId == dto.BusinessId && x.Id != dto.Id && x.IsPrimary)
+                    .Where(x => x.BusinessId == dto.BusinessId && x.Id != dto.Id && x.IsPrimary && !x.IsDeleted)
                     .ToListAsync(ct);
 
                 foreach (var existingPrimary in existingPrimaryLocations)

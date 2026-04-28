@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -587,6 +588,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getBusinessForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -603,6 +610,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Setup(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getBusinessForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -653,6 +666,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 pageSize,
                 query,
                 filter,
+                culture: CultureInfo.CurrentUICulture.Name,
                 ct).ConfigureAwait(false);
             var summary = await _getBusinessSubscriptionInvoiceOpsSummary.HandleAsync(businessId, ct).ConfigureAwait(false);
 
@@ -682,6 +696,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] string rowVersion,
             CancellationToken ct = default)
         {
+            if (businessId == Guid.Empty || subscriptionId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessSubscriptionCancelAtPeriodEndUpdateFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var parsedRowVersion = string.IsNullOrWhiteSpace(rowVersion)
                 ? Array.Empty<byte>()
                 : Convert.FromBase64String(rowVersion);
@@ -799,6 +819,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Edit(BusinessEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateBusinessFormOptionsAsync(vm, ct);
@@ -859,6 +885,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Setup(BusinessEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateBusinessFormOptionsAsync(vm, ct);
@@ -919,6 +951,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> ProvisionSupportCustomer([FromForm] Guid businessId, [FromForm] bool returnToSetup = true, CancellationToken ct = default)
         {
+            if (businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var result = await _ensureBusinessOnboardingCustomerProfile.HandleAsync(businessId, ct);
             if (result.CustomerId.HasValue)
             {
@@ -943,6 +981,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] bool returnToReadiness = false,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var result = await _provisionBusinessOnboarding.HandleAsync(new BusinessLifecycleActionDto
             {
                 Id = id,
@@ -972,6 +1016,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessArchiveFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             Result result = await _deleteBusiness.HandleAsync(new BusinessDeleteDto
             {
                 Id = id,
@@ -988,6 +1038,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessApproveFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _approveBusiness.HandleAsync(new BusinessLifecycleActionDto
@@ -1010,6 +1066,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] string? note, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessSuspendFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _suspendBusiness.HandleAsync(new BusinessLifecycleActionDto
@@ -1033,6 +1095,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessReactivateFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _reactivateBusiness.HandleAsync(new BusinessLifecycleActionDto
@@ -1128,6 +1196,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> CreateLocation(BusinessLocationEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateBusinessContextAsync(vm, ct);
@@ -1167,6 +1241,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditLocation(Guid id, int page = 1, int pageSize = 20, string? query = null, BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessLocationNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getBusinessLocationForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -1213,6 +1293,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditLocation(BusinessLocationEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.BusinessId == Guid.Empty ? "BusinessNotFound" : "BusinessLocationNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateBusinessContextAsync(vm, ct);
@@ -1259,6 +1345,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> DeleteLocation([FromForm] Guid id, [FromForm(Name = "userId")] Guid businessId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessLocationArchiveFailed");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmx(nameof(Locations), new { businessId });
+            }
+
             var result = await _deleteBusinessLocation.HandleAsync(new BusinessLocationDeleteDto
             {
                 Id = id,
@@ -1438,6 +1532,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> CreateInvitation(BusinessInvitationCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateBusinessContextAsync(vm, ct);
@@ -1472,6 +1572,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> ResendInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessInvitationResendFailed");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmx(nameof(Invitations), new { businessId });
+            }
+
             try
             {
                 await _resendBusinessInvitation.HandleAsync(new BusinessInvitationResendDto
@@ -1493,6 +1601,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> RevokeInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessInvitationRevokeFailed");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmx(nameof(Invitations), new { businessId });
+            }
+
             try
             {
                 await _revokeBusinessInvitation.HandleAsync(new BusinessInvitationRevokeDto
@@ -1540,6 +1656,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> CreateMember(BusinessMemberEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty || vm.UserId == Guid.Empty)
+            {
+                SetErrorMessage(vm.BusinessId == Guid.Empty ? "BusinessNotFound" : "BusinessMemberCreateFailed");
+                return vm.BusinessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateBusinessContextAsync(vm, ct);
@@ -1578,6 +1702,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditMember(Guid id, int page = 1, int pageSize = 20, string? query = null, BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -1620,6 +1750,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> StaffAccessBadge(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -1662,6 +1798,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditMember(BusinessMemberEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty || vm.UserId == Guid.Empty)
+            {
+                SetErrorMessage(vm.BusinessId == Guid.Empty ? "BusinessNotFound" : "BusinessMemberUpdateFailed");
+                return vm.BusinessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmx(nameof(Members), new { businessId = vm.BusinessId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query, filter = vm.Filter });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateBusinessContextAsync(vm, ct);
@@ -1710,6 +1854,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> DeleteMember([FromForm] Guid id, [FromForm(Name = "userId")] Guid businessId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberDeleteFailed");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmx(nameof(Members), new { businessId });
+            }
+
             try
             {
                 await _deleteBusinessMember.HandleAsync(new BusinessMemberDeleteDto
@@ -1737,6 +1889,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] string? overrideReason,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberForceDeleteFailed");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmx(nameof(Members), new { businessId });
+            }
+
             try
             {
                 await _deleteBusinessMember.HandleAsync(new BusinessMemberDeleteDto
@@ -1770,6 +1930,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberNotFound");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
+            }
+
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
@@ -1803,6 +1971,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberNotFound");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
+            }
+
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
@@ -1834,6 +2010,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberNotFound");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
+            }
+
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
@@ -1867,6 +2051,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberNotFound");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
+            }
+
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
@@ -1898,6 +2090,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             [FromForm] BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessMemberNotFound");
+                return businessId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectMemberSupport(returnToEdit, id, businessId, page, pageSize, query, filter);
+            }
+
             var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
             if (member is null)
             {
@@ -1970,6 +2170,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private async Task SyncBusinessOnboardingCustomerProfileAsync(Guid businessId, CancellationToken ct)
         {
+            if (businessId == Guid.Empty)
+            {
+                return;
+            }
+
             await _ensureBusinessOnboardingCustomerProfile.HandleAsync(businessId, ct);
         }
 
@@ -2079,6 +2284,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private async Task<BusinessContextVm?> LoadBusinessContextAsync(Guid id, CancellationToken ct)
         {
+            if (id == Guid.Empty)
+            {
+                return null;
+            }
+
             var dto = await _getBusinessForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
@@ -2526,7 +2736,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return new BusinessSubscriptionSnapshotVm();
             }
 
-            var result = await _getBusinessSubscriptionStatus.HandleAsync(businessId, ct).ConfigureAwait(false);
+            var result = await _getBusinessSubscriptionStatus.HandleAsync(
+                businessId,
+                CultureInfo.CurrentUICulture.Name,
+                ct).ConfigureAwait(false);
             if (!result.Succeeded || result.Value is null)
             {
                 return new BusinessSubscriptionSnapshotVm
@@ -2564,13 +2777,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 : settings.BusinessManagementWebsiteUrl.Trim();
             var managementWebsiteConfigured = !string.IsNullOrWhiteSpace(managementWebsiteUrl);
             var workspaceManagementWebsiteUrl = BuildSubscriptionManagementWebsiteUrl(managementWebsiteUrl, business.Id, planCode: null);
-            var plans = await _getBillingPlans.HandleAsync(activeOnly: true, ct);
+            var plans = await _getBillingPlans.HandleAsync(
+                activeOnly: true,
+                culture: CultureInfo.CurrentUICulture.Name,
+                ct);
             var recentInvoices = await _getBusinessSubscriptionInvoicesPage.HandleAsync(
                 business.Id,
                 page: 1,
                 pageSize: 5,
                 query: null,
                 filter: BusinessSubscriptionInvoiceQueueFilter.All,
+                culture: CultureInfo.CurrentUICulture.Name,
                 ct).ConfigureAwait(false);
             var invoiceSummary = await _getBusinessSubscriptionInvoiceOpsSummary.HandleAsync(business.Id, ct).ConfigureAwait(false);
             var planVms = new List<BusinessBillingPlanVm>();

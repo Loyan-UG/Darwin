@@ -21,8 +21,14 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
             builder.Property(r => r.Key).HasMaxLength(128).IsRequired();
             builder.Property(r => r.NormalizedName).HasMaxLength(128).IsRequired();
 
-            builder.HasIndex(r => r.Key).IsUnique().HasDatabaseName("UX_Role_Name");
-            builder.HasIndex(r => r.NormalizedName).IsUnique().HasDatabaseName("UX_Role_NormalizedName");
+            builder.HasIndex(r => r.Key)
+                .IsUnique()
+                .HasDatabaseName("UX_Role_Name")
+                .HasFilter("[IsDeleted] = 0");
+            builder.HasIndex(r => r.NormalizedName)
+                .IsUnique()
+                .HasDatabaseName("UX_Role_NormalizedName")
+                .HasFilter("[IsDeleted] = 0");
 
             builder.Property(r => r.IsSystem).HasDefaultValue(false);
             builder.Property(r => r.Description).HasMaxLength(1024);

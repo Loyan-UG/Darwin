@@ -18,8 +18,13 @@ import {
   buildStorefrontOfferCards,
   buildStorefrontPageSpotlightCards,
 } from "@/features/storefront/storefront-campaigns";
-import { formatResource, getMemberResource } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { buildInvoicePath } from "@/lib/entity-paths";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 
 type InvoicesPageProps = {
@@ -43,6 +48,20 @@ type InvoicesPageProps = {
 
 function isOutstandingInvoice(invoice: MemberInvoiceSummary) {
   return invoice.balanceMinor > 0;
+}
+
+function localizeInvoiceStatus(status: string, culture: string) {
+  if (culture.toLowerCase().startsWith("en")) {
+    return status;
+  }
+
+  const labels: Record<string, string> = {
+    Draft: "Entwurf",
+    Open: "Offen",
+    Paid: "Bezahlt",
+    Cancelled: "Storniert",
+  };
+  return labels[status] ?? status;
 }
 
 function buildInvoicesHref(
@@ -83,6 +102,13 @@ export function InvoicesPage({
   storefrontCartStatus,
 }: InvoicesPageProps) {
   const copy = getMemberResource(culture);
+  const statusLabel = resolveApiStatusLabel(status, copy) ?? status;
+  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const productsStatusLabel = resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
+  const storefrontCartStatusLabel =
+    resolveApiStatusLabel(storefrontCartStatus, copy) ?? storefrontCartStatus;
   const outstandingInvoices = invoices.filter(isOutstandingInvoice);
   const outstandingBalanceMinor = outstandingInvoices.reduce(
     (total, invoice) => total + invoice.balanceMinor,
@@ -96,6 +122,7 @@ export function InvoicesPage({
       [
         invoice.orderNumber ?? "",
         invoice.status,
+        localizeInvoiceStatus(invoice.status, culture),
         invoice.id,
       ].some((value) => value.toLowerCase().includes(normalizedVisibleQuery));
 
@@ -196,7 +223,7 @@ export function InvoicesPage({
           <StatusBanner
             tone="warning"
             title={copy.invoicesWarningsTitle}
-            message={formatResource(copy.invoicesWarningsMessage, { status })}
+            message={formatResource(copy.invoicesWarningsMessage, { status: statusLabel })}
           />
         )}
 
@@ -210,7 +237,7 @@ export function InvoicesPage({
               loadedCount: invoices.length,
               currentPage,
               totalPages,
-              status,
+              status: statusLabel,
             })}
           </p>
         </div>
@@ -308,7 +335,7 @@ export function InvoicesPage({
           <div className="mt-5 flex flex-wrap gap-3">
             {outstandingInvoices[0] ? (
               <Link
-                href={localizeHref(`/invoices/${outstandingInvoices[0].id}`, culture)}
+            href={localizeHref(buildInvoicePath(outstandingInvoices[0].id), culture)}
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
               >
                 {copy.invoicesReadinessPrimaryCta}
@@ -333,7 +360,7 @@ export function InvoicesPage({
               loadedCount: invoices.length,
               currentPage,
               totalPages,
-              status,
+              status: statusLabel,
             }),
             href: buildInvoicesHref(currentPage, { visibleQuery, visibleState }),
             ctaLabel: copy.accountCompositionJourneyCurrentCta,
@@ -347,7 +374,7 @@ export function InvoicesPage({
                   balance: formatMoney(outstandingBalanceMinor, primaryCurrency, culture),
                 })
               : copy.ordersPortalNote,
-            href: outstandingInvoices[0] ? `/invoices/${outstandingInvoices[0].id}` : "/orders",
+    href: outstandingInvoices[0] ? buildInvoicePath(outstandingInvoices[0].id) : "/orders",
             ctaLabel: outstandingInvoices[0]
               ? copy.invoicesReadinessPrimaryCta
               : copy.accountCompositionJourneySecurityNextCta,
@@ -378,9 +405,9 @@ export function InvoicesPage({
             culture={culture}
             title={copy.invoicesStorefrontWindowTitle}
             message={formatResource(copy.invoicesStorefrontWindowMessage, {
-              cmsStatus: cmsPagesStatus,
-              categoriesStatus,
-              productsStatus,
+              cmsStatus: cmsPagesStatusLabel,
+              categoriesStatus: categoriesStatusLabel,
+              productsStatus: productsStatusLabel,
               pageCount: cmsPages.length,
               categoryCount: categories.length,
               productCount: products.length,
@@ -389,13 +416,13 @@ export function InvoicesPage({
             cmsCtaLabel={copy.invoicesStorefrontCmsCta}
             cmsCards={cmsSpotlightCards}
             cmsEmptyMessage={formatResource(copy.invoicesStorefrontCmsEmptyMessage, {
-              status: cmsPagesStatus,
+              status: cmsPagesStatusLabel,
             })}
             catalogTitle={copy.invoicesStorefrontCatalogTitle}
             catalogCtaLabel={copy.invoicesStorefrontCatalogCta}
             categoryCards={categorySpotlightCards}
             catalogEmptyMessage={formatResource(copy.invoicesStorefrontCatalogEmptyMessage, {
-              status: categoriesStatus,
+              status: categoriesStatusLabel,
             })}
             productTitle={copy.invoicesStorefrontProductTitle}
             productCtaLabel={copy.invoicesStorefrontProductCta}
@@ -408,7 +435,7 @@ export function InvoicesPage({
             }
             productCards={storefrontOfferCards}
             productEmptyMessage={formatResource(copy.invoicesStorefrontProductEmptyMessage, {
-              status: productsStatus,
+              status: productsStatusLabel,
             })}
             promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
             promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
@@ -417,11 +444,11 @@ export function InvoicesPage({
             cartSectionMessage={
               storefrontCart && storefrontCart.items.length > 0
                 ? formatResource(copy.invoicesStorefrontCartMessage, {
-                    status: storefrontCartStatus,
+                    status: storefrontCartStatusLabel,
                     count: storefrontCart.items.length,
                   })
                 : formatResource(copy.invoicesStorefrontCartEmptyMessage, {
-                    status: storefrontCartStatus,
+                    status: storefrontCartStatusLabel,
                   })
             }
             cartSectionCartCtaLabel={copy.invoicesStorefrontCartCta}
@@ -438,10 +465,10 @@ export function InvoicesPage({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                    {invoice.status}
+                    {localizeInvoiceStatus(invoice.status, culture)}
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
-                    <Link href={localizeHref(`/invoices/${invoice.id}`, culture)} className="transition hover:text-[var(--color-brand)]">
+                <Link href={localizeHref(buildInvoicePath(invoice.id), culture)} className="transition hover:text-[var(--color-brand)]">
                       {invoice.orderNumber ?? invoice.id}
                     </Link>
                   </h2>
@@ -459,7 +486,7 @@ export function InvoicesPage({
                     })}
                   </p>
                   <Link
-                    href={localizeHref(`/invoices/${invoice.id}`, culture)}
+                    href={localizeHref(buildInvoicePath(invoice.id), culture)}
                     className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {copy.openInvoiceCta}

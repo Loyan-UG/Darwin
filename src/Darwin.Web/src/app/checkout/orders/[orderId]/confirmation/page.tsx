@@ -24,6 +24,10 @@ type ConfirmationRouteProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+function buildFinalizePath(orderId: string) {
+  return `/checkout/orders/${encodeURIComponent(orderId)}/confirmation/finalize`;
+}
+
 export default async function OrderConfirmationRoute({
   params,
   searchParams,
@@ -59,7 +63,7 @@ export default async function OrderConfirmationRoute({
   ) {
     redirect(
       buildAppQueryPath(
-        `/checkout/orders/${resolvedParams.orderId}/confirmation/finalize`,
+        buildFinalizePath(resolvedParams.orderId),
         {
           orderNumber,
           cancelled: cancelled ? "true" : undefined,

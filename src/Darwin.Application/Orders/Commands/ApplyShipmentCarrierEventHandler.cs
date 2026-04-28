@@ -31,6 +31,7 @@ public sealed class ApplyShipmentCarrierEventHandler
         var shipment = await _db.Set<Shipment>()
             .FirstOrDefaultAsync(
                 x => x.ProviderShipmentReference == dto.ProviderShipmentReference &&
+                     !x.IsDeleted &&
                      x.Carrier == dto.Carrier,
                 ct)
             .ConfigureAwait(false);

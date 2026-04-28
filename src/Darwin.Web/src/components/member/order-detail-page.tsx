@@ -22,10 +22,12 @@ import {
 import {
   formatResource,
   getMemberResource,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { parseAddressJson, type ParsedAddress } from "@/lib/address-json";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { buildInvoicePath, buildOrderPath } from "@/lib/entity-paths";
 import { buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
 import { getSafeExternalLinkProps, toWebApiUrl } from "@/lib/webapi-url";
 
@@ -91,6 +93,72 @@ function getLatestPaymentAttempt(
   })[0];
 }
 
+function localizeOrderStatus(status: string, culture: string) {
+  if (culture.toLowerCase().startsWith("en")) {
+    return status;
+  }
+
+  const labels: Record<string, string> = {
+    Created: "Erstellt",
+    Confirmed: "Bestaetigt",
+    Paid: "Bezahlt",
+    PartiallyShipped: "Teilweise versendet",
+    Shipped: "Versendet",
+    Delivered: "Zugestellt",
+    Cancelled: "Storniert",
+    Refunded: "Erstattet",
+    PartiallyRefunded: "Teilweise erstattet",
+    Completed: "Abgeschlossen",
+  };
+  return labels[status] ?? status;
+}
+
+function localizePaymentStatus(status: string, culture: string) {
+  if (culture.toLowerCase().startsWith("en")) {
+    return status;
+  }
+
+  const labels: Record<string, string> = {
+    Pending: "Ausstehend",
+    Authorized: "Autorisiert",
+    Captured: "Erfasst",
+    Completed: "Abgeschlossen",
+    Failed: "Fehlgeschlagen",
+    Refunded: "Erstattet",
+    Voided: "Storniert",
+  };
+  return labels[status] ?? status;
+}
+
+function localizeShipmentStatus(status: string, culture: string) {
+  if (culture.toLowerCase().startsWith("en")) {
+    return status;
+  }
+
+  const labels: Record<string, string> = {
+    Pending: "Ausstehend",
+    Packed: "Gepackt",
+    Shipped: "Versendet",
+    Delivered: "Zugestellt",
+    Returned: "Retourniert",
+  };
+  return labels[status] ?? status;
+}
+
+function localizeInvoiceStatus(status: string, culture: string) {
+  if (culture.toLowerCase().startsWith("en")) {
+    return status;
+  }
+
+  const labels: Record<string, string> = {
+    Draft: "Entwurf",
+    Open: "Offen",
+    Paid: "Bezahlt",
+    Cancelled: "Storniert",
+  };
+  return labels[status] ?? status;
+}
+
 export function OrderDetailPage({
   culture,
   order,
@@ -107,6 +175,13 @@ export function OrderDetailPage({
   storefrontCartStatus,
 }: OrderDetailPageProps) {
   const copy = getMemberResource(culture);
+  const statusLabel = resolveApiStatusLabel(status, copy) ?? status;
+  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const productsStatusLabel = resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
+  const storefrontCartStatusLabel =
+    resolveApiStatusLabel(storefrontCartStatus, copy) ?? storefrontCartStatus;
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
 
   if (!order) {
@@ -116,7 +191,9 @@ export function OrderDetailPage({
           <StatusBanner
             tone="warning"
             title={copy.orderDetailUnavailableTitle}
-            message={formatResource(copy.orderDetailUnavailableMessage, { status })}
+            message={formatResource(copy.orderDetailUnavailableMessage, {
+              status: statusLabel,
+            })}
           />
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -150,7 +227,10 @@ export function OrderDetailPage({
     );
   }
 
-  const documentUrl = toWebApiUrl(order.actions.documentPath);
+  const documentPath = order.actions.documentPath
+    ? `${order.actions.documentPath}?culture=${encodeURIComponent(culture)}`
+    : null;
+  const documentUrl = documentPath ? toWebApiUrl(documentPath) : "";
   const shipmentsInFlight = order.shipments.filter(
     (shipment) => !shipment.deliveredAtUtc,
   ).length;
@@ -308,7 +388,7 @@ export function OrderDetailPage({
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <div>
                             <p className="text-sm font-semibold text-[var(--color-text-primary)]">{payment.provider}</p>
-                            <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{payment.status}</p>
+                            <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{localizePaymentStatus(payment.status, culture)}</p>
                             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
                               {copy.createdLabel} {formatDateTime(payment.createdAtUtc, culture)}
                             </p>
@@ -349,7 +429,7 @@ export function OrderDetailPage({
                           {shipment.carrier} / {shipment.service}
                         </p>
                         <div className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                          <p>{formatResource(copy.shipmentStatusLabel, { value: shipment.status })}</p>
+                          <p>{formatResource(copy.shipmentStatusLabel, { value: localizeShipmentStatus(shipment.status, culture) })}</p>
                           {shipment.trackingNumber ? <p>{formatResource(copy.trackingLabel, { value: shipment.trackingNumber })}</p> : null}
                           {shipment.trackingUrl ? (
                             <p>
@@ -403,7 +483,7 @@ export function OrderDetailPage({
                     <article key={invoice.id} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">{invoice.status}</p>
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">{localizeInvoiceStatus(invoice.status, culture)}</p>
                           <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">
                             {formatResource(copy.dueLabel, { value: formatDateTime(invoice.dueDateUtc, culture) })}
                           </p>
@@ -418,7 +498,7 @@ export function OrderDetailPage({
                             {formatMoney(invoice.totalGrossMinor, invoice.currency, culture)}
                           </p>
                           <Link
-                            href={localizeHref(`/invoices/${invoice.id}`, culture)}
+            href={localizeHref(buildInvoicePath(invoice.id), culture)}
                             className="mt-3 inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                           >
                             {copy.openInvoiceCta}
@@ -461,7 +541,7 @@ export function OrderDetailPage({
                   </p>
                   {latestPaymentAttempt ? (
                     <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {latestPaymentAttempt.provider} / {latestPaymentAttempt.status}
+                      {latestPaymentAttempt.provider} / {localizePaymentStatus(latestPaymentAttempt.status, culture)}
                     </p>
                   ) : null}
                 </article>
@@ -507,7 +587,7 @@ export function OrderDetailPage({
                   shipments: shipmentsInFlight,
                   invoices: linkedInvoiceAttention,
                 }),
-                href: `/orders/${order.id}`,
+    href: buildOrderPath(order.id),
                 ctaLabel: copy.accountCompositionJourneyCurrentCta,
               }}
               nextCard={{
@@ -516,7 +596,7 @@ export function OrderDetailPage({
                 description: order.invoices[0]
                   ? copy.linkedInvoicesDescription
                   : copy.invoicesPortalNote,
-                href: order.invoices[0] ? `/invoices/${order.invoices[0].id}` : "/invoices",
+    href: order.invoices[0] ? buildInvoicePath(order.invoices[0].id) : "/invoices",
                 ctaLabel: order.invoices[0]
                   ? copy.openInvoiceCta
                   : copy.accountCompositionJourneyAddressesCta,
@@ -533,7 +613,7 @@ export function OrderDetailPage({
                   label: copy.accountCompositionRouteMapNextLabel,
                   title: copy.summaryTitle,
                   description: formatResource(copy.orderDetailTimelineMessage, {}),
-                  href: `/orders/${order.id}`,
+    href: buildOrderPath(order.id),
                   ctaLabel: copy.accountCompositionRouteMapProfileCta,
                 },
               ]}
@@ -545,7 +625,7 @@ export function OrderDetailPage({
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
-                <div className="flex items-center justify-between"><span>{copy.statusLabel}</span><span>{order.status}</span></div>
+                <div className="flex items-center justify-between"><span>{copy.statusLabel}</span><span>{localizeOrderStatus(order.status, culture)}</span></div>
                 <div className="flex items-center justify-between"><span>{copy.createdLabel}</span><span>{formatDateTime(order.createdAtUtc, culture)}</span></div>
                 <div className="flex items-center justify-between"><span>{copy.subtotalLabel}</span><span>{formatMoney(order.subtotalNetMinor, order.currency, culture)}</span></div>
                 <div className="flex items-center justify-between"><span>{copy.taxLabel}</span><span>{formatMoney(order.taxTotalMinor, order.currency, culture)}</span></div>
@@ -640,9 +720,9 @@ export function OrderDetailPage({
                 culture={culture}
                 title={copy.orderDetailStorefrontWindowTitle}
                 message={formatResource(copy.orderDetailStorefrontWindowMessage, {
-                  cmsStatus: cmsPagesStatus,
-                  categoriesStatus,
-                  productsStatus,
+                  cmsStatus: cmsPagesStatusLabel,
+                  categoriesStatus: categoriesStatusLabel,
+                  productsStatus: productsStatusLabel,
                   pageCount: cmsPages.length,
                   categoryCount: categories.length,
                   productCount: products.length,
@@ -651,13 +731,13 @@ export function OrderDetailPage({
                 cmsCtaLabel={copy.orderDetailStorefrontCmsCta}
                 cmsCards={cmsSpotlightCards}
                 cmsEmptyMessage={formatResource(copy.orderDetailStorefrontCmsEmptyMessage, {
-                  status: cmsPagesStatus,
+                  status: cmsPagesStatusLabel,
                 })}
                 catalogTitle={copy.orderDetailStorefrontCatalogTitle}
                 catalogCtaLabel={copy.orderDetailStorefrontCatalogCta}
                 categoryCards={categorySpotlightCards}
                 catalogEmptyMessage={formatResource(copy.orderDetailStorefrontCatalogEmptyMessage, {
-                  status: categoriesStatus,
+                  status: categoriesStatusLabel,
                 })}
                 productTitle={copy.orderDetailStorefrontProductTitle}
                 productCtaLabel={copy.orderDetailStorefrontProductCta}
@@ -668,7 +748,7 @@ export function OrderDetailPage({
                 }
                 productCards={storefrontOfferCards}
                 productEmptyMessage={formatResource(copy.orderDetailStorefrontProductEmptyMessage, {
-                  status: productsStatus,
+                  status: productsStatusLabel,
                 })}
                 promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
                 promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
@@ -677,11 +757,11 @@ export function OrderDetailPage({
                 cartSectionMessage={
                   storefrontCart && storefrontCart.items.length > 0
                     ? formatResource(copy.orderDetailStorefrontCartMessage, {
-                        status: storefrontCartStatus,
+                        status: storefrontCartStatusLabel,
                         count: storefrontCart.items.length,
                       })
                     : formatResource(copy.orderDetailStorefrontCartEmptyMessage, {
-                        status: storefrontCartStatus,
+                        status: storefrontCartStatusLabel,
                       })
                 }
                 cartSectionCartCtaLabel={copy.orderDetailStorefrontCartCta}
@@ -695,7 +775,8 @@ export function OrderDetailPage({
                 {order.actions.canRetryPayment && (
                   <form action={createMemberOrderPaymentIntentAction}>
                     <input type="hidden" name="orderId" value={order.id} />
-                    <input type="hidden" name="failurePath" value={localizeHref(`/orders/${order.id}`, culture)} />
+                    <input type="hidden" name="culture" value={culture} />
+            <input type="hidden" name="failurePath" value={localizeHref(buildOrderPath(order.id), culture)} />
                     <button type="submit" className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
                       {copy.retryPaymentCta}
                     </button>

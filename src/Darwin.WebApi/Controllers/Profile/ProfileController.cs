@@ -177,13 +177,16 @@ namespace Darwin.WebApi.Controllers.Profile
             if (request.RowVersion is null || request.RowVersion.Length == 0)
                 return BadRequestProblem(_validationLocalizer["RowVersionRequiredForOptimisticConcurrency"]);
 
-            if (string.IsNullOrWhiteSpace(request.Locale))
+            var normalizedLocale = NormalizeText(request.Locale);
+            if (normalizedLocale is null)
                 return BadRequestProblem(_validationLocalizer["LocaleRequired"]);
 
-            if (string.IsNullOrWhiteSpace(request.Timezone))
+            var normalizedTimezone = NormalizeText(request.Timezone);
+            if (normalizedTimezone is null)
                 return BadRequestProblem(_validationLocalizer["TimezoneRequired"]);
 
-            if (string.IsNullOrWhiteSpace(request.Currency))
+            var normalizedCurrency = NormalizeText(request.Currency)?.ToUpperInvariant();
+            if (normalizedCurrency is null)
                 return BadRequestProblem(_validationLocalizer["CurrencyRequired"]);
 
             // API-level minimal guards: keep null-safety, but leave real validation to Application validators.
@@ -195,14 +198,14 @@ namespace Darwin.WebApi.Controllers.Profile
                 // If we do not map Id here, default Guid.Empty causes update to fail.
                 Id = request.Id,
 
-                Email = request.Email ?? string.Empty,
-                FirstName = request.FirstName ?? string.Empty,
-                LastName = request.LastName ?? string.Empty,
-                PhoneE164 = request.PhoneE164,
+                Email = NormalizeText(request.Email) ?? string.Empty,
+                FirstName = NormalizeText(request.FirstName) ?? string.Empty,
+                LastName = NormalizeText(request.LastName) ?? string.Empty,
+                PhoneE164 = NormalizeText(request.PhoneE164),
 
-                Locale = request.Locale,
-                Timezone = request.Timezone,
-                Currency = request.Currency,
+                Locale = normalizedLocale,
+                Timezone = normalizedTimezone,
+                Currency = normalizedCurrency,
 
                 // Ensure non-null token to avoid null deref and to keep concurrency semantics explicit.
                 RowVersion = request.RowVersion ?? Array.Empty<byte>()
@@ -253,7 +256,7 @@ namespace Darwin.WebApi.Controllers.Profile
             }
 
             var result = await _confirmPhoneVerificationHandler.HandleAsync(
-                new ConfirmPhoneVerificationDto { Code = request.Code },
+                new ConfirmPhoneVerificationDto { Code = request.Code.Trim() },
                 ct).ConfigureAwait(false);
 
             if (!result.Succeeded)
@@ -263,6 +266,9 @@ namespace Darwin.WebApi.Controllers.Profile
 
             return NoContent();
         }
+
+        private static string? NormalizeText(string? value)
+            => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
         /// <summary>
         /// Updates the current user's privacy and communication preferences using optimistic concurrency.

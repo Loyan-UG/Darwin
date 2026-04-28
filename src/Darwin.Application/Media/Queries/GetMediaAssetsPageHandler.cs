@@ -15,13 +15,16 @@ namespace Darwin.Application.CMS.Media.Queries
     /// </summary>
     public sealed class GetMediaAssetsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetMediaAssetsPageHandler(IAppDbContext db) => _db = db;
+        public GetMediaAssetsPageHandler(IAppDbContext db) => _db = db ?? throw new System.ArgumentNullException(nameof(db));
 
         public async Task<(List<MediaAssetListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, string? query = null, MediaAssetQueueFilter filter = MediaAssetQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery = _db.Set<MediaAsset>().AsNoTracking().Where(m => !m.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
@@ -74,7 +77,7 @@ namespace Darwin.Application.CMS.Media.Queries
     public sealed class GetMediaAssetOpsSummaryHandler
     {
         private readonly IAppDbContext _db;
-        public GetMediaAssetOpsSummaryHandler(IAppDbContext db) => _db = db;
+        public GetMediaAssetOpsSummaryHandler(IAppDbContext db) => _db = db ?? throw new System.ArgumentNullException(nameof(db));
 
         public async Task<MediaAssetOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {

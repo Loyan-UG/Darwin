@@ -47,7 +47,7 @@ namespace Darwin.Application.Businesses.Commands
         {
             var audit = await _db.Set<EmailDispatchAudit>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == dto.AuditId, ct)
+                .FirstOrDefaultAsync(x => x.Id == dto.AuditId && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (audit is null)
@@ -64,6 +64,7 @@ namespace Darwin.Application.Businesses.Commands
                 .AsNoTracking()
                 .CountAsync(
                     x => x.RecipientEmail == audit.RecipientEmail &&
+                         !x.IsDeleted &&
                          x.FlowKey == audit.FlowKey &&
                          x.BusinessId == audit.BusinessId &&
                          x.AttemptedAtUtc >= DateTime.UtcNow.Subtract(RetryChainWindow),

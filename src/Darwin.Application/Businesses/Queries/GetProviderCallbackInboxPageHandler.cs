@@ -27,7 +27,7 @@ namespace Darwin.Application.Businesses.Queries
 
             var now = DateTime.UtcNow;
             var staleBeforeUtc = now.Subtract(StalePendingThreshold);
-            var baseQuery = _db.Set<ProviderCallbackInboxMessage>().AsNoTracking();
+            var baseQuery = _db.Set<ProviderCallbackInboxMessage>().AsNoTracking().Where(x => !x.IsDeleted);
 
             var summary = new ProviderCallbackInboxSummaryDto
             {

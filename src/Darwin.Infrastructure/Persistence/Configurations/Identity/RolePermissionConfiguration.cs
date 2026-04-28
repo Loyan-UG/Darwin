@@ -19,7 +19,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
 
             builder.HasIndex(rp => new { rp.RoleId, rp.PermissionId })
                    .IsUnique()
-                   .HasDatabaseName("UX_RolePermission_Role_Permission");
+                   .HasDatabaseName("UX_RolePermission_Role_Permission")
+                   .HasFilter("[IsDeleted] = 0");
 
             builder.HasOne(rp => rp.Role)
                    .WithMany(r => r.RolePermissions)

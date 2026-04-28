@@ -32,7 +32,7 @@ namespace Darwin.Application.Orders.Commands
         public async Task<ShipmentDetailDto> HandleAsync(Guid shipmentId, CancellationToken ct = default)
         {
             var shipment = await _db.Set<Shipment>()
-                .FirstOrDefaultAsync(x => x.Id == shipmentId, ct)
+                .FirstOrDefaultAsync(x => x.Id == shipmentId && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (shipment is null)
@@ -47,6 +47,7 @@ namespace Darwin.Application.Orders.Commands
 
             var settings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
+                .Where(x => !x.IsDeleted)
                 .OrderBy(x => x.Id)
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
@@ -84,6 +85,7 @@ namespace Darwin.Application.Orders.Commands
                 var pendingLabelOperation = await _db.Set<ShipmentProviderOperation>()
                     .FirstOrDefaultAsync(
                         x => x.ShipmentId == shipment.Id &&
+                             !x.IsDeleted &&
                              x.Provider == "DHL" &&
                              x.OperationType == "GenerateLabel" &&
                              x.Status == "Pending",
@@ -96,6 +98,7 @@ namespace Darwin.Application.Orders.Commands
                         .OrderByDescending(x => x.LastAttemptAtUtc ?? x.CreatedAtUtc)
                         .FirstOrDefaultAsync(
                             x => x.ShipmentId == shipment.Id &&
+                                 !x.IsDeleted &&
                                  x.Provider == "DHL" &&
                                  x.OperationType == "GenerateLabel" &&
                                  x.Status == "Failed",

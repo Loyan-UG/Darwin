@@ -18,10 +18,15 @@ import {
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { toLocalizedQueryMessage } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
+import { toSafeHttpUrl } from "@/lib/webapi-url";
 
 function revalidateCheckoutPaths() {
   revalidatePath("/cart");
   revalidatePath("/checkout");
+}
+
+function buildOrderConfirmationPath(orderId: string) {
+  return `/checkout/orders/${encodeURIComponent(orderId)}/confirmation`;
 }
 
 export async function placeStorefrontOrderAction(formData: FormData) {
@@ -72,7 +77,7 @@ export async function placeStorefrontOrderAction(formData: FormData) {
   await clearStorefrontCartState();
   revalidateCheckoutPaths();
   redirect(
-    buildAppQueryPath(`/checkout/orders/${orderResult.data.orderId}/confirmation`, {
+    buildAppQueryPath(buildOrderConfirmationPath(orderResult.data.orderId), {
       orderNumber: orderResult.data.orderNumber,
       checkoutStatus: "order-placed",
     }),
@@ -96,12 +101,16 @@ export async function createStorefrontPaymentIntentAction(formData: FormData) {
     orderNumber: orderNumber || undefined,
   });
 
-  if (!paymentResult.data || !paymentResult.data.checkoutUrl) {
+  const checkoutUrl = paymentResult.data?.checkoutUrl
+    ? toSafeHttpUrl(paymentResult.data.checkoutUrl)
+    : "";
+
+  if (!paymentResult.data || !checkoutUrl) {
     const paymentError =
       paymentResult.message ??
       toLocalizedQueryMessage("checkoutHostedCheckoutStartFailedMessage");
     redirect(
-      buildAppQueryPath(`/checkout/orders/${orderId}/confirmation`, {
+      buildAppQueryPath(buildOrderConfirmationPath(orderId), {
         orderNumber: orderNumber || undefined,
         paymentError,
       }),
@@ -117,5 +126,5 @@ export async function createStorefrontPaymentIntentAction(formData: FormData) {
     expiresAtUtc: paymentResult.data.expiresAtUtc,
   });
 
-  redirect(paymentResult.data.checkoutUrl);
+  redirect(checkoutUrl);
 }

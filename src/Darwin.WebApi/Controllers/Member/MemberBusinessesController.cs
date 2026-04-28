@@ -62,7 +62,8 @@ public sealed class MemberBusinessesController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
-        if (string.IsNullOrWhiteSpace(request.Name))
+        var normalizedName = BusinessControllerConventions.NormalizeNullable(request.Name);
+        if (normalizedName is null)
         {
             return BadRequestProblem(_validationLocalizer["BusinessNameRequired"]);
         }
@@ -85,7 +86,7 @@ public sealed class MemberBusinessesController : ApiControllerBase
 
         var createBusinessDto = new BusinessCreateDto
         {
-            Name = request.Name,
+            Name = normalizedName,
             LegalName = BusinessControllerConventions.NormalizeNullable(request.LegalName),
             TaxId = BusinessControllerConventions.NormalizeNullable(request.TaxId),
             ShortDescription = BusinessControllerConventions.NormalizeNullable(request.ShortDescription),
@@ -137,14 +138,19 @@ public sealed class MemberBusinessesController : ApiControllerBase
     [ProducesResponseType(typeof(BusinessDetailWithMyAccount), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetWithMyAccountAsync([FromRoute] Guid id, CancellationToken ct = default)
+    public async Task<IActionResult> GetWithMyAccountAsync(
+        [FromRoute] Guid id,
+        [FromQuery] string? culture = null,
+        CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
-            return NotFoundProblem(_validationLocalizer["BusinessNotFound"]);
+            return BadRequestProblem(_validationLocalizer["BusinessIdValidWhenProvided"]);
         }
 
-        var result = await _getBusinessPublicDetailWithMyAccountHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        var result = await _getBusinessPublicDetailWithMyAccountHandler
+            .HandleAsync(id, BusinessControllerConventions.NormalizeNullable(culture), ct)
+            .ConfigureAwait(false);
         if (!result.Succeeded)
         {
             return ProblemFromResult(result);
@@ -217,6 +223,11 @@ public sealed class MemberBusinessesController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ToggleLikeAsync([FromRoute] Guid id, CancellationToken ct = default)
     {
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem(_validationLocalizer["BusinessIdValidWhenProvided"]);
+        }
+
         var result = await _toggleBusinessLikeHandler.HandleAsync(id, ct).ConfigureAwait(false);
         if (!result.Succeeded || result.Value is null)
         {
@@ -237,6 +248,11 @@ public sealed class MemberBusinessesController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ToggleFavoriteAsync([FromRoute] Guid id, CancellationToken ct = default)
     {
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem(_validationLocalizer["BusinessIdValidWhenProvided"]);
+        }
+
         var result = await _toggleBusinessFavoriteHandler.HandleAsync(id, ct).ConfigureAwait(false);
         if (!result.Succeeded || result.Value is null)
         {
@@ -260,6 +276,11 @@ public sealed class MemberBusinessesController : ApiControllerBase
         if (request is null)
         {
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
+        }
+
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem(_validationLocalizer["BusinessIdValidWhenProvided"]);
         }
 
         var result = await _upsertBusinessReviewHandler

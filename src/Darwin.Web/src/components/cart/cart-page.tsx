@@ -27,9 +27,11 @@ import type {
 import {
   formatResource,
   getCommerceResource,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatMoney } from "@/lib/formatting";
+import { buildCatalogProductPath } from "@/lib/entity-paths";
 import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 
@@ -88,6 +90,13 @@ export function CartPage({
   categoriesStatus,
 }: CartPageProps) {
   const copy = getCommerceResource(culture);
+  const modelStatusLabel = resolveApiStatusLabel(model.status, copy) ?? model.status;
+  const memberAddressesStatusLabel =
+    resolveApiStatusLabel(memberAddressesStatus, copy) ?? memberAddressesStatus;
+  const memberProfileStatusLabel =
+    resolveApiStatusLabel(memberProfileStatus, copy) ?? memberProfileStatus;
+  const memberPreferencesStatusLabel =
+    resolveApiStatusLabel(memberPreferencesStatus, copy) ?? memberPreferencesStatus;
   const statusMessageKey = getStatusMessage(cartStatus);
   const statusMessage = statusMessageKey
     ? copy[statusMessageKey as keyof typeof copy]
@@ -216,7 +225,7 @@ export function CartPage({
             tone="warning"
             title={copy.cartDegradedTitle}
             message={resolvedModelMessage ?? formatResource(copy.cartDegradedMessage, {
-              status: model.status,
+              status: modelStatusLabel,
             })}
           />
         )}
@@ -228,7 +237,7 @@ export function CartPage({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.cartRouteSummaryMessage, {
-                status: model.status,
+                status: modelStatusLabel,
                 itemCount: cart?.items.length ?? 0,
                 followUpCount: followUpProducts.length,
               })}
@@ -619,7 +628,7 @@ export function CartPage({
                     </p>
                     <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.cartMemberCheckoutMessage, {
-                        status: memberAddressesStatus,
+                        status: memberAddressesStatusLabel,
                         count: memberAddresses.length,
                       })}
                     </p>
@@ -681,9 +690,9 @@ export function CartPage({
                     </p>
                     <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.cartMemberContextMessage, {
-                        profileStatus: memberProfileStatus,
-                        preferencesStatus: memberPreferencesStatus,
-                        addressesStatus: memberAddressesStatus,
+                        profileStatus: memberProfileStatusLabel,
+                        preferencesStatus: memberPreferencesStatusLabel,
+                        addressesStatus: memberAddressesStatusLabel,
                       })}
                     </p>
                     <div className="mt-4 grid gap-3">
@@ -821,7 +830,7 @@ export function CartPage({
                       </div>
                       <h2 className="mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
                         <Link
-                          href={localizeHref(`/catalog/${product.slug}`, culture)}
+                          href={localizeHref(buildCatalogProductPath(product.slug), culture)}
                           className="transition hover:text-[var(--color-brand)]"
                         >
                           {product.name}
@@ -835,7 +844,7 @@ export function CartPage({
                           {formatMoney(product.priceMinor, product.currency, culture)}
                         </div>
                         <Link
-                          href={localizeHref(`/catalog/${product.slug}`, culture)}
+                          href={localizeHref(buildCatalogProductPath(product.slug), culture)}
                           className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                         >
                           {copy.followUpProductCta}

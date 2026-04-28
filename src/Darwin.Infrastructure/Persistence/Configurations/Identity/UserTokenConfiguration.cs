@@ -37,7 +37,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
                    .OnDelete(DeleteBehavior.Cascade);
 
             // If you want only one active token per purpose per user, keep this unique index.
-            builder.HasIndex(x => new { x.UserId, x.Purpose }).IsUnique();
+            builder.HasIndex(x => new { x.UserId, x.Purpose })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             // Useful lookups
             builder.HasIndex(x => x.ExpiresAtUtc);

@@ -50,9 +50,10 @@ namespace Darwin.Application.CMS.Queries
             var q = _db.Set<Page>()
                 .AsNoTracking()
                 .Where(p =>
-                    query == null ||
-                    p.Translations.Any(t => t.Title.Contains(query)) ||
-                    p.Translations.Any(t => t.Slug.Contains(query)));
+                    !p.IsDeleted &&
+                    (query == null ||
+                     p.Translations.Any(t => t.Title.Contains(query)) ||
+                     p.Translations.Any(t => t.Slug.Contains(query))));
 
             q = filter switch
             {
@@ -106,7 +107,7 @@ namespace Darwin.Application.CMS.Queries
         public async Task<PageOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {
             var nowUtc = DateTime.UtcNow;
-            var pages = _db.Set<Page>().AsNoTracking();
+            var pages = _db.Set<Page>().AsNoTracking().Where(p => !p.IsDeleted);
 
             return new PageOpsSummaryDto
             {

@@ -183,6 +183,22 @@ function buildPagedQuery(page?: number, pageSize?: number) {
   });
 }
 
+function buildPagedCultureQuery(
+  page?: number,
+  pageSize?: number,
+  culture?: string,
+) {
+  return buildQuerySuffix({
+    page: String(page ?? 1),
+    pageSize: String(pageSize ?? 20),
+    culture,
+  });
+}
+
+function encodePathSegment(value: string) {
+  return encodeURIComponent(value);
+}
+
 async function mutateMemberJson<T>(
   path: string,
   init: RequestInit,
@@ -289,7 +305,8 @@ async function mutateMemberJson<T>(
       logApiFailure(failureDiagnostics, error);
       return {
         data: null,
-        status: "ok",
+        status: "invalid-payload",
+        message: toLocalizedQueryMessage("memberApiInvalidPayloadMessage"),
         diagnostics: failureDiagnostics,
       };
     }
@@ -333,34 +350,40 @@ export async function getCurrentMemberAddresses() {
 export async function getCurrentMemberOrders(input?: {
   page?: number;
   pageSize?: number;
+  culture?: string;
 }) {
   return fetchCachedMemberJson<PagedResponse<MemberOrderSummary>>(
-    `/api/v1/member/orders${buildPagedQuery(input?.page, input?.pageSize)}`,
+    `/api/v1/member/orders${buildPagedCultureQuery(input?.page, input?.pageSize, input?.culture)}`,
   );
 }
 
-export async function getCurrentMemberOrder(id: string) {
-  return fetchCachedMemberJson<MemberOrderDetail>(`/api/v1/member/orders/${id}`);
+export async function getCurrentMemberOrder(id: string, culture?: string) {
+  const cultureQuery = culture ? buildQuerySuffix({ culture }) : "";
+  return fetchCachedMemberJson<MemberOrderDetail>(
+    `/api/v1/member/orders/${encodePathSegment(id)}${cultureQuery}`,
+  );
 }
 
 export async function getCurrentMemberInvoices(input?: {
   page?: number;
   pageSize?: number;
+  culture?: string;
 }) {
   return fetchCachedMemberJson<PagedResponse<MemberInvoiceSummary>>(
-    `/api/v1/member/invoices${buildPagedQuery(input?.page, input?.pageSize)}`,
+    `/api/v1/member/invoices${buildPagedCultureQuery(input?.page, input?.pageSize, input?.culture)}`,
   );
 }
 
-export async function getCurrentMemberInvoice(id: string) {
+export async function getCurrentMemberInvoice(id: string, culture?: string) {
+  const cultureQuery = culture ? buildQuerySuffix({ culture }) : "";
   return fetchCachedMemberJson<MemberInvoiceDetail>(
-    `/api/v1/member/invoices/${id}`,
+    `/api/v1/member/invoices/${encodePathSegment(id)}${cultureQuery}`,
   );
 }
 
-export async function getCurrentMemberLoyaltyOverview() {
+export async function getCurrentMemberLoyaltyOverviewForCulture(culture: string) {
   return fetchCachedMemberJson<MyLoyaltyOverview>(
-    "/api/v1/member/loyalty/my/overview",
+    `/api/v1/member/loyalty/my/overview?${serializeQueryParams({ culture })}`,
   );
 }
 
@@ -368,25 +391,41 @@ export async function getCurrentMemberLoyaltyBusinesses(input?: {
   page?: number;
   pageSize?: number;
   includeInactiveBusinesses?: boolean;
+  culture?: string;
 }) {
   return fetchCachedMemberJson<PagedResponse<MyLoyaltyBusinessSummary>>(
     `/api/v1/member/loyalty/my/businesses?${serializeQueryParams({
       page: String(input?.page ?? 1),
       pageSize: String(input?.pageSize ?? 12),
       includeInactiveBusinesses: String(input?.includeInactiveBusinesses ?? false),
+      culture: input?.culture ?? "",
     })}`,
   );
 }
 
-export async function getCurrentMemberLoyaltyBusinessDashboard(businessId: string) {
+export async function getCurrentMemberLoyaltyBusinessDashboard(
+  businessId: string,
+  culture?: string,
+) {
+  const cultureQuery = culture
+    ? `?${serializeQueryParams({ culture })}`
+    : "";
+
   return fetchCachedMemberJson<LoyaltyBusinessDashboard>(
-    `/api/v1/member/loyalty/business/${businessId}/dashboard`,
+    `/api/v1/member/loyalty/business/${encodePathSegment(businessId)}/dashboard${cultureQuery}`,
   );
 }
 
-export async function getCurrentMemberLoyaltyRewards(businessId: string) {
+export async function getCurrentMemberLoyaltyRewards(
+  businessId: string,
+  culture?: string,
+) {
+  const cultureQuery = culture
+    ? `?${serializeQueryParams({ culture })}`
+    : "";
+
   return fetchCachedMemberJson<LoyaltyRewardSummary[]>(
-    `/api/v1/member/loyalty/business/${businessId}/rewards`,
+    `/api/v1/member/loyalty/business/${encodePathSegment(businessId)}/rewards${cultureQuery}`,
   );
 }
 
@@ -395,6 +434,7 @@ export async function getCurrentMemberLoyaltyTimeline(input: {
   pageSize?: number;
   beforeAtUtc?: string | null;
   beforeId?: string | null;
+  culture?: string;
 }) {
   return mutateMemberJson<LoyaltyTimelinePage>("/api/v1/member/loyalty/my/timeline", {
     method: "POST",
@@ -403,6 +443,7 @@ export async function getCurrentMemberLoyaltyTimeline(input: {
       pageSize: input.pageSize ?? 10,
       beforeAtUtc: input.beforeAtUtc ?? null,
       beforeId: input.beforeId ?? null,
+      culture: input.culture ?? null,
     }),
   });
 }
@@ -410,19 +451,28 @@ export async function getCurrentMemberLoyaltyTimeline(input: {
 export async function getCurrentMemberPromotions(input?: {
   businessId?: string;
   maxItems?: number;
+  culture?: string;
 }) {
   return mutateMemberJson<MyPromotionsResponse>("/api/v1/member/loyalty/my/promotions", {
     method: "POST",
     body: JSON.stringify({
       businessId: input?.businessId ?? null,
       maxItems: input?.maxItems ?? 6,
+      culture: input?.culture ?? null,
     }),
   });
 }
 
-export async function getCurrentMemberBusinessWithMyAccount(businessId: string) {
+export async function getCurrentMemberBusinessWithMyAccount(
+  businessId: string,
+  culture?: string,
+) {
+  const cultureQuery = culture
+    ? `?${serializeQueryParams({ culture })}`
+    : "";
+
   return fetchCachedMemberJson<BusinessDetailWithMyAccount>(
-    `/api/v1/member/businesses/${businessId}/with-my-account`,
+    `/api/v1/member/businesses/${encodePathSegment(businessId)}/with-my-account${cultureQuery}`,
   );
 }
 
@@ -431,7 +481,7 @@ export async function joinCurrentMemberLoyaltyBusiness(input: {
   businessLocationId?: string | null;
 }) {
   return mutateMemberJson<LoyaltyAccountSummary>(
-    `/api/v1/member/loyalty/account/${input.businessId}/join`,
+    `/api/v1/member/loyalty/account/${encodePathSegment(input.businessId)}/join`,
     {
       method: "POST",
       body: JSON.stringify({
@@ -582,15 +632,18 @@ export async function updateCurrentMemberAddress(
     isDefaultShipping: boolean;
   },
 ) {
-  return mutateMemberJson<MemberAddress>(`/api/v1/member/profile/addresses/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(input),
-  });
+  return mutateMemberJson<MemberAddress>(
+    `/api/v1/member/profile/addresses/${encodePathSegment(id)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 export async function deleteCurrentMemberAddress(id: string, rowVersion: string) {
   return mutateMemberJson<never>(
-    `/api/v1/member/profile/addresses/${id}/delete`,
+    `/api/v1/member/profile/addresses/${encodePathSegment(id)}/delete`,
     {
       method: "POST",
       body: JSON.stringify({
@@ -608,7 +661,7 @@ export async function setCurrentMemberAddressDefault(
   },
 ) {
   return mutateMemberJson<MemberAddress>(
-    `/api/v1/member/profile/addresses/${id}/default`,
+    `/api/v1/member/profile/addresses/${encodePathSegment(id)}/default`,
     {
       method: "POST",
       body: JSON.stringify(input),

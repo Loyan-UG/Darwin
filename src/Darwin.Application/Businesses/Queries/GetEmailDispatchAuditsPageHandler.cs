@@ -19,6 +19,7 @@ namespace Darwin.Application.Businesses.Queries
         private static readonly TimeSpan RetryCooldown = TimeSpan.FromMinutes(10);
         private static readonly TimeSpan RetryChainWindow = TimeSpan.FromHours(24);
         private const int MaxRetryAttemptsPerWindow = 3;
+        private const int MaxPageSize = 200;
         private readonly IAppDbContext _db;
 
         public GetEmailDispatchAuditsPageHandler(IAppDbContext db)
@@ -47,6 +48,7 @@ namespace Darwin.Application.Businesses.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
             var nowUtc = DateTime.UtcNow;
             var stalePendingThresholdUtc = nowUtc.AddMinutes(-15);
             const int slowDeliveryThresholdSeconds = 60;
@@ -55,6 +57,7 @@ namespace Darwin.Application.Businesses.Queries
                 from audit in _db.Set<EmailDispatchAudit>().AsNoTracking()
                 join business in _db.Set<Business>().AsNoTracking() on audit.BusinessId equals business.Id into businessJoin
                 from business in businessJoin.DefaultIfEmpty()
+                where !audit.IsDeleted && (business == null || !business.IsDeleted)
                 select new
                 {
                     Audit = audit,
@@ -145,6 +148,7 @@ namespace Darwin.Application.Businesses.Queries
                     .AsNoTracking()
                     .Where(x =>
                         x.Id != item.Id &&
+                        !x.IsDeleted &&
                         (x.IntendedRecipientEmail ?? x.RecipientEmail) == chainRecipientEmail &&
                         x.FlowKey == item.FlowKey &&
                         x.BusinessId == item.BusinessId &&
@@ -284,7 +288,7 @@ namespace Darwin.Application.Businesses.Queries
 
         public async Task<EmailDispatchAuditSummaryDto> GetSummaryAsync(Guid? businessId = null, CancellationToken ct = default)
         {
-            var audits = _db.Set<EmailDispatchAudit>().AsNoTracking();
+            var audits = _db.Set<EmailDispatchAudit>().AsNoTracking().Where(x => !x.IsDeleted);
             var queued = _db.Set<EmailDispatchOperation>().AsNoTracking().Where(x => !x.IsDeleted);
             if (businessId.HasValue)
             {
@@ -394,7 +398,9 @@ namespace Darwin.Application.Businesses.Queries
                 from operation in _db.Set<EmailDispatchOperation>().AsNoTracking()
                 join business in _db.Set<Business>().AsNoTracking() on operation.BusinessId equals business.Id into businessJoin
                 from business in businessJoin.DefaultIfEmpty()
-                where !operation.IsDeleted && (operation.Status == "Pending" || operation.Status == "Failed")
+                where !operation.IsDeleted &&
+                      (business == null || !business.IsDeleted) &&
+                      (operation.Status == "Pending" || operation.Status == "Failed")
                 select new
                 {
                     Operation = operation,
@@ -561,7 +567,7 @@ namespace Darwin.Application.Businesses.Queries
         {
             var chainQuery = _db.Set<EmailDispatchAudit>()
                 .AsNoTracking()
-                .Where(x => (x.IntendedRecipientEmail ?? x.RecipientEmail) == recipientEmail);
+                .Where(x => !x.IsDeleted && (x.IntendedRecipientEmail ?? x.RecipientEmail) == recipientEmail);
 
             if (!string.IsNullOrWhiteSpace(flowKey))
             {

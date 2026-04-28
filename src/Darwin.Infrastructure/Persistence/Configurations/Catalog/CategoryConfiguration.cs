@@ -43,8 +43,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
             builder.Property(x => x.Name).HasMaxLength(300).IsRequired();
             builder.Property(x => x.Slug).HasMaxLength(200).IsRequired();
 
-            // <== NEW: unique (Culture, Slug) within CategoryTranslations
-            builder.HasIndex(x => new { x.Culture, x.Slug }).IsUnique();
+            builder.HasIndex(x => new { x.Culture, x.Slug })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 }

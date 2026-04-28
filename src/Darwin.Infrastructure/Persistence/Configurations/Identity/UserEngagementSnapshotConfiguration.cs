@@ -46,7 +46,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
 
             builder.HasIndex(x => x.UserId)
                 .IsUnique()
-                .HasDatabaseName("UX_UserEngagementSnapshots_UserId");
+                .HasDatabaseName("UX_UserEngagementSnapshots_UserId")
+                .HasFilter("[IsDeleted] = 0");
 
             builder.HasIndex(x => x.CalculatedAtUtc)
                 .HasDatabaseName("IX_UserEngagementSnapshots_CalculatedAtUtc");

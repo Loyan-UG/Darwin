@@ -8,6 +8,7 @@ import {
   getProductOpportunityCampaignLabel,
   getProductSavingsPercent,
 } from "@/features/catalog/merchandising";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 
 type CampaignLabels = {
@@ -158,7 +159,7 @@ export function buildStorefrontPageSpotlightCards(
     id: `${formatter.prefix}-page-${page.id}`,
     title: page.title,
     description: page.metaDescription ?? formatter.fallbackDescription,
-    href: `/cms/${page.slug}`,
+    href: buildCmsPagePath(page.slug),
   }));
 }
 
@@ -201,7 +202,7 @@ export function buildStorefrontProductCampaignCards(
               campaignLabel,
               price,
             }),
-      href: `/catalog/${product.slug}`,
+      href: buildCatalogProductPath(product.slug),
       ctaLabel: formatter.ctaLabel,
     };
   });
@@ -235,7 +236,7 @@ export function buildStorefrontOfferCards(
               price,
             }) || product.shortDescription ||
             formatter.fallbackDescription,
-      href: `/catalog/${product.slug}`,
+      href: buildCatalogProductPath(product.slug),
       ctaLabel: formatter.ctaLabel,
       meta: formatter.formatMeta?.(product) ?? null,
       price,

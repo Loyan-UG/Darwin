@@ -3141,6 +3141,9 @@
   <data name="ShortDescription" xml:space="preserve">
     <value>Short description</value>
   </data>
+  <data name="SearchKeywords" xml:space="preserve">
+    <value>Search keywords</value>
+  </data>
   <data name="CrmSegmentsPlaybookEmptyTitle" xml:space="preserve">
     <value>Empty segments</value>
   </data>
@@ -3203,6 +3206,12 @@
   </data>
   <data name="Description" xml:space="preserve">
     <value>Description</value>
+  </data>
+  <data name="MetaTitle" xml:space="preserve">
+    <value>Meta title</value>
+  </data>
+  <data name="MetaDescription" xml:space="preserve">
+    <value>Meta description</value>
   </data>
   <data name="NoSegmentsFound" xml:space="preserve">
     <value>No segments found.</value>
@@ -5217,6 +5226,42 @@
   </data>
   <data name="CompareAtNetMinor" xml:space="preserve">
     <value>Compare at (net, minor units)</value>
+  </data>
+  <data name="Gtin" xml:space="preserve">
+    <value>GTIN</value>
+  </data>
+  <data name="ManufacturerPartNumber" xml:space="preserve">
+    <value>Manufacturer part number</value>
+  </data>
+  <data name="StockReserved" xml:space="preserve">
+    <value>Stock reserved</value>
+  </data>
+  <data name="MinOrderQty" xml:space="preserve">
+    <value>Minimum order quantity</value>
+  </data>
+  <data name="MaxOrderQty" xml:space="preserve">
+    <value>Maximum order quantity</value>
+  </data>
+  <data name="StepOrderQty" xml:space="preserve">
+    <value>Order step quantity</value>
+  </data>
+  <data name="PackageWeight" xml:space="preserve">
+    <value>Package weight</value>
+  </data>
+  <data name="PackageLength" xml:space="preserve">
+    <value>Package length</value>
+  </data>
+  <data name="PackageWidth" xml:space="preserve">
+    <value>Package width</value>
+  </data>
+  <data name="PackageHeight" xml:space="preserve">
+    <value>Package height</value>
+  </data>
+  <data name="BackorderAllowed" xml:space="preserve">
+    <value>Backorder allowed</value>
+  </data>
+  <data name="IsDigital" xml:space="preserve">
+    <value>Digital product</value>
   </data>
   <data name="ProductDescriptionPlaceholder" xml:space="preserve">
     <value>Write product description...</value>

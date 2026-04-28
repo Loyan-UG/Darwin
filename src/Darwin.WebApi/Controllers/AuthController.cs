@@ -85,7 +85,7 @@ namespace Darwin.WebApi.Controllers
         [AllowAnonymous]
         [EnableRateLimiting("auth-login")]
         public async Task<IActionResult> LoginAsync(
-            [FromBody] PasswordLoginRequest request,
+            [FromBody] PasswordLoginRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -96,9 +96,9 @@ namespace Darwin.WebApi.Controllers
             // Map Contracts → Application DTO
             var dto = new PasswordLoginRequestDto
             {
-                Email = request.Email ?? string.Empty,
+                Email = NormalizeText(request.Email) ?? string.Empty,
                 PasswordPlain = request.Password ?? string.Empty,
-                DeviceId = request.DeviceId,
+                DeviceId = NormalizeText(request.DeviceId),
                 BusinessId = request.BusinessId
             };
 
@@ -141,7 +141,7 @@ namespace Darwin.WebApi.Controllers
         [AllowAnonymous]
         [EnableRateLimiting("auth-refresh")]
         public async Task<IActionResult> RefreshAsync(
-            [FromBody] RefreshTokenRequest request,
+            [FromBody] RefreshTokenRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -151,8 +151,8 @@ namespace Darwin.WebApi.Controllers
 
             var dto = new RefreshRequestDto
             {
-                RefreshToken = request.RefreshToken ?? string.Empty,
-                DeviceId = request.DeviceId,
+                RefreshToken = NormalizeText(request.RefreshToken) ?? string.Empty,
+                DeviceId = NormalizeText(request.DeviceId),
                 BusinessId = request.BusinessId
             };
 
@@ -193,7 +193,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/logout")]
         [Authorize]
         public async Task<IActionResult> LogoutAsync(
-            [FromBody] LogoutRequest request,
+            [FromBody] LogoutRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -203,7 +203,7 @@ namespace Darwin.WebApi.Controllers
 
             var dto = new RevokeRefreshRequestDto
             {
-                RefreshToken = request.RefreshToken,
+                RefreshToken = NormalizeText(request.RefreshToken),
                 UserId = null,
                 DeviceId = null
             };
@@ -298,7 +298,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/register")]
         [AllowAnonymous]
         public async Task<IActionResult> RegisterAsync(
-            [FromBody] RegisterRequest request,
+            [FromBody] RegisterRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -308,10 +308,10 @@ namespace Darwin.WebApi.Controllers
 
             var dto = new UserCreateDto
             {
-                Email = request.Email ?? string.Empty,
+                Email = NormalizeText(request.Email) ?? string.Empty,
                 Password = request.Password ?? string.Empty,
-                FirstName = request.FirstName ?? string.Empty,
-                LastName = request.LastName ?? string.Empty,
+                FirstName = NormalizeText(request.FirstName) ?? string.Empty,
+                LastName = NormalizeText(request.LastName) ?? string.Empty,
                 PhoneE164 = null,
                 //Locale = null,
                 //Timezone = null,
@@ -375,7 +375,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/password/change")]
         [Authorize]
         public async Task<IActionResult> ChangePasswordAsync(
-            [FromBody] ChangePasswordRequest request,
+            [FromBody] ChangePasswordRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -423,7 +423,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/email/request-confirmation")]
         [AllowAnonymous]
         public async Task<IActionResult> RequestEmailConfirmationAsync(
-            [FromBody] RequestEmailConfirmationRequest request,
+            [FromBody] RequestEmailConfirmationRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -436,7 +436,7 @@ namespace Darwin.WebApi.Controllers
                 await _requestEmailConfirmation.HandleAsync(
                     new RequestEmailConfirmationDto
                     {
-                        Email = request.Email ?? string.Empty
+                        Email = NormalizeText(request.Email) ?? string.Empty
                     },
                     ct).ConfigureAwait(false);
             }
@@ -455,7 +455,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/email/confirm")]
         [AllowAnonymous]
         public async Task<IActionResult> ConfirmEmailAsync(
-            [FromBody] ConfirmEmailRequest request,
+            [FromBody] ConfirmEmailRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -466,8 +466,8 @@ namespace Darwin.WebApi.Controllers
             var result = await _confirmEmail.HandleAsync(
                 new ConfirmEmailDto
                 {
-                    Email = request.Email ?? string.Empty,
-                    Token = request.Token ?? string.Empty
+                    Email = NormalizeText(request.Email) ?? string.Empty,
+                    Token = NormalizeText(request.Token) ?? string.Empty
                 },
                 ct).ConfigureAwait(false);
 
@@ -486,7 +486,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/password/request-reset")]
         [AllowAnonymous]
         public async Task<IActionResult> RequestPasswordResetAsync(
-            [FromBody] RequestPasswordResetRequest request,
+            [FromBody] RequestPasswordResetRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -496,7 +496,7 @@ namespace Darwin.WebApi.Controllers
 
             var dto = new RequestPasswordResetDto
             {
-                Email = request.Email ?? string.Empty
+                Email = NormalizeText(request.Email) ?? string.Empty
             };
 
             try
@@ -519,7 +519,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/password/reset")]
         [AllowAnonymous]
         public async Task<IActionResult> ResetPasswordAsync(
-            [FromBody] ResetPasswordRequest request,
+            [FromBody] ResetPasswordRequest? request,
             CancellationToken ct)
         {
             if (request is null)
@@ -529,8 +529,8 @@ namespace Darwin.WebApi.Controllers
 
             var dto = new ResetPasswordDto
             {
-                Email = request.Email ?? string.Empty,
-                Token = request.Token ?? string.Empty,
+                Email = NormalizeText(request.Email) ?? string.Empty,
+                Token = NormalizeText(request.Token) ?? string.Empty,
                 NewPassword = request.NewPassword ?? string.Empty
             };
 
@@ -623,6 +623,9 @@ namespace Darwin.WebApi.Controllers
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             return $"{normalizedEmail}|{ip}";
         }
+
+        private static string? NormalizeText(string? value)
+            => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
         /// <summary>
         /// Resolves the remote IP address of the current HTTP request in a null-safe way.

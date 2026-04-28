@@ -45,7 +45,13 @@ namespace Darwin.Application.Loyalty.Queries
                 from tx in txGroup.DefaultIfEmpty()
                 join scan in _db.Set<ScanSession>().AsNoTracking() on tx.Id equals scan.ResultingTransactionId into scanGroup
                 from scan in scanGroup.DefaultIfEmpty()
-                where redemption.BusinessId == businessId && !redemption.IsDeleted
+                where redemption.BusinessId == businessId &&
+                      !redemption.IsDeleted &&
+                      !account.IsDeleted &&
+                      !user.IsDeleted &&
+                      (rewardTier == null || !rewardTier.IsDeleted) &&
+                      (tx == null || !tx.IsDeleted) &&
+                      (scan == null || !scan.IsDeleted)
                 select new { redemption, account, user, rewardTier, tx, scan };
 
             if (!string.IsNullOrWhiteSpace(query))
@@ -108,7 +114,10 @@ namespace Darwin.Application.Loyalty.Queries
                 from tx in txGroup.DefaultIfEmpty()
                 join scan in _db.Set<ScanSession>().AsNoTracking() on tx.Id equals scan.ResultingTransactionId into scanGroup
                 from scan in scanGroup.DefaultIfEmpty()
-                where redemption.BusinessId == businessId && !redemption.IsDeleted
+                where redemption.BusinessId == businessId &&
+                      !redemption.IsDeleted &&
+                      (tx == null || !tx.IsDeleted) &&
+                      (scan == null || !scan.IsDeleted)
                 select new { redemption.Status, ScanFailureReason = scan != null ? scan.FailureReason : null, ScanStatus = scan != null ? scan.Status : (LoyaltyScanStatus?)null };
 
             return await query

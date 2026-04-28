@@ -10,8 +10,18 @@ type ObserveAsyncOperationInput<T> = {
 };
 
 export function shouldLogDegradedOperations() {
-  return process.env.NODE_ENV === "production" ||
-    process.env.DARWIN_WEB_LOG_DEGRADED === "true";
+  if (process.env.DARWIN_WEB_LOG_DEGRADED === "true") {
+    return true;
+  }
+
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.npm_lifecycle_event === "build"
+  ) {
+    return false;
+  }
+
+  return process.env.NODE_ENV === "production";
 }
 
 export function getDegradedStatusEntries(detail?: Record<string, unknown>) {

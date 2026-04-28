@@ -80,6 +80,16 @@ public sealed class RegisterOrUpdateUserDeviceHandler
 
         var now = _clock.UtcNow;
 
+        var userExists = await _db.Set<User>()
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == dto.UserId && !x.IsDeleted && x.IsActive, ct)
+            .ConfigureAwait(false);
+
+        if (!userExists)
+        {
+            return Result<RegisterUserDeviceResultDto>.Fail(_localizer["UserNotFoundOrInactive"]);
+        }
+
         var existing = await _db.Set<UserDevice>()
             .FirstOrDefaultAsync(x => x.UserId == dto.UserId && x.DeviceId == normalizedDeviceId, ct)
             .ConfigureAwait(false);
@@ -116,6 +126,7 @@ public sealed class RegisterOrUpdateUserDeviceHandler
             existing.AppVersion = normalizedAppVersion;
             existing.DeviceModel = normalizedDeviceModel;
             existing.IsActive = true;
+            existing.IsDeleted = false;
         }
 
         await UpsertEngagementSnapshotAsync(dto.UserId, now, ct).ConfigureAwait(false);

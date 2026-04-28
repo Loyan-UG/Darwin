@@ -31,7 +31,7 @@ namespace Darwin.Application.Identity.Commands
 
         public async Task<Result<AuthResultDto>> HandleAsync(RefreshRequestDto dto, CancellationToken ct = default)
         {
-            var userId = _jwt.ValidateRefreshToken(dto.RefreshToken, dto.DeviceId);
+            var userId = await _jwt.ValidateRefreshTokenAsync(dto.RefreshToken, dto.DeviceId, ct).ConfigureAwait(false);
             if (userId is null)
                 return Result<AuthResultDto>.Fail(_localizer["InvalidOrExpiredRefreshToken"]);
 
@@ -41,10 +41,10 @@ namespace Darwin.Application.Identity.Commands
 
             // Rotation: revoke the used refresh token and issue a new one for the same device.
             // DeviceId is forwarded so that device-bound refresh tokens remain consistent with SiteSetting.
-            _jwt.RevokeRefreshToken(dto.RefreshToken, dto.DeviceId);
+            await _jwt.RevokeRefreshTokenAsync(dto.RefreshToken, dto.DeviceId, ct).ConfigureAwait(false);
 
             var (access, accessExp, refresh, refreshExp) =
-                _jwt.IssueTokens(user.Id, user.Email, dto.DeviceId, scopes: null, preferredBusinessId: dto.BusinessId);
+                await _jwt.IssueTokensAsync(user.Id, user.Email, dto.DeviceId, scopes: null, preferredBusinessId: dto.BusinessId, ct).ConfigureAwait(false);
 
 
             var result = new AuthResultDto

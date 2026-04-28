@@ -51,17 +51,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             IAppDbContext db,
             ISiteSettingCache siteSettingCache)
         {
-            _getSummary = getSummary;
-            _getSetupPage = getSetupPage;
-            _getProfile = getProfile;
-            _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
-            _getChannelDispatchActivity = getChannelDispatchActivity;
-            _getProviderCallbackInboxPage = getProviderCallbackInboxPage;
-            _retryEmailDispatchAudit = retryEmailDispatchAudit;
-            _cancelCommunicationDispatchOperation = cancelCommunicationDispatchOperation;
-            _updateProviderCallbackInboxMessage = updateProviderCallbackInboxMessage;
-            _db = db;
-            _siteSettingCache = siteSettingCache;
+            _getSummary = getSummary ?? throw new ArgumentNullException(nameof(getSummary));
+            _getSetupPage = getSetupPage ?? throw new ArgumentNullException(nameof(getSetupPage));
+            _getProfile = getProfile ?? throw new ArgumentNullException(nameof(getProfile));
+            _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage ?? throw new ArgumentNullException(nameof(getEmailDispatchAuditsPage));
+            _getChannelDispatchActivity = getChannelDispatchActivity ?? throw new ArgumentNullException(nameof(getChannelDispatchActivity));
+            _getProviderCallbackInboxPage = getProviderCallbackInboxPage ?? throw new ArgumentNullException(nameof(getProviderCallbackInboxPage));
+            _retryEmailDispatchAudit = retryEmailDispatchAudit ?? throw new ArgumentNullException(nameof(retryEmailDispatchAudit));
+            _cancelCommunicationDispatchOperation = cancelCommunicationDispatchOperation ?? throw new ArgumentNullException(nameof(cancelCommunicationDispatchOperation));
+            _updateProviderCallbackInboxMessage = updateProviderCallbackInboxMessage ?? throw new ArgumentNullException(nameof(updateProviderCallbackInboxMessage));
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         [HttpGet]
@@ -350,6 +350,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             bool failedOnly = false,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
+            {
+                SetErrorMessage("ProviderCallbackUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(ProviderCallbacks), new
+                {
+                    page,
+                    pageSize,
+                    query,
+                    provider,
+                    status,
+                    stalePendingOnly,
+                    failedOnly
+                });
+            }
+
             byte[] version;
             try
             {
@@ -400,6 +415,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [HttpGet]
         public async Task<IActionResult> Details(Guid businessId, CancellationToken ct = default)
         {
+            if (businessId == Guid.Empty)
+            {
+                SetErrorMessage("BusinessCommunicationProfileNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var profile = await _getProfile.HandleAsync(businessId, ct).ConfigureAwait(false);
             if (profile is null)
             {
@@ -940,6 +961,32 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             Guid? businessId = null,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("CommunicationEmailRetryFailedFallback");
+                return RedirectOrHtmx(
+                    nameof(EmailAudits),
+                    new
+                    {
+                        page,
+                        pageSize,
+                        query,
+                        recipientEmail,
+                        status,
+                        flowKey,
+                        stalePendingOnly,
+                        businessLinkedFailuresOnly,
+                        repeatedFailuresOnly,
+                        priorSuccessOnly,
+                        retryReadyOnly,
+                        retryBlockedOnly,
+                        highChainVolumeOnly,
+                        chainFollowUpOnly,
+                        chainResolvedOnly,
+                        businessId
+                    });
+            }
+
             var result = await _retryEmailDispatchAudit
                 .HandleAsync(new RetryEmailDispatchAuditDto { AuditId = id }, ct)
                 .ConfigureAwait(false);
@@ -999,6 +1046,32 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             Guid? businessId = null,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("CommunicationQueuedDispatchCancelFailedMessage");
+                return RedirectOrHtmx(
+                    nameof(EmailAudits),
+                    new
+                    {
+                        page,
+                        pageSize,
+                        query,
+                        recipientEmail,
+                        status,
+                        flowKey,
+                        stalePendingOnly,
+                        businessLinkedFailuresOnly,
+                        repeatedFailuresOnly,
+                        priorSuccessOnly,
+                        retryReadyOnly,
+                        retryBlockedOnly,
+                        highChainVolumeOnly,
+                        chainFollowUpOnly,
+                        chainResolvedOnly,
+                        businessId
+                    });
+            }
+
             var result = await _cancelCommunicationDispatchOperation
                 .HandleAsync(new CancelCommunicationDispatchOperationDto
                 {
@@ -1068,6 +1141,37 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             Guid? businessId = null,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(channel))
+            {
+                SetErrorMessage("CommunicationQueuedDispatchCancelFailedMessage");
+                return RedirectOrHtmx(
+                    nameof(ChannelAudits),
+                    new
+                    {
+                        page,
+                        pageSize,
+                        query,
+                        recipientAddress,
+                        provider,
+                        channel,
+                        flowKey,
+                        status,
+                        failedOnly,
+                        phoneVerificationOnly,
+                        adminTestOnly,
+                        repeatedFailuresOnly,
+                        priorSuccessOnly,
+                        actionReadyOnly,
+                        actionBlockedOnly,
+                        escalationCandidatesOnly,
+                        heavyChainsOnly,
+                        providerReviewOnly,
+                        chainFollowUpOnly,
+                        chainResolvedOnly,
+                        businessId
+                    });
+            }
+
             var result = await _cancelCommunicationDispatchOperation
                 .HandleAsync(new CancelCommunicationDispatchOperationDto
                 {

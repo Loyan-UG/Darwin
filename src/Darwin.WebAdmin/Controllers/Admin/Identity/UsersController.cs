@@ -74,27 +74,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             UpdateUserRolesHandler updateUserRoles,
             ISiteSettingCache siteSettingCache)
         {
-            _registerUser = registerUser;
-            _getUsersPage = getUsersPage;
-            _getUserOpsSummary = getUserOpsSummary;
-            _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
-            _getUserWithAddresses = getUserWithAddresses;
-            _updateUser = updateUser;
-            _changeUserEmail = changeUserEmail;
-            _setUserPasswordByAdmin = setUserPasswordByAdmin;
-            _requestPasswordReset = requestPasswordReset;
-            _requestEmailConfirmation = requestEmailConfirmation;
-            _confirmUserEmail = confirmUserEmail;
-            _lockUser = lockUser;
-            _unlockUser = unlockUser;
-            _softDeleteUser = softDeleteUser;
-            _createAddress = createAddress;
-            _updateAddress = updateAddress;
-            _softDeleteAddress = softDeleteAddress;
-            _setDefaultAddress = setDefaultAddress;
-            _getUserRoles = getUserRoles;
-            _updateUserRoles = updateUserRoles;
-            _siteSettingCache = siteSettingCache;
+            _registerUser = registerUser ?? throw new ArgumentNullException(nameof(registerUser));
+            _getUsersPage = getUsersPage ?? throw new ArgumentNullException(nameof(getUsersPage));
+            _getUserOpsSummary = getUserOpsSummary ?? throw new ArgumentNullException(nameof(getUserOpsSummary));
+            _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage ?? throw new ArgumentNullException(nameof(getEmailDispatchAuditsPage));
+            _getUserWithAddresses = getUserWithAddresses ?? throw new ArgumentNullException(nameof(getUserWithAddresses));
+            _updateUser = updateUser ?? throw new ArgumentNullException(nameof(updateUser));
+            _changeUserEmail = changeUserEmail ?? throw new ArgumentNullException(nameof(changeUserEmail));
+            _setUserPasswordByAdmin = setUserPasswordByAdmin ?? throw new ArgumentNullException(nameof(setUserPasswordByAdmin));
+            _requestPasswordReset = requestPasswordReset ?? throw new ArgumentNullException(nameof(requestPasswordReset));
+            _requestEmailConfirmation = requestEmailConfirmation ?? throw new ArgumentNullException(nameof(requestEmailConfirmation));
+            _confirmUserEmail = confirmUserEmail ?? throw new ArgumentNullException(nameof(confirmUserEmail));
+            _lockUser = lockUser ?? throw new ArgumentNullException(nameof(lockUser));
+            _unlockUser = unlockUser ?? throw new ArgumentNullException(nameof(unlockUser));
+            _softDeleteUser = softDeleteUser ?? throw new ArgumentNullException(nameof(softDeleteUser));
+            _createAddress = createAddress ?? throw new ArgumentNullException(nameof(createAddress));
+            _updateAddress = updateAddress ?? throw new ArgumentNullException(nameof(updateAddress));
+            _softDeleteAddress = softDeleteAddress ?? throw new ArgumentNullException(nameof(softDeleteAddress));
+            _setDefaultAddress = setDefaultAddress ?? throw new ArgumentNullException(nameof(setDefaultAddress));
+            _getUserRoles = getUserRoles ?? throw new ArgumentNullException(nameof(getUserRoles));
+            _updateUserRoles = updateUserRoles ?? throw new ArgumentNullException(nameof(updateUserRoles));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// Renders the create form. Locale/Currency/Timezone are rendered by SettingSelectTagHelper.
         /// </summary>
         [HttpGet]
-        public IActionResult Create() => RenderCreateEditor(new UserCreateVm());
+        public async Task<IActionResult> Create(CancellationToken ct = default) => await RenderCreateEditorAsync(new UserCreateVm(), ct);
 
         /// <summary>
         /// Creates a new user. On success, redirects to Edit so that addresses can be managed.
@@ -172,7 +172,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(UserCreateVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return RenderCreateEditor(vm);
+            if (!ModelState.IsValid) return await RenderCreateEditorAsync(vm, ct);
 
             var dto = new UserCreateDto
             {
@@ -190,7 +190,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded)
             {
                 AddModelErrorMessage("UserCreateFailedMessage");
-                return RenderCreateEditor(vm);
+                return await RenderCreateEditorAsync(vm, ct);
             }
 
             SetSuccessMessage("UserCreatedMessage");
@@ -203,6 +203,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var result = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!result.Succeeded || result.Value is null)
             {
@@ -245,6 +251,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UserEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 return await RenderEditEditorAsync(vm, ct);
@@ -285,6 +297,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public IActionResult ChangeEmail([FromRoute] Guid id, [FromQuery] string? currentEmail = null, [FromQuery] bool returnToIndex = false, [FromQuery] string? q = null, [FromQuery] UserQueueFilter filter = UserQueueFilter.All, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             // Prepare view model with the user id. NewEmail is intentionally left blank to force admin input.
             var vm = new UserChangeEmailVm
             {
@@ -308,6 +326,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeEmail(UserChangeEmailVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             // Validate input on the same page to preserve validation messages and user input.
             if (!ModelState.IsValid)
                 return RenderChangeEmailEditor(vm);
@@ -336,6 +360,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmEmail([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
+            }
+
             var result = await _confirmUserEmail.HandleAsync(new UserAdminActionDto { Id = id }, ct);
             if (result.Succeeded)
             {
@@ -356,6 +386,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendActivationEmail([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
+            }
+
             var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!userResult.Succeeded || userResult.Value is null)
             {
@@ -381,6 +417,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendPasswordReset([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
+            }
+
             var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!userResult.Succeeded || userResult.Value is null)
             {
@@ -431,6 +473,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Lock([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
+            }
+
             var result = await _lockUser.HandleAsync(new UserAdminActionDto { Id = id }, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? T("AccountLockedMessage")
@@ -446,6 +494,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Unlock([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
+            }
+
             var result = await _unlockUser.HandleAsync(new UserAdminActionDto { Id = id }, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? T("AccountUnlockedMessage")
@@ -468,6 +522,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public IActionResult ChangePassword(Guid id, string? email = null, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var vm = new UserChangePasswordVm
             {
                 Id = id,
@@ -492,6 +552,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(UserChangePasswordVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             // Server-side safety: ensure confirmation matches before calling Application
             if (!ModelState.IsValid || vm.NewPassword != vm.ConfirmNewPassword)
             {
@@ -531,6 +597,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = new UserDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
             var result = await _softDeleteUser.HandleAsync(dto, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
@@ -551,6 +623,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> AddressesSection(Guid userId, CancellationToken ct = default)
         {
+            if (userId == Guid.Empty)
+            {
+                return BadRequest(T("UserNotFoundMessage"));
+            }
+
             var section = await BuildAddressesSectionVmAsync(userId, ct);
 
             return PartialView("~/Views/Users/_AddressesSection.cshtml", section);
@@ -565,7 +642,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         public async Task<IActionResult> CreateAddress(UserAddressCreateVm vm, CancellationToken ct = default)
         {
             // Server-side validation is enforced in the Application layer; Web layer keeps basic shape checks.
-            if (!ModelState.IsValid) return BadRequest(T("InvalidAddressMessage"));
+            if (!ModelState.IsValid || vm.UserId == Guid.Empty) return BadRequest(T("InvalidAddressMessage"));
 
             var dto = new AddressCreateDto
             {
@@ -600,7 +677,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditAddress(UserAddressEditVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return BadRequest(T("InvalidAddressMessage"));
+            if (!ModelState.IsValid || vm.Id == Guid.Empty || vm.UserId == Guid.Empty) return BadRequest(T("InvalidAddressMessage"));
 
             var dto = new AddressEditDto
             {
@@ -635,6 +712,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAddress([FromForm] Guid id, [FromForm] Guid userId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || userId == Guid.Empty)
+            {
+                return BadRequest(T("AddressDeleteFailedMessage"));
+            }
+
             var dto = new AddressDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
             var result = await _softDeleteAddress.HandleAsync(dto, ct);
             if (!result.Succeeded) return BadRequest(T("AddressDeleteFailedMessage"));
@@ -652,8 +734,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetDefaultAddress([FromForm] Guid id, [FromForm] Guid userId, [FromForm] string kind, CancellationToken ct = default)
         {
+            if (id == Guid.Empty || userId == Guid.Empty)
+            {
+                return BadRequest(T("SetDefaultAddressFailedMessage"));
+            }
+
             var asBilling = string.Equals(kind, "Billing", StringComparison.OrdinalIgnoreCase);
             var asShipping = string.Equals(kind, "Shipping", StringComparison.OrdinalIgnoreCase);
+            if (!asBilling && !asShipping)
+            {
+                return BadRequest(T("SetDefaultAddressFailedMessage"));
+            }
 
             var result = await _setDefaultAddress.HandleAsync(userId, id, asBilling, asShipping, ct);
             if (!result.Succeeded) return BadRequest(T("SetDefaultAddressFailedMessage"));
@@ -713,6 +804,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> Roles(Guid id, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserRolesLoadFailedMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var vm = await BuildUserRolesVmAsync(id, ct);
             if (vm is null)
             {
@@ -736,6 +833,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Roles(UserRolesEditVm vm, CancellationToken ct = default)
         {
+            if (vm.UserId == Guid.Empty)
+            {
+                SetErrorMessage("UserRolesLoadFailedMessage");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
                 return await RenderRolesEditorAsync(vm, ct);
 
@@ -757,13 +860,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             return await RedirectToUserRolesReturnTargetAsync(vm, ct);
         }
 
-        private IActionResult RenderCreateEditor(UserCreateVm vm)
+        private async Task<IActionResult> RenderCreateEditorAsync(UserCreateVm vm, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(vm.Locale) ||
                 string.IsNullOrWhiteSpace(vm.Currency) ||
                 string.IsNullOrWhiteSpace(vm.Timezone))
             {
-                var settings = _siteSettingCache.GetAsync().GetAwaiter().GetResult();
+                var settings = await _siteSettingCache.GetAsync(ct);
                 vm.Locale = string.IsNullOrWhiteSpace(vm.Locale) ? settings.DefaultCulture : vm.Locale;
                 vm.Currency = string.IsNullOrWhiteSpace(vm.Currency) ? settings.DefaultCurrency : vm.Currency;
                 vm.Timezone = string.IsNullOrWhiteSpace(vm.Timezone)
@@ -884,6 +987,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
         private async Task<IActionResult> SetUserActiveStateAsync(Guid id, bool isActive, bool returnToIndex, string? q, UserQueueFilter filter, int page, int pageSize, CancellationToken ct)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("UserNotFoundMessage");
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
+            }
+
             var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!userResult.Succeeded || userResult.Value is null)
             {
@@ -922,6 +1031,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
         private async Task<UserRolesEditVm?> BuildUserRolesVmAsync(Guid userId, CancellationToken ct)
         {
+            if (userId == Guid.Empty)
+            {
+                return null;
+            }
+
             var result = await _getUserRoles.HandleAsync(userId, ct);
             if (!result.Succeeded || result.Value is null)
             {

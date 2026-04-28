@@ -23,7 +23,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
             builder.Property(x => x.IsActive).IsRequired();
 
             // A user should not have multiple memberships for the same business.
-            builder.HasIndex(x => new { x.BusinessId, x.UserId }).IsUnique();
+            builder.HasIndex(x => new { x.BusinessId, x.UserId })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             builder.HasIndex(x => x.UserId);
         }

@@ -66,6 +66,14 @@ async function postAuthJson<T>(
       };
     }
 
+    if (response.status === 204 || response.headers.get("content-length") === "0") {
+      return {
+        data: null,
+        status: "ok",
+        diagnostics,
+      };
+    }
+
     try {
       return {
         data: (await response.json()) as T,
@@ -80,7 +88,8 @@ async function postAuthJson<T>(
       logApiFailure(failureDiagnostics, error);
       return {
         data: null,
-        status: "ok",
+        status: "invalid-payload",
+        message: toLocalizedQueryMessage("memberAuthInvalidPayloadMessage"),
         diagnostics: failureDiagnostics,
       };
     }

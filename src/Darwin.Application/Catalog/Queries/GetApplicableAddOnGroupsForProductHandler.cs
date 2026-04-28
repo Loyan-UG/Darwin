@@ -147,6 +147,7 @@ namespace Darwin.Application.Catalog.Queries
                 MaxSelections = g.MaxSelections,
                 IsActive = g.IsActive,
                 Options = g.Options
+                    .Where(o => !o.IsDeleted)
                     .OrderBy(o => o.SortOrder)
                     .Select(o => new ApplicableAddOnOptionDto
                     {
@@ -154,7 +155,7 @@ namespace Darwin.Application.Catalog.Queries
                         Label = Localize(o.Label, o.Translations, requestedCulture, static t => t.Culture, static t => t.Label),
                         SortOrder = o.SortOrder,
                         Values = o.Values
-                            .Where(v => v.IsActive)
+                            .Where(v => !v.IsDeleted && v.IsActive)
                             .OrderBy(v => v.SortOrder)
                             .Select(v => new ApplicableAddOnOptionValueDto
                             {

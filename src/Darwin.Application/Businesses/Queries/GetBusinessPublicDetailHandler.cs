@@ -29,7 +29,18 @@ namespace Darwin.Application.Businesses.Queries
         /// Returns a public business detail model by business id.
         /// If the business does not exist or is not active, returns null.
         /// </summary>
-        public async Task<BusinessPublicDetailDto?> HandleAsync(Guid businessId, CancellationToken ct = default)
+        public Task<BusinessPublicDetailDto?> HandleAsync(Guid businessId, CancellationToken ct = default)
+        {
+            return HandleAsync(businessId, culture: null, ct);
+        }
+
+        /// <summary>
+        /// Returns a public business detail model by business id, localized to the requested culture when translations exist.
+        /// </summary>
+        public async Task<BusinessPublicDetailDto?> HandleAsync(
+            Guid businessId,
+            string? culture = null,
+            CancellationToken ct = default)
         {
             if (businessId == Guid.Empty)
             {
@@ -45,6 +56,7 @@ namespace Darwin.Application.Businesses.Queries
                     b.Id,
                     b.Name,
                     b.ShortDescription,
+                    b.AdminTextOverridesJson,
                     b.WebsiteUrl,
                     b.ContactEmail,
                     b.ContactPhoneE164,
@@ -135,8 +147,16 @@ namespace Darwin.Application.Businesses.Queries
             return new BusinessPublicDetailDto
             {
                 Id = business.Id,
-                Name = business.Name,
-                ShortDescription = business.ShortDescription,
+                Name = BusinessPublicTextResolver.ResolveName(
+                    business.Name,
+                    business.AdminTextOverridesJson,
+                    culture,
+                    business.DefaultCulture),
+                ShortDescription = BusinessPublicTextResolver.ResolveShortDescription(
+                    business.ShortDescription,
+                    business.AdminTextOverridesJson,
+                    culture,
+                    business.DefaultCulture),
                 WebsiteUrl = business.WebsiteUrl,
                 ContactEmail = business.ContactEmail,
                 ContactPhoneE164 = business.ContactPhoneE164,

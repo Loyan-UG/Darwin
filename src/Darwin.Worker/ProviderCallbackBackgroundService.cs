@@ -24,9 +24,9 @@ public sealed class ProviderCallbackBackgroundService : BackgroundService
         IOptions<ProviderCallbackWorkerOptions> options,
         ILogger<ProviderCallbackBackgroundService> logger)
     {
-        _scopeFactory = scopeFactory;
-        _options = options;
-        _logger = logger;
+        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -89,12 +89,12 @@ public sealed class ProviderCallbackBackgroundService : BackgroundService
             catch (ValidationException ex)
             {
                 item.Status = "Failed";
-                item.FailureReason = ex.Message;
+                item.FailureReason = WorkerFailureText.Truncate(ex.Message);
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
             {
                 item.Status = "Failed";
-                item.FailureReason = ex.Message.Length > 1024 ? ex.Message[..1024] : ex.Message;
+                item.FailureReason = WorkerFailureText.Truncate(ex.Message);
                 _logger.LogWarning(ex, "Provider callback inbox message {MessageId} failed.", item.Id);
             }
 

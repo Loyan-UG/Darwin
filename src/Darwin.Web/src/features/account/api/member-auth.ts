@@ -76,7 +76,8 @@ async function postMemberAuthJson<T>(
       logApiFailure(failureDiagnostics, error);
       return {
         data: null,
-        status: "ok",
+        status: "invalid-payload",
+        message: toLocalizedQueryMessage("memberAuthInvalidPayloadMessage"),
         diagnostics: failureDiagnostics,
       };
     }

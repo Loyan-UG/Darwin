@@ -12,6 +12,7 @@ import type {
   MyLoyaltyOverview,
 } from "@/features/member-portal/types";
 import { formatMoney } from "@/lib/formatting";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getCommerceResource } from "@/localization";
 
@@ -68,7 +69,7 @@ export function ConfirmationContentCompositionWindow({
   const paymentHref = paymentNeedsAttention ? "/checkout" : memberOrdersHref;
   const accountJourneyHref = hasMemberSession ? memberOrdersHref : signInHref;
   const storefrontHref = strongestProduct
-    ? `/catalog/${strongestProduct.slug}`
+    ? buildCatalogProductPath(strongestProduct.slug)
     : strongestCategory
       ? buildAppQueryPath("/catalog", { category: strongestCategory.slug })
       : "/catalog";
@@ -151,7 +152,7 @@ export function ConfirmationContentCompositionWindow({
         : copy.confirmationCompositionRouteMapContentFallbackTitle,
       description: strongestPage?.metaDescription ??
         copy.confirmationCompositionRouteMapContentFallbackDescription,
-      href: strongestPage ? `/cms/${strongestPage.slug}` : "/cms",
+      href: strongestPage ? buildCmsPagePath(strongestPage.slug) : "/cms",
       ctaLabel: copy.confirmationCompositionRouteMapContentCta,
       meta: formatResource(copy.confirmationCompositionRouteMapContentMeta, {
         count: cmsPages.length,

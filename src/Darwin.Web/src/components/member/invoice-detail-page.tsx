@@ -22,9 +22,11 @@ import {
 import {
   formatResource,
   getMemberResource,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { buildInvoicePath, buildOrderPath } from "@/lib/entity-paths";
 import { localizeHref } from "@/lib/locale-routing";
 import { getSafeExternalLinkProps, toWebApiUrl } from "@/lib/webapi-url";
 
@@ -44,6 +46,20 @@ type InvoiceDetailPageProps = {
   storefrontCartStatus: string;
 };
 
+function localizeInvoiceStatus(status: string, culture: string) {
+  if (culture.toLowerCase().startsWith("en")) {
+    return status;
+  }
+
+  const labels: Record<string, string> = {
+    Draft: "Entwurf",
+    Open: "Offen",
+    Paid: "Bezahlt",
+    Cancelled: "Storniert",
+  };
+  return labels[status] ?? status;
+}
+
 export function InvoiceDetailPage({
   culture,
   invoice,
@@ -60,6 +76,13 @@ export function InvoiceDetailPage({
   storefrontCartStatus,
 }: InvoiceDetailPageProps) {
   const copy = getMemberResource(culture);
+  const statusLabel = resolveApiStatusLabel(status, copy) ?? status;
+  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const productsStatusLabel = resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
+  const storefrontCartStatusLabel =
+    resolveApiStatusLabel(storefrontCartStatus, copy) ?? storefrontCartStatus;
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
 
   if (!invoice) {
@@ -69,7 +92,9 @@ export function InvoiceDetailPage({
           <StatusBanner
             tone="warning"
             title={copy.invoiceDetailUnavailableTitle}
-            message={formatResource(copy.invoiceDetailUnavailableMessage, { status })}
+            message={formatResource(copy.invoiceDetailUnavailableMessage, {
+              status: statusLabel,
+            })}
           />
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -103,7 +128,10 @@ export function InvoiceDetailPage({
     );
   }
 
-  const documentUrl = toWebApiUrl(invoice.actions.documentPath);
+  const documentPath = invoice.actions.documentPath
+    ? `${invoice.actions.documentPath}?culture=${encodeURIComponent(culture)}`
+    : null;
+  const documentUrl = documentPath ? toWebApiUrl(documentPath) : "";
   const paymentAttention =
     invoice.actions.canRetryPayment || invoice.balanceMinor > 0;
   const settledAtUtc = invoice.paidAtUtc ?? null;
@@ -309,7 +337,7 @@ export function InvoiceDetailPage({
                 description: formatResource(copy.invoiceDetailReadinessMessage, {
                   balance: formatMoney(invoice.balanceMinor, invoice.currency, culture),
                 }),
-                href: `/invoices/${invoice.id}`,
+    href: buildInvoicePath(invoice.id),
                 ctaLabel: copy.accountCompositionJourneyCurrentCta,
               }}
               nextCard={{
@@ -318,7 +346,7 @@ export function InvoiceDetailPage({
                 description: invoice.orderId
                   ? copy.invoiceDetailPortalNote
                   : copy.ordersPortalNote,
-                href: invoice.orderId ? `/orders/${invoice.orderId}` : "/orders",
+    href: invoice.orderId ? buildOrderPath(invoice.orderId) : "/orders",
                 ctaLabel: invoice.orderId
                   ? copy.openLinkedOrderCta
                   : copy.accountCompositionJourneySecurityNextCta,
@@ -335,7 +363,7 @@ export function InvoiceDetailPage({
                   label: copy.accountCompositionRouteMapNextLabel,
                   title: copy.invoiceDetailTimelineTitle,
                   description: copy.invoiceDetailTimelineMessage,
-                  href: `/invoices/${invoice.id}`,
+    href: buildInvoicePath(invoice.id),
                   ctaLabel: copy.accountCompositionRouteMapProfileCta,
                 },
               ]}
@@ -347,7 +375,7 @@ export function InvoiceDetailPage({
             <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
-                <div className="flex items-center justify-between"><span>{copy.statusLabel}</span><span>{invoice.status}</span></div>
+                <div className="flex items-center justify-between"><span>{copy.statusLabel}</span><span>{localizeInvoiceStatus(invoice.status, culture)}</span></div>
                 <div className="flex items-center justify-between"><span>{copy.createdLabel}</span><span>{formatDateTime(invoice.createdAtUtc, culture)}</span></div>
                 <div className="flex items-center justify-between"><span>{copy.dueDateLabel}</span><span>{formatDateTime(invoice.dueDateUtc, culture)}</span></div>
                 <div className="flex items-center justify-between"><span>{copy.netLabel}</span><span>{formatMoney(invoice.totalNetMinor, invoice.currency, culture)}</span></div>
@@ -400,9 +428,9 @@ export function InvoiceDetailPage({
                 culture={culture}
                 title={copy.invoiceDetailStorefrontWindowTitle}
                 message={formatResource(copy.invoiceDetailStorefrontWindowMessage, {
-                  cmsStatus: cmsPagesStatus,
-                  categoriesStatus,
-                  productsStatus,
+                  cmsStatus: cmsPagesStatusLabel,
+                  categoriesStatus: categoriesStatusLabel,
+                  productsStatus: productsStatusLabel,
                   pageCount: cmsPages.length,
                   categoryCount: categories.length,
                   productCount: products.length,
@@ -411,13 +439,13 @@ export function InvoiceDetailPage({
                 cmsCtaLabel={copy.invoiceDetailStorefrontCmsCta}
                 cmsCards={cmsSpotlightCards}
                 cmsEmptyMessage={formatResource(copy.invoiceDetailStorefrontCmsEmptyMessage, {
-                  status: cmsPagesStatus,
+                  status: cmsPagesStatusLabel,
                 })}
                 catalogTitle={copy.invoiceDetailStorefrontCatalogTitle}
                 catalogCtaLabel={copy.invoiceDetailStorefrontCatalogCta}
                 categoryCards={categorySpotlightCards}
                 catalogEmptyMessage={formatResource(copy.invoiceDetailStorefrontCatalogEmptyMessage, {
-                  status: categoriesStatus,
+                  status: categoriesStatusLabel,
                 })}
                 productTitle={copy.invoiceDetailStorefrontProductTitle}
                 productCtaLabel={copy.invoiceDetailStorefrontProductCta}
@@ -428,7 +456,7 @@ export function InvoiceDetailPage({
                 }
                 productCards={storefrontOfferCards}
                 productEmptyMessage={formatResource(copy.invoiceDetailStorefrontProductEmptyMessage, {
-                  status: productsStatus,
+                  status: productsStatusLabel,
                 })}
                 promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
                 promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
@@ -437,11 +465,11 @@ export function InvoiceDetailPage({
                 cartSectionMessage={
                   storefrontCart && storefrontCart.items.length > 0
                     ? formatResource(copy.invoiceDetailStorefrontCartMessage, {
-                        status: storefrontCartStatus,
+                        status: storefrontCartStatusLabel,
                         count: storefrontCart.items.length,
                       })
                     : formatResource(copy.invoiceDetailStorefrontCartEmptyMessage, {
-                        status: storefrontCartStatus,
+                        status: storefrontCartStatusLabel,
                       })
                 }
                 cartSectionCartCtaLabel={copy.invoiceDetailStorefrontCartCta}
@@ -455,14 +483,15 @@ export function InvoiceDetailPage({
                 {invoice.actions.canRetryPayment && (
                   <form action={createMemberInvoicePaymentIntentAction}>
                     <input type="hidden" name="invoiceId" value={invoice.id} />
-                    <input type="hidden" name="failurePath" value={localizeHref(`/invoices/${invoice.id}`, culture)} />
+                    <input type="hidden" name="culture" value={culture} />
+            <input type="hidden" name="failurePath" value={localizeHref(buildInvoicePath(invoice.id), culture)} />
                     <button type="submit" className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
                       {copy.retryPaymentCta}
                     </button>
                   </form>
                 )}
                 {invoice.orderId ? (
-                  <Link href={localizeHref(`/orders/${invoice.orderId}`, culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+              <Link href={localizeHref(buildOrderPath(invoice.orderId), culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
                     {copy.openLinkedOrderCta}
                   </Link>
                 ) : null}

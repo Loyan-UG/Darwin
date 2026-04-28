@@ -7,6 +7,7 @@ import type {
 } from "@/features/catalog/types";
 import type { CmsMetadataFocus } from "@/features/cms/discovery";
 import type { PublicPageSummary } from "@/features/cms/types";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getSharedResource } from "@/localization";
@@ -63,14 +64,14 @@ export function CmsIndexCompositionWindow({
   );
   const reviewWindowHref = localizeHref(reviewHref, culture);
   const contentHref = localizeHref(
-    spotlightPage ? `/cms/${spotlightPage.slug}` : "/cms",
+    spotlightPage ? buildCmsPagePath(spotlightPage.slug) : "/cms",
     culture,
   );
   const storefrontHref = localizeHref(
     cartSummary && cartSummary.itemCount > 0
       ? "/cart"
       : strongestProduct
-        ? `/catalog/${strongestProduct.slug}`
+        ? buildCatalogProductPath(strongestProduct.slug)
         : strongestCategory
           ? buildAppQueryPath("/catalog", { category: strongestCategory.slug })
           : "/catalog",

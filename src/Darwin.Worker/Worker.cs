@@ -24,10 +24,10 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         IOptions<WebhookDeliveryWorkerOptions> options,
         ILogger<WebhookDeliveryBackgroundService> logger)
     {
-        _scopeFactory = scopeFactory;
-        _httpClientFactory = httpClientFactory;
-        _options = options;
-        _logger = logger;
+        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -97,12 +97,17 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         {
             if (!subscriptions.TryGetValue(delivery.SubscriptionId, out var subscription) || !subscription.IsActive)
             {
+                delivery.LastAttemptAtUtc = DateTime.UtcNow;
+                delivery.RetryCount = options.MaxAttempts;
+                delivery.Status = "Failed";
                 continue;
             }
 
             events.TryGetValue(delivery.EventRefId ?? Guid.Empty, out var eventLog);
             await DispatchAsync(db, delivery, subscription, eventLog, options, ct).ConfigureAwait(false);
         }
+
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
     private async Task DispatchAsync(
@@ -123,28 +128,28 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         delivery.PayloadHash = ComputePayloadHash(payloadJson);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-        using var client = _httpClientFactory.CreateClient(nameof(WebhookDeliveryBackgroundService));
-        client.Timeout = TimeSpan.FromSeconds(options.RequestTimeoutSeconds);
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, subscription.CallbackUrl)
-        {
-            Content = new StringContent(payloadJson, Encoding.UTF8, "application/json")
-        };
-
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        request.Headers.UserAgent.ParseAdd("Darwin.WebhookDispatcher/1.0");
-        request.Headers.TryAddWithoutValidation("Idempotency-Key", payload.IdempotencyKey);
-        request.Headers.TryAddWithoutValidation("X-Darwin-Delivery-Id", delivery.Id.ToString("D"));
-        request.Headers.TryAddWithoutValidation("X-Darwin-Event-Type", payload.EventType);
-        request.Headers.TryAddWithoutValidation("X-Darwin-Signature", ComputeSignatureHeader(payloadJson, subscription.Secret));
-
-        if (delivery.EventRefId.HasValue)
-        {
-            request.Headers.TryAddWithoutValidation("X-Darwin-Event-Ref-Id", delivery.EventRefId.Value.ToString("D"));
-        }
-
         try
         {
+            using var client = _httpClientFactory.CreateClient(nameof(WebhookDeliveryBackgroundService));
+            client.Timeout = TimeSpan.FromSeconds(options.RequestTimeoutSeconds);
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, subscription.CallbackUrl)
+            {
+                Content = new StringContent(payloadJson, Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.UserAgent.ParseAdd("Darwin.WebhookDispatcher/1.0");
+            request.Headers.TryAddWithoutValidation("Idempotency-Key", payload.IdempotencyKey);
+            request.Headers.TryAddWithoutValidation("X-Darwin-Delivery-Id", delivery.Id.ToString("D"));
+            request.Headers.TryAddWithoutValidation("X-Darwin-Event-Type", payload.EventType);
+            request.Headers.TryAddWithoutValidation("X-Darwin-Signature", ComputeSignatureHeader(payloadJson, subscription.Secret));
+
+            if (delivery.EventRefId.HasValue)
+            {
+                request.Headers.TryAddWithoutValidation("X-Darwin-Event-Ref-Id", delivery.EventRefId.Value.ToString("D"));
+            }
+
             using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
             delivery.ResponseCode = (int)response.StatusCode;
             delivery.Status = response.IsSuccessStatusCode ? "Succeeded" : "Failed";

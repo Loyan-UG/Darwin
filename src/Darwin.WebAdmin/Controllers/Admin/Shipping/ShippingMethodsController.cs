@@ -34,12 +34,12 @@ public sealed class ShippingMethodsController : AdminBaseController
         UpdateShippingMethodHandler update,
         ISiteSettingCache siteSettingCache)
     {
-        _getPage = getPage;
-        _getSummary = getSummary;
-        _getForEdit = getForEdit;
-        _create = create;
-        _update = update;
-        _siteSettingCache = siteSettingCache;
+        _getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
+        _getSummary = getSummary ?? throw new ArgumentNullException(nameof(getSummary));
+        _getForEdit = getForEdit ?? throw new ArgumentNullException(nameof(getForEdit));
+        _create = create ?? throw new ArgumentNullException(nameof(create));
+        _update = update ?? throw new ArgumentNullException(nameof(update));
+        _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
     }
 
     [HttpGet]
@@ -94,9 +94,9 @@ public sealed class ShippingMethodsController : AdminBaseController
     }
 
     [HttpGet]
-    public IActionResult Create()
+    public async Task<IActionResult> Create(CancellationToken ct = default)
     {
-        var defaultCurrency = _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCurrency;
+        var defaultCurrency = (await _siteSettingCache.GetAsync(ct)).DefaultCurrency;
         var vm = new ShippingMethodEditVm
         {
             Currency = defaultCurrency,
@@ -141,6 +141,12 @@ public sealed class ShippingMethodsController : AdminBaseController
     [HttpGet]
     public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
     {
+        if (id == Guid.Empty)
+        {
+            SetErrorMessage("ShippingMethodNotFoundMessage");
+            return RedirectOrHtmx(nameof(Index), new { });
+        }
+
         var dto = await _getForEdit.HandleAsync(id, ct);
         if (dto is null)
         {

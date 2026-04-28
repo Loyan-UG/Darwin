@@ -182,11 +182,12 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("BillingPlanId");
 
                     b.HasIndex("BusinessId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("Provider", "ProviderSubscriptionId")
                         .IsUnique()
-                        .HasFilter("[ProviderSubscriptionId] IS NOT NULL");
+                        .HasFilter("[ProviderSubscriptionId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("BusinessSubscriptions", "Billing");
                 });
@@ -299,7 +300,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("BusinessId", "Code")
                         .IsUnique()
-                        .HasFilter("[Code] IS NOT NULL");
+                        .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("FinancialAccounts", "Billing");
                 });
@@ -592,7 +593,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("Provider", "ProviderInvoiceId")
                         .IsUnique()
-                        .HasFilter("[ProviderInvoiceId] IS NOT NULL");
+                        .HasFilter("[ProviderInvoiceId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("SubscriptionInvoices", "Billing");
                 });
@@ -836,7 +837,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "BusinessId")
                         .IsUnique()
-                        .HasDatabaseName("UX_BusinessFavorites_User_Business");
+                        .HasDatabaseName("UX_BusinessFavorites_User_Business")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("BusinessFavorites", "Businesses");
                 });
@@ -970,7 +972,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "BusinessId")
                         .IsUnique()
-                        .HasDatabaseName("UX_BusinessLikes_User_Business");
+                        .HasDatabaseName("UX_BusinessLikes_User_Business")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("BusinessLikes", "Businesses");
                 });
@@ -1157,7 +1160,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("BusinessId", "UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("BusinessMembers", "Businesses");
                 });
@@ -1274,7 +1278,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "BusinessId")
                         .IsUnique()
-                        .HasDatabaseName("UX_BusinessReviews_User_Business");
+                        .HasDatabaseName("UX_BusinessReviews_User_Business")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("BusinessId", "IsHidden", "IsDeleted")
                         .HasDatabaseName("IX_BusinessReviews_Business_Visibility");
@@ -1352,7 +1357,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("ExpiresAtUtc");
 
                     b.HasIndex("Token")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("BusinessStaffQrCodes", "Businesses");
                 });
@@ -1469,7 +1475,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Menus", "CMS");
                 });
@@ -1596,7 +1603,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("MenuItemId", "Culture")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("MenuItemTranslations", "CMS");
                 });
@@ -1727,7 +1735,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PageId", "Culture", "Slug")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("PageTranslations", "CMS");
                 });
@@ -1852,7 +1861,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId")
                         .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL");
+                        .HasFilter("[UserId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("Customers", "CRM");
                 });
@@ -1972,7 +1981,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("CustomerSegments", "CRM");
                 });
@@ -2015,7 +2025,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("CustomerSegmentId");
 
                     b.HasIndex("CustomerId", "CustomerSegmentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("CustomerSegmentMemberships", "CRM");
                 });
@@ -2512,7 +2523,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CartId", "VariantId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("CartItems", "CartCheckout");
                 });
@@ -2618,7 +2630,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddOnGroupId", "BrandId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AddOnGroupBrands", "Catalog");
                 });
@@ -2659,7 +2672,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddOnGroupId", "CategoryId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AddOnGroupCategories", "Catalog");
                 });
@@ -2700,7 +2714,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddOnGroupId", "ProductId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AddOnGroupProducts", "Catalog");
                 });
@@ -2748,7 +2763,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddOnGroupId", "Culture")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AddOnGroupTranslations", "Catalog");
                 });
@@ -2789,7 +2805,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddOnGroupId", "VariantId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AddOnGroupVariants", "Catalog");
                 });
@@ -2884,7 +2901,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddOnOptionId", "Culture")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AddOnOptionTranslations", "Catalog");
                 });
@@ -2993,7 +3011,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddOnOptionValueId", "Culture")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AddOnOptionValueTranslations", "Catalog");
                 });
@@ -3039,7 +3058,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("Slug")
                         .IsUnique()
-                        .HasFilter("[Slug] IS NOT NULL");
+                        .HasFilter("[Slug] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("Brands", "Catalog");
                 });
@@ -3090,7 +3109,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BrandId", "Culture")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("BrandTranslations", "Catalog");
                 });
@@ -3748,7 +3768,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "Token")
                         .IsUnique()
-                        .HasDatabaseName("UX_ResetToken_User_Token");
+                        .HasDatabaseName("UX_ResetToken_User_Token")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("PasswordResetTokens", "Identity");
                 });
@@ -3803,7 +3824,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("Key")
                         .IsUnique()
-                        .HasDatabaseName("UX_Permission_Key");
+                        .HasDatabaseName("UX_Permission_Key")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Permissions", "Identity");
                 });
@@ -3862,11 +3884,13 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("Key")
                         .IsUnique()
-                        .HasDatabaseName("UX_Role_Name");
+                        .HasDatabaseName("UX_Role_Name")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("UX_Role_NormalizedName");
+                        .HasDatabaseName("UX_Role_NormalizedName")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Roles", "Identity");
                 });
@@ -3910,7 +3934,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("RoleId", "PermissionId")
                         .IsUnique()
-                        .HasDatabaseName("UX_RolePermission_Role_Permission");
+                        .HasDatabaseName("UX_RolePermission_Role_Permission")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("RolePermissions", "Identity");
                 });
@@ -4073,7 +4098,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasDatabaseName("UX_User_NormalizedUserName");
+                        .HasDatabaseName("UX_User_NormalizedUserName")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Users", "Identity");
                 });
@@ -4153,7 +4179,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "DeviceId")
                         .IsUnique()
-                        .HasDatabaseName("UX_UserDevices_User_DeviceId");
+                        .HasDatabaseName("UX_UserDevices_User_DeviceId")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("UserDevices", "Identity");
                 });
@@ -4224,7 +4251,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId")
                         .IsUnique()
-                        .HasDatabaseName("UX_UserEngagementSnapshots_UserId");
+                        .HasDatabaseName("UX_UserEngagementSnapshots_UserId")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("UserEngagementSnapshots", "Identity");
                 });
@@ -4278,10 +4306,12 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("Provider", "ProviderKey")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("UserId", "Provider")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("UserLogins", "Identity");
                 });
@@ -4325,7 +4355,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "RoleId")
                         .IsUnique()
-                        .HasDatabaseName("UX_UserRole_User_Role");
+                        .HasDatabaseName("UX_UserRole_User_Role")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("UserRoles", "Identity");
                 });
@@ -4381,7 +4412,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("ExpiresAtUtc");
 
                     b.HasIndex("UserId", "Purpose")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("UserTokens", "Identity");
                 });
@@ -4510,7 +4542,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("CredentialId");
 
                     b.HasIndex("UserId", "CredentialId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("UserWebAuthnCredentials", "Identity");
                 });
@@ -4580,7 +4613,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("AnalyticsExportJobId", "StorageKey")
                         .IsUnique()
-                        .HasDatabaseName("UX_AnalyticsExportFiles_Job_StorageKey");
+                        .HasDatabaseName("UX_AnalyticsExportFiles_Job_StorageKey")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AnalyticsExportFiles", "Integration");
                 });
@@ -4666,7 +4700,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("BusinessId", "IdempotencyKey")
                         .IsUnique()
                         .HasDatabaseName("UX_AnalyticsExportJobs_Business_IdempotencyKey")
-                        .HasFilter("[IdempotencyKey] IS NOT NULL");
+                        .HasFilter("[IdempotencyKey] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("AnalyticsExportJobs", "Integration");
                 });
@@ -5481,7 +5515,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("SupplierId");
 
                     b.HasIndex("BusinessId", "OrderNumber")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("PurchaseOrders", "Inventory");
                 });
@@ -5592,7 +5627,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("WarehouseId");
 
                     b.HasIndex("WarehouseId", "ProductVariantId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("StockLevels", "Inventory");
                 });
@@ -5804,7 +5840,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("BusinessId", "IsDefault");
 
                     b.HasIndex("BusinessId", "Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Warehouses", "Inventory");
                 });
@@ -5862,7 +5899,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("BusinessId", "UserId")
                         .IsUnique()
-                        .HasDatabaseName("UX_LoyaltyAccounts_Business_User");
+                        .HasDatabaseName("UX_LoyaltyAccounts_Business_User")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("LoyaltyAccounts", "Loyalty");
                 });
@@ -5992,7 +6030,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("BusinessId")
                         .IsUnique()
-                        .HasDatabaseName("UX_LoyaltyPrograms_Business");
+                        .HasDatabaseName("UX_LoyaltyPrograms_Business")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("IsActive");
 
@@ -6119,7 +6158,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("LoyaltyProgramId", "PointsRequired")
                         .IsUnique()
-                        .HasDatabaseName("UX_LoyaltyRewardTiers_Program_Points");
+                        .HasDatabaseName("UX_LoyaltyRewardTiers_Program_Points")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("LoyaltyRewardTiers", "Loyalty");
                 });
@@ -6191,7 +6231,8 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("Token")
                         .IsUnique()
-                        .HasDatabaseName("UX_QrCodeTokens_Token");
+                        .HasDatabaseName("UX_QrCodeTokens_Token")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("UserId");
 
@@ -6466,7 +6507,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasIndex("IdempotencyKey")
                         .IsUnique()
                         .HasDatabaseName("UX_CampaignDeliveries_IdempotencyKey")
-                        .HasFilter("[IdempotencyKey] IS NOT NULL");
+                        .HasFilter("[IdempotencyKey] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("LastAttemptAtUtc")
                         .HasDatabaseName("IX_CampaignDeliveries_LastAttemptAtUtc");
@@ -7045,7 +7086,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("PromotionId");
 
@@ -7715,7 +7757,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name", "Carrier", "Service")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("ShippingMethods", "Shipping");
                 });
@@ -7765,7 +7808,8 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ShippingMethodId", "SortOrder")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("ShippingRates", (string)null);
                 });

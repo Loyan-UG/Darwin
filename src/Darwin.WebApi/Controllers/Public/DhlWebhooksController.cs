@@ -94,6 +94,13 @@ public sealed class DhlWebhooksController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["DhlWebhookPayloadInvalid"]);
         }
 
+        var providerShipmentReference = NormalizeText(request.ProviderShipmentReference);
+        var carrierEventKey = NormalizeText(request.CarrierEventKey);
+        if (providerShipmentReference is null || carrierEventKey is null)
+        {
+            return BadRequestProblem(_validationLocalizer["DhlWebhookPayloadInvalid"]);
+        }
+
         var idempotencyKey = BuildIdempotencyKey(request);
         var existing = await _db.Set<ProviderCallbackInboxMessage>()
             .AsNoTracking()
@@ -105,7 +112,7 @@ public sealed class DhlWebhooksController : ApiControllerBase
             _db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
             {
                 Provider = "DHL",
-                CallbackType = request.CarrierEventKey,
+                CallbackType = carrierEventKey,
                 IdempotencyKey = idempotencyKey,
                 PayloadJson = rawPayload,
                 Status = "Pending"
@@ -117,8 +124,8 @@ public sealed class DhlWebhooksController : ApiControllerBase
         {
             received = true,
             duplicate = existing,
-            providerShipmentReference = request.ProviderShipmentReference,
-            carrierEventKey = request.CarrierEventKey,
+            providerShipmentReference,
+            carrierEventKey,
             instance = Request.GetDisplayUrl()
         });
     }
@@ -144,7 +151,7 @@ public sealed class DhlWebhooksController : ApiControllerBase
             var providedHash = Convert.FromHexString(normalizedHeader);
             return CryptographicOperations.FixedTimeEquals(computedHash, providedHash);
         }
-        catch (FormatException)
+        catch (Exception ex) when (ex is FormatException || ex is ArgumentException)
         {
             return false;
         }
@@ -153,10 +160,13 @@ public sealed class DhlWebhooksController : ApiControllerBase
     private static string BuildIdempotencyKey(DhlShipmentCallbackRequest request)
     {
         return string.Concat(
-            request.ProviderShipmentReference.Trim(),
+            NormalizeText(request.ProviderShipmentReference) ?? string.Empty,
             "::",
-            request.CarrierEventKey.Trim(),
+            NormalizeText(request.CarrierEventKey) ?? string.Empty,
             "::",
             request.OccurredAtUtc.ToUniversalTime().ToString("O"));
     }
+
+    private static string? NormalizeText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

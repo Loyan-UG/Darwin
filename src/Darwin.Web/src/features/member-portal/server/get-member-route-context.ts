@@ -58,8 +58,8 @@ export const getMemberDashboardRouteContext = createCachedObservedLoader({
       storefrontContext,
     ] = await Promise.all([
       getMemberIdentityContext(),
-      getMemberCommerceSummaryContext(),
-      getCurrentMemberLoyaltyBusinesses({ page: 1, pageSize: 3 }),
+      getMemberCommerceSummaryContext(culture),
+      getCurrentMemberLoyaltyBusinesses({ page: 1, pageSize: 3, culture }),
       getPublicStorefrontContext(culture),
     ]);
 
@@ -113,7 +113,7 @@ export const getMemberOrdersRouteContext = createCachedObservedLoader({
   }),
   load: async (culture: string, page: number, pageSize: number) => {
     const [ordersResult, storefrontContext] = await Promise.all([
-      getMemberOrdersPageContext(page, pageSize),
+      getMemberOrdersPageContext(culture, page, pageSize),
       getPublicStorefrontContext(culture),
     ]);
 
@@ -141,7 +141,7 @@ export const getMemberInvoicesRouteContext = createCachedObservedLoader({
   }),
   load: async (culture: string, page: number, pageSize: number) => {
     const [invoicesResult, storefrontContext] = await Promise.all([
-      getMemberInvoicesPageContext(page, pageSize),
+      getMemberInvoicesPageContext(culture, page, pageSize),
       getPublicStorefrontContext(culture),
     ]);
 
@@ -167,7 +167,7 @@ export const getMemberOrderDetailRouteContext = createCachedObservedLoader({
   }),
   load: async (culture: string, id: string) => {
     const [orderResult, storefrontContext] = await Promise.all([
-      getCurrentMemberOrder(id),
+      getCurrentMemberOrder(id, culture),
       getPublicStorefrontContext(culture),
     ]);
 
@@ -193,7 +193,7 @@ export const getMemberInvoiceDetailRouteContext = createCachedObservedLoader({
   }),
   load: async (culture: string, id: string) => {
     const [invoiceResult, storefrontContext] = await Promise.all([
-      getCurrentMemberInvoice(id),
+      getCurrentMemberInvoice(id, culture),
       getPublicStorefrontContext(culture),
     ]);
 

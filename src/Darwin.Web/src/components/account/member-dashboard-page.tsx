@@ -30,8 +30,17 @@ import {
   buildStorefrontOfferCards,
   buildStorefrontPageSpotlightCards,
 } from "@/features/storefront/storefront-campaigns";
-import { formatResource, getMemberResource } from "@/localization";
+import {
+  formatResource,
+  getMemberResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import {
+  buildInvoicePath,
+  buildLoyaltyBusinessPath,
+  buildOrderPath,
+} from "@/lib/entity-paths";
 import { localizeHref } from "@/lib/locale-routing";
 import { parseUtcTimestamp } from "@/lib/time";
 import { toWebApiUrl } from "@/lib/webapi-url";
@@ -109,6 +118,42 @@ export function MemberDashboardPage({
   cartLinkedProductSlugs,
 }: MemberDashboardPageProps) {
   const copy = getMemberResource(culture);
+  const localizedProfileStatus =
+    resolveApiStatusLabel(profileStatus, copy) ?? profileStatus;
+  const localizedPreferencesStatus =
+    resolveApiStatusLabel(preferencesStatus, copy) ?? preferencesStatus;
+  const localizedCustomerContextStatus = resolveApiStatusLabel(
+    customerContextStatus,
+    copy,
+  ) ?? customerContextStatus;
+  const localizedAddressesStatus =
+    resolveApiStatusLabel(addressesStatus, copy) ?? addressesStatus;
+  const localizedRecentOrdersStatus = resolveApiStatusLabel(
+    recentOrdersStatus,
+    copy,
+  ) ?? recentOrdersStatus;
+  const localizedRecentInvoicesStatus = resolveApiStatusLabel(
+    recentInvoicesStatus,
+    copy,
+  ) ?? recentInvoicesStatus;
+  const localizedLoyaltyOverviewStatus = resolveApiStatusLabel(
+    loyaltyOverviewStatus,
+    copy,
+  ) ?? loyaltyOverviewStatus;
+  const localizedLoyaltyBusinessesStatus = resolveApiStatusLabel(
+    loyaltyBusinessesStatus,
+    copy,
+  ) ?? loyaltyBusinessesStatus;
+  const localizedStorefrontCartStatus = resolveApiStatusLabel(
+    storefrontCartStatus,
+    copy,
+  ) ?? storefrontCartStatus;
+  const localizedCmsPagesStatus =
+    resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const localizedCategoriesStatus =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const localizedProductsStatus =
+    resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
   const hasValidSessionExpiry = parseUtcTimestamp(session.accessTokenExpiresAtUtc) !== null;
   const sessionNeedsAttention =
     !hasValidSessionExpiry;
@@ -170,9 +215,9 @@ export function MemberDashboardPage({
     0,
   );
   const commercePrimaryHref = attentionOrders[0]
-    ? localizeHref(`/orders/${attentionOrders[0].id}`, culture)
+    ? localizeHref(buildOrderPath(attentionOrders[0].id), culture)
     : outstandingInvoices[0]
-      ? localizeHref(`/invoices/${outstandingInvoices[0].id}`, culture)
+      ? localizeHref(buildInvoicePath(outstandingInvoices[0].id), culture)
       : localizeHref("/orders", culture);
   const commercePrimaryCta = attentionOrders[0]
     ? copy.dashboardCommerceReadinessOrdersCta
@@ -298,7 +343,7 @@ export function MemberDashboardPage({
               culture,
             ),
           }),
-          href: localizeHref(`/invoices/${invoiceAttention.id}`, culture),
+          href: localizeHref(buildInvoicePath(invoiceAttention.id), culture),
           cta: copy.dashboardActionInvoiceCta,
         }
       : null,
@@ -314,7 +359,7 @@ export function MemberDashboardPage({
               copy.unavailable,
           }),
           href: localizeHref(
-            `/loyalty/${loyaltyFocusAccounts[0].businessId}`,
+            buildLoyaltyBusinessPath(loyaltyFocusAccounts[0].businessId),
             culture,
           ),
           cta: copy.dashboardActionLoyaltyCta,
@@ -326,10 +371,10 @@ export function MemberDashboardPage({
     label: copy.dashboardCompositionJourneyCurrentLabel,
     title: copy.dashboardCompositionJourneyCurrentTitle,
     description: formatResource(copy.dashboardCompositionJourneyCurrentDescription, {
-      profileStatus,
-      preferencesStatus,
-      ordersStatus: recentOrdersStatus,
-      invoicesStatus: recentInvoicesStatus,
+      profileStatus: localizedProfileStatus,
+      preferencesStatus: localizedPreferencesStatus,
+      ordersStatus: localizedRecentOrdersStatus,
+      invoicesStatus: localizedRecentInvoicesStatus,
     }),
     href: "/account",
     ctaLabel: copy.dashboardCompositionJourneyCurrentCta,
@@ -346,7 +391,7 @@ export function MemberDashboardPage({
           count: attentionOrders.length,
           total: formatMoney(attentionOrderValueMinor, primaryCurrency, culture),
         }),
-        href: `/orders/${attentionOrders[0].id}`,
+        href: buildOrderPath(attentionOrders[0].id),
         ctaLabel: copy.dashboardCompositionJourneyNextOrdersCta,
       }
     : outstandingInvoices[0]
@@ -361,7 +406,7 @@ export function MemberDashboardPage({
               culture,
             ),
           }),
-          href: `/invoices/${outstandingInvoices[0].id}`,
+          href: buildInvoicePath(outstandingInvoices[0].id),
           ctaLabel: copy.dashboardCompositionJourneyNextInvoicesCta,
         }
       : !profile?.phoneNumberConfirmed || sessionNeedsAttention
@@ -369,7 +414,7 @@ export function MemberDashboardPage({
             label: copy.dashboardCompositionJourneyNextLabel,
             title: copy.dashboardCompositionJourneyNextSecurityTitle,
             description: formatResource(copy.dashboardCompositionJourneyNextSecurityDescription, {
-              profileStatus,
+              profileStatus: localizedProfileStatus,
             }),
             href: "/account/security",
             ctaLabel: copy.dashboardCompositionJourneyNextSecurityCta,
@@ -394,7 +439,7 @@ export function MemberDashboardPage({
       label: copy.dashboardCompositionRouteMapProfileLabel,
       title: copy.dashboardCompositionRouteMapProfileTitle,
       description: formatResource(copy.dashboardCompositionRouteMapProfileDescription, {
-        status: profileStatus,
+        status: localizedProfileStatus,
       }),
       href: "/account/profile",
       ctaLabel: copy.dashboardCompositionRouteMapProfileCta,
@@ -435,7 +480,7 @@ export function MemberDashboardPage({
       label: copy.dashboardCompositionRouteMapPreferencesLabel,
       title: copy.dashboardCompositionRouteMapPreferencesTitle,
       description: formatResource(copy.dashboardCompositionRouteMapPreferencesDescription, {
-        status: preferencesStatus,
+        status: localizedPreferencesStatus,
       }),
       href: "/account/preferences",
       ctaLabel: copy.dashboardCompositionRouteMapPreferencesCta,
@@ -525,9 +570,9 @@ export function MemberDashboardPage({
             tone="warning"
             title={copy.memberDataWarningsTitle}
             message={formatResource(copy.memberDataWarningsMessage, {
-              profileStatus,
-              preferencesStatus,
-              customerContextStatus,
+              profileStatus: localizedProfileStatus,
+              preferencesStatus: localizedPreferencesStatus,
+              customerContextStatus: localizedCustomerContextStatus,
             })}
           />
         )}
@@ -586,9 +631,9 @@ export function MemberDashboardPage({
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {formatResource(copy.memberRouteSummaryMessage, {
-                  profileStatus,
-                  preferencesStatus,
-                  customerContextStatus,
+                  profileStatus: localizedProfileStatus,
+                  preferencesStatus: localizedPreferencesStatus,
+                  customerContextStatus: localizedCustomerContextStatus,
                 })}
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
@@ -641,9 +686,9 @@ export function MemberDashboardPage({
               culture={culture}
               title={copy.dashboardStorefrontWindowTitle}
               message={formatResource(copy.dashboardStorefrontWindowMessage, {
-                cmsStatus: cmsPagesStatus,
-                categoriesStatus,
-                productsStatus,
+                cmsStatus: localizedCmsPagesStatus,
+                categoriesStatus: localizedCategoriesStatus,
+                productsStatus: localizedProductsStatus,
                 pageCount: cmsPages.length,
                 categoryCount: categories.length,
                 productCount: products.length,
@@ -652,13 +697,13 @@ export function MemberDashboardPage({
               cmsCtaLabel={copy.dashboardStorefrontCmsCta}
               cmsCards={cmsSpotlightCards}
               cmsEmptyMessage={formatResource(copy.dashboardStorefrontCmsEmptyMessage, {
-                status: cmsPagesStatus,
+                status: localizedCmsPagesStatus,
               })}
               catalogTitle={copy.dashboardStorefrontCatalogTitle}
               catalogCtaLabel={copy.dashboardStorefrontCatalogCta}
               categoryCards={categorySpotlightCards}
               catalogEmptyMessage={formatResource(copy.dashboardStorefrontCatalogEmptyMessage, {
-                status: categoriesStatus,
+                status: localizedCategoriesStatus,
               })}
               productTitle={copy.dashboardStorefrontProductTitle}
               productCtaLabel={copy.dashboardStorefrontProductCta}
@@ -671,7 +716,7 @@ export function MemberDashboardPage({
               }
               productCards={storefrontOfferCards}
               productEmptyMessage={formatResource(copy.dashboardStorefrontProductEmptyMessage, {
-                status: productsStatus,
+                status: localizedProductsStatus,
               })}
               promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
               promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
@@ -680,11 +725,11 @@ export function MemberDashboardPage({
               cartSectionMessage={
                 hasStorefrontCart && storefrontCart
                   ? formatResource(copy.dashboardStorefrontCartMessage, {
-                      status: storefrontCartStatus,
+                      status: localizedStorefrontCartStatus,
                       count: storefrontCart.items.length,
                     })
                   : formatResource(copy.dashboardStorefrontCartEmptyMessage, {
-                      status: storefrontCartStatus,
+                      status: localizedStorefrontCartStatus,
                     })
               }
               cartSectionCartCtaLabel={copy.dashboardStorefrontCartOpenCartCta}
@@ -697,8 +742,8 @@ export function MemberDashboardPage({
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {formatResource(copy.dashboardCommunicationWindowMessage, {
-                  profileStatus,
-                  preferencesStatus,
+                  profileStatus: localizedProfileStatus,
+                  preferencesStatus: localizedPreferencesStatus,
                 })}
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -761,7 +806,7 @@ export function MemberDashboardPage({
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {formatResource(copy.checkoutLaunchMessage, {
-                  addressesStatus,
+                  addressesStatus: localizedAddressesStatus,
                   count: addresses.length,
                 })}
               </p>
@@ -902,8 +947,8 @@ export function MemberDashboardPage({
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {formatResource(copy.dashboardCommerceWindowMessage, {
-                  ordersStatus: recentOrdersStatus,
-                  invoicesStatus: recentInvoicesStatus,
+                  ordersStatus: localizedRecentOrdersStatus,
+                  invoicesStatus: localizedRecentInvoicesStatus,
                   orderCount: recentOrders.length,
                   invoiceCount: recentInvoices.length,
                 })}
@@ -995,7 +1040,7 @@ export function MemberDashboardPage({
                       {recentOrders.map((order) => (
                         <Link
                           key={order.id}
-                          href={localizeHref(`/orders/${order.id}`, culture)}
+                          href={localizeHref(buildOrderPath(order.id), culture)}
                           className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -1024,7 +1069,7 @@ export function MemberDashboardPage({
                   ) : (
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.dashboardRecentOrdersEmptyMessage, {
-                        status: recentOrdersStatus,
+                        status: localizedRecentOrdersStatus,
                       })}
                     </p>
                   )}
@@ -1047,7 +1092,7 @@ export function MemberDashboardPage({
                       {recentInvoices.map((invoice) => (
                         <Link
                           key={invoice.id}
-                          href={localizeHref(`/invoices/${invoice.id}`, culture)}
+                          href={localizeHref(buildInvoicePath(invoice.id), culture)}
                           className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -1076,7 +1121,7 @@ export function MemberDashboardPage({
                   ) : (
                     <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                       {formatResource(copy.dashboardRecentInvoicesEmptyMessage, {
-                        status: recentInvoicesStatus,
+                        status: localizedRecentInvoicesStatus,
                       })}
                     </p>
                   )}
@@ -1090,8 +1135,8 @@ export function MemberDashboardPage({
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {formatResource(copy.dashboardLoyaltyWindowMessage, {
-                  overviewStatus: loyaltyOverviewStatus,
-                  businessesStatus: loyaltyBusinessesStatus,
+                  overviewStatus: localizedLoyaltyOverviewStatus,
+                  businessesStatus: localizedLoyaltyBusinessesStatus,
                   accountCount: loyaltyOverview?.totalAccounts ?? 0,
                   visibleCount: loyaltyBusinesses.length,
                 })}
@@ -1145,7 +1190,7 @@ export function MemberDashboardPage({
                       return (
                         <Link
                           key={business.businessId}
-                          href={localizeHref(`/loyalty/${business.businessId}`, culture)}
+                          href={localizeHref(buildLoyaltyBusinessPath(business.businessId), culture)}
                           className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                         >
                           <div className="flex items-start gap-4">
@@ -1201,7 +1246,7 @@ export function MemberDashboardPage({
                 ) : (
                   <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {formatResource(copy.dashboardJoinedPlacesEmptyMessage, {
-                      status: loyaltyBusinessesStatus,
+                      status: localizedLoyaltyBusinessesStatus,
                     })}
                   </p>
                 )}
@@ -1224,7 +1269,7 @@ export function MemberDashboardPage({
                     {loyaltyFocusAccounts.map((account) => (
                       <Link
                         key={account.loyaltyAccountId}
-                        href={localizeHref(`/loyalty/${account.businessId}`, culture)}
+                        href={localizeHref(buildLoyaltyBusinessPath(account.businessId), culture)}
                         className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -1267,7 +1312,7 @@ export function MemberDashboardPage({
                 ) : (
                   <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {formatResource(copy.dashboardRewardFocusEmptyMessage, {
-                      status: loyaltyOverviewStatus,
+                      status: localizedLoyaltyOverviewStatus,
                     })}
                   </p>
                 )}

@@ -20,7 +20,7 @@ namespace Darwin.Application.Catalog.Queries
         public async Task<BrandEditDto?> HandleAsync(Guid id, CancellationToken ct = default)
         {
             return await _db.Set<Brand>().AsNoTracking()
-                .Where(b => b.Id == id)
+                .Where(b => b.Id == id && !b.IsDeleted)
                 .Select(b => new BrandEditDto
                 {
                     Id = b.Id,

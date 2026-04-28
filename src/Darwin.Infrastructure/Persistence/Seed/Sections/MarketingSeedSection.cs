@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Domain.Entities.Businesses;
@@ -24,7 +25,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
         public MarketingSeedSection(ILogger<MarketingSeedSection> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
@@ -33,6 +34,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             if (!await db.Campaigns.AnyAsync(ct))
                 await SeedCampaignsAsync(db, ct);
+
+            await EnsureCampaignLocalizedPayloadsAsync(db, ct);
 
             if (!await db.CampaignDeliveries.AnyAsync(ct))
                 await SeedDeliveriesAsync(db, ct);
@@ -91,6 +94,96 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             db.AddRange(deliveries);
             await db.SaveChangesAsync(ct);
+        }
+
+        private static async Task EnsureCampaignLocalizedPayloadsAsync(DarwinDbContext db, CancellationToken ct)
+        {
+            var campaigns = await db.Campaigns
+                .Where(x => !x.IsDeleted)
+                .ToListAsync(ct);
+
+            var requiresSave = false;
+            foreach (var campaign in campaigns)
+            {
+                var english = GetEnglishCampaignText(campaign.Name, campaign.Title, campaign.Body ?? campaign.Subtitle ?? string.Empty);
+                var merged = MergeCampaignPayloadJson(
+                    campaign.PayloadJson,
+                    campaign.Title,
+                    campaign.Body ?? campaign.Subtitle ?? string.Empty,
+                    english.Title,
+                    english.Body);
+
+                if (!string.Equals(campaign.PayloadJson, merged, StringComparison.Ordinal))
+                {
+                    campaign.PayloadJson = merged;
+                    requiresSave = true;
+                }
+            }
+
+            if (requiresSave)
+            {
+                await db.SaveChangesAsync(ct);
+            }
+        }
+
+        private static string MergeCampaignPayloadJson(
+            string? existingJson,
+            string germanTitle,
+            string germanBody,
+            string englishTitle,
+            string englishBody)
+        {
+            Dictionary<string, object?> values;
+            if (string.IsNullOrWhiteSpace(existingJson))
+            {
+                values = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                try
+                {
+                    values = JsonSerializer.Deserialize<Dictionary<string, object?>>(existingJson)
+                        ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                }
+                catch (JsonException)
+                {
+                    values = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                }
+            }
+
+            values["localized"] = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["de-DE"] = new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["title"] = germanTitle,
+                    ["body"] = germanBody
+                },
+                ["en-US"] = new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["title"] = englishTitle,
+                    ["body"] = englishBody
+                }
+            };
+
+            return JsonSerializer.Serialize(values);
+        }
+
+        private static (string Title, string Body) GetEnglishCampaignText(string name, string fallbackTitle, string fallbackBody)
+        {
+            return name switch
+            {
+                "Berlin Frühling" => ("Spring offers in Berlin", "Discover local offers in Berlin."),
+                "München Kaffee" => ("Free coffee", "Get a free coffee on your next visit."),
+                "Köln Abendessen" => ("Dinner menu -20%", "Get 20% off the dinner menu."),
+                "Hamburg Fitness" => ("Free trial workout", "Book your free trial workout now."),
+                "Frankfurt Supermarkt" => ("Fresh week", "Fresh products with 10% off."),
+                "Stuttgart Wellness" => ("Wellness day", "Massage and sauna package on offer."),
+                "Düsseldorf Feinkost" => ("Deli picks of the week", "Exclusive regional products."),
+                "Leipzig Service" => ("Express pickup", "Repairs are now available faster."),
+                "Dresden Bistro" => ("Lunch menu €9.90", "Daily lunch special."),
+                "Nürnberg Kaffeehaus" => ("House blend -15%", "15% off our house blend."),
+                _ => (fallbackTitle, fallbackBody)
+            };
         }
     }
 }

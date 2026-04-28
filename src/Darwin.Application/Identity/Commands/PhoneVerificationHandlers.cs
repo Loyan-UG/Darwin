@@ -55,7 +55,7 @@ public sealed class RequestPhoneVerificationHandler
 
     public async Task<Result> HandleAsync(RequestPhoneVerificationDto dto, CancellationToken ct = default)
     {
-        await _validator.ValidateAndThrowAsync(dto, ct);
+        await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
 
         var userId = _currentUser.GetCurrentUserId();
         if (userId == Guid.Empty)
@@ -80,6 +80,18 @@ public sealed class RequestPhoneVerificationHandler
         if (settings is null)
         {
             return Result.Fail(_localizer["CommunicationSettingsMissing"]);
+        }
+
+        var requestedChannel = dto.Channel;
+        var preferredChannel = ParsePreferredChannel(settings.PhoneVerificationPreferredChannel);
+        var effectiveChannel = requestedChannel ?? preferredChannel;
+        var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(user.Locale, settings.DefaultCulture);
+
+        if (!CanSend(effectiveChannel, settings) && !CanSendFallback(effectiveChannel, settings))
+        {
+            return effectiveChannel == PhoneVerificationChannel.WhatsApp
+                ? Result.Fail(CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "PhoneVerificationWhatsAppUnavailable"))
+                : Result.Fail(CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "PhoneVerificationSmsUnavailable"));
         }
 
         var utcNow = _clock.UtcNow;
@@ -108,10 +120,6 @@ public sealed class RequestPhoneVerificationHandler
             ["expires_at_utc"] = expiresAtUtc.ToString("u")
         };
 
-        var requestedChannel = dto.Channel;
-        var preferredChannel = ParsePreferredChannel(settings.PhoneVerificationPreferredChannel);
-        var effectiveChannel = requestedChannel ?? preferredChannel;
-        var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(user.Locale, settings.DefaultCulture);
         var smsTemplate = CommunicationTemplateDefaults.ResolveTemplate(
             _communicationLocalizer,
             communicationCulture,
@@ -237,6 +245,27 @@ public sealed class RequestPhoneVerificationHandler
                !string.IsNullOrWhiteSpace(settings.WhatsAppBusinessPhoneId) &&
                !string.IsNullOrWhiteSpace(settings.WhatsAppAccessToken);
     }
+
+    private static bool CanSend(PhoneVerificationChannel channel, SiteSetting settings)
+    {
+        return channel == PhoneVerificationChannel.Sms
+            ? IsSmsReady(settings)
+            : IsWhatsAppReady(settings);
+    }
+
+    private static bool CanSendFallback(PhoneVerificationChannel effectiveChannel, SiteSetting settings)
+    {
+        if (!settings.PhoneVerificationAllowFallback)
+        {
+            return false;
+        }
+
+        var fallbackChannel = effectiveChannel == PhoneVerificationChannel.WhatsApp
+            ? PhoneVerificationChannel.Sms
+            : PhoneVerificationChannel.WhatsApp;
+
+        return CanSend(fallbackChannel, settings);
+    }
 }
 
 public sealed class ConfirmPhoneVerificationHandler
@@ -265,7 +294,7 @@ public sealed class ConfirmPhoneVerificationHandler
 
     public async Task<Result> HandleAsync(ConfirmPhoneVerificationDto dto, CancellationToken ct = default)
     {
-        await _validator.ValidateAndThrowAsync(dto, ct);
+        await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
 
         var userId = _currentUser.GetCurrentUserId();
         if (userId == Guid.Empty)

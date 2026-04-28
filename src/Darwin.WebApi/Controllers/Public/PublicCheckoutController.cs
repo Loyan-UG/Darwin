@@ -70,20 +70,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 CartId = request.CartId,
                 UserId = GetCurrentUserId(),
                 ShippingAddressId = request.ShippingAddressId,
-                ShippingAddress = request.ShippingAddress is null
-                    ? null
-                    : new CheckoutAddressDto
-                    {
-                        FullName = request.ShippingAddress.FullName,
-                        Company = request.ShippingAddress.Company,
-                        Street1 = request.ShippingAddress.Street1,
-                        Street2 = request.ShippingAddress.Street2,
-                        PostalCode = request.ShippingAddress.PostalCode,
-                        City = request.ShippingAddress.City,
-                        State = request.ShippingAddress.State,
-                        CountryCode = request.ShippingAddress.CountryCode,
-                        PhoneE164 = request.ShippingAddress.PhoneE164
-                    },
+                ShippingAddress = MapAddress(request.ShippingAddress),
                 SelectedShippingMethodId = request.SelectedShippingMethodId
             }, ct).ConfigureAwait(false);
 
@@ -131,34 +118,8 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 BillingAddressId = request.BillingAddressId,
                 ShippingAddressId = request.ShippingAddressId,
                 SelectedShippingMethodId = request.SelectedShippingMethodId,
-                BillingAddress = request.BillingAddress is null
-                    ? null
-                    : new CheckoutAddressDto
-                    {
-                        FullName = request.BillingAddress.FullName,
-                        Company = request.BillingAddress.Company,
-                        Street1 = request.BillingAddress.Street1,
-                        Street2 = request.BillingAddress.Street2,
-                        PostalCode = request.BillingAddress.PostalCode,
-                        City = request.BillingAddress.City,
-                        State = request.BillingAddress.State,
-                        CountryCode = request.BillingAddress.CountryCode,
-                        PhoneE164 = request.BillingAddress.PhoneE164
-                    },
-                ShippingAddress = request.ShippingAddress is null
-                    ? null
-                    : new CheckoutAddressDto
-                    {
-                        FullName = request.ShippingAddress.FullName,
-                        Company = request.ShippingAddress.Company,
-                        Street1 = request.ShippingAddress.Street1,
-                        Street2 = request.ShippingAddress.Street2,
-                        PostalCode = request.ShippingAddress.PostalCode,
-                        City = request.ShippingAddress.City,
-                        State = request.ShippingAddress.State,
-                        CountryCode = request.ShippingAddress.CountryCode,
-                        PhoneE164 = request.ShippingAddress.PhoneE164
-                    },
+                BillingAddress = MapAddress(request.BillingAddress),
+                ShippingAddress = MapAddress(request.ShippingAddress),
                 ShippingTotalMinor = request.ShippingTotalMinor,
                 Culture = string.IsNullOrWhiteSpace(request.Culture) ? SiteSettingDto.DefaultCultureDefault : request.Culture.Trim()
             }, ct).ConfigureAwait(false);
@@ -195,16 +156,18 @@ public sealed class PublicCheckoutController : ApiControllerBase
 
         try
         {
+            var normalizedOrderNumber = NormalizeNullable(request?.OrderNumber);
+            var normalizedProvider = NormalizeNullable(request?.Provider) ?? "Stripe";
             var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto
             {
                 OrderId = orderId,
                 UserId = GetCurrentUserId(),
-                OrderNumber = request?.OrderNumber,
-                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "Stripe" : request.Provider.Trim()
+                OrderNumber = normalizedOrderNumber,
+                Provider = normalizedProvider
             }, ct).ConfigureAwait(false);
 
-            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, request?.OrderNumber, cancelled: false);
-            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, request?.OrderNumber, cancelled: true);
+            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, normalizedOrderNumber, cancelled: false);
+            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, normalizedOrderNumber, cancelled: true);
             var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);
 
             return Ok(new CreateStorefrontPaymentIntentResponse
@@ -254,7 +217,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
-        if (!Enum.TryParse<StorefrontPaymentOutcome>(request.Outcome, ignoreCase: true, out var outcome))
+        if (!Enum.TryParse<StorefrontPaymentOutcome>(NormalizeNullable(request.Outcome), ignoreCase: true, out var outcome))
         {
             return BadRequestProblem(_validationLocalizer["UnsupportedStorefrontPaymentOutcome"]);
         }
@@ -266,12 +229,12 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 OrderId = orderId,
                 PaymentId = paymentId,
                 UserId = GetCurrentUserId(),
-                OrderNumber = request.OrderNumber,
-                ProviderReference = request.ProviderReference,
-                ProviderPaymentIntentReference = request.ProviderPaymentIntentReference,
-                ProviderCheckoutSessionReference = request.ProviderCheckoutSessionReference,
+                OrderNumber = NormalizeNullable(request.OrderNumber),
+                ProviderReference = NormalizeNullable(request.ProviderReference),
+                ProviderPaymentIntentReference = NormalizeNullable(request.ProviderPaymentIntentReference),
+                ProviderCheckoutSessionReference = NormalizeNullable(request.ProviderCheckoutSessionReference),
                 Outcome = outcome,
-                FailureReason = request.FailureReason
+                FailureReason = NormalizeNullable(request.FailureReason)
             }, ct).ConfigureAwait(false);
 
             return Ok(new CompleteStorefrontPaymentResponse
@@ -314,7 +277,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
         {
             OrderId = orderId,
             UserId = GetCurrentUserId(),
-            OrderNumber = orderNumber
+            OrderNumber = NormalizeNullable(orderNumber)
         }, ct).ConfigureAwait(false);
 
         if (confirmation is null)
@@ -376,5 +339,24 @@ public sealed class PublicCheckoutController : ApiControllerBase
             Carrier = dto.Carrier,
             Service = dto.Service
         };
+
+    private static CheckoutAddressDto? MapAddress(CheckoutAddress? address)
+        => address is null
+            ? null
+            : new CheckoutAddressDto
+            {
+                FullName = (address.FullName ?? string.Empty).Trim(),
+                Company = NormalizeNullable(address.Company),
+                Street1 = (address.Street1 ?? string.Empty).Trim(),
+                Street2 = NormalizeNullable(address.Street2),
+                PostalCode = (address.PostalCode ?? string.Empty).Trim(),
+                City = (address.City ?? string.Empty).Trim(),
+                State = NormalizeNullable(address.State),
+                CountryCode = (address.CountryCode ?? string.Empty).Trim().ToUpperInvariant(),
+                PhoneE164 = NormalizeNullable(address.PhoneE164)
+            };
+
+    private static string? NormalizeNullable(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
 }

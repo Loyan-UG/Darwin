@@ -65,27 +65,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             UpdateOrderStatusHandler updateOrderStatus,
             ISiteSettingCache siteSettingCache)
         {
-            _getOrdersPage = getOrdersPage;
-            _getShipmentsPage = getShipmentsPage;
-            _getShipmentOpsSummary = getShipmentOpsSummary;
-            _getShipmentProviderOperationsPage = getShipmentProviderOperationsPage;
-            _getOrderForView = getOrderForView;
-            _getOrderPaymentsPage = getOrderPaymentsPage;
-            _getOrderShipmentsPage = getOrderShipmentsPage;
-            _getOrderRefundsPage = getOrderRefundsPage;
-            _getOrderInvoicesPage = getOrderInvoicesPage;
-            _getWarehouseLookup = getWarehouseLookup;
-            _getBusinessLookup = getBusinessLookup;
-            _getCustomerLookup = getCustomerLookup;
-            _addPayment = addPayment;
-            _addShipment = addShipment;
-            _generateDhlShipmentLabel = generateDhlShipmentLabel;
-            _resolveShipmentCarrierException = resolveShipmentCarrierException;
-            _updateShipmentProviderOperation = updateShipmentProviderOperation;
-            _addRefund = addRefund;
-            _createOrderInvoice = createOrderInvoice;
-            _updateOrderStatus = updateOrderStatus;
-            _siteSettingCache = siteSettingCache;
+            _getOrdersPage = getOrdersPage ?? throw new ArgumentNullException(nameof(getOrdersPage));
+            _getShipmentsPage = getShipmentsPage ?? throw new ArgumentNullException(nameof(getShipmentsPage));
+            _getShipmentOpsSummary = getShipmentOpsSummary ?? throw new ArgumentNullException(nameof(getShipmentOpsSummary));
+            _getShipmentProviderOperationsPage = getShipmentProviderOperationsPage ?? throw new ArgumentNullException(nameof(getShipmentProviderOperationsPage));
+            _getOrderForView = getOrderForView ?? throw new ArgumentNullException(nameof(getOrderForView));
+            _getOrderPaymentsPage = getOrderPaymentsPage ?? throw new ArgumentNullException(nameof(getOrderPaymentsPage));
+            _getOrderShipmentsPage = getOrderShipmentsPage ?? throw new ArgumentNullException(nameof(getOrderShipmentsPage));
+            _getOrderRefundsPage = getOrderRefundsPage ?? throw new ArgumentNullException(nameof(getOrderRefundsPage));
+            _getOrderInvoicesPage = getOrderInvoicesPage ?? throw new ArgumentNullException(nameof(getOrderInvoicesPage));
+            _getWarehouseLookup = getWarehouseLookup ?? throw new ArgumentNullException(nameof(getWarehouseLookup));
+            _getBusinessLookup = getBusinessLookup ?? throw new ArgumentNullException(nameof(getBusinessLookup));
+            _getCustomerLookup = getCustomerLookup ?? throw new ArgumentNullException(nameof(getCustomerLookup));
+            _addPayment = addPayment ?? throw new ArgumentNullException(nameof(addPayment));
+            _addShipment = addShipment ?? throw new ArgumentNullException(nameof(addShipment));
+            _generateDhlShipmentLabel = generateDhlShipmentLabel ?? throw new ArgumentNullException(nameof(generateDhlShipmentLabel));
+            _resolveShipmentCarrierException = resolveShipmentCarrierException ?? throw new ArgumentNullException(nameof(resolveShipmentCarrierException));
+            _updateShipmentProviderOperation = updateShipmentProviderOperation ?? throw new ArgumentNullException(nameof(updateShipmentProviderOperation));
+            _addRefund = addRefund ?? throw new ArgumentNullException(nameof(addRefund));
+            _createOrderInvoice = createOrderInvoice ?? throw new ArgumentNullException(nameof(createOrderInvoice));
+            _updateOrderStatus = updateOrderStatus ?? throw new ArgumentNullException(nameof(updateOrderStatus));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         [HttpGet]
@@ -527,6 +527,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> Details(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("OrderNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getOrderForView.HandleAsync(id, ct).ConfigureAwait(false);
             var warehouses = await _getWarehouseLookup.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
@@ -600,6 +606,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> Payments(Guid orderId, int page = 1, int pageSize = 10, PaymentQueueFilter filter = PaymentQueueFilter.All, CancellationToken ct = default)
         {
+            if (orderId == Guid.Empty)
+            {
+                return BadRequest(T("OrderNotFound"));
+            }
+
             var (items, total) = await _getOrderPaymentsPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
             var vm = new OrderPaymentsPageVm
             {
@@ -635,6 +646,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> Shipments(Guid orderId, int page = 1, int pageSize = 10, ShipmentQueueFilter filter = ShipmentQueueFilter.All, CancellationToken ct = default)
         {
+            if (orderId == Guid.Empty)
+            {
+                return BadRequest(T("OrderNotFound"));
+            }
+
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var order = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             var (items, total) = await _getOrderShipmentsPage.HandleAsync(
@@ -708,6 +724,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> Refunds(Guid orderId, int page = 1, int pageSize = 10, RefundQueueFilter filter = RefundQueueFilter.All, CancellationToken ct = default)
         {
+            if (orderId == Guid.Empty)
+            {
+                return BadRequest(T("OrderNotFound"));
+            }
+
             var order = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             var (items, total) = await _getOrderRefundsPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
             var vm = new OrderRefundsPageVm
@@ -742,6 +763,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> Invoices(Guid orderId, int page = 1, int pageSize = 10, InvoiceQueueFilter filter = InvoiceQueueFilter.All, CancellationToken ct = default)
         {
+            if (orderId == Guid.Empty)
+            {
+                return BadRequest(T("OrderNotFound"));
+            }
+
             var (items, total) = await _getOrderInvoicesPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
             var vm = new OrderInvoicesPageVm
             {
@@ -782,6 +808,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> AddPayment(Guid orderId, CancellationToken ct = default)
         {
+            if (orderId == Guid.Empty)
+            {
+                SetErrorMessage("OrderNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -803,6 +835,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddPayment(PaymentCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.OrderId == Guid.Empty)
+            {
+                SetErrorMessage("OrderPaymentAddFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
@@ -838,6 +876,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> AddShipment(Guid orderId, CancellationToken ct = default)
         {
+            if (orderId == Guid.Empty)
+            {
+                SetErrorMessage("OrderNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -866,6 +910,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddShipment(ShipmentCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.OrderId == Guid.Empty)
+            {
+                SetErrorMessage("OrderShipmentAddFailed");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
@@ -910,6 +960,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> AddRefund(Guid orderId, Guid? paymentId = null, CancellationToken ct = default)
         {
+            if (orderId == Guid.Empty)
+            {
+                SetErrorMessage("OrderNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -946,6 +1002,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             int pageSize = 20,
             CancellationToken ct = default)
         {
+            if (shipmentId == Guid.Empty || orderId == Guid.Empty)
+            {
+                SetErrorMessage("DhlLabelGenerationFailed");
+                return returnToQueue
+                    ? RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter })
+                    : RedirectOrHtmx(nameof(Index), new { });
+            }
+
             try
             {
                 await _generateDhlShipmentLabel.HandleAsync(shipmentId, ct).ConfigureAwait(false);
@@ -978,6 +1042,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             int pageSize = 20,
             CancellationToken ct = default)
         {
+            if (shipmentId == Guid.Empty)
+            {
+                SetErrorMessage("ShipmentCarrierExceptionResolveFailedMessage");
+                return returnToReturnsQueue
+                    ? RedirectOrHtmx(nameof(ReturnsQueue), new { page, pageSize, query, filter = returnFilter })
+                    : RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter });
+            }
+
             byte[] version;
             try
             {
@@ -1033,6 +1105,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             bool failedOnly = false,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
+            {
+                SetErrorMessage("ShipmentProviderOperationUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(ShipmentProviderOperations), new
+                {
+                    page,
+                    pageSize,
+                    query,
+                    provider,
+                    operationType,
+                    status,
+                    stalePendingOnly,
+                    failedOnly
+                });
+            }
+
             byte[] version;
             try
             {
@@ -1086,6 +1174,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddRefund(RefundCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.OrderId == Guid.Empty || vm.PaymentId == Guid.Empty)
+            {
+                SetErrorMessage("OrderRefundAddFailed");
+                return vm.OrderId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmxDetails(vm.OrderId);
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateRefundOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -1120,6 +1216,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> CreateInvoice(Guid orderId, CancellationToken ct = default)
         {
+            if (orderId == Guid.Empty)
+            {
+                SetErrorMessage("OrderNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1145,6 +1247,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateInvoice(OrderInvoiceCreateVm vm, CancellationToken ct = default)
         {
+            if (vm.OrderId == Guid.Empty || vm.BusinessId == Guid.Empty || vm.CustomerId == Guid.Empty)
+            {
+                SetErrorMessage("OrderInvoiceCreateFailed");
+                return vm.OrderId == Guid.Empty
+                    ? RedirectOrHtmx(nameof(Index), new { })
+                    : RedirectOrHtmxDetails(vm.OrderId);
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateOrderInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -1180,6 +1290,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeStatus(OrderStatusChangeVm vm, CancellationToken ct = default)
         {
+            if (vm.OrderId == Guid.Empty)
+            {
+                SetErrorMessage("OrderNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (vm.RowVersion is null || vm.RowVersion.Length == 0)
             {
                 SetErrorMessage("ConcurrencyTokenMissing");
@@ -1431,6 +1547,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
         private IActionResult RedirectOrHtmxDetails(Guid orderId)
         {
+            if (orderId == Guid.Empty)
+            {
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
             if (IsHtmxRequest())
             {
                 Response.Headers["HX-Redirect"] = Url.Action(nameof(Details), new { id = orderId }) ?? string.Empty;
@@ -1463,12 +1584,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
         private async Task<OrderHeaderVm?> GetOrderHeaderAsync(Guid orderId, CancellationToken ct)
         {
+            if (orderId == Guid.Empty)
+            {
+                return null;
+            }
+
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             return dto is null ? null : CreateHeader(dto);
         }
 
         private async Task PopulateRefundOptionsAsync(RefundCreateVm vm, CancellationToken ct)
         {
+            if (vm.OrderId == Guid.Empty)
+            {
+                vm.PaymentOptions = new List<SelectListItem>();
+                return;
+            }
+
             var dto = await _getOrderForView.HandleAsync(vm.OrderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1489,7 +1621,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         {
             var businessOptions = await _getBusinessLookup.HandleAsync(ct).ConfigureAwait(false);
             var customerOptions = await _getCustomerLookup.HandleAsync(ct).ConfigureAwait(false);
-            var orderDto = await _getOrderForView.HandleAsync(vm.OrderId, ct).ConfigureAwait(false);
+            var orderDto = vm.OrderId == Guid.Empty
+                ? null
+                : await _getOrderForView.HandleAsync(vm.OrderId, ct).ConfigureAwait(false);
             await PopulateOrderInvoiceOptionsAsync(vm, businessOptions, customerOptions, orderDto).ConfigureAwait(false);
         }
 

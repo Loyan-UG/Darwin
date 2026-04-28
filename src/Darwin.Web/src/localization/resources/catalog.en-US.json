@@ -148,6 +148,7 @@
     "campaignWindowPromotionLaneFallbackDescription":  "{lane} currently has no visible products, so this merchandising lane stays visible as an explicit gap.",
     "campaignWindowPromotionLaneCta":  "Open promotion lane",
     "campaignWindowPromotionLaneMeta":  "{count} products in lane.",
+    "campaignWindowPromotionLaneEmptyMessage":  "No promotion lanes are currently derivable from the visible products. Product status: {productsStatus}.",
     "campaignWindowEmptyMessage":  "No stronger browse campaigns are currently derivable from this catalog surface.",
     "catalogCartWindowTitle":  "Storefront cart continuity",
     "catalogCartWindowMessage":  "{itemCount} live cart lines already exist at {total}, so browse can move directly into the active purchase flow instead of starting over.",

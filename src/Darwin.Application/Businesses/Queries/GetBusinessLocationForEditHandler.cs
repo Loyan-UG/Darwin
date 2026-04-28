@@ -21,7 +21,7 @@ namespace Darwin.Application.Businesses.Queries
         {
             return await _db.Set<BusinessLocation>()
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new BusinessLocationEditDto
                 {
                     Id = x.Id,

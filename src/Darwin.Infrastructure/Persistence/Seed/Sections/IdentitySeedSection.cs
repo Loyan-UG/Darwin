@@ -30,9 +30,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             IUserPasswordHasher hasher,
             ISecurityStampService stamps)
         {
-            _logger = logger;
-            _hasher = hasher;
-            _stamps = stamps;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _hasher = hasher ?? throw new ArgumentNullException(nameof(hasher));
+            _stamps = stamps ?? throw new ArgumentNullException(nameof(stamps));
         }
 
         /// <summary>

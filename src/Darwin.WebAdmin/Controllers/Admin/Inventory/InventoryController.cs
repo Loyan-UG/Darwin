@@ -74,34 +74,34 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             GetInventoryLedgerHandler getLedger,
             AdminReferenceDataService referenceData)
         {
-            _getWarehousesPage = getWarehousesPage;
-            _getWarehouseForEdit = getWarehouseForEdit;
-            _createWarehouse = createWarehouse;
-            _updateWarehouse = updateWarehouse;
-            _getSuppliersPage = getSuppliersPage;
-            _getSupplierForEdit = getSupplierForEdit;
-            _createSupplier = createSupplier;
-            _updateSupplier = updateSupplier;
-            _getStockLevelsPage = getStockLevelsPage;
-            _getStockLevelForEdit = getStockLevelForEdit;
-            _createStockLevel = createStockLevel;
-            _updateStockLevel = updateStockLevel;
-            _adjustInventory = adjustInventory;
-            _reserveInventory = reserveInventory;
-            _releaseInventoryReservation = releaseInventoryReservation;
-            _processReturnReceipt = processReturnReceipt;
-            _getStockTransfersPage = getStockTransfersPage;
-            _getStockTransferForEdit = getStockTransferForEdit;
-            _createStockTransfer = createStockTransfer;
-            _updateStockTransfer = updateStockTransfer;
-            _updateStockTransferLifecycle = updateStockTransferLifecycle;
-            _getPurchaseOrdersPage = getPurchaseOrdersPage;
-            _getPurchaseOrderForEdit = getPurchaseOrderForEdit;
-            _createPurchaseOrder = createPurchaseOrder;
-            _updatePurchaseOrder = updatePurchaseOrder;
-            _updatePurchaseOrderLifecycle = updatePurchaseOrderLifecycle;
-            _getLedger = getLedger;
-            _referenceData = referenceData;
+            _getWarehousesPage = getWarehousesPage ?? throw new ArgumentNullException(nameof(getWarehousesPage));
+            _getWarehouseForEdit = getWarehouseForEdit ?? throw new ArgumentNullException(nameof(getWarehouseForEdit));
+            _createWarehouse = createWarehouse ?? throw new ArgumentNullException(nameof(createWarehouse));
+            _updateWarehouse = updateWarehouse ?? throw new ArgumentNullException(nameof(updateWarehouse));
+            _getSuppliersPage = getSuppliersPage ?? throw new ArgumentNullException(nameof(getSuppliersPage));
+            _getSupplierForEdit = getSupplierForEdit ?? throw new ArgumentNullException(nameof(getSupplierForEdit));
+            _createSupplier = createSupplier ?? throw new ArgumentNullException(nameof(createSupplier));
+            _updateSupplier = updateSupplier ?? throw new ArgumentNullException(nameof(updateSupplier));
+            _getStockLevelsPage = getStockLevelsPage ?? throw new ArgumentNullException(nameof(getStockLevelsPage));
+            _getStockLevelForEdit = getStockLevelForEdit ?? throw new ArgumentNullException(nameof(getStockLevelForEdit));
+            _createStockLevel = createStockLevel ?? throw new ArgumentNullException(nameof(createStockLevel));
+            _updateStockLevel = updateStockLevel ?? throw new ArgumentNullException(nameof(updateStockLevel));
+            _adjustInventory = adjustInventory ?? throw new ArgumentNullException(nameof(adjustInventory));
+            _reserveInventory = reserveInventory ?? throw new ArgumentNullException(nameof(reserveInventory));
+            _releaseInventoryReservation = releaseInventoryReservation ?? throw new ArgumentNullException(nameof(releaseInventoryReservation));
+            _processReturnReceipt = processReturnReceipt ?? throw new ArgumentNullException(nameof(processReturnReceipt));
+            _getStockTransfersPage = getStockTransfersPage ?? throw new ArgumentNullException(nameof(getStockTransfersPage));
+            _getStockTransferForEdit = getStockTransferForEdit ?? throw new ArgumentNullException(nameof(getStockTransferForEdit));
+            _createStockTransfer = createStockTransfer ?? throw new ArgumentNullException(nameof(createStockTransfer));
+            _updateStockTransfer = updateStockTransfer ?? throw new ArgumentNullException(nameof(updateStockTransfer));
+            _updateStockTransferLifecycle = updateStockTransferLifecycle ?? throw new ArgumentNullException(nameof(updateStockTransferLifecycle));
+            _getPurchaseOrdersPage = getPurchaseOrdersPage ?? throw new ArgumentNullException(nameof(getPurchaseOrdersPage));
+            _getPurchaseOrderForEdit = getPurchaseOrderForEdit ?? throw new ArgumentNullException(nameof(getPurchaseOrderForEdit));
+            _createPurchaseOrder = createPurchaseOrder ?? throw new ArgumentNullException(nameof(createPurchaseOrder));
+            _updatePurchaseOrder = updatePurchaseOrder ?? throw new ArgumentNullException(nameof(updatePurchaseOrder));
+            _updatePurchaseOrderLifecycle = updatePurchaseOrderLifecycle ?? throw new ArgumentNullException(nameof(updatePurchaseOrderLifecycle));
+            _getLedger = getLedger ?? throw new ArgumentNullException(nameof(getLedger));
+            _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
         }
 
         [HttpGet]
@@ -169,6 +169,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateWarehouse(WarehouseEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("WarehouseCreateFailedMessage");
+                return RedirectOrHtmx(nameof(Warehouses), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -201,6 +207,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> EditWarehouse(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("WarehouseNotFoundMessage");
+                return RedirectOrHtmx(nameof(Warehouses), new { });
+            }
+
             var dto = await _getWarehouseForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -226,6 +238,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditWarehouse(WarehouseEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "WarehouseNotFoundMessage" : "WarehouseUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Warehouses), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -323,6 +341,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateSupplier(SupplierEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage("SupplierCreateFailedMessage");
+                return RedirectOrHtmx(nameof(Suppliers), new { });
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -356,6 +380,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> EditSupplier(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("SupplierNotFoundMessage");
+                return RedirectOrHtmx(nameof(Suppliers), new { });
+            }
+
             var dto = await _getSupplierForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -382,6 +412,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditSupplier(SupplierEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "SupplierNotFoundMessage" : "SupplierUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(Suppliers), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
@@ -467,6 +503,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> AdjustStock(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
         {
+            if (stockLevelId == Guid.Empty)
+            {
+                SetErrorMessage("StockLevelNotFoundMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId });
+            }
+
             var vm = await BuildInventoryAdjustActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
             if (vm is null)
             {
@@ -481,6 +523,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AdjustStock(InventoryAdjustActionVm vm, CancellationToken ct = default)
         {
+            if (vm.WarehouseId == Guid.Empty || vm.ProductVariantId == Guid.Empty)
+            {
+                SetErrorMessage("StockAdjustFailedMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId == Guid.Empty ? (Guid?)null : vm.WarehouseId });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -512,6 +560,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> ReserveStock(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
         {
+            if (stockLevelId == Guid.Empty)
+            {
+                SetErrorMessage("StockLevelNotFoundMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId });
+            }
+
             var vm = await BuildInventoryReserveActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
             if (vm is null)
             {
@@ -526,6 +580,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReserveStock(InventoryReserveActionVm vm, CancellationToken ct = default)
         {
+            if (vm.WarehouseId == Guid.Empty || vm.ProductVariantId == Guid.Empty)
+            {
+                SetErrorMessage("StockReserveFailedMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId == Guid.Empty ? (Guid?)null : vm.WarehouseId });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -557,6 +617,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> ReleaseReservation(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
         {
+            if (stockLevelId == Guid.Empty)
+            {
+                SetErrorMessage("StockLevelNotFoundMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId });
+            }
+
             var vm = await BuildInventoryReleaseActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
             if (vm is null)
             {
@@ -571,6 +637,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReleaseReservation(InventoryReleaseReservationActionVm vm, CancellationToken ct = default)
         {
+            if (vm.WarehouseId == Guid.Empty || vm.ProductVariantId == Guid.Empty)
+            {
+                SetErrorMessage("ReservationReleaseFailedMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId == Guid.Empty ? (Guid?)null : vm.WarehouseId });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -602,6 +674,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> ReturnReceipt(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
         {
+            if (stockLevelId == Guid.Empty)
+            {
+                SetErrorMessage("StockLevelNotFoundMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId });
+            }
+
             var vm = await BuildInventoryReturnReceiptActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
             if (vm is null)
             {
@@ -616,6 +694,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReturnReceipt(InventoryReturnReceiptActionVm vm, CancellationToken ct = default)
         {
+            if (vm.WarehouseId == Guid.Empty || vm.ProductVariantId == Guid.Empty)
+            {
+                SetErrorMessage("ReturnReceiptProcessFailedMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId == Guid.Empty ? (Guid?)null : vm.WarehouseId });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -658,6 +742,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateStockLevel(StockLevelEditVm vm, CancellationToken ct = default)
         {
+            if (vm.WarehouseId == Guid.Empty || vm.ProductVariantId == Guid.Empty)
+            {
+                SetErrorMessage("StockLevelCreateFailedMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { warehouseId = vm.WarehouseId == Guid.Empty ? (Guid?)null : vm.WarehouseId });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
@@ -692,6 +782,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> EditStockLevel(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("StockLevelNotFoundMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { });
+            }
+
             var dto = await _getStockLevelForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -719,6 +815,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditStockLevel(StockLevelEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.WarehouseId == Guid.Empty || vm.ProductVariantId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "StockLevelNotFoundMessage" : "StockLevelUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { warehouseId = vm.WarehouseId == Guid.Empty ? (Guid?)null : vm.WarehouseId });
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
@@ -832,6 +934,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateStockTransfer(StockTransferEditVm vm, CancellationToken ct = default)
         {
+            if (vm.FromWarehouseId == Guid.Empty || vm.ToWarehouseId == Guid.Empty)
+            {
+                SetErrorMessage("StockTransferCreateFailedMessage");
+                return RedirectOrHtmx(nameof(StockTransfers), new { warehouseId = vm.FromWarehouseId == Guid.Empty ? (Guid?)null : vm.FromWarehouseId });
+            }
+
             if (!ModelState.IsValid)
             {
                 EnsureStockTransferRows(vm);
@@ -869,6 +977,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> EditStockTransfer(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("StockTransferNotFoundMessage");
+                return RedirectOrHtmx(nameof(StockTransfers), new { });
+            }
+
             var dto = await _getStockTransferForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -908,6 +1022,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             StockTransferQueueFilter filter = StockTransferQueueFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
+            {
+                SetErrorMessage("StockTransferLifecycleUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(StockTransfers), new { businessId, warehouseId, page, pageSize, q, filter });
+            }
+
             byte[] version;
             try
             {
@@ -956,6 +1076,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditStockTransfer(StockTransferEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.FromWarehouseId == Guid.Empty || vm.ToWarehouseId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "StockTransferNotFoundMessage" : "StockTransferUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(StockTransfers), new { warehouseId = vm.FromWarehouseId == Guid.Empty ? (Guid?)null : vm.FromWarehouseId });
+            }
+
             if (!ModelState.IsValid)
             {
                 EnsureStockTransferRows(vm);
@@ -1069,6 +1195,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePurchaseOrder(PurchaseOrderEditVm vm, CancellationToken ct = default)
         {
+            if (vm.BusinessId == Guid.Empty || vm.SupplierId == Guid.Empty)
+            {
+                SetErrorMessage("PurchaseOrderCreateFailedMessage");
+                return RedirectOrHtmx(nameof(PurchaseOrders), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 EnsurePurchaseOrderRows(vm);
@@ -1110,6 +1242,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> EditPurchaseOrder(Guid id, CancellationToken ct = default)
         {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("PurchaseOrderNotFoundMessage");
+                return RedirectOrHtmx(nameof(PurchaseOrders), new { });
+            }
+
             var dto = await _getPurchaseOrderForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1152,6 +1290,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             PurchaseOrderQueueFilter filter = PurchaseOrderQueueFilter.All,
             CancellationToken ct = default)
         {
+            if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
+            {
+                SetErrorMessage("PurchaseOrderLifecycleUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(PurchaseOrders), new { businessId, page, pageSize, q, filter });
+            }
+
             byte[] version;
             try
             {
@@ -1200,6 +1344,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditPurchaseOrder(PurchaseOrderEditVm vm, CancellationToken ct = default)
         {
+            if (vm.Id == Guid.Empty || vm.BusinessId == Guid.Empty || vm.SupplierId == Guid.Empty)
+            {
+                SetErrorMessage(vm.Id == Guid.Empty ? "PurchaseOrderNotFoundMessage" : "PurchaseOrderUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(PurchaseOrders), new { businessId = vm.BusinessId == Guid.Empty ? (Guid?)null : vm.BusinessId });
+            }
+
             if (!ModelState.IsValid)
             {
                 EnsurePurchaseOrderRows(vm);
@@ -1251,6 +1401,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         [HttpGet]
         public async Task<IActionResult> VariantLedger(Guid variantId, Guid? warehouseId = null, int page = 1, int pageSize = 20, InventoryLedgerQueueFilter filter = InventoryLedgerQueueFilter.All, CancellationToken ct = default)
         {
+            if (variantId == Guid.Empty)
+            {
+                SetErrorMessage("StockLevelNotFoundMessage");
+                return RedirectOrHtmx(nameof(StockLevels), new { warehouseId });
+            }
+
             var dto = await _getLedger.HandleAsync(variantId, page, pageSize, warehouseId, filter, ct).ConfigureAwait(false);
             var summary = await _getLedger.GetSummaryAsync(variantId, warehouseId, ct).ConfigureAwait(false);
             var vm = new InventoryLedgerListVm
@@ -1404,6 +1560,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
         private async Task<InventoryAdjustActionVm?> BuildInventoryAdjustActionVmAsync(Guid stockLevelId, Guid? businessId, CancellationToken ct)
         {
+            if (stockLevelId == Guid.Empty)
+            {
+                return null;
+            }
+
             var dto = await _getStockLevelForEdit.HandleAsync(stockLevelId, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1426,6 +1587,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
         private async Task<InventoryReserveActionVm?> BuildInventoryReserveActionVmAsync(Guid stockLevelId, Guid? businessId, CancellationToken ct)
         {
+            if (stockLevelId == Guid.Empty)
+            {
+                return null;
+            }
+
             var dto = await _getStockLevelForEdit.HandleAsync(stockLevelId, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1448,6 +1614,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
         private async Task<InventoryReleaseReservationActionVm?> BuildInventoryReleaseActionVmAsync(Guid stockLevelId, Guid? businessId, CancellationToken ct)
         {
+            if (stockLevelId == Guid.Empty)
+            {
+                return null;
+            }
+
             var dto = await _getStockLevelForEdit.HandleAsync(stockLevelId, ct).ConfigureAwait(false);
             if (dto is null)
             {
@@ -1471,6 +1642,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
         private async Task<InventoryReturnReceiptActionVm?> BuildInventoryReturnReceiptActionVmAsync(Guid stockLevelId, Guid? businessId, CancellationToken ct)
         {
+            if (stockLevelId == Guid.Empty)
+            {
+                return null;
+            }
+
             var dto = await _getStockLevelForEdit.HandleAsync(stockLevelId, ct).ConfigureAwait(false);
             if (dto is null)
             {

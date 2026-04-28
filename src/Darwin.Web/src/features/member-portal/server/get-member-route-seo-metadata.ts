@@ -1,4 +1,5 @@
 import "server-only";
+import { buildInvoicePath, buildOrderPath } from "@/lib/entity-paths";
 import { normalizeEntityRouteArgs } from "@/lib/route-context-normalization";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import { createCachedObservedSeoMetadataLoader } from "@/lib/seo-loader";
@@ -112,7 +113,15 @@ export const getInvoicesSeoMetadata = (culture: string) =>
   getCachedMemberRouteSeoMetadata(culture, "/invoices", "/invoices");
 
 export const getOrderDetailSeoMetadata = (culture: string, id: string) =>
-  getCachedMemberRouteSeoMetadata(culture, "/orders/[id]", `/orders/${id}`);
+  getCachedMemberRouteSeoMetadata(
+    culture,
+    "/orders/[id]",
+    buildOrderPath(id),
+  );
 
 export const getInvoiceDetailSeoMetadata = (culture: string, id: string) =>
-  getCachedMemberRouteSeoMetadata(culture, "/invoices/[id]", `/invoices/${id}`);
+  getCachedMemberRouteSeoMetadata(
+    culture,
+    "/invoices/[id]",
+    buildInvoicePath(id),
+  );

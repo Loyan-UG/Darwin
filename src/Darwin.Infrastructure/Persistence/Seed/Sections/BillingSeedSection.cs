@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Domain.Common;
@@ -24,10 +26,11 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         private readonly ILogger<BillingSeedSection> _logger;
 
         private sealed record FinancialAccountSeed(string Code, string Name, AccountType Type);
+        private sealed record BillingPlanLocalizedSeed(string DeName, string DeDescription, string EnName, string EnDescription);
 
         public BillingSeedSection(ILogger<BillingSeedSection> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
@@ -38,6 +41,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             {
                 await SeedPlansAsync(db, ct);
             }
+
+            await EnsureBillingPlanLocalizedFeaturesAsync(db, ct);
 
             if (!await db.BusinessSubscriptions.AnyAsync(ct))
             {
@@ -86,6 +91,85 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             db.AddRange(plans);
             await db.SaveChangesAsync(ct);
         }
+
+        private static async Task EnsureBillingPlanLocalizedFeaturesAsync(DarwinDbContext db, CancellationToken ct)
+        {
+            var plans = await db.BillingPlans
+                .Where(x => !x.IsDeleted)
+                .ToListAsync(ct);
+
+            var changed = false;
+            foreach (var plan in plans)
+            {
+                var updatedFeaturesJson = BuildBillingPlanFeaturesJson(plan.FeaturesJson, plan.Code);
+                if (string.Equals(updatedFeaturesJson, plan.FeaturesJson, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                plan.FeaturesJson = updatedFeaturesJson;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                await db.SaveChangesAsync(ct);
+            }
+        }
+
+        private static string BuildBillingPlanFeaturesJson(string? featuresJson, string code)
+        {
+            if (!BillingPlanLocalizedSeeds.TryGetValue(code, out var text))
+            {
+                return string.IsNullOrWhiteSpace(featuresJson) ? "{}" : featuresJson;
+            }
+
+            JsonObject root;
+            try
+            {
+                root = JsonNode.Parse(string.IsNullOrWhiteSpace(featuresJson) ? "{}" : featuresJson) as JsonObject
+                    ?? new JsonObject();
+            }
+            catch (JsonException)
+            {
+                root = new JsonObject();
+            }
+
+            var localized = root["localized"] as JsonObject;
+            if (localized is null)
+            {
+                localized = new JsonObject();
+                root["localized"] = localized;
+            }
+
+            localized["de-DE"] = new JsonObject
+            {
+                ["name"] = text.DeName,
+                ["description"] = text.DeDescription
+            };
+            localized["en-US"] = new JsonObject
+            {
+                ["name"] = text.EnName,
+                ["description"] = text.EnDescription
+            };
+
+            return root.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
+        }
+
+        private static readonly IReadOnlyDictionary<string, BillingPlanLocalizedSeed> BillingPlanLocalizedSeeds =
+            new Dictionary<string, BillingPlanLocalizedSeed>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["starter-month"] = new("Starter (Monat)", "Basisplan f\u00fcr kleine Teams", "Starter (monthly)", "Base plan for small teams"),
+                ["starter-year"] = new("Starter (Jahr)", "Basisplan mit Jahresrabatt", "Starter (annual)", "Base plan with annual discount"),
+                ["pro-month"] = new("Pro (Monat)", "Erweiterte Funktionen", "Pro (monthly)", "Advanced features"),
+                ["pro-year"] = new("Pro (Jahr)", "Pro mit Jahresrabatt", "Pro (annual)", "Pro with annual discount"),
+                ["plus-month"] = new("Plus (Monat)", "Mittleres Paket", "Plus (monthly)", "Mid-tier package"),
+                ["plus-year"] = new("Plus (Jahr)", "Plus mit Jahresrabatt", "Plus (annual)", "Plus with annual discount"),
+                ["enterprise-month"] = new("Enterprise (Monat)", "Gro\u00dfe Teams mit SLA", "Enterprise (monthly)", "Large teams with SLA"),
+                ["enterprise-year"] = new("Enterprise (Jahr)", "Enterprise mit Jahresrabatt", "Enterprise (annual)", "Enterprise with annual discount"),
+                ["basic-quarter"] = new("Basic (Quartal)", "Quartalsplan", "Basic (quarterly)", "Quarterly plan"),
+                ["trial-month"] = new("Test (Monat)", "Kurzfristiger Testplan", "Trial (monthly)", "Short trial plan")
+            };
 
         private static async Task SeedSubscriptionsAsync(DarwinDbContext db, CancellationToken ct)
         {

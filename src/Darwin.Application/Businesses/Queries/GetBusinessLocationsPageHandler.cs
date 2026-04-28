@@ -15,18 +15,21 @@ namespace Darwin.Application.Businesses.Queries
     /// </summary>
     public sealed class GetBusinessLocationsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetBusinessLocationsPageHandler(IAppDbContext db) => _db = db;
+        public GetBusinessLocationsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
         public async Task<(List<BusinessLocationListItemDto> Items, int Total)> HandleAsync(
             Guid businessId, int page, int pageSize, string? query = null, BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery = _db.Set<BusinessLocation>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             baseQuery = filter switch
             {
@@ -81,7 +84,7 @@ namespace Darwin.Application.Businesses.Queries
         {
             var baseQuery = _db.Set<BusinessLocation>()
                 .AsNoTracking()
-                .Where(x => x.BusinessId == businessId);
+                .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
             return new BusinessLocationOpsSummaryDto
             {

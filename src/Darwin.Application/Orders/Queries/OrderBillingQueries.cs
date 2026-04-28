@@ -15,6 +15,8 @@ namespace Darwin.Application.Orders.Queries
     /// </summary>
     public sealed class GetOrderRefundsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetOrderRefundsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -23,10 +25,11 @@ namespace Darwin.Application.Orders.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery = _db.Set<Refund>()
                 .AsNoTracking()
-                .Where(x => x.OrderId == orderId);
+                .Where(x => x.OrderId == orderId && !x.IsDeleted);
 
             baseQuery = filter switch
             {
@@ -60,7 +63,7 @@ namespace Darwin.Application.Orders.Queries
             {
                 var payments = await _db.Set<Payment>()
                     .AsNoTracking()
-                    .Where(x => paymentIds.Contains(x.Id))
+                    .Where(x => paymentIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, ct)
                     .ConfigureAwait(false);
 
@@ -84,6 +87,8 @@ namespace Darwin.Application.Orders.Queries
     /// </summary>
     public sealed class GetOrderInvoicesPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetOrderInvoicesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -92,10 +97,11 @@ namespace Darwin.Application.Orders.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery = _db.Set<Invoice>()
                 .AsNoTracking()
-                .Where(x => x.OrderId == orderId);
+                .Where(x => x.OrderId == orderId && !x.IsDeleted);
 
             baseQuery = filter switch
             {
@@ -134,14 +140,14 @@ namespace Darwin.Application.Orders.Queries
                 ? new Dictionary<Guid, Payment>()
                 : await _db.Set<Payment>()
                     .AsNoTracking()
-                    .Where(x => paymentIds.Contains(x.Id))
+                    .Where(x => paymentIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, ct)
                     .ConfigureAwait(false);
             var refundTotals = paymentIds.Count == 0
                 ? new Dictionary<Guid, long>()
                 : await _db.Set<Refund>()
                     .AsNoTracking()
-                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId) && !x.IsDeleted)
                     .GroupBy(x => x.PaymentId)
                     .Select(x => new { PaymentId = x.Key, AmountMinor = x.Sum(r => r.AmountMinor) })
                     .ToDictionaryAsync(x => x.PaymentId, x => x.AmountMinor, ct)
@@ -151,7 +157,7 @@ namespace Darwin.Application.Orders.Queries
                 ? new List<Customer>()
                 : await _db.Set<Customer>()
                     .AsNoTracking()
-                    .Where(x => customerIds.Contains(x.Id))
+                    .Where(x => customerIds.Contains(x.Id) && !x.IsDeleted)
                     .ToListAsync(ct)
                     .ConfigureAwait(false);
 

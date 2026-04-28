@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application;
+using Darwin.Application.Businesses;
 using Darwin.Application.Common.DTOs;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Businesses;
@@ -71,11 +72,12 @@ namespace Darwin.Application.Loyalty.Queries
             // Base: loyalty accounts for current user.
             var accountsQuery = _db.Set<LoyaltyAccount>()
                 .AsNoTracking()
-                .Where(a => a.UserId == userId);
+                .Where(a => a.UserId == userId && !a.IsDeleted);
 
             // Businesses joined for card fields.
             var businessesQuery = _db.Set<Business>()
-                .AsNoTracking();
+                .AsNoTracking()
+                .Where(b => !b.IsDeleted);
 
             if (!request.IncludeInactiveBusinesses)
             {
@@ -85,7 +87,7 @@ namespace Darwin.Application.Loyalty.Queries
             // Primary location is optional.
             var primaryLocationsQuery = _db.Set<BusinessLocation>()
                 .AsNoTracking()
-                .Where(l => l.IsPrimary);
+                .Where(l => l.IsPrimary && !l.IsDeleted);
 
             // Compose.
             var composed =
@@ -99,6 +101,8 @@ namespace Darwin.Application.Loyalty.Queries
                 {
                     BusinessId = b.Id,
                     BusinessName = b.Name,
+                    BusinessAdminTextOverridesJson = b.AdminTextOverridesJson,
+                    BusinessDefaultCulture = b.DefaultCulture,
                     Category = b.Category,
                     IsBusinessActive = b.IsActive,
                     City = l != null ? l.City : null,
@@ -112,7 +116,7 @@ namespace Darwin.Application.Loyalty.Queries
                         : null,
                     PrimaryImageUrl = _db.Set<BusinessMedia>()
                         .AsNoTracking()
-                        .Where(m => m.BusinessId == b.Id && m.IsPrimary)
+                        .Where(m => m.BusinessId == b.Id && m.IsPrimary && !m.IsDeleted)
                         .OrderBy(m => m.SortOrder)
                         .Select(m => m.Url)
                         .FirstOrDefault(),
@@ -137,7 +141,11 @@ namespace Darwin.Application.Loyalty.Queries
             // Ensure non-null business names (defensive; should never be null due to domain constraints).
             foreach (var item in items)
             {
-                item.BusinessName = item.BusinessName ?? string.Empty;
+                item.BusinessName = BusinessPublicTextResolver.ResolveName(
+                    item.BusinessName ?? string.Empty,
+                    item.BusinessAdminTextOverridesJson,
+                    request.Culture,
+                    item.BusinessDefaultCulture);
             }
 
             return (items, total);

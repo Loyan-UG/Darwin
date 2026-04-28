@@ -25,9 +25,14 @@ import {
   buildLocalizedQueryHref,
   localizeHref,
 } from "@/lib/locale-routing";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { sanitizeHtmlFragment } from "@/lib/html-fragment";
 import { toWebApiUrl } from "@/lib/webapi-url";
-import { formatResource, getCatalogResource } from "@/localization";
+import {
+  formatResource,
+  getCatalogResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 import { formatMoney } from "@/lib/formatting";
 
 type ProductDetailPageProps = {
@@ -74,10 +79,18 @@ export function ProductDetailPage({
   cmsPagesStatus,
 }: ProductDetailPageProps) {
   const copy = getCatalogResource(culture);
+  const statusLabel = resolveApiStatusLabel(status, copy) ?? status;
+  const relatedProductsStatusLabel =
+    resolveApiStatusLabel(reviewProductsStatus ?? relatedProductsStatus ?? "ok", copy) ??
+    reviewProductsStatus ??
+    relatedProductsStatus ??
+    "ok";
+  const cmsPagesStatusLabel =
+    resolveApiStatusLabel(cmsPagesStatus ?? "ok", copy) ?? cmsPagesStatus ?? "ok";
   const productRouteSummaryMessage = formatResource(copy.productRouteSummaryMessage, {
-    status,
-    relatedProductsStatus: reviewProductsStatus ?? relatedProductsStatus ?? "ok",
-    cmsPagesStatus: cmsPagesStatus ?? "ok",
+    status: statusLabel,
+    relatedProductsStatus: relatedProductsStatusLabel,
+    cmsPagesStatus: cmsPagesStatusLabel,
     relatedCount: reviewProducts.length,
   });
 
@@ -88,7 +101,7 @@ export function ProductDetailPage({
           <StatusBanner
             tone="warning"
             title={copy.productUnavailableTitle}
-            message={formatResource(copy.productUnavailableMessage, { status })}
+            message={formatResource(copy.productUnavailableMessage, { status: statusLabel })}
           />
           <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
@@ -107,7 +120,7 @@ export function ProductDetailPage({
                   id: "product-unavailable-catalog",
                   label: copy.productBreadcrumbCatalog,
                   title: copy.backToCatalog,
-                  description: formatResource(copy.productUnavailableMessage, { status }),
+                  description: formatResource(copy.productUnavailableMessage, { status: statusLabel }),
                   href: "/catalog",
                   ctaLabel: copy.backToCatalog,
                 },
@@ -323,7 +336,7 @@ export function ProductDetailPage({
               <StatusBanner
                 tone="warning"
                 title={copy.productDataWarningsTitle}
-                message={formatResource(copy.productDataWarningsMessage, { status })}
+                message={formatResource(copy.productDataWarningsMessage, { status: statusLabel })}
               />
             </div>
           )}
@@ -861,11 +874,11 @@ export function ProductDetailPage({
                   culture={culture}
                   variantId={primaryVariant.id}
                   productName={product.name}
-                  productHref={localizeHref(`/catalog/${product.slug}`, culture)}
+                  productHref={localizeHref(buildCatalogProductPath(product.slug), culture)}
                   productImageUrl={primaryProductImageUrl}
                   productImageAlt={gallery[0]?.alt ?? product.name}
                   productSku={primaryVariant.sku}
-                  returnPath={localizeHref(`/catalog/${product.slug}`, culture)}
+                  returnPath={localizeHref(buildCatalogProductPath(product.slug), culture)}
                   formId={addToCartFormId}
                 />
             ) : (
@@ -988,7 +1001,7 @@ export function ProductDetailPage({
                 tone="warning"
                 title={copy.relatedProductsDegradedTitle}
                 message={formatResource(copy.relatedProductsDegradedMessage, {
-                  status: relatedProductsStatus,
+                  status: resolveApiStatusLabel(relatedProductsStatus, copy) ?? relatedProductsStatus,
                 })}
               />
             </div>
@@ -1186,7 +1199,7 @@ export function ProductDetailPage({
             </p>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.productCmsWindowMessage, {
-                cmsPagesStatus: cmsPagesStatus ?? "unknown",
+                cmsPagesStatus: cmsPagesStatusLabel,
                 pageCount: cmsPages.length,
               })}
             </p>
@@ -1204,7 +1217,7 @@ export function ProductDetailPage({
             {cmsPages.map((page) => (
               <Link
                 key={page.id}
-                href={localizeHref(`/cms/${page.slug}`, culture)}
+                href={localizeHref(buildCmsPagePath(page.slug), culture)}
                 className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4 transition hover:bg-[var(--color-surface-panel)]"
               >
                 <p className="text-lg font-semibold text-[var(--color-text-primary)]">
@@ -1219,7 +1232,7 @@ export function ProductDetailPage({
         ) : (
           <p className="mt-6 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.productCmsWindowEmptyMessage, {
-              status: cmsPagesStatus ?? "unknown",
+              status: cmsPagesStatusLabel,
             })}
           </p>
         )}

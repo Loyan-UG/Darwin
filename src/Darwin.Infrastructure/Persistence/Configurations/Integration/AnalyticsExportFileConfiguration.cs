@@ -54,7 +54,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
             // Prevent duplicates within a job.
             builder.HasIndex(x => new { x.AnalyticsExportJobId, x.StorageKey })
                 .IsUnique()
-                .HasDatabaseName("UX_AnalyticsExportFiles_Job_StorageKey");
+                .HasDatabaseName("UX_AnalyticsExportFiles_Job_StorageKey")
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 }

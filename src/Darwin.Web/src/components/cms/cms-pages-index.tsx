@@ -14,6 +14,7 @@ import {
   getPreferredCmsReviewState,
 } from "@/features/review/review-workflow";
 import type { PublicPageSummary } from "@/features/cms/types";
+import { buildCmsPagePath } from "@/lib/entity-paths";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import {
   formatResource,
@@ -71,6 +72,11 @@ function buildCmsHref(
       metadataFocus && metadataFocus !== "all" ? metadataFocus : undefined,
   });
 }
+
+function buildCmsGroupAnchor(key: string) {
+  return `cms-group-${encodeURIComponent(key.toLowerCase())}`;
+}
+
 export function CmsPagesIndex({
   culture,
   pages,
@@ -93,7 +99,7 @@ export function CmsPagesIndex({
   cartSummary,
 }: CmsPagesIndexProps) {
   const copy = getSharedResource(culture);
-  const statusLabel = resolveApiStatusLabel(status, copy);
+  const statusLabel = resolveApiStatusLabel(status, copy) ?? status;
   const pageStart = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const pageEnd =
     totalItems === 0 ? 0 : Math.min(totalItems, pageStart + loadedPageCount - 1);
@@ -225,7 +231,7 @@ export function CmsPagesIndex({
             tone="warning"
             title={copy.cmsIndexDegradedTitle}
             message={formatResource(copy.cmsIndexDegradedMessage, {
-              status: statusLabel ?? status,
+              status: statusLabel,
             })}
           />
         )}
@@ -670,7 +676,7 @@ export function CmsPagesIndex({
                 {groupedPages.map((group) => (
                   <a
                     key={group.key}
-                    href={`#cms-group-${group.key}`}
+                    href={`#${buildCmsGroupAnchor(group.key)}`}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                   >
                     {formatResource(copy.cmsGroupingChip, {
@@ -705,7 +711,7 @@ export function CmsPagesIndex({
               </p>
               <h2 className="mt-4 text-3xl font-semibold leading-tight text-[var(--color-text-primary)]">
                 <Link
-                  href={localizeHref(`/cms/${spotlightPage.slug}`, culture)}
+                  href={localizeHref(buildCmsPagePath(spotlightPage.slug), culture)}
                   className="transition hover:text-[var(--color-brand)]"
                 >
                   {spotlightPage.title}
@@ -716,7 +722,7 @@ export function CmsPagesIndex({
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href={localizeHref(`/cms/${spotlightPage.slug}`, culture)}
+                  href={localizeHref(buildCmsPagePath(spotlightPage.slug), culture)}
                   className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
                 >
                   {copy.cmsSpotlightPrimaryCta}
@@ -799,7 +805,7 @@ export function CmsPagesIndex({
 
         <div id="cms-results" className="scroll-mt-28 flex flex-col gap-6">
           {groupedPages.map((group) => (
-            <section key={group.key} id={`cms-group-${group.key}`} className="flex flex-col gap-4">
+            <section key={group.key} id={buildCmsGroupAnchor(group.key)} className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">

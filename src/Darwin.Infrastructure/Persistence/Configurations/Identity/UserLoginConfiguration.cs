@@ -41,8 +41,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
             // Uniqueness:
             // A given provider should be linked once per user,
             // and ProviderKey should be globally unique per provider.
-            builder.HasIndex(x => new { x.UserId, x.Provider }).IsUnique();
-            builder.HasIndex(x => new { x.Provider, x.ProviderKey }).IsUnique();
+            builder.HasIndex(x => new { x.UserId, x.Provider })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
+            builder.HasIndex(x => new { x.Provider, x.ProviderKey })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             // Optional: quick lookup by User
             builder.HasIndex(x => x.UserId);

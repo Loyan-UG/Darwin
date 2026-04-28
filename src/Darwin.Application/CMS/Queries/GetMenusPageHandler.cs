@@ -14,16 +14,19 @@ namespace Darwin.Application.CMS.Queries
     /// </summary>
     public sealed class GetMenusPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetMenusPageHandler(IAppDbContext db) => _db = db;
+        public GetMenusPageHandler(IAppDbContext db) => _db = db ?? throw new System.ArgumentNullException(nameof(db));
 
         public async Task<(List<MenuListItemDto> Items, int Total)> HandleAsync(
             int page, int pageSize, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var baseQuery = _db.Set<Menu>().AsNoTracking();
+            var baseQuery = _db.Set<Menu>().AsNoTracking().Where(m => !m.IsDeleted);
             var total = await baseQuery.CountAsync(ct);
 
             var items = await baseQuery
@@ -34,7 +37,7 @@ namespace Darwin.Application.CMS.Queries
                 {
                     Id = m.Id,
                     Name = m.Name,
-                    ItemsCount = m.Items.Count,
+                    ItemsCount = m.Items.Count(item => !item.IsDeleted),
                     ModifiedAtUtc = m.ModifiedAtUtc
                 })
                 .ToListAsync(ct);

@@ -25,6 +25,11 @@ namespace Darwin.Application.Loyalty.DTOs
         /// Useful to show historical accounts for businesses that were deactivated.
         /// </summary>
         public bool IncludeInactiveBusinesses { get; set; } = true;
+
+        /// <summary>
+        /// Optional requested content culture for business names.
+        /// </summary>
+        public string? Culture { get; set; }
     }
 
     /// <summary>
@@ -42,6 +47,10 @@ namespace Darwin.Application.Loyalty.DTOs
         /// Business name.
         /// </summary>
         public string BusinessName { get; set; } = string.Empty;
+
+        public string? BusinessAdminTextOverridesJson { get; set; }
+
+        public string? BusinessDefaultCulture { get; set; }
 
         /// <summary>
         /// Business category.

@@ -222,7 +222,10 @@ export function CmsStorefrontSupportWindow({
         <StorefrontCampaignBoard
           culture={culture}
           cards={promotionLaneCards}
-          emptyMessage={copy.cmsCampaignPromotionLaneSectionMessage}
+          emptyMessage={formatResource(copy.cmsCampaignWindowEmptyMessage, {
+            categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
+            productsStatus: productsStatusLabel ?? productsStatus,
+          })}
         />
       </div>
 

@@ -24,7 +24,7 @@ public sealed class GetBusinessSubscriptionStatusHandler
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
-    public async Task<Result<BusinessSubscriptionStatusDto>> HandleAsync(Guid businessId, CancellationToken ct = default)
+    public async Task<Result<BusinessSubscriptionStatusDto>> HandleAsync(Guid businessId, string? culture = null, CancellationToken ct = default)
     {
         if (businessId == Guid.Empty)
         {
@@ -35,7 +35,7 @@ public sealed class GetBusinessSubscriptionStatusHandler
                               join plan in _db.Set<BillingPlan>().AsNoTracking() on subscription.BillingPlanId equals plan.Id
                               where !subscription.IsDeleted && !plan.IsDeleted && subscription.BusinessId == businessId
                               orderby subscription.StartedAtUtc descending
-                              select new BusinessSubscriptionStatusDto
+                              select new
                               {
                                   HasSubscription = true,
                                   SubscriptionId = subscription.Id,
@@ -44,6 +44,7 @@ public sealed class GetBusinessSubscriptionStatusHandler
                                   Provider = subscription.Provider,
                                   PlanCode = plan.Code,
                                   PlanName = plan.Name,
+                                  PlanFeaturesJson = plan.FeaturesJson,
                                   UnitPriceMinor = subscription.UnitPriceMinor,
                                   Currency = subscription.Currency,
                                   StartedAtUtc = subscription.StartedAtUtc,
@@ -64,6 +65,22 @@ public sealed class GetBusinessSubscriptionStatusHandler
             });
         }
 
-        return Result<BusinessSubscriptionStatusDto>.Ok(snapshot);
+        return Result<BusinessSubscriptionStatusDto>.Ok(new BusinessSubscriptionStatusDto
+        {
+            HasSubscription = snapshot.HasSubscription,
+            SubscriptionId = snapshot.SubscriptionId,
+            RowVersion = snapshot.RowVersion,
+            Status = snapshot.Status,
+            Provider = snapshot.Provider,
+            PlanCode = snapshot.PlanCode,
+            PlanName = BillingLocalizedTextResolver.ResolvePlanName(snapshot.PlanName, snapshot.PlanFeaturesJson, culture),
+            UnitPriceMinor = snapshot.UnitPriceMinor,
+            Currency = snapshot.Currency,
+            StartedAtUtc = snapshot.StartedAtUtc,
+            CurrentPeriodEndUtc = snapshot.CurrentPeriodEndUtc,
+            TrialEndsAtUtc = snapshot.TrialEndsAtUtc,
+            CanceledAtUtc = snapshot.CanceledAtUtc,
+            CancelAtPeriodEnd = snapshot.CancelAtPeriodEnd
+        });
     }
 }

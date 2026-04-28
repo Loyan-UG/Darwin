@@ -42,11 +42,11 @@ type PasswordPageProps = {
 function getPasswordMessage(status: string | undefined, culture: string) {
   const copy = getMemberResource(culture);
   if (matchesLocalizedQueryMessageKey(status, "passwordRequestedMessage", "requested")) {
-      return copy.passwordRequestedMessage;
+    return copy.passwordRequestedMessage;
   }
 
   if (matchesLocalizedQueryMessageKey(status, "passwordResetMessage", "reset")) {
-      return copy.passwordResetMessage;
+    return copy.passwordResetMessage;
   }
 
   return undefined;

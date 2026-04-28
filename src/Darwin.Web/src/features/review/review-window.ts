@@ -9,6 +9,7 @@ import type {
   CmsVisibleSort,
   CmsVisibleState,
 } from "@/features/cms/discovery";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 
 export type CmsReviewWindow = {
@@ -67,7 +68,7 @@ export function buildCmsReviewTargetHref(
     metadataFocus: overrides?.metadataFocus ?? reviewWindow?.metadataFocus,
   };
 
-  return buildAppQueryPath(`/cms/${slug}`, {
+  return buildAppQueryPath(buildCmsPagePath(slug), {
     visibleQuery: next.visibleQuery,
     visibleState:
       next.visibleState && next.visibleState !== "all"
@@ -133,7 +134,7 @@ export function buildCatalogReviewTargetHref(
     savingsBand: overrides?.savingsBand ?? reviewWindow?.savingsBand,
   };
 
-  return buildAppQueryPath(`/catalog/${slug}`, {
+  return buildAppQueryPath(buildCatalogProductPath(slug), {
     category: next.category,
     visibleQuery: next.visibleQuery,
     visibleState:

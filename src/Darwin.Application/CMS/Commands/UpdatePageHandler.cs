@@ -56,12 +56,15 @@ namespace Darwin.Application.CMS.Commands
                     entity.Translations.Add(translation);
                 }
 
-                translation.Title = t.Title;
-                translation.Slug = t.Slug;
-                translation.MetaTitle = t.MetaTitle;
-                translation.MetaDescription = t.MetaDescription;
+                translation.Culture = t.Culture.Trim();
+                translation.Title = t.Title.Trim();
+                translation.Slug = t.Slug.Trim();
+                translation.MetaTitle = t.MetaTitle?.Trim();
+                translation.MetaDescription = t.MetaDescription?.Trim();
                 translation.ContentHtml = sanitizer.Sanitize(t.ContentHtml ?? string.Empty);
             }
+
+            PageRootSnapshot.SyncFromPrimaryTranslation(entity);
 
             await _db.SaveChangesAsync(ct);
         }

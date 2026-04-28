@@ -16,6 +16,8 @@ namespace Darwin.Application.Businesses.Queries
     /// </summary>
     public sealed class GetBusinessOwnerOverrideAuditsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetBusinessOwnerOverrideAuditsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -29,12 +31,15 @@ namespace Darwin.Application.Businesses.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery =
                 from audit in _db.Set<BusinessOwnerOverrideAudit>().AsNoTracking()
                 join user in _db.Set<User>().AsNoTracking() on audit.AffectedUserId equals user.Id into userJoin
                 from user in userJoin.DefaultIfEmpty()
-                where audit.BusinessId == businessId
+                where audit.BusinessId == businessId &&
+                      !audit.IsDeleted &&
+                      (user == null || !user.IsDeleted)
                 select new BusinessOwnerOverrideAuditListItemDto
                 {
                     Id = audit.Id,

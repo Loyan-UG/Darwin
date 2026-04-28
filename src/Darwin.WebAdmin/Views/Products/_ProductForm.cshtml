@@ -67,6 +67,15 @@
                     </div>
 
                     <div class="col-md-6">
+                        <label class="form-label">@T.T("ShortDescription")</label>
+                        <textarea asp-for="Translations[@i].ShortDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">@T.T("SearchKeywords")</label>
+                        <input asp-for="Translations[@i].SearchKeywords" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
                         <label class="form-label">@T.T("MetaTitle")</label>
                         <input asp-for="Translations[@i].MetaTitle" class="form-control" />
                     </div>
@@ -112,6 +121,10 @@
                         <input asp-for="Variants[@j].Gtin" class="form-control" />
                     </div>
                     <div class="col-md-3">
+                        <label class="form-label">@T.T("ManufacturerPartNumber")</label>
+                        <input asp-for="Variants[@j].ManufacturerPartNumber" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label">@T.T("Currency")</label>
                         <select asp-for="Variants[@j].Currency" class="form-select">
                             @foreach (var cur in (IEnumerable<string>)ViewBag.Currencies)
@@ -145,8 +158,52 @@
                         <input asp-for="Variants[@j].StockOnHand" class="form-control" />
                     </div>
                     <div class="col-md-3">
+                        <label class="form-label">@T.T("StockReserved")</label>
+                        <input asp-for="Variants[@j].StockReserved" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label">@T.T("ReorderPoint")</label>
                         <input asp-for="Variants[@j].ReorderPoint" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">@T.T("MinOrderQty")</label>
+                        <input asp-for="Variants[@j].MinOrderQty" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">@T.T("MaxOrderQty")</label>
+                        <input asp-for="Variants[@j].MaxOrderQty" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">@T.T("StepOrderQty")</label>
+                        <input asp-for="Variants[@j].StepOrderQty" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">@T.T("PackageWeight")</label>
+                        <input asp-for="Variants[@j].PackageWeight" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">@T.T("PackageLength")</label>
+                        <input asp-for="Variants[@j].PackageLength" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">@T.T("PackageWidth")</label>
+                        <input asp-for="Variants[@j].PackageWidth" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">@T.T("PackageHeight")</label>
+                        <input asp-for="Variants[@j].PackageHeight" class="form-control" />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-check">
+                            <input asp-for="Variants[@j].BackorderAllowed" class="form-check-input" />
+                            <label class="form-check-label" asp-for="Variants[@j].BackorderAllowed">@T.T("BackorderAllowed")</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-check">
+                            <input asp-for="Variants[@j].IsDigital" class="form-check-input" />
+                            <label class="form-check-label" asp-for="Variants[@j].IsDigital">@T.T("IsDigital")</label>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -216,7 +216,7 @@ public sealed class GetStorefrontOrderConfirmationHandler
 
         var order = await _db.Set<Order>()
             .AsNoTracking()
-            .Where(x => x.Id == dto.OrderId)
+            .Where(x => x.Id == dto.OrderId && !x.IsDeleted)
             .Select(x => new
             {
                 x.Id,
@@ -236,7 +236,7 @@ public sealed class GetStorefrontOrderConfirmationHandler
                 x.BillingAddressJson,
                 x.ShippingAddressJson,
                 x.CreatedAtUtc,
-                Lines = x.Lines.Select(line => new StorefrontOrderConfirmationLineDto
+                Lines = x.Lines.Where(line => !line.IsDeleted).Select(line => new StorefrontOrderConfirmationLineDto
                 {
                     Id = line.Id,
                     VariantId = line.VariantId,
@@ -247,6 +247,7 @@ public sealed class GetStorefrontOrderConfirmationHandler
                     LineGrossMinor = line.LineGrossMinor
                 }).ToList(),
                 Payments = x.Payments
+                    .Where(payment => !payment.IsDeleted)
                     .OrderByDescending(payment => payment.CreatedAtUtc)
                     .Select(payment => new StorefrontOrderConfirmationPaymentDto
                 {

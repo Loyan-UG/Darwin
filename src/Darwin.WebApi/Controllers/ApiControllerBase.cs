@@ -163,7 +163,9 @@ namespace Darwin.WebApi.Controllers
                 User.FindFirstValue("sub") ??
                 User.FindFirstValue("uid");
 
-            return Guid.TryParse(candidate, out var userId) ? userId : null;
+            return Guid.TryParse(candidate, out var userId) && userId != Guid.Empty
+                ? userId
+                : null;
         }
     }
 }

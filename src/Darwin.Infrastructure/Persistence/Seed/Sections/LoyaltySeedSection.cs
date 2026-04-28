@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Domain.Entities.Businesses;
@@ -37,7 +38,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
         public LoyaltySeedSection(ILogger<LoyaltySeedSection> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
@@ -58,6 +59,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             if (!await db.Set<LoyaltyRewardTier>().AnyAsync(ct))
                 await SeedRewardTiersAsync(db, ct);
+
+            await EnsureRewardTierLocalizedMetadataAsync(db, ct);
 
             if (!await db.Set<LoyaltyAccount>().AnyAsync(ct))
                 await SeedAccountsAsync(db, businesses, users, ct);
@@ -117,7 +120,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     RewardValue = null,
                     Description = "Kostenloser Kaffee",
                     AllowSelfRedemption = false,
-                    MetadataJson = "{\"sku\":\"COFFEE-01\"}"
+                    MetadataJson = BuildRewardMetadataJson("Kostenloser Kaffee", "Free coffee", ("sku", "COFFEE-01"))
                 });
 
                 tiers.Add(new LoyaltyRewardTier
@@ -128,7 +131,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     RewardValue = 10,
                     Description = "10% Rabatt auf den nächsten Einkauf",
                     AllowSelfRedemption = true,
-                    MetadataJson = "{\"maxPercent\":10}"
+                    MetadataJson = BuildRewardMetadataJson("10% Rabatt auf den nächsten Einkauf", "10% off your next purchase", ("maxPercent", 10))
                 });
 
                 tiers.Add(new LoyaltyRewardTier
@@ -139,12 +142,98 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     RewardValue = 2.5m,
                     Description = "2,50 € Rabatt",
                     AllowSelfRedemption = false,
-                    MetadataJson = "{\"amount\":\"2.50\"}"
+                    MetadataJson = BuildRewardMetadataJson("2,50 € Rabatt", "€2.50 discount", ("amount", "2.50"))
                 });
             }
 
             db.AddRange(tiers);
             await db.SaveChangesAsync(ct);
+        }
+
+        private static async Task EnsureRewardTierLocalizedMetadataAsync(DarwinDbContext db, CancellationToken ct)
+        {
+            var tiers = await db.Set<LoyaltyRewardTier>()
+                .Where(x => !x.IsDeleted)
+                .ToListAsync(ct);
+
+            var requiresSave = false;
+            foreach (var tier in tiers)
+            {
+                var englishDescription = tier.RewardType switch
+                {
+                    LoyaltyRewardType.PercentDiscount when tier.RewardValue.HasValue
+                        => $"{tier.RewardValue:0}% off your next purchase",
+                    LoyaltyRewardType.AmountDiscount when tier.RewardValue.HasValue
+                        => $"€{tier.RewardValue:0.00} discount",
+                    LoyaltyRewardType.FreeItem => "Free coffee",
+                    _ => tier.Description ?? "Reward"
+                };
+
+                var merged = MergeRewardMetadataJson(tier.MetadataJson, tier.Description ?? "Prämie", englishDescription);
+                if (!string.Equals(tier.MetadataJson, merged, StringComparison.Ordinal))
+                {
+                    tier.MetadataJson = merged;
+                    requiresSave = true;
+                }
+            }
+
+            if (requiresSave)
+            {
+                await db.SaveChangesAsync(ct);
+            }
+        }
+
+        private static string BuildRewardMetadataJson(string germanDescription, string englishDescription, (string Key, object Value) extra)
+        {
+            var values = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+            {
+                [extra.Key] = extra.Value
+            };
+
+            AddLocalizedRewardDescriptions(values, germanDescription, englishDescription);
+            return JsonSerializer.Serialize(values);
+        }
+
+        private static string MergeRewardMetadataJson(string? existingJson, string germanDescription, string englishDescription)
+        {
+            Dictionary<string, object?> values;
+            if (string.IsNullOrWhiteSpace(existingJson))
+            {
+                values = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                try
+                {
+                    values = JsonSerializer.Deserialize<Dictionary<string, object?>>(existingJson)
+                        ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                }
+                catch (JsonException)
+                {
+                    values = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                }
+            }
+
+            AddLocalizedRewardDescriptions(values, germanDescription, englishDescription);
+            return JsonSerializer.Serialize(values);
+        }
+
+        private static void AddLocalizedRewardDescriptions(
+            IDictionary<string, object?> values,
+            string germanDescription,
+            string englishDescription)
+        {
+            values["localized"] = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["de-DE"] = new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["description"] = germanDescription
+                },
+                ["en-US"] = new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["description"] = englishDescription
+                }
+            };
         }
 
         private static async Task SeedAccountsAsync(DarwinDbContext db, IReadOnlyList<Business> businesses, IReadOnlyList<User> users, CancellationToken ct)

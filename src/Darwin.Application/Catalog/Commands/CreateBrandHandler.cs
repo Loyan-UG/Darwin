@@ -34,9 +34,12 @@ namespace Darwin.Application.Catalog.Commands
             if (!validation.IsValid)
                 throw new FluentValidation.ValidationException(validation.Errors);
 
-            if (!string.IsNullOrWhiteSpace(dto.Slug))
+            var normalizedSlug = string.IsNullOrWhiteSpace(dto.Slug) ? null : dto.Slug.Trim();
+            if (!string.IsNullOrWhiteSpace(normalizedSlug))
             {
-                var slugExists = await _db.Set<Brand>().AnyAsync(b => b.Slug == dto.Slug, ct);
+                var slugExists = await _db.Set<Brand>().AnyAsync(
+                    b => !b.IsDeleted && b.Slug == normalizedSlug,
+                    ct);
                 if (slugExists)
                     throw new FluentValidation.ValidationException(_localizer["BrandSlugMustBeUnique"]);
             }
@@ -45,7 +48,7 @@ namespace Darwin.Application.Catalog.Commands
 
             var brand = new Brand
             {
-                Slug = dto.Slug?.Trim(),
+                Slug = normalizedSlug,
                 LogoMediaId = dto.LogoMediaId
             };
 

@@ -45,13 +45,17 @@ public sealed class PublicShippingController : ApiControllerBase
 
         try
         {
+            var normalizedCountry = (request.Country ?? string.Empty).Trim().ToUpperInvariant();
+            var normalizedCurrency = string.IsNullOrWhiteSpace(request.Currency)
+                ? SiteSettingDto.DefaultCurrencyDefault
+                : request.Currency.Trim().ToUpperInvariant();
             var items = await _rateShipmentHandler.HandleAsync(new RateShipmentInputDto
             {
-                Country = request.Country,
+                Country = normalizedCountry,
                 SubtotalNetMinor = request.SubtotalNetMinor,
                 ShipmentMass = request.ShipmentMass,
-                Currency = request.Currency
-            }, request.Currency ?? SiteSettingDto.DefaultCurrencyDefault, ct).ConfigureAwait(false);
+                Currency = normalizedCurrency
+            }, normalizedCurrency, ct).ConfigureAwait(false);
 
             return Ok(items.Select(MapOption).ToList());
         }

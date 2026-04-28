@@ -3,6 +3,7 @@ import { OrderDetailPage } from "@/components/member/order-detail-page";
 import { getMemberOrderDetailPageContext } from "@/features/member-portal/server/get-member-protected-page-context";
 import { getOrderDetailSeoMetadata } from "@/features/member-portal/server/get-member-route-seo-metadata";
 import { getMemberResource } from "@/localization";
+import { buildOrderPath } from "@/lib/entity-paths";
 import { getRequestCulture } from "@/lib/request-culture";
 
 export async function generateMetadata({ params }: OrderDetailRouteProps) {
@@ -43,7 +44,7 @@ export default async function OrderDetailRoute({
         culture={culture}
         title={copy.orderDetailAuthRequiredTitle}
         message={copy.orderDetailAuthRequiredMessage}
-        returnPath={`/orders/${id}`}
+        returnPath={buildOrderPath(id)}
         cmsPages={authStorefrontContext!.cmsPages}
         cmsPagesStatus={authStorefrontContext!.cmsPagesStatus}
         categories={authStorefrontContext!.categories}

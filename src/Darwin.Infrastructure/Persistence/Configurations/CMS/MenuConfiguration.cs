@@ -27,7 +27,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
                    .HasForeignKey(i => i.MenuId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasIndex(m => m.Name).IsUnique(); // internal uniqueness to avoid duplicates like "Main"
+            builder.HasIndex(m => m.Name)
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
 
         public void Configure(EntityTypeBuilder<MenuItem> builder)
@@ -77,7 +79,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
                    .HasMaxLength(1024);
 
             // Each MenuItem can have at most one translation per culture
-            builder.HasIndex(t => new { t.MenuItemId, t.Culture }).IsUnique();
+            builder.HasIndex(t => new { t.MenuItemId, t.Culture })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
     }
 }

@@ -38,7 +38,7 @@ namespace Darwin.Application.Loyalty.Queries
             var baseQuery =
                 from account in _db.Set<LoyaltyAccount>().AsNoTracking()
                 join user in _db.Set<User>().AsNoTracking() on account.UserId equals user.Id
-                where account.BusinessId == businessId && !account.IsDeleted
+                where account.BusinessId == businessId && !account.IsDeleted && !user.IsDeleted
                 select new { account, user };
 
             if (!string.IsNullOrWhiteSpace(query))

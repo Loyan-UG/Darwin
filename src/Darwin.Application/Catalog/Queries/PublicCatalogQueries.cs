@@ -12,6 +12,8 @@ namespace Darwin.Application.Catalog.Queries;
 /// </summary>
 public sealed class GetPublishedCategoriesHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
 
     /// <summary>
@@ -26,12 +28,14 @@ public sealed class GetPublishedCategoriesHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var defaultCulture = SiteSettingDto.DefaultCultureDefault;
 
         var baseQuery = _db.Set<Category>()
             .AsNoTracking()
-            .Where(x => x.IsActive && x.IsPublished);
+            .Where(x => !x.IsDeleted && x.IsActive && x.IsPublished);
 
         var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
         var items = await baseQuery
@@ -43,14 +47,18 @@ public sealed class GetPublishedCategoriesHandler
             {
                 Id = x.Id,
                 ParentId = x.ParentId,
-                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
+                Name = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
                     ?? string.Empty,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                Slug = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
                     ?? string.Empty,
-                Description = x.Translations.Where(t => t.Culture == culture).Select(t => t.Description).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Description).FirstOrDefault(),
+                Description = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Description).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Description).FirstOrDefault(),
+                MetaTitle = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault(),
+                MetaDescription = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault(),
                 SortOrder = x.SortOrder
             })
             .ToListAsync(ct)
@@ -65,6 +73,8 @@ public sealed class GetPublishedCategoriesHandler
 /// </summary>
 public sealed class GetPublishedProductsPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
 
     /// <summary>
@@ -84,6 +94,8 @@ public sealed class GetPublishedProductsPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var defaultCulture = SiteSettingDto.DefaultCultureDefault;
         categorySlug = string.IsNullOrWhiteSpace(categorySlug) ? null : categorySlug.Trim();
@@ -92,8 +104,10 @@ public sealed class GetPublishedProductsPageHandler
         var baseQuery = _db.Set<Product>()
             .AsNoTracking()
             .Where(x =>
+                !x.IsDeleted &&
                 x.IsActive &&
                 x.IsVisible &&
+                x.Variants.Any(v => !v.IsDeleted) &&
                 (!x.PublishStartUtc.HasValue || x.PublishStartUtc <= nowUtc) &&
                 (!x.PublishEndUtc.HasValue || x.PublishEndUtc >= nowUtc));
 
@@ -103,7 +117,11 @@ public sealed class GetPublishedProductsPageHandler
                 x.PrimaryCategoryId.HasValue &&
                 _db.Set<Category>().Any(category =>
                     category.Id == x.PrimaryCategoryId.Value &&
+                    !category.IsDeleted &&
+                    category.IsActive &&
+                    category.IsPublished &&
                     category.Translations.Any(translation =>
+                        !translation.IsDeleted &&
                         translation.Slug == categorySlug &&
                         (translation.Culture == culture || translation.Culture == defaultCulture))));
         }
@@ -116,20 +134,21 @@ public sealed class GetPublishedProductsPageHandler
             .Select(x => new PublicProductSummaryDto
             {
                 Id = x.Id,
-                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
+                Name = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
                     ?? string.Empty,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                Slug = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
                     ?? string.Empty,
-                ShortDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.ShortDescription).FirstOrDefault(),
-                Currency = x.Variants.OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? SiteSettingDto.DefaultCurrencyDefault,
-                PriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.BasePriceNetMinor).FirstOrDefault(),
-                CompareAtPriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.CompareAtPriceNetMinor).FirstOrDefault(),
+                ShortDescription = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.ShortDescription).FirstOrDefault(),
+                Currency = x.Variants.Where(v => !v.IsDeleted).OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? SiteSettingDto.DefaultCurrencyDefault,
+                PriceMinor = x.Variants.Where(v => !v.IsDeleted).OrderBy(v => v.BasePriceNetMinor).Select(v => v.BasePriceNetMinor).FirstOrDefault(),
+                CompareAtPriceMinor = x.Variants.Where(v => !v.IsDeleted).OrderBy(v => v.BasePriceNetMinor).Select(v => v.CompareAtPriceNetMinor).FirstOrDefault(),
                 PrimaryImageUrl = (
-                    from productMedia in x.Media
+                    from productMedia in x.Media.Where(productMedia => !productMedia.IsDeleted)
                     join mediaAsset in _db.Set<MediaAsset>() on productMedia.MediaAssetId equals mediaAsset.Id
+                    where !mediaAsset.IsDeleted
                     orderby productMedia.SortOrder
                     select mediaAsset.Url
                 ).FirstOrDefault()
@@ -171,39 +190,43 @@ public sealed class GetPublishedProductBySlugHandler
         return await _db.Set<Product>()
             .AsNoTracking()
             .Where(x =>
+                !x.IsDeleted &&
                 x.IsActive &&
                 x.IsVisible &&
+                x.Variants.Any(v => !v.IsDeleted) &&
                 (!x.PublishStartUtc.HasValue || x.PublishStartUtc <= nowUtc) &&
                 (!x.PublishEndUtc.HasValue || x.PublishEndUtc >= nowUtc) &&
-                x.Translations.Any(t => t.Slug == normalizedSlug && (t.Culture == culture || t.Culture == defaultCulture)))
+                x.Translations.Any(t => !t.IsDeleted && t.Slug == normalizedSlug && (t.Culture == culture || t.Culture == defaultCulture)))
             .Select(x => new PublicProductDetailDto
             {
                 Id = x.Id,
-                Name = x.Translations.Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
+                Name = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Name).FirstOrDefault()
                     ?? string.Empty,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                Slug = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
                     ?? string.Empty,
-                ShortDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.ShortDescription).FirstOrDefault(),
-                FullDescriptionHtml = x.Translations.Where(t => t.Culture == culture).Select(t => t.FullDescriptionHtml).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.FullDescriptionHtml).FirstOrDefault(),
-                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault(),
-                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault(),
-                Currency = x.Variants.OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? SiteSettingDto.DefaultCurrencyDefault,
-                PriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.BasePriceNetMinor).FirstOrDefault(),
-                CompareAtPriceMinor = x.Variants.OrderBy(v => v.BasePriceNetMinor).Select(v => v.CompareAtPriceNetMinor).FirstOrDefault(),
+                ShortDescription = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.ShortDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.ShortDescription).FirstOrDefault(),
+                FullDescriptionHtml = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.FullDescriptionHtml).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.FullDescriptionHtml).FirstOrDefault(),
+                MetaTitle = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault(),
+                MetaDescription = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault(),
+                Currency = x.Variants.Where(v => !v.IsDeleted).OrderBy(v => v.Sku).Select(v => v.Currency).FirstOrDefault() ?? SiteSettingDto.DefaultCurrencyDefault,
+                PriceMinor = x.Variants.Where(v => !v.IsDeleted).OrderBy(v => v.BasePriceNetMinor).Select(v => v.BasePriceNetMinor).FirstOrDefault(),
+                CompareAtPriceMinor = x.Variants.Where(v => !v.IsDeleted).OrderBy(v => v.BasePriceNetMinor).Select(v => v.CompareAtPriceNetMinor).FirstOrDefault(),
                 PrimaryCategoryId = x.PrimaryCategoryId,
                 PrimaryImageUrl = (
-                    from productMedia in x.Media
+                    from productMedia in x.Media.Where(productMedia => !productMedia.IsDeleted)
                     join mediaAsset in _db.Set<MediaAsset>() on productMedia.MediaAssetId equals mediaAsset.Id
+                    where !mediaAsset.IsDeleted
                     orderby productMedia.SortOrder
                     select mediaAsset.Url
                 ).FirstOrDefault(),
                 Variants = x.Variants
+                    .Where(v => !v.IsDeleted)
                     .OrderBy(v => v.Sku)
                     .Select(v => new PublicProductVariantDto
                     {
@@ -217,8 +240,9 @@ public sealed class GetPublishedProductBySlugHandler
                     })
                     .ToList(),
                 Media = (
-                    from productMedia in x.Media
+                    from productMedia in x.Media.Where(productMedia => !productMedia.IsDeleted)
                     join mediaAsset in _db.Set<MediaAsset>() on productMedia.MediaAssetId equals mediaAsset.Id
+                    where !mediaAsset.IsDeleted
                     orderby productMedia.SortOrder
                     select new PublicProductMediaDto
                     {

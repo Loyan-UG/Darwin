@@ -1,6 +1,7 @@
 import "server-only";
 import { getCatalogDetailRouteContext } from "@/features/catalog/server/get-catalog-route-context";
 import { getProductLanguageAlternatesMap } from "@/features/catalog/server/get-product-language-alternates-map";
+import { buildCatalogProductPath } from "@/lib/entity-paths";
 import { productDetailRouteObservationContext } from "@/lib/route-observation-context";
 import { normalizeEntityRouteArgs } from "@/lib/route-context-normalization";
 import { buildSeoMetadata, deriveSeoDescription } from "@/lib/seo";
@@ -19,7 +20,7 @@ export const getProductSeoMetadata = createCachedObservedSeoMetadataLoader({
     const { detailContext } = await getCatalogDetailRouteContext(culture, slug);
     const { productResult } = detailContext;
     const product = productResult.data;
-    const requestedPath = `/catalog/${encodeURIComponent(slug)}`;
+    const requestedPath = buildCatalogProductPath(slug);
 
     if (!product) {
       return {
@@ -38,7 +39,7 @@ export const getProductSeoMetadata = createCachedObservedSeoMetadataLoader({
 
     const alternates = await getProductLanguageAlternatesMap();
     const languageAlternates = alternates.get(product.id) ?? {};
-    const canonicalPath = `/catalog/${encodeURIComponent(product.slug)}`;
+    const canonicalPath = buildCatalogProductPath(product.slug);
     const noIndex = productResult.status !== "ok";
 
     return {

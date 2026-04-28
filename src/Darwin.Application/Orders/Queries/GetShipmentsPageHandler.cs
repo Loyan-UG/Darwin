@@ -15,9 +15,11 @@ namespace Darwin.Application.Orders.Queries;
 
 public sealed class GetShipmentsPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
 
-    public GetShipmentsPageHandler(IAppDbContext db) => _db = db;
+    public GetShipmentsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
     public async Task<(List<ShipmentListItemDto> Items, int Total)> HandleAsync(
         int page,
@@ -30,6 +32,7 @@ public sealed class GetShipmentsPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
         if (attentionDelayHours < 1) attentionDelayHours = 24;
         if (trackingGraceHours < 1) trackingGraceHours = 12;
 
@@ -37,7 +40,7 @@ public sealed class GetShipmentsPageHandler
         var handoffThresholdUtc = nowUtc.AddHours(-attentionDelayHours);
         var trackingThresholdUtc = nowUtc.AddHours(-trackingGraceHours);
 
-        var shipments = _db.Set<Shipment>().AsNoTracking();
+        var shipments = _db.Set<Shipment>().AsNoTracking().Where(s => !s.IsDeleted);
 
         shipments = filter switch
         {
@@ -75,7 +78,7 @@ public sealed class GetShipmentsPageHandler
                 s.Carrier.Contains(term) ||
                 s.Service.Contains(term) ||
                 (s.TrackingNumber != null && s.TrackingNumber.Contains(term)) ||
-                _db.Set<Order>().Any(o => o.Id == s.OrderId && o.OrderNumber.Contains(term)));
+                _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && o.OrderNumber.Contains(term)));
         }
 
         var total = await shipments.CountAsync(ct);
@@ -89,7 +92,7 @@ public sealed class GetShipmentsPageHandler
                 Id = s.Id,
                 OrderId = s.OrderId,
                 OrderNumber = _db.Set<Order>()
-                    .Where(o => o.Id == s.OrderId)
+                    .Where(o => o.Id == s.OrderId && !o.IsDeleted)
                     .Select(o => o.OrderNumber)
                     .FirstOrDefault() ?? string.Empty,
                 Carrier = s.Carrier,
@@ -118,6 +121,7 @@ public sealed class GetShipmentsPageHandler
                 TrackingGraceHours = trackingGraceHours,
                 DefaultRefundPaymentId = _db.Set<Payment>()
                     .Where(p => p.OrderId == s.OrderId &&
+                        !p.IsDeleted &&
                         (p.Status == PaymentStatus.Captured ||
                          p.Status == PaymentStatus.Completed ||
                          p.Status == PaymentStatus.Refunded))
@@ -179,7 +183,7 @@ public sealed class GetShipmentOpsSummaryHandler
 {
     private readonly IAppDbContext _db;
 
-    public GetShipmentOpsSummaryHandler(IAppDbContext db) => _db = db;
+    public GetShipmentOpsSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
     public async Task<ShipmentOpsSummaryDto> HandleAsync(
         int attentionDelayHours = 24,
@@ -192,7 +196,7 @@ public sealed class GetShipmentOpsSummaryHandler
         var nowUtc = DateTime.UtcNow;
         var handoffThresholdUtc = nowUtc.AddHours(-attentionDelayHours);
         var trackingThresholdUtc = nowUtc.AddHours(-trackingGraceHours);
-        var shipments = _db.Set<Shipment>().AsNoTracking();
+        var shipments = _db.Set<Shipment>().AsNoTracking().Where(s => !s.IsDeleted);
 
         return new ShipmentOpsSummaryDto
         {

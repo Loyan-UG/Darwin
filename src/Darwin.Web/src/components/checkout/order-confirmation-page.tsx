@@ -23,10 +23,12 @@ import { buildStorefrontOfferCards } from "@/features/storefront/storefront-camp
 import {
   formatResource,
   getCommerceResource,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { parseAddressJson, type ParsedAddress } from "@/lib/address-json";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { buildOrderPath } from "@/lib/entity-paths";
 import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 
 type OrderConfirmationPageProps = {
@@ -106,6 +108,80 @@ function getRecordedPaymentAmountMinor(
   }, 0);
 }
 
+function localizeConfirmationStatus(status: string | undefined, culture: string) {
+  const normalized = (status ?? "").trim().toLowerCase();
+  const english = culture.toLowerCase().startsWith("en");
+
+  if (!normalized) {
+    return english ? "Unavailable" : "Nicht verfuegbar";
+  }
+
+  const labels: Record<string, { de: string; en: string }> = {
+    idle: { de: "Bereit", en: "Ready" },
+    ok: { de: "Aktuell", en: "Current" },
+    "order-placed": { de: "Bestellung platziert", en: "Order placed" },
+    completed: { de: "Abgeschlossen", en: "Completed" },
+    failed: { de: "Fehlgeschlagen", en: "Failed" },
+    "missing-context": { de: "Zahlungskontext fehlt", en: "Payment context missing" },
+    "not-found": { de: "Nicht gefunden", en: "Not found" },
+    "http-error": { de: "Dienstfehler", en: "Service error" },
+    "network-error": { de: "Netzwerkfehler", en: "Network error" },
+    unavailable: { de: "Nicht verfuegbar", en: "Unavailable" },
+  };
+
+  const label = labels[normalized];
+  return label ? (english ? label.en : label.de) : normalized;
+}
+
+function localizeOrderStatus(status: string | undefined, culture: string) {
+  const normalized = (status ?? "").trim().toLowerCase();
+  const english = culture.toLowerCase().startsWith("en");
+
+  if (!normalized) {
+    return english ? "Unavailable" : "Nicht verfuegbar";
+  }
+
+  const labels: Record<string, { de: string; en: string }> = {
+    created: { de: "Erstellt", en: "Created" },
+    confirmed: { de: "Bestaetigt", en: "Confirmed" },
+    paid: { de: "Bezahlt", en: "Paid" },
+    partiallyshipped: { de: "Teilweise versendet", en: "Partially shipped" },
+    shipped: { de: "Versendet", en: "Shipped" },
+    delivered: { de: "Zugestellt", en: "Delivered" },
+    cancelled: { de: "Storniert", en: "Cancelled" },
+    refunded: { de: "Erstattet", en: "Refunded" },
+    partiallyrefunded: { de: "Teilweise erstattet", en: "Partially refunded" },
+    completed: { de: "Abgeschlossen", en: "Completed" },
+  };
+
+  const label = labels[normalized.replace(/[\s_-]/g, "")];
+  return label ? (english ? label.en : label.de) : normalized;
+}
+
+function localizePaymentStatus(status: string | undefined, culture: string) {
+  const normalized = (status ?? "").trim().toLowerCase();
+  const english = culture.toLowerCase().startsWith("en");
+
+  if (!normalized) {
+    return english ? "Unavailable" : "Nicht verfuegbar";
+  }
+
+  const labels: Record<string, { de: string; en: string }> = {
+    pending: { de: "Ausstehend", en: "Pending" },
+    authorized: { de: "Autorisiert", en: "Authorized" },
+    paid: { de: "Bezahlt", en: "Paid" },
+    succeeded: { de: "Erfolgreich", en: "Succeeded" },
+    completed: { de: "Abgeschlossen", en: "Completed" },
+    failed: { de: "Fehlgeschlagen", en: "Failed" },
+    cancelled: { de: "Abgebrochen", en: "Cancelled" },
+    refunded: { de: "Erstattet", en: "Refunded" },
+    partiallyrefunded: { de: "Teilweise erstattet", en: "Partially refunded" },
+  };
+
+  const label = labels[normalized.replace(/[\s_-]/g, "")];
+  return label ? (english ? label.en : label.de) : normalized;
+}
+
 function resolveDisplayedPaymentStatus(
   confirmation: PublicStorefrontOrderConfirmation,
   paymentCompletionStatus: string | undefined,
@@ -161,6 +237,19 @@ export function OrderConfirmationPage({
   const copy = getCommerceResource(culture);
   const resolvedPaymentError = resolveLocalizedQueryMessage(paymentError, copy);
   const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
+  const localizedStatus = localizeConfirmationStatus(status, culture);
+  const localizedMemberOrdersStatus =
+    resolveApiStatusLabel(memberOrdersStatus, copy) ??
+    localizeConfirmationStatus(memberOrdersStatus, culture);
+  const localizedMemberInvoicesStatus =
+    resolveApiStatusLabel(memberInvoicesStatus, copy) ??
+    localizeConfirmationStatus(memberInvoicesStatus, culture);
+  const localizedMemberLoyaltyStatus =
+    resolveApiStatusLabel(memberLoyaltyStatus, copy) ??
+    localizeConfirmationStatus(memberLoyaltyStatus, culture);
+  const productsStatusLabel =
+    resolveApiStatusLabel(productsStatus, copy) ??
+    localizeConfirmationStatus(productsStatus, culture);
 
   if (!confirmation) {
     return (
@@ -170,7 +259,7 @@ export function OrderConfirmationPage({
             tone="warning"
             title={copy.orderConfirmationUnavailableTitle}
             message={resolvedMessage ?? formatResource(copy.orderConfirmationUnavailableMessage, {
-              status,
+              status: localizedStatus,
             })}
           />
           <div className="mt-8">
@@ -196,7 +285,7 @@ export function OrderConfirmationPage({
   );
   const paymentCoverageComplete = remainingPaymentAmountMinor === 0;
   const memberOrderDetailHref = sanitizeAppPath(
-    `/orders/${confirmation.orderId}`,
+    buildOrderPath(confirmation.orderId),
     "/orders",
   );
   const memberOrdersHref = sanitizeAppPath(
@@ -236,6 +325,16 @@ export function OrderConfirmationPage({
     paymentCompletionStatus,
     paymentOutcome,
     copy.unavailable,
+  );
+  const localizedOrderStatus = localizeOrderStatus(confirmation.status, culture);
+  const localizedPaymentStatus = localizePaymentStatus(
+    displayedPaymentStatus,
+    culture,
+  );
+  const localizedRouteStatus = localizedStatus;
+  const localizedPaymentCompletionStatus = localizeConfirmationStatus(
+    paymentCompletionStatus ?? "idle",
+    culture,
   );
   const outstandingInvoice =
     memberInvoices.find((invoice) => invoice.balanceMinor > 0) ??
@@ -394,8 +493,8 @@ export function OrderConfirmationPage({
                 : copy.paymentReconciledTitle
             }
             message={formatResource(copy.paymentReconciledMessage, {
-              orderStatus: confirmation.status,
-              paymentStatus: displayedPaymentStatus,
+              orderStatus: localizedOrderStatus,
+              paymentStatus: localizedPaymentStatus,
             })}
           />
         )}
@@ -433,7 +532,7 @@ export function OrderConfirmationPage({
             tone="warning"
             title={copy.confirmationWarningsTitle}
             message={resolvedMessage ?? formatResource(copy.confirmationWarningsMessage, {
-              status,
+              status: localizedStatus,
             })}
           />
         )}
@@ -444,9 +543,9 @@ export function OrderConfirmationPage({
           </p>
           <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.confirmationRouteSummaryMessage, {
-              status,
-              paymentCompletionStatus: paymentCompletionStatus ?? "idle",
-              paymentStatus: displayedPaymentStatus,
+              status: localizedRouteStatus,
+              paymentCompletionStatus: localizedPaymentCompletionStatus,
+              paymentStatus: localizedPaymentStatus,
             })}
           </p>
         </div>
@@ -502,7 +601,7 @@ export function OrderConfirmationPage({
                   {copy.confirmationCareStatusLabel}
                 </p>
                 <p className="mt-2 font-semibold text-[var(--color-text-primary)]">
-                  {confirmation.status}
+                  {localizedOrderStatus}
                 </p>
               </div>
             </div>
@@ -811,9 +910,9 @@ export function OrderConfirmationPage({
                 </p>
                 <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                   {formatResource(copy.confirmationMemberWindowMessage, {
-                    ordersStatus: memberOrdersStatus,
-                    invoicesStatus: memberInvoicesStatus,
-                    loyaltyStatus: memberLoyaltyStatus,
+                    ordersStatus: localizedMemberOrdersStatus,
+                    invoicesStatus: localizedMemberInvoicesStatus,
+                    loyaltyStatus: localizedMemberLoyaltyStatus,
                   })}
                 </p>
                 <div className="mt-5 grid gap-3">
@@ -943,7 +1042,9 @@ export function OrderConfirmationPage({
                       <StorefrontCampaignBoard
                         culture={culture}
                         cards={guestPromotionLaneCards}
-                        emptyMessage={copy.storefrontWindowPromotionLaneSectionMessage}
+                        emptyMessage={formatResource(copy.storefrontWindowPromotionLaneEmptyMessage, {
+                          productsStatus: productsStatusLabel,
+                        })}
                       />
                     </div>
                   </article>
@@ -984,7 +1085,7 @@ export function OrderConfirmationPage({
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex items-center justify-between">
                   <span>{copy.statusLabel}</span>
-                  <span>{confirmation.status}</span>
+                  <span>{localizedOrderStatus}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>{copy.createdLabel}</span>
@@ -1036,7 +1137,7 @@ export function OrderConfirmationPage({
                       className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
                     >
                       <p className="font-semibold text-[var(--color-text-primary)]">
-                        {payment.provider} - {payment.status}
+                        {payment.provider} - {localizePaymentStatus(payment.status, culture)}
                       </p>
                       <p>{formatMoney(payment.amountMinor, payment.currency, culture)}</p>
                       <p>{copy.createdLabel} {formatDateTime(payment.createdAtUtc, culture)}</p>

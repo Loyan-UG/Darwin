@@ -46,9 +46,10 @@ namespace Darwin.Application.Catalog.Queries
             var q = _db.Set<Category>()
                 .AsNoTracking()
                 .Where(c =>
-                    query == null ||
-                    c.Translations.Any(t => t.Name.Contains(query)) ||
-                    c.Translations.Any(t => t.Slug != null && t.Slug.Contains(query)));
+                    !c.IsDeleted &&
+                    (query == null ||
+                     c.Translations.Any(t => !t.IsDeleted && t.Name.Contains(query)) ||
+                     c.Translations.Any(t => !t.IsDeleted && t.Slug != null && t.Slug.Contains(query))));
 
             q = filter switch
             {
@@ -63,8 +64,8 @@ namespace Darwin.Application.Catalog.Queries
             {
                 Id = c.Id,
                 Name = c.Translations
-                    .Where(t => t.Culture == culture).Select(t => t.Name).FirstOrDefault()
-                    ?? c.Translations.Select(t => t.Name).FirstOrDefault(),
+                    .Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Name).FirstOrDefault()
+                    ?? c.Translations.Where(t => !t.IsDeleted).Select(t => t.Name).FirstOrDefault(),
                 IsActive = c.IsActive,
                 IsPublished = c.IsPublished,
                 SortOrder = c.SortOrder,
@@ -96,7 +97,7 @@ namespace Darwin.Application.Catalog.Queries
 
         public async Task<CategoryOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {
-            var categories = _db.Set<Category>().AsNoTracking();
+            var categories = _db.Set<Category>().AsNoTracking().Where(c => !c.IsDeleted);
 
             return new CategoryOpsSummaryDto
             {

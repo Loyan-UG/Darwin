@@ -8,6 +8,7 @@ import type {
 import type { PublicPageSummary } from "@/features/cms/types";
 import type { MemberInvoiceSummary } from "@/features/member-portal/types";
 import { formatMoney } from "@/lib/formatting";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getCommerceResource } from "@/localization";
 
@@ -49,7 +50,7 @@ export function CheckoutContentCompositionWindow({
   const outstandingInvoice =
     memberInvoices.find((invoice) => invoice.balanceMinor > 0) ?? null;
   const storefrontHref = strongestProduct
-    ? `/catalog/${strongestProduct.slug}`
+    ? buildCatalogProductPath(strongestProduct.slug)
     : strongestCategory
       ? buildAppQueryPath("/catalog", { category: strongestCategory.slug })
       : "/catalog";
@@ -123,7 +124,7 @@ export function CheckoutContentCompositionWindow({
       description:
         strongestPage?.metaDescription ??
         copy.checkoutCompositionRouteMapContentFallbackDescription,
-      href: strongestPage ? `/cms/${strongestPage.slug}` : "/cms",
+      href: strongestPage ? buildCmsPagePath(strongestPage.slug) : "/cms",
       ctaLabel: copy.checkoutCompositionRouteMapContentCta,
       meta: formatResource(copy.checkoutCompositionRouteMapContentMeta, {
         count: cmsPages.length,

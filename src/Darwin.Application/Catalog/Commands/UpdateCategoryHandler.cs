@@ -35,7 +35,7 @@ namespace Darwin.Application.Catalog.Commands
 
             var entity = await _db.Set<Category>()
                 .Include(c => c.Translations)
-                .FirstOrDefaultAsync(c => c.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(c => c.Id == dto.Id && !c.IsDeleted, ct);
 
             if (entity == null)
                 throw new ValidationException(_localizer["CategoryNotFound"]);
@@ -48,20 +48,30 @@ namespace Darwin.Application.Catalog.Commands
             entity.IsActive = dto.IsActive;
             entity.SortOrder = dto.SortOrder;
 
+            var requestedCultures = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
             foreach (var t in dto.Translations)
             {
-                var translation = entity.Translations.FirstOrDefault(x => x.Culture == t.Culture);
+                var culture = t.Culture.Trim();
+                if (!requestedCultures.Add(culture))
+                {
+                    throw new ValidationException(_localizer["DuplicateCulturesNotAllowed"]);
+                }
+
+                var translation = entity.Translations.FirstOrDefault(x =>
+                    string.Equals(x.Culture, culture, System.StringComparison.OrdinalIgnoreCase));
                 if (translation == null)
                 {
-                    translation = new CategoryTranslation { Culture = t.Culture };
+                    translation = new CategoryTranslation { Culture = culture };
                     entity.Translations.Add(translation);
                 }
 
-                translation.Name = t.Name;
-                translation.Slug = t.Slug;
-                translation.Description = t.Description;
-                translation.MetaTitle = t.MetaTitle;
-                translation.MetaDescription = t.MetaDescription;
+                translation.IsDeleted = false;
+                translation.Culture = culture;
+                translation.Name = t.Name.Trim();
+                translation.Slug = t.Slug.Trim();
+                translation.Description = t.Description?.Trim();
+                translation.MetaTitle = t.MetaTitle?.Trim();
+                translation.MetaDescription = t.MetaDescription?.Trim();
             }
 
             await _db.SaveChangesAsync(ct);

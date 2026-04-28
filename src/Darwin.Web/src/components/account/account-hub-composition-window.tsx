@@ -12,6 +12,7 @@ import {
 } from "@/features/storefront/storefront-campaigns";
 import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
+import { buildCatalogProductPath } from "@/lib/entity-paths";
 import { buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getMemberResource } from "@/localization";
 
@@ -64,7 +65,7 @@ export function AccountHubCompositionWindow({
   );
   const storefrontHref = localizeHref(
     spotlightProduct
-      ? `/catalog/${spotlightProduct.slug}`
+      ? buildCatalogProductPath(spotlightProduct.slug)
       : categorySpotlightCard
         ? categorySpotlightCard.href
         : "/catalog",

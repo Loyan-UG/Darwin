@@ -33,7 +33,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
             builder.HasIndex(x => x.BusinessId);
             builder.HasIndex(x => new { x.BusinessId, x.Code })
                 .IsUnique()
-                .HasFilter("[Code] IS NOT NULL");
+                .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
         }
 
         /// <inheritdoc />

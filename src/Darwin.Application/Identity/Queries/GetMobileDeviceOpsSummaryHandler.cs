@@ -31,7 +31,7 @@ public sealed class GetMobileDeviceOpsSummaryHandler
 
         var baseDevices = _db.Set<UserDevice>()
             .AsNoTracking()
-            .Where(x => !x.IsDeleted && x.IsActive);
+            .Where(x => !x.IsDeleted && x.IsActive && _db.Set<User>().Any(u => u.Id == x.UserId && !u.IsDeleted));
 
         var businessMemberUserIds = _db.Set<BusinessMember>()
             .AsNoTracking()

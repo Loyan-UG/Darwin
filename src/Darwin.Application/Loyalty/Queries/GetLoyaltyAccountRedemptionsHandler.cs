@@ -64,13 +64,13 @@ namespace Darwin.Application.Loyalty.Queries
             }
 
             var redemptionQuery = _db.Set<LoyaltyRewardRedemption>().AsNoTracking()
-                .Where(r => r.LoyaltyAccountId == loyaltyAccountId);
+                .Where(r => r.LoyaltyAccountId == loyaltyAccountId && !r.IsDeleted);
 
-            var accountQuery = _db.Set<LoyaltyAccount>().AsNoTracking();
-            var userQuery = _db.Set<User>().AsNoTracking();
-            var txQuery = _db.Set<LoyaltyPointsTransaction>().AsNoTracking();
-            var scanQuery = _db.Set<ScanSession>().AsNoTracking();
-            var rewardTierQuery = _db.Set<LoyaltyRewardTier>().AsNoTracking();
+            var accountQuery = _db.Set<LoyaltyAccount>().AsNoTracking().Where(a => !a.IsDeleted);
+            var userQuery = _db.Set<User>().AsNoTracking().Where(u => !u.IsDeleted);
+            var txQuery = _db.Set<LoyaltyPointsTransaction>().AsNoTracking().Where(t => !t.IsDeleted);
+            var scanQuery = _db.Set<ScanSession>().AsNoTracking().Where(s => !s.IsDeleted);
+            var rewardTierQuery = _db.Set<LoyaltyRewardTier>().AsNoTracking().Where(t => !t.IsDeleted);
 
             var query =
                 from redemption in redemptionQuery

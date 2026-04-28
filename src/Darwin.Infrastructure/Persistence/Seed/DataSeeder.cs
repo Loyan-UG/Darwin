@@ -44,23 +44,23 @@ namespace Darwin.Infrastructure.Persistence.Seed
             ShippingSeedSection shipping,
             OrdersSeedSection orders)
         {
-            _db = db;
-            _identity = identity;
-            _pricing = pricing;
-            _cms = cms;
-            _inventory = inventory;
-            _integration = integration;
-            _seo = seo;
-            _cart = cart;
-            _siteSettings = siteSettings;
-            _catalog = catalog;
-            _businesses = businesses;
-            _crm = crm;
-            _loyalty = loyalty;
-            _billing = billing;
-            _marketing = marketing;
-            _shipping = shipping;
-            _orders = orders;
+            _db = db ?? throw new System.ArgumentNullException(nameof(db));
+            _identity = identity ?? throw new System.ArgumentNullException(nameof(identity));
+            _pricing = pricing ?? throw new System.ArgumentNullException(nameof(pricing));
+            _cms = cms ?? throw new System.ArgumentNullException(nameof(cms));
+            _inventory = inventory ?? throw new System.ArgumentNullException(nameof(inventory));
+            _integration = integration ?? throw new System.ArgumentNullException(nameof(integration));
+            _seo = seo ?? throw new System.ArgumentNullException(nameof(seo));
+            _cart = cart ?? throw new System.ArgumentNullException(nameof(cart));
+            _siteSettings = siteSettings ?? throw new System.ArgumentNullException(nameof(siteSettings));
+            _catalog = catalog ?? throw new System.ArgumentNullException(nameof(catalog));
+            _businesses = businesses ?? throw new System.ArgumentNullException(nameof(businesses));
+            _crm = crm ?? throw new System.ArgumentNullException(nameof(crm));
+            _loyalty = loyalty ?? throw new System.ArgumentNullException(nameof(loyalty));
+            _billing = billing ?? throw new System.ArgumentNullException(nameof(billing));
+            _marketing = marketing ?? throw new System.ArgumentNullException(nameof(marketing));
+            _shipping = shipping ?? throw new System.ArgumentNullException(nameof(shipping));
+            _orders = orders ?? throw new System.ArgumentNullException(nameof(orders));
         }
 
         public async Task SeedAsync(CancellationToken ct = default)

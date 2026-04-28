@@ -28,7 +28,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
 
             builder.HasIndex(x => new { x.BusinessId, x.UserId })
                    .IsUnique()
-                   .HasDatabaseName("UX_LoyaltyAccounts_Business_User");
+                   .HasDatabaseName("UX_LoyaltyAccounts_Business_User")
+                   .HasFilter("[IsDeleted] = 0");
 
             builder.HasMany(x => x.Transactions)
                    .WithOne()
@@ -74,7 +75,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
 
             builder.HasIndex(x => x.BusinessId)
                    .IsUnique()
-                   .HasDatabaseName("UX_LoyaltyPrograms_Business");
+                   .HasDatabaseName("UX_LoyaltyPrograms_Business")
+                   .HasFilter("[IsDeleted] = 0");
 
             builder.HasIndex(x => x.IsActive);
 
@@ -97,7 +99,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
 
             builder.HasIndex(x => new { x.LoyaltyProgramId, x.PointsRequired })
                    .IsUnique()
-                   .HasDatabaseName("UX_LoyaltyRewardTiers_Program_Points");
+                   .HasDatabaseName("UX_LoyaltyRewardTiers_Program_Points")
+                   .HasFilter("[IsDeleted] = 0");
         }
 
         public void Configure(EntityTypeBuilder<LoyaltyRewardRedemption> builder)
@@ -128,7 +131,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
 
             builder.HasIndex(x => x.Token)
                    .IsUnique()
-                   .HasDatabaseName("UX_QrCodeTokens_Token");
+                   .HasDatabaseName("UX_QrCodeTokens_Token")
+                   .HasFilter("[IsDeleted] = 0");
 
             builder.HasIndex(x => x.UserId);
             builder.HasIndex(x => x.LoyaltyAccountId);

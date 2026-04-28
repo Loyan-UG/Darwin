@@ -69,7 +69,7 @@ namespace Darwin.Application.Orders.Commands
                 .Include(o => o.Payments)
                 .Include(o => o.Shipments)
                     .ThenInclude(s => s.Lines)
-                .FirstOrDefaultAsync(o => o.Id == dto.OrderId, ct);
+                .FirstOrDefaultAsync(o => o.Id == dto.OrderId && !o.IsDeleted, ct);
 
             if (order is null)
                 throw new ValidationException(_localizer["OrderNotFound"]);
@@ -275,7 +275,7 @@ namespace Darwin.Application.Orders.Commands
         {
             var completedRefundTotal = await _db.Set<Refund>()
                 .AsNoTracking()
-                .Where(x => x.OrderId == order.Id && x.Status == RefundStatus.Completed)
+                .Where(x => x.OrderId == order.Id && x.Status == RefundStatus.Completed && !x.IsDeleted)
                 .SumAsync(x => (long?)x.AmountMinor, ct)
                 .ConfigureAwait(false) ?? 0L;
 
@@ -295,7 +295,7 @@ namespace Darwin.Application.Orders.Commands
         {
             return await _db.Set<Refund>()
                 .AsNoTracking()
-                .AnyAsync(x => x.OrderId == orderId && x.Status == RefundStatus.Pending, ct)
+                .AnyAsync(x => x.OrderId == orderId && x.Status == RefundStatus.Pending && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
         }
     }

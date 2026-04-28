@@ -15,6 +15,8 @@ namespace Darwin.Application.Businesses.Queries
     /// </summary>
     public sealed class GetBusinessCommunicationSetupPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetBusinessCommunicationSetupPageHandler(IAppDbContext db)
@@ -32,8 +34,9 @@ namespace Darwin.Application.Businesses.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var baseQuery = _db.Set<Business>().AsNoTracking();
+            var baseQuery = _db.Set<Business>().AsNoTracking().Where(x => !x.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(query))
             {

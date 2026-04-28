@@ -16,6 +16,8 @@ export type PublicCategorySummary = {
   name: string;
   slug: string;
   description?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
   sortOrder: number;
 };
 

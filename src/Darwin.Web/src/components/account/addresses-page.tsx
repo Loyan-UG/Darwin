@@ -22,6 +22,7 @@ import {
   formatResource,
   getMemberResource,
   matchesLocalizedQueryMessageKey,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { localizeHref } from "@/lib/locale-routing";
@@ -82,6 +83,7 @@ export function AddressesPage({
   const copy = getMemberResource(culture);
   const resolvedAddressesError = resolveLocalizedQueryMessage(addressesError, copy);
   const statusMessage = getAddressesStatusMessage(addressesStatus, copy);
+  const localizedStatus = resolveApiStatusLabel(status, copy) ?? status;
   const defaultShippingAddress =
     addresses.find((address) => address.isDefaultShipping) ?? null;
   const defaultBillingAddress =
@@ -202,7 +204,7 @@ export function AddressesPage({
             title={copy.addressBookWarningsTitle}
             message={
               resolvedAddressesError ??
-              formatResource(copy.addressBookWarningsMessage, { status })
+              formatResource(copy.addressBookWarningsMessage, { status: localizedStatus })
             }
           />
         )}
@@ -242,7 +244,7 @@ export function AddressesPage({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.addressesRouteSummaryMessage, {
-                status,
+                status: localizedStatus,
                 count: addresses.length,
               })}
             </p>

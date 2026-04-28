@@ -70,11 +70,22 @@ namespace Darwin.Application.Catalog.Commands
             // SANITIZE translations:
             foreach (var t in product.Translations)
             {
+                t.Culture = t.Culture.Trim();
+                t.Name = t.Name.Trim();
+                t.Slug = t.Slug.Trim();
                 t.FullDescriptionHtml = HtmlSanitizerHelper.SanitizeOrNull(_sanitizer, t.FullDescriptionHtml);
                 t.ShortDescription = t.ShortDescription?.Trim();
                 t.MetaTitle = t.MetaTitle?.Trim();
                 t.MetaDescription = t.MetaDescription?.Trim();
                 t.SearchKeywords = t.SearchKeywords?.Trim();
+            }
+
+            foreach (var variant in product.Variants)
+            {
+                variant.Sku = variant.Sku.Trim();
+                variant.Gtin = variant.Gtin?.Trim();
+                variant.ManufacturerPartNumber = variant.ManufacturerPartNumber?.Trim();
+                variant.Currency = variant.Currency.Trim().ToUpperInvariant();
             }
 
             _db.Set<Product>().Add(product);

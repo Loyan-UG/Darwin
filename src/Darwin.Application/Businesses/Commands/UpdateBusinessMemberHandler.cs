@@ -36,7 +36,7 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var entity = await _db.Set<BusinessMember>()
-                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
 
             if (entity is null)
                 throw new InvalidOperationException(_localizer["BusinessMemberNotFound"]);
@@ -56,6 +56,7 @@ namespace Darwin.Application.Businesses.Commands
                     .AnyAsync(x =>
                         x.BusinessId == entity.BusinessId &&
                         x.Id != entity.Id &&
+                        !x.IsDeleted &&
                         x.Role == BusinessMemberRole.Owner &&
                         x.IsActive, ct);
 

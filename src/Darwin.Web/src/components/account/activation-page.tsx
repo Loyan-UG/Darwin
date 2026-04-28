@@ -160,13 +160,13 @@ export function ActivationPage({
 
         <div className="flex flex-wrap gap-3">
           <Link
-              href={signInHref}
+            href={signInHref}
             className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
           >
             {copy.signIn}
           </Link>
           <Link
-              href={passwordHref}
+            href={passwordHref}
             className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
           >
             {copy.cardPasswordCta}

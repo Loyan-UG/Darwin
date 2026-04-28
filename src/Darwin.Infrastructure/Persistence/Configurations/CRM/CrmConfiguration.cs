@@ -40,7 +40,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.HasIndex(x => x.Email);
             builder.HasIndex(x => x.UserId)
                 .IsUnique()
-                .HasFilter("[UserId] IS NOT NULL");
+                .HasFilter("[UserId] IS NOT NULL AND [IsDeleted] = 0");
 
             builder.HasOne<User>()
                 .WithMany()
@@ -99,7 +99,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.Property(x => x.Name).IsRequired().HasMaxLength(200);
             builder.Property(x => x.Description).HasMaxLength(2000);
 
-            builder.HasIndex(x => x.Name).IsUnique();
+            builder.HasIndex(x => x.Name)
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
 
         /// <inheritdoc />
@@ -109,7 +111,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.HasKey(x => x.Id);
 
             builder.HasIndex(x => new { x.CustomerId, x.CustomerSegmentId })
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             builder.HasOne<Customer>()
                 .WithMany(x => x.CustomerSegments)

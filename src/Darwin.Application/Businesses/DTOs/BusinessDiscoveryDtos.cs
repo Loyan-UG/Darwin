@@ -70,6 +70,11 @@ namespace Darwin.Application.Businesses.DTOs
         /// Optional radius in kilometers used for proximity search.
         /// </summary>
         public double? RadiusKm { get; set; }
+
+        /// <summary>
+        /// Optional requested content culture for public business card text.
+        /// </summary>
+        public string? Culture { get; set; }
     }
 
     /// <summary>
@@ -83,6 +88,10 @@ namespace Darwin.Application.Businesses.DTOs
         public string Name { get; set; } = string.Empty;
 
         public string? ShortDescription { get; set; }
+
+        public string? AdminTextOverridesJson { get; set; }
+
+        public string? DefaultCulture { get; set; }
 
         public BusinessCategoryKind Category { get; set; }
 

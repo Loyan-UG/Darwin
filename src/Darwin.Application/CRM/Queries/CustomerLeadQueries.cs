@@ -9,6 +9,8 @@ namespace Darwin.Application.CRM.Queries
 {
     public sealed class GetCustomersPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetCustomersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -22,11 +24,14 @@ namespace Darwin.Application.CRM.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery =
                 from customer in _db.Set<Customer>().AsNoTracking()
                 join user in _db.Set<User>().AsNoTracking() on customer.UserId equals (Guid?)user.Id into users
                 from user in users.DefaultIfEmpty()
+                where !customer.IsDeleted &&
+                      (user == null || !user.IsDeleted)
                 select new { customer, user };
 
             if (!string.IsNullOrWhiteSpace(query))
@@ -45,8 +50,8 @@ namespace Darwin.Application.CRM.Queries
             baseQuery = filter switch
             {
                 CustomerQueueFilter.LinkedUser => baseQuery.Where(x => x.customer.UserId.HasValue),
-                CustomerQueueFilter.NeedsSegmentation => baseQuery.Where(x => x.customer.CustomerSegments.Count == 0),
-                CustomerQueueFilter.HasOpportunities => baseQuery.Where(x => x.customer.Opportunities.Count > 0),
+                CustomerQueueFilter.NeedsSegmentation => baseQuery.Where(x => x.customer.CustomerSegments.Count(segment => !segment.IsDeleted) == 0),
+                CustomerQueueFilter.HasOpportunities => baseQuery.Where(x => x.customer.Opportunities.Count(opportunity => !opportunity.IsDeleted) > 0),
                 CustomerQueueFilter.Business => baseQuery.Where(x => x.customer.TaxProfileType == CustomerTaxProfileType.Business),
                 CustomerQueueFilter.MissingVatId => baseQuery.Where(x => x.customer.TaxProfileType == CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(x.customer.VatId)),
                 CustomerQueueFilter.UsesPlatformLocaleFallback => baseQuery.Where(x => !x.customer.UserId.HasValue || x.user == null || string.IsNullOrWhiteSpace(x.user.Locale)),
@@ -73,8 +78,8 @@ namespace Darwin.Application.CRM.Queries
                     VatId = x.customer.VatId,
                     Locale = x.customer.UserId.HasValue && x.user != null ? x.user.Locale : null,
                     UsesPlatformLocaleFallback = !x.customer.UserId.HasValue || x.user == null || string.IsNullOrWhiteSpace(x.user.Locale),
-                    SegmentCount = x.customer.CustomerSegments.Count,
-                    OpportunityCount = x.customer.Opportunities.Count,
+                    SegmentCount = x.customer.CustomerSegments.Count(segment => !segment.IsDeleted),
+                    OpportunityCount = x.customer.Opportunities.Count(opportunity => !opportunity.IsDeleted),
                     CreatedAtUtc = x.customer.CreatedAtUtc,
                     ModifiedAtUtc = x.customer.ModifiedAtUtc,
                     RowVersion = x.customer.RowVersion
@@ -224,6 +229,8 @@ namespace Darwin.Application.CRM.Queries
 
     public sealed class GetLeadsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetLeadsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -237,11 +244,14 @@ namespace Darwin.Application.CRM.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery =
                 from lead in _db.Set<Lead>().AsNoTracking()
                 join assignedUser in _db.Set<User>().AsNoTracking() on lead.AssignedToUserId equals (Guid?)assignedUser.Id into assignedUsers
                 from assignedUser in assignedUsers.DefaultIfEmpty()
+                where !lead.IsDeleted &&
+                      (assignedUser == null || !assignedUser.IsDeleted)
                 select new { lead, assignedUser };
 
             if (!string.IsNullOrWhiteSpace(query))
@@ -286,7 +296,7 @@ namespace Darwin.Application.CRM.Queries
                         ? null
                         : (((x.assignedUser.FirstName ?? string.Empty) + " " + (x.assignedUser.LastName ?? string.Empty)).Trim()),
                     CustomerId = x.lead.CustomerId,
-                    InteractionCount = x.lead.Interactions.Count,
+                    InteractionCount = x.lead.Interactions.Count(interaction => !interaction.IsDeleted),
                     CreatedAtUtc = x.lead.CreatedAtUtc,
                     ModifiedAtUtc = x.lead.ModifiedAtUtc,
                     RowVersion = x.lead.RowVersion

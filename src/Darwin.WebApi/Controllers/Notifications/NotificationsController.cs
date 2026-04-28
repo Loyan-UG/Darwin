@@ -7,7 +7,6 @@ using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Contracts.Notifications;
 using Darwin.Domain.Enums;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
@@ -64,12 +63,12 @@ public sealed class NotificationsController : ApiControllerBase
         var dto = new RegisterUserDeviceDto
         {
             UserId = userId.Value,
-            DeviceId = request.DeviceId,
+            DeviceId = NormalizeRequired(request.DeviceId),
             Platform = ToDomainPlatform(request.Platform),
-            PushToken = request.PushToken,
+            PushToken = NormalizeNullable(request.PushToken),
             NotificationsEnabled = request.NotificationsEnabled,
-            AppVersion = request.AppVersion,
-            DeviceModel = request.DeviceModel
+            AppVersion = NormalizeNullable(request.AppVersion),
+            DeviceModel = NormalizeNullable(request.DeviceModel)
         };
 
         var result = await _registerOrUpdateUserDeviceHandler.HandleAsync(dto, ct).ConfigureAwait(false);
@@ -92,6 +91,12 @@ public sealed class NotificationsController : ApiControllerBase
             MobileDevicePlatform.iOS => MobilePlatform.iOS,
             _ => MobilePlatform.Unknown
         };
+
+    private static string NormalizeRequired(string? value)
+        => value?.Trim() ?? string.Empty;
+
+    private static string? NormalizeNullable(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static Guid? GetUserIdFromClaims(ClaimsPrincipal user)
     {

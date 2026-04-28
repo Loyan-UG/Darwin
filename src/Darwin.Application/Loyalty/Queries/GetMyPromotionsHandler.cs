@@ -91,11 +91,11 @@ namespace Darwin.Application.Loyalty.Queries
             var joinedBusinessIds = accountLookup.Keys.ToList();
             var items = new List<PromotionFeedItemDto>(capacity: baseMax * 2);
 
-            var campaignCards = await BuildCampaignCardsAsync(dto.BusinessId, nowUtc, joinedBusinessIds, accountLookup, ct)
+            var campaignCards = await BuildCampaignCardsAsync(dto.BusinessId, dto.Culture, nowUtc, joinedBusinessIds, accountLookup, ct)
                 .ConfigureAwait(false);
             items.AddRange(campaignCards);
 
-            var derivedCards = await BuildDerivedCardsAsync(accounts, ct).ConfigureAwait(false);
+            var derivedCards = await BuildDerivedCardsAsync(accounts, dto.Culture, ct).ConfigureAwait(false);
             items.AddRange(derivedCards);
 
             var guardrailResult = await ApplyGuardrailsAsync(items, userId, nowUtc, policy, ct).ConfigureAwait(false);
@@ -250,6 +250,7 @@ namespace Darwin.Application.Loyalty.Queries
         /// </summary>
         private async Task<List<PromotionFeedItemDto>> BuildCampaignCardsAsync(
             Guid? businessFilter,
+            string? culture,
             DateTime nowUtc,
             IReadOnlyCollection<Guid> joinedBusinessIds,
             IReadOnlyDictionary<Guid, AccountPromotionContext> accountLookup,
@@ -291,12 +292,23 @@ namespace Darwin.Application.Loyalty.Queries
                     ? account.BusinessName
                     : "Darwin";
 
+                var title = LoyaltyLocalizedTextResolver.Resolve(
+                    campaign.PayloadJson,
+                    culture,
+                    "title",
+                    string.IsNullOrWhiteSpace(campaign.Title) ? campaign.Name : campaign.Title);
+                var description = LoyaltyLocalizedTextResolver.Resolve(
+                    campaign.PayloadJson,
+                    culture,
+                    "body",
+                    campaign.Body ?? campaign.Subtitle ?? string.Empty);
+
                 cards.Add(new PromotionFeedItemDto
                 {
                     BusinessId = effectiveBusinessId,
                     BusinessName = businessName,
-                    Title = string.IsNullOrWhiteSpace(campaign.Title) ? campaign.Name : campaign.Title,
-                    Description = campaign.Body ?? campaign.Subtitle ?? string.Empty,
+                    Title = title,
+                    Description = description,
                     CtaKind = "OpenRewards",
                     Priority = ResolveCampaignPriority(campaign.PayloadJson),
                     CampaignId = campaign.Id,
@@ -313,7 +325,10 @@ namespace Darwin.Application.Loyalty.Queries
         /// <summary>
         /// Builds legacy derived cards from loyalty reward thresholds.
         /// </summary>
-        private async Task<List<PromotionFeedItemDto>> BuildDerivedCardsAsync(IReadOnlyCollection<AccountPromotionContext> accounts, CancellationToken ct)
+        private async Task<List<PromotionFeedItemDto>> BuildDerivedCardsAsync(
+            IReadOnlyCollection<AccountPromotionContext> accounts,
+            string? culture,
+            CancellationToken ct)
         {
             var resultItems = new List<PromotionFeedItemDto>();
 
@@ -323,7 +338,7 @@ namespace Darwin.Application.Loyalty.Queries
                                    join tier in _db.Set<LoyaltyRewardTier>().AsNoTracking() on program.Id equals tier.LoyaltyProgramId
                                    where !program.IsDeleted && program.IsActive && program.BusinessId == account.BusinessId && !tier.IsDeleted
                                    orderby tier.PointsRequired
-                                   select new { tier.PointsRequired, tier.Description })
+                                   select new { tier.PointsRequired, tier.Description, tier.MetadataJson })
                     .ToListAsync(ct)
                     .ConfigureAwait(false);
 
@@ -339,12 +354,18 @@ namespace Darwin.Application.Loyalty.Queries
 
                 if (redeemable is not null)
                 {
+                    var rewardDescription = LoyaltyLocalizedTextResolver.Resolve(
+                        redeemable.MetadataJson,
+                        culture,
+                        "description",
+                        redeemable.Description ?? "reward");
+
                     resultItems.Add(new PromotionFeedItemDto
                     {
                         BusinessId = account.BusinessId,
                         BusinessName = account.BusinessName,
-                        Title = "Reward available now",
-                        Description = $"You can redeem '{redeemable.Description}' with your current points.",
+                        Title = ResolveDerivedTitle(culture, rewardAvailable: true),
+                        Description = ResolveRedeemableDescription(culture, rewardDescription),
                         CtaKind = "OpenRewards",
                         Priority = 100,
                         CampaignState = ActiveCampaignState,
@@ -369,12 +390,17 @@ namespace Darwin.Application.Loyalty.Queries
                 }
 
                 var missing = next.PointsRequired - account.PointsBalance;
+                var nextRewardDescription = LoyaltyLocalizedTextResolver.Resolve(
+                    next.MetadataJson,
+                    culture,
+                    "description",
+                    next.Description ?? "reward");
                 resultItems.Add(new PromotionFeedItemDto
                 {
                     BusinessId = account.BusinessId,
                     BusinessName = account.BusinessName,
-                    Title = "Close to next reward",
-                    Description = $"Only {missing} points left to unlock '{next.Description}'.",
+                    Title = ResolveDerivedTitle(culture, rewardAvailable: false),
+                    Description = ResolveNextRewardDescription(culture, missing, nextRewardDescription),
                     CtaKind = "OpenQr",
                     Priority = 80,
                     CampaignState = ActiveCampaignState,
@@ -385,13 +411,38 @@ namespace Darwin.Application.Loyalty.Queries
                             AudienceKind = PointsThresholdAudience,
                             MinPoints = next.PointsRequired,
                             MaxPoints = next.PointsRequired - 1,
-                            Note = $"Member needs {missing} more points to qualify."
+                                Note = $"Member needs {missing} more points to qualify."
                         }
                     }
                 });
             }
 
             return resultItems;
+        }
+
+        private static string ResolveDerivedTitle(string? culture, bool rewardAvailable)
+        {
+            var isGerman = string.Equals(culture, "de-DE", StringComparison.OrdinalIgnoreCase);
+            if (rewardAvailable)
+            {
+                return isGerman ? "Prämie jetzt verfügbar" : "Reward available now";
+            }
+
+            return isGerman ? "Fast bei der nächsten Prämie" : "Close to next reward";
+        }
+
+        private static string ResolveRedeemableDescription(string? culture, string rewardDescription)
+        {
+            return string.Equals(culture, "de-DE", StringComparison.OrdinalIgnoreCase)
+                ? $"Du kannst '{rewardDescription}' mit deinen aktuellen Punkten einlösen."
+                : $"You can redeem '{rewardDescription}' with your current points.";
+        }
+
+        private static string ResolveNextRewardDescription(string? culture, int missingPoints, string rewardDescription)
+        {
+            return string.Equals(culture, "de-DE", StringComparison.OrdinalIgnoreCase)
+                ? $"Nur noch {missingPoints} Punkte bis '{rewardDescription}'."
+                : $"Only {missingPoints} points left to unlock '{rewardDescription}'.";
         }
 
         /// <summary>

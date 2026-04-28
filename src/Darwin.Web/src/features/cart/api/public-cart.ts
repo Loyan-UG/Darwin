@@ -1,6 +1,12 @@
 import "server-only";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
+import {
+  createDiagnostics,
+  getResponseDiagnostics,
+  logApiFailure,
+  withFailureDiagnostics,
+} from "@/lib/api-diagnostics";
 import { serializeQueryParams } from "@/lib/query-params";
 import type { PublicCartSummary } from "@/features/cart/types";
 import {
@@ -27,11 +33,15 @@ async function fetchCartJson<T>(
       },
     }));
 
+    const diagnostics = getResponseDiagnostics("storefront-cart", path, response);
+
     if (response.status === 404) {
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "not-found");
       return {
         data: null,
         status: "not-found",
         message: toLocalizedQueryMessage("storefrontCartNotFoundMessage"),
+        diagnostics: failureDiagnostics,
       };
     }
 
@@ -44,22 +54,46 @@ async function fetchCartJson<T>(
         // Keep the status-based message.
       }
 
+      const failureDiagnostics = withFailureDiagnostics(diagnostics, "http-error");
+      logApiFailure(failureDiagnostics, detail);
       return {
         data: null,
         status: "http-error",
         message: detail,
+        diagnostics: failureDiagnostics,
       };
     }
 
-    return {
-      data: (await response.json()) as T,
-      status: "ok",
-    };
-  } catch {
+    try {
+      return {
+        data: (await response.json()) as T,
+        status: "ok",
+        diagnostics,
+      };
+    } catch (error) {
+      const failureDiagnostics = withFailureDiagnostics(
+        diagnostics,
+        "invalid-payload",
+      );
+      logApiFailure(failureDiagnostics, error);
+      return {
+        data: null,
+        status: "invalid-payload",
+        message: toLocalizedQueryMessage("storefrontCartInvalidPayloadMessage"),
+        diagnostics: failureDiagnostics,
+      };
+    }
+  } catch (error) {
+    const diagnostics = withFailureDiagnostics(
+      createDiagnostics("storefront-cart", path),
+      "network-error",
+    );
+    logApiFailure(diagnostics, error);
     return {
       data: null,
       status: "network-error",
       message: toLocalizedQueryMessage("storefrontCartNetworkErrorMessage"),
+      diagnostics,
     };
   }
 }

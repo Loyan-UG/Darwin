@@ -18,6 +18,8 @@ namespace Darwin.Application.Businesses.Queries
     /// </summary>
     public sealed class GetBusinessInvitationsPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetBusinessInvitationsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -32,6 +34,7 @@ namespace Darwin.Application.Businesses.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var utcNow = DateTime.UtcNow;
 
@@ -39,7 +42,9 @@ namespace Darwin.Application.Businesses.Queries
                 from invitation in _db.Set<BusinessInvitation>().AsNoTracking()
                 join inviter in _db.Set<User>().AsNoTracking() on invitation.InvitedByUserId equals inviter.Id into inviterJoin
                 from inviter in inviterJoin.DefaultIfEmpty()
-                where invitation.BusinessId == businessId
+                where invitation.BusinessId == businessId &&
+                      !invitation.IsDeleted &&
+                      (inviter == null || !inviter.IsDeleted)
                 select new
                 {
                     Invitation = invitation,

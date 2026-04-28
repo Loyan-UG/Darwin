@@ -14,13 +14,16 @@ namespace Darwin.Application.SEO.Queries
     /// </summary>
     public sealed class GetRedirectRulesPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
-        public GetRedirectRulesPageHandler(IAppDbContext db) => _db = db;
+        public GetRedirectRulesPageHandler(IAppDbContext db) => _db = db ?? throw new System.ArgumentNullException(nameof(db));
 
         public async Task<(List<RedirectRuleListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery = _db.Set<RedirectRule>().AsNoTracking().Where(r => !r.IsDeleted);
             var total = await baseQuery.CountAsync(ct);

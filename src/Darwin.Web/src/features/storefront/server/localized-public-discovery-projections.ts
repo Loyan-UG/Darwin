@@ -1,3 +1,4 @@
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { buildLocalizedPath } from "@/lib/locale-routing";
 import { canonicalizeLanguageAlternates } from "@/lib/localized-alternates";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
@@ -34,28 +35,28 @@ export function projectLocalizedPublicDiscoveryInventory(
         culture: entry.culture,
         items: entry.pages,
       })),
-      (slug) => `/cms/${encodeURIComponent(slug)}`,
+      buildCmsPagePath,
     ),
     productAlternatesById: mapLocalizedDetailAlternatesById(
       localizedByCulture.map((entry) => ({
         culture: entry.culture,
         items: entry.products,
       })),
-      (slug) => `/catalog/${encodeURIComponent(slug)}`,
+      buildCatalogProductPath,
     ),
     cmsSitemapEntries: groupLocalizedDetailAlternates(
       localizedByCulture.map((entry) => ({
         culture: entry.culture,
         items: entry.pages,
       })),
-      (slug) => `/cms/${encodeURIComponent(slug)}`,
+      buildCmsPagePath,
     ),
     productSitemapEntries: groupLocalizedDetailAlternates(
       localizedByCulture.map((entry) => ({
         culture: entry.culture,
         items: entry.products,
       })),
-      (slug) => `/catalog/${encodeURIComponent(slug)}`,
+      buildCatalogProductPath,
     ),
   };
 }

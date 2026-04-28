@@ -12,6 +12,7 @@ import {
   INFERRED_CULTURE_SEARCH_PARAM,
   localizeHref,
 } from "@/lib/locale-routing";
+import { buildCmsPagePath } from "@/lib/entity-paths";
 import { getRequestCulture, getSupportedCultures } from "@/lib/request-culture";
 
 type CmsSearchParams = {
@@ -105,7 +106,7 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
       const alternatePage = alternateContext.detailContext.pageResult.data;
       if (alternatePage) {
         redirect(
-          appendSearchParams(`/cms/${slug}`, resolvedSearchParams, {
+    appendSearchParams(buildCmsPagePath(slug), resolvedSearchParams, {
             culture: alternateCulture,
             [INFERRED_CULTURE_SEARCH_PARAM]: "1",
           }),
@@ -118,7 +119,7 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
 
   if (page?.slug && page.slug !== slug) {
     redirect(
-      appendSearchParams(localizeHref(`/cms/${page.slug}`, culture), resolvedSearchParams),
+      appendSearchParams(localizeHref(buildCmsPagePath(page.slug), culture), resolvedSearchParams),
     );
   }
 

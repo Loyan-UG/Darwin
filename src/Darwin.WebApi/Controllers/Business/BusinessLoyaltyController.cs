@@ -172,9 +172,9 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
                     PointsRequired = request.PointsRequired,
                     RewardType = rewardType,
                     RewardValue = request.RewardValue,
-                    Description = request.Description,
+                    Description = NormalizeText(request.Description),
                     AllowSelfRedemption = request.AllowSelfRedemption,
-                    MetadataJson = request.MetadataJson
+                    MetadataJson = NormalizeText(request.MetadataJson)
                 }, ct)
                 .ConfigureAwait(false);
 
@@ -239,9 +239,9 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
                     PointsRequired = request.PointsRequired,
                     RewardType = rewardType,
                     RewardValue = request.RewardValue,
-                    Description = request.Description,
+                    Description = NormalizeText(request.Description),
                     AllowSelfRedemption = request.AllowSelfRedemption,
-                    MetadataJson = request.MetadataJson,
+                    MetadataJson = NormalizeText(request.MetadataJson),
                     RowVersion = request.RowVersion
                 }, ct)
                 .ConfigureAwait(false);
@@ -319,7 +319,8 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
-        if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
+        var normalizedScanSessionToken = NormalizeText(request.ScanSessionToken);
+        if (normalizedScanSessionToken is null)
         {
             return BadRequestProblem(_validationLocalizer["ScanSessionTokenRequired"]);
         }
@@ -331,7 +332,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         }
 
         var result = await _processScanSessionForBusinessHandler
-            .HandleAsync(request.ScanSessionToken, businessId, ct)
+            .HandleAsync(normalizedScanSessionToken, businessId, ct)
             .ConfigureAwait(false);
 
         if (!result.Succeeded || result.Value is null)
@@ -393,12 +394,13 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
-        if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
+        var normalizedScanSessionToken = NormalizeText(request.ScanSessionToken);
+        if (normalizedScanSessionToken is null)
         {
             return BadRequestProblem(_validationLocalizer["ScanSessionTokenRequired"]);
         }
 
-        if (request.ScanSessionToken.Length > 4000)
+        if (normalizedScanSessionToken.Length > 4000)
         {
             return BadRequestProblem(_validationLocalizer["ScanSessionTokenTooLong"]);
         }
@@ -417,9 +419,9 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         var result = await _confirmAccrualFromSessionHandler
             .HandleAsync(new ConfirmAccrualFromSessionDto
             {
-                ScanSessionToken = request.ScanSessionToken,
+                ScanSessionToken = normalizedScanSessionToken,
                 Points = request.Points,
-                Note = request.Note
+                Note = NormalizeText(request.Note)
             }, businessId, ct)
             .ConfigureAwait(false);
 
@@ -454,12 +456,13 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
-        if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
+        var normalizedScanSessionToken = NormalizeText(request.ScanSessionToken);
+        if (normalizedScanSessionToken is null)
         {
             return BadRequestProblem(_validationLocalizer["ScanSessionTokenRequired"]);
         }
 
-        if (request.ScanSessionToken.Length > 4000)
+        if (normalizedScanSessionToken.Length > 4000)
         {
             return BadRequestProblem(_validationLocalizer["ScanSessionTokenTooLong"]);
         }
@@ -473,7 +476,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         var result = await _confirmRedemptionFromSessionHandler
             .HandleAsync(new ConfirmRedemptionFromSessionDto
             {
-                ScanSessionToken = request.ScanSessionToken
+                ScanSessionToken = normalizedScanSessionToken
             }, businessId, ct)
             .ConfigureAwait(false);
 
@@ -502,6 +505,16 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetBusinessCampaignsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
     {
+        if (page <= 0)
+        {
+            return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
+        }
+
+        if (pageSize <= 0 || pageSize > 200)
+        {
+            return BadRequestProblem(_validationLocalizer["PageSizeMustBeBetween1And200"]);
+        }
+
         var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(ct).ConfigureAwait(false);
         if (!hasBusinessAccess)
         {
@@ -571,25 +584,25 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         var result = await _createBusinessCampaignHandler.HandleAsync(new CreateBusinessCampaignDto
         {
             BusinessId = businessId,
-            Name = request.Name,
-            Title = request.Title,
-            Subtitle = request.Subtitle,
-            Body = request.Body,
-            MediaUrl = request.MediaUrl,
-            LandingUrl = request.LandingUrl,
+            Name = NormalizeText(request.Name) ?? string.Empty,
+            Title = NormalizeText(request.Title) ?? string.Empty,
+            Subtitle = NormalizeText(request.Subtitle),
+            Body = NormalizeText(request.Body),
+            MediaUrl = NormalizeText(request.MediaUrl),
+            LandingUrl = NormalizeText(request.LandingUrl),
             Channels = request.Channels,
             StartsAtUtc = request.StartsAtUtc,
             EndsAtUtc = request.EndsAtUtc,
-            TargetingJson = request.TargetingJson,
-            EligibilityRules = request.EligibilityRules.Select(rule => new Darwin.Application.Loyalty.Campaigns.PromotionEligibilityRuleDto
+            TargetingJson = NormalizeText(request.TargetingJson) ?? "{}",
+            EligibilityRules = (request.EligibilityRules ?? new List<PromotionEligibilityRule>()).Select(rule => new Darwin.Application.Loyalty.Campaigns.PromotionEligibilityRuleDto
             {
-                AudienceKind = rule.AudienceKind,
+                AudienceKind = NormalizeText(rule.AudienceKind) ?? PromotionAudienceKind.JoinedMembers,
                 MinPoints = rule.MinPoints,
                 MaxPoints = rule.MaxPoints,
-                TierKey = rule.TierKey,
-                Note = rule.Note
+                TierKey = NormalizeText(rule.TierKey),
+                Note = NormalizeText(rule.Note)
             }).ToList(),
-            PayloadJson = request.PayloadJson
+            PayloadJson = NormalizeText(request.PayloadJson) ?? "{}"
         }, ct).ConfigureAwait(false);
 
         if (!result.Succeeded || result.Value == Guid.Empty)
@@ -621,29 +634,34 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["RequestBodyRouteIdMismatch"]);
         }
 
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
+        }
+
         var result = await _updateBusinessCampaignHandler.HandleAsync(new UpdateBusinessCampaignDto
         {
             BusinessId = businessId,
             Id = request.Id,
-            Name = request.Name,
-            Title = request.Title,
-            Subtitle = request.Subtitle,
-            Body = request.Body,
-            MediaUrl = request.MediaUrl,
-            LandingUrl = request.LandingUrl,
+            Name = NormalizeText(request.Name) ?? string.Empty,
+            Title = NormalizeText(request.Title) ?? string.Empty,
+            Subtitle = NormalizeText(request.Subtitle),
+            Body = NormalizeText(request.Body),
+            MediaUrl = NormalizeText(request.MediaUrl),
+            LandingUrl = NormalizeText(request.LandingUrl),
             Channels = request.Channels,
             StartsAtUtc = request.StartsAtUtc,
             EndsAtUtc = request.EndsAtUtc,
-            TargetingJson = request.TargetingJson,
-            EligibilityRules = request.EligibilityRules.Select(rule => new Darwin.Application.Loyalty.Campaigns.PromotionEligibilityRuleDto
+            TargetingJson = NormalizeText(request.TargetingJson) ?? "{}",
+            EligibilityRules = (request.EligibilityRules ?? new List<PromotionEligibilityRule>()).Select(rule => new Darwin.Application.Loyalty.Campaigns.PromotionEligibilityRuleDto
             {
-                AudienceKind = rule.AudienceKind,
+                AudienceKind = NormalizeText(rule.AudienceKind) ?? PromotionAudienceKind.JoinedMembers,
                 MinPoints = rule.MinPoints,
                 MaxPoints = rule.MaxPoints,
-                TierKey = rule.TierKey,
-                Note = rule.Note
+                TierKey = NormalizeText(rule.TierKey),
+                Note = NormalizeText(rule.Note)
             }).ToList(),
-            PayloadJson = request.PayloadJson,
+            PayloadJson = NormalizeText(request.PayloadJson) ?? "{}",
             RowVersion = request.RowVersion
         }, ct).ConfigureAwait(false);
 
@@ -674,6 +692,11 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         if (request is null || request.Id != id)
         {
             return BadRequestProblem(_validationLocalizer["RequestBodyRouteIdMismatch"]);
+        }
+
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
         }
 
         var result = await _setCampaignActivationHandler.HandleAsync(new SetCampaignActivationDto
@@ -767,7 +790,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     /// </summary>
     private static bool TryParseRewardType(string? rewardType, out DomainLoyaltyRewardType value)
     {
-        if (Enum.TryParse(rewardType, ignoreCase: true, out DomainLoyaltyRewardType parsed) &&
+        if (Enum.TryParse(NormalizeText(rewardType), ignoreCase: true, out DomainLoyaltyRewardType parsed) &&
             Enum.IsDefined(parsed))
         {
             value = parsed;
@@ -777,6 +800,9 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         value = default;
         return false;
     }
+
+    private static string? NormalizeText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     /// <summary>
     /// Maps common scan-session failures to stable HTTP responses for business clients.

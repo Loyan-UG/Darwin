@@ -53,6 +53,11 @@ namespace Darwin.Application.Loyalty.DTOs
         /// This must be provided together with <see cref="BeforeAtUtc"/> to ensure deterministic paging.
         /// </summary>
         public Guid? BeforeId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the requested presentation culture for future localized timeline fields.
+        /// </summary>
+        public string? Culture { get; set; }
     }
 
     /// <summary>

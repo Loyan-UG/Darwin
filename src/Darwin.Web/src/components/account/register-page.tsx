@@ -208,15 +208,15 @@ export function RegisterPage({
           />
           <PublicAuthContinuation
             culture={culture}
-          cmsPages={cmsPages}
-          cmsPagesStatus={cmsPagesStatus}
-          categories={categories}
-          categoriesStatus={categoriesStatus}
-          products={products}
-          productsStatus={productsStatus}
-          storefrontCart={storefrontCart}
-          storefrontCartStatus={storefrontCartStatus}
-        />
+            cmsPages={cmsPages}
+            cmsPagesStatus={cmsPagesStatus}
+            categories={categories}
+            categoriesStatus={categoriesStatus}
+            products={products}
+            productsStatus={productsStatus}
+            storefrontCart={storefrontCart}
+            storefrontCartStatus={storefrontCartStatus}
+          />
         </div>
       </div>
     </section>

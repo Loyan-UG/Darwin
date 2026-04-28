@@ -27,6 +27,7 @@ import {
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
+import { buildCmsPagePath, buildLoyaltyBusinessPath } from "@/lib/entity-paths";
 import { buildAppQueryPath, buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
 
 type LoyaltyBusinessPageProps = {
@@ -101,6 +102,56 @@ function getTimelineValue(
   return copy.activityFallback;
 }
 
+function localizeLoyaltyAccountStatus(
+  status: string | null | undefined,
+  copy: ReturnType<typeof getMemberResource>,
+) {
+  switch (status?.toLowerCase()) {
+    case "active":
+      return copy.loyaltyAccountStatusActiveLabel;
+    case "suspended":
+      return copy.loyaltyAccountStatusSuspendedLabel;
+    case "closed":
+      return copy.loyaltyAccountStatusClosedLabel;
+    default:
+      return status ?? copy.activityFallback;
+  }
+}
+
+function localizePointsTransactionType(
+  type: string | null | undefined,
+  copy: ReturnType<typeof getMemberResource>,
+) {
+  switch (type?.toLowerCase()) {
+    case "accrual":
+      return copy.pointsTransactionTypeAccrualLabel;
+    case "redemption":
+      return copy.pointsTransactionTypeRedemptionLabel;
+    case "adjustment":
+      return copy.pointsTransactionTypeAdjustmentLabel;
+    default:
+      return type ?? copy.pointsTransactionKind;
+  }
+}
+
+function localizeCampaignState(
+  state: string | null | undefined,
+  copy: ReturnType<typeof getMemberResource>,
+) {
+  switch (state?.toLowerCase()) {
+    case "active":
+      return copy.campaignStateActiveLabel;
+    case "draft":
+      return copy.campaignStateDraftLabel;
+    case "scheduled":
+      return copy.campaignStateScheduledLabel;
+    case "expired":
+      return copy.campaignStateExpiredLabel;
+    default:
+      return state ?? copy.activityFallback;
+  }
+}
+
 function normalizeProgressPercent(value: number | string | null | undefined) {
   if (typeof value === "number") {
     return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
@@ -155,7 +206,7 @@ export function LoyaltyBusinessPage({
   const loadMoreHref =
     timeline?.nextBeforeAtUtc && timeline?.nextBeforeId
       ? buildLocalizedQueryHref(
-          `/loyalty/${businessId}`,
+    buildLoyaltyBusinessPath(businessId),
           {
             beforeAtUtc: timeline.nextBeforeAtUtc,
             beforeId: timeline.nextBeforeId,
@@ -359,14 +410,14 @@ export function LoyaltyBusinessPage({
                     {preparedScanSession ? (
                       <form action={clearMemberLoyaltyScanSessionAction}>
                         <input type="hidden" name="businessId" value={businessId} />
-                        <input type="hidden" name="returnPath" value={localizeHref(`/loyalty/${businessId}`, culture)} />
+            <input type="hidden" name="returnPath" value={localizeHref(buildLoyaltyBusinessPath(businessId), culture)} />
                         <button type="submit" className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">{copy.clearTokenCta}</button>
                       </form>
                     ) : null}
                   </div>
                   <form action={prepareMemberLoyaltyScanSessionAction} className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
                     <input type="hidden" name="businessId" value={businessId} />
-                    <input type="hidden" name="returnPath" value={localizeHref(`/loyalty/${businessId}`, culture)} />
+            <input type="hidden" name="returnPath" value={localizeHref(buildLoyaltyBusinessPath(businessId), culture)} />
                     <div className="space-y-5">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <label className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
@@ -479,7 +530,7 @@ export function LoyaltyBusinessPage({
                         <article key={`${item.businessId}-${item.title}-${item.ctaKind}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">{item.campaignState}</p>
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">{localizeCampaignState(item.campaignState, copy)}</p>
                               <h3 className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">{item.title}</h3>
                             </div>
                             <span className="rounded-full bg-[var(--color-surface-panel)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-primary)]">P{item.priority}</span>
@@ -493,7 +544,7 @@ export function LoyaltyBusinessPage({
                             <input type="hidden" name="title" value={item.title} />
                             <input type="hidden" name="ctaKind" value={item.ctaKind} />
                             <input type="hidden" name="eventType" value={getPromotionEventType(item)} />
-                            <input type="hidden" name="returnPath" value={localizeHref(`/loyalty/${businessId}`, culture)} />
+                  <input type="hidden" name="returnPath" value={localizeHref(buildLoyaltyBusinessPath(businessId), culture)} />
                             <button type="submit" className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]">{getPromotionLabel(item, copy)}</button>
                           </form>
                         </article>
@@ -535,7 +586,7 @@ export function LoyaltyBusinessPage({
                 <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.accountDetailsTitle}</p>
                   <div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                    <div className="flex items-center justify-between gap-4"><span>{copy.statusLabel}</span><span>{dashboard.account.status}</span></div>
+                    <div className="flex items-center justify-between gap-4"><span>{copy.statusLabel}</span><span>{localizeLoyaltyAccountStatus(dashboard.account.status, copy)}</span></div>
                     <div className="flex items-center justify-between gap-4"><span>{copy.loyaltyAccountLabel}</span><span className="truncate">{dashboard.account.loyaltyAccountId}</span></div>
                     <div className="flex items-center justify-between gap-4"><span>{copy.businessIdShortLabel}</span><span className="truncate">{dashboard.account.businessId}</span></div>
                   </div>
@@ -578,7 +629,7 @@ export function LoyaltyBusinessPage({
                           {cmsPages.map((page) => (
                             <Link
                               key={page.id}
-                              href={localizeHref(`/cms/${page.slug}`, culture)}
+                  href={localizeHref(buildCmsPagePath(page.slug), culture)}
                               className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
                             >
                               <p className="font-semibold text-[var(--color-text-primary)]">
@@ -649,7 +700,7 @@ export function LoyaltyBusinessPage({
                 />
                 <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.recentTransactionsTitle}</p>
-                  {dashboard.recentTransactions.length ? <div className="mt-5 flex flex-col gap-4">{dashboard.recentTransactions.map((transaction) => <article key={`${transaction.occurredAtUtc}-${transaction.type}-${transaction.delta}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{transaction.type}</p><p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{formatDateTime(transaction.occurredAtUtc, culture)}</p>{transaction.notes ? <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{transaction.notes}</p> : null}</div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{formatResource(copy.pointsValueLabel, { value: `${transaction.delta >= 0 ? "+" : ""}${transaction.delta}` })}</p></div></article>)}</div> : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noRecentTransactionsMessage}</p>}
+                  {dashboard.recentTransactions.length ? <div className="mt-5 flex flex-col gap-4">{dashboard.recentTransactions.map((transaction) => <article key={`${transaction.occurredAtUtc}-${transaction.type}-${transaction.delta}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{localizePointsTransactionType(transaction.type, copy)}</p><p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{formatDateTime(transaction.occurredAtUtc, culture)}</p>{transaction.notes ? <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{transaction.notes}</p> : null}</div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{formatResource(copy.pointsValueLabel, { value: `${transaction.delta >= 0 ? "+" : ""}${transaction.delta}` })}</p></div></article>)}</div> : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noRecentTransactionsMessage}</p>}
                 </aside>
                 {promotions ? <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.feedDiagnosticsTitle}</p><div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]"><div className="flex items-center justify-between gap-4"><span>{copy.initialCandidatesLabel}</span><span>{promotions.diagnostics.initialCandidates}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.suppressedLabel}</span><span>{promotions.diagnostics.suppressedByFrequency}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.deduplicatedLabel}</span><span>{promotions.diagnostics.deduplicated}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.trimmedByCapLabel}</span><span>{promotions.diagnostics.trimmedByCap}</span></div></div></aside> : null}
               </div>

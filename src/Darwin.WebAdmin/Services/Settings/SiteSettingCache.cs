@@ -45,7 +45,7 @@ namespace Darwin.WebAdmin.Services.Settings
             // Load the single SiteSetting entity. Database schema enforces single row.
             var entity = await _db.Set<SiteSetting>()
                                   .AsNoTracking()
-                                  .SingleAsync(ct)
+                                  .FirstAsync(x => !x.IsDeleted, ct)
                                   .ConfigureAwait(false);
 
             var dto = Map(entity);

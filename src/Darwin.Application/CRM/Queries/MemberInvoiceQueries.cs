@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing.Queries;
+using Darwin.Application.Businesses;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Businesses;
@@ -16,6 +17,8 @@ namespace Darwin.Application.CRM.Queries;
 /// </summary>
 public sealed class GetMyInvoicesPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
     private readonly ICurrentUserService _currentUser;
 
@@ -31,10 +34,11 @@ public sealed class GetMyInvoicesPageHandler
     /// <summary>
     /// Returns the current member invoice history page.
     /// </summary>
-    public async Task<(List<MemberInvoiceSummaryDto> Items, int Total)> HandleAsync(int page, int pageSize, CancellationToken ct = default)
+    public async Task<(List<MemberInvoiceSummaryDto> Items, int Total)> HandleAsync(int page, int pageSize, string? culture = null, CancellationToken ct = default)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
         var userId = _currentUser.GetCurrentUserId();
         var baseQuery = BuildMemberInvoiceScope(userId);
@@ -59,7 +63,7 @@ public sealed class GetMyInvoicesPageHandler
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        await EnrichInvoicesAsync(items, ct).ConfigureAwait(false);
+        await EnrichInvoicesAsync(items, culture, ct).ConfigureAwait(false);
         return (items, total);
     }
 
@@ -68,11 +72,12 @@ public sealed class GetMyInvoicesPageHandler
         return _db.Set<Invoice>()
             .AsNoTracking()
             .Where(invoice =>
-                (invoice.OrderId.HasValue && _db.Set<Order>().Any(order => order.Id == invoice.OrderId.Value && order.UserId == userId)) ||
-                (invoice.CustomerId.HasValue && _db.Set<Customer>().Any(customer => customer.Id == invoice.CustomerId.Value && customer.UserId == userId)));
+                !invoice.IsDeleted &&
+                ((invoice.OrderId.HasValue && _db.Set<Order>().Any(order => !order.IsDeleted && order.Id == invoice.OrderId.Value && order.UserId == userId)) ||
+                 (invoice.CustomerId.HasValue && _db.Set<Customer>().Any(customer => !customer.IsDeleted && customer.Id == invoice.CustomerId.Value && customer.UserId == userId))));
     }
 
-    private async Task EnrichInvoicesAsync(List<MemberInvoiceSummaryDto> items, CancellationToken ct)
+    private async Task EnrichInvoicesAsync(List<MemberInvoiceSummaryDto> items, string? culture, CancellationToken ct)
     {
         if (items.Count == 0)
         {
@@ -84,18 +89,26 @@ public sealed class GetMyInvoicesPageHandler
         var invoiceIds = items.Select(x => x.Id).Distinct().ToList();
 
         var businesses = businessIds.Count == 0
-            ? new Dictionary<Guid, string>()
-            : await _db.Set<Business>().AsNoTracking().Where(x => businessIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.Name, ct).ConfigureAwait(false);
+            ? new Dictionary<Guid, (string Name, string? AdminTextOverridesJson, string DefaultCulture)>()
+            : await _db.Set<Business>()
+                .AsNoTracking()
+                .Where(x => businessIds.Contains(x.Id) && !x.IsDeleted)
+                .ToDictionaryAsync(x => x.Id, x => (x.Name, x.AdminTextOverridesJson, x.DefaultCulture), ct)
+                .ConfigureAwait(false);
         var orders = orderIds.Count == 0
             ? new Dictionary<Guid, string>()
-            : await _db.Set<Order>().AsNoTracking().Where(x => orderIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct).ConfigureAwait(false);
+            : await _db.Set<Order>().AsNoTracking().Where(x => orderIds.Contains(x.Id) && !x.IsDeleted).ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct).ConfigureAwait(false);
         var paymentData = await LoadPaymentDataAsync(invoiceIds, ct).ConfigureAwait(false);
 
         foreach (var item in items)
         {
-            if (item.BusinessId.HasValue && businesses.TryGetValue(item.BusinessId.Value, out var businessName))
+            if (item.BusinessId.HasValue && businesses.TryGetValue(item.BusinessId.Value, out var business))
             {
-                item.BusinessName = businessName;
+                item.BusinessName = BusinessPublicTextResolver.ResolveName(
+                    business.Name,
+                    business.AdminTextOverridesJson,
+                    culture,
+                    business.DefaultCulture);
             }
 
             if (item.OrderId.HasValue && orders.TryGetValue(item.OrderId.Value, out var orderNumber))
@@ -122,7 +135,7 @@ public sealed class GetMyInvoicesPageHandler
     {
         var invoicePayments = await _db.Set<Invoice>()
             .AsNoTracking()
-            .Where(x => invoiceIds.Contains(x.Id) && x.PaymentId.HasValue)
+            .Where(x => !x.IsDeleted && invoiceIds.Contains(x.Id) && x.PaymentId.HasValue)
             .Select(x => new { x.Id, PaymentId = x.PaymentId!.Value, x.TotalGrossMinor })
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -135,12 +148,12 @@ public sealed class GetMyInvoicesPageHandler
 
         var payments = await _db.Set<Payment>()
             .AsNoTracking()
-            .Where(x => paymentIds.Contains(x.Id))
+            .Where(x => paymentIds.Contains(x.Id) && !x.IsDeleted)
             .ToDictionaryAsync(x => x.Id, ct)
             .ConfigureAwait(false);
         var refundTotals = await _db.Set<Refund>()
             .AsNoTracking()
-            .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+            .Where(x => !x.IsDeleted && x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
             .GroupBy(x => x.PaymentId)
             .Select(x => new { PaymentId = x.Key, AmountMinor = x.Sum(r => r.AmountMinor) })
             .ToDictionaryAsync(x => x.PaymentId, x => x.AmountMinor, ct)
@@ -200,16 +213,21 @@ public sealed class GetMyInvoiceDetailHandler
     /// <summary>
     /// Returns the member-owned invoice detail or <c>null</c> when inaccessible.
     /// </summary>
-    public async Task<MemberInvoiceDetailDto?> HandleAsync(Guid id, CancellationToken ct = default)
+    public async Task<MemberInvoiceDetailDto?> HandleAsync(Guid id, string? culture = null, CancellationToken ct = default)
     {
+        if (id == Guid.Empty)
+        {
+            return null;
+        }
+
         var userId = _currentUser.GetCurrentUserId();
 
         var invoice = await _db.Set<Invoice>()
             .AsNoTracking()
-            .Where(x => x.Id == id)
+            .Where(x => x.Id == id && !x.IsDeleted)
             .Where(x =>
-                (x.OrderId.HasValue && _db.Set<Order>().Any(order => order.Id == x.OrderId.Value && order.UserId == userId)) ||
-                (x.CustomerId.HasValue && _db.Set<Customer>().Any(customer => customer.Id == x.CustomerId.Value && customer.UserId == userId)))
+                (x.OrderId.HasValue && _db.Set<Order>().Any(order => !order.IsDeleted && order.Id == x.OrderId.Value && order.UserId == userId)) ||
+                (x.CustomerId.HasValue && _db.Set<Customer>().Any(customer => !customer.IsDeleted && customer.Id == x.CustomerId.Value && customer.UserId == userId)))
             .Select(x => new MemberInvoiceDetailDto
             {
                 Id = x.Id,
@@ -223,10 +241,10 @@ public sealed class GetMyInvoiceDetailHandler
                 DueDateUtc = x.DueDateUtc,
                 PaidAtUtc = x.PaidAtUtc,
                 CreatedAtUtc = x.CreatedAtUtc,
-                Lines = x.Lines.Select(line => new MemberInvoiceLineDto
+                Lines = x.Lines.Where(line => !line.IsDeleted).Select(line => new MemberInvoiceLineDto
                 {
                     Id = line.Id,
-                    Description = line.Description,
+                    Description = MemberInvoicePresentationResolver.ResolveLineDescription(line.Description, culture),
                     Quantity = line.Quantity,
                     UnitPriceNetMinor = line.UnitPriceNetMinor,
                     TaxRate = line.TaxRate,
@@ -244,19 +262,28 @@ public sealed class GetMyInvoiceDetailHandler
 
         if (invoice.BusinessId.HasValue)
         {
-            invoice.BusinessName = await _db.Set<Business>()
+            var business = await _db.Set<Business>()
                 .AsNoTracking()
-                .Where(x => x.Id == invoice.BusinessId.Value)
-                .Select(x => x.Name)
+                .Where(x => x.Id == invoice.BusinessId.Value && !x.IsDeleted)
+                .Select(x => new { x.Name, x.AdminTextOverridesJson, x.DefaultCulture })
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
+
+            if (business is not null)
+            {
+                invoice.BusinessName = BusinessPublicTextResolver.ResolveName(
+                    business.Name,
+                    business.AdminTextOverridesJson,
+                    culture,
+                    business.DefaultCulture);
+            }
         }
 
         if (invoice.OrderId.HasValue)
         {
             invoice.OrderNumber = await _db.Set<Order>()
                 .AsNoTracking()
-                .Where(x => x.Id == invoice.OrderId.Value)
+                .Where(x => x.Id == invoice.OrderId.Value && !x.IsDeleted)
                 .Select(x => x.OrderNumber)
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
@@ -264,7 +291,7 @@ public sealed class GetMyInvoiceDetailHandler
 
         var paymentLink = await _db.Set<Invoice>()
             .AsNoTracking()
-            .Where(x => x.Id == invoice.Id)
+            .Where(x => x.Id == invoice.Id && !x.IsDeleted)
             .Select(x => x.PaymentId)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
@@ -273,17 +300,22 @@ public sealed class GetMyInvoiceDetailHandler
         {
             var payment = await _db.Set<Payment>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == paymentLink.Value, ct)
+                .FirstOrDefaultAsync(x => x.Id == paymentLink.Value && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (payment is not null)
             {
-                invoice.PaymentSummary = $"{payment.Provider} | {payment.Currency} {(payment.AmountMinor / 100.0M):0.00} | {payment.Status}";
+                invoice.PaymentSummary = MemberInvoicePresentationResolver.BuildPaymentSummary(
+                    payment.Provider,
+                    payment.Currency,
+                    payment.AmountMinor,
+                    payment.Status,
+                    culture);
                 var refundedAmountMinor = BillingReconciliationCalculator.ClampRefundedAmount(
                     payment.AmountMinor,
                     await _db.Set<Refund>()
                         .AsNoTracking()
-                        .Where(x => x.PaymentId == payment.Id && x.Status == RefundStatus.Completed)
+                        .Where(x => !x.IsDeleted && x.PaymentId == payment.Id && x.Status == RefundStatus.Completed)
                         .SumAsync(x => (long?)x.AmountMinor, ct)
                         .ConfigureAwait(false) ?? 0L);
                 invoice.RefundedAmountMinor = Math.Min(refundedAmountMinor, invoice.TotalGrossMinor);

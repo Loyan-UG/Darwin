@@ -8,6 +8,7 @@ import type {
   BusinessLocation,
   LoyaltyRewardTierPublic,
 } from "@/features/businesses/types";
+import { buildCmsPagePath, buildLoyaltyBusinessPath } from "@/lib/entity-paths";
 import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import {
   getSafeExternalLinkProps,
@@ -122,7 +123,7 @@ export function LoyaltyPublicBusinessPage({
                 {isAuthenticated ? (
                   <form action={joinMemberLoyaltyBusinessAction}>
                     <input type="hidden" name="businessId" value={businessId} />
-                    <input type="hidden" name="returnPath" value={localizeHref(`/loyalty/${businessId}`, culture)} />
+              <input type="hidden" name="returnPath" value={localizeHref(buildLoyaltyBusinessPath(businessId), culture)} />
                     {locations.length > 0 ? (
                       <select
                         name="businessLocationId"
@@ -155,7 +156,7 @@ export function LoyaltyPublicBusinessPage({
                     <Link
                       href={buildLocalizedAuthHref(
                         "/account/sign-in",
-                        `/loyalty/${businessId}`,
+              buildLoyaltyBusinessPath(businessId),
                         culture,
                       )}
                       className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
@@ -165,7 +166,7 @@ export function LoyaltyPublicBusinessPage({
                     <Link
                       href={buildLocalizedAuthHref(
                         "/account/register",
-                        `/loyalty/${businessId}`,
+              buildLoyaltyBusinessPath(businessId),
                         culture,
                       )}
                       className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
@@ -423,7 +424,7 @@ export function LoyaltyPublicBusinessPage({
                       {cmsPages.map((page) => (
                         <Link
                           key={page.id}
-                          href={localizeHref(`/cms/${page.slug}`, culture)}
+                    href={localizeHref(buildCmsPagePath(page.slug), culture)}
                           className="inline-flex rounded-full border border-[var(--color-border-soft)] px-3 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                         >
                           {page.title}

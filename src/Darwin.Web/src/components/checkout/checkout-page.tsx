@@ -22,9 +22,11 @@ import type {
 import {
   formatResource,
   getCommerceResource,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import { buildInvoicePath } from "@/lib/entity-paths";
 import { localizeHref, sanitizeAppPath } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 
@@ -66,6 +68,27 @@ function getFinalTotalMinor(
   return intent.grandTotalGrossMinor + intent.selectedShippingTotalMinor;
 }
 
+function localizeCheckoutStatus(status: string | undefined, culture: string) {
+  const normalized = (status ?? "").trim().toLowerCase();
+  const english = culture.toLowerCase().startsWith("en");
+
+  if (!normalized) {
+    return english ? "Unavailable" : "Nicht verfuegbar";
+  }
+
+  const labels: Record<string, { de: string; en: string }> = {
+    idle: { de: "Bereit", en: "Ready" },
+    ok: { de: "Aktuell", en: "Current" },
+    "not-found": { de: "Nicht gefunden", en: "Not found" },
+    "http-error": { de: "Dienstfehler", en: "Service error" },
+    "network-error": { de: "Netzwerkfehler", en: "Network error" },
+    unavailable: { de: "Nicht verfuegbar", en: "Unavailable" },
+  };
+
+  const label = labels[normalized];
+  return label ? (english ? label.en : label.de) : normalized;
+}
+
 export function CheckoutPage({
   culture,
   model,
@@ -96,6 +119,16 @@ export function CheckoutPage({
   const resolvedCheckoutError = resolveLocalizedQueryMessage(checkoutError, copy);
   const resolvedCartMessage = resolveLocalizedQueryMessage(model.message, copy);
   const resolvedIntentMessage = resolveLocalizedQueryMessage(intentMessage, copy);
+  const localizedCartStatus = localizeCheckoutStatus(model.status, culture);
+  const localizedIntentStatus = localizeCheckoutStatus(intentStatus, culture);
+  const memberAddressesStatusLabel =
+    resolveApiStatusLabel(memberAddressesStatus, copy) ?? memberAddressesStatus;
+  const memberProfileStatusLabel =
+    resolveApiStatusLabel(memberProfileStatus, copy) ?? memberProfileStatus;
+  const memberPreferencesStatusLabel =
+    resolveApiStatusLabel(memberPreferencesStatus, copy) ?? memberPreferencesStatus;
+  const memberInvoicesStatusLabel =
+    resolveApiStatusLabel(memberInvoicesStatus, copy) ?? memberInvoicesStatus;
   const cart = model.cart;
   const addressComplete = isCheckoutAddressComplete(draft);
   const requiresShipping = intent?.requiresShipping ?? true;
@@ -262,7 +295,7 @@ export function CheckoutPage({
             tone="warning"
             title={copy.previewDegradedTitle}
             message={resolvedIntentMessage ?? formatResource(copy.previewDegradedMessage, {
-              status: intentStatus,
+              status: localizedIntentStatus,
             })}
           />
         )}
@@ -274,8 +307,8 @@ export function CheckoutPage({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.checkoutRouteSummaryMessage, {
-                cartStatus: model.status,
-                intentStatus,
+                cartStatus: localizedCartStatus,
+                intentStatus: localizedIntentStatus,
                 lineCount: cart.items.length,
                 addressReady: addressComplete ? copy.readyYes : copy.readyNo,
               })}
@@ -496,7 +529,7 @@ export function CheckoutPage({
           <div className="mt-6 flex flex-wrap gap-3">
             {outstandingInvoice ? (
               <Link
-                href={localizeHref(`/invoices/${outstandingInvoice.id}`, culture)}
+                href={localizeHref(buildInvoicePath(outstandingInvoice.id), culture)}
                 className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
               >
                 {copy.checkoutPaymentWindowInvoicesCta}
@@ -535,7 +568,7 @@ export function CheckoutPage({
                     tone="warning"
                     title={copy.savedAddressWarningsTitle}
                     message={formatResource(copy.savedAddressWarningsMessage, {
-                      status: memberAddressesStatus,
+                      status: memberAddressesStatusLabel,
                     })}
                   />
                 </div>
@@ -634,7 +667,7 @@ export function CheckoutPage({
                         <p>{memberProfile.phoneE164 ?? copy.unavailable}</p>
                         <p className="mt-3">
                           {formatResource(copy.savedProfilePrefillMessage, {
-                            status: memberProfileStatus,
+                            status: memberProfileStatusLabel,
                           })}
                         </p>
                         {profilePrefillActive ? (
@@ -668,9 +701,9 @@ export function CheckoutPage({
                   </h2>
                   <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {formatResource(copy.memberCheckoutContextDescription, {
-                      profileStatus: memberProfileStatus,
-                      preferencesStatus: memberPreferencesStatus,
-                      addressesStatus: memberAddressesStatus,
+                      profileStatus: memberProfileStatusLabel,
+                      preferencesStatus: memberPreferencesStatusLabel,
+                      addressesStatus: memberAddressesStatusLabel,
                     })}
                   </p>
                 </div>
@@ -763,7 +796,7 @@ export function CheckoutPage({
                   </h2>
                   <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {formatResource(copy.memberCheckoutFinanceDescription, {
-                      invoicesStatus: memberInvoicesStatus,
+                      invoicesStatus: memberInvoicesStatusLabel,
                       count: memberInvoices.length,
                     })}
                   </p>
@@ -813,7 +846,7 @@ export function CheckoutPage({
                   </Link>
                   {outstandingInvoice ? (
                     <Link
-                      href={localizeHref(`/invoices/${outstandingInvoice.id}`, culture)}
+                      href={localizeHref(buildInvoicePath(outstandingInvoice.id), culture)}
                       className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
                     >
                       {copy.memberCheckoutFinancePrimaryCta}

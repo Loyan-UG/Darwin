@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Domain.Common;
@@ -30,7 +31,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
         public BusinessesSeedSection(ILogger<BusinessesSeedSection> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -162,7 +163,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     ContactEmail = s.Email,
                     ContactPhoneE164 = s.Phone,
                     WebsiteUrl = s.Website,
-                    ShortDescription = s.ShortDescription
+                    ShortDescription = s.ShortDescription,
+                    AdminTextOverridesJson = BuildPublicTextOverridesJson(s)
                 });
             }
 
@@ -241,6 +243,11 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             if (string.IsNullOrWhiteSpace(primaryBusiness.ShortDescription))
             {
                 primaryBusiness.ShortDescription = primarySeed.ShortDescription;
+                requiresSave = true;
+            }
+
+            if (EnsurePublicTextOverrides(primaryBusiness, primarySeed))
+            {
                 requiresSave = true;
             }
 
@@ -377,6 +384,11 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 if (string.IsNullOrWhiteSpace(business.ShortDescription))
                 {
                     business.ShortDescription = seed.ShortDescription;
+                    requiresSave = true;
+                }
+
+                if (EnsurePublicTextOverrides(business, seed))
+                {
                     requiresSave = true;
                 }
 
@@ -674,6 +686,102 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             new BusinessSeed("FrankenKaffee", "FrankenKaffee GmbH", "DE103456789", BusinessCategoryKind.Cafe,
                 "Nürnberg", "Königstraße 41", "90402", 49.4521, 11.0767, "kontakt@frankenkaffee.de", "+49 911 556644",
                 "https://frankenkaffee.de", "Kaffeehaus mit regionalen Röstungen.", "frankenkaffee"),
+        };
+
+        private static string BuildPublicTextOverridesJson(BusinessSeed seed)
+        {
+            var values = new Dictionary<string, Dictionary<string, string>>
+            {
+                ["de-DE"] = new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["PublicBusinessName"] = seed.Name,
+                    ["PublicBusinessShortDescription"] = seed.ShortDescription
+                },
+                ["en-US"] = new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["PublicBusinessName"] = seed.Name,
+                    ["PublicBusinessShortDescription"] = GetEnglishShortDescription(seed.SlugKey, seed.ShortDescription)
+                }
+            };
+
+            return JsonSerializer.Serialize(values);
+        }
+
+        private static bool EnsurePublicTextOverrides(Business business, BusinessSeed seed)
+        {
+            var mergedJson = MergePublicTextOverridesJson(business.AdminTextOverridesJson, seed);
+            if (string.Equals(business.AdminTextOverridesJson, mergedJson, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            business.AdminTextOverridesJson = mergedJson;
+            return true;
+        }
+
+        private static string MergePublicTextOverridesJson(string? existingJson, BusinessSeed seed)
+        {
+            Dictionary<string, Dictionary<string, string>> values;
+
+            if (string.IsNullOrWhiteSpace(existingJson))
+            {
+                values = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                try
+                {
+                    values = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(existingJson)
+                        ?? new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+                }
+                catch (JsonException)
+                {
+                    values = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+                }
+            }
+
+            EnsureCultureEntry(values, "de-DE", "PublicBusinessName", seed.Name);
+            EnsureCultureEntry(values, "de-DE", "PublicBusinessShortDescription", seed.ShortDescription);
+            EnsureCultureEntry(values, "en-US", "PublicBusinessName", seed.Name);
+            EnsureCultureEntry(values, "en-US", "PublicBusinessShortDescription", GetEnglishShortDescription(seed.SlugKey, seed.ShortDescription));
+
+            return JsonSerializer.Serialize(values);
+        }
+
+        private static void EnsureCultureEntry(
+            IDictionary<string, Dictionary<string, string>> values,
+            string culture,
+            string key,
+            string value)
+        {
+            var cultureKey = values.Keys.FirstOrDefault(x => string.Equals(x, culture, StringComparison.OrdinalIgnoreCase))
+                ?? culture;
+
+            if (!values.TryGetValue(cultureKey, out var entries))
+            {
+                entries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                values[cultureKey] = entries;
+            }
+
+            if (!entries.TryGetValue(key, out var existing) || string.IsNullOrWhiteSpace(existing))
+            {
+                entries[key] = value;
+            }
+        }
+
+        private static string GetEnglishShortDescription(string slugKey, string fallback) => slugKey switch
+        {
+            "cafe-aurora" => "Bright cafe serving specialty coffee and breakfast.",
+            "baeckerei-koenig" => "Traditional baked goods crafted with Bavarian bakery methods.",
+            "rheinessen" => "Rhine-style cuisine prepared with regional ingredients.",
+            "nordfit" => "Modern fitness studio with personal coaching.",
+            "mainmarkt" => "Fresh produce and regional specialties for everyday shopping.",
+            "schoenzeit" => "Relaxation, massage and beauty services in a calm spa setting.",
+            "dorfladen" => "Delicatessen and regional products from North Rhine-Westphalia.",
+            "lshub" => "Service point for pickup, repairs and personal advice.",
+            "elbebistro" => "Bistro with daily specials and views of the Elbe.",
+            "frankenkaffee" => "Coffee house featuring regional roasts.",
+            _ => fallback,
         };
     }
 }

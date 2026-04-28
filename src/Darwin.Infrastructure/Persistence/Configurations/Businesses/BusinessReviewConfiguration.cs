@@ -34,7 +34,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
             // Soft-delete-aware uniqueness (matches domain guidelines).
             builder.HasIndex(x => new { x.UserId, x.BusinessId })
                 .IsUnique()
-                .HasDatabaseName("UX_BusinessReviews_User_Business");
+                .HasDatabaseName("UX_BusinessReviews_User_Business")
+                .HasFilter("[IsDeleted] = 0");
 
             // Useful for discovery lists: fetch reviews for a business while respecting moderation & soft delete.
             builder.HasIndex(x => new { x.BusinessId, x.IsHidden, x.IsDeleted })

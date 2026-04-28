@@ -21,7 +21,7 @@ type FinalizeOutcome = "Succeeded" | "Cancelled" | "Failed";
 async function buildRedirectUrl(request: NextRequest, orderId: string) {
   const culture = await getRequestCulture();
   const confirmationPath = buildLocalizedPath(
-    `/checkout/orders/${orderId}/confirmation`,
+    `/checkout/orders/${encodeURIComponent(orderId)}/confirmation`,
     culture,
   );
 

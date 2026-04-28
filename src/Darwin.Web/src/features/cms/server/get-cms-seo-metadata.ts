@@ -1,6 +1,7 @@
 import "server-only";
 import { getCmsDetailRouteContext } from "@/features/cms/server/get-cms-route-context";
 import { getCmsLanguageAlternatesMap } from "@/features/cms/server/get-cms-language-alternates-map";
+import { buildCmsPagePath } from "@/lib/entity-paths";
 import { cmsDetailRouteObservationContext } from "@/lib/route-observation-context";
 import { normalizeEntityRouteArgs } from "@/lib/route-context-normalization";
 import { buildSeoMetadata, deriveSeoDescription } from "@/lib/seo";
@@ -19,7 +20,7 @@ export const getCmsSeoMetadata = createCachedObservedSeoMetadataLoader({
     const { detailContext } = await getCmsDetailRouteContext(culture, slug);
     const { pageResult } = detailContext;
     const page = pageResult.data;
-    const requestedPath = `/cms/${encodeURIComponent(slug)}`;
+    const requestedPath = buildCmsPagePath(slug);
 
     if (!page) {
       return {
@@ -41,7 +42,7 @@ export const getCmsSeoMetadata = createCachedObservedSeoMetadataLoader({
 
     const alternates = await getCmsLanguageAlternatesMap();
     const languageAlternates = alternates.get(page.id) ?? {};
-    const canonicalPath = `/cms/${encodeURIComponent(page.slug)}`;
+    const canonicalPath = buildCmsPagePath(page.slug);
     const noIndex = pageResult.status !== "ok";
 
     return {

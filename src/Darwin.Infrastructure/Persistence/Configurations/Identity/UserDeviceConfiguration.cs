@@ -54,7 +54,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
             // Uniqueness per (UserId, DeviceId)
             builder.HasIndex(x => new { x.UserId, x.DeviceId })
                 .IsUnique()
-                .HasDatabaseName("UX_UserDevices_User_DeviceId");
+                .HasDatabaseName("UX_UserDevices_User_DeviceId")
+                .HasFilter("[IsDeleted] = 0");
 
             builder.HasIndex(x => x.UserId)
                 .HasDatabaseName("IX_UserDevices_UserId");

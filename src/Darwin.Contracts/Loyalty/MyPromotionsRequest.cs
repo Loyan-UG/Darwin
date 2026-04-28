@@ -18,6 +18,11 @@ namespace Darwin.Contracts.Loyalty
         public int MaxItems { get; init; } = 20;
 
         /// <summary>
+        /// Optional requested culture for user-facing promotion text.
+        /// </summary>
+        public string? Culture { get; init; }
+
+        /// <summary>
         /// Optional policy override used to tune server-side guardrails.
         ///
         /// Precedence behavior for suppression controls:

@@ -55,7 +55,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
             // - ExpiresAtUtc is commonly queried for cleanup/validity checks.
             // - BusinessId/BusinessMemberId help operational queries and audits.
             builder.HasIndex(x => x.Token)
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             builder.HasIndex(x => x.ExpiresAtUtc);
             builder.HasIndex(x => x.BusinessId);

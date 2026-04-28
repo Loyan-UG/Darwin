@@ -12,7 +12,7 @@ namespace Darwin.Application.Identity.Queries
 {
     /// <summary>
     /// Returns a paged list of roles for admin listing screens.
-    /// Filtering is a simple case-insensitive "contains" on DisplayName or Description.
+    /// Filtering is a simple case-insensitive "contains" on Key, DisplayName, or Description.
     /// </summary>
     public sealed class GetRolesPageHandler
     {
@@ -28,7 +28,7 @@ namespace Darwin.Application.Identity.Queries
         /// </summary>
         /// <param name="page">1-based page number.</param>
         /// <param name="pageSize">Items per page (reasonable upper bound is advised by the caller).</param>
-        /// <param name="search">Optional search term applied to DisplayName and Description.</param>
+        /// <param name="search">Optional search term applied to Key, DisplayName, and Description.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Tuple of (items, totalCount).</returns>
         public async Task<(List<RoleListItemDto> Items, int Total)> HandleAsync(
@@ -46,6 +46,7 @@ namespace Darwin.Application.Identity.Queries
             {
                 var s = search.Trim();
                 query = query.Where(r =>
+                    EF.Functions.Like(r.Key, $"%{s}%") ||
                     (r.DisplayName != null && EF.Functions.Like(r.DisplayName, $"%{s}%")) ||
                     (r.Description != null && EF.Functions.Like(r.Description, $"%{s}%")));
             }
@@ -60,6 +61,7 @@ namespace Darwin.Application.Identity.Queries
                 .Select(r => new RoleListItemDto
                 {
                     Id = r.Id,
+                    Key = r.Key,
                     DisplayName = r.DisplayName ?? string.Empty,
                     Description = r.Description,
                     IsSystem = r.IsSystem,

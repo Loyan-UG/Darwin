@@ -30,13 +30,30 @@ namespace Darwin.Application.Catalog.Commands
             var groupExists = await _db.Set<AddOnGroup>().AnyAsync(g => g.Id == groupId && !g.IsDeleted, ct);
             if (!groupExists) throw new InvalidOperationException(_localizer["AddOnGroupNotFound"]);
 
+            var requested = (categoryIds ?? Array.Empty<Guid>())
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToArray();
+
+            var validCategoryIds = await _db.Set<Category>()
+                .AsNoTracking()
+                .Where(c => requested.Contains(c.Id) && !c.IsDeleted)
+                .Select(c => c.Id)
+                .ToListAsync(ct);
+
+            if (validCategoryIds.Count != requested.Length)
+            {
+                throw new InvalidOperationException(_localizer["CategoriesNotFoundOrDeleted"]);
+            }
+
             var existing = await _db.Set<AddOnGroupCategory>()
+                .IgnoreQueryFilters()
                 .Where(x => x.AddOnGroupId == groupId)
                 .ToListAsync(ct);
 
             _db.Set<AddOnGroupCategory>().RemoveRange(existing);
 
-            var toAdd = categoryIds.Distinct().Select(cid => new AddOnGroupCategory
+            var toAdd = validCategoryIds.Select(cid => new AddOnGroupCategory
             {
                 AddOnGroupId = groupId,
                 CategoryId = cid

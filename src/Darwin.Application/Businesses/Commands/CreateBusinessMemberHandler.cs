@@ -36,7 +36,7 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var businessExists = await _db.Set<Business>()
-                .AnyAsync(x => x.Id == dto.BusinessId, ct);
+                .AnyAsync(x => x.Id == dto.BusinessId && !x.IsDeleted, ct);
             if (!businessExists)
                 throw new InvalidOperationException(_localizer["BusinessNotFound"]);
 
@@ -46,7 +46,7 @@ namespace Darwin.Application.Businesses.Commands
                 throw new InvalidOperationException(_localizer["UserNotFound"]);
 
             var duplicateExists = await _db.Set<BusinessMember>()
-                .AnyAsync(x => x.BusinessId == dto.BusinessId && x.UserId == dto.UserId, ct);
+                .AnyAsync(x => x.BusinessId == dto.BusinessId && x.UserId == dto.UserId && !x.IsDeleted, ct);
             if (duplicateExists)
                 throw new InvalidOperationException(_localizer["BusinessMemberUserAlreadyAssignedToSelectedBusiness"]);
 

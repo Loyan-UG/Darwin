@@ -26,7 +26,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 
             builder.HasIndex(b => b.Slug)
                    .IsUnique()
-                   .HasFilter("[Slug] IS NOT NULL");
+                   .HasFilter("[Slug] IS NOT NULL AND [IsDeleted] = 0");
 
             // Optional logo reference left as scalar Guid to avoid hard FK to Media at this stage.
             builder.Property(b => b.LogoMediaId);
@@ -57,7 +57,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 
             // Unique translation per (BrandId, Culture)
             builder.HasIndex(t => new { t.BrandId, t.Culture })
-                   .IsUnique();
+                   .IsUnique()
+                   .HasFilter("[IsDeleted] = 0");
         }
     }
 }

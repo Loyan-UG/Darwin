@@ -19,6 +19,7 @@ import {
   formatResource,
   getMemberResource,
   matchesLocalizedQueryMessageKey,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { localizeHref } from "@/lib/locale-routing";
@@ -72,6 +73,8 @@ export function PreferencesPage({
   productsStatus,
 }: PreferencesPageProps) {
   const copy = getMemberResource(culture);
+  const localizedStatus = resolveApiStatusLabel(status, copy) ?? status;
+  const localizedProfileStatus = resolveApiStatusLabel(profileStatus, copy) ?? profileStatus;
   const resolvedPreferencesError = resolveLocalizedQueryMessage(
     preferencesError,
     copy,
@@ -207,7 +210,7 @@ export function PreferencesPage({
                 title={copy.preferencesNeedsAttentionTitle}
                 message={
                   resolvedPreferencesError ??
-                  formatResource(copy.preferencesNeedsAttentionMessage, { status })
+                  formatResource(copy.preferencesNeedsAttentionMessage, { status: localizedStatus })
                 }
               />
             </div>
@@ -265,8 +268,8 @@ export function PreferencesPage({
             </p>
             <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.preferencesRouteSummaryProfileMessage, {
-                preferencesStatus: status,
-                profileStatus,
+                preferencesStatus: localizedStatus,
+                profileStatus: localizedProfileStatus,
               })}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -297,8 +300,8 @@ export function PreferencesPage({
             </p>
             <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.preferencesChannelReadinessMessage, {
-                profileStatus,
-                preferencesStatus: status,
+                profileStatus: localizedProfileStatus,
+                preferencesStatus: localizedStatus,
               })}
             </p>
             <div className="mt-6 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
@@ -366,8 +369,8 @@ export function PreferencesPage({
                 label: copy.accountCompositionJourneyCurrentLabel,
                 title: copy.accountCompositionJourneyPreferencesTitle,
                 description: formatResource(copy.accountCompositionJourneyPreferencesRouteDescription, {
-                  status,
-                  profileStatus,
+                  status: localizedStatus,
+                  profileStatus: localizedProfileStatus,
                 }),
                 href: "/account/preferences",
                 ctaLabel: copy.accountCompositionJourneyCurrentCta,
@@ -384,7 +387,7 @@ export function PreferencesPage({
                   label: copy.accountCompositionRouteMapPreferencesLabel,
                   title: copy.accountCompositionRouteMapPreferencesTitle,
                   description: formatResource(copy.accountCompositionRouteMapPreferencesRouteDescription, {
-                    status,
+                    status: localizedStatus,
                   }),
                   href: "/account/preferences",
                   ctaLabel: copy.accountCompositionRouteMapPreferencesCta,

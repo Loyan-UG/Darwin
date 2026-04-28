@@ -131,9 +131,15 @@ public sealed class PublicCatalogController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProductBySlugAsync([FromRoute] string slug, [FromQuery] string? culture, CancellationToken ct = default)
     {
+        var normalizedSlug = string.IsNullOrWhiteSpace(slug) ? null : slug.Trim();
+        if (normalizedSlug is null)
+        {
+            return BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"]);
+        }
+
         var normalizedCulture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var dto = await _getPublishedProductBySlugHandler
-            .HandleAsync(slug, normalizedCulture, ct)
+            .HandleAsync(normalizedSlug, normalizedCulture, ct)
             .ConfigureAwait(false);
 
         if (dto is null)
@@ -156,6 +162,8 @@ public sealed class PublicCatalogController : ApiControllerBase
             Name = dto.Name,
             Slug = dto.Slug,
             Description = dto.Description,
+            MetaTitle = dto.MetaTitle,
+            MetaDescription = dto.MetaDescription,
             SortOrder = dto.SortOrder
         };
 

@@ -11,7 +11,11 @@ import {
   buildLocalizedAuthHref,
   localizeHref,
 } from "@/lib/locale-routing";
-import { formatResource, getCommerceResource } from "@/localization";
+import {
+  formatResource,
+  getCommerceResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type CommerceAuthHandoffProps = {
   culture: string;
@@ -31,6 +35,8 @@ export function CommerceAuthHandoff({
   productsStatus,
 }: CommerceAuthHandoffProps) {
   const copy = getCommerceResource(culture);
+  const productsStatusLabel =
+    resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
   const cartLineCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
   const { offerBoardProducts } = buildStorefrontSpotlightSelections({
     cmsPages: [],
@@ -204,13 +210,13 @@ export function CommerceAuthHandoff({
         </div>
         <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
           {formatResource(copy.commerceAuthOfferBoardMessage, {
-            status: productsStatus,
+            status: productsStatusLabel,
             productCount: products.length,
           })}
         </p>
         {productOpportunities.length > 0 ? (
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              {productOpportunities.map((product) => {
+            {productOpportunities.map((product) => {
               return (
                 <Link
                   key={product.id}
@@ -236,7 +242,7 @@ export function CommerceAuthHandoff({
         ) : (
           <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.commerceAuthOfferBoardEmptyMessage, {
-              status: productsStatus,
+              status: productsStatusLabel,
             })}
           </p>
         )}

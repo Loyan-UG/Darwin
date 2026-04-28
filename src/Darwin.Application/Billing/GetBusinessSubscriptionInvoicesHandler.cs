@@ -14,6 +14,8 @@ namespace Darwin.Application.Billing;
 /// </summary>
 public sealed class GetBusinessSubscriptionInvoicesPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
 
     public GetBusinessSubscriptionInvoicesPageHandler(IAppDbContext db)
@@ -27,10 +29,12 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
         int pageSize = 20,
         string? query = null,
         BusinessSubscriptionInvoiceQueueFilter filter = BusinessSubscriptionInvoiceQueueFilter.All,
+        string? culture = null,
         CancellationToken ct = default)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
         var invoices = from invoice in _db.Set<SubscriptionInvoice>().AsNoTracking()
                        join subscription in _db.Set<BusinessSubscription>().AsNoTracking()
@@ -41,7 +45,7 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
                        where invoice.BusinessId == businessId
                              && !invoice.IsDeleted
                              && !subscription.IsDeleted
-                       select new BusinessSubscriptionInvoiceListItemDto
+                       select new
                        {
                            Id = invoice.Id,
                            BusinessId = invoice.BusinessId,
@@ -58,7 +62,8 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
                            PdfUrl = invoice.PdfUrl,
                            FailureReason = invoice.FailureReason,
                            PlanName = plan != null ? plan.Name : null,
-                           PlanCode = plan != null ? plan.Code : null
+                           PlanCode = plan != null ? plan.Code : null,
+                           PlanFeaturesJson = plan != null ? plan.FeaturesJson : null
                        };
 
         invoices = filter switch
@@ -89,7 +94,7 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
         }
 
         var total = await invoices.CountAsync(ct).ConfigureAwait(false);
-        var items = await invoices
+        var invoiceRows = await invoices
             .OrderByDescending(x => x.IssuedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -98,7 +103,29 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
 
         return new GetBusinessSubscriptionInvoicesPageDto
         {
-            Items = items,
+            Items = invoiceRows
+                .Select(x => new BusinessSubscriptionInvoiceListItemDto
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    BusinessSubscriptionId = x.BusinessSubscriptionId,
+                    Provider = x.Provider,
+                    ProviderInvoiceId = x.ProviderInvoiceId,
+                    Status = x.Status,
+                    TotalMinor = x.TotalMinor,
+                    Currency = x.Currency,
+                    IssuedAtUtc = x.IssuedAtUtc,
+                    DueAtUtc = x.DueAtUtc,
+                    PaidAtUtc = x.PaidAtUtc,
+                    HostedInvoiceUrl = x.HostedInvoiceUrl,
+                    PdfUrl = x.PdfUrl,
+                    FailureReason = x.FailureReason,
+                    PlanName = x.PlanName is null
+                        ? null
+                        : BillingLocalizedTextResolver.ResolvePlanName(x.PlanName, x.PlanFeaturesJson, culture),
+                    PlanCode = x.PlanCode
+                })
+                .ToList(),
             Total = total
         };
     }

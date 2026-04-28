@@ -182,11 +182,11 @@ namespace Darwin.Application.Loyalty.Campaigns
                     Id = x.Id,
                     CampaignId = x.CampaignId,
                     CampaignName = _db.Set<Campaign>()
-                        .Where(c => c.Id == x.CampaignId)
+                        .Where(c => c.Id == x.CampaignId && !c.IsDeleted)
                         .Select(c => c.Name)
                         .FirstOrDefault() ?? string.Empty,
                     CampaignTitle = _db.Set<Campaign>()
-                        .Where(c => c.Id == x.CampaignId)
+                        .Where(c => c.Id == x.CampaignId && !c.IsDeleted)
                         .Select(c => c.Title)
                         .FirstOrDefault() ?? string.Empty,
                     RecipientUserId = x.RecipientUserId,

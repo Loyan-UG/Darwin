@@ -148,6 +148,7 @@
     "campaignWindowPromotionLaneFallbackDescription":  "{lane} hat aktuell keine sichtbaren Produkte, daher bleibt diese Merchandising-Lane als explizite Luecke sichtbar.",
     "campaignWindowPromotionLaneCta":  "Promotion-Lane oeffnen",
     "campaignWindowPromotionLaneMeta":  "{count} Produkte in dieser Lane.",
+    "campaignWindowPromotionLaneEmptyMessage":  "Aus den sichtbaren Produkten lassen sich aktuell keine Promotion-Lanes ableiten. Produktstatus: {productsStatus}.",
     "campaignWindowEmptyMessage":  "Aus dieser Katalog-Surface lassen sich aktuell keine staerkeren Browse-Kampagnen ableiten.",
     "catalogCartWindowTitle":  "Storefront-Cart-Kontinuitaet",
     "catalogCartWindowMessage":  "{itemCount} live Warenkorbzeilen bestehen bereits im Wert von {total}, sodass Browse direkt in den aktiven Kauf-Flow weitergehen kann statt neu zu starten.",

@@ -31,11 +31,19 @@ import {
   getPreferredCmsReviewState,
 } from "@/features/review/review-workflow";
 import { formatDateTime, formatMoney } from "@/lib/formatting";
+import {
+  buildCatalogProductPath,
+  buildCmsPagePath,
+  buildInvoicePath,
+  buildLoyaltyBusinessPath,
+  buildOrderPath,
+} from "@/lib/entity-paths";
 import { buildAppQueryPath } from "@/lib/locale-routing";
 import { getSupportedCultures } from "@/lib/request-culture";
 import {
   formatResource,
   getHomeResource,
+  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import type { WebPagePart } from "@/web-parts/types";
@@ -54,7 +62,7 @@ export async function getHomePageParts(
       preloadedHomeDiscoveryContext ?? getHomeDiscoveryContext(culture),
     ),
     session
-      ? getMemberCommerceSummaryContext()
+      ? getMemberCommerceSummaryContext(culture)
       : Promise.resolve(null),
     session ? getMemberIdentityContext() : Promise.resolve(null),
   ]);
@@ -64,6 +72,37 @@ export async function getHomePageParts(
   const cartResult = {
     data: storefrontContext.storefrontCart,
     status: storefrontContext.storefrontCartStatus,
+  };
+  const pagesStatusLabel = resolveApiStatusLabel(pagesResult.status, copy) ?? pagesResult.status;
+  const productsStatusLabel =
+    resolveApiStatusLabel(productsResult.status, copy) ?? productsResult.status;
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(categoriesResult.status, copy) ?? categoriesResult.status;
+  const cartStatusLabel = resolveApiStatusLabel(cartResult.status, copy) ?? cartResult.status;
+  const ordersStatus = memberCommerceContext?.ordersResult.status ?? "ok";
+  const ordersStatusLabel = resolveApiStatusLabel(ordersStatus, copy) ?? ordersStatus;
+  const invoicesStatus = memberCommerceContext?.invoicesResult.status ?? "ok";
+  const invoicesStatusLabel = resolveApiStatusLabel(invoicesStatus, copy) ?? invoicesStatus;
+  const loyaltyStatus = memberCommerceContext?.loyaltyOverviewResult.status ?? "ok";
+  const loyaltyStatusLabel = resolveApiStatusLabel(loyaltyStatus, copy) ?? loyaltyStatus;
+  const addressesStatus =
+    memberIdentityContext?.addressesResult.status ?? "unauthenticated";
+  const addressesStatusLabel =
+    resolveApiStatusLabel(addressesStatus, copy) ?? addressesStatus;
+  const localizeApiStatus = (status: string) =>
+    resolveApiStatusLabel(status, copy) ?? status;
+  const localizeInvoiceStatus = (status: string) => {
+    if (culture.toLowerCase().startsWith("en")) {
+      return status;
+    }
+
+    const labels: Record<string, string> = {
+      Draft: "Entwurf",
+      Open: "Offen",
+      Paid: "Bezahlt",
+      Cancelled: "Storniert",
+    };
+    return labels[status] ?? status;
   };
   const cartLinkedSlugs = new Set(storefrontContext.cartLinkedProductSlugs);
   const cmsHealthy = pagesResult.status === "ok";
@@ -172,7 +211,7 @@ export async function getHomePageParts(
             href: "/checkout",
             ctaLabel: copy.priorityCheckoutCta,
             meta: formatResource(copy.priorityCheckoutMeta, {
-              status: cartResult.status,
+              status: cartStatusLabel,
             }),
           },
         ]
@@ -190,12 +229,12 @@ export async function getHomePageParts(
                 invoiceAttention.currency,
                 culture,
               ),
-              status: invoiceAttention.status,
+              status: localizeInvoiceStatus(invoiceAttention.status),
             }),
-            href: `/invoices/${invoiceAttention.id}`,
+          href: buildInvoicePath(invoiceAttention.id),
             ctaLabel: copy.priorityInvoiceCta,
             meta: formatResource(copy.priorityInvoiceMeta, {
-              status: memberCommerceContext?.invoicesResult.status ?? "ok",
+              status: invoicesStatusLabel,
             }),
           },
         ]
@@ -215,10 +254,10 @@ export async function getHomePageParts(
                 loyaltyFocusAccount.pointsToNextReward?.toString() ??
                 copy.memberResumeUnavailable,
             }),
-            href: `/loyalty/${loyaltyFocusAccount.businessId}`,
+          href: buildLoyaltyBusinessPath(loyaltyFocusAccount.businessId),
             ctaLabel: copy.priorityLoyaltyCta,
             meta: formatResource(copy.priorityLoyaltyMeta, {
-              status: memberCommerceContext?.loyaltyOverviewResult.status ?? "ok",
+              status: loyaltyStatusLabel,
             }),
           },
         ]
@@ -238,10 +277,10 @@ export async function getHomePageParts(
                 culture,
               ),
             }),
-            href: `/orders/${recentOrders[0]!.id}`,
+          href: buildOrderPath(recentOrders[0]!.id),
             ctaLabel: copy.priorityOrderCta,
             meta: formatResource(copy.priorityOrderMeta, {
-              status: memberCommerceContext?.ordersResult.status ?? "ok",
+              status: ordersStatusLabel,
             }),
           },
         ]
@@ -260,10 +299,10 @@ export async function getHomePageParts(
                 culture,
               ),
             }),
-            href: `/catalog/${spotlightProduct.slug}`,
+          href: buildCatalogProductPath(spotlightProduct.slug),
             ctaLabel: copy.priorityProductCta,
             meta: formatResource(copy.priorityProductMeta, {
-              status: productsResult.status,
+              status: productsStatusLabel,
             }),
           },
         ]
@@ -277,10 +316,10 @@ export async function getHomePageParts(
             }),
             description:
               spotlightPage.metaDescription ?? copy.priorityPageFallbackDescription,
-            href: `/cms/${spotlightPage.slug}`,
+          href: buildCmsPagePath(spotlightPage.slug),
             ctaLabel: copy.priorityPageCta,
             meta: formatResource(copy.priorityPageMeta, {
-              status: pagesResult.status,
+              status: pagesStatusLabel,
             }),
           },
         ]
@@ -349,7 +388,7 @@ export async function getHomePageParts(
             }),
       formatFallbackDescription: (entry) =>
         formatResource(copy.campaignBoardCategoryFallbackDescription, {
-          status: entry.status,
+          status: localizeApiStatus(entry.status),
         }),
       formatMeta: (entry) =>
         entry.product && entry.status === "ok"
@@ -365,7 +404,7 @@ export async function getHomePageParts(
                   : copy.campaignBoardProductMetaFallback,
             })
           : formatResource(copy.campaignBoardCategoryMeta, {
-              status: entry.status,
+              status: localizeApiStatus(entry.status),
             }),
     },
   );
@@ -416,11 +455,11 @@ export async function getHomePageParts(
         copy.heroHighlightTheme,
         copy.heroHighlightComposition,
         formatResource(copy.heroHighlightStatus, {
-          pagesStatus: pagesResult.status,
-          productsStatus: productsResult.status,
+          pagesStatus: pagesStatusLabel,
+          productsStatus: productsStatusLabel,
         }),
         formatResource(copy.heroHighlightCategoriesStatus, {
-          categoriesStatus: categoriesResult.status,
+          categoriesStatus: categoriesStatusLabel,
         }),
       ],
       panelTitle: copy.heroPanelTitle,
@@ -439,7 +478,7 @@ export async function getHomePageParts(
           note: cmsHealthy
             ? copy.metricPagesNote
             : formatResource(copy.metricPagesDegradedNote, {
-                status: pagesResult.status,
+                status: pagesStatusLabel,
               }),
         },
         {
@@ -451,7 +490,7 @@ export async function getHomePageParts(
           note: catalogHealthy
             ? copy.metricProductsNote
             : formatResource(copy.metricProductsDegradedNote, {
-                status: productsResult.status,
+                status: productsStatusLabel,
               }),
         },
         {
@@ -465,7 +504,7 @@ export async function getHomePageParts(
           note: categoriesHealthy
             ? copy.metricCategoriesNote
             : formatResource(copy.metricCategoriesDegradedNote, {
-                status: categoriesResult.status,
+                status: categoriesStatusLabel,
               }),
         },
         {
@@ -488,8 +527,8 @@ export async function getHomePageParts(
           label: copy.homeCompositionCurrentLabel,
           title: copy.homeCompositionCurrentTitle,
           description: formatResource(copy.homeCompositionCurrentDescription, {
-            pagesStatus: pagesResult.status,
-            productsStatus: productsResult.status,
+            pagesStatus: pagesStatusLabel,
+            productsStatus: productsStatusLabel,
           }),
           primaryHref: "/",
           primaryCtaLabel: copy.homeCompositionCurrentCta,
@@ -523,8 +562,8 @@ export async function getHomePageParts(
               ? copy.reviewTargetsCatalogOffersCta
               : copy.reviewTargetsCatalogBaseCta,
             meta: formatResource(copy.homeCompositionReviewMeta, {
-              cmsStatus: pagesResult.status,
-              catalogStatus: productsResult.status,
+              cmsStatus: pagesStatusLabel,
+              catalogStatus: productsStatusLabel,
             }),
           },
           {
@@ -669,9 +708,9 @@ export async function getHomePageParts(
           primaryHref: cartResult.data && cartResult.data.items.length > 0
             ? "/checkout"
             : spotlightProduct
-              ? `/catalog/${spotlightProduct.slug}`
+      ? buildCatalogProductPath(spotlightProduct.slug)
               : spotlightPage
-                ? `/cms/${spotlightPage.slug}`
+      ? buildCmsPagePath(spotlightPage.slug)
                 : "/catalog",
           primaryCtaLabel: cartResult.data && cartResult.data.items.length > 0
             ? copy.openCheckoutCta
@@ -688,11 +727,11 @@ export async function getHomePageParts(
             : copy.openAccountCta,
           meta: cartResult.data && cartResult.data.items.length > 0
             ? formatResource(copy.homeCompositionStorefrontCartMeta, {
-                status: cartResult.status,
+                status: cartStatusLabel,
               })
             : formatResource(copy.homeCompositionStorefrontMeta, {
-                pagesStatus: pagesResult.status,
-                productsStatus: productsResult.status,
+                pagesStatus: pagesStatusLabel,
+                productsStatus: productsStatusLabel,
               }),
         },
       ],
@@ -717,7 +756,7 @@ export async function getHomePageParts(
           ctaLabel: copy.discoveryReadinessCmsCta,
           tone: cmsHealthy ? "ok" : "warning",
           meta: formatResource(copy.discoveryReadinessCmsMeta, {
-            status: pagesResult.status,
+            status: pagesStatusLabel,
           }),
         },
         {
@@ -733,8 +772,8 @@ export async function getHomePageParts(
           ctaLabel: copy.discoveryReadinessCatalogCta,
           tone: catalogHealthy && categoriesHealthy ? "ok" : "warning",
           meta: formatResource(copy.discoveryReadinessCatalogMeta, {
-            productsStatus: productsResult.status,
-            categoriesStatus: categoriesResult.status,
+            productsStatus: productsStatusLabel,
+            categoriesStatus: categoriesStatusLabel,
           }),
         },
       ],
@@ -760,7 +799,7 @@ export async function getHomePageParts(
               ? copy.reviewTargetsCmsAttentionCta
               : copy.reviewTargetsCmsReadyCta,
           meta: formatResource(copy.reviewTargetsCmsWindowMeta, {
-            status: pagesResult.status,
+            status: pagesStatusLabel,
           }),
         },
         ...cmsReviewTargets.map(({ page, missingMetaTitle, missingMetaDescription }) => ({
@@ -800,7 +839,7 @@ export async function getHomePageParts(
               ? copy.reviewTargetsCatalogOffersCta
               : copy.reviewTargetsCatalogBaseCta,
           meta: formatResource(copy.reviewTargetsCatalogWindowMeta, {
-            status: productsResult.status,
+            status: productsStatusLabel,
           }),
         },
         ...catalogReviewTargets.map(({ product, missingImage, savingsAmount }) => ({
@@ -863,7 +902,7 @@ export async function getHomePageParts(
                 ctaLabel: copy.commerceOpportunityCartCta,
                 tone: "ok" as const,
                 meta: formatResource(copy.commerceOpportunityCartMeta, {
-                  status: cartResult.status,
+                  status: cartStatusLabel,
                 }),
               },
             ]
@@ -886,11 +925,11 @@ export async function getHomePageParts(
                     ),
                   },
                 ),
-                href: `/catalog/${spotlightProduct.slug}`,
+          href: buildCatalogProductPath(spotlightProduct.slug),
                 ctaLabel: copy.commerceOpportunityProductCta,
                 tone: catalogHealthy ? ("ok" as const) : ("warning" as const),
                 meta: formatResource(copy.commerceOpportunityProductMeta, {
-                  status: productsResult.status,
+                  status: productsStatusLabel,
                 }),
               },
             ]
@@ -916,7 +955,7 @@ export async function getHomePageParts(
                     : formatResource(
                         copy.commerceOpportunityCategoryFallbackDescription,
                         {
-                          status: strongestCategoryOpportunity.status,
+                          status: localizeApiStatus(strongestCategoryOpportunity.status),
                         },
                       ),
                 href: buildAppQueryPath("/catalog", {
@@ -929,7 +968,7 @@ export async function getHomePageParts(
                     ? ("ok" as const)
                     : ("warning" as const),
                 meta: formatResource(copy.commerceOpportunityCategoryMeta, {
-                  status: strongestCategoryOpportunity.status,
+                  status: localizeApiStatus(strongestCategoryOpportunity.status),
                 }),
               },
             ]
@@ -1121,11 +1160,11 @@ export async function getHomePageParts(
           description: cmsHealthy
             ? copy.routeMapCmsHealthyDescription
             : formatResource(copy.routeMapCmsDegradedDescription, {
-                status: pagesResult.status,
+                status: pagesStatusLabel,
               }),
           primaryHref: "/cms",
           primaryCtaLabel: copy.openCmsCta,
-          secondaryHref: spotlightPage ? `/cms/${spotlightPage.slug}` : "/account",
+      secondaryHref: spotlightPage ? buildCmsPagePath(spotlightPage.slug) : "/account",
           secondaryCtaLabel: spotlightPage
             ? copy.routeMapCmsSecondaryCta
             : copy.openAccountCta,
@@ -1143,13 +1182,13 @@ export async function getHomePageParts(
             catalogHealthy && categoriesHealthy
               ? copy.routeMapCatalogHealthyDescription
               : formatResource(copy.routeMapCatalogDegradedDescription, {
-                  productsStatus: productsResult.status,
-                  categoriesStatus: categoriesResult.status,
+                  productsStatus: productsStatusLabel,
+                  categoriesStatus: categoriesStatusLabel,
                 }),
           primaryHref: "/catalog",
           primaryCtaLabel: copy.browseCatalogCta,
           secondaryHref: spotlightProduct
-            ? `/catalog/${spotlightProduct.slug}`
+      ? buildCatalogProductPath(spotlightProduct.slug)
             : "/checkout",
           secondaryCtaLabel: spotlightProduct
             ? copy.routeMapCatalogSecondaryCta
@@ -1204,10 +1243,10 @@ export async function getHomePageParts(
                         ),
                       },
                     ),
-                    href: `/orders/${order.id}`,
+          href: buildOrderPath(order.id),
                     ctaLabel: copy.memberResumeRecentOrderCta,
                     meta: formatResource(copy.memberResumeRecentOrderMeta, {
-                      status: memberCommerceContext?.ordersResult.status ?? "ok",
+                      status: ordersStatusLabel,
                     }),
                   }))
                 : []),
@@ -1227,13 +1266,13 @@ export async function getHomePageParts(
                             invoiceAttention.currency,
                             culture,
                           ),
-                          status: invoiceAttention.status,
+                          status: localizeInvoiceStatus(invoiceAttention.status),
                         },
                       ),
-                      href: `/invoices/${invoiceAttention.id}`,
+          href: buildInvoicePath(invoiceAttention.id),
                       ctaLabel: copy.memberResumeInvoiceCta,
                       meta: formatResource(copy.memberResumeInvoiceMeta, {
-                        status: memberCommerceContext?.invoicesResult.status ?? "ok",
+                        status: invoicesStatusLabel,
                       }),
                     },
                   ]
@@ -1249,7 +1288,7 @@ export async function getHomePageParts(
                       countryCode: preferredMemberAddress.countryCode,
                     })
                   : formatResource(copy.memberResumeCheckoutAddressDescription, {
-                      status: memberIdentityContext?.addressesResult.status ?? "unauthenticated",
+                      status: addressesStatusLabel,
                     }),
                 href: memberCheckoutHref,
                 ctaLabel: preferredMemberAddress
@@ -1281,10 +1320,10 @@ export async function getHomePageParts(
                             copy.memberResumeUnavailable,
                         },
                       ),
-                      href: `/loyalty/${loyaltyFocusAccount.businessId}`,
+          href: buildLoyaltyBusinessPath(loyaltyFocusAccount.businessId),
                       ctaLabel: copy.memberResumeLoyaltyFocusCta,
                       meta: formatResource(copy.memberResumeLoyaltyFocusMeta, {
-                        status: memberCommerceContext?.loyaltyOverviewResult.status ?? "ok",
+                        status: loyaltyStatusLabel,
                       }),
                     },
                   ]
@@ -1375,7 +1414,7 @@ export async function getHomePageParts(
             eyebrow: copy.cartWindowEyebrow,
             title: copy.cartWindowTitle,
             description: formatResource(copy.cartWindowDescription, {
-              status: cartResult.status,
+              status: cartStatusLabel,
               itemCount: cartResult.data.items.length,
             }),
             items: [
@@ -1436,7 +1475,7 @@ export async function getHomePageParts(
           description: cmsHealthy
             ? copy.contractCmsHealthyDescription
             : formatResource(copy.contractCmsDegradedDescription, {
-                status: pagesResult.status,
+                status: pagesStatusLabel,
               }),
           href: "/cms",
           ctaLabel: copy.openCmsCta,
@@ -1452,7 +1491,7 @@ export async function getHomePageParts(
           description: catalogHealthy
             ? copy.contractCatalogHealthyDescription
             : formatResource(copy.contractCatalogDegradedDescription, {
-                status: productsResult.status,
+                status: productsStatusLabel,
               }),
           href: "/catalog",
           ctaLabel: copy.browseCatalogCta,
@@ -1491,7 +1530,7 @@ export async function getHomePageParts(
           href: "/cms",
           ctaLabel: copy.openCmsCta,
           meta: formatResource(copy.stageContentMeta, {
-            status: pagesResult.status,
+            status: pagesStatusLabel,
           }),
         },
         {
@@ -1502,7 +1541,7 @@ export async function getHomePageParts(
           href: "/catalog",
           ctaLabel: copy.browseCatalogCta,
           meta: formatResource(copy.stageDiscoveryMeta, {
-            status: productsResult.status,
+            status: productsStatusLabel,
           }),
         },
         {
@@ -1530,7 +1569,7 @@ export async function getHomePageParts(
         description: cmsHealthy
           ? copy.pairCmsHealthyDescription
           : formatResource(copy.pairCmsDegradedDescription, {
-              status: pagesResult.status,
+              status: pagesStatusLabel,
             }),
         href: "/cms",
         ctaLabel: copy.openCmsCta,
@@ -1545,7 +1584,7 @@ export async function getHomePageParts(
         description: catalogHealthy
           ? copy.pairCatalogHealthyDescription
           : formatResource(copy.pairCatalogDegradedDescription, {
-              status: productsResult.status,
+              status: productsStatusLabel,
             }),
         href: "/catalog",
         ctaLabel: copy.browseCatalogCta,
@@ -1571,7 +1610,7 @@ export async function getHomePageParts(
           bullets: [
             copy.agendaContentBulletOne,
             formatResource(copy.agendaContentBulletTwo, {
-              status: pagesResult.status,
+              status: pagesStatusLabel,
             }),
           ],
           meta: formatResource(copy.agendaContentMeta, {
@@ -1588,7 +1627,7 @@ export async function getHomePageParts(
           bullets: [
             copy.agendaCommerceBulletOne,
             formatResource(copy.agendaCommerceBulletTwo, {
-              status: productsResult.status,
+              status: productsStatusLabel,
             }),
           ],
           meta: formatResource(copy.agendaCommerceMeta, {
@@ -1630,7 +1669,7 @@ export async function getHomePageParts(
               })
             : category.description ??
               formatResource(copy.categorySpotlightFallbackDescription, {
-                status,
+                status: localizeApiStatus(status),
               }),
         href: buildAppQueryPath("/catalog", {
           category: category.slug,
@@ -1642,7 +1681,7 @@ export async function getHomePageParts(
                 price: formatMoney(product.priceMinor, product.currency, culture),
               })
             : formatResource(copy.categorySpotlightFallbackMeta, {
-                status,
+                status: localizeApiStatus(status),
               }),
       })),
       emptyMessage:
@@ -1696,7 +1735,7 @@ export async function getHomePageParts(
           href: "/cms",
           ctaLabel: copy.readPageCta,
           meta: formatResource(copy.journeyCmsMeta, {
-            status: pagesResult.status,
+            status: pagesStatusLabel,
           }),
         },
         {
@@ -1706,7 +1745,7 @@ export async function getHomePageParts(
           href: "/catalog",
           ctaLabel: copy.browseCatalogCta,
           meta: formatResource(copy.journeyCatalogMeta, {
-            status: productsResult.status,
+            status: productsStatusLabel,
           }),
         },
         {
@@ -1733,7 +1772,7 @@ export async function getHomePageParts(
           description: cmsHealthy
             ? copy.recoveryCmsHealthyDescription
             : formatResource(copy.recoveryCmsDegradedDescription, {
-                status: pagesResult.status,
+                status: pagesStatusLabel,
               }),
           href: "/cms",
           ctaLabel: copy.openCmsCta,
@@ -1747,8 +1786,8 @@ export async function getHomePageParts(
           description: catalogHealthy && categoriesHealthy
             ? copy.recoveryCatalogHealthyDescription
             : formatResource(copy.recoveryCatalogDegradedDescription, {
-                productsStatus: productsResult.status,
-                categoriesStatus: categoriesResult.status,
+                productsStatus: productsStatusLabel,
+                categoriesStatus: categoriesStatusLabel,
               }),
           href: "/catalog",
           ctaLabel: copy.browseCatalogCta,
@@ -1779,7 +1818,7 @@ export async function getHomePageParts(
           eyebrow: copy.cmsPageEyebrow,
           title: page.title,
           description: page.metaDescription ?? copy.cmsPageDescriptionFallback,
-          href: `/cms/${page.slug}`,
+          href: buildCmsPagePath(page.slug),
           ctaLabel: copy.readPageCta,
           meta: page.slug,
         })) ?? [],
@@ -1797,7 +1836,7 @@ export async function getHomePageParts(
           eyebrow: copy.productEyebrow,
           title: product.name,
           description: product.shortDescription ?? copy.productDescriptionFallback,
-          href: `/catalog/${product.slug}`,
+          href: buildCatalogProductPath(product.slug),
           ctaLabel: copy.viewProductCta,
           meta: formatMoney(product.priceMinor, product.currency, culture),
         })) ?? [],

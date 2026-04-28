@@ -84,7 +84,7 @@ namespace Darwin.Application.Identity.Commands
             }
 
             await _db.SaveChangesAsync(ct);
-            _jwt.RevokeAllForUser(user.Id);
+            await _jwt.RevokeAllForUserAsync(user.Id, ct);
 
             return Result<UserDeleteOutcomeDto>.Ok(outcome);
         }

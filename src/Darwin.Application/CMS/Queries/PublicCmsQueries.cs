@@ -12,6 +12,8 @@ namespace Darwin.Application.CMS.Queries;
 /// </summary>
 public sealed class GetPublishedPagesPageHandler
 {
+    private const int MaxPageSize = 200;
+
     private readonly IAppDbContext _db;
 
     /// <summary>
@@ -26,6 +28,8 @@ public sealed class GetPublishedPagesPageHandler
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var defaultCulture = SiteSettingDto.DefaultCultureDefault;
 
@@ -33,6 +37,7 @@ public sealed class GetPublishedPagesPageHandler
         var baseQuery = _db.Set<Page>()
             .AsNoTracking()
             .Where(x =>
+                !x.IsDeleted &&
                 x.IsPublished &&
                 x.Status == PageStatus.Published &&
                 (!x.PublishStartUtc.HasValue || x.PublishStartUtc <= nowUtc) &&
@@ -46,17 +51,17 @@ public sealed class GetPublishedPagesPageHandler
             .Select(x => new PublicPageSummaryDto
             {
                 Id = x.Id,
-                Title = x.Translations.Where(t => t.Culture == culture).Select(t => t.Title).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Title).FirstOrDefault()
+                Title = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Title).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Title).FirstOrDefault()
                     ?? x.Title,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                Slug = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
                     ?? x.Slug,
-                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault()
+                MetaTitle = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault()
                     ?? x.MetaTitle,
-                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault()
+                MetaDescription = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault()
                     ?? x.MetaDescription
             })
             .ToListAsync(ct)
@@ -96,29 +101,30 @@ public sealed class GetPublishedPageBySlugHandler
         return await _db.Set<Page>()
             .AsNoTracking()
             .Where(x =>
+                !x.IsDeleted &&
                 x.IsPublished &&
                 x.Status == PageStatus.Published &&
                 (!x.PublishStartUtc.HasValue || x.PublishStartUtc <= nowUtc) &&
                 (!x.PublishEndUtc.HasValue || x.PublishEndUtc >= nowUtc) &&
                 (x.Slug == normalizedSlug ||
-                 x.Translations.Any(t => t.Slug == normalizedSlug && (t.Culture == culture || t.Culture == defaultCulture))))
+                 x.Translations.Any(t => !t.IsDeleted && t.Slug == normalizedSlug && (t.Culture == culture || t.Culture == defaultCulture))))
             .Select(x => new PublicPageDetailDto
             {
                 Id = x.Id,
-                Title = x.Translations.Where(t => t.Culture == culture).Select(t => t.Title).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Title).FirstOrDefault()
+                Title = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Title).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Title).FirstOrDefault()
                     ?? x.Title,
-                Slug = x.Translations.Where(t => t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
+                Slug = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Slug).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Slug).FirstOrDefault()
                     ?? x.Slug,
-                MetaTitle = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault()
+                MetaTitle = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.MetaTitle).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.MetaTitle).FirstOrDefault()
                     ?? x.MetaTitle,
-                MetaDescription = x.Translations.Where(t => t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault()
+                MetaDescription = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.MetaDescription).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.MetaDescription).FirstOrDefault()
                     ?? x.MetaDescription,
-                ContentHtml = x.Translations.Where(t => t.Culture == culture).Select(t => t.ContentHtml).FirstOrDefault()
-                    ?? x.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.ContentHtml).FirstOrDefault()
+                ContentHtml = x.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.ContentHtml).FirstOrDefault()
+                    ?? x.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.ContentHtml).FirstOrDefault()
                     ?? x.ContentHtml
             })
             .FirstOrDefaultAsync(ct)
@@ -154,23 +160,23 @@ public sealed class GetPublicMenuByNameHandler
 
         return await _db.Set<Menu>()
             .AsNoTracking()
-            .Where(x => x.Name == normalizedName)
+            .Where(x => x.Name == normalizedName && !x.IsDeleted)
             .Select(x => new PublicMenuDto
             {
                 Id = x.Id,
                 Name = x.Name,
                 Items = x.Items
-                    .Where(item => item.IsActive)
+                    .Where(item => item.IsActive && !item.IsDeleted)
                     .OrderBy(item => item.SortOrder)
                     .Select(item => new PublicMenuItemDto
                     {
                         Id = item.Id,
                         ParentId = item.ParentId,
-                        Label = item.Translations.Where(t => t.Culture == culture).Select(t => t.Label).FirstOrDefault()
-                            ?? item.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
+                        Label = item.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Label).FirstOrDefault()
+                            ?? item.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
                             ?? item.Title,
-                        Url = item.Translations.Where(t => t.Culture == culture).Select(t => t.Url).FirstOrDefault()
-                            ?? item.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Url).FirstOrDefault()
+                        Url = item.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Url).FirstOrDefault()
+                            ?? item.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Url).FirstOrDefault()
                             ?? item.Url,
                         SortOrder = item.SortOrder
                     })

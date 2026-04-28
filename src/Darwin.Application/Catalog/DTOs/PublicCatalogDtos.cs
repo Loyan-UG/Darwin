@@ -20,6 +20,12 @@ public sealed class PublicCategorySummaryDto
     /// <summary>Gets or sets the optional localized description.</summary>
     public string? Description { get; set; }
 
+    /// <summary>Gets or sets the optional localized SEO meta title.</summary>
+    public string? MetaTitle { get; set; }
+
+    /// <summary>Gets or sets the optional localized SEO meta description.</summary>
+    public string? MetaDescription { get; set; }
+
     /// <summary>Gets or sets the sort order among siblings.</summary>
     public int SortOrder { get; set; }
 }

@@ -5,6 +5,7 @@ import type {
   BusinessCategoryKind,
   BusinessSummary,
 } from "@/features/businesses/types";
+import { buildLoyaltyBusinessPath } from "@/lib/entity-paths";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
 import {
@@ -329,7 +330,7 @@ export function LoyaltyDiscoverySection({
 
                 <div className="mt-5">
                   <Link
-                    href={localizeHref(`/loyalty/${business.id}`, culture)}
+                          href={localizeHref(buildLoyaltyBusinessPath(business.id), culture)}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
                   >
                     {copy.openLoyaltyPlaceCta}

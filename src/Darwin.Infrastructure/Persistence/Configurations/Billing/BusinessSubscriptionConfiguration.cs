@@ -59,13 +59,15 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
 
             // Indexes:
             builder.HasIndex(x => x.BusinessId)
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             builder.HasIndex(x => x.BillingPlanId);
 
             // Provider subscription id should be unique when present.
             builder.HasIndex(x => new { x.Provider, x.ProviderSubscriptionId })
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[ProviderSubscriptionId] IS NOT NULL AND [IsDeleted] = 0");
         }
     }
 }

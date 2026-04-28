@@ -23,7 +23,7 @@ namespace Darwin.Application.Businesses.Queries
 
         public async Task<BusinessCommunicationOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {
-            var baseQuery = _db.Set<Business>().AsNoTracking();
+            var baseQuery = _db.Set<Business>().AsNoTracking().Where(x => !x.IsDeleted);
 
             var transactionalEnabledCount = await baseQuery
                 .CountAsync(x => x.CustomerEmailNotificationsEnabled, ct)
@@ -51,7 +51,7 @@ namespace Darwin.Application.Businesses.Queries
                 .ConfigureAwait(false);
             var failedEmailAuditQuery = _db.Set<EmailDispatchAudit>()
                 .AsNoTracking()
-                .Where(x => x.Status == "Failed");
+                .Where(x => x.Status == "Failed" && !x.IsDeleted);
             var failedInvitationCount = await failedEmailAuditQuery
                 .CountAsync(x => x.FlowKey == "BusinessInvitation", ct)
                 .ConfigureAwait(false);

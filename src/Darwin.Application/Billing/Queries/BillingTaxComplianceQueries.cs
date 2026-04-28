@@ -25,7 +25,7 @@ namespace Darwin.Application.Billing.Queries
 
             var businessCustomersQuery = _db.Set<Customer>()
                 .AsNoTracking()
-                .Where(x => x.TaxProfileType == CustomerTaxProfileType.Business);
+                .Where(x => !x.IsDeleted && x.TaxProfileType == CustomerTaxProfileType.Business);
 
             var missingVatCustomersQuery = businessCustomersQuery
                 .Where(x => string.IsNullOrWhiteSpace(x.VatId));
@@ -36,6 +36,7 @@ namespace Darwin.Application.Billing.Queries
                 from customer in customers.DefaultIfEmpty()
                 join user in _db.Set<User>().AsNoTracking() on customer.UserId equals (Guid?)user.Id into users
                 from user in users.DefaultIfEmpty()
+                where !invoice.IsDeleted && (customer == null || !customer.IsDeleted) && (user == null || !user.IsDeleted)
                 select new
                 {
                     invoice,
@@ -57,12 +58,14 @@ namespace Darwin.Application.Billing.Queries
 
             var businessCustomersMissingVatIdCount = await missingVatCustomersQuery.CountAsync(ct).ConfigureAwait(false);
             var businessInvoicesMissingVatIdCount = await businessInvoicesMissingVatQuery.CountAsync(ct).ConfigureAwait(false);
-            var draftInvoiceCount = await _db.Set<Invoice>().AsNoTracking().CountAsync(x => x.Status == InvoiceStatus.Draft, ct).ConfigureAwait(false);
+            var draftInvoiceCount = await _db.Set<Invoice>().AsNoTracking().CountAsync(x => !x.IsDeleted && x.Status == InvoiceStatus.Draft, ct).ConfigureAwait(false);
             var dueSoonInvoiceCount = await _db.Set<Invoice>().AsNoTracking().CountAsync(x =>
+                !x.IsDeleted &&
                 x.Status == InvoiceStatus.Open &&
                 x.DueDateUtc >= nowUtc &&
                 x.DueDateUtc <= dueSoonUtc, ct).ConfigureAwait(false);
             var overdueInvoiceCount = await _db.Set<Invoice>().AsNoTracking().CountAsync(x =>
+                !x.IsDeleted &&
                 x.Status == InvoiceStatus.Open &&
                 x.DueDateUtc < nowUtc, ct).ConfigureAwait(false);
 
@@ -99,7 +102,7 @@ namespace Darwin.Application.Billing.Queries
                 ? new Dictionary<Guid, string>()
                 : await _db.Set<Order>()
                     .AsNoTracking()
-                    .Where(x => orderIds.Contains(x.Id))
+                    .Where(x => orderIds.Contains(x.Id) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct)
                     .ConfigureAwait(false);
 
@@ -126,6 +129,7 @@ namespace Darwin.Application.Billing.Queries
                 (from customer in missingVatCustomersQuery
                  join user in _db.Set<User>().AsNoTracking() on customer.UserId equals (Guid?)user.Id into users
                  from user in users.DefaultIfEmpty()
+                 where user == null || !user.IsDeleted
                  orderby customer.ModifiedAtUtc ?? customer.CreatedAtUtc descending
                  select new TaxComplianceCustomerReviewItemDto
                  {

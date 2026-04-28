@@ -19,6 +19,7 @@ import {
   getPendingCmsReviewQueueState,
 } from "@/features/review/review-workflow";
 import type { PublicPageDetail, PublicPageSummary } from "@/features/cms/types";
+import { buildCmsPagePath } from "@/lib/entity-paths";
 import { sanitizeHtmlFragment } from "@/lib/html-fragment";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import {
@@ -69,10 +70,10 @@ export function CmsPageDetail({
 }: CmsPageDetailProps) {
   const copy = getSharedResource(culture);
   const resolvedMessage = resolveLocalizedQueryMessage(message, copy);
-  const statusLabel = resolveApiStatusLabel(status, copy);
-  const relatedStatusLabel = resolveApiStatusLabel(relatedStatus, copy);
-  const pageReference = page ? localizeHref(`/cms/${page.slug}`, culture) : null;
-  const pagePath = page ? `/cms/${page.slug}` : "/cms";
+  const statusLabel = resolveApiStatusLabel(status, copy) ?? status;
+  const relatedStatusLabel = resolveApiStatusLabel(relatedStatus, copy) ?? relatedStatus;
+  const pageReference = page ? localizeHref(buildCmsPagePath(page.slug), culture) : null;
+  const pagePath = page ? buildCmsPagePath(page.slug) : "/cms";
   const contentSummary = page
     ? summarizeCmsContent(page.contentHtml)
     : null;
@@ -118,8 +119,8 @@ export function CmsPageDetail({
       ? copy.cmsReviewWindowReadyCta
       : copy.cmsReviewWindowAttentionCta;
   const detailRouteSummaryMessage = formatResource(copy.cmsDetailRouteSummaryMessage, {
-    status: statusLabel ?? status,
-    relatedStatus: relatedStatusLabel ?? relatedStatus,
+    status: statusLabel,
+    relatedStatus: relatedStatusLabel,
     relatedCount: relatedPages.length,
   });
   if (!page) {
@@ -132,7 +133,7 @@ export function CmsPageDetail({
             message={
               resolvedMessage ??
               formatResource(copy.cmsDetailWarningsMessage, {
-                status: statusLabel ?? status,
+                status: statusLabel,
               })
             }
           />
@@ -234,7 +235,7 @@ export function CmsPageDetail({
               <StatusBanner
                 tone="warning"
                 title={copy.cmsDetailWarningsTitle}
-                message={resolvedMessage ?? formatResource(copy.cmsDetailWarningsMessage, { status })}
+                message={resolvedMessage ?? formatResource(copy.cmsDetailWarningsMessage, { status: statusLabel })}
               />
             </div>
           )}
@@ -686,7 +687,7 @@ export function CmsPageDetail({
                 tone="warning"
                 title={copy.cmsRelatedPagesDegradedTitle}
                 message={formatResource(copy.cmsRelatedPagesDegradedMessage, {
-                status: relatedStatusLabel ?? relatedStatus,
+                status: relatedStatusLabel,
                 })}
               />
           )}

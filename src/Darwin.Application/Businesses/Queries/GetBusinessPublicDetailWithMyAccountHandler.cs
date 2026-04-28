@@ -48,8 +48,19 @@ namespace Darwin.Application.Businesses.Queries
         /// <returns>
         /// A <see cref="Result{T}"/> that contains a payload on success; the payload can be null when the business is not visible.
         /// </returns>
+        public Task<Result<BusinessPublicDetailWithMyAccountDto?>> HandleAsync(
+            Guid businessId,
+            CancellationToken ct = default)
+        {
+            return HandleAsync(businessId, culture: null, ct);
+        }
+
+        /// <summary>
+        /// Returns the combined model with localized public business text when translations exist.
+        /// </summary>
         public async Task<Result<BusinessPublicDetailWithMyAccountDto?>> HandleAsync(
             Guid businessId,
+            string? culture = null,
             CancellationToken ct = default)
         {
             if (businessId == Guid.Empty)
@@ -60,7 +71,7 @@ namespace Darwin.Application.Businesses.Queries
 
             // 1) Public business detail (includes active checks).
             var business = await _businessPublicDetailHandler
-                .HandleAsync(businessId, ct)
+                .HandleAsync(businessId, culture, ct)
                 .ConfigureAwait(false);
 
             if (business is null)

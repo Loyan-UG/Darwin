@@ -104,7 +104,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             // Step 2: load redemption and ensure it exists and belongs to the given business.
             var redemption = await _db.Set<LoyaltyRewardRedemption>()
-                .FirstOrDefaultAsync(r => r.Id == dto.RedemptionId, ct)
+                .FirstOrDefaultAsync(r => r.Id == dto.RedemptionId && !r.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (redemption is null)
@@ -149,7 +149,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             // Step 4: load the associated loyalty account and verify status and balance.
             var account = await _db.Set<LoyaltyAccount>()
-                .FirstOrDefaultAsync(a => a.Id == redemption.LoyaltyAccountId, ct)
+                .FirstOrDefaultAsync(a => a.Id == redemption.LoyaltyAccountId && !a.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (account is null)

@@ -20,7 +20,7 @@ namespace Darwin.Application.Catalog.Queries
         {
             var c = await _db.Set<Category>()
                 .Include(x => x.Translations)
-                .FirstOrDefaultAsync(x => x.Id == id, ct);
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
 
             if (c == null) return null;
 
@@ -31,7 +31,7 @@ namespace Darwin.Application.Catalog.Queries
                 IsActive = c.IsActive,
                 SortOrder = c.SortOrder,
                 RowVersion = c.RowVersion,
-                Translations = c.Translations.Select(t => new CategoryTranslationDto
+                Translations = c.Translations.Where(t => !t.IsDeleted).Select(t => new CategoryTranslationDto
                 {
                     Culture = t.Culture,
                     Name = t.Name,

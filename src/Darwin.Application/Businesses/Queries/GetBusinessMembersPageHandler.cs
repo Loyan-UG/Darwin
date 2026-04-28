@@ -16,6 +16,8 @@ namespace Darwin.Application.Businesses.Queries
     /// </summary>
     public sealed class GetBusinessMembersPageHandler
     {
+        private const int MaxPageSize = 200;
+
         private readonly IAppDbContext _db;
 
         public GetBusinessMembersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -30,12 +32,15 @@ namespace Darwin.Application.Businesses.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
             var baseQuery =
                 from member in _db.Set<BusinessMember>().AsNoTracking()
                 join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id into userJoin
                 from user in userJoin.DefaultIfEmpty()
-                where member.BusinessId == businessId
+                where member.BusinessId == businessId &&
+                      !member.IsDeleted &&
+                      (user == null || !user.IsDeleted)
                 select new
                 {
                     Member = member,

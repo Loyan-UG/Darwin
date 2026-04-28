@@ -23,10 +23,15 @@ import {
   getCatalogReviewQueueState,
   getPreferredCatalogReviewState,
 } from "@/features/review/review-workflow";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { formatMoney } from "@/lib/formatting";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 import { toWebApiUrl } from "@/lib/webapi-url";
-import { formatResource, getCatalogResource } from "@/localization";
+import {
+  formatResource,
+  getCatalogResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 
 type CatalogPageProps = {
   culture: string;
@@ -85,6 +90,7 @@ function buildCatalogHref(
     savingsBand: savingsBand && savingsBand !== "all" ? savingsBand : undefined,
   });
 }
+
 export function CatalogPage({
   culture,
   categories,
@@ -106,6 +112,18 @@ export function CatalogPage({
   dataStatus,
 }: CatalogPageProps) {
   const copy = getCatalogResource(culture);
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(dataStatus?.categories, copy) ??
+    dataStatus?.categories ??
+    "unknown";
+  const productsStatusLabel =
+    resolveApiStatusLabel(dataStatus?.products, copy) ??
+    dataStatus?.products ??
+    "unknown";
+  const cmsPagesStatusLabel =
+    resolveApiStatusLabel(dataStatus?.cmsPages, copy) ??
+    dataStatus?.cmsPages ??
+    "unknown";
   const hasProducts = products.length > 0;
   const totalPages = Math.max(1, Math.ceil(totalProducts / pageSize));
   const pageStart = totalProducts === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -184,9 +202,9 @@ export function CatalogPage({
       ? copy.catalogReviewOffersCta
       : copy.catalogReviewBaseCta;
   const catalogRouteSummaryMessage = formatResource(copy.catalogRouteSummaryMessage, {
-    categoriesStatus: dataStatus?.categories ?? "unknown",
-    productsStatus: dataStatus?.products ?? "unknown",
-    cmsPagesStatus: dataStatus?.cmsPages ?? "unknown",
+    categoriesStatus: categoriesStatusLabel,
+    productsStatus: productsStatusLabel,
+    cmsPagesStatus: cmsPagesStatusLabel,
     visibleCount: products.length,
     totalProducts: matchingProductsTotal,
     currentPage,
@@ -321,8 +339,8 @@ export function CatalogPage({
             tone="warning"
             title={copy.degradedTitle}
             message={formatResource(copy.degradedMessage, {
-              categoriesStatus: dataStatus?.categories ?? "unknown",
-              productsStatus: dataStatus?.products ?? "unknown",
+              categoriesStatus: categoriesStatusLabel,
+              productsStatus: productsStatusLabel,
             })}
           />
         )}
@@ -486,7 +504,7 @@ export function CatalogPage({
                 <div className="mt-4">
                   <Link
                     href={localizeHref(
-                      `/catalog/${featuredOfferProduct.product.slug}`,
+                      buildCatalogProductPath(featuredOfferProduct.product.slug),
                       culture,
                     )}
                     className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
@@ -778,7 +796,7 @@ export function CatalogPage({
           </p>
           <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.catalogCmsWindowMessage, {
-              cmsPagesStatus: dataStatus?.cmsPages ?? "unknown",
+              cmsPagesStatus: cmsPagesStatusLabel,
               pageCount: cmsPages.length,
             })}
           </p>
@@ -787,7 +805,7 @@ export function CatalogPage({
               {cmsPages.map((page) => (
                 <Link
                   key={page.id}
-                  href={localizeHref(`/cms/${page.slug}`, culture)}
+                  href={localizeHref(buildCmsPagePath(page.slug), culture)}
                   className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
                 >
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -802,7 +820,7 @@ export function CatalogPage({
           ) : (
             <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
               {formatResource(copy.catalogCmsWindowEmptyMessage, {
-                status: dataStatus?.cmsPages ?? "unknown",
+                status: cmsPagesStatusLabel,
               })}
             </p>
           )}

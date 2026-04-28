@@ -28,7 +28,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Inventory
             builder.Property(x => x.Location).HasMaxLength(500);
 
             builder.HasIndex(x => x.BusinessId);
-            builder.HasIndex(x => new { x.BusinessId, x.Name }).IsUnique();
+            builder.HasIndex(x => new { x.BusinessId, x.Name })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
             builder.HasIndex(x => new { x.BusinessId, x.IsDefault });
 
             builder.HasMany(x => x.StockLevels)
@@ -51,7 +53,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Inventory
 
             builder.HasIndex(x => x.WarehouseId);
             builder.HasIndex(x => x.ProductVariantId);
-            builder.HasIndex(x => new { x.WarehouseId, x.ProductVariantId }).IsUnique();
+            builder.HasIndex(x => new { x.WarehouseId, x.ProductVariantId })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
         }
 
         /// <inheritdoc />
@@ -117,7 +121,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Inventory
 
             builder.HasIndex(x => x.SupplierId);
             builder.HasIndex(x => x.BusinessId);
-            builder.HasIndex(x => new { x.BusinessId, x.OrderNumber }).IsUnique();
+            builder.HasIndex(x => new { x.BusinessId, x.OrderNumber })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             builder.HasMany(x => x.Lines)
                 .WithOne()

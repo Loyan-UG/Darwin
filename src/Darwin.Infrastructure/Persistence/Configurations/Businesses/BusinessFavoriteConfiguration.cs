@@ -25,7 +25,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
             // Uniqueness: only one active favorite per (UserId, BusinessId).
             builder.HasIndex(x => new { x.UserId, x.BusinessId })
                 .IsUnique()
-                .HasDatabaseName("UX_BusinessFavorites_User_Business");
+                .HasDatabaseName("UX_BusinessFavorites_User_Business")
+                .HasFilter("[IsDeleted] = 0");
 
 
             // Helpful lookups

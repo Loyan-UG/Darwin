@@ -103,7 +103,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CartCheckout
             // Unique index on (CartId, VariantId) to enforce one entry per variant per cart.
             // We include only non-deleted items to allow re-adding a deleted variant.
             builder.HasIndex(ci => new { ci.CartId, ci.VariantId })
-                   .IsUnique();
+                   .IsUnique()
+                   .HasFilter("[IsDeleted] = 0");
         }
     }
 }

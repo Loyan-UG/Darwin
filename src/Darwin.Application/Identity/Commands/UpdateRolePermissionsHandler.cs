@@ -69,10 +69,18 @@ namespace Darwin.Application.Identity.Commands
             var toAdd = target.Except(currentActive).ToList();
             var toRemove = currentActive.Except(target).ToList();
 
-            // Add new links using domain constructor (properties have private setters)
+            // Restore previously deleted links instead of creating duplicate join rows.
             foreach (var pid in toAdd)
             {
-                _db.Set<RolePermission>().Add(new RolePermission(dto.RoleId, pid));
+                var existingDeletedLink = currentLinks.FirstOrDefault(l => l.PermissionId == pid && l.IsDeleted);
+                if (existingDeletedLink is not null)
+                {
+                    existingDeletedLink.IsDeleted = false;
+                }
+                else
+                {
+                    _db.Set<RolePermission>().Add(new RolePermission(dto.RoleId, pid));
+                }
             }
 
             // Soft-remove links

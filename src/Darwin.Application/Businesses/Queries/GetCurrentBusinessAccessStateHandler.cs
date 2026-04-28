@@ -29,7 +29,7 @@ public sealed class GetCurrentBusinessAccessStateHandler
     {
         return _db.Set<Business>()
             .AsNoTracking()
-            .Where(x => x.Id == businessId)
+            .Where(x => x.Id == businessId && !x.IsDeleted)
             .Select(x => new BusinessAccessStateDto
             {
                 UserId = userId,
@@ -41,7 +41,7 @@ public sealed class GetCurrentBusinessAccessStateHandler
                 SuspendedAtUtc = x.SuspendedAtUtc,
                 SuspensionReason = x.SuspensionReason,
                 HasActiveOwner = _db.Set<BusinessMember>()
-                    .Any(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner),
+                    .Any(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner),
                 HasPrimaryLocation = _db.Set<BusinessLocation>()
                     .Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary),
                 HasContactEmail = !string.IsNullOrWhiteSpace(x.ContactEmail),

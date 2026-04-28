@@ -62,7 +62,8 @@ namespace Darwin.Application.Businesses.Queries
                 var q = request.Query.Trim();
                 businessQuery = businessQuery.Where(x =>
                     x.Name.Contains(q) ||
-                    (x.ShortDescription != null && x.ShortDescription.Contains(q)));
+                    (x.ShortDescription != null && x.ShortDescription.Contains(q)) ||
+                    (x.AdminTextOverridesJson != null && x.AdminTextOverridesJson.Contains(q)));
             }
 
             if (request.HasActiveLoyaltyProgram.HasValue)
@@ -142,6 +143,8 @@ namespace Darwin.Application.Businesses.Queries
                     Id = b.Id,
                     Name = b.Name,
                     ShortDescription = b.ShortDescription,
+                    AdminTextOverridesJson = b.AdminTextOverridesJson,
+                    DefaultCulture = b.DefaultCulture,
                     Category = b.Category,
                     IsActive = b.IsActive,
                     City = l != null ? l.City : null,
@@ -204,6 +207,20 @@ namespace Darwin.Application.Businesses.Queries
                     .OrderBy(x => x.DistanceKm)
                     .ThenBy(x => x.Name)
                     .ToList();
+            }
+
+            foreach (var item in pageItems)
+            {
+                item.Name = BusinessPublicTextResolver.ResolveName(
+                    item.Name,
+                    item.AdminTextOverridesJson,
+                    request.Culture,
+                    item.DefaultCulture);
+                item.ShortDescription = BusinessPublicTextResolver.ResolveShortDescription(
+                    item.ShortDescription,
+                    item.AdminTextOverridesJson,
+                    request.Culture,
+                    item.DefaultCulture);
             }
 
             return (pageItems, total);

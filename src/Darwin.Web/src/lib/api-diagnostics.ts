@@ -299,10 +299,29 @@ export function buildApiFailureDedupeKey(diagnostics: ApiDiagnostics) {
   ].join("|");
 }
 
+export function isNextProductionBuildPhase() {
+  return (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.npm_lifecycle_event === "build"
+  );
+}
+
+export function shouldSuppressBuildTimeApiFailureLog(diagnostics: ApiDiagnostics) {
+  return (
+    isNextProductionBuildPhase() &&
+    diagnostics.failureKind === "network-error" &&
+    diagnostics.surfaceFamily === "public-discovery"
+  );
+}
+
 export function logApiFailure(
   diagnostics: ApiDiagnostics,
   detail: unknown,
 ) {
+  if (shouldSuppressBuildTimeApiFailureLog(diagnostics)) {
+    return;
+  }
+
   const dedupeKey = buildApiFailureDedupeKey(diagnostics);
 
   if (loggedDiagnosticFailures.has(dedupeKey)) {

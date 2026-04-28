@@ -263,11 +263,11 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.TimeFormat));
 
-        RuleFor(x => x.AdminTextOverridesJson)
-            .MaximumLength(16000)
-            .Must(BeAdminTextOverridesJson)
-            .When(x => !string.IsNullOrWhiteSpace(x.AdminTextOverridesJson))
-            .WithMessage(localizer["SiteSettingAdminTextOverridesJsonInvalid"]);
+            RuleFor(x => x.AdminTextOverridesJson)
+                .MaximumLength(16000)
+                .Must(BeAdminTextOverridesJson)
+                .When(x => !string.IsNullOrWhiteSpace(x.AdminTextOverridesJson))
+                .WithMessage(localizer["SiteSettingAdminTextOverridesJsonInvalid"]);
 
             // -------- Measurement --------
             RuleFor(x => x.MeasurementSystem)
@@ -487,7 +487,7 @@ namespace Darwin.Application.Settings.Validators
                    string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
         }
 
-    private static bool BeAdminTextOverridesJson(string? json)
+        private static bool BeAdminTextOverridesJson(string? json)
         {
             if (string.IsNullOrWhiteSpace(json))
             {

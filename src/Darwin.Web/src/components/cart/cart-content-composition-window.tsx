@@ -7,6 +7,7 @@ import type {
 } from "@/features/catalog/types";
 import type { PublicPageSummary } from "@/features/cms/types";
 import { formatMoney } from "@/lib/formatting";
+import { buildCatalogProductPath, buildCmsPagePath } from "@/lib/entity-paths";
 import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import { formatResource, getCommerceResource } from "@/localization";
 
@@ -42,13 +43,13 @@ export function CartContentCompositionWindow({
     ? localizeHref("/account", culture)
     : buildLocalizedAuthHref("/account/sign-in", "/cart", culture);
   const storefrontPath = strongestProduct
-    ? `/catalog/${strongestProduct.slug}`
+    ? buildCatalogProductPath(strongestProduct.slug)
     : strongestCategory
       ? buildAppQueryPath("/catalog", { category: strongestCategory.slug })
       : "/catalog";
   const storefrontHref = localizeHref(storefrontPath, culture);
   const contentHref = localizeHref(
-    strongestPage ? `/cms/${strongestPage.slug}` : "/cms",
+    strongestPage ? buildCmsPagePath(strongestPage.slug) : "/cms",
     culture,
   );
 

@@ -30,6 +30,7 @@ internal static class ShipmentCarrierEventRecorder
         var existing = await db.Set<ShipmentCarrierEvent>()
             .FirstOrDefaultAsync(
                 x => x.ShipmentId == shipment.Id &&
+                     !x.IsDeleted &&
                      x.ProviderShipmentReference == normalizedReference &&
                      x.CarrierEventKey == normalizedEventKey &&
                      x.OccurredAtUtc == occurredAtUtc &&

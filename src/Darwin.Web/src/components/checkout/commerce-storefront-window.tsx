@@ -17,7 +17,11 @@ import {
 } from "@/features/storefront/storefront-campaigns";
 import { buildStorefrontSpotlightSelections } from "@/features/storefront/storefront-spotlight";
 import { formatMoney } from "@/lib/formatting";
-import { formatResource, getCommerceResource } from "@/localization";
+import {
+  formatResource,
+  getCommerceResource,
+  resolveApiStatusLabel,
+} from "@/localization";
 import { buildAppQueryPath, localizeHref } from "@/lib/locale-routing";
 
 type CommerceStorefrontWindowProps = {
@@ -44,6 +48,12 @@ export function CommerceStorefrontWindow({
   description,
 }: CommerceStorefrontWindowProps) {
   const copy = getCommerceResource(culture);
+  const cmsPagesStatusLabel =
+    resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
+  const categoriesStatusLabel =
+    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
+  const productsStatusLabel =
+    resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
   const {
     offerBoardProducts: offerBoard,
     campaignCategories,
@@ -201,9 +211,9 @@ export function CommerceStorefrontWindow({
       <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
         {description ??
           formatResource(copy.storefrontWindowMessage, {
-            cmsPagesStatus,
-            categoriesStatus,
-            productsStatus,
+            cmsPagesStatus: cmsPagesStatusLabel,
+            categoriesStatus: categoriesStatusLabel,
+            productsStatus: productsStatusLabel,
             cmsCount: cmsPages.length,
             categoryCount: categories.length,
             productCount: products.length,
@@ -262,7 +272,7 @@ export function CommerceStorefrontWindow({
           <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
             {formatResource(copy.storefrontWindowProductOfferBoardMessage, {
               productCount: products.length,
-              status: productsStatus,
+              status: productsStatusLabel,
             })}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
@@ -277,7 +287,7 @@ export function CommerceStorefrontWindow({
             culture={culture}
             cards={offerBoardCards}
             emptyMessage={formatResource(copy.storefrontWindowProductOfferBoardEmptyMessage, {
-              status: productsStatus,
+              status: productsStatusLabel,
             })}
             columnsClassName="grid-cols-1"
           />
@@ -312,7 +322,9 @@ export function CommerceStorefrontWindow({
           <StorefrontCampaignBoard
             culture={culture}
             cards={promotionLaneCards}
-            emptyMessage={copy.storefrontWindowCampaignEmptyMessage}
+            emptyMessage={formatResource(copy.storefrontWindowPromotionLaneEmptyMessage, {
+              productsStatus: productsStatusLabel,
+            })}
             cardClassName="bg-[var(--color-surface-panel-strong)]"
           />
         </div>

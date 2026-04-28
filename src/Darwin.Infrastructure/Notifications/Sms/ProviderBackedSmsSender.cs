@@ -26,9 +26,9 @@ public sealed class ProviderBackedSmsSender : ISmsSender
         IHttpClientFactory httpClientFactory,
         ILogger<ProviderBackedSmsSender> logger)
     {
-        _db = db;
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task SendAsync(
@@ -37,6 +37,9 @@ public sealed class ProviderBackedSmsSender : ISmsSender
         CancellationToken ct = default,
         ChannelDispatchContext? context = null)
     {
+        if (string.IsNullOrWhiteSpace(toPhoneE164)) throw new ArgumentNullException(nameof(toPhoneE164));
+        if (string.IsNullOrWhiteSpace(text)) throw new ArgumentNullException(nameof(text));
+
         var settings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
         if (settings is null || !settings.SmsEnabled)
         {
@@ -75,37 +78,56 @@ public sealed class ProviderBackedSmsSender : ISmsSender
 
         var accountSid = settings.SmsApiKey.Trim();
         var authToken = settings.SmsApiSecret.Trim();
-        var client = _httpClientFactory.CreateClient(nameof(ProviderBackedSmsSender));
-        var authBytes = Encoding.ASCII.GetBytes($"{accountSid}:{authToken}");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Basic",
-            Convert.ToBase64String(authBytes));
-
-        using var response = await client.PostAsync(
-            $"https://api.twilio.com/2010-04-01/Accounts/{accountSid}/Messages.json",
-            new FormUrlEncodedContent(new Dictionary<string, string>
+        try
+        {
+            var client = _httpClientFactory.CreateClient(nameof(ProviderBackedSmsSender));
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"https://api.twilio.com/2010-04-01/Accounts/{accountSid}/Messages.json")
             {
-                ["To"] = toPhoneE164,
-                ["From"] = settings.SmsFromPhoneE164.Trim(),
-                ["Body"] = text
-            }),
-            ct);
+                Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["To"] = toPhoneE164,
+                    ["From"] = settings.SmsFromPhoneE164.Trim(),
+                    ["Body"] = text
+                })
+            };
+            var authBytes = Encoding.ASCII.GetBytes($"{accountSid}:{authToken}");
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Basic",
+                Convert.ToBase64String(authBytes));
 
-        var body = await response.Content.ReadAsStringAsync(ct);
-        if (!response.IsSuccessStatusCode)
+            using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
+
+            var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                audit.Status = "Failed";
+                audit.CompletedAtUtc = DateTime.UtcNow;
+                audit.FailureMessage = BuildFailure(body);
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                _logger.LogError("Twilio SMS send failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
+                throw new InvalidOperationException("SMS send failed.");
+            }
+
+            audit.ProviderMessageId = ExtractProviderMessageId(body);
+            audit.Status = "Sent";
+            audit.CompletedAtUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (audit.Status == "Pending")
         {
             audit.Status = "Failed";
             audit.CompletedAtUtc = DateTime.UtcNow;
-            audit.FailureMessage = BuildFailure(body);
+            audit.FailureMessage = BuildFailure(ex.Message);
             await _db.SaveChangesAsync(ct);
-            _logger.LogError("Twilio SMS send failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
-            throw new InvalidOperationException("SMS send failed.");
+            _logger.LogError(ex, "Twilio SMS send failed before receiving a provider response.");
+            throw;
         }
-
-        audit.ProviderMessageId = ExtractProviderMessageId(body);
-        audit.Status = "Sent";
-        audit.CompletedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
     }
 
     private static string BuildPreview(string text)

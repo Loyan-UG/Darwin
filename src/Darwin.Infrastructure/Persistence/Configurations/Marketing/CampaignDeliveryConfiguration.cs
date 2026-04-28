@@ -77,11 +77,11 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Marketing
             builder.HasIndex(x => x.LastAttemptAtUtc)
                 .HasDatabaseName("IX_CampaignDeliveries_LastAttemptAtUtc");
 
-            // Optional idempotency key; keep it unique to avoid duplicate deliveries.
-            // Unique indexes allow multiple NULLs in SQL Server and PostgreSQL.
+            // Optional idempotency key; keep it unique for live rows to avoid duplicate deliveries.
             builder.HasIndex(x => x.IdempotencyKey)
                 .IsUnique()
-                .HasDatabaseName("UX_CampaignDeliveries_IdempotencyKey");
+                .HasDatabaseName("UX_CampaignDeliveries_IdempotencyKey")
+                .HasFilter("[IdempotencyKey] IS NOT NULL AND [IsDeleted] = 0");
         }
     }
 }

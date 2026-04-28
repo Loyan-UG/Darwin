@@ -53,7 +53,8 @@ namespace Darwin.Application.Businesses.Queries
                 var q = request.Query.Trim();
                 businessQuery = businessQuery.Where(x =>
                     x.Name.Contains(q) ||
-                    (x.ShortDescription != null && x.ShortDescription.Contains(q)));
+                    (x.ShortDescription != null && x.ShortDescription.Contains(q)) ||
+                    (x.AdminTextOverridesJson != null && x.AdminTextOverridesJson.Contains(q)));
             }
 
             var b = request.Bounds;
@@ -85,6 +86,8 @@ namespace Darwin.Application.Businesses.Queries
                     Id = biz.Id,
                     Name = biz.Name,
                     ShortDescription = biz.ShortDescription,
+                    AdminTextOverridesJson = biz.AdminTextOverridesJson,
+                    DefaultCulture = biz.DefaultCulture,
                     Category = biz.Category,
                     IsActive = biz.IsActive,
                     City = loc.City,
@@ -110,6 +113,20 @@ namespace Darwin.Application.Businesses.Queries
                 .Take(pageSize)
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
+            foreach (var item in items)
+            {
+                item.Name = BusinessPublicTextResolver.ResolveName(
+                    item.Name,
+                    item.AdminTextOverridesJson,
+                    request.Culture,
+                    item.DefaultCulture);
+                item.ShortDescription = BusinessPublicTextResolver.ResolveShortDescription(
+                    item.ShortDescription,
+                    item.AdminTextOverridesJson,
+                    request.Culture,
+                    item.DefaultCulture);
+            }
 
             return (items, total);
         }
