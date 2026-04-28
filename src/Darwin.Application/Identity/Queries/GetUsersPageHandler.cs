@@ -24,10 +24,11 @@ namespace Darwin.Application.Identity.Queries
                 .AsNoTracking()
                 .Where(u => !u.IsDeleted);
 
+            var nowUtc = DateTime.UtcNow;
             q = filter switch
             {
                 UserQueueFilter.Unconfirmed => q.Where(u => !u.EmailConfirmed),
-                UserQueueFilter.Locked => q.Where(u => u.LockoutEndUtc.HasValue && u.LockoutEndUtc.Value > DateTime.UtcNow),
+                UserQueueFilter.Locked => q.Where(u => u.LockoutEndUtc.HasValue && u.LockoutEndUtc.Value > nowUtc),
                 UserQueueFilter.Inactive => q.Where(u => !u.IsActive),
                 UserQueueFilter.MobileLinked => q.Where(u => _db.Set<Darwin.Domain.Entities.Identity.UserDevice>().Any(d => d.UserId == u.Id && !d.IsDeleted && d.IsActive)),
                 _ => q
@@ -35,11 +36,11 @@ namespace Darwin.Application.Identity.Queries
 
             if (!string.IsNullOrWhiteSpace(emailFilter))
             {
-                var term = emailFilter.Trim();
+                var term = emailFilter.Trim().ToLowerInvariant();
                 q = q.Where(u =>
-                    EF.Functions.Like(u.Email, $"%{term}%") ||
-                    (u.FirstName != null && EF.Functions.Like(u.FirstName, $"%{term}%")) ||
-                    (u.LastName != null && EF.Functions.Like(u.LastName, $"%{term}%")));
+                    u.Email.ToLower().Contains(term) ||
+                    (u.FirstName != null && u.FirstName.ToLower().Contains(term)) ||
+                    (u.LastName != null && u.LastName.ToLower().Contains(term)));
             }
 
             var total = await q.CountAsync(ct);
@@ -78,11 +79,12 @@ namespace Darwin.Application.Identity.Queries
                 .AsNoTracking()
                 .Where(u => !u.IsDeleted);
 
+            var nowUtc = DateTime.UtcNow;
             return new UserOpsSummaryDto
             {
                 TotalCount = await users.CountAsync(ct).ConfigureAwait(false),
                 UnconfirmedCount = await users.CountAsync(u => !u.EmailConfirmed, ct).ConfigureAwait(false),
-                LockedCount = await users.CountAsync(u => u.LockoutEndUtc.HasValue && u.LockoutEndUtc.Value > DateTime.UtcNow, ct).ConfigureAwait(false),
+                LockedCount = await users.CountAsync(u => u.LockoutEndUtc.HasValue && u.LockoutEndUtc.Value > nowUtc, ct).ConfigureAwait(false),
                 InactiveCount = await users.CountAsync(u => !u.IsActive, ct).ConfigureAwait(false),
                 MobileLinkedCount = await users.CountAsync(u => _db.Set<Darwin.Domain.Entities.Identity.UserDevice>().Any(d => d.UserId == u.Id && !d.IsDeleted && d.IsActive), ct).ConfigureAwait(false)
             };

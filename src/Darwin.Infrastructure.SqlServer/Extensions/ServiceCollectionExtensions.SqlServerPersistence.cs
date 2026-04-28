@@ -20,7 +20,7 @@ public static class ServiceCollectionExtensionsSqlServerPersistence
             options.UseSqlServer(connectionString, sql =>
             {
                 sql.EnableRetryOnFailure();
-                sql.MigrationsAssembly(typeof(DarwinDbContext).Assembly.FullName);
+                sql.MigrationsAssembly(typeof(ServiceCollectionExtensionsSqlServerPersistence).Assembly.FullName);
             });
         });
 

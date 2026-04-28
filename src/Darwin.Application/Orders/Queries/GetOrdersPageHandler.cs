@@ -30,15 +30,15 @@ namespace Darwin.Application.Orders.Queries
             if (pageSize < 1) pageSize = 20;
             if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
 
             var baseQuery = _db.Set<Order>()
                 .AsNoTracking()
                 .Where(o => !o.IsDeleted)
                 .Where(o =>
                     query == null ||
-                    o.OrderNumber.Contains(query) ||
-                    o.Currency.Contains(query));
+                    o.OrderNumber.ToLower().Contains(query) ||
+                    o.Currency.ToLower().Contains(query));
 
             baseQuery = filter switch
             {

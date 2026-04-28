@@ -119,7 +119,8 @@ namespace Darwin.Application.CRM.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            if (!TryApplyAction(opportunity, dto.Action))
+            var todayUtc = DateTime.UtcNow.Date;
+            if (!TryApplyAction(opportunity, dto.Action, todayUtc))
             {
                 return Result.Fail(_localizer["OpportunityLifecycleUnsupportedAction"]);
             }
@@ -128,7 +129,7 @@ namespace Darwin.Application.CRM.Commands
             return Result.Ok();
         }
 
-        private static bool TryApplyAction(Opportunity opportunity, string action)
+        private static bool TryApplyAction(Opportunity opportunity, string action, DateTime todayUtc)
         {
             switch (action)
             {
@@ -143,11 +144,11 @@ namespace Darwin.Application.CRM.Commands
                     return true;
                 case "CloseWon":
                     opportunity.Stage = OpportunityStage.ClosedWon;
-                    opportunity.ExpectedCloseDateUtc ??= DateTime.UtcNow.Date;
+                    opportunity.ExpectedCloseDateUtc ??= todayUtc;
                     return true;
                 case "CloseLost":
                     opportunity.Stage = OpportunityStage.ClosedLost;
-                    opportunity.ExpectedCloseDateUtc ??= DateTime.UtcNow.Date;
+                    opportunity.ExpectedCloseDateUtc ??= todayUtc;
                     return true;
                 case "Reopen":
                     opportunity.Stage = OpportunityStage.Qualification;

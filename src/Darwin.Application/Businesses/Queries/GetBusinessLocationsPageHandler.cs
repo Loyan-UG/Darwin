@@ -44,11 +44,11 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.Name.Contains(q) ||
-                    (x.City != null && x.City.Contains(q)) ||
-                    (x.PostalCode != null && x.PostalCode.Contains(q)));
+                    x.Name.ToLower().Contains(q) ||
+                    (x.City != null && x.City.ToLower().Contains(q)) ||
+                    (x.PostalCode != null && x.PostalCode.ToLower().Contains(q)));
             }
 
             var total = await baseQuery.CountAsync(ct);

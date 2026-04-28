@@ -60,12 +60,12 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.AffectedUserDisplayName.Contains(q) ||
-                    x.AffectedUserEmail.Contains(q) ||
-                    x.Reason.Contains(q) ||
-                    (x.ActorDisplayName != null && x.ActorDisplayName.Contains(q)));
+                    x.AffectedUserDisplayName.ToLower().Contains(q) ||
+                    x.AffectedUserEmail.ToLower().Contains(q) ||
+                    x.Reason.ToLower().Contains(q) ||
+                    (x.ActorDisplayName != null && x.ActorDisplayName.ToLower().Contains(q)));
             }
 
             var total = await baseQuery.CountAsync(ct);

@@ -31,20 +31,23 @@ namespace Darwin.Application.CRM.Queries
             var baseQuery = _db.Set<Invoice>().AsNoTracking().Where(x => !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
+                var hasGuidQuery = Guid.TryParse(q, out var guidQuery);
                 baseQuery = baseQuery.Where(x =>
-                    x.Currency.Contains(q) ||
-                    (x.CustomerId.HasValue && x.CustomerId.Value.ToString().Contains(q)) ||
-                    (x.OrderId.HasValue && x.OrderId.Value.ToString().Contains(q)) ||
-                    (x.PaymentId.HasValue && x.PaymentId.Value.ToString().Contains(q)));
+                    x.Currency.ToLower().Contains(q) ||
+                    (hasGuidQuery &&
+                     ((x.CustomerId.HasValue && x.CustomerId.Value == guidQuery) ||
+                      (x.OrderId.HasValue && x.OrderId.Value == guidQuery) ||
+                      (x.PaymentId.HasValue && x.PaymentId.Value == guidQuery))));
             }
 
-            var dueSoonThresholdUtc = DateTime.UtcNow.Date.AddDays(7);
+            var todayUtc = DateTime.UtcNow.Date;
+            var dueSoonThresholdUtc = todayUtc.AddDays(7);
             baseQuery = filter switch
             {
                 InvoiceQueueFilter.Draft => baseQuery.Where(x => x.Status == InvoiceStatus.Draft),
-                InvoiceQueueFilter.DueSoon => baseQuery.Where(x => x.Status != InvoiceStatus.Paid && x.DueDateUtc >= DateTime.UtcNow.Date && x.DueDateUtc <= dueSoonThresholdUtc),
-                InvoiceQueueFilter.Overdue => baseQuery.Where(x => x.Status != InvoiceStatus.Paid && x.DueDateUtc < DateTime.UtcNow.Date),
+                InvoiceQueueFilter.DueSoon => baseQuery.Where(x => x.Status != InvoiceStatus.Paid && x.DueDateUtc >= todayUtc && x.DueDateUtc <= dueSoonThresholdUtc),
+                InvoiceQueueFilter.Overdue => baseQuery.Where(x => x.Status != InvoiceStatus.Paid && x.DueDateUtc < todayUtc),
                 InvoiceQueueFilter.MissingVatId => baseQuery.Where(x => x.CustomerId.HasValue && _db.Set<Customer>().Any(customer => !customer.IsDeleted && customer.Id == x.CustomerId.Value && customer.TaxProfileType == CustomerTaxProfileType.Business && (customer.VatId == null || customer.VatId == string.Empty))),
                 InvoiceQueueFilter.Refunded => baseQuery.Where(x => x.PaymentId.HasValue && _db.Set<Refund>().Any(refund => !refund.IsDeleted && refund.PaymentId == x.PaymentId.Value && refund.Status == RefundStatus.Completed)),
                 _ => baseQuery

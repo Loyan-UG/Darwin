@@ -27,6 +27,7 @@ public sealed class GetCurrentBusinessAccessStateHandler
     /// </summary>
     public Task<BusinessAccessStateDto?> HandleAsync(Guid businessId, Guid userId, CancellationToken ct = default)
     {
+        var nowUtc = DateTime.UtcNow;
         return _db.Set<Business>()
             .AsNoTracking()
             .Where(x => x.Id == businessId && !x.IsDeleted)
@@ -64,7 +65,7 @@ public sealed class GetCurrentBusinessAccessStateHandler
                     .Any(u => u.Id == userId &&
                               !u.IsDeleted &&
                               u.LockoutEndUtc.HasValue &&
-                              u.LockoutEndUtc.Value > DateTime.UtcNow)
+                              u.LockoutEndUtc.Value > nowUtc)
             })
             .FirstOrDefaultAsync(ct);
     }

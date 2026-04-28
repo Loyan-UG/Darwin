@@ -1,3 +1,4 @@
+using Darwin.Infrastructure.PostgreSql.Configuration;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -19,10 +20,16 @@ public sealed class PostgreSqlDesignTimeDbContextFactory : IDesignTimeDbContextF
             configuration.GetConnectionString("DefaultConnection") ??
             "Host=localhost;Port=5432;Database=darwin_dev;Username=darwin;Password=Darwin_Postgres_Dev_123!;Include Error Detail=true";
 
+        var normalizedConnectionString = PostgreSqlConnectionString.Normalize(connectionString);
+
         var options = new DbContextOptionsBuilder<DarwinDbContext>()
-            .UseNpgsql(connectionString, npgsql =>
+            .UseNpgsql(normalizedConnectionString, npgsql =>
             {
-                npgsql.EnableRetryOnFailure();
+                npgsql.CommandTimeout(60);
+                npgsql.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorCodesToAdd: null);
                 npgsql.MigrationsAssembly(typeof(PostgreSqlDesignTimeDbContextFactory).Assembly.FullName);
             })
             .Options;

@@ -50,11 +50,11 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.Query))
             {
-                var q = request.Query.Trim();
+                var q = request.Query.Trim().ToLowerInvariant();
                 businessQuery = businessQuery.Where(x =>
-                    x.Name.Contains(q) ||
-                    (x.ShortDescription != null && x.ShortDescription.Contains(q)) ||
-                    (x.AdminTextOverridesJson != null && x.AdminTextOverridesJson.Contains(q)));
+                    x.Name.ToLower().Contains(q) ||
+                    (x.ShortDescription != null && x.ShortDescription.ToLower().Contains(q)) ||
+                    (x.AdminTextOverridesJson != null && x.AdminTextOverridesJson.ToLower().Contains(q)));
             }
 
             var b = request.Bounds;

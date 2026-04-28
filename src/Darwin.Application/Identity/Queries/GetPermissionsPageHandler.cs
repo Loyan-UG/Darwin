@@ -43,8 +43,8 @@ namespace Darwin.Application.Identity.Queries
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var term = searchTerm.Trim();
-                query = query.Where(p => p.Key.Contains(term) || p.DisplayName.Contains(term));
+                var term = searchTerm.Trim().ToLowerInvariant();
+                query = query.Where(p => p.Key.ToLower().Contains(term) || p.DisplayName.ToLower().Contains(term));
             }
 
             var total = await query.CountAsync(ct);

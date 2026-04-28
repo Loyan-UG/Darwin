@@ -3,25 +3,23 @@ using Darwin.Infrastructure.Persistence.Db;
 using Darwin.Infrastructure.Persistence.Seed;
 using Darwin.Infrastructure.Persistence.Seed.Sections;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Darwin.Infrastructure.Extensions
 {
     /// <summary>
-    ///     DI extension methods for registering persistence services:
-    ///     EF Core <see cref="DbContext"/>, the application-facing <c>IAppDbContext</c> abstraction,
+    ///     DI extension methods for shared persistence services:
+    ///     the application-facing <c>IAppDbContext</c> abstraction, seed sections,
     ///     and helpers for applying migrations and seeding at application startup.
     /// </summary>
     /// <remarks>
     ///     <para>
     ///         Responsibilities:
     ///         <list type="bullet">
-    ///             <item>Bind <c>DarwinDbContext</c> to SQL Server using the configured connection string.</item>
+    ///             <item>Register provider-neutral persistence services shared by all database providers.</item>
     ///             <item>Expose <c>IAppDbContext</c> as a scoped mapping to the same DbContext for the Application layer.</item>
     ///             <item>Provide <c>MigrateAndSeedAsync</c> to apply pending migrations and run idempotent data seeding.</item>
     ///         </list>
@@ -29,32 +27,13 @@ namespace Darwin.Infrastructure.Extensions
     ///     <para>
     ///         Notes:
     ///         <list type="bullet">
-    ///             <item>Enable retry-on-failure for transient SQL issues during development.</item>
+    ///             <item>Keep provider registration in provider-specific projects such as PostgreSQL or SQL Server.</item>
     ///             <item>Keep this extension free of web/host-specific concerns; it is reusable across entry points.</item>
     ///         </list>
     ///     </para>
     /// </remarks>
     public static class ServiceCollectionExtensionsPersistence
     {
-        public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration config)
-        {
-            var conn = config.GetConnectionString("DefaultConnection")
-                      ?? throw new InvalidOperationException("ConnectionString 'DefaultConnection' is missing.");
-
-            services.AddDbContext<DarwinDbContext>(opt =>
-            {
-                opt.UseSqlServer(conn, sql =>
-                {
-                    sql.EnableRetryOnFailure();
-                    sql.MigrationsAssembly(typeof(DarwinDbContext).Assembly.FullName);
-                });
-            });
-
-            services.AddDarwinPersistenceCoreServices();
-
-            return services;
-        }
-
         public static IServiceCollection AddDarwinPersistenceCoreServices(this IServiceCollection services)
         {
             // Expose DbContext via IAppDbContext for Application layer

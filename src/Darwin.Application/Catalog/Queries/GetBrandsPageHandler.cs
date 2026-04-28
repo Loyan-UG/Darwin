@@ -44,7 +44,7 @@ namespace Darwin.Application.Catalog.Queries
             if (pageSize < 1) pageSize = 20;
             if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
 
             var baseQuery = _db.Set<Brand>()
@@ -52,8 +52,8 @@ namespace Darwin.Application.Catalog.Queries
                 .Where(b =>
                     !b.IsDeleted &&
                     (query == null ||
-                     (b.Slug != null && b.Slug.Contains(query)) ||
-                     b.Translations.Any(t => !t.IsDeleted && t.Name.Contains(query))));
+                     (b.Slug != null && b.Slug.ToLower().Contains(query)) ||
+                     b.Translations.Any(t => !t.IsDeleted && t.Name.ToLower().Contains(query))));
 
             baseQuery = filter switch
             {

@@ -95,14 +95,14 @@ namespace Darwin.Application.Billing.Commands
                 payment.Status = PaymentStatus.Failed;
             }
 
-            payment.FailureReason = BuildFailureReason(payment.FailureReason, state, note);
+            payment.FailureReason = BuildFailureReason(payment.FailureReason, state, note, DateTime.UtcNow);
             return true;
         }
 
-        private static string? BuildFailureReason(string? existing, string state, string? note)
+        private static string? BuildFailureReason(string? existing, string state, string? note, DateTime nowUtc)
         {
             var preserved = RemoveExistingMarker(existing);
-            var marker = $"{MarkerPrefix}{state};{DateTime.UtcNow:O};{NormalizeNote(note)}]";
+            var marker = $"{MarkerPrefix}{state};{nowUtc:O};{NormalizeNote(note)}]";
             return string.IsNullOrWhiteSpace(preserved) ? marker : $"{preserved.Trim()} {marker}";
         }
 

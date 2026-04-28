@@ -21,7 +21,7 @@ public sealed class SqlServerDesignTimeDbContextFactory : IDesignTimeDbContextFa
             .UseSqlServer(connectionString, sql =>
             {
                 sql.EnableRetryOnFailure();
-                sql.MigrationsAssembly(typeof(DarwinDbContext).Assembly.FullName);
+                sql.MigrationsAssembly(typeof(SqlServerDesignTimeDbContextFactory).Assembly.FullName);
             })
             .Options;
 

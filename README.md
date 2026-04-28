@@ -96,7 +96,7 @@ src/
 |-- Darwin.Application     - Use cases, handlers, DTOs, validators, and orchestration
 |-- Darwin.Infrastructure  - Shared EF Core model, DbContext, seed pipeline, and infrastructure services
 |-- Darwin.Infrastructure.PostgreSql - PostgreSQL provider registration and PostgreSQL migrations
-|-- Darwin.Infrastructure.SqlServer  - SQL Server provider registration and legacy SQL Server migration lane
+|-- Darwin.Infrastructure.SqlServer  - SQL Server provider registration and SQL Server migrations
 |-- Darwin.Infrastructure.PersistenceProviders - Neutral runtime selector for PostgreSQL/SQL Server
 |-- Darwin.WebAdmin        - MVC + Razor + HTMX back-office
 |-- Darwin.WebApi          - REST API for public, member, business, admin, and future integrations
@@ -131,6 +131,8 @@ Provider selection is configuration-driven:
 ```
 
 Use `PostgreSql`/`Postgres`/`Npgsql` for PostgreSQL and `SqlServer`/`MSSQL` for SQL Server. The shared EF model and seed pipeline live in `Darwin.Infrastructure`; provider-specific registration lives in `Darwin.Infrastructure.PostgreSql` and `Darwin.Infrastructure.SqlServer`; neutral runtime selection lives in `Darwin.Infrastructure.PersistenceProviders`.
+
+PostgreSQL uses provider-native `pg_trgm`, `citext`, selected `jsonb`+GIN support, and normalized Npgsql connection defaults so search surfaces, stable identifiers, operational/configuration JSON documents, and runtime connections behave correctly without depending on SQL Server collation or text-storage behavior.
 
 See [`docs/persistence-providers.md`](docs/persistence-providers.md) for Docker setup, migration commands, and provider verification rules.
 
@@ -264,7 +266,7 @@ Required direction:
 - [.NET 10 SDK](https://dotnet.microsoft.com/)
 - [Node.js 18.0+](https://nodejs.org/)
 - Docker Desktop for local PostgreSQL development
-- SQL Server only when validating SQL Server customer deployments or the legacy SQL Server migration lane
+- SQL Server only when validating SQL Server customer deployments or the SQL Server migration lane
 - MAUI workloads for mobile work
 
 ### Local Setup

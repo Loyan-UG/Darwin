@@ -59,11 +59,11 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.Query))
             {
-                var q = request.Query.Trim();
+                var q = request.Query.Trim().ToLowerInvariant();
                 businessQuery = businessQuery.Where(x =>
-                    x.Name.Contains(q) ||
-                    (x.ShortDescription != null && x.ShortDescription.Contains(q)) ||
-                    (x.AdminTextOverridesJson != null && x.AdminTextOverridesJson.Contains(q)));
+                    x.Name.ToLower().Contains(q) ||
+                    (x.ShortDescription != null && x.ShortDescription.ToLower().Contains(q)) ||
+                    (x.AdminTextOverridesJson != null && x.AdminTextOverridesJson.ToLower().Contains(q)));
             }
 
             if (request.HasActiveLoyaltyProgram.HasValue)
@@ -98,9 +98,9 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.City))
             {
-                var city = request.City.Trim();
+                var city = request.City.Trim().ToLowerInvariant();
                 primaryLocationQuery = primaryLocationQuery.Where(l =>
-                    l.City != null && l.City.Contains(city));
+                    l.City != null && l.City.ToLower().Contains(city));
             }
 
             if (!string.IsNullOrWhiteSpace(request.CountryCode))
@@ -112,17 +112,17 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.AddressQuery))
             {
-                var aq = request.AddressQuery.Trim();
+                var aq = request.AddressQuery.Trim().ToLowerInvariant();
 
                 // Match against common address fields and location name to support partial address search.
                 primaryLocationQuery = primaryLocationQuery.Where(l =>
-                    (l.Name != null && l.Name.Contains(aq)) ||
-                    (l.AddressLine1 != null && l.AddressLine1.Contains(aq)) ||
-                    (l.AddressLine2 != null && l.AddressLine2.Contains(aq)) ||
-                    (l.City != null && l.City.Contains(aq)) ||
-                    (l.Region != null && l.Region.Contains(aq)) ||
-                    (l.PostalCode != null && l.PostalCode.Contains(aq)) ||
-                    (l.CountryCode != null && l.CountryCode.Contains(aq)));
+                    (l.Name != null && l.Name.ToLower().Contains(aq)) ||
+                    (l.AddressLine1 != null && l.AddressLine1.ToLower().Contains(aq)) ||
+                    (l.AddressLine2 != null && l.AddressLine2.ToLower().Contains(aq)) ||
+                    (l.City != null && l.City.ToLower().Contains(aq)) ||
+                    (l.Region != null && l.Region.ToLower().Contains(aq)) ||
+                    (l.PostalCode != null && l.PostalCode.ToLower().Contains(aq)) ||
+                    (l.CountryCode != null && l.CountryCode.ToLower().Contains(aq)));
             }
 
             // Optional proximity: apply a DB-agnostic bounding box filter in SQL.

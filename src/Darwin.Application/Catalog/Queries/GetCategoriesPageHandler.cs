@@ -40,7 +40,7 @@ namespace Darwin.Application.Catalog.Queries
         {
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
 
             var q = _db.Set<Category>()
@@ -48,8 +48,8 @@ namespace Darwin.Application.Catalog.Queries
                 .Where(c =>
                     !c.IsDeleted &&
                     (query == null ||
-                     c.Translations.Any(t => !t.IsDeleted && t.Name.Contains(query)) ||
-                     c.Translations.Any(t => !t.IsDeleted && t.Slug != null && t.Slug.Contains(query))));
+                     c.Translations.Any(t => !t.IsDeleted && t.Name.ToLower().Contains(query)) ||
+                     c.Translations.Any(t => !t.IsDeleted && t.Slug != null && t.Slug.ToLower().Contains(query))));
 
             q = filter switch
             {

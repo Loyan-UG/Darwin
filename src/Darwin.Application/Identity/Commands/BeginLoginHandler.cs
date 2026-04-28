@@ -59,7 +59,8 @@ namespace Darwin.Application.Identity.Commands
             if (oldTokens.Count > 0)
                 _db.Set<UserToken>().RemoveRange(oldTokens);
 
-            var token = new UserToken(dto.UserId, Purpose, optionsJson, DateTime.UtcNow.AddMinutes(10));
+            var nowUtc = DateTime.UtcNow;
+            var token = new UserToken(dto.UserId, Purpose, optionsJson, nowUtc.AddMinutes(10));
             _db.Set<UserToken>().Add(token);
             await _db.SaveChangesAsync(ct);
 

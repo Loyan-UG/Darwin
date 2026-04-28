@@ -48,11 +48,11 @@ namespace Darwin.Application.Inventory.Queries
             var warehousesQuery = _db.Set<Warehouse>().AsNoTracking().Where(x => x.BusinessId == businessId && !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 warehousesQuery = warehousesQuery.Where(x =>
-                    x.Name.Contains(term) ||
-                    (x.Description != null && x.Description.Contains(term)) ||
-                    (x.Location != null && x.Location.Contains(term)));
+                    x.Name.ToLower().Contains(term) ||
+                    (x.Description != null && x.Description.ToLower().Contains(term)) ||
+                    (x.Location != null && x.Location.ToLower().Contains(term)));
             }
 
             warehousesQuery = filter switch
@@ -143,12 +143,12 @@ namespace Darwin.Application.Inventory.Queries
             var suppliersQuery = _db.Set<Supplier>().AsNoTracking().Where(x => x.BusinessId == businessId && !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 suppliersQuery = suppliersQuery.Where(x =>
-                    x.Name.Contains(term) ||
-                    x.Email.Contains(term) ||
-                    x.Phone.Contains(term) ||
-                    (x.Address != null && x.Address.Contains(term)));
+                    x.Name.ToLower().Contains(term) ||
+                    x.Email.ToLower().Contains(term) ||
+                    x.Phone.ToLower().Contains(term) ||
+                    (x.Address != null && x.Address.ToLower().Contains(term)));
             }
 
             suppliersQuery = filter switch
@@ -248,10 +248,10 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 stockLevelsQuery = stockLevelsQuery.Where(x =>
-                    x.variant.Sku.Contains(term) ||
-                    x.warehouse.Name.Contains(term));
+                    x.variant.Sku.ToLower().Contains(term) ||
+                    x.warehouse.Name.ToLower().Contains(term));
             }
 
             stockLevelsQuery = filter switch
@@ -343,11 +343,12 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
+                var statusMatches = InventorySearchTermResolver.ResolveTransferStatusSearch(term);
                 stockTransfersQuery = stockTransfersQuery.Where(x =>
-                    x.fromWarehouse.Name.Contains(term) ||
-                    x.toWarehouse.Name.Contains(term) ||
-                    x.transfer.Status.ToString().Contains(term));
+                    x.fromWarehouse.Name.ToLower().Contains(term) ||
+                    x.toWarehouse.Name.ToLower().Contains(term) ||
+                    statusMatches.Contains(x.transfer.Status));
             }
 
             stockTransfersQuery = filter switch
@@ -468,11 +469,12 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
+                var statusMatches = InventorySearchTermResolver.ResolvePurchaseOrderStatusSearch(term);
                 purchaseOrdersQuery = purchaseOrdersQuery.Where(x =>
-                    x.order.OrderNumber.Contains(term) ||
-                    x.supplier.Name.Contains(term) ||
-                    x.order.Status.ToString().Contains(term));
+                    x.order.OrderNumber.ToLower().Contains(term) ||
+                    x.supplier.Name.ToLower().Contains(term) ||
+                    statusMatches.Contains(x.order.Status));
             }
 
             purchaseOrdersQuery = filter switch
@@ -569,6 +571,23 @@ namespace Darwin.Application.Inventory.Queries
                     })
                     .ToList()
             };
+        }
+    }
+
+    internal static class InventorySearchTermResolver
+    {
+        public static IReadOnlyList<Domain.Enums.TransferStatus> ResolveTransferStatusSearch(string term)
+        {
+            return Enum.GetValues<Domain.Enums.TransferStatus>()
+                .Where(status => status.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        public static IReadOnlyList<Domain.Enums.PurchaseOrderStatus> ResolvePurchaseOrderStatusSearch(string term)
+        {
+            return Enum.GetValues<Domain.Enums.PurchaseOrderStatus>()
+                .Where(status => status.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
         }
     }
 }

@@ -38,11 +38,12 @@ namespace Darwin.Application.Identity.Commands
         /// <param name="ct">Cancellation token.</param>
         public async Task<Result<Guid>> HandleAsync(WebAuthnFinishRegisterDto dto, CancellationToken ct = default)
         {
+            var nowUtc = DateTime.UtcNow;
             var token = await _db.Set<UserToken>()
                 .FirstOrDefaultAsync(t => t.Id == dto.ChallengeTokenId
                                           && t.Purpose == Purpose
                                           && t.UsedAtUtc == null
-                                          && (t.ExpiresAtUtc == null || t.ExpiresAtUtc > DateTime.UtcNow), ct);
+                                          && (t.ExpiresAtUtc == null || t.ExpiresAtUtc > nowUtc), ct);
 
             if (token is null)
                 return Result<Guid>.Fail(_localizer["RegistrationSessionExpiredOrMissing"]);
@@ -69,7 +70,7 @@ namespace Darwin.Application.Identity.Commands
                     CredentialType = verified.CredType,
                     AttestationFormat = verified.AttestationFmt,
                     SignatureCounter = verified.SignCount,
-                    LastUsedAtUtc = DateTime.UtcNow,
+                    LastUsedAtUtc = nowUtc,
                     IsSyncedPasskey = verified.IsSynced
                 };
                 _db.Set<UserWebAuthnCredential>().Add(cred);
@@ -79,10 +80,10 @@ namespace Darwin.Application.Identity.Commands
                 existing.PublicKey = verified.PublicKey;
                 existing.AaGuid = verified.Aaguid;
                 existing.SignatureCounter = verified.SignCount;
-                existing.LastUsedAtUtc = DateTime.UtcNow;
+                existing.LastUsedAtUtc = nowUtc;
             }
 
-            token.MarkUsed(DateTime.UtcNow);
+            token.MarkUsed(nowUtc);
             await _db.SaveChangesAsync(ct);
 
             return Result<Guid>.Ok(user.Id);

@@ -40,14 +40,14 @@ namespace Darwin.Application.CRM.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.opportunity.Title.Contains(q) ||
-                    x.customer.FirstName.Contains(q) ||
-                    x.customer.LastName.Contains(q) ||
-                    (x.user != null && x.user.Email.Contains(q)) ||
-                    (x.user != null && x.user.FirstName != null && x.user.FirstName.Contains(q)) ||
-                    (x.user != null && x.user.LastName != null && x.user.LastName.Contains(q)));
+                    x.opportunity.Title.ToLower().Contains(q) ||
+                    x.customer.FirstName.ToLower().Contains(q) ||
+                    x.customer.LastName.ToLower().Contains(q) ||
+                    (x.user != null && x.user.Email.ToLower().Contains(q)) ||
+                    (x.user != null && x.user.FirstName != null && x.user.FirstName.ToLower().Contains(q)) ||
+                    (x.user != null && x.user.LastName != null && x.user.LastName.ToLower().Contains(q)));
             }
 
             var closingSoonThreshold = DateTime.UtcNow.Date.AddDays(14);

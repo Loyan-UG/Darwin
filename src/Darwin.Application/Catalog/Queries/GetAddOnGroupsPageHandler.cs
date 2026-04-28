@@ -29,7 +29,7 @@ namespace Darwin.Application.Catalog.Queries
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
 
-            var baseQuery = BuildListQuery(q);
+            var baseQuery = BuildListQuery(AddOnGroupSearch.NormalizeQuery(q));
 
             baseQuery = filter switch
             {
@@ -55,7 +55,7 @@ namespace Darwin.Application.Catalog.Queries
         {
             return _db.Set<AddOnGroup>()
                 .AsNoTracking()
-                .Where(g => !g.IsDeleted && (string.IsNullOrEmpty(q) || g.Name.Contains(q)))
+                .Where(g => !g.IsDeleted && (q == null || g.Name.ToLower().Contains(q)))
                 .Select(g => new AddOnGroupListItemDto
                 {
                     Id = g.Id,
@@ -83,9 +83,11 @@ namespace Darwin.Application.Catalog.Queries
 
         public async Task<AddOnGroupOpsSummaryDto> HandleAsync(string? q = null, CancellationToken ct = default)
         {
+            q = AddOnGroupSearch.NormalizeQuery(q);
+
             var groups = _db.Set<AddOnGroup>()
                 .AsNoTracking()
-                .Where(g => !g.IsDeleted && (string.IsNullOrEmpty(q) || g.Name.Contains(q)))
+                .Where(g => !g.IsDeleted && (q == null || g.Name.ToLower().Contains(q)))
                 .Select(g => new
                 {
                     g.IsActive,
@@ -105,6 +107,14 @@ namespace Darwin.Application.Catalog.Queries
                 UnattachedCount = await groups.CountAsync(x => x.AttachmentCount == 0, ct),
                 VariantLinkedCount = await groups.CountAsync(x => x.AttachmentCount > 0 && !x.IsGlobal, ct)
             };
+        }
+    }
+
+    internal static class AddOnGroupSearch
+    {
+        public static string? NormalizeQuery(string? q)
+        {
+            return string.IsNullOrWhiteSpace(q) ? null : q.Trim().ToLowerInvariant();
         }
     }
 }

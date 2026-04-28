@@ -29,20 +29,20 @@ namespace Darwin.Application.CMS.Media.Queries
             var baseQuery = _db.Set<MediaAsset>().AsNoTracking().Where(m => !m.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(m =>
-                    m.Url.Contains(term) ||
-                    m.Alt.Contains(term) ||
-                    m.OriginalFileName.Contains(term) ||
-                    (m.Title != null && m.Title.Contains(term)) ||
-                    (m.Role != null && m.Role.Contains(term)));
+                    m.Url.ToLower().Contains(term) ||
+                    (m.Alt != null && m.Alt.ToLower().Contains(term)) ||
+                    m.OriginalFileName.ToLower().Contains(term) ||
+                    (m.Title != null && m.Title.ToLower().Contains(term)) ||
+                    (m.Role != null && m.Role.ToLower().Contains(term)));
             }
 
             baseQuery = filter switch
             {
                 MediaAssetQueueFilter.MissingAlt => baseQuery.Where(m => string.IsNullOrWhiteSpace(m.Alt)),
-                MediaAssetQueueFilter.EditorAssets => baseQuery.Where(m => m.Role != null && m.Role.Contains("EditorAsset")),
-                MediaAssetQueueFilter.LibraryAssets => baseQuery.Where(m => m.Role == null || m.Role == string.Empty || m.Role.Contains("LibraryAsset")),
+                MediaAssetQueueFilter.EditorAssets => baseQuery.Where(m => m.Role != null && m.Role.ToLower().Contains("editorasset")),
+                MediaAssetQueueFilter.LibraryAssets => baseQuery.Where(m => m.Role == null || m.Role == string.Empty || m.Role.ToLower().Contains("libraryasset")),
                 MediaAssetQueueFilter.MissingTitle => baseQuery.Where(m => string.IsNullOrWhiteSpace(m.Title)),
                 MediaAssetQueueFilter.UsedInProducts => baseQuery.Where(m => _db.Set<ProductMedia>().Any(pm => !pm.IsDeleted && pm.MediaAssetId == m.Id)),
                 MediaAssetQueueFilter.Unused => baseQuery.Where(m => !_db.Set<ProductMedia>().Any(pm => !pm.IsDeleted && pm.MediaAssetId == m.Id)),
@@ -89,8 +89,8 @@ namespace Darwin.Application.CMS.Media.Queries
                 TotalCount = await media.CountAsync(ct).ConfigureAwait(false),
                 MissingAltCount = await media.CountAsync(m => string.IsNullOrWhiteSpace(m.Alt), ct).ConfigureAwait(false),
                 MissingTitleCount = await media.CountAsync(m => string.IsNullOrWhiteSpace(m.Title), ct).ConfigureAwait(false),
-                EditorAssetCount = await media.CountAsync(m => m.Role != null && m.Role.Contains("EditorAsset"), ct).ConfigureAwait(false),
-                LibraryAssetCount = await media.CountAsync(m => m.Role == null || m.Role == string.Empty || m.Role.Contains("LibraryAsset"), ct).ConfigureAwait(false),
+                EditorAssetCount = await media.CountAsync(m => m.Role != null && m.Role.ToLower().Contains("editorasset"), ct).ConfigureAwait(false),
+                LibraryAssetCount = await media.CountAsync(m => m.Role == null || m.Role == string.Empty || m.Role.ToLower().Contains("libraryasset"), ct).ConfigureAwait(false),
                 ProductReferencedCount = await media.CountAsync(m => productMedia.Any(pm => pm.MediaAssetId == m.Id), ct).ConfigureAwait(false),
                 UnusedCount = await media.CountAsync(m => !productMedia.Any(pm => pm.MediaAssetId == m.Id), ct).ConfigureAwait(false)
             };

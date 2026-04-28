@@ -66,6 +66,7 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
                            PlanFeaturesJson = plan != null ? plan.FeaturesJson : null
                        };
 
+        var nowUtc = DateTime.UtcNow;
         invoices = filter switch
         {
             BusinessSubscriptionInvoiceQueueFilter.Open => invoices.Where(x => x.Status == SubscriptionInvoiceStatus.Open),
@@ -77,20 +78,20 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
             BusinessSubscriptionInvoiceQueueFilter.Overdue => invoices.Where(x =>
                 x.Status == SubscriptionInvoiceStatus.Open &&
                 x.DueAtUtc.HasValue &&
-                x.DueAtUtc.Value < DateTime.UtcNow),
+                x.DueAtUtc.Value < nowUtc),
             BusinessSubscriptionInvoiceQueueFilter.PdfMissing => invoices.Where(x => string.IsNullOrWhiteSpace(x.PdfUrl)),
             _ => invoices
         };
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim();
+            var term = query.Trim().ToLowerInvariant();
             invoices = invoices.Where(x =>
-                x.Provider.Contains(term) ||
-                (x.ProviderInvoiceId != null && x.ProviderInvoiceId.Contains(term)) ||
-                (x.PlanName != null && x.PlanName.Contains(term)) ||
-                (x.PlanCode != null && x.PlanCode.Contains(term)) ||
-                (x.FailureReason != null && x.FailureReason.Contains(term)));
+                x.Provider.ToLower().Contains(term) ||
+                (x.ProviderInvoiceId != null && x.ProviderInvoiceId.ToLower().Contains(term)) ||
+                (x.PlanName != null && x.PlanName.ToLower().Contains(term)) ||
+                (x.PlanCode != null && x.PlanCode.ToLower().Contains(term)) ||
+                (x.FailureReason != null && x.FailureReason.ToLower().Contains(term)));
         }
 
         var total = await invoices.CountAsync(ct).ConfigureAwait(false);
@@ -145,6 +146,7 @@ public sealed class GetBusinessSubscriptionInvoiceOpsSummaryHandler
 
     public async Task<BusinessSubscriptionInvoiceOpsSummaryDto> HandleAsync(Guid businessId, CancellationToken ct = default)
     {
+        var nowUtc = DateTime.UtcNow;
         var invoices = _db.Set<SubscriptionInvoice>()
             .AsNoTracking()
             .Where(x => !x.IsDeleted && x.BusinessId == businessId);
@@ -161,7 +163,7 @@ public sealed class GetBusinessSubscriptionInvoiceOpsSummaryHandler
             OverdueCount = await invoices.CountAsync(x =>
                 x.Status == SubscriptionInvoiceStatus.Open &&
                 x.DueAtUtc.HasValue &&
-                x.DueAtUtc.Value < DateTime.UtcNow, ct).ConfigureAwait(false),
+                x.DueAtUtc.Value < nowUtc, ct).ConfigureAwait(false),
             PdfMissingCount = await invoices.CountAsync(x => x.PdfUrl == null || x.PdfUrl == string.Empty, ct).ConfigureAwait(false)
         };
     }

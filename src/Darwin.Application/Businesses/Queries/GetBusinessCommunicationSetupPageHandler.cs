@@ -40,13 +40,13 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.Name.Contains(q) ||
-                    (x.LegalName != null && x.LegalName.Contains(q)) ||
-                    (x.SupportEmail != null && x.SupportEmail.Contains(q)) ||
-                    (x.CommunicationSenderName != null && x.CommunicationSenderName.Contains(q)) ||
-                    (x.CommunicationReplyToEmail != null && x.CommunicationReplyToEmail.Contains(q)));
+                    x.Name.ToLower().Contains(q) ||
+                    (x.LegalName != null && x.LegalName.ToLower().Contains(q)) ||
+                    (x.SupportEmail != null && x.SupportEmail.ToLower().Contains(q)) ||
+                    (x.CommunicationSenderName != null && x.CommunicationSenderName.ToLower().Contains(q)) ||
+                    (x.CommunicationReplyToEmail != null && x.CommunicationReplyToEmail.ToLower().Contains(q)));
             }
 
             if (setupOnly)

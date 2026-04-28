@@ -45,6 +45,8 @@ namespace Darwin.Application.Businesses.Commands
 
         public async Task<Result> HandleAsync(RetryEmailDispatchAuditDto dto, CancellationToken ct = default)
         {
+            var nowUtc = DateTime.UtcNow;
+            var retryChainThresholdUtc = nowUtc.Subtract(RetryChainWindow);
             var audit = await _db.Set<EmailDispatchAudit>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == dto.AuditId && !x.IsDeleted, ct)
@@ -67,7 +69,7 @@ namespace Darwin.Application.Businesses.Commands
                          !x.IsDeleted &&
                          x.FlowKey == audit.FlowKey &&
                          x.BusinessId == audit.BusinessId &&
-                         x.AttemptedAtUtc >= DateTime.UtcNow.Subtract(RetryChainWindow),
+                         x.AttemptedAtUtc >= retryChainThresholdUtc,
                     ct)
                 .ConfigureAwait(false);
 
@@ -77,7 +79,7 @@ namespace Darwin.Application.Businesses.Commands
             }
 
             var retryAvailableAtUtc = audit.AttemptedAtUtc.Add(RetryCooldown);
-            if (retryAvailableAtUtc > DateTime.UtcNow)
+            if (retryAvailableAtUtc > nowUtc)
             {
                 return Result.Fail(_localizer["EmailAuditRetryCooldownActive", retryAvailableAtUtc]);
             }

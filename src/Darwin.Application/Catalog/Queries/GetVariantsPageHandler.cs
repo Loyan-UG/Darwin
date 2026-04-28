@@ -49,11 +49,11 @@ namespace Darwin.Application.Catalog.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 variants = variants.Where(v =>
-                    EF.Functions.Like(v.Sku, $"%{q}%") ||
+                    v.Sku.ToLower().Contains(q) ||
                     _db.Set<ProductTranslation>()
-                       .Any(t => t.ProductId == v.ProductId && !t.IsDeleted && EF.Functions.Like(t.Name, $"%{q}%")));
+                       .Any(t => t.ProductId == v.ProductId && !t.IsDeleted && t.Name.ToLower().Contains(q)));
             }
 
             var total = await variants.CountAsync(ct);

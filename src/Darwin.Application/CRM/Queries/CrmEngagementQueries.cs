@@ -103,8 +103,8 @@ namespace Darwin.Application.CRM.Queries
             var baseQuery = _db.Set<CustomerSegment>().AsNoTracking().Where(x => !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
-                baseQuery = baseQuery.Where(x => x.Name.Contains(term) || (x.Description != null && x.Description.Contains(term)));
+                var term = query.Trim().ToLowerInvariant();
+                baseQuery = baseQuery.Where(x => x.Name.ToLower().Contains(term) || (x.Description != null && x.Description.ToLower().Contains(term)));
             }
 
             baseQuery = filter switch

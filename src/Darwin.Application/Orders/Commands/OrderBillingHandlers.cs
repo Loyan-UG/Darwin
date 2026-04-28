@@ -192,6 +192,7 @@ namespace Darwin.Application.Orders.Commands
                 }
             }
 
+            var nowUtc = DateTime.UtcNow;
             var invoice = new Invoice
             {
                 BusinessId = dto.BusinessId,
@@ -203,8 +204,8 @@ namespace Darwin.Application.Orders.Commands
                 TotalNetMinor = order.SubtotalNetMinor,
                 TotalTaxMinor = order.TaxTotalMinor,
                 TotalGrossMinor = order.GrandTotalGrossMinor,
-                DueDateUtc = dto.DueAtUtc ?? DateTime.UtcNow.AddDays(14),
-                PaidAtUtc = dto.PaymentId.HasValue ? DateTime.UtcNow : null,
+                DueDateUtc = dto.DueAtUtc ?? nowUtc.AddDays(14),
+                PaidAtUtc = dto.PaymentId.HasValue ? nowUtc : null,
                 Lines = order.Lines.Where(x => !x.IsDeleted).Select(x => new InvoiceLine
                 {
                     Description = string.IsNullOrWhiteSpace(x.Name) ? x.Sku : x.Name,

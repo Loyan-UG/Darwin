@@ -80,7 +80,8 @@ namespace Darwin.Application.Identity.Commands
                     return Result<AuthResultDto>.Fail(_localizer["InvalidCredentials"]);
                 }
 
-                if (user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > DateTime.UtcNow)
+                var nowUtc = DateTime.UtcNow;
+                if (user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > nowUtc)
                 {
                     return Result<AuthResultDto>.Fail(_localizer["AccountLocked"]);
                 }

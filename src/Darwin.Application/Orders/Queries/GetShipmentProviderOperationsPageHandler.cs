@@ -61,16 +61,16 @@ namespace Darwin.Application.Orders.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = filter.Query.Trim();
+                var q = filter.Query.Trim().ToLowerInvariant();
                 query = query.Where(x =>
-                    x.Provider.Contains(q) ||
-                    x.OperationType.Contains(q) ||
-                    (x.FailureReason != null && x.FailureReason.Contains(q)) ||
+                    x.Provider.ToLower().Contains(q) ||
+                    x.OperationType.ToLower().Contains(q) ||
+                    (x.FailureReason != null && x.FailureReason.ToLower().Contains(q)) ||
                     _db.Set<Shipment>().Any(s => s.Id == x.ShipmentId &&
                         !s.IsDeleted &&
-                        ((s.TrackingNumber != null && s.TrackingNumber.Contains(q)) ||
-                         (s.ProviderShipmentReference != null && s.ProviderShipmentReference.Contains(q)) ||
-                         _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && o.OrderNumber.Contains(q)))));
+                        ((s.TrackingNumber != null && s.TrackingNumber.ToLower().Contains(q)) ||
+                         (s.ProviderShipmentReference != null && s.ProviderShipmentReference.ToLower().Contains(q)) ||
+                         _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && o.OrderNumber.ToLower().Contains(q)))));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))

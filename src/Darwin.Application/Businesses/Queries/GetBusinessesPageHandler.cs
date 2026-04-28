@@ -39,10 +39,10 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.Name.Contains(q) ||
-                    (x.LegalName != null && x.LegalName.Contains(q)));
+                    x.Name.ToLower().Contains(q) ||
+                    (x.LegalName != null && x.LegalName.ToLower().Contains(q)));
             }
 
             if (operationalStatus.HasValue)

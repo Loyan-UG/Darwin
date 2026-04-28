@@ -34,12 +34,12 @@ namespace Darwin.Application.Shipping.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(m =>
-                    m.Name.Contains(term) ||
-                    m.Carrier.Contains(term) ||
-                    m.Service.Contains(term) ||
-                    (m.CountriesCsv != null && m.CountriesCsv.Contains(term)));
+                    m.Name.ToLower().Contains(term) ||
+                    m.Carrier.ToLower().Contains(term) ||
+                    m.Service.ToLower().Contains(term) ||
+                    (m.CountriesCsv != null && m.CountriesCsv.ToLower().Contains(term)));
             }
 
             baseQuery = filter switch
@@ -48,9 +48,9 @@ namespace Darwin.Application.Shipping.Queries
                 ShippingMethodQueueFilter.Inactive => baseQuery.Where(m => !m.IsActive),
                 ShippingMethodQueueFilter.MissingRates => baseQuery.Where(m => !m.Rates.Any(r => !r.IsDeleted)),
                 ShippingMethodQueueFilter.Dhl => baseQuery.Where(m =>
-                    m.Carrier.Contains("DHL") ||
-                    m.Name.Contains("DHL") ||
-                    m.Service.Contains("DHL")),
+                    m.Carrier.ToLower().Contains("dhl") ||
+                    m.Name.ToLower().Contains("dhl") ||
+                    m.Service.ToLower().Contains("dhl")),
                 ShippingMethodQueueFilter.GlobalCoverage => baseQuery.Where(m => m.CountriesCsv == null || m.CountriesCsv == string.Empty),
                 ShippingMethodQueueFilter.MultiRate => baseQuery.Where(m => m.Rates.Count(r => !r.IsDeleted) > 1),
                 _ => baseQuery
@@ -73,7 +73,7 @@ namespace Darwin.Application.Shipping.Queries
                     Currency = m.Currency,
                     IsActive = m.IsActive,
                     RatesCount = m.Rates.Count(r => !r.IsDeleted),
-                    IsDhl = m.Carrier.Contains("DHL") || m.Name.Contains("DHL") || m.Service.Contains("DHL"),
+                    IsDhl = m.Carrier.ToLower().Contains("dhl") || m.Name.ToLower().Contains("dhl") || m.Service.ToLower().Contains("dhl"),
                     HasGlobalCoverage = m.CountriesCsv == null || m.CountriesCsv == string.Empty,
                     HasMultipleRates = m.Rates.Count(r => !r.IsDeleted) > 1,
                     ModifiedAtUtc = m.ModifiedAtUtc
@@ -100,9 +100,9 @@ namespace Darwin.Application.Shipping.Queries
                 InactiveCount = await methods.CountAsync(x => !x.IsActive, ct).ConfigureAwait(false),
                 MissingRatesCount = await methods.CountAsync(x => !x.Rates.Any(r => !r.IsDeleted), ct).ConfigureAwait(false),
                 DhlCount = await methods.CountAsync(x =>
-                    x.Carrier.Contains("DHL") ||
-                    x.Name.Contains("DHL") ||
-                    x.Service.Contains("DHL"), ct).ConfigureAwait(false),
+                    x.Carrier.ToLower().Contains("dhl") ||
+                    x.Name.ToLower().Contains("dhl") ||
+                    x.Service.ToLower().Contains("dhl"), ct).ConfigureAwait(false),
                 GlobalCoverageCount = await methods.CountAsync(x => x.CountriesCsv == null || x.CountriesCsv == string.Empty, ct).ConfigureAwait(false),
                 MultiRateCount = await methods.CountAsync(x => x.Rates.Count(r => !r.IsDeleted) > 1, ct).ConfigureAwait(false)
             };

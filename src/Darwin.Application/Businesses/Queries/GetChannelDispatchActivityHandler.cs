@@ -121,16 +121,16 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = filter.Query.Trim();
+                var q = filter.Query.Trim().ToLowerInvariant();
                 query = query.Where(x =>
-                    x.RecipientAddress.Contains(q) ||
-                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.Contains(q)) ||
-                    x.Provider.Contains(q) ||
-                    x.MessagePreview.Contains(q) ||
-                    (x.FlowKey != null && x.FlowKey.Contains(q)) ||
-                    (x.TemplateKey != null && x.TemplateKey.Contains(q)) ||
-                    (x.CorrelationKey != null && x.CorrelationKey.Contains(q)) ||
-                    (x.ProviderMessageId != null && x.ProviderMessageId.Contains(q)));
+                    x.RecipientAddress.ToLower().Contains(q) ||
+                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.ToLower().Contains(q)) ||
+                    x.Provider.ToLower().Contains(q) ||
+                    x.MessagePreview.ToLower().Contains(q) ||
+                    (x.FlowKey != null && x.FlowKey.ToLower().Contains(q)) ||
+                    (x.TemplateKey != null && x.TemplateKey.ToLower().Contains(q)) ||
+                    (x.CorrelationKey != null && x.CorrelationKey.ToLower().Contains(q)) ||
+                    (x.ProviderMessageId != null && x.ProviderMessageId.ToLower().Contains(q)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.RecipientAddress))
@@ -359,16 +359,16 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = filter.Query.Trim();
+                var q = filter.Query.Trim().ToLowerInvariant();
                 query = query.Where(x =>
-                    x.RecipientAddress.Contains(q) ||
-                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.Contains(q)) ||
-                    x.Provider.Contains(q) ||
-                    x.MessageText.Contains(q) ||
-                    (x.FlowKey != null && x.FlowKey.Contains(q)) ||
-                    (x.TemplateKey != null && x.TemplateKey.Contains(q)) ||
-                    (x.CorrelationKey != null && x.CorrelationKey.Contains(q)) ||
-                    (x.FailureReason != null && x.FailureReason.Contains(q)));
+                    x.RecipientAddress.ToLower().Contains(q) ||
+                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.ToLower().Contains(q)) ||
+                    x.Provider.ToLower().Contains(q) ||
+                    x.MessageText.ToLower().Contains(q) ||
+                    (x.FlowKey != null && x.FlowKey.ToLower().Contains(q)) ||
+                    (x.TemplateKey != null && x.TemplateKey.ToLower().Contains(q)) ||
+                    (x.CorrelationKey != null && x.CorrelationKey.ToLower().Contains(q)) ||
+                    (x.FailureReason != null && x.FailureReason.ToLower().Contains(q)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.RecipientAddress))
@@ -755,6 +755,7 @@ namespace Darwin.Application.Businesses.Queries
             ChannelDispatchAudit row,
             ChannelDispatchAuditChainContext context)
         {
+            var nowUtc = DateTime.UtcNow;
             if (string.Equals(row.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, StringComparison.OrdinalIgnoreCase))
             {
                 return new ChannelDispatchActionPolicy
@@ -769,7 +770,7 @@ namespace Darwin.Application.Businesses.Queries
             if (string.Equals(row.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.AdminCommunicationTest, StringComparison.OrdinalIgnoreCase))
             {
                 var cooldownUntil = row.AttemptedAtUtc.AddMinutes(5);
-                if (cooldownUntil > DateTime.UtcNow)
+                if (cooldownUntil > nowUtc)
                 {
                     return new ChannelDispatchActionPolicy
                     {

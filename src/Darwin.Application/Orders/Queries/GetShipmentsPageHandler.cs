@@ -73,12 +73,12 @@ public sealed class GetShipmentsPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim();
+            var term = query.Trim().ToLowerInvariant();
             shipments = shipments.Where(s =>
-                s.Carrier.Contains(term) ||
-                s.Service.Contains(term) ||
-                (s.TrackingNumber != null && s.TrackingNumber.Contains(term)) ||
-                _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && o.OrderNumber.Contains(term)));
+                s.Carrier.ToLower().Contains(term) ||
+                (s.Service != null && s.Service.ToLower().Contains(term)) ||
+                (s.TrackingNumber != null && s.TrackingNumber.ToLower().Contains(term)) ||
+                _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && o.OrderNumber.ToLower().Contains(term)));
         }
 
         var total = await shipments.CountAsync(ct);

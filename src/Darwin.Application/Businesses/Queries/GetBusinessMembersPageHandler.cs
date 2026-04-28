@@ -7,6 +7,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Queries
@@ -56,11 +57,12 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
+                var roleMatches = BusinessSearchTermResolver.ResolveMemberRoleSearch(q);
                 baseQuery = baseQuery.Where(x =>
-                    x.UserDisplayName.Contains(q) ||
-                    x.UserEmail.Contains(q) ||
-                    x.Member.Role.ToString().Contains(q));
+                    x.UserDisplayName.ToLower().Contains(q) ||
+                    x.UserEmail.ToLower().Contains(q) ||
+                    roleMatches.Contains(x.Member.Role));
             }
 
             var nowUtc = DateTime.UtcNow;
@@ -100,6 +102,16 @@ namespace Darwin.Application.Businesses.Queries
                 .ToListAsync(ct);
 
             return (items, total);
+        }
+    }
+
+    internal static class BusinessSearchTermResolver
+    {
+        public static IReadOnlyList<BusinessMemberRole> ResolveMemberRoleSearch(string term)
+        {
+            return Enum.GetValues<BusinessMemberRole>()
+                .Where(role => role.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
         }
     }
 }

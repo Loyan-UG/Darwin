@@ -66,18 +66,18 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.Audit.RecipientEmail.Contains(q) ||
-                    (x.Audit.IntendedRecipientEmail != null && x.Audit.IntendedRecipientEmail.Contains(q)) ||
-                    x.Audit.Subject.Contains(q) ||
-                    x.Audit.Status.Contains(q) ||
-                    x.Audit.Provider.Contains(q) ||
-                    (x.Audit.FlowKey != null && x.Audit.FlowKey.Contains(q)) ||
-                    (x.Audit.TemplateKey != null && x.Audit.TemplateKey.Contains(q)) ||
-                    (x.Audit.CorrelationKey != null && x.Audit.CorrelationKey.Contains(q)) ||
-                    (x.Audit.ProviderMessageId != null && x.Audit.ProviderMessageId.Contains(q)) ||
-                    (x.BusinessName != null && x.BusinessName.Contains(q)));
+                    x.Audit.RecipientEmail.ToLower().Contains(q) ||
+                    (x.Audit.IntendedRecipientEmail != null && x.Audit.IntendedRecipientEmail.ToLower().Contains(q)) ||
+                    x.Audit.Subject.ToLower().Contains(q) ||
+                    x.Audit.Status.ToLower().Contains(q) ||
+                    x.Audit.Provider.ToLower().Contains(q) ||
+                    (x.Audit.FlowKey != null && x.Audit.FlowKey.ToLower().Contains(q)) ||
+                    (x.Audit.TemplateKey != null && x.Audit.TemplateKey.ToLower().Contains(q)) ||
+                    (x.Audit.CorrelationKey != null && x.Audit.CorrelationKey.ToLower().Contains(q)) ||
+                    (x.Audit.ProviderMessageId != null && x.Audit.ProviderMessageId.ToLower().Contains(q)) ||
+                    (x.BusinessName != null && x.BusinessName.ToLower().Contains(q)));
             }
 
             if (!string.IsNullOrWhiteSpace(recipientEmail))
@@ -296,8 +296,10 @@ namespace Darwin.Application.Businesses.Queries
                 queued = queued.Where(x => x.BusinessId == businessId.Value);
             }
 
-            var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
-            var stalePendingThresholdUtc = DateTime.UtcNow.AddMinutes(-15);
+            var nowUtc = DateTime.UtcNow;
+            var recentThresholdUtc = nowUtc.AddHours(-24);
+            var stalePendingThresholdUtc = nowUtc.AddMinutes(-15);
+            var retryCooldownThresholdUtc = nowUtc.Subtract(RetryCooldown);
             const int slowDeliveryThresholdSeconds = 60;
 
             var summaryRows = await audits
@@ -353,11 +355,11 @@ namespace Darwin.Application.Businesses.Queries
                 RetryReadyCount = summaryRows.Count(x =>
                     IsSupportedRetryFlow(x.FlowKey) &&
                     CanRetryStatus(x.Status) &&
-                    x.AttemptedAtUtc <= DateTime.UtcNow.Subtract(RetryCooldown)),
+                    x.AttemptedAtUtc <= retryCooldownThresholdUtc),
                 RetryBlockedCount = summaryRows.Count(x =>
                     IsSupportedRetryFlow(x.FlowKey) &&
                     CanRetryStatus(x.Status) &&
-                    x.AttemptedAtUtc > DateTime.UtcNow.Subtract(RetryCooldown)),
+                    x.AttemptedAtUtc > retryCooldownThresholdUtc),
                 HighChainVolumeCount = summaryRows
                     .Where(x => !string.IsNullOrWhiteSpace(x.FlowKey) && x.AttemptedAtUtc >= recentThresholdUtc)
                     .GroupBy(x => new { x.FlowKey, x.BusinessId, RecipientEmail = x.IntendedRecipientEmail ?? x.RecipientEmail })
@@ -414,17 +416,17 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 queuedQuery = queuedQuery.Where(x =>
-                    x.Operation.RecipientEmail.Contains(q) ||
-                    (x.Operation.IntendedRecipientEmail != null && x.Operation.IntendedRecipientEmail.Contains(q)) ||
-                    x.Operation.Subject.Contains(q) ||
-                    x.Operation.Provider.Contains(q) ||
-                    x.Operation.Status.Contains(q) ||
-                    (x.Operation.FlowKey != null && x.Operation.FlowKey.Contains(q)) ||
-                    (x.Operation.TemplateKey != null && x.Operation.TemplateKey.Contains(q)) ||
-                    (x.Operation.CorrelationKey != null && x.Operation.CorrelationKey.Contains(q)) ||
-                    (x.BusinessName != null && x.BusinessName.Contains(q)));
+                    x.Operation.RecipientEmail.ToLower().Contains(q) ||
+                    (x.Operation.IntendedRecipientEmail != null && x.Operation.IntendedRecipientEmail.ToLower().Contains(q)) ||
+                    x.Operation.Subject.ToLower().Contains(q) ||
+                    x.Operation.Provider.ToLower().Contains(q) ||
+                    x.Operation.Status.ToLower().Contains(q) ||
+                    (x.Operation.FlowKey != null && x.Operation.FlowKey.ToLower().Contains(q)) ||
+                    (x.Operation.TemplateKey != null && x.Operation.TemplateKey.ToLower().Contains(q)) ||
+                    (x.Operation.CorrelationKey != null && x.Operation.CorrelationKey.ToLower().Contains(q)) ||
+                    (x.BusinessName != null && x.BusinessName.ToLower().Contains(q)));
             }
 
             if (!string.IsNullOrWhiteSpace(recipientEmail))

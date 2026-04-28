@@ -79,27 +79,27 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 paymentsQuery = paymentsQuery.Where(x =>
-                    x.Provider.Contains(term) ||
-                    x.Currency.Contains(term) ||
-                    (x.ProviderTransactionRef != null && x.ProviderTransactionRef.Contains(term)) ||
-                    (x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef.Contains(term)) ||
-                    (x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef.Contains(term)) ||
-                    (x.OrderId.HasValue && _db.Set<Order>().Any(o => o.Id == x.OrderId.Value && !o.IsDeleted && o.OrderNumber.Contains(term))) ||
+                    x.Provider.ToLower().Contains(term) ||
+                    x.Currency.ToLower().Contains(term) ||
+                    (x.ProviderTransactionRef != null && x.ProviderTransactionRef.ToLower().Contains(term)) ||
+                    (x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef.ToLower().Contains(term)) ||
+                    (x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef.ToLower().Contains(term)) ||
+                    (x.OrderId.HasValue && _db.Set<Order>().Any(o => o.Id == x.OrderId.Value && !o.IsDeleted && o.OrderNumber.ToLower().Contains(term))) ||
                     (x.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
                         c.Id == x.CustomerId.Value &&
                         !c.IsDeleted &&
-                        (c.FirstName.Contains(term) ||
-                         c.LastName.Contains(term) ||
-                         c.Email.Contains(term) ||
-                         (c.CompanyName != null && c.CompanyName.Contains(term))))) ||
+                        (c.FirstName.ToLower().Contains(term) ||
+                         c.LastName.ToLower().Contains(term) ||
+                         c.Email.ToLower().Contains(term) ||
+                         (c.CompanyName != null && c.CompanyName.ToLower().Contains(term))))) ||
                     (x.UserId.HasValue && _db.Set<User>().Any(u =>
                         u.Id == x.UserId.Value &&
                         !u.IsDeleted &&
-                        (u.Email.Contains(term) ||
-                         (u.FirstName != null && u.FirstName.Contains(term)) ||
-                         (u.LastName != null && u.LastName.Contains(term))))));
+                        (u.Email.ToLower().Contains(term) ||
+                         (u.FirstName != null && u.FirstName.ToLower().Contains(term)) ||
+                         (u.LastName != null && u.LastName.ToLower().Contains(term))))));
             }
 
             var total = await paymentsQuery.CountAsync(ct).ConfigureAwait(false);
@@ -540,9 +540,9 @@ namespace Darwin.Application.Billing.Queries
                 return new List<PaymentProviderEventItemDto>();
             }
 
-            var paymentIntentRef = string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentRef) ? null : dto.ProviderPaymentIntentRef.Trim();
-            var checkoutSessionRef = string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionRef) ? null : dto.ProviderCheckoutSessionRef.Trim();
-            var providerTransactionRef = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef) ? null : dto.ProviderTransactionRef.Trim();
+            var paymentIntentRef = string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentRef) ? null : dto.ProviderPaymentIntentRef.Trim().ToLowerInvariant();
+            var checkoutSessionRef = string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionRef) ? null : dto.ProviderCheckoutSessionRef.Trim().ToLowerInvariant();
+            var providerTransactionRef = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef) ? null : dto.ProviderTransactionRef.Trim().ToLowerInvariant();
 
             if (paymentIntentRef is null && checkoutSessionRef is null && providerTransactionRef is null)
             {
@@ -554,9 +554,9 @@ namespace Darwin.Application.Billing.Queries
                 .Where(x =>
                     !x.IsDeleted &&
                     x.Type.StartsWith("StripeWebhook:") &&
-                    ((paymentIntentRef != null && EF.Functions.Like(x.PropertiesJson, $"%{paymentIntentRef}%")) ||
-                     (checkoutSessionRef != null && EF.Functions.Like(x.PropertiesJson, $"%{checkoutSessionRef}%")) ||
-                     (providerTransactionRef != null && EF.Functions.Like(x.PropertiesJson, $"%{providerTransactionRef}%"))))
+                    ((paymentIntentRef != null && x.PropertiesJson.ToLower().Contains(paymentIntentRef)) ||
+                     (checkoutSessionRef != null && x.PropertiesJson.ToLower().Contains(checkoutSessionRef)) ||
+                     (providerTransactionRef != null && x.PropertiesJson.ToLower().Contains(providerTransactionRef))))
                 .OrderByDescending(x => x.OccurredAtUtc)
                 .Take(12)
                 .Select(x => new
@@ -635,21 +635,21 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 refundsQuery = refundsQuery.Where(x =>
-                    x.Refund.Reason.Contains(term) ||
-                    x.Payment.Provider.Contains(term) ||
-                    (x.Payment.ProviderTransactionRef != null && x.Payment.ProviderTransactionRef.Contains(term)) ||
-                    (x.Payment.ProviderPaymentIntentRef != null && x.Payment.ProviderPaymentIntentRef.Contains(term)) ||
-                    (x.Payment.ProviderCheckoutSessionRef != null && x.Payment.ProviderCheckoutSessionRef.Contains(term)) ||
-                    _db.Set<Order>().Any(o => o.Id == x.Refund.OrderId && !o.IsDeleted && o.OrderNumber.Contains(term)) ||
+                    x.Refund.Reason.ToLower().Contains(term) ||
+                    x.Payment.Provider.ToLower().Contains(term) ||
+                    (x.Payment.ProviderTransactionRef != null && x.Payment.ProviderTransactionRef.ToLower().Contains(term)) ||
+                    (x.Payment.ProviderPaymentIntentRef != null && x.Payment.ProviderPaymentIntentRef.ToLower().Contains(term)) ||
+                    (x.Payment.ProviderCheckoutSessionRef != null && x.Payment.ProviderCheckoutSessionRef.ToLower().Contains(term)) ||
+                    _db.Set<Order>().Any(o => o.Id == x.Refund.OrderId && !o.IsDeleted && o.OrderNumber.ToLower().Contains(term)) ||
                     (x.Payment.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
                         c.Id == x.Payment.CustomerId.Value &&
                         !c.IsDeleted &&
-                        (c.FirstName.Contains(term) ||
-                         c.LastName.Contains(term) ||
-                         c.Email.Contains(term) ||
-                         (c.CompanyName != null && c.CompanyName.Contains(term)))))
+                        (c.FirstName.ToLower().Contains(term) ||
+                         c.LastName.ToLower().Contains(term) ||
+                         c.Email.ToLower().Contains(term) ||
+                         (c.CompanyName != null && c.CompanyName.ToLower().Contains(term)))))
                 );
             }
 
@@ -817,10 +817,10 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 accountsQuery = accountsQuery.Where(x =>
-                    x.Name.Contains(term) ||
-                    (x.Code != null && x.Code.Contains(term)));
+                    x.Name.ToLower().Contains(term) ||
+                    (x.Code != null && x.Code.ToLower().Contains(term)));
             }
 
             var total = await accountsQuery.CountAsync(ct).ConfigureAwait(false);
@@ -911,10 +911,10 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 expensesQuery = expensesQuery.Where(x =>
-                    x.Category.Contains(term) ||
-                    x.Description.Contains(term));
+                    x.Category.ToLower().Contains(term) ||
+                    x.Description.ToLower().Contains(term));
             }
 
             var total = await expensesQuery.CountAsync(ct).ConfigureAwait(false);
@@ -1011,9 +1011,10 @@ namespace Darwin.Application.Billing.Queries
 
             if (filter.HasValue)
             {
+                var recentCutoffUtc = DateTime.UtcNow.AddDays(-7);
                 journalEntriesQuery = filter.Value switch
                 {
-                    JournalEntryQueueFilter.Recent => journalEntriesQuery.Where(x => x.EntryDateUtc >= DateTime.UtcNow.AddDays(-7)),
+                    JournalEntryQueueFilter.Recent => journalEntriesQuery.Where(x => x.EntryDateUtc >= recentCutoffUtc),
                     JournalEntryQueueFilter.MultiLine => journalEntriesQuery.Where(x => x.Lines.Count(l => !l.IsDeleted) > 2),
                     _ => journalEntriesQuery
                 };
@@ -1021,16 +1022,16 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 journalEntriesQuery = journalEntriesQuery.Where(x =>
-                    x.Description.Contains(term) ||
+                    x.Description.ToLower().Contains(term) ||
                     x.Lines.Any(l =>
                         !l.IsDeleted &&
                         _db.Set<FinancialAccount>().Any(a =>
                             a.Id == l.AccountId &&
                             !a.IsDeleted &&
-                            (a.Name.Contains(term) ||
-                             (a.Code != null && a.Code.Contains(term))))));
+                            (a.Name.ToLower().Contains(term) ||
+                             (a.Code != null && a.Code.ToLower().Contains(term))))));
             }
 
             var total = await journalEntriesQuery.CountAsync(ct).ConfigureAwait(false);

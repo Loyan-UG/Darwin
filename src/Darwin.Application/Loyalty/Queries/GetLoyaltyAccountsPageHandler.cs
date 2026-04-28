@@ -43,10 +43,10 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim();
+                var term = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.user.Email.Contains(term) ||
-                    ((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)).Contains(term));
+                    x.user.Email.ToLower().Contains(term) ||
+                    (((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)).ToLower()).Contains(term));
             }
 
             if (status.HasValue)

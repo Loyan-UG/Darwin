@@ -93,7 +93,8 @@ namespace Darwin.Application.CRM.Commands
             invoice.TotalTaxMinor = dto.TotalTaxMinor;
             invoice.TotalGrossMinor = dto.TotalGrossMinor;
             invoice.DueDateUtc = dto.DueDateUtc;
-            invoice.PaidAtUtc = dto.Status == Darwin.Domain.Enums.InvoiceStatus.Paid ? dto.PaidAtUtc ?? DateTime.UtcNow : dto.PaidAtUtc;
+            var nowUtc = DateTime.UtcNow;
+            invoice.PaidAtUtc = dto.Status == Darwin.Domain.Enums.InvoiceStatus.Paid ? dto.PaidAtUtc ?? nowUtc : dto.PaidAtUtc;
 
             if (previousPaymentId.HasValue && previousPaymentId != dto.PaymentId)
             {
@@ -161,7 +162,8 @@ namespace Darwin.Application.CRM.Commands
 
                 case InvoiceStatus.Paid:
                 {
-                    var paidAtUtc = dto.PaidAtUtc ?? DateTime.UtcNow;
+                    var nowUtc = DateTime.UtcNow;
+                    var paidAtUtc = dto.PaidAtUtc ?? nowUtc;
                     if (payment is not null)
                     {
                         if (payment.Status is PaymentStatus.Failed or PaymentStatus.Voided or PaymentStatus.Refunded)

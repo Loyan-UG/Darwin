@@ -43,7 +43,7 @@ namespace Darwin.Application.CMS.Queries
         {
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
             var nowUtc = DateTime.UtcNow;
 
@@ -52,8 +52,8 @@ namespace Darwin.Application.CMS.Queries
                 .Where(p =>
                     !p.IsDeleted &&
                     (query == null ||
-                     p.Translations.Any(t => t.Title.Contains(query)) ||
-                     p.Translations.Any(t => t.Slug.Contains(query))));
+                     p.Translations.Any(t => t.Title.ToLower().Contains(query)) ||
+                     p.Translations.Any(t => t.Slug.ToLower().Contains(query))));
 
             q = filter switch
             {

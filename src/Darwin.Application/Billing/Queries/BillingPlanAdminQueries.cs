@@ -31,11 +31,11 @@ public sealed class GetBillingPlansAdminPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim();
+            var term = query.Trim().ToLowerInvariant();
             baseQuery = baseQuery.Where(x =>
-                x.Code.Contains(term) ||
-                x.Name.Contains(term) ||
-                (x.Description != null && x.Description.Contains(term)));
+                x.Code.ToLower().Contains(term) ||
+                x.Name.ToLower().Contains(term) ||
+                (x.Description != null && x.Description.ToLower().Contains(term)));
         }
 
         baseQuery = filter switch

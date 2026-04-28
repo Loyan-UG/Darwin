@@ -1,3 +1,4 @@
+using Darwin.Infrastructure.PostgreSql.Configuration;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -12,15 +13,20 @@ public static class ServiceCollectionExtensionsPostgreSqlPersistence
 
     public static IServiceCollection AddPostgreSqlPersistence(this IServiceCollection services, IConfiguration config)
     {
-        var conn = config.GetConnectionString(PostgreSqlProviderName)
-                   ?? config.GetConnectionString("DefaultConnection")
-                   ?? throw new InvalidOperationException("ConnectionString 'PostgreSql' or 'DefaultConnection' is missing.");
+        var conn = PostgreSqlConnectionString.Normalize(
+            config.GetConnectionString(PostgreSqlProviderName)
+            ?? config.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("ConnectionString 'PostgreSql' or 'DefaultConnection' is missing."));
 
         services.AddDbContext<DarwinDbContext>(opt =>
         {
             opt.UseNpgsql(conn, npgsql =>
             {
-                npgsql.EnableRetryOnFailure();
+                npgsql.CommandTimeout(60);
+                npgsql.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorCodesToAdd: null);
                 npgsql.MigrationsAssembly(typeof(ServiceCollectionExtensionsPostgreSqlPersistence).Assembly.FullName);
             });
         });

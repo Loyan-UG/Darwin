@@ -232,6 +232,15 @@ Do not expand test projects until the current implementation slice calls for it,
 - Add concurrency coverage for `RowVersion`: SQL Server native rowversion and PostgreSQL client-managed bytea concurrency.
 - Add schema-placement coverage proving no application tables are created in PostgreSQL `public` or SQL Server `dbo`.
 - Add PostgreSQL extension/index coverage proving `pg_trgm` and the expected `IX_PG_*` GIN indexes exist after migration.
+- Add PostgreSQL `citext` coverage proving identifier uniqueness and equality behave case-insensitively for login identifiers, role/permission keys, slugs, SKUs, billing plan codes, promotion codes, and tax category names.
+- Add PostgreSQL `jsonb` coverage proving the current 21 selected operational/configuration JSON columns are created as `jsonb`, the current 14 `IX_PG_*_JsonbGin` indexes exist, and text-search/equality-sensitive paths remain on text-backed JSON columns until query code is migrated to JSON operators or generated search fields.
+- Add PostgreSQL trigram coverage proving text-backed JSON search columns keep their `IX_PG_*_Trgm` indexes for event-log properties, provider callback payloads, and business admin text overrides.
+- Add PostgreSQL JSON validity coverage proving the current 11 `CK_PG_*_ValidJson` constraints exist for text-backed JSON columns and reject invalid JSON on new writes.
+- Add provider-neutral search coverage for high-value catalog, CMS, business discovery/list, Billing operator, CRM operator, Inventory operator, Orders/shipment operator, Shipping, Media, Loyalty, Identity user/mobile-device/permission, add-on group, variant lookup, and business/communication operations paths proving uppercase/lowercase search terms return the same relevant rows on PostgreSQL and SQL Server.
+- Add provider-neutral guard coverage that fails on new application-query `EF.Functions.Like`, query-side `Enum.ToString()` search, or query-side `Guid.ToString()` search unless a provider-specific exception is documented.
+- Add provider-neutral guard coverage that fails when EF query predicates embed moving `DateTime.UtcNow` expressions directly instead of using local UTC snapshots/cutoff parameters.
+- Add model-metadata coverage proving all decimal properties have explicit precision either through entity-specific configuration or the provider-neutral fallback convention.
+- Add PostgreSQL provider-registration coverage proving runtime and design-time Npgsql paths preserve normalized connection defaults for application name, retry limits, timeouts, keepalive, and auto-prepare settings.
 
 ### Mobile.Shared tests
 

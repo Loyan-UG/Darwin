@@ -36,15 +36,15 @@ namespace Darwin.Application.CRM.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.customer.FirstName.Contains(q) ||
-                    x.customer.LastName.Contains(q) ||
-                    x.customer.Email.Contains(q) ||
-                    (x.customer.CompanyName != null && x.customer.CompanyName.Contains(q)) ||
-                    (x.user != null && x.user.Email.Contains(q)) ||
-                    (x.user != null && x.user.FirstName != null && x.user.FirstName.Contains(q)) ||
-                    (x.user != null && x.user.LastName != null && x.user.LastName.Contains(q)));
+                    x.customer.FirstName.ToLower().Contains(q) ||
+                    x.customer.LastName.ToLower().Contains(q) ||
+                    x.customer.Email.ToLower().Contains(q) ||
+                    (x.customer.CompanyName != null && x.customer.CompanyName.ToLower().Contains(q)) ||
+                    (x.user != null && x.user.Email.ToLower().Contains(q)) ||
+                    (x.user != null && x.user.FirstName != null && x.user.FirstName.ToLower().Contains(q)) ||
+                    (x.user != null && x.user.LastName != null && x.user.LastName.ToLower().Contains(q)));
             }
 
             baseQuery = filter switch
@@ -256,16 +256,16 @@ namespace Darwin.Application.CRM.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
                 baseQuery = baseQuery.Where(x =>
-                    x.lead.FirstName.Contains(q) ||
-                    x.lead.LastName.Contains(q) ||
-                    x.lead.Email.Contains(q) ||
-                    x.lead.Phone.Contains(q) ||
-                    (x.lead.CompanyName != null && x.lead.CompanyName.Contains(q)) ||
-                    (x.assignedUser != null && x.assignedUser.Email.Contains(q)) ||
-                    (x.assignedUser != null && x.assignedUser.FirstName != null && x.assignedUser.FirstName.Contains(q)) ||
-                    (x.assignedUser != null && x.assignedUser.LastName != null && x.assignedUser.LastName.Contains(q)));
+                    x.lead.FirstName.ToLower().Contains(q) ||
+                    x.lead.LastName.ToLower().Contains(q) ||
+                    x.lead.Email.ToLower().Contains(q) ||
+                    x.lead.Phone.ToLower().Contains(q) ||
+                    (x.lead.CompanyName != null && x.lead.CompanyName.ToLower().Contains(q)) ||
+                    (x.assignedUser != null && x.assignedUser.Email.ToLower().Contains(q)) ||
+                    (x.assignedUser != null && x.assignedUser.FirstName != null && x.assignedUser.FirstName.ToLower().Contains(q)) ||
+                    (x.assignedUser != null && x.assignedUser.LastName != null && x.assignedUser.LastName.ToLower().Contains(q)));
             }
 
             baseQuery = filter switch
@@ -364,6 +364,7 @@ namespace Darwin.Application.CRM.Queries
 
         public async Task<CrmSummaryDto> HandleAsync(CancellationToken ct = default)
         {
+            var recentInteractionCutoffUtc = DateTime.UtcNow.AddDays(-7);
             var customerCount = await _db.Set<Customer>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
             var leadCount = await _db.Set<Lead>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
             var qualifiedLeadCount = await _db.Set<Lead>().AsNoTracking().CountAsync(x => x.Status == LeadStatus.Qualified, ct).ConfigureAwait(false);
@@ -376,7 +377,7 @@ namespace Darwin.Application.CRM.Queries
                 .ConfigureAwait(false) ?? 0L;
             var segmentCount = await _db.Set<CustomerSegment>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
             var recentInteractionCount = await _db.Set<Interaction>().AsNoTracking()
-                .CountAsync(x => x.CreatedAtUtc >= DateTime.UtcNow.AddDays(-7), ct)
+                .CountAsync(x => x.CreatedAtUtc >= recentInteractionCutoffUtc, ct)
                 .ConfigureAwait(false);
 
             return new CrmSummaryDto

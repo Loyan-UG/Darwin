@@ -46,6 +46,13 @@ Default local services:
 
 The development connection string is named `ConnectionStrings:PostgreSql`.
 
+The PostgreSQL provider normalizes runtime and design-time Npgsql connection strings with conservative production-friendly defaults:
+
+- `Application Name=Darwin` for server-side connection visibility.
+- `Max Auto Prepare=100` and `Auto Prepare Min Usages=2` for repeated-query prepared statement reuse.
+- `Keepalive=30`, `Timeout=15`, and `Command Timeout=60` unless the caller explicitly overrides them.
+- EF Core Npgsql retry policy is capped at 5 retries with a 10-second maximum delay.
+
 Apply PostgreSQL migrations:
 
 ```powershell
@@ -80,7 +87,7 @@ Set:
 
 Use either `ConnectionStrings:SqlServer` or the legacy `ConnectionStrings:DefaultConnection`.
 
-The existing SQL Server migrations currently remain in `Darwin.Infrastructure.Migrations` for compatibility with the established migration lane. The runtime registration now has a clearer home in `Darwin.Infrastructure.SqlServer`.
+The SQL Server migration lane now lives in `Darwin.Infrastructure.SqlServer.Migrations`. The shared `Darwin.Infrastructure` project intentionally contains no provider-specific migrations or SQL Server registration.
 
 When running EF commands for the SQL Server lane through an entry point whose default provider is PostgreSQL, set the provider explicitly:
 
@@ -105,7 +112,19 @@ Remove-Item Env:\Persistence__Provider
 - SQL Server keeps native `rowversion` concurrency semantics.
 - PostgreSQL uses client-managed `bytea` concurrency bytes for the shared `RowVersion` property.
 - SQL Server filtered-index syntax is normalized for PostgreSQL when the active provider is Npgsql.
-- PostgreSQL enables `pg_trgm` and GIN trigram indexes for high-value search columns in catalog, CMS, business, and identity surfaces.
+- PostgreSQL enables `pg_trgm` and GIN trigram indexes for high-value search columns in catalog, CMS, business, identity, provider callback, and event-log correlation surfaces.
+- High-value catalog, CMS, business discovery/list, Billing operator, CRM operator, Inventory operator, Orders/shipment operator, Shipping, Media, Loyalty, Identity user/mobile-device/permission, add-on group, variant lookup, and business/communication operations search paths normalize query terms and searchable columns to lowercase in LINQ, keeping PostgreSQL behavior aligned with SQL Server's common case-insensitive collation behavior while matching the existing `lower(...) gin_trgm_ops` PostgreSQL indexes where provider-specific indexes are present.
+- Avoid `EF.Functions.Like` and query-side `Enum.ToString()` or `Guid.ToString()` search logic in provider-neutral application queries. Resolve enum search values before SQL translation and use direct GUID equality when an identifier query parses as a GUID.
+- Do not embed moving `DateTime.UtcNow` expressions directly in EF predicates. Snapshot UTC values and cutoff windows in local variables before composing queries so providers receive stable parameters instead of provider-specific translations or repeated moving timestamps.
+- For command handlers, prefer one local UTC snapshot for related writes in the same operation, especially expiry, paid-at, due-date, retry, audit-marker, and lifecycle timestamps.
+- Keep decimal storage explicit. Darwin stores money as minor-unit integers; rare decimal rates/ratios must use explicit precision. `DarwinDbContext` applies a provider-neutral `decimal(18,4)` fallback only for future decimal properties that do not have entity-specific precision configured.
+- PostgreSQL enables `citext` for stable identifiers that must compare case-insensitively, including login identifiers, role/permission keys, slugs, SKUs, billing plan codes, promotion codes, and tax category names.
+- PostgreSQL uses `jsonb` plus targeted GIN indexes for selected operational JSON documents that are safe to query as JSON without breaking current text-search paths. Current `jsonb` surfaces include user attribution/external-id JSON, campaign targeting/payload JSON, promotion conditions, subscription metadata, subscription invoice snapshots, site-setting JSON options, business opening hours, analytics export parameters, user-engagement snapshots, and order address/add-on snapshots.
+- Do not convert text-searched JSON columns to `jsonb` until their query paths have been migrated away from raw `LIKE` or string `Contains` semantics. Current examples include provider callback payload search, event-log payment-reference search, business admin text override search, and cart-line JSON equality matching.
+- PostgreSQL still accelerates selected text-searched JSON fields with trigram indexes while preserving current query behavior. Current examples are `Integration.EventLogs.PropertiesJson`, `Integration.ProviderCallbackInboxMessages.PayloadJson`, and `Businesses.Businesses.AdminTextOverridesJson`.
+- PostgreSQL protects remaining text-backed JSON columns with `NOT VALID` check constraints backed by `public.darwin_is_valid_jsonb(text)`. This preserves low-risk migration behavior for existing databases while rejecting invalid JSON on new or updated rows.
+- PostgreSQL connection behavior is normalized in `Darwin.Infrastructure.PostgreSql` so runtime startup and EF design-time migrations share the same Npgsql timeout, retry, keepalive, and auto-prepare defaults.
+- Do not add new case-sensitive `string.Contains` search paths without deciding whether the behavior should be provider-neutral. Prefer explicit normalization or a documented provider-specific search strategy.
 
 ## Required Verification For Provider Changes
 
@@ -135,3 +154,18 @@ docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select table_schema
 ```
 
 Expected result: only `__EFMigrationsHistory` should remain in `public`.
+
+PostgreSQL extension sanity checks:
+
+```powershell
+docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select extname from pg_extension where extname in ('pg_trgm', 'citext') order by extname;"
+docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select table_schema, table_name, column_name from information_schema.columns where udt_name = 'citext' order by table_schema, table_name, column_name;"
+docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select table_schema, table_name, column_name from information_schema.columns where udt_name = 'jsonb' order by table_schema, table_name, column_name;"
+docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select schemaname, indexname from pg_indexes where indexname like 'IX_PG_%_JsonbGin' order by schemaname, indexname;"
+docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select schemaname, indexname from pg_indexes where indexname in ('IX_PG_EventLogs_PropertiesJson_Trgm', 'IX_PG_ProviderCallbackInboxMessages_PayloadJson_Trgm', 'IX_PG_Businesses_AdminTextOverridesJson_Trgm') order by schemaname, indexname;"
+docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select n.nspname as schema, c.relname as table_name, con.conname, con.convalidated from pg_constraint con join pg_class c on c.oid = con.conrelid join pg_namespace n on n.oid = c.relnamespace where con.conname like 'CK_PG_%_ValidJson' order by n.nspname, c.relname, con.conname;"
+```
+
+Expected current PostgreSQL JSON baseline: 21 `jsonb` columns and 14 `IX_PG_*_JsonbGin` indexes after all PostgreSQL migrations are applied.
+Expected current text-JSON search baseline: 3 targeted `IX_PG_*_Trgm` indexes for JSON columns that intentionally remain text-backed.
+Expected current text-JSON validity baseline: 11 `CK_PG_*_ValidJson` constraints, initially `NOT VALID`.

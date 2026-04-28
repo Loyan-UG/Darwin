@@ -51,13 +51,13 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = filter.Query.Trim();
+                var q = filter.Query.Trim().ToLowerInvariant();
                 query = query.Where(x =>
-                    x.Provider.Contains(q) ||
-                    x.CallbackType.Contains(q) ||
-                    (x.IdempotencyKey != null && x.IdempotencyKey.Contains(q)) ||
-                    (x.FailureReason != null && x.FailureReason.Contains(q)) ||
-                    x.PayloadJson.Contains(q));
+                    x.Provider.ToLower().Contains(q) ||
+                    x.CallbackType.ToLower().Contains(q) ||
+                    (x.IdempotencyKey != null && x.IdempotencyKey.ToLower().Contains(q)) ||
+                    (x.FailureReason != null && x.FailureReason.ToLower().Contains(q)) ||
+                    x.PayloadJson.ToLower().Contains(q));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))

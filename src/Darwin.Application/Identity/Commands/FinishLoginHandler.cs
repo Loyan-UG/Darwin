@@ -37,11 +37,12 @@ namespace Darwin.Application.Identity.Commands
         /// <param name="ct">Cancellation token.</param>
         public async Task<Result> HandleAsync(WebAuthnFinishLoginDto dto, CancellationToken ct = default)
         {
+            var nowUtc = DateTime.UtcNow;
             var token = await _db.Set<UserToken>()
                 .FirstOrDefaultAsync(t => t.Id == dto.ChallengeTokenId
                                           && t.Purpose == Purpose
                                           && t.UsedAtUtc == null
-                                          && (t.ExpiresAtUtc == null || t.ExpiresAtUtc > DateTime.UtcNow), ct);
+                                          && (t.ExpiresAtUtc == null || t.ExpiresAtUtc > nowUtc), ct);
 
             if (token is null)
                 return Result.Fail(_localizer["LoginSessionExpiredOrMissing"]);
@@ -62,9 +63,9 @@ namespace Darwin.Application.Identity.Commands
                 return Result.Fail(_localizer["CredentialNotFoundAfterVerification"]);
 
             cred.SignatureCounter = verified.NewSignCount;
-            cred.LastUsedAtUtc = DateTime.UtcNow;
+            cred.LastUsedAtUtc = nowUtc;
 
-            token.MarkUsed(DateTime.UtcNow);
+            token.MarkUsed(nowUtc);
             await _db.SaveChangesAsync(ct);
 
             return Result.Ok();

@@ -21,6 +21,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                 .HasAnnotation("ProductVersion", "10.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Darwin.Domain.Entities.Billing.BillingPlan", b =>
@@ -32,7 +33,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("citext");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -138,7 +139,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("MetadataJson")
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -537,11 +538,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("LinesJson")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("MetadataJson")
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -877,7 +878,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("NormalizedEmail")
                         .IsRequired()
                         .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("Note")
                         .HasMaxLength(2000)
@@ -1020,7 +1021,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("OpeningHoursJson")
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("PostalCode")
                         .HasMaxLength(20)
@@ -1669,7 +1670,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Culture")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasColumnType("citext");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -1701,7 +1702,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -2481,7 +2482,8 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("VatRate")
-                        .HasColumnType("decimal(5, 2)");
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
 
                     b.HasKey("Id");
 
@@ -3004,7 +3006,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("Slug")
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("citext");
 
                     b.HasKey("Id");
 
@@ -3033,7 +3035,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Culture")
                         .IsRequired()
                         .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("DescriptionHtml")
                         .HasColumnType("text");
@@ -3127,7 +3129,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Culture")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -3160,7 +3162,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("citext");
 
                     b.HasKey("Id");
 
@@ -3378,7 +3380,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Culture")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("FullDescriptionHtml")
                         .HasColumnType("text");
@@ -3419,7 +3421,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("citext");
 
                     b.HasKey("Id");
 
@@ -3507,7 +3509,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Sku")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("citext");
 
                     b.Property<int?>("StepOrderQty")
                         .HasColumnType("integer");
@@ -3746,7 +3748,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("citext");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -3800,7 +3802,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("citext");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -3811,7 +3813,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("NormalizedName")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("citext");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -3895,7 +3897,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("ChannelsOptInJson")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("Company")
                         .HasColumnType("text");
@@ -3920,7 +3922,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("citext");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
@@ -3928,7 +3930,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("ExternalIdsJson")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("FirstName")
                         .HasColumnType("text");
@@ -3936,7 +3938,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("FirstTouchUtmJson")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -3957,7 +3959,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("LastTouchUtmJson")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("Locale")
                         .IsRequired()
@@ -3979,12 +3981,12 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("NormalizedEmail")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("NormalizedUserName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -4022,7 +4024,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("VatId")
                         .HasColumnType("text");
@@ -4170,7 +4172,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("SnapshotJson")
                         .IsRequired()
                         .HasMaxLength(8000)
-                        .HasColumnType("character varying(8000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -4588,7 +4590,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("ParametersJson")
                         .IsRequired()
                         .HasMaxLength(8000)
-                        .HasColumnType("character varying(8000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<short>("ReportType")
                         .HasColumnType("smallint");
@@ -6280,7 +6282,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("PayloadJson")
                         .IsRequired()
                         .HasMaxLength(8000)
-                        .HasColumnType("character varying(8000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -6297,7 +6299,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("TargetingJson")
                         .IsRequired()
                         .HasMaxLength(8000)
-                        .HasColumnType("character varying(8000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -6430,7 +6432,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("BillingAddressJson")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -6475,7 +6477,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("ShippingAddressJson")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("ShippingCarrier")
                         .HasMaxLength(100)
@@ -6530,7 +6532,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("AddOnValueIdsJson")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -6865,11 +6867,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("Code")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("ConditionsJson")
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -7016,7 +7018,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("citext");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
@@ -7266,7 +7268,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("FeatureFlagsJson")
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("GoogleAnalyticsId")
                         .HasMaxLength(50)
@@ -7358,7 +7360,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("MeasurementSettingsJson")
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("MeasurementSystem")
                         .IsRequired()
@@ -7379,11 +7381,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("NumberFormattingOverridesJson")
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("OpenGraphDefaultsJson")
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("PasswordResetEmailBodyTemplate")
                         .HasMaxLength(8000)
@@ -7447,7 +7449,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<string>("SmsExtraSettingsJson")
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("SmsFromPhoneE164")
                         .HasMaxLength(32)

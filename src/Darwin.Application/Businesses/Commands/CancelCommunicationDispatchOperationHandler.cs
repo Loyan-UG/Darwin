@@ -71,16 +71,16 @@ namespace Darwin.Application.Businesses.Commands
 
             if (!string.IsNullOrWhiteSpace(dto.Query))
             {
-                var q = dto.Query.Trim();
+                var q = dto.Query.Trim().ToLowerInvariant();
                 query = query.Where(x =>
-                    x.RecipientAddress.Contains(q) ||
-                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.Contains(q)) ||
-                    x.Provider.Contains(q) ||
-                    x.MessageText.Contains(q) ||
-                    (x.FlowKey != null && x.FlowKey.Contains(q)) ||
-                    (x.TemplateKey != null && x.TemplateKey.Contains(q)) ||
-                    (x.CorrelationKey != null && x.CorrelationKey.Contains(q)) ||
-                    (x.FailureReason != null && x.FailureReason.Contains(q)));
+                    x.RecipientAddress.ToLower().Contains(q) ||
+                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.ToLower().Contains(q)) ||
+                    x.Provider.ToLower().Contains(q) ||
+                    x.MessageText.ToLower().Contains(q) ||
+                    (x.FlowKey != null && x.FlowKey.ToLower().Contains(q)) ||
+                    (x.TemplateKey != null && x.TemplateKey.ToLower().Contains(q)) ||
+                    (x.CorrelationKey != null && x.CorrelationKey.ToLower().Contains(q)) ||
+                    (x.FailureReason != null && x.FailureReason.ToLower().Contains(q)));
             }
 
             if (!string.IsNullOrWhiteSpace(dto.RecipientAddress))

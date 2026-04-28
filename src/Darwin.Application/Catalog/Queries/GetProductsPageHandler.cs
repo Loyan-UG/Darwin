@@ -41,7 +41,7 @@ namespace Darwin.Application.Catalog.Queries
         {
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
 
             var productsQuery = _db.Set<Product>()
@@ -49,9 +49,9 @@ namespace Darwin.Application.Catalog.Queries
                 .Where(p =>
                     !p.IsDeleted &&
                     (query == null ||
-                     p.Translations.Any(t => !t.IsDeleted && t.Name.Contains(query)) ||
-                     p.Translations.Any(t => !t.IsDeleted && t.Slug != null && t.Slug.Contains(query)) ||
-                     p.Variants.Any(v => !v.IsDeleted && v.Sku.Contains(query))));
+                     p.Translations.Any(t => !t.IsDeleted && t.Name.ToLower().Contains(query)) ||
+                     p.Translations.Any(t => !t.IsDeleted && t.Slug != null && t.Slug.ToLower().Contains(query)) ||
+                     p.Variants.Any(v => !v.IsDeleted && v.Sku.ToLower().Contains(query))));
 
             productsQuery = filter switch
             {

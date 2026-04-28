@@ -44,11 +44,11 @@ namespace Darwin.Application.Identity.Queries
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var s = search.Trim();
+                var s = search.Trim().ToLowerInvariant();
                 query = query.Where(r =>
-                    EF.Functions.Like(r.Key, $"%{s}%") ||
-                    (r.DisplayName != null && EF.Functions.Like(r.DisplayName, $"%{s}%")) ||
-                    (r.Description != null && EF.Functions.Like(r.Description, $"%{s}%")));
+                    r.Key.ToLower().Contains(s) ||
+                    (r.DisplayName != null && r.DisplayName.ToLower().Contains(s)) ||
+                    (r.Description != null && r.Description.ToLower().Contains(s)));
             }
 
             var total = await query.CountAsync(ct);

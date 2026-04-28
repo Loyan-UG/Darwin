@@ -86,7 +86,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CartCheckout
 
             // VAT rate stored as decimal with precision; ensure non-negative
             builder.Property(ci => ci.VatRate)
-                   .HasColumnType("decimal(5, 2)")
+                   .HasPrecision(5, 2)
                    .IsRequired();
 
             builder.Property(x => x.SelectedAddOnValueIdsJson)

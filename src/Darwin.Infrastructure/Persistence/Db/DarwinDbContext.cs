@@ -1,11 +1,13 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Common;
+using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Integration;
+using Darwin.Domain.Entities.Marketing;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Entities.SEO;
@@ -145,18 +147,46 @@ namespace Darwin.Infrastructure.Persistence.Db
             // 1) Apply all IEntityTypeConfiguration<T> from Infrastructure assembly
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(DarwinDbContext).Assembly);
 
-            // 2) Global soft-delete filter for entities that have a bool IsDeleted property
+            // 2) Keep decimal storage explicit across providers; entity-specific configurations can still override this.
+            ApplyDecimalPrecisionFallback(modelBuilder);
+
+            // 3) Global soft-delete filter for entities that have a bool IsDeleted property
             ApplySoftDeleteQueryFilters(modelBuilder);
 
-            // 3) Mark "RowVersion" (byte[]) as provider-appropriate concurrency token when present.
+            // 4) Mark "RowVersion" (byte[]) as provider-appropriate concurrency token when present.
             ApplyRowVersionConcurrency(modelBuilder);
 
-            // 4) Keep explicit SQL Server filtered indexes usable when the active provider is PostgreSQL.
+            // 5) Keep explicit SQL Server filtered indexes usable when the active provider is PostgreSQL.
             NormalizeProviderSpecificIndexFilters(modelBuilder);
 
-            // 5) Optional: register global value converters/protectors (only if class exists in project).
+            // 6) Use PostgreSQL-native case-insensitive text for stable identifiers.
+            ApplyPostgreSqlCitextIdentifiers(modelBuilder);
+
+            // 7) Use PostgreSQL jsonb for operational JSON documents that benefit from GIN indexes and JSON operators.
+            ApplyPostgreSqlJsonbColumns(modelBuilder);
+
+            // 8) Optional: register global value converters/protectors (only if class exists in project).
             //    If you are using the SecretProtectionConverterFactory we created earlier, uncomment:
             //SecretProtectionConverterFactory.Apply(modelBuilder);
+        }
+
+        /// <summary>
+        /// Applies a safe provider-neutral precision to decimal properties that do not have an explicit precision.
+        /// Most money in Darwin is stored as minor-unit integers; this protects future decimal ratios/rates from provider defaults.
+        /// </summary>
+        private static void ApplyDecimalPrecisionFallback(ModelBuilder modelBuilder)
+        {
+            foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(entityType => entityType.GetProperties()))
+            {
+                var clrType = Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType;
+                if (clrType != typeof(decimal) || property.GetPrecision().HasValue)
+                {
+                    continue;
+                }
+
+                property.SetPrecision(18);
+                property.SetScale(4);
+            }
         }
 
         /// <summary>
@@ -253,6 +283,117 @@ namespace Darwin.Infrastructure.Persistence.Db
                 RegexOptions.CultureInvariant);
 
             return converted;
+        }
+
+        private void ApplyPostgreSqlCitextIdentifiers(ModelBuilder modelBuilder)
+        {
+            if (Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) != true)
+            {
+                return;
+            }
+
+            // citext keeps CLR strings unchanged while making equality and unique
+            // indexes case-insensitive for identifiers in PostgreSQL.
+            modelBuilder.Entity<User>(b =>
+            {
+                b.Property(x => x.UserName).HasColumnType("citext");
+                b.Property(x => x.NormalizedUserName).HasColumnType("citext");
+                b.Property(x => x.Email).HasColumnType("citext");
+                b.Property(x => x.NormalizedEmail).HasColumnType("citext");
+            });
+
+            modelBuilder.Entity<Role>(b =>
+            {
+                b.Property(x => x.Key).HasColumnType("citext");
+                b.Property(x => x.NormalizedName).HasColumnType("citext");
+            });
+
+            modelBuilder.Entity<Permission>(b => b.Property(x => x.Key).HasColumnType("citext"));
+            modelBuilder.Entity<BusinessInvitation>(b => b.Property(x => x.NormalizedEmail).HasColumnType("citext"));
+            modelBuilder.Entity<BillingPlan>(b => b.Property(x => x.Code).HasColumnType("citext"));
+
+            modelBuilder.Entity<Brand>(b => b.Property(x => x.Slug).HasColumnType("citext"));
+            modelBuilder.Entity<BrandTranslation>(b => b.Property(x => x.Culture).HasColumnType("citext"));
+            modelBuilder.Entity<CategoryTranslation>(b =>
+            {
+                b.Property(x => x.Culture).HasColumnType("citext");
+                b.Property(x => x.Slug).HasColumnType("citext");
+            });
+            modelBuilder.Entity<ProductTranslation>(b =>
+            {
+                b.Property(x => x.Culture).HasColumnType("citext");
+                b.Property(x => x.Slug).HasColumnType("citext");
+            });
+            modelBuilder.Entity<ProductVariant>(b => b.Property(x => x.Sku).HasColumnType("citext"));
+            modelBuilder.Entity<PageTranslation>(b =>
+            {
+                b.Property(x => x.Culture).HasColumnType("citext");
+                b.Property(x => x.Slug).HasColumnType("citext");
+            });
+
+            modelBuilder.Entity<Promotion>(b => b.Property(x => x.Code).HasColumnType("citext"));
+            modelBuilder.Entity<TaxCategory>(b => b.Property(x => x.Name).HasColumnType("citext"));
+        }
+
+        private void ApplyPostgreSqlJsonbColumns(ModelBuilder modelBuilder)
+        {
+            if (Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) != true)
+            {
+                return;
+            }
+
+            modelBuilder.Entity<Campaign>(b =>
+            {
+                b.Property(x => x.TargetingJson).HasColumnType("jsonb");
+                b.Property(x => x.PayloadJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<BusinessSubscription>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<BusinessLocation>(b =>
+                b.Property(x => x.OpeningHoursJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<SubscriptionInvoice>(b =>
+            {
+                b.Property(x => x.LinesJson).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<AnalyticsExportJob>(b =>
+                b.Property(x => x.ParametersJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<UserEngagementSnapshot>(b =>
+                b.Property(x => x.SnapshotJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<Order>(b =>
+            {
+                b.Property(x => x.BillingAddressJson).HasColumnType("jsonb");
+                b.Property(x => x.ShippingAddressJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<OrderLine>(b =>
+                b.Property(x => x.AddOnValueIdsJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<Promotion>(b =>
+                b.Property(x => x.ConditionsJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<SiteSetting>(b =>
+            {
+                b.Property(x => x.FeatureFlagsJson).HasColumnType("jsonb");
+                b.Property(x => x.MeasurementSettingsJson).HasColumnType("jsonb");
+                b.Property(x => x.NumberFormattingOverridesJson).HasColumnType("jsonb");
+                b.Property(x => x.OpenGraphDefaultsJson).HasColumnType("jsonb");
+                b.Property(x => x.SmsExtraSettingsJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<User>(b =>
+            {
+                b.Property(x => x.ChannelsOptInJson).HasColumnType("jsonb");
+                b.Property(x => x.FirstTouchUtmJson).HasColumnType("jsonb");
+                b.Property(x => x.LastTouchUtmJson).HasColumnType("jsonb");
+                b.Property(x => x.ExternalIdsJson).HasColumnType("jsonb");
+            });
         }
     }
 }

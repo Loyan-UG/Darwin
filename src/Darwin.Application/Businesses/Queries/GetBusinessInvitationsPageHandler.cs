@@ -60,12 +60,14 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim();
+                var q = query.Trim().ToLowerInvariant();
+                var statusMatches = BusinessInvitationSearch.ResolveStatusSearch(q);
+                var roleMatches = BusinessInvitationSearch.ResolveRoleSearch(q);
                 baseQuery = baseQuery.Where(x =>
-                    x.Invitation.Email.Contains(q) ||
-                    x.InvitedByDisplayName.Contains(q) ||
-                    x.EffectiveStatus.ToString().Contains(q) ||
-                    x.Invitation.Role.ToString().Contains(q));
+                    x.Invitation.Email.ToLower().Contains(q) ||
+                    x.InvitedByDisplayName.ToLower().Contains(q) ||
+                    statusMatches.Contains(x.EffectiveStatus) ||
+                    roleMatches.Contains(x.Invitation.Role));
             }
 
             baseQuery = filter switch
@@ -103,6 +105,23 @@ namespace Darwin.Application.Businesses.Queries
                 .ToListAsync(ct);
 
             return (items, total);
+        }
+    }
+
+    internal static class BusinessInvitationSearch
+    {
+        public static IReadOnlyList<BusinessInvitationStatus> ResolveStatusSearch(string term)
+        {
+            return Enum.GetValues<BusinessInvitationStatus>()
+                .Where(status => status.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        public static IReadOnlyList<BusinessMemberRole> ResolveRoleSearch(string term)
+        {
+            return Enum.GetValues<BusinessMemberRole>()
+                .Where(role => role.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
         }
     }
 }

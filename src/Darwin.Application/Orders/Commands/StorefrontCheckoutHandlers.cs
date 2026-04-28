@@ -105,6 +105,7 @@ public sealed class CreateStorefrontPaymentIntentHandler
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
         }
 
+        var nowUtc = DateTime.UtcNow;
         return new StorefrontPaymentIntentResultDto
         {
             OrderId = order.Id,
@@ -116,7 +117,7 @@ public sealed class CreateStorefrontPaymentIntentHandler
             AmountMinor = existing.AmountMinor,
             Currency = existing.Currency,
             Status = existing.Status,
-            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(15)
+            ExpiresAtUtc = nowUtc.AddMinutes(15)
         };
     }
 
@@ -158,6 +159,7 @@ public sealed class CompleteStorefrontPaymentHandler
     public async Task<CompleteStorefrontPaymentResultDto> HandleAsync(CompleteStorefrontPaymentDto dto, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(dto);
+        var nowUtc = DateTime.UtcNow;
         if (dto.OrderId == Guid.Empty || dto.PaymentId == Guid.Empty)
         {
             throw new InvalidOperationException(_localizer["OrderIdAndPaymentIdAreRequired"]);
@@ -208,7 +210,7 @@ public sealed class CompleteStorefrontPaymentHandler
         {
             case StorefrontPaymentOutcome.Succeeded:
                 payment.Status = PaymentStatus.Captured;
-                payment.PaidAtUtc = DateTime.UtcNow;
+                payment.PaidAtUtc = nowUtc;
                 if (order.Status is OrderStatus.Created or OrderStatus.Confirmed)
                 {
                     order.Status = OrderStatus.Paid;
