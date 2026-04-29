@@ -45,18 +45,18 @@ public sealed class MarkInactiveReminderSentHandler
             return Result.Fail(_localizer["UserIdRequired"]);
         }
 
-        var snapshot = await (
-                from engagementSnapshot in _db.Set<UserEngagementSnapshot>()
-                join user in _db.Set<User>().AsNoTracking() on engagementSnapshot.UserId equals user.Id
-                where engagementSnapshot.UserId == request.UserId &&
-                      !engagementSnapshot.IsDeleted &&
-                      !user.IsDeleted &&
-                      user.IsActive
-                select engagementSnapshot)
-            .FirstOrDefaultAsync(ct)
+        // Validate that the user exists, is not deleted, and is active.
+        var userIsEligible = await _db.Set<User>()
+            .AsNoTracking()
+            .AnyAsync(u => u.Id == request.UserId && !u.IsDeleted && u.IsActive, ct)
             .ConfigureAwait(false);
 
-        if (snapshot is null)
+        // Fetch the snapshot as a tracked entity for later update.
+        var snapshot = await _db.Set<UserEngagementSnapshot>()
+            .FirstOrDefaultAsync(s => s.UserId == request.UserId && !s.IsDeleted, ct)
+            .ConfigureAwait(false);
+
+        if (!userIsEligible || snapshot is null)
         {
             return Result.Fail(_localizer["UserEngagementSnapshotNotFound"]);
         }

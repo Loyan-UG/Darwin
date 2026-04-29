@@ -71,7 +71,7 @@ public sealed class RoleAndPermissionHandlerTests
     public async Task UpdateRole_Should_UpdateDisplayNameAndDescription()
     {
         await using var db = RolePermissionTestDbContext.Create();
-        var role = new Role("editor", "Old Name", isSystem: false, description: "Old desc");
+        var role = new Role("editor", "Old Name", isSystem: false, description: "Old desc") { RowVersion = [1] };
         db.Set<Role>().Add(role);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -96,7 +96,7 @@ public sealed class RoleAndPermissionHandlerTests
     public async Task UpdateRole_Should_Fail_WhenRoleIsSystem()
     {
         await using var db = RolePermissionTestDbContext.Create();
-        var role = new Role("superadmin", "Super Admin", isSystem: true, description: null);
+        var role = new Role("superadmin", "Super Admin", isSystem: true, description: null) { RowVersion = [1] };
         db.Set<Role>().Add(role);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -136,13 +136,13 @@ public sealed class RoleAndPermissionHandlerTests
     public async Task DeleteRole_Should_SoftDeleteRole()
     {
         await using var db = RolePermissionTestDbContext.Create();
-        var role = new Role("viewer", "Viewer", isSystem: false, description: null);
+        var role = new Role("viewer", "Viewer", isSystem: false, description: null) { RowVersion = [1] };
         db.Set<Role>().Add(role);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new DeleteRoleHandler(db, new TestLocalizer());
 
-        var result = await handler.HandleAsync(role.Id, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(role.Id, role.RowVersion, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
 
@@ -154,13 +154,13 @@ public sealed class RoleAndPermissionHandlerTests
     public async Task DeleteRole_Should_Fail_WhenRoleIsSystem()
     {
         await using var db = RolePermissionTestDbContext.Create();
-        var role = new Role("protected", "Protected", isSystem: true, description: null);
+        var role = new Role("protected", "Protected", isSystem: true, description: null) { RowVersion = [1] };
         db.Set<Role>().Add(role);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new DeleteRoleHandler(db, new TestLocalizer());
 
-        var result = await handler.HandleAsync(role.Id, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(role.Id, role.RowVersion, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("SystemProtectedRoleCannotBeDeleted");
@@ -172,7 +172,7 @@ public sealed class RoleAndPermissionHandlerTests
         await using var db = RolePermissionTestDbContext.Create();
         var handler = new DeleteRoleHandler(db, new TestLocalizer());
 
-        var result = await handler.HandleAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(Guid.NewGuid(), [1], TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("RoleNotFound");
@@ -217,7 +217,7 @@ public sealed class RoleAndPermissionHandlerTests
     public async Task UpdatePermission_Should_UpdateDisplayNameAndDescription()
     {
         await using var db = RolePermissionTestDbContext.Create();
-        var permission = new Permission("catalog.write", "Old Name", false, "Old description");
+        var permission = new Permission("catalog.write", "Old Name", false, "Old description") { RowVersion = [1] };
         db.Set<Permission>().Add(permission);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -247,7 +247,7 @@ public sealed class RoleAndPermissionHandlerTests
         var result = await handler.HandleAsync(new PermissionEditDto
         {
             Id = Guid.NewGuid(),
-            RowVersion = [],
+            RowVersion = [1],
             DisplayName = "Something"
         }, TestContext.Current.CancellationToken);
 
@@ -261,7 +261,7 @@ public sealed class RoleAndPermissionHandlerTests
     public async Task SoftDeletePermission_Should_MarkAsDeleted_WhenNotAssigned()
     {
         await using var db = RolePermissionTestDbContext.Create();
-        var permission = new Permission("reports.view", "Reports View", false, null);
+        var permission = new Permission("reports.view", "Reports View", false, null) { RowVersion = [1] };
         db.Set<Permission>().Add(permission);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -283,7 +283,7 @@ public sealed class RoleAndPermissionHandlerTests
     public async Task SoftDeletePermission_Should_Fail_WhenPermissionIsSystem()
     {
         await using var db = RolePermissionTestDbContext.Create();
-        var permission = new Permission("system.full-access", "System Full", true, null);
+        var permission = new Permission("system.full-access", "System Full", true, null) { RowVersion = [1] };
         db.Set<Permission>().Add(permission);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -304,7 +304,7 @@ public sealed class RoleAndPermissionHandlerTests
     {
         await using var db = RolePermissionTestDbContext.Create();
         var role = new Role("staff", "Staff", false, null);
-        var permission = new Permission("billing.view", "Billing View", false, null);
+        var permission = new Permission("billing.view", "Billing View", false, null) { RowVersion = [1] };
         db.Set<Role>().Add(role);
         db.Set<Permission>().Add(permission);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);

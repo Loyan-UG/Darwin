@@ -87,12 +87,15 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<AdjustLoyaltyPointsResultDto>.Fail(_localizer["BusinessMismatchForLoyaltyAccount"]);
             }
 
-            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
-            var currentVersion = account.RowVersion ?? Array.Empty<byte>();
-            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+            var rowVersion = dto.RowVersion;
+            if (rowVersion is { Length: > 0 })
             {
-                return Result<AdjustLoyaltyPointsResultDto>.Fail(
-                    _localizer["ConcurrencyConflictLoyaltyAccountModified"]);
+                var currentVersion = account.RowVersion ?? Array.Empty<byte>();
+                if (!currentVersion.SequenceEqual(rowVersion))
+                {
+                    return Result<AdjustLoyaltyPointsResultDto>.Fail(
+                        _localizer["ConcurrencyConflictLoyaltyAccountModified"]);
+                }
             }
 
             if (account.Status != LoyaltyAccountStatus.Active)

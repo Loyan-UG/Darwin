@@ -28,7 +28,8 @@ public sealed class MobileDeviceAdminHandlersTests
             PushToken = "push-token",
             PushTokenUpdatedAtUtc = new DateTime(2030, 1, 1, 8, 0, 0, DateTimeKind.Utc),
             NotificationsEnabled = true,
-            IsActive = true
+            IsActive = true,
+            RowVersion = [1]
         };
         db.Set<UserDevice>().Add(device);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -54,7 +55,8 @@ public sealed class MobileDeviceAdminHandlersTests
             Platform = MobilePlatform.iOS,
             PushToken = "push-token",
             NotificationsEnabled = true,
-            IsActive = true
+            IsActive = true,
+            RowVersion = [1]
         };
         db.Set<UserDevice>().Add(device);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);

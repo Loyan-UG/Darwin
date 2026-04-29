@@ -148,7 +148,8 @@ public sealed class BusinessInvitationEmailHandlersTests
             Role = BusinessMemberRole.Manager,
             Token = "old-token",
             ExpiresAtUtc = new DateTime(2030, 2, 3, 8, 0, 0, DateTimeKind.Utc),
-            Status = BusinessInvitationStatus.Pending
+            Status = BusinessInvitationStatus.Pending,
+            RowVersion = [1]
         });
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -166,7 +167,8 @@ public sealed class BusinessInvitationEmailHandlersTests
         await handler.HandleAsync(new BusinessInvitationResendDto
         {
             Id = invitationId,
-            ExpiresInDays = 5
+            ExpiresInDays = 5,
+            RowVersion = [1]
         }, TestContext.Current.CancellationToken);
 
         emailSender.LastBody.Should().Contain("<code>");
