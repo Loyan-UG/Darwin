@@ -53,7 +53,14 @@ namespace Darwin.Application.Loyalty.Commands
             entity.IsActive = dto.IsActive;
             entity.RulesJson = dto.RulesJson;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictProgramModified"]);
+            }
         }
     }
 }

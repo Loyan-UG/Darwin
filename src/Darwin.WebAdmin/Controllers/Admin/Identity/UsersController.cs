@@ -734,7 +734,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetDefaultAddress([FromForm] Guid id, [FromForm] Guid userId, [FromForm] string kind, CancellationToken ct = default)
+        public async Task<IActionResult> SetDefaultAddress([FromForm] Guid id, [FromForm] Guid userId, [FromForm] string kind, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty || userId == Guid.Empty)
             {
@@ -748,7 +748,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 return BadRequest(T("SetDefaultAddressFailedMessage"));
             }
 
-            var result = await _setDefaultAddress.HandleAsync(userId, id, asBilling, asShipping, ct);
+            var parsedRowVersion = DecodeBase64RowVersion(rowVersion);
+            if (parsedRowVersion.Length == 0)
+            {
+                return BadRequest(T("SetDefaultAddressFailedMessage"));
+            }
+
+            var result = await _setDefaultAddress.HandleAsync(userId, id, asBilling, asShipping, parsedRowVersion, ct);
             if (!result.Succeeded) return BadRequest(T("SetDefaultAddressFailedMessage"));
 
             TempData["Success"] = asBilling

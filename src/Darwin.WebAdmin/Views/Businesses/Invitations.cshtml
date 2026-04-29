@@ -354,6 +354,7 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
                                 <input type="hidden" name="page" value="@Model.Page" />
                                 <input type="hidden" name="pageSize" value="@Model.PageSize" />
                                 <input type="hidden" name="query" value="@Model.Query" />
@@ -374,6 +375,7 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
                                 <input type="hidden" name="page" value="@Model.Page" />
                                 <input type="hidden" name="pageSize" value="@Model.PageSize" />
                                 <input type="hidden" name="query" value="@Model.Query" />

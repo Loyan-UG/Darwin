@@ -10,6 +10,8 @@ namespace Darwin.Application.Businesses.Commands
 {
     public sealed class CancelCommunicationDispatchOperationHandler
     {
+        private static readonly TimeSpan InFlightProtectionWindow = TimeSpan.FromMinutes(2);
+
         private readonly IAppDbContext _db;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
@@ -50,9 +52,11 @@ namespace Darwin.Application.Businesses.Commands
             }
 
             var limit = dto.Limit <= 0 ? 200 : Math.Min(dto.Limit, 200);
+            var inFlightCutoffUtc = DateTime.UtcNow.Subtract(InFlightProtectionWindow);
             var query = _db.Set<ChannelDispatchOperation>()
                 .Where(x => !x.IsDeleted)
-                .Where(x => x.Status == "Pending" || x.Status == "Failed");
+                .Where(x => x.Status == "Pending" || x.Status == "Failed")
+                .Where(x => !x.LastAttemptAtUtc.HasValue || x.LastAttemptAtUtc <= inFlightCutoffUtc);
 
             if (!string.IsNullOrWhiteSpace(dto.Status))
             {
@@ -137,7 +141,14 @@ namespace Darwin.Application.Businesses.Commands
 
             if (operations.Count > 0)
             {
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return Result<int>.Fail(_localizer["ItemConcurrencyConflict"]);
+                }
             }
 
             return Result<int>.Ok(operations.Count);
@@ -154,7 +165,7 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["CommunicationDispatchOperationNotFound"]);
             }
 
-            return await CancelOperationAsync(operation, rowVersion, ct).ConfigureAwait(false);
+            return await CancelOperationAsync(operation, rowVersion, operation.LastAttemptAtUtc, ct).ConfigureAwait(false);
         }
 
         private async Task<Result> CancelChannelOperationAsync(CancelCommunicationDispatchOperationDto dto, byte[] rowVersion, CancellationToken ct)
@@ -168,10 +179,14 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["CommunicationDispatchOperationNotFound"]);
             }
 
-            return await CancelOperationAsync(operation, rowVersion, ct).ConfigureAwait(false);
+            return await CancelOperationAsync(operation, rowVersion, operation.LastAttemptAtUtc, ct).ConfigureAwait(false);
         }
 
-        private async Task<Result> CancelOperationAsync(Domain.Common.BaseEntity operation, byte[] rowVersion, CancellationToken ct)
+        private async Task<Result> CancelOperationAsync(
+            Domain.Common.BaseEntity operation,
+            byte[] rowVersion,
+            DateTime? lastAttemptAtUtc,
+            CancellationToken ct)
         {
             if (operation.IsDeleted)
             {
@@ -184,8 +199,21 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
+            if (lastAttemptAtUtc.HasValue && lastAttemptAtUtc.Value > DateTime.UtcNow.Subtract(InFlightProtectionWindow))
+            {
+                return Result.Fail(_localizer["CommunicationDispatchOperationInFlight"]);
+            }
+
             operation.IsDeleted = true;
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

@@ -99,6 +99,38 @@ namespace Darwin.Application.Catalog.Validators
     }
 
     /// <summary>
+    /// Validates requests to attach an add-on group to categories.
+    /// </summary>
+    public sealed class AddOnGroupAttachToCategoriesValidator : AbstractValidator<AddOnGroupAttachToCategoriesDto>
+    {
+        public AddOnGroupAttachToCategoriesValidator(IStringLocalizer<ValidationResource> localizer)
+        {
+            RuleFor(x => x.AddOnGroupId).NotEmpty();
+            RuleFor(x => x.CategoryIds).NotNull();
+            // Replacing the full set is allowed to be empty.
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
+        }
+    }
+
+    /// <summary>
+    /// Validates requests to attach an add-on group to brands.
+    /// </summary>
+    public sealed class AddOnGroupAttachToBrandsValidator : AbstractValidator<AddOnGroupAttachToBrandsDto>
+    {
+        public AddOnGroupAttachToBrandsValidator(IStringLocalizer<ValidationResource> localizer)
+        {
+            RuleFor(x => x.AddOnGroupId).NotEmpty();
+            RuleFor(x => x.BrandIds).NotNull();
+            // Replacing the full set is allowed to be empty.
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
+        }
+    }
+
+    /// <summary>
     /// Validation rules for <see cref="AddOnGroupAttachToVariantsDto"/>.
     /// </summary>
     public sealed class AddOnGroupAttachToVariantsValidator : AbstractValidator<AddOnGroupAttachToVariantsDto>

@@ -133,7 +133,8 @@ namespace Darwin.Application.Businesses.Commands
                 new BusinessInvitationResendDto
                 {
                     Id = invitation.Id,
-                    ExpiresInDays = 7
+                    ExpiresInDays = 7,
+                    RowVersion = invitation.RowVersion
                 },
                 ct).ConfigureAwait(false);
 

@@ -68,7 +68,7 @@
                                     hx-post="@Url.Action("SetDefaultAddress", "Users")"
                                     hx-target="#addresses-section"
                                     hx-swap="innerHTML"
-                                    hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Billing"}'
+                                    hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Billing","rowVersion":"@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"}'
                                     data-refresh-alerts>
                                 <i class="fa fa-credit-card"></i> @T.T("SetBilling")
                             </button>
@@ -83,7 +83,7 @@
                                     hx-post="@Url.Action("SetDefaultAddress", "Users")"
                                     hx-target="#addresses-section"
                                     hx-swap="innerHTML"
-                                    hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Shipping"}'
+                                    hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Shipping","rowVersion":"@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"}'
                                     data-refresh-alerts>
                                 <i class="fa fa-truck"></i> @T.T("SetShipping")
                             </button>

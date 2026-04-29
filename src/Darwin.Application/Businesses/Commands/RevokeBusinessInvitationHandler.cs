@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
@@ -46,8 +47,20 @@ namespace Darwin.Application.Businesses.Commands
             if (invitation.Status == BusinessInvitationStatus.Accepted)
                 throw new InvalidOperationException(_localizer["AcceptedInvitationsCannotBeRevoked"]);
 
+            var currentVersion = invitation.RowVersion ?? Array.Empty<byte>();
+            var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (requestVersion.Length == 0 || !currentVersion.SequenceEqual(requestVersion))
+                throw new InvalidOperationException(_localizer["ItemConcurrencyConflict"]);
+
             invitation.Revoke(_clock.UtcNow, string.IsNullOrWhiteSpace(dto.Note) ? invitation.Note : dto.Note.Trim());
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new InvalidOperationException(_localizer["ItemConcurrencyConflict"]);
+            }
         }
     }
 }

@@ -129,7 +129,10 @@ namespace Darwin.Application.Loyalty.Commands
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "TokenAlreadyConsumed";
                 session.FailureReason = "TokenAlreadyConsumed";
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                if (!await TrySaveChangesAsync(ct).ConfigureAwait(false))
+                {
+                    return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyScanSessionConcurrencyConflict"]);
+                }
 
                 return Result<ConfirmAccrualResultDto>.Fail(_localizer["ScanSessionTokenAlreadyConsumed"]);
             }
@@ -144,7 +147,10 @@ namespace Darwin.Application.Loyalty.Commands
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "AccountNotFound";
                 session.FailureReason = "AccountNotFound";
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                if (!await TrySaveChangesAsync(ct).ConfigureAwait(false))
+                {
+                    return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyScanSessionConcurrencyConflict"]);
+                }
 
                 return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyAccountNotFoundForScanSession"]);
             }
@@ -154,7 +160,10 @@ namespace Darwin.Application.Loyalty.Commands
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "AccountNotActive";
                 session.FailureReason = "AccountNotActive";
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                if (!await TrySaveChangesAsync(ct).ConfigureAwait(false))
+                {
+                    return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyScanSessionConcurrencyConflict"]);
+                }
 
                 return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyAccountInactive"]);
             }
@@ -166,7 +175,10 @@ namespace Darwin.Application.Loyalty.Commands
                 session.Status = LoyaltyScanStatus.Expired;
                 session.Outcome = "Expired";
                 session.FailureReason = "Expired";
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                if (!await TrySaveChangesAsync(ct).ConfigureAwait(false))
+                {
+                    return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyScanSessionConcurrencyConflict"]);
+                }
 
                 return Result<ConfirmAccrualResultDto>.Fail(_localizer["ScanSessionExpired"]);
             }
@@ -208,7 +220,10 @@ namespace Darwin.Application.Loyalty.Commands
             session.FailureReason = null;
             session.ResultingTransactionId = transaction.Id;
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            if (!await TrySaveChangesAsync(ct).ConfigureAwait(false))
+            {
+                return Result<ConfirmAccrualResultDto>.Fail(_localizer["LoyaltyScanSessionConcurrencyConflict"]);
+            }
 
             var result = new ConfirmAccrualResultDto
             {
@@ -219,6 +234,19 @@ namespace Darwin.Application.Loyalty.Commands
             };
 
             return Result<ConfirmAccrualResultDto>.Ok(result);
+        }
+
+        private async Task<bool> TrySaveChangesAsync(CancellationToken ct)
+        {
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return true;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return false;
+            }
         }
     }
 }

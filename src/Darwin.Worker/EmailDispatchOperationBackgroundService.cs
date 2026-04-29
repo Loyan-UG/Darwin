@@ -2,6 +2,8 @@ using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
+using Darwin.Infrastructure.Notifications;
+using Darwin.Infrastructure.Notifications.Brevo;
 using Darwin.Infrastructure.Notifications.Smtp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -93,18 +95,39 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
                 _logger.LogWarning(ex, "Email dispatch operation {OperationId} failed.", item.Id);
             }
 
-            await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "email dispatch operation", item.Id, ct).ConfigureAwait(false);
+            if (!await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "email dispatch operation", item.Id, ct).ConfigureAwait(false))
+            {
+                await PersistEmailCompletionFallbackAsync(db, item, ct).ConfigureAwait(false);
+            }
         }
+    }
+
+    private static async Task PersistEmailCompletionFallbackAsync(
+        IAppDbContext db,
+        EmailDispatchOperation item,
+        CancellationToken ct)
+    {
+        await db.Set<EmailDispatchOperation>()
+            .Where(x => x.Id == item.Id && !x.IsDeleted)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.Status, item.Status)
+                .SetProperty(x => x.AttemptCount, item.AttemptCount)
+                .SetProperty(x => x.LastAttemptAtUtc, item.LastAttemptAtUtc)
+                .SetProperty(x => x.ProcessedAtUtc, item.ProcessedAtUtc)
+                .SetProperty(x => x.FailureReason, item.FailureReason),
+                ct)
+            .ConfigureAwait(false);
     }
 
     private static async Task ProcessOneAsync(IServiceProvider services, EmailDispatchOperation item, CancellationToken ct)
     {
-        if (!string.Equals(item.Provider, "SMTP", StringComparison.OrdinalIgnoreCase))
+        IEmailSender sender = EmailProviderNames.Normalize(item.Provider) switch
         {
-            throw new InvalidOperationException($"Unsupported email provider '{item.Provider}'.");
-        }
+            EmailProviderNames.Brevo => services.GetRequiredService<BrevoEmailSender>(),
+            EmailProviderNames.Smtp => services.GetRequiredService<SmtpEmailSender>(),
+            var provider => throw new InvalidOperationException($"Unsupported email provider '{provider}'.")
+        };
 
-        var sender = services.GetRequiredService<SmtpEmailSender>();
         await sender.SendAsync(
             item.RecipientEmail,
             item.Subject,

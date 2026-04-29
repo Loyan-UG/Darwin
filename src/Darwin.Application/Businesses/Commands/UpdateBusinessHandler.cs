@@ -44,8 +44,8 @@ namespace Darwin.Application.Businesses.Commands
             // Concurrency check exactly like Brand.
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
-            if (!currentVersion.SequenceEqual(requestVersion))
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            if (requestVersion.Length == 0 || !currentVersion.SequenceEqual(requestVersion))
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
 
             entity.Name = dto.Name.Trim();
             entity.LegalName = string.IsNullOrWhiteSpace(dto.LegalName) ? null : dto.LegalName.Trim();
@@ -71,7 +71,14 @@ namespace Darwin.Application.Businesses.Commands
             entity.OperationalAlertEmailsEnabled = dto.OperationalAlertEmailsEnabled;
             entity.IsActive = entity.OperationalStatus == BusinessOperationalStatus.Approved && dto.IsActive;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 }

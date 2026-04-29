@@ -94,6 +94,7 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
                 .ToDictionaryAsync(x => x.Id, ct)
                 .ConfigureAwait(false);
 
+        var inactiveSubscriptionDeliveryIds = new List<Guid>();
         foreach (var delivery in deliveries)
         {
             if (!subscriptions.TryGetValue(delivery.SubscriptionId, out var subscription) || !subscription.IsActive)
@@ -101,6 +102,7 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
                 delivery.LastAttemptAtUtc = nowUtc;
                 delivery.RetryCount = options.MaxAttempts;
                 delivery.Status = "Failed";
+                inactiveSubscriptionDeliveryIds.Add(delivery.Id);
                 continue;
             }
 
@@ -108,7 +110,28 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
             await DispatchAsync(db, delivery, subscription, eventLog, options, nowUtc, ct).ConfigureAwait(false);
         }
 
-        await QueueSaveResilience.TrySaveBatchAsync(db, _logger, "webhook delivery inactive subscription", ct).ConfigureAwait(false);
+        if (inactiveSubscriptionDeliveryIds.Count > 0 &&
+            !await QueueSaveResilience.TrySaveBatchAsync(db, _logger, "webhook delivery inactive subscription", ct).ConfigureAwait(false))
+        {
+            await PersistInactiveSubscriptionFallbackAsync(db, inactiveSubscriptionDeliveryIds, nowUtc, options.MaxAttempts, ct).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task PersistInactiveSubscriptionFallbackAsync(
+        IAppDbContext db,
+        IReadOnlyCollection<Guid> deliveryIds,
+        DateTime nowUtc,
+        int maxAttempts,
+        CancellationToken ct)
+    {
+        await db.Set<WebhookDelivery>()
+            .Where(x => deliveryIds.Contains(x.Id) && !x.IsDeleted)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.LastAttemptAtUtc, nowUtc)
+                .SetProperty(x => x.RetryCount, maxAttempts)
+                .SetProperty(x => x.Status, "Failed"),
+                ct)
+            .ConfigureAwait(false);
     }
 
     private async Task DispatchAsync(
@@ -194,7 +217,27 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
                 delivery.RetryCount);
         }
 
-        await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "webhook delivery", delivery.Id, ct).ConfigureAwait(false);
+        if (!await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "webhook delivery", delivery.Id, ct).ConfigureAwait(false))
+        {
+            await PersistWebhookCompletionFallbackAsync(db, delivery, ct).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task PersistWebhookCompletionFallbackAsync(
+        IAppDbContext db,
+        WebhookDelivery delivery,
+        CancellationToken ct)
+    {
+        await db.Set<WebhookDelivery>()
+            .Where(x => x.Id == delivery.Id && !x.IsDeleted)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.Status, delivery.Status)
+                .SetProperty(x => x.ResponseCode, delivery.ResponseCode)
+                .SetProperty(x => x.PayloadHash, delivery.PayloadHash)
+                .SetProperty(x => x.LastAttemptAtUtc, delivery.LastAttemptAtUtc)
+                .SetProperty(x => x.RetryCount, delivery.RetryCount),
+                ct)
+            .ConfigureAwait(false);
     }
 
     private static WebhookEnvelope BuildEnvelope(

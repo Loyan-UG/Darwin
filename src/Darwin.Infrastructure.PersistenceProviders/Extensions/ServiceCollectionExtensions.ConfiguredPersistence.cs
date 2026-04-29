@@ -10,26 +10,38 @@ public static class ServiceCollectionExtensionsConfiguredPersistence
 
     public static IServiceCollection AddConfiguredPersistence(this IServiceCollection services, IConfiguration config)
     {
-        var provider = config["Persistence:Provider"];
-        if (string.IsNullOrWhiteSpace(provider))
+        var provider = NormalizeProviderName(config["Persistence:Provider"]);
+
+        return provider switch
         {
-            provider = PostgreSqlProviderName;
+            PostgreSqlProviderName => services.AddPostgreSqlPersistence(config),
+            SqlServerProviderName => services.AddSqlServerPersistence(config),
+            _ => throw new InvalidOperationException(
+                $"Unsupported persistence provider '{provider}'. Supported values are '{PostgreSqlProviderName}' and '{SqlServerProviderName}'.")
+        };
+    }
+
+    private static string NormalizeProviderName(string? configuredProvider)
+    {
+        if (string.IsNullOrWhiteSpace(configuredProvider))
+        {
+            return PostgreSqlProviderName;
         }
 
+        var provider = configuredProvider.Trim();
         if (string.Equals(provider, PostgreSqlProviderName, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(provider, "Postgres", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(provider, "Npgsql", StringComparison.OrdinalIgnoreCase))
         {
-            return services.AddPostgreSqlPersistence(config);
+            return PostgreSqlProviderName;
         }
 
         if (string.Equals(provider, SqlServerProviderName, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(provider, "MSSQL", StringComparison.OrdinalIgnoreCase))
         {
-            return services.AddSqlServerPersistence(config);
+            return SqlServerProviderName;
         }
 
-        throw new InvalidOperationException(
-            $"Unsupported persistence provider '{provider}'. Supported values are '{PostgreSqlProviderName}' and '{SqlServerProviderName}'.");
+        return provider;
     }
 }

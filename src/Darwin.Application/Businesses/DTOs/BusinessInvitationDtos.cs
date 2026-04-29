@@ -35,6 +35,7 @@ namespace Darwin.Application.Businesses.DTOs
     {
         public Guid Id { get; set; }
         public int ExpiresInDays { get; set; } = 7;
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>
@@ -44,6 +45,7 @@ namespace Darwin.Application.Businesses.DTOs
     {
         public Guid Id { get; set; }
         public string? Note { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>
@@ -62,6 +64,7 @@ namespace Darwin.Application.Businesses.DTOs
         public DateTime? RevokedAtUtc { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public string? Note { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>

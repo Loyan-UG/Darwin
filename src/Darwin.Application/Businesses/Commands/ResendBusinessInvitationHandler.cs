@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
@@ -63,6 +64,11 @@ namespace Darwin.Application.Businesses.Commands
             if (invitation.Status == BusinessInvitationStatus.Revoked)
                 throw new InvalidOperationException(_localizer["RevokedInvitationsCannotBeResent"]);
 
+            var currentVersion = invitation.RowVersion ?? Array.Empty<byte>();
+            var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (requestVersion.Length == 0 || !currentVersion.SequenceEqual(requestVersion))
+                throw new InvalidOperationException(_localizer["ItemConcurrencyConflict"]);
+
             var business = await _db.Set<Business>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == invitation.BusinessId && !x.IsDeleted, ct);
@@ -76,7 +82,14 @@ namespace Darwin.Application.Businesses.Commands
             invitation.AcceptedByUserId = null;
             invitation.RevokedAtUtc = null;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new InvalidOperationException(_localizer["ItemConcurrencyConflict"]);
+            }
 
             var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(invitation.Token);
             var siteSettings = await _db.Set<SiteSetting>()

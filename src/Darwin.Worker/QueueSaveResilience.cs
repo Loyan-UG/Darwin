@@ -14,22 +14,56 @@ internal static class QueueSaveResilience
         Guid itemId,
         CancellationToken ct)
     {
-        try
+        for (var attempt = 1; attempt <= MaxCompletionSaveAttempts; attempt++)
         {
-            await db.SaveChangesAsync(ct).ConfigureAwait(false);
-            return true;
-        }
-        catch (DbUpdateConcurrencyException ex) when (!ct.IsCancellationRequested)
-        {
-            logger.LogDebug(ex, "Skipped {QueueName} item {ItemId} because another worker instance claimed it first.", queueName, itemId);
-
-            foreach (var entry in ex.Entries)
+            try
             {
-                entry.State = EntityState.Detached;
+                await db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return true;
             }
+            catch (DbUpdateConcurrencyException ex) when (!ct.IsCancellationRequested)
+            {
+                logger.LogDebug(ex, "Skipped {QueueName} item {ItemId} because another worker instance claimed it first.", queueName, itemId);
 
-            return false;
+                foreach (var entry in ex.Entries)
+                {
+                    entry.State = EntityState.Detached;
+                }
+
+                return false;
+            }
+            catch (DbUpdateException ex) when (!ct.IsCancellationRequested)
+            {
+                if (attempt >= MaxCompletionSaveAttempts)
+                {
+                    logger.LogError(
+                        ex,
+                        "Could not claim {QueueName} item {ItemId} after {MaxAttempts} attempts.",
+                        queueName,
+                        itemId,
+                        MaxCompletionSaveAttempts);
+
+                    foreach (var entry in ex.Entries)
+                    {
+                        entry.State = EntityState.Detached;
+                    }
+
+                    return false;
+                }
+
+                logger.LogWarning(
+                    ex,
+                    "Transient save failure while claiming {QueueName} item {ItemId}. Attempt {Attempt}/{MaxAttempts}.",
+                    queueName,
+                    itemId,
+                    attempt,
+                    MaxCompletionSaveAttempts);
+
+                await Task.Delay(TimeSpan.FromMilliseconds(100 * attempt), ct).ConfigureAwait(false);
+            }
         }
+
+        return false;
     }
 
     public static async Task<bool> TrySaveCompletionAsync(
@@ -61,8 +95,25 @@ internal static class QueueSaveResilience
 
                 return false;
             }
-            catch (DbUpdateException ex) when (attempt < MaxCompletionSaveAttempts && !ct.IsCancellationRequested)
+            catch (DbUpdateException ex) when (!ct.IsCancellationRequested)
             {
+                if (attempt >= MaxCompletionSaveAttempts)
+                {
+                    logger.LogError(
+                        ex,
+                        "Could not save {QueueName} item {ItemId} completion after {MaxAttempts} attempts.",
+                        queueName,
+                        itemId,
+                        MaxCompletionSaveAttempts);
+
+                    foreach (var entry in ex.Entries)
+                    {
+                        entry.State = EntityState.Detached;
+                    }
+
+                    return false;
+                }
+
                 logger.LogWarning(
                     ex,
                     "Transient save failure while saving {QueueName} item {ItemId} completion. Attempt {Attempt}/{MaxAttempts}.",
@@ -74,12 +125,6 @@ internal static class QueueSaveResilience
                 await Task.Delay(TimeSpan.FromMilliseconds(100 * attempt), ct).ConfigureAwait(false);
             }
         }
-
-        logger.LogError(
-            "Could not save {QueueName} item {ItemId} completion after {MaxAttempts} attempts.",
-            queueName,
-            itemId,
-            MaxCompletionSaveAttempts);
 
         return false;
     }
@@ -108,8 +153,24 @@ internal static class QueueSaveResilience
 
                 return false;
             }
-            catch (DbUpdateException ex) when (attempt < MaxCompletionSaveAttempts && !ct.IsCancellationRequested)
+            catch (DbUpdateException ex) when (!ct.IsCancellationRequested)
             {
+                if (attempt >= MaxCompletionSaveAttempts)
+                {
+                    logger.LogError(
+                        ex,
+                        "Could not save {QueueName} batch after {MaxAttempts} attempts.",
+                        queueName,
+                        MaxCompletionSaveAttempts);
+
+                    foreach (var entry in ex.Entries)
+                    {
+                        entry.State = EntityState.Detached;
+                    }
+
+                    return false;
+                }
+
                 logger.LogWarning(
                     ex,
                     "Transient save failure while saving {QueueName} batch. Attempt {Attempt}/{MaxAttempts}.",
@@ -121,7 +182,6 @@ internal static class QueueSaveResilience
             }
         }
 
-        logger.LogError("Could not save {QueueName} batch after {MaxAttempts} attempts.", queueName, MaxCompletionSaveAttempts);
         return false;
     }
 }

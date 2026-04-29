@@ -10,6 +10,8 @@ using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.Integration;
+using Darwin.Infrastructure.Notifications;
+using Darwin.Infrastructure.Notifications.Brevo;
 using Darwin.WebAdmin.Security;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Admin;
@@ -17,6 +19,7 @@ using Darwin.WebAdmin.ViewModels.Businesses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 {
@@ -37,6 +40,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly UpdateProviderCallbackInboxMessageHandler _updateProviderCallbackInboxMessage;
         private readonly IAppDbContext _db;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly EmailDeliveryOptions _emailDeliveryOptions;
+        private readonly BrevoEmailOptions _brevoEmailOptions;
 
         public BusinessCommunicationsController(
             GetBusinessCommunicationOpsSummaryHandler getSummary,
@@ -49,7 +54,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             CancelCommunicationDispatchOperationHandler cancelCommunicationDispatchOperation,
             UpdateProviderCallbackInboxMessageHandler updateProviderCallbackInboxMessage,
             IAppDbContext db,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            IOptions<EmailDeliveryOptions> emailDeliveryOptions,
+            IOptions<BrevoEmailOptions> brevoEmailOptions)
         {
             _getSummary = getSummary ?? throw new ArgumentNullException(nameof(getSummary));
             _getSetupPage = getSetupPage ?? throw new ArgumentNullException(nameof(getSetupPage));
@@ -62,6 +69,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _updateProviderCallbackInboxMessage = updateProviderCallbackInboxMessage ?? throw new ArgumentNullException(nameof(updateProviderCallbackInboxMessage));
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
+            _emailDeliveryOptions = (emailDeliveryOptions ?? throw new ArgumentNullException(nameof(emailDeliveryOptions))).Value;
+            _brevoEmailOptions = (brevoEmailOptions ?? throw new ArgumentNullException(nameof(brevoEmailOptions))).Value;
         }
 
         [HttpGet]
@@ -110,10 +119,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 FilterItems = BuildFilterItems(filter),
                 Transport = new BusinessCommunicationOpsTransportVm
                 {
-                    EmailTransportConfigured = settings.SmtpEnabled &&
-                                               !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
-                                               settings.SmtpPort.HasValue &&
-                                               !string.IsNullOrWhiteSpace(settings.SmtpFromAddress),
+                    EmailTransportConfigured = IsEmailTransportConfigured(settings),
                     SmsTransportConfigured = settings.SmsEnabled &&
                                              !string.IsNullOrWhiteSpace(settings.SmsProvider) &&
                                              !string.IsNullOrWhiteSpace(settings.SmsFromPhoneE164),
@@ -130,10 +136,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     TestInboxEmail = settings.CommunicationTestInboxEmail,
                     TestSmsRecipientE164 = settings.CommunicationTestSmsRecipientE164,
                     TestWhatsAppRecipientE164 = settings.CommunicationTestWhatsAppRecipientE164,
-                    CanSendTestEmail = settings.SmtpEnabled &&
-                                       !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
-                                       settings.SmtpPort.HasValue &&
-                                       !string.IsNullOrWhiteSpace(settings.SmtpFromAddress) &&
+                    CanSendTestEmail = IsEmailTransportConfigured(settings) &&
                                        !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail),
                     CanSendTestSms = settings.SmsEnabled &&
                                      !string.IsNullOrWhiteSpace(settings.SmsProvider) &&
@@ -440,10 +443,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessId: businessId,
                     ct: ct)
                 .ConfigureAwait(false);
-            var emailTransportConfigured = settings.SmtpEnabled &&
-                                           !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
-                                           settings.SmtpPort.HasValue &&
-                                           !string.IsNullOrWhiteSpace(settings.SmtpFromAddress);
+            var emailTransportConfigured = IsEmailTransportConfigured(settings);
             var smsTransportConfigured = settings.SmsEnabled &&
                                          !string.IsNullOrWhiteSpace(settings.SmsProvider) &&
                                          !string.IsNullOrWhiteSpace(settings.SmsFromPhoneE164);
@@ -1295,10 +1295,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         public async Task<IActionResult> SendTestEmail(CancellationToken ct = default)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
-            var emailTransportConfigured = settings.SmtpEnabled &&
-                                           !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
-                                           settings.SmtpPort.HasValue &&
-                                           !string.IsNullOrWhiteSpace(settings.SmtpFromAddress);
+            var emailTransportConfigured = IsEmailTransportConfigured(settings);
 
             if (!emailTransportConfigured)
             {
@@ -1334,7 +1331,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             _db.Set<EmailDispatchOperation>().Add(new EmailDispatchOperation
             {
-                Provider = "SMTP",
+                Provider = GetConfiguredEmailProvider(),
                 RecipientEmail = settings.CommunicationTestInboxEmail!,
                 IntendedRecipientEmail = settings.CommunicationTestInboxEmail,
                 Subject = subject,
@@ -1344,7 +1341,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 CorrelationKey = Guid.NewGuid().ToString("N"),
                 Status = "Pending"
             });
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            if (!await TrySaveCommunicationTestQueueAsync(ct).ConfigureAwait(false))
+            {
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
 
             TempData["Success"] = string.Format(T("CommunicationTestEmailQueuedMessage"), settings.CommunicationTestInboxEmail);
             return RedirectOrHtmx(nameof(Index), new { });
@@ -1494,7 +1494,32 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 CorrelationKey = Guid.NewGuid().ToString("N"),
                 Status = "Pending"
             });
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            if (!await TrySaveCommunicationTestQueueAsync(ct).ConfigureAwait(false))
+            {
+                return RedirectToChannelAuditsOrIndex(
+                    returnToChannelAudits,
+                    page,
+                    pageSize,
+                    query,
+                    recipientAddress,
+                    provider,
+                    channel,
+                    flowKey,
+                    status,
+                    failedOnly,
+                    phoneVerificationOnly,
+                    adminTestOnly,
+                    repeatedFailuresOnly,
+                    priorSuccessOnly,
+                    actionReadyOnly,
+                    actionBlockedOnly,
+                    escalationCandidatesOnly,
+                    heavyChainsOnly,
+                    providerReviewOnly,
+                    chainFollowUpOnly,
+                    chainResolvedOnly,
+                    businessId);
+            }
 
             TempData["Success"] = string.Format(T("CommunicationTestSmsQueuedMessage"), settings.CommunicationTestSmsRecipientE164);
             return RedirectToChannelAuditsOrIndex(
@@ -1666,7 +1691,32 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 CorrelationKey = Guid.NewGuid().ToString("N"),
                 Status = "Pending"
             });
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            if (!await TrySaveCommunicationTestQueueAsync(ct).ConfigureAwait(false))
+            {
+                return RedirectToChannelAuditsOrIndex(
+                    returnToChannelAudits,
+                    page,
+                    pageSize,
+                    query,
+                    recipientAddress,
+                    provider,
+                    channel,
+                    flowKey,
+                    status,
+                    failedOnly,
+                    phoneVerificationOnly,
+                    adminTestOnly,
+                    repeatedFailuresOnly,
+                    priorSuccessOnly,
+                    actionReadyOnly,
+                    actionBlockedOnly,
+                    escalationCandidatesOnly,
+                    heavyChainsOnly,
+                    providerReviewOnly,
+                    chainFollowUpOnly,
+                    chainResolvedOnly,
+                    businessId);
+            }
 
             TempData["Success"] = string.Format(T("CommunicationTestWhatsAppQueuedMessage"), settings.CommunicationTestWhatsAppRecipientE164);
             return RedirectToChannelAuditsOrIndex(
@@ -1784,6 +1834,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return sizes.Select(x => new SelectListItem(x.ToString(), x.ToString(), x == selectedPageSize)).ToList();
         }
 
+        private async Task<bool> TrySaveCommunicationTestQueueAsync(CancellationToken ct)
+        {
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return true;
+            }
+            catch (DbUpdateException)
+            {
+                SetErrorMessage("CommunicationTestQueueFailedMessage");
+                return false;
+            }
+        }
+
         private IActionResult RenderCommunicationsWorkspace(BusinessCommunicationOpsVm vm)
         {
             if (IsHtmxRequest())
@@ -1863,11 +1927,29 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private async Task<bool> CanSendTestEmailAsync(CancellationToken ct)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
-            return settings.SmtpEnabled &&
-                   !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
-                   settings.SmtpPort.HasValue &&
-                   !string.IsNullOrWhiteSpace(settings.SmtpFromAddress) &&
+            return IsEmailTransportConfigured(settings) &&
                    !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail);
+        }
+
+        private bool IsEmailTransportConfigured(SiteSettingDto settings)
+        {
+            return IsBrevoTransportConfigured() ||
+                   (settings.SmtpEnabled &&
+                    !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
+                    settings.SmtpPort.HasValue &&
+                    !string.IsNullOrWhiteSpace(settings.SmtpFromAddress));
+        }
+
+        private bool IsBrevoTransportConfigured()
+        {
+            return string.Equals(GetConfiguredEmailProvider(), EmailProviderNames.Brevo, StringComparison.OrdinalIgnoreCase) &&
+                   !string.IsNullOrWhiteSpace(_brevoEmailOptions.ApiKey) &&
+                   !string.IsNullOrWhiteSpace(_brevoEmailOptions.SenderEmail);
+        }
+
+        private string GetConfiguredEmailProvider()
+        {
+            return EmailProviderNames.Normalize(_emailDeliveryOptions.Provider);
         }
 
         private IEnumerable<SelectListItem> BuildFilterItems(BusinessCommunicationSetupFilter selectedFilter)
@@ -2078,10 +2160,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private List<CommunicationChannelOpsVm> BuildChannelOperations(SiteSettingDto settings)
         {
-            var emailReady = settings.SmtpEnabled &&
-                             !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
-                             settings.SmtpPort.HasValue &&
-                             !string.IsNullOrWhiteSpace(settings.SmtpFromAddress);
+            var emailReady = IsEmailTransportConfigured(settings);
             var smsReady = settings.SmsEnabled &&
                            !string.IsNullOrWhiteSpace(settings.SmsProvider) &&
                            !string.IsNullOrWhiteSpace(settings.SmsFromPhoneE164);

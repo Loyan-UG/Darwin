@@ -4728,6 +4728,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.HasIndex("CorrelationKey");
 
+                    b.HasIndex("Channel", "CorrelationKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ChannelDispatchAudits_ActiveChannelCorrelation")
+                        .HasFilter("\"CorrelationKey\" IS NOT NULL AND \"IsDeleted\" = FALSE AND \"Status\" IN ('Pending', 'Sent')");
+
                     b.HasIndex("FlowKey");
 
                     b.HasIndex("IntendedRecipientAddress");
@@ -4917,7 +4922,13 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.HasIndex("BusinessId");
 
-                    b.HasIndex("CorrelationKey");
+                    b.HasIndex(new[] { "CorrelationKey" }, "IX_EmailDispatchAudits_CorrelationKey_Model")
+                        .HasDatabaseName("IX_EmailDispatchAudits_CorrelationKey");
+
+                    b.HasIndex(new[] { "CorrelationKey" }, "UX_EmailDispatchAudits_ActiveCorrelation_Model")
+                        .IsUnique()
+                        .HasDatabaseName("UX_EmailDispatchAudits_ActiveCorrelation")
+                        .HasFilter("\"CorrelationKey\" IS NOT NULL AND \"IsDeleted\" = FALSE AND \"Status\" IN ('Pending', 'Sent')");
 
                     b.HasIndex("FlowKey");
 
@@ -5223,6 +5234,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ShipmentId", "Provider", "OperationType", "Status", "CreatedAtUtc");
+
+                    b.HasIndex("ShipmentId", "Provider", "OperationType")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ShipmentProviderOperations_ActivePending")
+                        .HasFilter("\"IsDeleted\" = FALSE AND \"Status\" = 'Pending'");
 
                     b.ToTable("ShipmentProviderOperations", "Integration");
                 });
@@ -7657,6 +7673,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.HasIndex("Name", "Carrier", "Service")
                         .IsUnique()
+                        .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("Carrier", "Service")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ShippingMethods_ActiveCarrierService")
                         .HasFilter("\"IsDeleted\" = FALSE");
 
                     b.ToTable("ShippingMethods", "Shipping");

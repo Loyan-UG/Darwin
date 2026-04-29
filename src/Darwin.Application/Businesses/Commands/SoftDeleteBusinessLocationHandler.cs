@@ -48,11 +48,19 @@ namespace Darwin.Application.Businesses.Commands
 
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
-            if (!currentVersion.SequenceEqual(requestVersion))
+            if (requestVersion.Length == 0 || !currentVersion.SequenceEqual(requestVersion))
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
 
             entity.IsDeleted = true;
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

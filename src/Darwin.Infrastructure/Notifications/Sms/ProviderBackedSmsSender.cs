@@ -10,6 +10,7 @@ using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Settings;
+using Darwin.Infrastructure.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -40,10 +41,15 @@ public sealed class ProviderBackedSmsSender : ISmsSender
         if (string.IsNullOrWhiteSpace(toPhoneE164)) throw new ArgumentNullException(nameof(toPhoneE164));
         if (string.IsNullOrWhiteSpace(text)) throw new ArgumentNullException(nameof(text));
         var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
+        var pendingDuplicateCutoffUtc = DateTime.UtcNow.AddMinutes(-15);
         if (!string.IsNullOrWhiteSpace(correlationKey) &&
             await _db.Set<ChannelDispatchAudit>()
                 .AsNoTracking()
-                .AnyAsync(x => !x.IsDeleted && x.CorrelationKey == correlationKey && x.Status == "Sent", ct)
+                .AnyAsync(
+                    x => !x.IsDeleted &&
+                         x.CorrelationKey == correlationKey &&
+                         (x.Status == "Sent" || (x.Status == "Pending" && x.AttemptedAtUtc >= pendingDuplicateCutoffUtc)),
+                    ct)
                 .ConfigureAwait(false))
         {
             _logger.LogInformation("Skipping duplicate SMS send for correlation {CorrelationKey}.", correlationKey);
@@ -87,6 +93,22 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             CreatedAtUtc = attemptedAtUtc
         };
         _db.Set<ChannelDispatchAudit>().Add(audit);
+        try
+        {
+            await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMS dispatch audit claim", ct)
+                .ConfigureAwait(false);
+        }
+        catch (DbUpdateException) when (!string.IsNullOrWhiteSpace(correlationKey) && !ct.IsCancellationRequested)
+        {
+            _db.Set<ChannelDispatchAudit>().Remove(audit);
+            if (await HasActiveChannelAuditAsync("SMS", correlationKey, pendingDuplicateCutoffUtc, ct).ConfigureAwait(false))
+            {
+                _logger.LogInformation("Skipping duplicate SMS send for correlation {CorrelationKey}.", correlationKey);
+                return;
+            }
+
+            throw;
+        }
 
         var accountSid = settings.SmsApiKey.Trim();
         var authToken = settings.SmsApiSecret.Trim();
@@ -118,7 +140,8 @@ public sealed class ProviderBackedSmsSender : ISmsSender
                 audit.Status = "Failed";
                 audit.CompletedAtUtc = completedAtUtc;
                 audit.FailureMessage = BuildFailure(body);
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMS dispatch audit provider failure", ct)
+                    .ConfigureAwait(false);
                 _logger.LogError("Twilio SMS send failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
                 throw new InvalidOperationException("SMS send failed.");
             }
@@ -126,7 +149,8 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             audit.ProviderMessageId = ExtractProviderMessageId(body);
             audit.Status = "Sent";
             audit.CompletedAtUtc = DateTime.UtcNow;
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMS dispatch audit completion", ct)
+                .ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -138,7 +162,8 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             audit.Status = "Failed";
             audit.CompletedAtUtc = completedAtUtc;
             audit.FailureMessage = BuildFailure(ex.Message);
-            await _db.SaveChangesAsync(ct);
+            await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMS dispatch audit transport failure", ct)
+                .ConfigureAwait(false);
             _logger.LogError(ex, "Twilio SMS send failed before receiving a provider response.");
             throw;
         }
@@ -182,5 +207,21 @@ public sealed class ProviderBackedSmsSender : ISmsSender
     private static string? NormalizeCorrelationKey(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private Task<bool> HasActiveChannelAuditAsync(
+        string channel,
+        string correlationKey,
+        DateTime pendingDuplicateCutoffUtc,
+        CancellationToken ct)
+    {
+        return _db.Set<ChannelDispatchAudit>()
+            .AsNoTracking()
+            .AnyAsync(
+                x => !x.IsDeleted &&
+                     x.Channel == channel &&
+                     x.CorrelationKey == correlationKey &&
+                     (x.Status == "Sent" || (x.Status == "Pending" && x.AttemptedAtUtc >= pendingDuplicateCutoffUtc)),
+                ct);
     }
 }

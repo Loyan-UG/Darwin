@@ -28,7 +28,7 @@ namespace Darwin.Application.Orders.Commands
             _localizer = localizer;
         }
 
-        public async Task HandleAsync(Guid shipmentId, CancellationToken ct = default)
+        public async Task HandleAsync(Guid shipmentId, byte[]? rowVersion = null, CancellationToken ct = default)
         {
             var shipment = await _db.Set<Shipment>()
                 .FirstOrDefaultAsync(x => x.Id == shipmentId && !x.IsDeleted, ct)
@@ -42,6 +42,15 @@ namespace Darwin.Application.Orders.Commands
             if (!DhlShipmentPhaseOneMetadata.IsDhlCarrier(shipment.Carrier))
             {
                 throw new ValidationException(_localizer["ShipmentCarrierMustBeDhlForLabelGeneration"]);
+            }
+
+            if (rowVersion is not null)
+            {
+                var currentVersion = shipment.RowVersion ?? Array.Empty<byte>();
+                if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+                {
+                    throw new DbUpdateConcurrencyException(_localizer["ItemConcurrencyConflict"]);
+                }
             }
 
             var settings = await _db.Set<SiteSetting>()
@@ -92,6 +101,8 @@ namespace Darwin.Application.Orders.Commands
                     ct)
                 .ConfigureAwait(false);
 
+            var queuedPendingOperation = false;
+            ShipmentProviderOperation? queuedPendingOperationEntry = null;
             if (failedOperation is not null)
             {
                 failedOperation.Status = "Pending";
@@ -99,19 +110,65 @@ namespace Darwin.Application.Orders.Commands
                 failedOperation.LastAttemptAtUtc = null;
                 failedOperation.ProcessedAtUtc = null;
                 failedOperation.FailureReason = null;
+                queuedPendingOperation = true;
+                queuedPendingOperationEntry = failedOperation;
             }
             else
             {
-                _db.Set<ShipmentProviderOperation>().Add(new ShipmentProviderOperation
+                queuedPendingOperationEntry = new ShipmentProviderOperation
                 {
                     ShipmentId = shipment.Id,
                     Provider = "DHL",
                     OperationType = "GenerateLabel",
                     Status = "Pending"
-                });
+                };
+
+                _db.Set<ShipmentProviderOperation>().Add(queuedPendingOperationEntry);
+                queuedPendingOperation = true;
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateException ex)
+            {
+                if (queuedPendingOperation && await HasPendingLabelOperationAsync(shipment.Id, ct).ConfigureAwait(false))
+                {
+                    DetachQueueConflictEntries(ex, queuedPendingOperationEntry);
+
+                    // A concurrent request queued the same pending label operation first.
+                    return;
+                }
+
+                throw;
+            }
+        }
+
+        private Task<bool> HasPendingLabelOperationAsync(Guid shipmentId, CancellationToken ct)
+        {
+            return _db.Set<ShipmentProviderOperation>()
+                .AsNoTracking()
+                .AnyAsync(
+                    x => x.ShipmentId == shipmentId &&
+                         !x.IsDeleted &&
+                         x.Provider == "DHL" &&
+                         x.OperationType == "GenerateLabel" &&
+                         x.Status == "Pending",
+                    ct);
+        }
+
+        private void DetachQueueConflictEntries(DbUpdateException ex, ShipmentProviderOperation? operation)
+        {
+            foreach (var entry in ex.Entries)
+            {
+                entry.State = EntityState.Detached;
+            }
+
+            if (operation is not null && _db is DbContext dbContext)
+            {
+                dbContext.Entry(operation).State = EntityState.Detached;
+            }
         }
     }
 }

@@ -98,8 +98,28 @@ public sealed class ShipmentProviderOperationBackgroundService : BackgroundServi
                 _logger.LogWarning(ex, "Shipment provider operation {OperationId} failed.", item.Id);
             }
 
-            await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "shipment provider operation", item.Id, ct).ConfigureAwait(false);
+            if (!await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "shipment provider operation", item.Id, ct).ConfigureAwait(false))
+            {
+                await PersistShipmentProviderCompletionFallbackAsync(db, item, ct).ConfigureAwait(false);
+            }
         }
+    }
+
+    private static async Task PersistShipmentProviderCompletionFallbackAsync(
+        IAppDbContext db,
+        ShipmentProviderOperation item,
+        CancellationToken ct)
+    {
+        await db.Set<ShipmentProviderOperation>()
+            .Where(x => x.Id == item.Id && !x.IsDeleted)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.Status, item.Status)
+                .SetProperty(x => x.AttemptCount, item.AttemptCount)
+                .SetProperty(x => x.LastAttemptAtUtc, item.LastAttemptAtUtc)
+                .SetProperty(x => x.ProcessedAtUtc, item.ProcessedAtUtc)
+                .SetProperty(x => x.FailureReason, item.FailureReason),
+                ct)
+            .ConfigureAwait(false);
     }
 
     private static async Task ProcessOneAsync(IServiceProvider services, ShipmentProviderOperation item, CancellationToken ct)

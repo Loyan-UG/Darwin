@@ -552,6 +552,7 @@
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="shipmentId" value="@item.Id" />
                                     <input type="hidden" name="orderId" value="@item.OrderId" />
+                                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
                                     <input type="hidden" name="returnToQueue" value="true" />
                                     <input type="hidden" name="filter" value="@Model.Filter" />
                                     <input type="hidden" name="query" value="@Model.Query" />

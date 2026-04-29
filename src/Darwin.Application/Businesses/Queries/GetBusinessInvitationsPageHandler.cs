@@ -101,7 +101,8 @@ namespace Darwin.Application.Businesses.Queries
                     AcceptedAtUtc = x.Invitation.AcceptedAtUtc,
                     RevokedAtUtc = x.Invitation.RevokedAtUtc,
                     CreatedAtUtc = x.Invitation.CreatedAtUtc,
-                    Note = x.Invitation.Note
+                    Note = x.Invitation.Note,
+                    RowVersion = x.Invitation.RowVersion
                 })
                 .ToListAsync(ct);
 

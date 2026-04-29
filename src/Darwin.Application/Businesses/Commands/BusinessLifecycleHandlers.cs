@@ -51,7 +51,14 @@ namespace Darwin.Application.Businesses.Commands
             entity.SuspensionReason = null;
             entity.IsActive = true;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private async Task<Business> LoadBusinessAsync(BusinessLifecycleActionDto dto, CancellationToken ct)
@@ -62,9 +69,11 @@ namespace Darwin.Application.Businesses.Commands
                 throw new InvalidOperationException(_localizer["BusinessNotFound"]);
             }
 
-            if (!(entity.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             return entity;
@@ -108,7 +117,14 @@ namespace Darwin.Application.Businesses.Commands
             entity.SuspensionReason = string.IsNullOrWhiteSpace(dto.Note) ? null : dto.Note.Trim();
             entity.IsActive = false;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private async Task<Business> LoadBusinessAsync(BusinessLifecycleActionDto dto, CancellationToken ct)
@@ -119,9 +135,11 @@ namespace Darwin.Application.Businesses.Commands
                 throw new InvalidOperationException(_localizer["BusinessNotFound"]);
             }
 
-            if (!(entity.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             return entity;
@@ -166,7 +184,14 @@ namespace Darwin.Application.Businesses.Commands
             entity.SuspensionReason = null;
             entity.IsActive = true;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private async Task<Business> LoadBusinessAsync(BusinessLifecycleActionDto dto, CancellationToken ct)
@@ -177,9 +202,11 @@ namespace Darwin.Application.Businesses.Commands
                 throw new InvalidOperationException(_localizer["BusinessNotFound"]);
             }
 
-            if (!(entity.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
             }
 
             return entity;

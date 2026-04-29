@@ -316,6 +316,7 @@
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="shipmentId" value="@s.Id" />
                                         <input type="hidden" name="orderId" value="@Model.OrderId" />
+                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(s.RowVersion)" />
                                         <input type="hidden" name="returnToQueue" value="false" />
                                         <button type="submit" class="btn btn-sm btn-outline-primary">
                                             @T.T("GenerateCarrierLabel")

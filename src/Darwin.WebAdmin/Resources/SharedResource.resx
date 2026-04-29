@@ -7393,6 +7393,9 @@
   <data name="CommunicationTestWhatsAppQueuedMessage" xml:space="preserve">
     <value>Communication test WhatsApp message queued for {0}.</value>
   </data>
+  <data name="CommunicationTestQueueFailedMessage" xml:space="preserve">
+    <value>The communication test could not be queued. Please refresh and try again.</value>
+  </data>
   <data name="CommunicationQueuedDispatchesLabel" xml:space="preserve">
     <value>Worker queue (pending / failed)</value>
   </data>
@@ -11295,5 +11298,47 @@
   </data>
   <data name="Unpublished" xml:space="preserve">
     <value>Unpublished</value>
+  </data>
+  <data name="Accepted" xml:space="preserve">
+    <value>Accepted</value>
+  </data>
+  <data name="AccountNumber" xml:space="preserve">
+    <value>Account number</value>
+  </data>
+  <data name="ApiBaseUrl" xml:space="preserve">
+    <value>API base URL</value>
+  </data>
+  <data name="ApiCredentials" xml:space="preserve">
+    <value>API credentials</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Delivered" xml:space="preserve">
+    <value>Delivered</value>
+  </data>
+  <data name="Environment" xml:space="preserve">
+    <value>Environment</value>
+  </data>
+  <data name="MissingService" xml:space="preserve">
+    <value>Missing service</value>
+  </data>
+  <data name="MissingTracking" xml:space="preserve">
+    <value>Missing tracking</value>
+  </data>
+  <data name="Resend" xml:space="preserve">
+    <value>Resend</value>
+  </data>
+  <data name="Revoke" xml:space="preserve">
+    <value>Revoke</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Weight" xml:space="preserve">
+    <value>Weight</value>
+  </data>
+  <data name="BrevoWebhookEvents" xml:space="preserve">
+    <value>Brevo webhook events</value>
   </data>
 </root>

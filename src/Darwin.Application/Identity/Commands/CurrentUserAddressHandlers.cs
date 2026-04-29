@@ -151,5 +151,5 @@ public sealed class SetCurrentUserDefaultAddressHandler
     /// Sets the requested default flags on an address owned by the current user.
     /// </summary>
     public Task<Result> HandleAsync(Guid addressId, bool asBilling, bool asShipping, CancellationToken ct = default)
-        => _setDefaultUserAddressHandler.HandleAsync(_currentUser.GetCurrentUserId(), addressId, asBilling, asShipping, ct);
+        => _setDefaultUserAddressHandler.HandleAsync(_currentUser.GetCurrentUserId(), addressId, asBilling, asShipping, rowVersion: null, ct);
 }

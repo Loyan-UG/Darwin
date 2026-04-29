@@ -53,6 +53,12 @@ namespace Darwin.Application.Orders.Commands
                 return Result.Fail(_localizer["ShipmentProviderOperationUnsupportedAction"]);
             }
 
+            var requeueRequested = IsRequeueAction(dto.Action);
+            if (requeueRequested && await HasPendingSiblingAsync(operation, ct).ConfigureAwait(false))
+            {
+                return Result.Fail(_localizer["ShipmentProviderOperationPendingAlreadyExists"]);
+            }
+
             try
             {
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -61,8 +67,31 @@ namespace Darwin.Application.Orders.Commands
             {
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
+            catch (DbUpdateException)
+            {
+                if (requeueRequested && await HasPendingSiblingAsync(operation, ct).ConfigureAwait(false))
+                {
+                    return Result.Fail(_localizer["ShipmentProviderOperationPendingAlreadyExists"]);
+                }
+
+                throw;
+            }
 
             return Result.Ok();
+        }
+
+        private Task<bool> HasPendingSiblingAsync(ShipmentProviderOperation operation, CancellationToken ct)
+        {
+            return _db.Set<ShipmentProviderOperation>()
+                .AsNoTracking()
+                .AnyAsync(
+                    x => x.Id != operation.Id &&
+                         x.ShipmentId == operation.ShipmentId &&
+                         !x.IsDeleted &&
+                         x.Provider == operation.Provider &&
+                         x.OperationType == operation.OperationType &&
+                         x.Status == "Pending",
+                    ct);
         }
 
         private static bool TryApplyAction(ShipmentProviderOperation operation, UpdateShipmentProviderOperationDto dto)
@@ -78,6 +107,7 @@ namespace Darwin.Application.Orders.Commands
                 case "MARKFAILED":
                     operation.Status = "Failed";
                     operation.LastAttemptAtUtc = now;
+                    operation.ProcessedAtUtc = null;
                     operation.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason)
                         ? "Marked failed by WebAdmin operator."
                         : dto.FailureReason.Trim();
@@ -94,6 +124,7 @@ namespace Darwin.Application.Orders.Commands
                     operation.IsDeleted = true;
                     operation.Status = "Cancelled";
                     operation.LastAttemptAtUtc = now;
+                    operation.ProcessedAtUtc = null;
                     operation.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason)
                         ? "Cancelled by WebAdmin operator."
                         : dto.FailureReason.Trim();
@@ -103,6 +134,11 @@ namespace Darwin.Application.Orders.Commands
             }
 
             return true;
+        }
+
+        private static bool IsRequeueAction(string? action)
+        {
+            return string.Equals((action ?? string.Empty).Trim(), "Requeue", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

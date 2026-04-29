@@ -42,8 +42,8 @@ namespace Darwin.Application.Businesses.Commands
 
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
-            if (!currentVersion.SequenceEqual(requestVersion))
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            if (requestVersion.Length == 0 || !currentVersion.SequenceEqual(requestVersion))
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
 
             entity.BusinessLocationId = dto.BusinessLocationId;
             entity.Url = dto.Url.Trim();
@@ -51,7 +51,14 @@ namespace Darwin.Application.Businesses.Commands
             entity.SortOrder = dto.SortOrder;
             entity.IsPrimary = dto.IsPrimary;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 }

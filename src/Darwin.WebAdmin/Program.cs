@@ -13,6 +13,7 @@ if (builder.Environment.IsEnvironment("Testing") &&
 {
     builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
     {
+        ["Persistence:Provider"] = "SqlServer",
         ["ConnectionStrings:DefaultConnection"] = "Server=(localdb)\\MSSQLLocalDB;Database=Darwin_WebAdmin_SmokeTests;Trusted_Connection=True;TrustServerCertificate=True"
     });
 }

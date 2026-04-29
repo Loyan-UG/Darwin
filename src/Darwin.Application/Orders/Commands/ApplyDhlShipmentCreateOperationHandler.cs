@@ -81,6 +81,8 @@ namespace Darwin.Application.Orders.Commands
                 "Created",
                 ct: ct).ConfigureAwait(false);
 
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
             if (string.IsNullOrWhiteSpace(shipment.LabelUrl))
             {
                 var pendingLabelOperation = await _db.Set<ShipmentProviderOperation>()
@@ -95,6 +97,8 @@ namespace Darwin.Application.Orders.Commands
 
                 if (pendingLabelOperation is null)
                 {
+                    var queuedLabelOperation = false;
+                    ShipmentProviderOperation? queuedLabelOperationEntry = null;
                     var failedLabelOperation = await _db.Set<ShipmentProviderOperation>()
                         .OrderByDescending(x => x.LastAttemptAtUtc ?? x.CreatedAtUtc)
                         .FirstOrDefaultAsync(
@@ -113,21 +117,42 @@ namespace Darwin.Application.Orders.Commands
                         failedLabelOperation.LastAttemptAtUtc = null;
                         failedLabelOperation.ProcessedAtUtc = null;
                         failedLabelOperation.FailureReason = null;
+                        queuedLabelOperation = true;
+                        queuedLabelOperationEntry = failedLabelOperation;
                     }
                     else
                     {
-                        _db.Set<ShipmentProviderOperation>().Add(new ShipmentProviderOperation
+                        queuedLabelOperationEntry = new ShipmentProviderOperation
                         {
                             ShipmentId = shipment.Id,
                             Provider = "DHL",
                             OperationType = "GenerateLabel",
                             Status = "Pending"
-                        });
+                        };
+
+                        _db.Set<ShipmentProviderOperation>().Add(queuedLabelOperationEntry);
+                        queuedLabelOperation = true;
+                    }
+
+                    try
+                    {
+                        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                    }
+                    catch (DbUpdateException ex)
+                    {
+                        if (queuedLabelOperation && await HasPendingLabelOperationAsync(shipment.Id, ct).ConfigureAwait(false))
+                        {
+                            DetachQueueConflictEntries(ex, queuedLabelOperationEntry);
+
+                            // A concurrent queue path already created the pending label operation.
+                        }
+                        else
+                        {
+                            throw;
+                        }
                     }
                 }
             }
-
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return new ShipmentDetailDto
             {
@@ -144,6 +169,32 @@ namespace Darwin.Application.Orders.Commands
                 DeliveredAtUtc = shipment.DeliveredAtUtc,
                 LastCarrierEventKey = shipment.LastCarrierEventKey
             };
+        }
+
+        private Task<bool> HasPendingLabelOperationAsync(Guid shipmentId, CancellationToken ct)
+        {
+            return _db.Set<ShipmentProviderOperation>()
+                .AsNoTracking()
+                .AnyAsync(
+                    x => x.ShipmentId == shipmentId &&
+                         !x.IsDeleted &&
+                         x.Provider == "DHL" &&
+                         x.OperationType == "GenerateLabel" &&
+                         x.Status == "Pending",
+                    ct);
+        }
+
+        private void DetachQueueConflictEntries(DbUpdateException ex, ShipmentProviderOperation? operation)
+        {
+            foreach (var entry in ex.Entries)
+            {
+                entry.State = EntityState.Detached;
+            }
+
+            if (operation is not null && _db is DbContext dbContext)
+            {
+                dbContext.Entry(operation).State = EntityState.Detached;
+            }
         }
     }
 }

@@ -43,8 +43,8 @@ namespace Darwin.Application.Businesses.Commands
 
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
-            if (!currentVersion.SequenceEqual(requestVersion))
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            if (requestVersion.Length == 0 || !currentVersion.SequenceEqual(requestVersion))
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
 
             var isOwnerBeingDemotedOrDisabled =
                 entity.Role == BusinessMemberRole.Owner &&
@@ -80,7 +80,14 @@ namespace Darwin.Application.Businesses.Commands
             entity.Role = dto.Role;
             entity.IsActive = dto.IsActive;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 }

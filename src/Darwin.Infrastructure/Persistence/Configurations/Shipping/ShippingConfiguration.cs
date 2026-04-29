@@ -26,12 +26,15 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Shipping
             builder.Property(sm => sm.CountriesCsv).HasMaxLength(255);
             builder.Property(sm => sm.IsActive).IsRequired();
 
-            // Unique constraint across Name/Carrier/Service. Combined index
-            // ensures administrators cannot create duplicate methods for the
-            // same carrier/service combination. Note: This constraint
-            // complements the unique name validators in the application layer.
+            // Keep legacy name-aware uniqueness, and enforce the application
+            // invariant that a carrier/service pair maps to one active method.
             builder.HasIndex(sm => new { sm.Name, sm.Carrier, sm.Service })
                 .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
+
+            builder.HasIndex(sm => new { sm.Carrier, sm.Service })
+                .IsUnique()
+                .HasDatabaseName("UX_ShippingMethods_ActiveCarrierService")
                 .HasFilter("[IsDeleted] = 0");
 
             // One-to-many relationship to rate tiers. Cascade delete so that

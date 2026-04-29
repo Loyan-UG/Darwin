@@ -5,6 +5,7 @@ using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Security;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Shipping;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -131,6 +132,11 @@ public sealed class ShippingMethodsController : AdminBaseController
             SetSuccessMessage("ShippingMethodCreatedMessage");
             return RedirectOrHtmx(nameof(Index), new { });
         }
+        catch (ValidationException ex)
+        {
+            AddValidationErrors(ex, "ShippingMethodCreateFailedMessage");
+            return RenderEditor(vm, true);
+        }
         catch (Exception)
         {
             AddModelErrorMessage("ShippingMethodCreateFailedMessage");
@@ -217,6 +223,11 @@ public sealed class ShippingMethodsController : AdminBaseController
             SetErrorMessage("ShippingMethodConcurrencyMessage");
             return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
+        catch (ValidationException ex)
+        {
+            AddValidationErrors(ex, "ShippingMethodUpdateFailedMessage");
+            return RenderEditor(vm, false);
+        }
         catch (Exception)
         {
             AddModelErrorMessage("ShippingMethodUpdateFailedMessage");
@@ -234,6 +245,30 @@ public sealed class ShippingMethodsController : AdminBaseController
             PriceMinor = vm.PriceMinor,
             SortOrder = vm.SortOrder
         };
+    }
+
+    private void AddValidationErrors(ValidationException ex, string fallbackKey)
+    {
+        var hasError = false;
+        foreach (var error in ex.Errors ?? Enumerable.Empty<FluentValidation.Results.ValidationFailure>())
+        {
+            if (string.IsNullOrWhiteSpace(error.ErrorMessage))
+            {
+                continue;
+            }
+
+            ModelState.AddModelError(
+                string.IsNullOrWhiteSpace(error.PropertyName) ? string.Empty : error.PropertyName,
+                error.ErrorMessage);
+            hasError = true;
+        }
+
+        if (!hasError)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                string.IsNullOrWhiteSpace(ex.Message) ? T(fallbackKey) : ex.Message);
+        }
     }
 
     private static void EnsureRates(ShippingMethodEditVm vm)

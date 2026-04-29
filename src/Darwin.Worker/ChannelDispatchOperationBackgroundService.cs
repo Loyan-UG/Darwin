@@ -94,8 +94,28 @@ public sealed class ChannelDispatchOperationBackgroundService : BackgroundServic
                 _logger.LogWarning(ex, "Channel dispatch operation {OperationId} failed.", item.Id);
             }
 
-            await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "channel dispatch operation", item.Id, ct).ConfigureAwait(false);
+            if (!await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "channel dispatch operation", item.Id, ct).ConfigureAwait(false))
+            {
+                await PersistChannelCompletionFallbackAsync(db, item, ct).ConfigureAwait(false);
+            }
         }
+    }
+
+    private static async Task PersistChannelCompletionFallbackAsync(
+        IAppDbContext db,
+        ChannelDispatchOperation item,
+        CancellationToken ct)
+    {
+        await db.Set<ChannelDispatchOperation>()
+            .Where(x => x.Id == item.Id && !x.IsDeleted)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.Status, item.Status)
+                .SetProperty(x => x.AttemptCount, item.AttemptCount)
+                .SetProperty(x => x.LastAttemptAtUtc, item.LastAttemptAtUtc)
+                .SetProperty(x => x.ProcessedAtUtc, item.ProcessedAtUtc)
+                .SetProperty(x => x.FailureReason, item.FailureReason),
+                ct)
+            .ConfigureAwait(false);
     }
 
     private static async Task ProcessOneAsync(IServiceProvider services, ChannelDispatchOperation item, CancellationToken ct)

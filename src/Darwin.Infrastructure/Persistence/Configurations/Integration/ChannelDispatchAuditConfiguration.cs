@@ -52,7 +52,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
             builder.HasIndex(x => x.Channel);
             builder.HasIndex(x => x.Status);
             builder.HasIndex(x => x.FlowKey);
-            builder.HasIndex(x => x.CorrelationKey);
+            builder.HasIndex(x => x.CorrelationKey)
+                .HasDatabaseName("IX_ChannelDispatchAudits_CorrelationKey");
+            builder.HasIndex(x => new { x.Channel, x.CorrelationKey })
+                .IsUnique()
+                .HasDatabaseName("UX_ChannelDispatchAudits_ActiveChannelCorrelation")
+                .HasFilter("[CorrelationKey] IS NOT NULL AND [IsDeleted] = 0 AND [Status] IN (N'Pending', N'Sent')");
             builder.HasIndex(x => x.BusinessId);
             builder.HasIndex(x => x.RecipientAddress);
             builder.HasIndex(x => x.IntendedRecipientAddress);

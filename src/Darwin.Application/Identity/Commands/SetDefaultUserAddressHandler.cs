@@ -31,7 +31,8 @@ namespace Darwin.Application.Identity.Commands
         /// <param name="addressId">Address id to set as default.</param>
         /// <param name="asBilling">When true, sets default billing.</param>
         /// <param name="asShipping">When true, sets default shipping.</param>
-        public async Task<Result> HandleAsync(Guid userId, Guid addressId, bool asBilling, bool asShipping, CancellationToken ct = default)
+        /// <param name="rowVersion">Optional concurrency token. When supplied, it must match the target address.</param>
+        public async Task<Result> HandleAsync(Guid userId, Guid addressId, bool asBilling, bool asShipping, byte[]? rowVersion = null, CancellationToken ct = default)
         {
             if (userId == Guid.Empty) return Result.Fail(_localizer["UserIdRequired"]);
             if (addressId == Guid.Empty) return Result.Fail(_localizer["AddressIdRequired"]);
@@ -40,6 +41,15 @@ namespace Darwin.Application.Identity.Commands
             var address = await _db.Set<Address>().FirstOrDefaultAsync(a => a.Id == addressId && !a.IsDeleted, ct);
             if (address is null || address.UserId != userId)
                 return Result.Fail(_localizer["AddressNotOwnedByUser"]);
+
+            if (rowVersion is { Length: > 0 })
+            {
+                var currentVersion = address.RowVersion ?? Array.Empty<byte>();
+                if (!currentVersion.SequenceEqual(rowVersion))
+                {
+                    return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+                }
+            }
 
             if (asBilling)
             {
@@ -55,8 +65,15 @@ namespace Darwin.Application.Identity.Commands
                 address.IsDefaultShipping = true;
             }
 
-            await _db.SaveChangesAsync(ct);
-            return Result.Ok();
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return Result.Ok();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
         }
     }
 }

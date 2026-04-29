@@ -76,6 +76,15 @@ namespace Darwin.Application.Shipping.Queries
 
         private static bool SupportsCountry(string? countriesCsv, string country)
         {
+            var normalizedCountry = string.IsNullOrWhiteSpace(country)
+                ? string.Empty
+                : country.Trim();
+
+            if (normalizedCountry.Length == 0)
+            {
+                return false;
+            }
+
             if (string.IsNullOrWhiteSpace(countriesCsv))
             {
                 return true;
@@ -83,7 +92,7 @@ namespace Darwin.Application.Shipping.Queries
 
             return countriesCsv
                 .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                .Contains(country, StringComparer.OrdinalIgnoreCase);
+                .Contains(normalizedCountry, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

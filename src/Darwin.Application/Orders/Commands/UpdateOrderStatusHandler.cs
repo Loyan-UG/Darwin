@@ -170,7 +170,14 @@ namespace Darwin.Application.Orders.Commands
             }
 
             order.Status = dto.NewStatus;
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictOrderModified"]);
+            }
         }
 
         private async Task ValidateTargetStatusEvidenceAsync(Order order, OrderStatus targetStatus, CancellationToken ct)

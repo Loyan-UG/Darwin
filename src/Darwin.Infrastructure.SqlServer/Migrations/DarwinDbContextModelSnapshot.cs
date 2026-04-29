@@ -4799,7 +4799,8 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.HasIndex("Channel");
 
-                    b.HasIndex("CorrelationKey");
+                    b.HasIndex("CorrelationKey")
+                        .HasDatabaseName("IX_ChannelDispatchAudits_CorrelationKey");
 
                     b.HasIndex("FlowKey");
 
@@ -4808,6 +4809,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("RecipientAddress");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("Channel", "CorrelationKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ChannelDispatchAudits_ActiveChannelCorrelation")
+                        .HasFilter("[CorrelationKey] IS NOT NULL AND [IsDeleted] = 0 AND [Status] IN (N'Pending', N'Sent')");
 
                     b.ToTable("ChannelDispatchAudits", "Integration");
                 });
@@ -4992,8 +4998,6 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.HasIndex("BusinessId");
 
-                    b.HasIndex("CorrelationKey");
-
                     b.HasIndex("FlowKey");
 
                     b.HasIndex("IntendedRecipientEmail");
@@ -5001,6 +5005,14 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("RecipientEmail");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex(new[] { "CorrelationKey" }, "IX_EmailDispatchAudits_CorrelationKey_Model")
+                        .HasDatabaseName("IX_EmailDispatchAudits_CorrelationKey");
+
+                    b.HasIndex(new[] { "CorrelationKey" }, "UX_EmailDispatchAudits_ActiveCorrelation_Model")
+                        .IsUnique()
+                        .HasDatabaseName("UX_EmailDispatchAudits_ActiveCorrelation")
+                        .HasFilter("[CorrelationKey] IS NOT NULL AND [IsDeleted] = 0 AND [Status] IN (N'Pending', N'Sent')");
 
                     b.ToTable("EmailDispatchAudits", "Integration");
                 });
@@ -5300,6 +5312,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasColumnType("nvarchar(32)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ShipmentId", "Provider", "OperationType")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ShipmentProviderOperations_ActivePending")
+                        .HasFilter("[IsDeleted] = 0 AND [Status] = N'Pending'");
 
                     b.HasIndex("ShipmentId", "Provider", "OperationType", "Status", "CreatedAtUtc");
 
@@ -7764,6 +7781,11 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Carrier", "Service")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ShippingMethods_ActiveCarrierService")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("Name", "Carrier", "Service")
                         .IsUnique()

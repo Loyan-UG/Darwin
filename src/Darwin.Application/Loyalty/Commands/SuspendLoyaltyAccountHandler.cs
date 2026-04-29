@@ -61,9 +61,9 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result.Fail(_localizer["LoyaltyAccountNotFound"]);
             }
 
-            // Optional optimistic concurrency check.
-            if (dto.RowVersion is not null &&
-                !(account.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = account.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["LoyaltyAccountConcurrencyConflict"]);
             }
@@ -76,7 +76,14 @@ namespace Darwin.Application.Loyalty.Commands
 
             account.Status = LoyaltyAccountStatus.Suspended;
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["LoyaltyAccountConcurrencyConflict"]);
+            }
 
             return Result.Ok();
         }

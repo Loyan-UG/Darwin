@@ -522,6 +522,12 @@
   <data name="AddOnGroupNotFound" xml:space="preserve">
     <value>Add-on group not found.</value>
   </data>
+  <data name="BrandsNotFoundOrDeleted" xml:space="preserve">
+    <value>One or more selected brands were not found or have been deleted.</value>
+  </data>
+  <data name="CategoriesNotFoundOrDeleted" xml:space="preserve">
+    <value>One or more selected categories were not found or have been deleted.</value>
+  </data>
   <data name="MediaAssetNotFound" xml:space="preserve">
     <value>Media asset not found.</value>
   </data>
@@ -599,6 +605,9 @@
   </data>
   <data name="CartNotFound" xml:space="preserve">
     <value>Cart not found.</value>
+  </data>
+  <data name="CartAlreadyCheckedOut" xml:space="preserve">
+    <value>This cart has already been checked out.</value>
   </data>
   <data name="CouponIsInvalidOrInactive" xml:space="preserve">
     <value>Coupon is invalid or inactive.</value>
@@ -920,8 +929,17 @@
   <data name="BusinessLocationNotFound" xml:space="preserve">
     <value>Business location was not found.</value>
   </data>
+  <data name="BusinessMediaNotFound" xml:space="preserve">
+    <value>Business media was not found.</value>
+  </data>
   <data name="ItemConcurrencyConflict" xml:space="preserve">
     <value>Concurrency conflict. The item was modified by another process.</value>
+  </data>
+  <data name="ShipmentProviderOperationPendingAlreadyExists" xml:space="preserve">
+    <value>A pending operation already exists for this shipment, provider, and operation type.</value>
+  </data>
+  <data name="CommunicationDispatchOperationInFlight" xml:space="preserve">
+    <value>This dispatch operation was just claimed by the worker and cannot be cancelled while it is in flight.</value>
   </data>
   <data name="RatingMustBeBetweenOneAndFive" xml:space="preserve">
     <value>Rating must be between 1 and 5.</value>
@@ -1339,6 +1357,15 @@
   </data>
   <data name="DhlWebhookSignatureInvalid" xml:space="preserve">
     <value>DHL webhook signature is invalid.</value>
+  </data>
+  <data name="BrevoWebhookAuthenticationNotConfigured" xml:space="preserve">
+    <value>Brevo webhook authentication is not configured.</value>
+  </data>
+  <data name="BrevoWebhookAuthenticationInvalid" xml:space="preserve">
+    <value>Brevo webhook authentication is invalid.</value>
+  </data>
+  <data name="BrevoWebhookPayloadInvalid" xml:space="preserve">
+    <value>Brevo webhook payload is invalid.</value>
   </data>
   <data name="ShipmentNotFoundForCarrierCallback" xml:space="preserve">
     <value>Shipment was not found for the carrier callback.</value>

@@ -149,7 +149,35 @@ namespace Darwin.Application.Catalog.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    /// <summary>
+    /// Request to attach an add-on group to a set of categories, replacing any existing assignments.
+    /// </summary>
+    public sealed class AddOnGroupAttachToCategoriesDto
+    {
+        /// <summary>Target add-on group identifier.</summary>
+        public Guid AddOnGroupId { get; set; }
 
+        /// <summary>Selected category identifiers to be attached to the group.</summary>
+        public Guid[] CategoryIds { get; set; } = Array.Empty<Guid>();
+
+        /// <summary>Concurrency token of the add-on group to protect from lost updates.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    /// <summary>
+    /// Request to attach an add-on group to a set of brands, replacing any existing assignments.
+    /// </summary>
+    public sealed class AddOnGroupAttachToBrandsDto
+    {
+        /// <summary>Target add-on group identifier.</summary>
+        public Guid AddOnGroupId { get; set; }
+
+        /// <summary>Selected brand identifiers to be attached to the group.</summary>
+        public Guid[] BrandIds { get; set; } = Array.Empty<Guid>();
+
+        /// <summary>Concurrency token of the add-on group to protect from lost updates.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
 
 
     /// <summary>

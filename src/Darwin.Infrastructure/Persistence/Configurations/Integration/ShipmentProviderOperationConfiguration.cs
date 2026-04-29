@@ -16,5 +16,9 @@ public sealed class ShipmentProviderOperationConfiguration : IEntityTypeConfigur
         builder.Property(x => x.FailureReason).HasMaxLength(1024);
 
         builder.HasIndex(x => new { x.ShipmentId, x.Provider, x.OperationType, x.Status, x.CreatedAtUtc });
+        builder.HasIndex(x => new { x.ShipmentId, x.Provider, x.OperationType })
+            .IsUnique()
+            .HasDatabaseName("UX_ShipmentProviderOperations_ActivePending")
+            .HasFilter("[IsDeleted] = 0 AND [Status] = N'Pending'");
     }
 }

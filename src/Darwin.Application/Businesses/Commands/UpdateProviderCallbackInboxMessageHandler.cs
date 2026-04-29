@@ -78,6 +78,7 @@ namespace Darwin.Application.Businesses.Commands
                 case "MARKFAILED":
                     message.Status = "Failed";
                     message.LastAttemptAtUtc = now;
+                    message.ProcessedAtUtc = null;
                     message.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason)
                         ? "Marked failed by WebAdmin operator."
                         : dto.FailureReason.Trim();

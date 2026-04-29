@@ -498,10 +498,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             try
             {
-                await _attachCategories.HandleAsync(
-                    vm.AddOnGroupId,
-                    (vm.SelectedCategoryIds ?? new List<Guid>()).ToArray(),
-                    ct);
+                var result = await _attachCategories.HandleAsync(
+                    new AddOnGroupAttachToCategoriesDto
+                    {
+                        AddOnGroupId = vm.AddOnGroupId,
+                        RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
+                        CategoryIds = (vm.SelectedCategoryIds ?? new List<Guid>()).ToArray()
+                    },
+                    ct).ConfigureAwait(false);
+                if (!result.Succeeded)
+                {
+                    SetErrorMessage("AddOnGroupAttachCategoriesFailed");
+                    return RedirectOrHtmx(nameof(AttachToCategories), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query });
+                }
 
                 SetSuccessMessage("AddOnGroupAttachedToCategories");
                 return RedirectOrHtmx(nameof(Index), new { });
@@ -568,10 +577,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             try
             {
-                await _attachBrands.HandleAsync(
-                    vm.AddOnGroupId,
-                    (vm.SelectedBrandIds ?? new List<Guid>()).ToArray(),
-                    ct);
+                var result = await _attachBrands.HandleAsync(
+                    new AddOnGroupAttachToBrandsDto
+                    {
+                        AddOnGroupId = vm.AddOnGroupId,
+                        RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
+                        BrandIds = (vm.SelectedBrandIds ?? new List<Guid>()).ToArray()
+                    },
+                    ct).ConfigureAwait(false);
+                if (!result.Succeeded)
+                {
+                    SetErrorMessage("AddOnGroupAttachBrandsFailed");
+                    return RedirectOrHtmx(nameof(AttachToBrands), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query });
+                }
 
                 SetSuccessMessage("AddOnGroupAttachedToBrands");
                 return RedirectOrHtmx(nameof(Index), new { });

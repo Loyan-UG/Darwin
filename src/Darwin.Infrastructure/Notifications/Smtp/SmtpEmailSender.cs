@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Integration;
+using Darwin.Infrastructure.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -55,10 +56,15 @@ namespace Darwin.Infrastructure.Notifications.Smtp
         {
             if (string.IsNullOrWhiteSpace(toEmail)) throw new ArgumentNullException(nameof(toEmail));
             var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
+            var pendingDuplicateCutoffUtc = DateTime.UtcNow.AddMinutes(-15);
             if (!string.IsNullOrWhiteSpace(correlationKey) &&
                 await _db.Set<EmailDispatchAudit>()
                     .AsNoTracking()
-                    .AnyAsync(x => !x.IsDeleted && x.CorrelationKey == correlationKey && x.Status == "Sent", ct)
+                    .AnyAsync(
+                        x => !x.IsDeleted &&
+                             x.CorrelationKey == correlationKey &&
+                             (x.Status == "Sent" || (x.Status == "Pending" && x.AttemptedAtUtc >= pendingDuplicateCutoffUtc)),
+                        ct)
                     .ConfigureAwait(false))
             {
                 _logger.LogInformation("Skipping duplicate SMTP email send for correlation {CorrelationKey}.", correlationKey);
@@ -81,6 +87,22 @@ namespace Darwin.Infrastructure.Notifications.Smtp
                 CreatedAtUtc = attemptedAtUtc
             };
             _db.Set<EmailDispatchAudit>().Add(audit);
+            try
+            {
+                await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMTP email dispatch audit claim", ct)
+                    .ConfigureAwait(false);
+            }
+            catch (DbUpdateException) when (!string.IsNullOrWhiteSpace(correlationKey) && !ct.IsCancellationRequested)
+            {
+                _db.Set<EmailDispatchAudit>().Remove(audit);
+                if (await HasActiveEmailAuditAsync(correlationKey, pendingDuplicateCutoffUtc, ct).ConfigureAwait(false))
+                {
+                    _logger.LogInformation("Skipping duplicate SMTP email send for correlation {CorrelationKey}.", correlationKey);
+                    return;
+                }
+
+                throw;
+            }
 
             try
             {
@@ -106,15 +128,21 @@ namespace Darwin.Infrastructure.Notifications.Smtp
                 await client.SendMailAsync(message);
                 audit.Status = "Sent";
                 audit.CompletedAtUtc = DateTime.UtcNow;
-                await _db.SaveChangesAsync(ct);
+                await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMTP email dispatch audit completion", ct)
+                    .ConfigureAwait(false);
                 _logger.LogInformation("SMTP email sent to {Recipient} via {Host}:{Port}", toEmail, _options.Host, _options.Port);
             }
-            catch (Exception ex)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (audit.Status == "Pending")
             {
                 audit.Status = "Failed";
                 audit.CompletedAtUtc = DateTime.UtcNow;
                 audit.FailureMessage = ex.Message.Length > 2000 ? ex.Message.Substring(0, 2000) : ex.Message;
-                await _db.SaveChangesAsync(ct);
+                await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMTP email dispatch audit failure", ct)
+                    .ConfigureAwait(false);
                 throw;
             }
         }
@@ -122,6 +150,17 @@ namespace Darwin.Infrastructure.Notifications.Smtp
         private static string? NormalizeCorrelationKey(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        private Task<bool> HasActiveEmailAuditAsync(string correlationKey, DateTime pendingDuplicateCutoffUtc, CancellationToken ct)
+        {
+            return _db.Set<EmailDispatchAudit>()
+                .AsNoTracking()
+                .AnyAsync(
+                    x => !x.IsDeleted &&
+                         x.CorrelationKey == correlationKey &&
+                         (x.Status == "Sent" || (x.Status == "Pending" && x.AttemptedAtUtc >= pendingDuplicateCutoffUtc)),
+                    ct);
         }
     }
 }

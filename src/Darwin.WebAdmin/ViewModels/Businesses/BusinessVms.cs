@@ -566,6 +566,7 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public DateTime? RevokedAtUtc { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public string? Note { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>

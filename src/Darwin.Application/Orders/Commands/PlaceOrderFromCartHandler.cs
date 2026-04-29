@@ -203,7 +203,14 @@ public sealed class PlaceOrderFromCartHandler
             cartItem.IsDeleted = true;
         }
 
-        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new InvalidOperationException(_localizer["CartAlreadyCheckedOut"]);
+        }
 
         return new PlaceOrderFromCartResultDto
         {
@@ -277,8 +284,23 @@ public sealed class PlaceOrderFromCartHandler
     private async Task<string> NextOrderNumberAsync(CancellationToken ct)
     {
         var nowUtc = DateTime.UtcNow;
-        var lastCount = await _db.Set<Order>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
-        return $"D-{nowUtc:yyyyMMdd}-{lastCount + 1:D5}";
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var suffix = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)[..6].ToUpperInvariant();
+            var candidate = $"D-{nowUtc:yyyyMMdd-HHmmssfff}-{suffix}";
+            var exists = await _db.Set<Order>()
+                .AsNoTracking()
+                .AnyAsync(x => !x.IsDeleted && x.OrderNumber == candidate, ct)
+                .ConfigureAwait(false);
+
+            if (!exists)
+            {
+                return candidate;
+            }
+        }
+
+        return $"D-{nowUtc:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}"[..50].ToUpperInvariant();
     }
 
     private static string BuildSummaryKey(Guid variantId, string? selectedAddOnValueIdsJson)

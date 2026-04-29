@@ -52,7 +52,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
             builder.HasIndex(x => x.RecipientEmail);
             builder.HasIndex(x => x.IntendedRecipientEmail);
             builder.HasIndex(x => x.FlowKey);
-            builder.HasIndex(x => x.CorrelationKey);
+            builder.HasIndex(new[] { nameof(EmailDispatchAudit.CorrelationKey) }, "IX_EmailDispatchAudits_CorrelationKey_Model")
+                .HasDatabaseName("IX_EmailDispatchAudits_CorrelationKey");
+            builder.HasIndex(new[] { nameof(EmailDispatchAudit.CorrelationKey) }, "UX_EmailDispatchAudits_ActiveCorrelation_Model")
+                .IsUnique()
+                .HasDatabaseName("UX_EmailDispatchAudits_ActiveCorrelation")
+                .HasFilter("[CorrelationKey] IS NOT NULL AND [IsDeleted] = 0 AND [Status] IN (N'Pending', N'Sent')");
             builder.HasIndex(x => x.BusinessId);
         }
     }

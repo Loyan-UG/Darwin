@@ -153,6 +153,11 @@ namespace Darwin.Application.Businesses.Queries
                     return Summarize(BuildDhlPayloadPreview(root), 220);
                 }
 
+                if (string.Equals(row.Provider, "Brevo", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Summarize(BuildBrevoPayloadPreview(root), 220);
+                }
+
                 return Summarize(BuildGenericPayloadPreview(root), 220);
             }
             catch (JsonException)
@@ -189,6 +194,18 @@ namespace Darwin.Application.Businesses.Queries
             AddPreviewPart(parts, "status", GetString(root, "providerStatus"));
             AddPreviewPart(parts, "occurredAtUtc", GetString(root, "occurredAtUtc"));
             AddPreviewPart(parts, "exception", GetString(root, "exceptionCode"));
+            return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
+        }
+
+        private static string BuildBrevoPayloadPreview(JsonElement root)
+        {
+            var parts = new List<string>();
+            AddPreviewPart(parts, "event", GetString(root, "event"));
+            AddPreviewPart(parts, "messageId", GetString(root, "message-id"));
+            AddPreviewPart(parts, "email", GetString(root, "email"));
+            AddPreviewPart(parts, "subject", GetString(root, "subject"));
+            AddPreviewPart(parts, "reason", GetString(root, "reason"));
+            AddPreviewPart(parts, "ts", GetScalarText(root, "ts_event") ?? GetScalarText(root, "ts"));
             return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
         }
 

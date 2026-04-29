@@ -79,6 +79,7 @@ namespace Darwin.Application.Billing.Commands
                 case "REQUEUE":
                     delivery.IsDeleted = false;
                     delivery.Status = "Pending";
+                    delivery.RetryCount = 0;
                     delivery.ResponseCode = null;
                     delivery.LastAttemptAtUtc = null;
                     break;

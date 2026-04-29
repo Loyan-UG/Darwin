@@ -26,6 +26,7 @@ namespace Darwin.Application.Businesses.Validators
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.ExpiresInDays).InclusiveBetween(1, 30);
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 
@@ -38,6 +39,7 @@ namespace Darwin.Application.Businesses.Validators
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.Note).MaximumLength(2000);
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 

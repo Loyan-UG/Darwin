@@ -28,6 +28,8 @@ Supported provider names:
 - `PostgreSql`, `Postgres`, `Npgsql`
 - `SqlServer`, `MSSQL`
 
+Provider selection is normalized during startup. Empty or missing `Persistence:Provider` defaults to `PostgreSql`; recognized aliases are converted to the canonical provider names before provider-specific registration runs. Unsupported values fail fast during DI registration.
+
 ## Local PostgreSQL Development
 
 PostgreSQL is the preferred local default.
@@ -186,6 +188,10 @@ Fresh-bootstrap validation result: applying the full PostgreSQL migration lane t
 
 Runtime startup validation result: `Darwin.WebAdmin` started against the local PostgreSQL provider and returned HTTP 200 from `/`. `Darwin.WebApi` started against the same provider and returned HTTP 200 from `/api/v1/public/businesses/category-kinds`. `Darwin.Worker` also started against the same Development/PostgreSQL configuration, built its service provider successfully, and executed PostgreSQL-backed background queries during a short smoke run.
 
+Latest Development runtime smoke result: direct DLL startup for `Darwin.WebAdmin` and `Darwin.WebApi` against PostgreSQL returned HTTP 200 from the same smoke endpoints. `Darwin.Worker` Development defaults now keep queue/dispatch workers that can mutate queues or call external systems disabled unless explicitly overridden, and a short PostgreSQL smoke run started the host without queue-query or outbound-HTTP side-effect logs.
+
+Latest Development outbound-safety validation result: `Darwin.WebAdmin` and `Darwin.WebApi` Development settings now override SMTP to `localhost:2525` with empty credentials so local runtime paths do not inherit the production-like Office365 placeholder relay. Runtime email delivery is currently SMTP-only through `SmtpEmailSender`, so unused Development `Email:Provider`, Mailgun, and Graph placeholders were removed to keep configuration aligned with the actual composition root. `Darwin.WebApi` Development settings also disable placeholder FCM/APNS provider settings unless explicitly overridden. Both entry points still start against PostgreSQL and return HTTP 200 from the smoke endpoints after the override.
+
 Latest queue-status validation result: `Darwin.Application`, `Darwin.Worker`, and `Darwin.WebAdmin` build successfully after aligning provider callback inbox and shipment provider operation successful completion to `Processed`; local PostgreSQL `darwin_dev` currently has no rows in those two queue tables, so no development data rewrite was needed.
 
 Latest admin-text override validation result: `Darwin.Application`, `Darwin.WebAdmin`, and `Darwin.WebApi` build successfully after centralizing override JSON parsing. Local PostgreSQL `darwin_dev` currently has 10 business override documents and no site-setting override document; the sampled seed documents follow the expected `de-DE`/`en-US` object-of-string-values shape.
@@ -196,8 +202,14 @@ Latest provider callback preview validation result: `Darwin.Application` and `Da
 
 Migration-script audit result: idempotent scripts generated successfully for both provider lanes. The PostgreSQL script was clean for unwanted `dbo` references and application table creation in `public`. The SQL Server script still contains historical unqualified table creation in old migrations, but the current lane includes 9 explicit `ALTER SCHEMA ... TRANSFER` moves that align those legacy tables into `Integration`, `Orders`, `Catalog`, and `Shipping`; the latest SQL Server and PostgreSQL model snapshots have no unqualified `ToTable(...)` mappings.
 
+Latest migration freshness validation result: applying the full PostgreSQL migration lane to a fresh Docker database (`darwin_migration_validation_20260429`) and the full SQL Server migration lane to a fresh `sqlpreview` database (`Darwin_MigrationValidation_20260429`) completed successfully. Both provider databases contained the new active-operation/audit/shipping uniqueness indexes (`UX_ShipmentProviderOperations_ActivePending`, `UX_EmailDispatchAudits_ActiveCorrelation`, `UX_ChannelDispatchAudits_ActiveChannelCorrelation`, and `UX_ShippingMethods_ActiveCarrierService`), retained only migration history in the provider-default schema, and were dropped after validation.
+
+Latest migration metadata audit result: EF discovers the provider-specific idempotency/uniqueness migrations (`20260429113000_EnforcePendingShipmentProviderOperationIdempotency`, `20260429114500_EnforceNotificationAuditIdempotency`, and `20260429120500_EnforceShippingMethodCarrierServiceUniqueness`) in both SQL Server and PostgreSQL lanes. Both provider projects build, both lanes report no pending model changes, and both idempotent scripts include the new migration history rows and provider-specific filtered/partial unique indexes.
+
 SQL Server fresh-bootstrap validation result: applying the full SQL Server migration lane to a newly created `Darwin_FreshValidation` database on the local `sqlpreview` container completed successfully. Post-migration checks showed no application tables in `dbo`, all 16 module schemas present, and the 9 historically unqualified tables located in their final module schemas. The validation database was dropped after the check.
 
 Development Data Protection note: Worker and web entry points use shared Data Protection registration so identity/secret services can resolve during startup. Current local development settings point WebAdmin, WebApi, and Worker at `E:\_Projects\Darwin\_shared_keys` with `DataProtection:ApplicationName=Darwin` so cookies/tokens protected by shared infrastructure remain readable across entry points that intentionally share keys.
 
 Production Data Protection note: production settings should point `DataProtection:KeysPath` at a durable shared location. Certificate-based key encryption is supported through `DataProtection:CertificateThumbprint`, `DataProtection:CertificateStoreName` (default `My`), and `DataProtection:CertificateStoreLocation` (default `CurrentUser`). Set `DataProtection:RequireKeyEncryption=true` in production environments that must fail startup rather than run with an unencrypted key ring when the certificate is missing.
+
+EF tooling alignment validation result: the local global `dotnet-ef` tool was aligned to `10.0.6`. `has-pending-model-changes` reports no pending model changes for both `Darwin.Infrastructure.SqlServer` and `Darwin.Infrastructure.PostgreSql`, and idempotent migration scripts generate successfully for both provider lanes without EF tooling version mismatch warnings.

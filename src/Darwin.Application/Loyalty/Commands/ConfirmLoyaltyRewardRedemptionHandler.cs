@@ -118,9 +118,9 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(_localizer["BusinessMismatchForRedemption"]);
             }
 
-            // Step 3: optional optimistic concurrency check on the redemption row.
-            if (dto.RowVersion is not null &&
-                !(redemption.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = redemption.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
                     _localizer["RedemptionConcurrencyConflict"]);
@@ -214,7 +214,15 @@ namespace Darwin.Application.Loyalty.Commands
             //    model does not link a redemption back to a specific ScanSession. If such a link
             //    is added in the future, this handler can be extended to fill that relationship.
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
+                    _localizer["RedemptionConcurrencyConflict"]);
+            }
 
             // Step 7: build and return the result DTO.
             var resultDto = new ConfirmLoyaltyRewardRedemptionResultDto

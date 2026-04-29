@@ -282,6 +282,12 @@ namespace Darwin.Infrastructure.Persistence.Db
                 "$1 = TRUE",
                 RegexOptions.CultureInvariant);
 
+            converted = Regex.Replace(
+                converted,
+                @"\bN'",
+                "'",
+                RegexOptions.CultureInvariant);
+
             return converted;
         }
 

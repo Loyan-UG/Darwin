@@ -66,7 +66,15 @@ public sealed class ResolveShipmentCarrierExceptionHandler
             "ExceptionResolved",
             ct: ct).ConfigureAwait(false);
 
-        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+        }
+
         return Result.Ok();
     }
 }

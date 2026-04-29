@@ -48,7 +48,14 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result.Fail(_localizer["LoyaltyProgramConcurrencyConflict"]);
 
             entity.IsDeleted = true;
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["LoyaltyProgramConcurrencyConflict"]);
+            }
 
             return Result.Ok();
         }

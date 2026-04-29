@@ -995,6 +995,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         public async Task<IActionResult> GenerateDhlLabel(
             Guid shipmentId,
             Guid orderId,
+            string? rowVersion,
             bool returnToQueue = false,
             ShipmentQueueFilter filter = ShipmentQueueFilter.All,
             string? query = null,
@@ -1012,7 +1013,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
             try
             {
-                await _generateDhlShipmentLabel.HandleAsync(shipmentId, ct).ConfigureAwait(false);
+                var version = DecodeBase64RowVersion(rowVersion);
+                if (version.Length == 0)
+                {
+                    SetErrorMessage("DhlLabelGenerationFailed");
+                    return returnToQueue
+                        ? RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter })
+                        : RedirectOrHtmx(nameof(Details), new { id = orderId });
+                }
+
+                await _generateDhlShipmentLabel.HandleAsync(shipmentId, version, ct).ConfigureAwait(false);
                 SetSuccessMessage("DhlLabelGenerationQueued");
             }
             catch (Exception)
@@ -1051,6 +1061,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
 
             var version = DecodeBase64RowVersion(rowVersion);
+            if (version.Length == 0)
+            {
+                SetErrorMessage("ConcurrencyTokenMissing");
+                return returnToReturnsQueue
+                    ? RedirectOrHtmx(nameof(ReturnsQueue), new { page, pageSize, query, filter = returnFilter })
+                    : RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter });
+            }
 
             var result = await _resolveShipmentCarrierException
                 .HandleAsync(new ResolveShipmentCarrierExceptionDto
@@ -1114,6 +1131,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
 
             var version = DecodeBase64RowVersion(rowVersion);
+            if (version.Length == 0)
+            {
+                SetErrorMessage("ConcurrencyTokenMissing");
+                return RedirectOrHtmx(nameof(ShipmentProviderOperations), new
+                {
+                    page,
+                    pageSize,
+                    query,
+                    provider,
+                    operationType,
+                    status,
+                    stalePendingOnly,
+                    failedOnly
+                });
+            }
 
             var result = await _updateShipmentProviderOperation
                 .HandleAsync(new UpdateShipmentProviderOperationDto

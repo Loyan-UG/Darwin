@@ -7,9 +7,10 @@ namespace Darwin.Application.Shipping.Validators
     {
         public ShippingMethodCreateValidator()
         {
-            RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
-            RuleFor(x => x.Carrier).NotEmpty().MaximumLength(64);
-            RuleFor(x => x.Service).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.Name).NotEmpty().MaximumLength(global::Darwin.Application.Shipping.ShippingMethodConventions.NameMaxLength);
+            RuleFor(x => x.Carrier).NotEmpty().MaximumLength(global::Darwin.Application.Shipping.ShippingMethodConventions.CarrierMaxLength);
+            RuleFor(x => x.Service).NotEmpty().MaximumLength(global::Darwin.Application.Shipping.ShippingMethodConventions.ServiceMaxLength);
+            RuleFor(x => x.CountriesCsv).MaximumLength(global::Darwin.Application.Shipping.ShippingMethodConventions.CountriesCsvMaxLength);
             RuleForEach(x => x.Rates).SetValidator(new ShippingRateValidator());
             RuleFor(x => x.Currency).Length(3).When(x => !string.IsNullOrWhiteSpace(x.Currency));
         }
@@ -21,9 +22,10 @@ namespace Darwin.Application.Shipping.Validators
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotEmpty();
-            RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
-            RuleFor(x => x.Carrier).NotEmpty().MaximumLength(64);
-            RuleFor(x => x.Service).NotEmpty().MaximumLength(64);
+            RuleFor(x => x.Name).NotEmpty().MaximumLength(global::Darwin.Application.Shipping.ShippingMethodConventions.NameMaxLength);
+            RuleFor(x => x.Carrier).NotEmpty().MaximumLength(global::Darwin.Application.Shipping.ShippingMethodConventions.CarrierMaxLength);
+            RuleFor(x => x.Service).NotEmpty().MaximumLength(global::Darwin.Application.Shipping.ShippingMethodConventions.ServiceMaxLength);
+            RuleFor(x => x.CountriesCsv).MaximumLength(global::Darwin.Application.Shipping.ShippingMethodConventions.CountriesCsvMaxLength);
             RuleForEach(x => x.Rates).SetValidator(new ShippingRateValidator());
             RuleFor(x => x.Currency).Length(3).When(x => !string.IsNullOrWhiteSpace(x.Currency));
         }

@@ -75,7 +75,14 @@ public sealed class ProvisionBusinessOnboardingHandler
         business.SuspensionReason = null;
         business.IsActive = true;
 
-        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<BusinessProvisionOnboardingResultDto>.Fail(_localizer["ConcurrencyConflictDetected"]);
+        }
 
         return Result<BusinessProvisionOnboardingResultDto>.Ok(new BusinessProvisionOnboardingResultDto
         {

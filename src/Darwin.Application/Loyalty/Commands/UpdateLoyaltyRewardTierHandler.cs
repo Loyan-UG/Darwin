@@ -62,7 +62,14 @@ namespace Darwin.Application.Loyalty.Commands
             entity.AllowSelfRedemption = dto.AllowSelfRedemption;
             entity.MetadataJson = dto.MetadataJson;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ValidationException(_localizer["ConcurrencyConflictRewardTierModified"]);
+            }
         }
     }
 }

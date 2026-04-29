@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing;
+using Darwin.Application.Notifications;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Contracts.Shipping;
@@ -102,8 +103,28 @@ public sealed class ProviderCallbackBackgroundService : BackgroundService
                 _logger.LogWarning(ex, "Provider callback inbox message {MessageId} failed.", item.Id);
             }
 
-            await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "provider callback inbox message", item.Id, ct).ConfigureAwait(false);
+            if (!await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "provider callback inbox message", item.Id, ct).ConfigureAwait(false))
+            {
+                await PersistProviderCallbackCompletionFallbackAsync(db, item, ct).ConfigureAwait(false);
+            }
         }
+    }
+
+    private static async Task PersistProviderCallbackCompletionFallbackAsync(
+        IAppDbContext db,
+        ProviderCallbackInboxMessage item,
+        CancellationToken ct)
+    {
+        await db.Set<ProviderCallbackInboxMessage>()
+            .Where(x => x.Id == item.Id && !x.IsDeleted)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.Status, item.Status)
+                .SetProperty(x => x.AttemptCount, item.AttemptCount)
+                .SetProperty(x => x.LastAttemptAtUtc, item.LastAttemptAtUtc)
+                .SetProperty(x => x.ProcessedAtUtc, item.ProcessedAtUtc)
+                .SetProperty(x => x.FailureReason, item.FailureReason),
+                ct)
+            .ConfigureAwait(false);
     }
 
     private static async Task ProcessOneAsync(IServiceProvider services, ProviderCallbackInboxMessage item, CancellationToken ct)
@@ -138,6 +159,18 @@ public sealed class ProviderCallbackBackgroundService : BackgroundService
                 ExceptionCode = callback.ExceptionCode,
                 ExceptionMessage = callback.ExceptionMessage
             }, ct).ConfigureAwait(false);
+            return;
+        }
+
+        if (string.Equals(item.Provider, "Brevo", StringComparison.OrdinalIgnoreCase))
+        {
+            var handler = services.GetRequiredService<ProcessBrevoTransactionalEmailWebhookHandler>();
+            var result = await handler.HandleAsync(item.PayloadJson, ct).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(result.Error ?? "Brevo callback processing failed.");
+            }
+
             return;
         }
 

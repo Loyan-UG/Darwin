@@ -87,9 +87,9 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<AdjustLoyaltyPointsResultDto>.Fail(_localizer["BusinessMismatchForLoyaltyAccount"]);
             }
 
-            // Optional optimistic concurrency check when a row version is supplied.
-            if (dto.RowVersion is not null &&
-                !(account.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = account.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 return Result<AdjustLoyaltyPointsResultDto>.Fail(
                     _localizer["ConcurrencyConflictLoyaltyAccountModified"]);
@@ -140,7 +140,15 @@ namespace Darwin.Application.Loyalty.Commands
 
             _db.Set<LoyaltyPointsTransaction>().Add(transaction);
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result<AdjustLoyaltyPointsResultDto>.Fail(
+                    _localizer["ConcurrencyConflictLoyaltyAccountModified"]);
+            }
 
             var resultDto = new AdjustLoyaltyPointsResultDto
             {

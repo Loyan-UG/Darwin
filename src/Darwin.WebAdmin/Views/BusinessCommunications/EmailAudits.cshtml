@@ -5,6 +5,7 @@
     ViewData["Title"] = T.T("EmailDeliveryAudits");
     string GlobalEmailAuditsUrl() => Url.Action("EmailAudits", "BusinessCommunications") ?? string.Empty;
     string GlobalBusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
+    string ProviderCallbacksUrl(string? query = null, string? provider = null, string? status = null) => Url.Action("ProviderCallbacks", "BusinessCommunications", new { query, provider, status }) ?? string.Empty;
     string BusinessSupportQueueUrl(Guid? businessId) => Url.Action("SupportQueue", "Businesses", new { businessId }) ?? string.Empty;
     string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
     string CommunicationDetailsUrl(Guid? businessId) => Url.Action("Details", "BusinessCommunications", new { businessId }) ?? string.Empty;
@@ -998,6 +999,19 @@
                         @if (!string.IsNullOrWhiteSpace(item.ProviderMessageId))
                         {
                             <div class="small text-muted">@T.T("ProviderMessageId"): <code>@item.ProviderMessageId</code></div>
+                            @if (string.Equals(item.Provider, "Brevo", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <div class="small mt-1">
+                                    <a asp-action="ProviderCallbacks"
+                                       asp-route-query="@item.ProviderMessageId"
+                                       asp-route-provider="Brevo"
+                                       class="text-decoration-none"
+                                       hx-get="@ProviderCallbacksUrl(item.ProviderMessageId, "Brevo")"
+                                       hx-target="#business-communication-audits-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@T.T("BrevoWebhookEvents")</a>
+                                </div>
+                            }
                         }
                     </td>
                     <td>

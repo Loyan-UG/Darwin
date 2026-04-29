@@ -801,7 +801,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AcceptedAtUtc = x.AcceptedAtUtc,
                     RevokedAtUtc = x.RevokedAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
-                    Note = x.Note
+                    Note = x.Note,
+                    RowVersion = x.RowVersion
                 })
                 .ToList();
 
@@ -1455,7 +1456,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AcceptedAtUtc = x.AcceptedAtUtc,
                     RevokedAtUtc = x.RevokedAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
-                    Note = x.Note
+                    Note = x.Note,
+                    RowVersion = x.RowVersion
                 }).ToList()
             };
 
@@ -1569,14 +1571,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
-        public async Task<IActionResult> ResendInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)
+        public async Task<IActionResult> ResendInvitation(
+            [FromForm] Guid id,
+            [FromForm] Guid businessId,
+            [FromForm] string? rowVersion,
+            [FromForm] int page = 1,
+            [FromForm] int pageSize = 20,
+            [FromForm] string? query = null,
+            [FromForm] BusinessInvitationQueueFilter filter = BusinessInvitationQueueFilter.All,
+            CancellationToken ct = default)
         {
             if (id == Guid.Empty || businessId == Guid.Empty)
             {
                 SetErrorMessage("BusinessInvitationResendFailed");
                 return businessId == Guid.Empty
                     ? RedirectOrHtmx(nameof(Index), new { })
-                    : RedirectOrHtmx(nameof(Invitations), new { businessId });
+                    : RedirectOrHtmx(nameof(Invitations), new { businessId, page, pageSize, query, filter });
             }
 
             try
@@ -1584,7 +1594,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await _resendBusinessInvitation.HandleAsync(new BusinessInvitationResendDto
                 {
                     Id = id,
-                    ExpiresInDays = 7
+                    ExpiresInDays = 7,
+                    RowVersion = DecodeBase64RowVersion(rowVersion)
                 }, ct);
                 SetSuccessMessage("BusinessInvitationReissued");
             }
@@ -1593,19 +1604,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetErrorMessage("BusinessInvitationResendFailed");
             }
 
-            return RedirectOrHtmx(nameof(Invitations), new { businessId });
+            return RedirectOrHtmx(nameof(Invitations), new { businessId, page, pageSize, query, filter });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
-        public async Task<IActionResult> RevokeInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)
+        public async Task<IActionResult> RevokeInvitation(
+            [FromForm] Guid id,
+            [FromForm] Guid businessId,
+            [FromForm] string? rowVersion,
+            [FromForm] int page = 1,
+            [FromForm] int pageSize = 20,
+            [FromForm] string? query = null,
+            [FromForm] BusinessInvitationQueueFilter filter = BusinessInvitationQueueFilter.All,
+            CancellationToken ct = default)
         {
             if (id == Guid.Empty || businessId == Guid.Empty)
             {
                 SetErrorMessage("BusinessInvitationRevokeFailed");
                 return businessId == Guid.Empty
                     ? RedirectOrHtmx(nameof(Index), new { })
-                    : RedirectOrHtmx(nameof(Invitations), new { businessId });
+                    : RedirectOrHtmx(nameof(Invitations), new { businessId, page, pageSize, query, filter });
             }
 
             try
@@ -1613,7 +1632,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await _revokeBusinessInvitation.HandleAsync(new BusinessInvitationRevokeDto
                 {
                     Id = id,
-                    Note = T("BusinessInvitationRevokedFromWebAdminNote")
+                    Note = T("BusinessInvitationRevokedFromWebAdminNote"),
+                    RowVersion = DecodeBase64RowVersion(rowVersion)
                 }, ct);
                 SetSuccessMessage("BusinessInvitationRevoked");
             }
@@ -1622,7 +1642,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SetErrorMessage("BusinessInvitationRevokeFailed");
             }
 
-            return RedirectOrHtmx(nameof(Invitations), new { businessId });
+            return RedirectOrHtmx(nameof(Invitations), new { businessId, page, pageSize, query, filter });
         }
 
         [HttpGet]
