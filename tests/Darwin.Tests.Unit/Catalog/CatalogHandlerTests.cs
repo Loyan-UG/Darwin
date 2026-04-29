@@ -528,7 +528,7 @@ public sealed class CatalogHandlerTests
     public async Task UpdateCategory_Should_Throw_ValidationException_When_Dto_Invalid()
     {
         await using var db = CreateDb();
-        var validator = new CategoryEditDtoValidator();
+        var validator = new CategoryEditDtoValidator(CreateLocalizer());
         var handler = new UpdateCategoryHandler(db, validator, CreateLocalizer());
         var dto = new CategoryEditDto
         {
@@ -546,7 +546,7 @@ public sealed class CatalogHandlerTests
     public async Task UpdateCategory_Should_Throw_ValidationException_When_Category_Not_Found()
     {
         await using var db = CreateDb();
-        var validator = new CategoryEditDtoValidator();
+        var validator = new CategoryEditDtoValidator(CreateLocalizer());
         var handler = new UpdateCategoryHandler(db, validator, CreateLocalizer());
         var dto = BuildValidCategoryEditDto(Guid.NewGuid(), new byte[] { 1 });
 
@@ -567,7 +567,7 @@ public sealed class CatalogHandlerTests
         db.Set<Category>().Add(category);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var validator = new CategoryEditDtoValidator();
+        var validator = new CategoryEditDtoValidator(CreateLocalizer());
         var handler = new UpdateCategoryHandler(db, validator, CreateLocalizer());
         var dto = BuildValidCategoryEditDto(category.Id, new byte[] { 9, 9, 9 }); // stale
 
@@ -596,7 +596,7 @@ public sealed class CatalogHandlerTests
         db.Set<Category>().Add(category);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var validator = new CategoryEditDtoValidator();
+        var validator = new CategoryEditDtoValidator(CreateLocalizer());
         var handler = new UpdateCategoryHandler(db, validator, CreateLocalizer());
         var dto = BuildValidCategoryEditDto(category.Id, rowVersion);
         dto.IsActive = false;
@@ -630,7 +630,7 @@ public sealed class CatalogHandlerTests
         db.Set<Category>().Add(category);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var validator = new CategoryEditDtoValidator();
+        var validator = new CategoryEditDtoValidator(CreateLocalizer());
         var handler = new UpdateCategoryHandler(db, validator, CreateLocalizer());
         var dto = BuildValidCategoryEditDto(category.Id, rowVersion);
         dto.ParentId = parentId;
@@ -651,7 +651,7 @@ public sealed class CatalogHandlerTests
         await using var db = CreateDb();
         var handler = new SoftDeleteCategoryHandler(db, CreateLocalizer());
 
-        var result = await handler.HandleAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse("category does not exist");
     }
@@ -666,7 +666,7 @@ public sealed class CatalogHandlerTests
 
         var handler = new SoftDeleteCategoryHandler(db, CreateLocalizer());
 
-        var result = await handler.HandleAsync(category.Id, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(category.Id, null, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         var deleted = db.Set<Category>().Single();
@@ -683,7 +683,7 @@ public sealed class CatalogHandlerTests
 
         var handler = new SoftDeleteCategoryHandler(db, CreateLocalizer());
 
-        var result = await handler.HandleAsync(category.Id, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(category.Id, null, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue("deleting an already-deleted category is idempotent");
         db.Set<Category>().Single().IsDeleted.Should().BeTrue();

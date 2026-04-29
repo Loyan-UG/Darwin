@@ -189,7 +189,7 @@ public sealed class CmsPageHandlerTests
         var page = await db.Set<Page>().Include(p => p.Translations).SingleAsync(TestContext.Current.CancellationToken);
         var rowVersion = page.RowVersion;
 
-        var updateValidator = new PageEditDtoValidator();
+        var updateValidator = new PageEditDtoValidator(CreateLocalizer());
         var updateHandler = new UpdatePageHandler(db, updateValidator, CreateLocalizer());
 
         await updateHandler.HandleAsync(new PageEditDto
@@ -213,7 +213,7 @@ public sealed class CmsPageHandlerTests
     public async Task UpdatePage_Should_Throw_When_Page_Not_Found()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageEditDtoValidator();
+        var validator = new PageEditDtoValidator(CreateLocalizer());
         var handler = new UpdatePageHandler(db, validator, CreateLocalizer());
 
         var act = () => handler.HandleAsync(new PageEditDto
@@ -237,7 +237,7 @@ public sealed class CmsPageHandlerTests
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
-        var updateValidator = new PageEditDtoValidator();
+        var updateValidator = new PageEditDtoValidator(CreateLocalizer());
         var updateHandler = new UpdatePageHandler(db, updateValidator, CreateLocalizer());
 
         var act = () => updateHandler.HandleAsync(new PageEditDto
@@ -263,7 +263,7 @@ public sealed class CmsPageHandlerTests
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
         var page = await db.Set<Page>().Include(p => p.Translations).SingleAsync(TestContext.Current.CancellationToken);
-        var updateValidator = new PageEditDtoValidator();
+        var updateValidator = new PageEditDtoValidator(CreateLocalizer());
         var updateHandler = new UpdatePageHandler(db, updateValidator, CreateLocalizer());
 
         await updateHandler.HandleAsync(new PageEditDto

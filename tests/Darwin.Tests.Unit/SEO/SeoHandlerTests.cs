@@ -251,8 +251,8 @@ public sealed class SeoHandlerTests
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new DeleteRedirectRuleHandler(db);
-        await handler.HandleAsync(id, TestContext.Current.CancellationToken);
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
+        await handler.HandleAsync(id, null, TestContext.Current.CancellationToken);
 
         var entity = await db.Set<RedirectRule>().FindAsync([id], TestContext.Current.CancellationToken);
         entity!.IsDeleted.Should().BeTrue("soft delete should set the IsDeleted flag");
@@ -262,10 +262,10 @@ public sealed class SeoHandlerTests
     public async Task DeleteRedirectRule_Should_Be_Idempotent_When_Rule_Not_Found()
     {
         await using var db = SeoTestDbContext.Create();
-        var handler = new DeleteRedirectRuleHandler(db);
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
 
         // Should not throw even when the rule does not exist.
-        var act = () => handler.HandleAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+        var act = () => handler.HandleAsync(Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
         await act.Should().NotThrowAsync("deleting a non-existent rule should be silently ignored");
     }
@@ -284,9 +284,9 @@ public sealed class SeoHandlerTests
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new DeleteRedirectRuleHandler(db);
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
         // Should complete without error; the entity was already soft-deleted.
-        await handler.HandleAsync(id, TestContext.Current.CancellationToken);
+        await handler.HandleAsync(id, null, TestContext.Current.CancellationToken);
 
         var count = await db.Set<RedirectRule>().CountAsync(TestContext.Current.CancellationToken);
         count.Should().Be(1, "the entity should remain in the store");

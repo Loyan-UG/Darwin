@@ -195,7 +195,7 @@ public sealed class AddOnGroupValidatorTests
             Currency = "EUR"
         };
 
-        var result = new AddOnGroupEditValidator().Validate(dto);
+        var result = new AddOnGroupEditValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeTrue("a valid edit DTO should pass");
     }
@@ -211,7 +211,7 @@ public sealed class AddOnGroupValidatorTests
             Currency = "EUR"
         };
 
-        var result = new AddOnGroupEditValidator().Validate(dto);
+        var result = new AddOnGroupEditValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("Id is required for an edit");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Id));
@@ -228,7 +228,7 @@ public sealed class AddOnGroupValidatorTests
             Currency = "EUR"
         };
 
-        var result = new AddOnGroupEditValidator().Validate(dto);
+        var result = new AddOnGroupEditValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("RowVersion must not be null for an edit");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.RowVersion));
@@ -245,7 +245,7 @@ public sealed class AddOnGroupValidatorTests
             Currency = "EUR"
         };
 
-        var result = new AddOnGroupEditValidator().Validate(dto);
+        var result = new AddOnGroupEditValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("Name is required for edit");
     }
@@ -262,7 +262,7 @@ public sealed class AddOnGroupValidatorTests
             MinSelections = -1
         };
 
-        var result = new AddOnGroupEditValidator().Validate(dto);
+        var result = new AddOnGroupEditValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("MinSelections must be >= 0 for edit");
     }

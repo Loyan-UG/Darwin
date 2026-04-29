@@ -63,7 +63,7 @@ public sealed class GenerateDhlShipmentLabelHandlerTests
 
         var handler = new GenerateDhlShipmentLabelHandler(db, new TestStringLocalizer());
 
-        await handler.HandleAsync(shipmentId, TestContext.Current.CancellationToken);
+        await handler.HandleAsync(shipmentId, null, TestContext.Current.CancellationToken);
 
         var shipment = await db.Set<Shipment>().SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
         shipment.Status.Should().Be(ShipmentStatus.Pending);
@@ -127,7 +127,7 @@ public sealed class GenerateDhlShipmentLabelHandlerTests
 
         var handler = new GenerateDhlShipmentLabelHandler(db, new TestStringLocalizer());
 
-        var act = () => handler.HandleAsync(shipmentId, TestContext.Current.CancellationToken);
+        var act = () => handler.HandleAsync(shipmentId, null, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<ValidationException>();
     }

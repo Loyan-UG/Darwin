@@ -328,7 +328,7 @@ public sealed class ProductValidatorsTests
             Variants = new List<ProductVariantCreateDto> { ValidVariant() }
         };
 
-        var result = new ProductEditDtoValidator().Validate(dto);
+        var result = new ProductEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeTrue("a fully valid edit dto should pass");
     }
@@ -344,7 +344,7 @@ public sealed class ProductValidatorsTests
             Variants = new List<ProductVariantCreateDto> { ValidVariant() }
         };
 
-        var result = new ProductEditDtoValidator().Validate(dto);
+        var result = new ProductEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("Id must not be empty for an edit");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Id));
@@ -361,7 +361,7 @@ public sealed class ProductValidatorsTests
             Variants = new List<ProductVariantCreateDto> { ValidVariant() }
         };
 
-        var result = new ProductEditDtoValidator().Validate(dto);
+        var result = new ProductEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("RowVersion must not be null for an edit");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.RowVersion));
@@ -381,7 +381,7 @@ public sealed class ProductValidatorsTests
             Variants = new List<ProductVariantCreateDto> { ValidVariant() }
         };
 
-        var result = new ProductEditDtoValidator().Validate(dto);
+        var result = new ProductEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("invalid translation fields should be caught in an edit");
     }
@@ -400,7 +400,7 @@ public sealed class ProductValidatorsTests
             Variants = new List<ProductVariantCreateDto> { badVariant }
         };
 
-        var result = new ProductEditDtoValidator().Validate(dto);
+        var result = new ProductEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("an invalid variant currency should be caught in an edit");
     }
