@@ -83,7 +83,7 @@ namespace Darwin.Application.CartCheckout.Commands
                     !p.IsDeleted &&
                     p.IsActive &&
                     p.Code != null &&
-                    p.Code.ToUpper() == normalizedCode &&
+                    p.Code == normalizedCode &&
                     (p.StartsAtUtc == null || p.StartsAtUtc <= now) &&
                     (p.EndsAtUtc == null || p.EndsAtUtc >= now),
                     ct);

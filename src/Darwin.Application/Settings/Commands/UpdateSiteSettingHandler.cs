@@ -42,7 +42,12 @@ namespace Darwin.Application.Settings.Commands
             if (s is null)
                 throw new ValidationException(_localizer["SiteSettingRowNotFound"]);
 
-            if (!s.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+                throw new ValidationException(_localizer["RowVersionRequired"]);
+
+            var currentRowVersion = s.RowVersion ?? Array.Empty<byte>();
+            if (!currentRowVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["SettingsModifiedByAnotherUser"]);
 
             // -------- Basics --------
@@ -204,7 +209,14 @@ namespace Darwin.Application.Settings.Commands
             s.PhoneVerificationPreferredChannel = dto.PhoneVerificationPreferredChannel;
             s.PhoneVerificationAllowFallback = dto.PhoneVerificationAllowFallback;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["SettingsModifiedByAnotherUser"]);
+            }
         }
     }
 }

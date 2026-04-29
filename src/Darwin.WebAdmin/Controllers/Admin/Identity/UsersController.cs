@@ -218,6 +218,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
             // Map user -> edit VM
             var u = result.Value;
+            var nowUtc = DateTime.UtcNow;
 
             var vm = new UserEditVm
             {
@@ -226,6 +227,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 Email = u.Email,
                 EmailConfirmed = u.EmailConfirmed,
                 LockoutEndUtc = u.LockoutEndUtc,
+                IsLockedOut = u.LockoutEndUtc.HasValue && u.LockoutEndUtc.Value > nowUtc,
                 FirstName = u.FirstName,
                 LastName = u.LastName,
                 Locale = u.Locale,
@@ -1067,6 +1069,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var summary = await _getUserOpsSummary.HandleAsync(ct);
             var auditSummary = await _getEmailDispatchAuditsPage.GetSummaryAsync(null, ct);
 
+            var nowUtc = DateTime.UtcNow;
             return new UsersListVm
             {
                 Page = page,
@@ -1096,6 +1099,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     IsSystem = x.IsSystem,
                     EmailConfirmed = x.EmailConfirmed,
                     LockoutEndUtc = x.LockoutEndUtc,
+                    IsLockedOut = x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > nowUtc,
                     MobileDeviceCount = x.MobileDeviceCount,
                     RowVersion = x.RowVersion
                 }).ToList(),

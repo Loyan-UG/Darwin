@@ -24,7 +24,7 @@
     <form method="post" hx-post="@Url.Action("AttachToVariants", "AddOnGroups")" hx-target="#add-on-group-attach-variants-shell" hx-swap="outerHTML">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="AddOnGroupId" />
-        <input type="hidden" asp-for="RowVersion" />
+        <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
         <input type="hidden" asp-for="Page" />
         <input type="hidden" asp-for="PageSize" />
         <input type="hidden" asp-for="Query" />

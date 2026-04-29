@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Darwin.Application.Catalog.DTOs;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
@@ -35,7 +35,9 @@ namespace Darwin.Application.Catalog.Validators
         public BrandEditDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
 
             RuleFor(x => x.Translations)
                 .NotNull().WithMessage(localizer["TranslationsRequired"])
@@ -51,16 +53,17 @@ namespace Darwin.Application.Catalog.Validators
         }
     }
 
-
     /// <summary>
     /// Validation rules for deleting a brand (soft delete).
     /// </summary>
     public sealed class BrandDeleteValidator : AbstractValidator<BrandDeleteDto>
     {
-        public BrandDeleteValidator()
+        public BrandDeleteValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
         }
     }
 }

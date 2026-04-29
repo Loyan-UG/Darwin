@@ -5079,6 +5079,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_EventLogs_IdempotencyKey")
+                        .HasFilter("\"IdempotencyKey\" IS NOT NULL AND \"IsDeleted\" = FALSE");
+
                     b.HasIndex("Type", "OccurredAtUtc");
 
                     b.ToTable("EventLogs", "Integration");
@@ -5148,7 +5153,10 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IdempotencyKey");
+                    b.HasIndex("Provider", "IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ProviderCallbackInboxMessages_Provider_IdempotencyKey")
+                        .HasFilter("\"IdempotencyKey\" IS NOT NULL AND \"IsDeleted\" = FALSE");
 
                     b.HasIndex("Provider", "Status", "CreatedAtUtc");
 

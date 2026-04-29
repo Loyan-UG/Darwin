@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
+using Darwin.Application.CMS.Media;
 using Darwin.Application.CMS.Media.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
@@ -29,20 +31,20 @@ namespace Darwin.Application.CMS.Media.Queries
             var baseQuery = _db.Set<MediaAsset>().AsNoTracking().Where(m => !m.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(m =>
-                    m.Url.ToLower().Contains(term) ||
-                    (m.Alt != null && m.Alt.ToLower().Contains(term)) ||
-                    m.OriginalFileName.ToLower().Contains(term) ||
-                    (m.Title != null && m.Title.ToLower().Contains(term)) ||
-                    (m.Role != null && m.Role.ToLower().Contains(term)));
+                    EF.Functions.Like(m.Url, term, QueryLikePattern.EscapeCharacter) ||
+                    (m.Alt != null && EF.Functions.Like(m.Alt, term, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(m.OriginalFileName, term, QueryLikePattern.EscapeCharacter) ||
+                    (m.Title != null && EF.Functions.Like(m.Title, term, QueryLikePattern.EscapeCharacter)) ||
+                    (m.Role != null && EF.Functions.Like(m.Role, term, QueryLikePattern.EscapeCharacter)));
             }
 
             baseQuery = filter switch
             {
                 MediaAssetQueueFilter.MissingAlt => baseQuery.Where(m => string.IsNullOrWhiteSpace(m.Alt)),
-                MediaAssetQueueFilter.EditorAssets => baseQuery.Where(m => m.Role != null && m.Role.ToLower().Contains("editorasset")),
-                MediaAssetQueueFilter.LibraryAssets => baseQuery.Where(m => m.Role == null || m.Role == string.Empty || m.Role.ToLower().Contains("libraryasset")),
+                MediaAssetQueueFilter.EditorAssets => baseQuery.Where(m => m.Role == MediaAssetRoleConventions.EditorAssetRole),
+                MediaAssetQueueFilter.LibraryAssets => baseQuery.Where(m => m.Role == null || m.Role == string.Empty || m.Role == MediaAssetRoleConventions.LibraryAssetRole),
                 MediaAssetQueueFilter.MissingTitle => baseQuery.Where(m => string.IsNullOrWhiteSpace(m.Title)),
                 MediaAssetQueueFilter.UsedInProducts => baseQuery.Where(m => _db.Set<ProductMedia>().Any(pm => !pm.IsDeleted && pm.MediaAssetId == m.Id)),
                 MediaAssetQueueFilter.Unused => baseQuery.Where(m => !_db.Set<ProductMedia>().Any(pm => !pm.IsDeleted && pm.MediaAssetId == m.Id)),
@@ -89,8 +91,8 @@ namespace Darwin.Application.CMS.Media.Queries
                 TotalCount = await media.CountAsync(ct).ConfigureAwait(false),
                 MissingAltCount = await media.CountAsync(m => string.IsNullOrWhiteSpace(m.Alt), ct).ConfigureAwait(false),
                 MissingTitleCount = await media.CountAsync(m => string.IsNullOrWhiteSpace(m.Title), ct).ConfigureAwait(false),
-                EditorAssetCount = await media.CountAsync(m => m.Role != null && m.Role.ToLower().Contains("editorasset"), ct).ConfigureAwait(false),
-                LibraryAssetCount = await media.CountAsync(m => m.Role == null || m.Role == string.Empty || m.Role.ToLower().Contains("libraryasset"), ct).ConfigureAwait(false),
+                EditorAssetCount = await media.CountAsync(m => m.Role == MediaAssetRoleConventions.EditorAssetRole, ct).ConfigureAwait(false),
+                LibraryAssetCount = await media.CountAsync(m => m.Role == null || m.Role == string.Empty || m.Role == MediaAssetRoleConventions.LibraryAssetRole, ct).ConfigureAwait(false),
                 ProductReferencedCount = await media.CountAsync(m => productMedia.Any(pm => pm.MediaAssetId == m.Id), ct).ConfigureAwait(false),
                 UnusedCount = await media.CountAsync(m => !productMedia.Any(pm => pm.MediaAssetId == m.Id), ct).ConfigureAwait(false)
             };

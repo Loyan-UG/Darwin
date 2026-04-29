@@ -42,7 +42,7 @@ public sealed class GetBillingPlansHandler
                 Description = x.Description,
                 PriceMinor = x.PriceMinor,
                 Currency = x.Currency,
-                Interval = x.Interval.ToString(),
+                Interval = x.Interval,
                 IntervalCount = x.IntervalCount,
                 TrialDays = x.TrialDays,
                 IsActive = x.IsActive,
@@ -62,7 +62,7 @@ public sealed class GetBillingPlansHandler
                     Description = BillingLocalizedTextResolver.ResolvePlanDescription(x.Description, x.FeaturesJson, culture),
                     PriceMinor = x.PriceMinor,
                     Currency = x.Currency,
-                    Interval = x.Interval,
+                    Interval = x.Interval.ToString(),
                     IntervalCount = x.IntervalCount,
                     TrialDays = x.TrialDays,
                     IsActive = x.IsActive

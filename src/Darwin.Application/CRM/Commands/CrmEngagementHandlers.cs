@@ -106,6 +106,12 @@ namespace Darwin.Application.CRM.Commands
 
         public async Task<Guid> HandleAsync(ConsentCreateDto dto, CancellationToken ct = default)
         {
+            var nowUtc = DateTime.UtcNow;
+            if (dto.GrantedAtUtc == default)
+            {
+                dto.GrantedAtUtc = nowUtc;
+            }
+
             await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
 
             var customerExists = await _db.Set<Customer>()
@@ -207,7 +213,9 @@ namespace Darwin.Application.CRM.Commands
                 throw new InvalidOperationException(_localizer["CustomerSegmentNotFound"]);
             }
 
-            if (!segment.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = segment.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -225,7 +233,14 @@ namespace Darwin.Application.CRM.Commands
 
             segment.Name = normalizedName;
             segment.Description = CrmEngagementHandlerHelpers.NormalizeOptional(dto.Description);
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 

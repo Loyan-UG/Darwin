@@ -20,7 +20,7 @@ namespace Darwin.Application.Catalog.Commands
     public sealed class SoftDeleteBrandHandler
     {
         private readonly IAppDbContext _db;
-        private readonly BrandDeleteValidator _validator = new();
+        private readonly BrandDeleteValidator _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
@@ -30,6 +30,7 @@ namespace Darwin.Application.Catalog.Commands
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _validator = new BrandDeleteValidator(localizer);
         }
 
         /// <summary>
@@ -57,11 +58,21 @@ namespace Darwin.Application.Catalog.Commands
                 return Result.Ok(); // idempotent
 
             // Concurrency check: compare current row version with the one from UI.
-            if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
                 return Result.Fail(_localizer["BrandConcurrencyConflict"]);
 
             entity.IsDeleted = true;
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["BrandConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

@@ -76,7 +76,10 @@ public sealed class RequestPhoneVerificationHandler
             return Result.Fail(_localizer["PhoneNumberMissing"]);
         }
 
-        var settings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+        var settings = await _db.Set<SiteSetting>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => !x.IsDeleted, ct)
+            .ConfigureAwait(false);
         if (settings is null)
         {
             return Result.Fail(_localizer["CommunicationSettingsMissing"]);

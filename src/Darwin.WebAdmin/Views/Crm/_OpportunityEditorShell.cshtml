@@ -91,7 +91,7 @@
         @if (!isCreate)
         {
             <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="RowVersion" />
+            <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
         }
         <partial name="_OpportunityForm" model="Model" />
         <div class="mt-4">

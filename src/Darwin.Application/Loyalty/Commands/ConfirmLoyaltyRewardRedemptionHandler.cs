@@ -120,7 +120,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             // Step 3: optional optimistic concurrency check on the redemption row.
             if (dto.RowVersion is not null &&
-                !redemption.RowVersion.SequenceEqual(dto.RowVersion))
+                !(redemption.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion))
             {
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
                     _localizer["RedemptionConcurrencyConflict"]);

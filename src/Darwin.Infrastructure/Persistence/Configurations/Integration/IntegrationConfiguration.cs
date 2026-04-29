@@ -39,6 +39,10 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
 
             // Useful index for analytics
             b.HasIndex(x => new { x.Type, x.OccurredAtUtc });
+            b.HasIndex(x => x.IdempotencyKey)
+                .IsUnique()
+                .HasDatabaseName("UX_EventLogs_IdempotencyKey")
+                .HasFilter("[IdempotencyKey] IS NOT NULL AND [IsDeleted] = 0");
         }
     }
 }

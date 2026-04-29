@@ -1,11 +1,17 @@
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Extensions;
+using Darwin.Application.Abstractions.Services;
+using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddApplication();
+builder.Services.AddLocalization();
+builder.Services.AddScoped<IClock, SystemClock>();
 builder.Services.AddConfiguredPersistence(builder.Configuration);
+builder.Services.AddSharedHostingDataProtection(builder.Configuration);
+builder.Services.AddIdentityInfrastructure();
 builder.Services.AddNotificationsInfrastructure(builder.Configuration);
 builder.Services.AddHttpClient();
 builder.Services.Configure<InactiveReminderWorkerOptions>(builder.Configuration.GetSection("InactiveReminderWorker"));

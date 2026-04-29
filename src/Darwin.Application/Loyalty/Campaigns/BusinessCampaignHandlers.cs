@@ -299,6 +299,26 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result<Guid>.Fail(_localizer["BusinessCampaignNameAndTitleRequired"]);
             }
 
+            if (!BusinessCampaignValidation.HasValidChannels(dto.Channels))
+            {
+                return Result<Guid>.Fail(_localizer["BusinessCampaignChannelsInvalid"]);
+            }
+
+            if (!CampaignJsonValidator.IsValidObjectJson(dto.TargetingJson) || !CampaignJsonValidator.IsValidObjectJson(dto.PayloadJson))
+            {
+                return Result<Guid>.Fail(_localizer["BusinessCampaignJsonInvalid"]);
+            }
+
+            if (!BusinessCampaignValidation.IsValidSchedule(dto.StartsAtUtc, dto.EndsAtUtc))
+            {
+                return Result<Guid>.Fail(_localizer["BusinessCampaignScheduleInvalid"]);
+            }
+
+            if (!BusinessCampaignValidation.HasValidEligibilityRules(dto.EligibilityRules))
+            {
+                return Result<Guid>.Fail(_localizer["BusinessCampaignEligibilityRulesInvalid"]);
+            }
+
             var entity = new Campaign
             {
                 BusinessId = dto.BusinessId,
@@ -348,6 +368,26 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result.Fail(_localizer["BusinessCampaignNameAndTitleRequired"]);
             }
 
+            if (!BusinessCampaignValidation.HasValidChannels(dto.Channels))
+            {
+                return Result.Fail(_localizer["BusinessCampaignChannelsInvalid"]);
+            }
+
+            if (!CampaignJsonValidator.IsValidObjectJson(dto.TargetingJson) || !CampaignJsonValidator.IsValidObjectJson(dto.PayloadJson))
+            {
+                return Result.Fail(_localizer["BusinessCampaignJsonInvalid"]);
+            }
+
+            if (!BusinessCampaignValidation.IsValidSchedule(dto.StartsAtUtc, dto.EndsAtUtc))
+            {
+                return Result.Fail(_localizer["BusinessCampaignScheduleInvalid"]);
+            }
+
+            if (!BusinessCampaignValidation.HasValidEligibilityRules(dto.EligibilityRules))
+            {
+                return Result.Fail(_localizer["BusinessCampaignEligibilityRulesInvalid"]);
+            }
+
             var entity = await _db.Set<Campaign>()
                 .SingleOrDefaultAsync(c => !c.IsDeleted && c.Id == dto.Id && c.BusinessId == dto.BusinessId, ct)
                 .ConfigureAwait(false);
@@ -357,7 +397,9 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result.Fail(_localizer["BusinessCampaignNotFound"]);
             }
 
-            if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
             }
@@ -538,6 +580,72 @@ namespace Darwin.Application.Loyalty.Campaigns
         }
     }
 
+    internal static class CampaignJsonValidator
+    {
+        public static bool IsValidObjectJson(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return true;
+            }
+
+            try
+            {
+                using var document = JsonDocument.Parse(json);
+                return document.RootElement.ValueKind == JsonValueKind.Object;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
+        }
+    }
+
+    internal static class BusinessCampaignValidation
+    {
+        private const short ValidCampaignChannelsMask =
+            (short)(CampaignChannels.InApp | CampaignChannels.Push | CampaignChannels.Email | CampaignChannels.Sms | CampaignChannels.WhatsApp);
+
+        public static bool HasValidChannels(short channels)
+            => channels > 0 && (channels & ~ValidCampaignChannelsMask) == 0;
+
+        public static bool IsValidSchedule(DateTime? startsAtUtc, DateTime? endsAtUtc)
+            => !startsAtUtc.HasValue || !endsAtUtc.HasValue || startsAtUtc.Value <= endsAtUtc.Value;
+
+        public static bool IsExpired(DateTime? endsAtUtc, DateTime nowUtc)
+            => endsAtUtc.HasValue && endsAtUtc.Value < nowUtc;
+
+        public static bool HasValidEligibilityRules(IReadOnlyCollection<PromotionEligibilityRuleDto>? rules)
+        {
+            if (rules is null)
+            {
+                return true;
+            }
+
+            foreach (var rule in rules)
+            {
+                if (rule is null)
+                {
+                    continue;
+                }
+
+                if (rule.MinPoints is < 0 || rule.MaxPoints is < 0)
+                {
+                    return false;
+                }
+
+                if (rule.MinPoints.HasValue &&
+                    rule.MaxPoints.HasValue &&
+                    rule.MinPoints.Value > rule.MaxPoints.Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
 
     /// <summary>
     /// Activates or deactivates a campaign.
@@ -569,9 +677,35 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result.Fail(_localizer["BusinessCampaignNotFound"]);
             }
 
-            if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
+            }
+
+            if (dto.IsActive)
+            {
+                var nowUtc = DateTime.UtcNow;
+                if (!BusinessCampaignValidation.HasValidChannels((short)entity.Channels))
+                {
+                    return Result.Fail(_localizer["BusinessCampaignChannelsInvalid"]);
+                }
+
+                if (!CampaignJsonValidator.IsValidObjectJson(entity.TargetingJson) || !CampaignJsonValidator.IsValidObjectJson(entity.PayloadJson))
+                {
+                    return Result.Fail(_localizer["BusinessCampaignJsonInvalid"]);
+                }
+
+                if (!BusinessCampaignValidation.IsValidSchedule(entity.StartsAtUtc, entity.EndsAtUtc))
+                {
+                    return Result.Fail(_localizer["BusinessCampaignScheduleInvalid"]);
+                }
+
+                if (BusinessCampaignValidation.IsExpired(entity.EndsAtUtc, nowUtc))
+                {
+                    return Result.Fail(_localizer["BusinessCampaignCannotActivateExpired"]);
+                }
             }
 
             entity.IsActive = dto.IsActive;
@@ -586,6 +720,7 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result.Fail(_localizer["BusinessCampaignConcurrencyConflict"]);
             }
         }
+
     }
 
     /// <summary>
@@ -604,14 +739,20 @@ namespace Darwin.Application.Loyalty.Campaigns
 
         public async Task<Result> HandleAsync(UpdateCampaignDeliveryStatusDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
             }
 
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
+            }
+
             if (!Enum.IsDefined(typeof(CampaignDeliveryStatus), dto.Status))
             {
-                return Result.Fail(_localizer["InvalidDeleteRequest"]);
+                return Result.Fail(_localizer["CampaignDeliveryStatusInvalid"]);
             }
 
             var delivery = await _db.Set<CampaignDelivery>()
@@ -626,7 +767,8 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result.Fail(_localizer["CampaignDeliveryNotFound"]);
             }
 
-            if (!delivery.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentVersion = delivery.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }

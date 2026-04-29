@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
+using Darwin.Application.AdminTextOverrides;
 
 namespace Darwin.WebAdmin.Localization
 {
@@ -17,39 +15,32 @@ namespace Darwin.WebAdmin.Localization
                 return Empty;
             }
 
-            try
-            {
-                var root = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
-                if (root is null || root.Count == 0)
-                {
-                    return Empty;
-                }
-
-                var normalized = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
-                foreach (var (culture, entries) in root)
-                {
-                    if (string.IsNullOrWhiteSpace(culture) || entries is null || entries.Count == 0)
-                    {
-                        continue;
-                    }
-
-                    var normalizedCulture = AdminCultureCatalog.NormalizeUiCulture(culture);
-                    var values = entries
-                        .Where(static kvp => !string.IsNullOrWhiteSpace(kvp.Key) && !string.IsNullOrWhiteSpace(kvp.Value))
-                        .ToDictionary(kvp => kvp.Key.Trim(), kvp => kvp.Value.Trim(), StringComparer.OrdinalIgnoreCase);
-
-                    if (values.Count > 0)
-                    {
-                        normalized[normalizedCulture] = values;
-                    }
-                }
-
-                return normalized.Count == 0 ? Empty : normalized;
-            }
-            catch (JsonException)
+            var parsed = AdminTextOverrideJsonCatalog.Parse(json);
+            if (parsed.Count == 0)
             {
                 return Empty;
             }
+
+            var normalized = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (culture, entries) in parsed)
+            {
+                var normalizedCulture = AdminCultureCatalog.NormalizeUiCulture(culture);
+                if (!normalized.TryGetValue(normalizedCulture, out var existingEntries))
+                {
+                    normalized[normalizedCulture] = entries;
+                    continue;
+                }
+
+                var merged = new Dictionary<string, string>(existingEntries, StringComparer.OrdinalIgnoreCase);
+                foreach (var (key, value) in entries)
+                {
+                    merged[key] = value;
+                }
+
+                normalized[normalizedCulture] = merged;
+            }
+
+            return normalized.Count == 0 ? Empty : normalized;
         }
 
         public static bool TryResolve(

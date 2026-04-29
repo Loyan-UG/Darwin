@@ -26,11 +26,16 @@ public sealed class ClearUserDevicePushTokenHandler
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
-    public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion = null, CancellationToken ct = default)
+    public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return Result.Fail(_localizer["DeviceRequired"]);
+        }
+
+        if (rowVersion is null || rowVersion.Length == 0)
+        {
+            return Result.Fail(_localizer["RowVersionRequired"]);
         }
 
         var device = await _db.Set<UserDevice>()
@@ -42,10 +47,9 @@ public sealed class ClearUserDevicePushTokenHandler
             return Result.Fail(_localizer["DeviceNotFound"]);
         }
 
-        if (rowVersion is not null && !device.RowVersion.SequenceEqual(rowVersion))
-        {
+        var currentVersion = device.RowVersion ?? Array.Empty<byte>();
+        if (!currentVersion.SequenceEqual(rowVersion))
             return Result.Fail(_localizer["DeviceConcurrencyConflict"]);
-        }
 
         if (string.IsNullOrWhiteSpace(device.PushToken))
         {
@@ -54,7 +58,15 @@ public sealed class ClearUserDevicePushTokenHandler
 
         device.PushToken = null;
         device.PushTokenUpdatedAtUtc = null;
-        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result.Fail(_localizer["DeviceConcurrencyConflict"]);
+        }
+
         return Result.Ok();
     }
 
@@ -111,11 +123,16 @@ public sealed class DeactivateUserDeviceHandler
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
-    public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion = null, CancellationToken ct = default)
+    public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion, CancellationToken ct = default)
     {
         if (id == Guid.Empty)
         {
             return Result.Fail(_localizer["DeviceRequired"]);
+        }
+
+        if (rowVersion is null || rowVersion.Length == 0)
+        {
+            return Result.Fail(_localizer["RowVersionRequired"]);
         }
 
         var device = await _db.Set<UserDevice>()
@@ -127,10 +144,9 @@ public sealed class DeactivateUserDeviceHandler
             return Result.Fail(_localizer["DeviceNotFound"]);
         }
 
-        if (rowVersion is not null && !device.RowVersion.SequenceEqual(rowVersion))
-        {
+        var currentVersion = device.RowVersion ?? Array.Empty<byte>();
+        if (!currentVersion.SequenceEqual(rowVersion))
             return Result.Fail(_localizer["DeviceConcurrencyConflict"]);
-        }
 
         if (!device.IsActive && string.IsNullOrWhiteSpace(device.PushToken) && !device.NotificationsEnabled)
         {
@@ -141,7 +157,15 @@ public sealed class DeactivateUserDeviceHandler
         device.NotificationsEnabled = false;
         device.PushToken = null;
         device.PushTokenUpdatedAtUtc = null;
-        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result.Fail(_localizer["DeviceConcurrencyConflict"]);
+        }
+
         return Result.Ok();
     }
 

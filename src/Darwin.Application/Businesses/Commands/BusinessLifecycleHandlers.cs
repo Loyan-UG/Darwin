@@ -40,6 +40,10 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var entity = await LoadBusinessAsync(dto, ct);
+            if (entity.OperationalStatus != BusinessOperationalStatus.PendingApproval)
+            {
+                throw new ValidationException(_localizer["BusinessLifecycleUnsupportedAction"]);
+            }
 
             entity.OperationalStatus = BusinessOperationalStatus.Approved;
             entity.ApprovedAtUtc ??= _clock.UtcNow;
@@ -94,6 +98,10 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var entity = await LoadBusinessAsync(dto, ct);
+            if (entity.OperationalStatus != BusinessOperationalStatus.Approved)
+            {
+                throw new ValidationException(_localizer["BusinessLifecycleUnsupportedAction"]);
+            }
 
             entity.OperationalStatus = BusinessOperationalStatus.Suspended;
             entity.SuspendedAtUtc = _clock.UtcNow;
@@ -147,6 +155,10 @@ namespace Darwin.Application.Businesses.Commands
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var entity = await LoadBusinessAsync(dto, ct);
+            if (entity.OperationalStatus != BusinessOperationalStatus.Suspended)
+            {
+                throw new ValidationException(_localizer["BusinessLifecycleUnsupportedAction"]);
+            }
 
             entity.OperationalStatus = BusinessOperationalStatus.Approved;
             entity.ApprovedAtUtc ??= _clock.UtcNow;

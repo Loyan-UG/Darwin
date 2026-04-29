@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Integration;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,7 +36,7 @@ namespace Darwin.Application.Businesses.Queries
                 TotalCount = await baseQuery.CountAsync(ct).ConfigureAwait(false),
                 PendingCount = await baseQuery.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
                 FailedCount = await baseQuery.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
-                ProcessedCount = await baseQuery.CountAsync(x => x.Status == "Processed", ct).ConfigureAwait(false),
+                ProcessedCount = await baseQuery.CountAsync(x => x.Status == "Processed" || x.Status == "Succeeded", ct).ConfigureAwait(false),
                 StalePendingCount = await baseQuery.CountAsync(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
                 RetriedCount = await baseQuery.CountAsync(x => x.AttemptCount > 0, ct).ConfigureAwait(false)
             };
@@ -51,13 +53,13 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = filter.Query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(filter.Query);
                 query = query.Where(x =>
-                    x.Provider.ToLower().Contains(q) ||
-                    x.CallbackType.ToLower().Contains(q) ||
-                    (x.IdempotencyKey != null && x.IdempotencyKey.ToLower().Contains(q)) ||
-                    (x.FailureReason != null && x.FailureReason.ToLower().Contains(q)) ||
-                    x.PayloadJson.ToLower().Contains(q));
+                    EF.Functions.Like(x.Provider, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.CallbackType, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.IdempotencyKey != null && EF.Functions.Like(x.IdempotencyKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason, q, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(x.PayloadJson, q, QueryLikePattern.EscapeCharacter));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))
@@ -69,7 +71,9 @@ namespace Darwin.Application.Businesses.Queries
             if (!string.IsNullOrWhiteSpace(filter.Status))
             {
                 var normalizedStatus = filter.Status.Trim();
-                query = query.Where(x => x.Status == normalizedStatus);
+                query = string.Equals(normalizedStatus, "Processed", StringComparison.OrdinalIgnoreCase)
+                    ? query.Where(x => x.Status == "Processed" || x.Status == "Succeeded")
+                    : query.Where(x => x.Status == normalizedStatus);
             }
 
             if (filter.FailedOnly)
@@ -110,7 +114,7 @@ namespace Darwin.Application.Businesses.Queries
                 RowVersion = row.RowVersion,
                 Provider = row.Provider,
                 CallbackType = row.CallbackType,
-                Status = row.Status,
+                Status = NormalizeStatus(row.Status),
                 IdempotencyKey = row.IdempotencyKey,
                 AttemptCount = row.AttemptCount,
                 LastAttemptAtUtc = row.LastAttemptAtUtc,
@@ -119,14 +123,179 @@ namespace Darwin.Application.Businesses.Queries
                 AgeMinutes = Math.Max(0, (int)(now - row.CreatedAtUtc).TotalMinutes),
                 IsStalePending = IsStalePending(row, staleBeforeUtc),
                 FailureReason = row.FailureReason,
-                PayloadPreview = Summarize(row.PayloadJson, 220)
+                PayloadPreview = BuildPayloadPreview(row)
             };
+        }
+
+        private static string BuildPayloadPreview(ProviderCallbackInboxMessage row)
+        {
+            if (string.IsNullOrWhiteSpace(row.PayloadJson))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                using var document = JsonDocument.Parse(row.PayloadJson);
+                var root = document.RootElement;
+                if (root.ValueKind != JsonValueKind.Object)
+                {
+                    return Summarize(row.PayloadJson, 220);
+                }
+
+                if (string.Equals(row.Provider, "Stripe", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Summarize(BuildStripePayloadPreview(root), 220);
+                }
+
+                if (string.Equals(row.Provider, "DHL", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Summarize(BuildDhlPayloadPreview(root), 220);
+                }
+
+                return Summarize(BuildGenericPayloadPreview(root), 220);
+            }
+            catch (JsonException)
+            {
+                return Summarize(row.PayloadJson, 220);
+            }
+        }
+
+        private static string BuildStripePayloadPreview(JsonElement root)
+        {
+            var parts = new List<string>();
+            AddPreviewPart(parts, "event", GetString(root, "id"));
+            AddPreviewPart(parts, "type", GetString(root, "type"));
+            AddPreviewPart(parts, "created", GetScalarText(root, "created"));
+
+            if (TryGetObject(root, out var stripeObject, "data", "object"))
+            {
+                AddPreviewPart(parts, "object", GetString(stripeObject, "object"));
+                AddPreviewPart(parts, "objectId", GetString(stripeObject, "id"));
+                AddPreviewPart(parts, "paymentIntent", GetString(stripeObject, "payment_intent"));
+                AddPreviewPart(parts, "checkoutSession", GetString(stripeObject, "checkout_session"));
+                AddPreviewPart(parts, "status", GetString(stripeObject, "status"));
+            }
+
+            return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
+        }
+
+        private static string BuildDhlPayloadPreview(JsonElement root)
+        {
+            var parts = new List<string>();
+            AddPreviewPart(parts, "shipmentRef", GetString(root, "providerShipmentReference"));
+            AddPreviewPart(parts, "tracking", GetString(root, "trackingNumber"));
+            AddPreviewPart(parts, "event", GetString(root, "carrierEventKey"));
+            AddPreviewPart(parts, "status", GetString(root, "providerStatus"));
+            AddPreviewPart(parts, "occurredAtUtc", GetString(root, "occurredAtUtc"));
+            AddPreviewPart(parts, "exception", GetString(root, "exceptionCode"));
+            return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
+        }
+
+        private static string BuildGenericPayloadPreview(JsonElement root)
+        {
+            var parts = new List<string>();
+            foreach (var property in root.EnumerateObject())
+            {
+                if (parts.Count >= 8)
+                {
+                    break;
+                }
+
+                if (IsSensitiveKey(property.Name))
+                {
+                    AddPreviewPart(parts, property.Name, "[redacted]");
+                    continue;
+                }
+
+                var value = property.Value.ValueKind switch
+                {
+                    JsonValueKind.String => property.Value.GetString(),
+                    JsonValueKind.Number => property.Value.GetRawText(),
+                    JsonValueKind.True => "true",
+                    JsonValueKind.False => "false",
+                    JsonValueKind.Null => null,
+                    _ => null
+                };
+
+                AddPreviewPart(parts, property.Name, value);
+            }
+
+            return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
+        }
+
+        private static bool TryGetObject(JsonElement root, out JsonElement value, params string[] path)
+        {
+            value = root;
+            foreach (var segment in path)
+            {
+                if (value.ValueKind != JsonValueKind.Object ||
+                    !value.TryGetProperty(segment, out value))
+                {
+                    value = default;
+                    return false;
+                }
+            }
+
+            return value.ValueKind == JsonValueKind.Object;
+        }
+
+        private static string? GetString(JsonElement root, string propertyName)
+        {
+            return root.ValueKind == JsonValueKind.Object &&
+                   root.TryGetProperty(propertyName, out var value) &&
+                   value.ValueKind == JsonValueKind.String
+                ? value.GetString()?.Trim()
+                : null;
+        }
+
+        private static string? GetScalarText(JsonElement root, string propertyName)
+        {
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty(propertyName, out var value))
+            {
+                return null;
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.String => value.GetString()?.Trim(),
+                JsonValueKind.Number => value.GetRawText(),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => null
+            };
+        }
+
+        private static void AddPreviewPart(List<string> parts, string key, string? value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                parts.Add($"{key}: {value.Trim()}");
+            }
+        }
+
+        private static bool IsSensitiveKey(string key)
+        {
+            return key.Contains("secret", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("token", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("password", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("signature", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("api_key", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("apikey", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsStalePending(ProviderCallbackInboxMessage row, DateTime staleBeforeUtc)
         {
             return string.Equals(row.Status, "Pending", StringComparison.OrdinalIgnoreCase) &&
                    row.CreatedAtUtc <= staleBeforeUtc;
+        }
+
+        private static string NormalizeStatus(string status)
+        {
+            return string.Equals(status, "Succeeded", StringComparison.OrdinalIgnoreCase)
+                ? "Processed"
+                : status;
         }
 
         private static string Summarize(string value, int maxLength)

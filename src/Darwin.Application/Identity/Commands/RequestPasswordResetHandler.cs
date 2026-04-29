@@ -98,7 +98,10 @@ namespace Darwin.Application.Identity.Commands
             await _db.SaveChangesAsync(ct);
 
             // NOTE: For production, switch this to a templating engine and a branded reset URL.
-            var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var siteSettings = await _db.Set<SiteSetting>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => !x.IsDeleted, ct)
+                .ConfigureAwait(false);
             var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(user.Locale, siteSettings?.DefaultCulture);
             var subjectTemplate = CommunicationTemplateDefaults.ResolveTemplate(
                 _communicationLocalizer,

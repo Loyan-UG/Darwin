@@ -196,7 +196,7 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <input type="hidden" asp-for="Id" />
-    <input type="hidden" asp-for="RowVersion" />
+    <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
     <input type="hidden" name="fragment" value="@activeFragment" />
 
     @if (!string.IsNullOrWhiteSpace(activeFragment))

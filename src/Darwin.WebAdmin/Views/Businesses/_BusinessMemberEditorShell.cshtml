@@ -281,7 +281,7 @@
         {
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="UserId" />
-            <input type="hidden" asp-for="RowVersion" />
+            <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
         }
 
         <partial name="_BusinessMemberForm" model="Model" />

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text.Json;
+using Darwin.Application.AdminTextOverrides;
 using Darwin.Application.Settings.DTOs;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
@@ -18,7 +18,9 @@ namespace Darwin.Application.Settings.Validators
         public SiteSettingEditValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
 
             // -------- Basic site information --------
             RuleFor(x => x.Title)
@@ -496,10 +498,9 @@ namespace Darwin.Application.Settings.Validators
 
             try
             {
-                var root = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
-                return root is not null;
+                return AdminTextOverrideJsonCatalog.IsValid(json);
             }
-            catch (JsonException)
+            catch (ArgumentException)
             {
                 return false;
             }

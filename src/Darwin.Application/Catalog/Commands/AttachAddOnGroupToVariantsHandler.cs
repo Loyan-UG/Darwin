@@ -55,7 +55,8 @@ namespace Darwin.Application.Catalog.Commands
             if (group is null)
                 return Result.Fail(_localizer["AddOnGroupNotFound"]);
 
-            if (dto.RowVersion is null || !dto.RowVersion.SequenceEqual(group.RowVersion))
+            var currentVersion = group.RowVersion ?? Array.Empty<byte>();
+            if (dto.RowVersion is null || dto.RowVersion.Length == 0 || !currentVersion.SequenceEqual(dto.RowVersion))
                 return Result.Fail(_localizer["AddOnGroupConcurrencyConflict"]);
 
             // 3) Normalize and validate requested variants
@@ -74,7 +75,11 @@ namespace Darwin.Application.Catalog.Commands
                 if (existingNone.Count > 0)
                 {
                     _db.Set<AddOnGroupVariant>().RemoveRange(existingNone);
-                    await _db.SaveChangesAsync(ct);
+                    var emptyResult = await SaveChangesOrConcurrencyConflictAsync(ct).ConfigureAwait(false);
+                    if (!emptyResult.Succeeded)
+                    {
+                        return emptyResult;
+                    }
                 }
                 return Result.Ok();
             }
@@ -107,8 +112,26 @@ namespace Darwin.Application.Catalog.Commands
             _db.Set<AddOnGroupVariant>().AddRange(toAdd);
 
             // 6) Commit
-            await _db.SaveChangesAsync(ct);
+            var result = await SaveChangesOrConcurrencyConflictAsync(ct).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                return result;
+            }
+
             return Result.Ok();
+        }
+
+        private async Task<Result> SaveChangesOrConcurrencyConflictAsync(CancellationToken ct)
+        {
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return Result.Ok();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["AddOnGroupConcurrencyConflict"]);
+            }
         }
     }
 }

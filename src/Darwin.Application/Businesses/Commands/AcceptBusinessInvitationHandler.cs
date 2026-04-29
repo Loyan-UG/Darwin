@@ -112,6 +112,7 @@ namespace Darwin.Application.Businesses.Commands
                 {
                     siteSetting = await _db.Set<SiteSetting>()
                         .AsNoTracking()
+                        .Where(x => !x.IsDeleted)
                         .OrderBy(x => x.Id)
                         .Select(x => new
                         {

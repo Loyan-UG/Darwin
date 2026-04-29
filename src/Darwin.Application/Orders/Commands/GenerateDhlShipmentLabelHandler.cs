@@ -46,6 +46,7 @@ namespace Darwin.Application.Orders.Commands
 
             var settings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
+                .Where(x => !x.IsDeleted)
                 .OrderBy(x => x.Id)
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);

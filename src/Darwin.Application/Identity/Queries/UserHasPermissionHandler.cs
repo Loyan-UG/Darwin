@@ -32,7 +32,7 @@ namespace Darwin.Application.Identity.Queries
             if (string.IsNullOrWhiteSpace(permissionKey))
                 return Result<bool>.Fail(_localizer["PermissionKeyRequired"]);
 
-            var normalized = permissionKey.Trim().ToUpperInvariant();
+            var normalized = permissionKey.Trim();
 
             var has = await
                 (from ur in _db.Set<Darwin.Domain.Entities.Identity.UserRole>().AsNoTracking()
@@ -42,7 +42,7 @@ namespace Darwin.Application.Identity.Queries
                      on rp.PermissionId equals p.Id
                  where ur.UserId == userId
                        && !ur.IsDeleted && !rp.IsDeleted && !p.IsDeleted
-                       && p.Key.ToUpper() == normalized
+                       && p.Key == normalized
                  select p.Id)
                 .AnyAsync(ct);
 

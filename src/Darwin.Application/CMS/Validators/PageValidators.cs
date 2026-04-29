@@ -1,5 +1,6 @@
-﻿using Darwin.Application.CMS.DTOs;
+using Darwin.Application.CMS.DTOs;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.CMS.Validators
 {
@@ -37,6 +38,7 @@ namespace Darwin.Application.CMS.Validators
         public PageCreateDtoValidator()
         {
             RuleFor(x => x.Translations).NotEmpty();
+            RuleFor(x => x.Status).IsInEnum();
             RuleForEach(x => x.Translations).SetValidator(new PageTranslationDtoValidator());
             RuleFor(x => x.PublishEndUtc).GreaterThan(x => x.PublishStartUtc)
                 .When(x => x.PublishEndUtc.HasValue && x.PublishStartUtc.HasValue);
@@ -58,10 +60,13 @@ namespace Darwin.Application.CMS.Validators
     /// </remarks>
     public sealed class PageEditDtoValidator : AbstractValidator<PageEditDto>
     {
-        public PageEditDtoValidator()
+        public PageEditDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
+            RuleFor(x => x.Status).IsInEnum();
             RuleFor(x => x.Translations).NotEmpty();
             RuleForEach(x => x.Translations).SetValidator(new PageTranslationDtoValidator());
             RuleFor(x => x.PublishEndUtc).GreaterThan(x => x.PublishStartUtc)

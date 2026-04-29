@@ -78,11 +78,12 @@ namespace Darwin.Application.Orders.Commands
                 shipment.Status = ShipmentStatus.Packed;
             }
 
+            var nowUtc = DateTime.UtcNow;
             await ShipmentCarrierEventRecorder.AddIfMissingAsync(
                 _db,
                 shipment,
                 "shipment.label_created",
-                DateTime.UtcNow,
+                nowUtc,
                 "LabelCreated",
                 ct: ct).ConfigureAwait(false);
 

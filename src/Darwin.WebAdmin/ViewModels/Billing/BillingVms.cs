@@ -550,7 +550,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         [Range(0, long.MaxValue)]
         public long AmountMinor { get; set; }
 
-        public DateTime ExpenseDateUtc { get; set; } = DateTime.UtcNow.Date;
+        public DateTime ExpenseDateUtc { get; set; }
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> SupplierOptions { get; set; } = new();
     }
@@ -613,7 +613,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         [Required]
         public Guid BusinessId { get; set; }
 
-        public DateTime EntryDateUtc { get; set; } = DateTime.UtcNow.Date;
+        public DateTime EntryDateUtc { get; set; }
 
         [Required]
         [StringLength(500)]

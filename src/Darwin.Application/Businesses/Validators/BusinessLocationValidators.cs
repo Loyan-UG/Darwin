@@ -61,7 +61,7 @@ namespace Darwin.Application.Businesses.Validators
                 RuleFor(x => x.Coordinate!.Longitude).InclusiveBetween(-180, 180);
             });
 
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 
@@ -73,7 +73,7 @@ namespace Darwin.Application.Businesses.Validators
         public BusinessLocationDeleteDtoValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 

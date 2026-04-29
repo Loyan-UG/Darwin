@@ -88,7 +88,9 @@ public sealed class UpdateBillingPlanHandler
             throw new InvalidOperationException(_localizer["BillingPlanNotFound"]);
         }
 
-        if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
+        var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+        var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+        if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
         {
             throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
         }
@@ -114,6 +116,13 @@ public sealed class UpdateBillingPlanHandler
         entity.IsActive = dto.IsActive;
         entity.FeaturesJson = string.IsNullOrWhiteSpace(dto.FeaturesJson) ? "{}" : dto.FeaturesJson.Trim();
 
-        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+        }
     }
 }

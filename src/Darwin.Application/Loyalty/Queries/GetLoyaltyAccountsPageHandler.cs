@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Loyalty;
@@ -43,10 +44,10 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.user.Email.ToLower().Contains(term) ||
-                    (((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)).ToLower()).Contains(term));
+                    EF.Functions.Like(x.user.Email, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)), term, QueryLikePattern.EscapeCharacter));
             }
 
             if (status.HasValue)

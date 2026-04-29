@@ -35,7 +35,10 @@ namespace Darwin.Application.Businesses.Commands
         public async Task<Guid> HandleAsync(BusinessCreateDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
-            var settings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct) ?? new SiteSetting();
+            var settings = await _db.Set<SiteSetting>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => !x.IsDeleted, ct)
+                .ConfigureAwait(false) ?? new SiteSetting();
             var contactEmail = NormalizeNullable(dto.ContactEmail) ?? NormalizeNullable(settings.ContactEmail);
             var brandDisplayName = NormalizeNullable(dto.BrandDisplayName) ?? NormalizeNullable(settings.Title);
             var brandLogoUrl = NormalizeNullable(dto.BrandLogoUrl) ?? NormalizeNullable(settings.LogoUrl);

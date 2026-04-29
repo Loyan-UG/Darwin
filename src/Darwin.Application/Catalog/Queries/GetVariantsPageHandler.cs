@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Catalog.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
 
@@ -49,11 +50,11 @@ namespace Darwin.Application.Catalog.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(query);
                 variants = variants.Where(v =>
-                    v.Sku.ToLower().Contains(q) ||
+                    EF.Functions.Like(v.Sku, q, QueryLikePattern.EscapeCharacter) ||
                     _db.Set<ProductTranslation>()
-                       .Any(t => t.ProductId == v.ProductId && !t.IsDeleted && t.Name.ToLower().Contains(q)));
+                       .Any(t => t.ProductId == v.ProductId && !t.IsDeleted && EF.Functions.Like(t.Name, q, QueryLikePattern.EscapeCharacter)));
             }
 
             var total = await variants.CountAsync(ct);

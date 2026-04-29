@@ -1050,15 +1050,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     : RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter });
             }
 
-            byte[] version;
-            try
-            {
-                version = Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+            var version = DecodeBase64RowVersion(rowVersion);
 
             var result = await _resolveShipmentCarrierException
                 .HandleAsync(new ResolveShipmentCarrierExceptionDto
@@ -1121,15 +1113,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 });
             }
 
-            byte[] version;
-            try
-            {
-                version = Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+            var version = DecodeBase64RowVersion(rowVersion);
 
             var result = await _updateShipmentProviderOperation
                 .HandleAsync(new UpdateShipmentProviderOperationDto
@@ -1231,11 +1215,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
             var businessOptions = await _getBusinessLookup.HandleAsync(ct).ConfigureAwait(false);
             var customerOptions = await _getCustomerLookup.HandleAsync(ct).ConfigureAwait(false);
+            var nowUtc = DateTime.UtcNow;
 
             var vm = new OrderInvoiceCreateVm
             {
                 OrderId = dto.Id,
-                DueAtUtc = DateTime.UtcNow.AddDays(14)
+                DueAtUtc = nowUtc.AddDays(14)
             };
 
             await PopulateOrderInvoiceOptionsAsync(vm, businessOptions, customerOptions, dto).ConfigureAwait(false);
@@ -1316,7 +1301,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
             catch (ValidationException ex)
             {
-                TempData["Error"] = ex.Message;
+                SetValidationErrorMessage(ex, "OrderStatusUpdateFailed");
             }
             catch (Exception)
             {

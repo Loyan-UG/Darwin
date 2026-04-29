@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
@@ -50,14 +49,13 @@ public sealed class StripeWebhooksController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["StripeWebhookSecretNotConfigured"]);
         }
 
-        Request.EnableBuffering();
-        string rawPayload;
-        using (var reader = new StreamReader(Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true))
+        var payloadRead = await ProviderWebhookPayloadReader.ReadAsync(Request, ct).ConfigureAwait(false);
+        if (payloadRead.PayloadTooLarge)
         {
-            rawPayload = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
+            return PayloadTooLargeProblem(_validationLocalizer["ProviderWebhookPayloadTooLarge"]);
         }
 
-        Request.Body.Position = 0;
+        var rawPayload = payloadRead.Payload;
 
         if (string.IsNullOrWhiteSpace(rawPayload))
         {
@@ -75,23 +73,12 @@ public sealed class StripeWebhooksController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["StripeWebhookPayloadInvalid"]);
         }
 
-        var existing = await _db.Set<ProviderCallbackInboxMessage>()
-            .AsNoTracking()
-            .AnyAsync(x => !x.IsDeleted && x.Provider == "Stripe" && x.IdempotencyKey == eventId, ct)
-            .ConfigureAwait(false);
-
-        if (!existing)
-        {
-            _db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
-            {
-                Provider = "Stripe",
-                CallbackType = eventType,
-                IdempotencyKey = eventId,
-                PayloadJson = rawPayload,
-                Status = "Pending"
-            });
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
-        }
+        var existing = await AddInboxMessageIfNewAsync(
+            provider: "Stripe",
+            callbackType: eventType,
+            idempotencyKey: eventId,
+            rawPayload,
+            ct).ConfigureAwait(false);
 
         return Ok(new
         {
@@ -101,6 +88,51 @@ public sealed class StripeWebhooksController : ApiControllerBase
             eventType = eventType.Trim(),
             instance = Request.GetDisplayUrl()
         });
+    }
+
+    private async Task<bool> AddInboxMessageIfNewAsync(
+        string provider,
+        string callbackType,
+        string idempotencyKey,
+        string rawPayload,
+        CancellationToken ct)
+    {
+        var existing = await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false);
+        if (existing)
+        {
+            return true;
+        }
+
+        _db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = provider,
+            CallbackType = callbackType,
+            IdempotencyKey = idempotencyKey,
+            PayloadJson = rawPayload,
+            Status = "Pending"
+        });
+
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return false;
+        }
+        catch (DbUpdateException)
+        {
+            if (await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false))
+            {
+                return true;
+            }
+
+            throw;
+        }
+    }
+
+    private Task<bool> InboxMessageExistsAsync(string provider, string idempotencyKey, CancellationToken ct)
+    {
+        return _db.Set<ProviderCallbackInboxMessage>()
+            .AsNoTracking()
+            .AnyAsync(x => !x.IsDeleted && x.Provider == provider && x.IdempotencyKey == idempotencyKey, ct);
     }
 
     private static bool TryParseStripeEnvelope(string rawPayload, out string eventId, out string eventType)

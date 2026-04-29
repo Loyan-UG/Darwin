@@ -23,9 +23,15 @@ namespace Darwin.Application.CRM.Commands
 
         public async Task<Result> HandleAsync(UpdateLeadLifecycleDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
             var lead = await _db.Set<Lead>()
@@ -37,7 +43,8 @@ namespace Darwin.Application.CRM.Commands
                 return Result.Fail(_localizer["LeadNotFound"]);
             }
 
-            if (!lead.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentVersion = lead.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
@@ -47,15 +54,23 @@ namespace Darwin.Application.CRM.Commands
                 return Result.Fail(_localizer["LeadLifecycleUnsupportedAction"]);
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
 
         private static bool TryApplyAction(Lead lead, string action)
         {
-            switch (action)
+            switch ((action ?? string.Empty).Trim().ToUpperInvariant())
             {
-                case "Qualify":
+                case "QUALIFY":
                     if (lead.Status == LeadStatus.Converted)
                     {
                         return false;
@@ -63,7 +78,7 @@ namespace Darwin.Application.CRM.Commands
 
                     lead.Status = LeadStatus.Qualified;
                     return true;
-                case "Disqualify":
+                case "DISQUALIFY":
                     if (lead.Status == LeadStatus.Converted)
                     {
                         return false;
@@ -71,7 +86,7 @@ namespace Darwin.Application.CRM.Commands
 
                     lead.Status = LeadStatus.Disqualified;
                     return true;
-                case "Reopen":
+                case "REOPEN":
                     if (lead.Status == LeadStatus.Converted)
                     {
                         return false;
@@ -100,9 +115,15 @@ namespace Darwin.Application.CRM.Commands
 
         public async Task<Result> HandleAsync(UpdateOpportunityLifecycleDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
             var opportunity = await _db.Set<Opportunity>()
@@ -114,7 +135,8 @@ namespace Darwin.Application.CRM.Commands
                 return Result.Fail(_localizer["OpportunityNotFound"]);
             }
 
-            if (!opportunity.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentVersion = opportunity.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
@@ -125,15 +147,28 @@ namespace Darwin.Application.CRM.Commands
                 return Result.Fail(_localizer["OpportunityLifecycleUnsupportedAction"]);
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
 
         private static bool TryApplyAction(Opportunity opportunity, string action, DateTime todayUtc)
         {
-            switch (action)
+            switch ((action ?? string.Empty).Trim().ToUpperInvariant())
             {
-                case "Advance":
+                case "ADVANCE":
+                    if (opportunity.Stage is OpportunityStage.ClosedWon or OpportunityStage.ClosedLost)
+                    {
+                        return false;
+                    }
+
                     opportunity.Stage = opportunity.Stage switch
                     {
                         OpportunityStage.Qualification => OpportunityStage.Proposal,
@@ -142,15 +177,15 @@ namespace Darwin.Application.CRM.Commands
                         _ => opportunity.Stage
                     };
                     return true;
-                case "CloseWon":
+                case "CLOSEWON":
                     opportunity.Stage = OpportunityStage.ClosedWon;
                     opportunity.ExpectedCloseDateUtc ??= todayUtc;
                     return true;
-                case "CloseLost":
+                case "CLOSELOST":
                     opportunity.Stage = OpportunityStage.ClosedLost;
                     opportunity.ExpectedCloseDateUtc ??= todayUtc;
                     return true;
-                case "Reopen":
+                case "REOPEN":
                     opportunity.Stage = OpportunityStage.Qualification;
                     return true;
                 default:

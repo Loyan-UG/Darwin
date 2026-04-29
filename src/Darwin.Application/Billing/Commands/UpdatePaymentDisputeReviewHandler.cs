@@ -30,9 +30,15 @@ namespace Darwin.Application.Billing.Commands
 
         public async Task<Result> HandleAsync(UpdatePaymentDisputeReviewDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
             var payment = await _db.Set<Payment>()
@@ -44,21 +50,31 @@ namespace Darwin.Application.Billing.Commands
                 return Result.Fail(_localizer["PaymentNotFound"]);
             }
 
-            if (!payment.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentVersion = payment.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflict"]);
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            if (!TryApplyAction(payment, dto.Action, dto.Note))
+            var nowUtc = DateTime.UtcNow;
+            if (!TryApplyAction(payment, dto.Action, dto.Note, nowUtc))
             {
                 return Result.Fail(_localizer["PaymentDisputeReviewUnsupportedAction"]);
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
 
-        private static bool TryApplyAction(Payment payment, string action, string? note)
+        private static bool TryApplyAction(Payment payment, string action, string? note, DateTime nowUtc)
         {
             var normalizedAction = NormalizeAction(action);
             if (string.IsNullOrWhiteSpace(normalizedAction))
@@ -66,7 +82,7 @@ namespace Darwin.Application.Billing.Commands
                 return false;
             }
 
-            if (normalizedAction == ClearAction)
+            if (string.Equals(normalizedAction, ClearAction, StringComparison.OrdinalIgnoreCase))
             {
                 payment.FailureReason = RemoveExistingMarker(payment.FailureReason);
                 return true;
@@ -74,10 +90,10 @@ namespace Darwin.Application.Billing.Commands
 
             var state = normalizedAction switch
             {
-                UnderReviewAction => "UnderReview",
-                EvidenceSubmittedAction => "EvidenceSubmitted",
-                ResolveWonAction => "Won",
-                ResolveLostAction => "Lost",
+                var current when string.Equals(current, UnderReviewAction, StringComparison.OrdinalIgnoreCase) => "UnderReview",
+                var current when string.Equals(current, EvidenceSubmittedAction, StringComparison.OrdinalIgnoreCase) => "EvidenceSubmitted",
+                var current when string.Equals(current, ResolveWonAction, StringComparison.OrdinalIgnoreCase) => "Won",
+                var current when string.Equals(current, ResolveLostAction, StringComparison.OrdinalIgnoreCase) => "Lost",
                 _ => null
             };
 
@@ -86,16 +102,18 @@ namespace Darwin.Application.Billing.Commands
                 return false;
             }
 
-            if (normalizedAction == ResolveWonAction && payment.Status == PaymentStatus.Failed)
+            if (string.Equals(normalizedAction, ResolveWonAction, StringComparison.OrdinalIgnoreCase) &&
+                payment.Status == PaymentStatus.Failed)
             {
                 payment.Status = PaymentStatus.Completed;
             }
-            else if (normalizedAction == ResolveLostAction && payment.Status != PaymentStatus.Refunded)
+            else if (string.Equals(normalizedAction, ResolveLostAction, StringComparison.OrdinalIgnoreCase) &&
+                     payment.Status != PaymentStatus.Refunded)
             {
                 payment.Status = PaymentStatus.Failed;
             }
 
-            payment.FailureReason = BuildFailureReason(payment.FailureReason, state, note, DateTime.UtcNow);
+            payment.FailureReason = BuildFailureReason(payment.FailureReason, state, note, nowUtc);
             return true;
         }
 

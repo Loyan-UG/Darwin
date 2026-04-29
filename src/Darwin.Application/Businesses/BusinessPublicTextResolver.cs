@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
+using Darwin.Application.AdminTextOverrides;
 
 namespace Darwin.Application.Businesses;
 
@@ -42,7 +40,7 @@ internal static class BusinessPublicTextResolver
         string? defaultCulture,
         string key)
     {
-        var catalog = Parse(adminTextOverridesJson);
+        var catalog = AdminTextOverrideJsonCatalog.Parse(adminTextOverridesJson);
         if (catalog.Count == 0)
         {
             return null;
@@ -59,52 +57,6 @@ internal static class BusinessPublicTextResolver
         }
 
         return null;
-    }
-
-    private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Parse(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return Empty;
-        }
-
-        try
-        {
-            var root = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
-            if (root is null || root.Count == 0)
-            {
-                return Empty;
-            }
-
-            var normalized = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var (culture, entries) in root)
-            {
-                if (string.IsNullOrWhiteSpace(culture) || entries is null || entries.Count == 0)
-                {
-                    continue;
-                }
-
-                var entryValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var (key, value) in entries)
-                {
-                    if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(value))
-                    {
-                        entryValues[key.Trim()] = value.Trim();
-                    }
-                }
-
-                if (entryValues.Count > 0)
-                {
-                    normalized[NormalizeCulture(culture)] = entryValues;
-                }
-            }
-
-            return normalized.Count == 0 ? Empty : normalized;
-        }
-        catch (Exception ex) when (ex is JsonException or ArgumentException)
-        {
-            return Empty;
-        }
     }
 
     private static IEnumerable<string> GetCandidateCultures(string? culture, string? defaultCulture)
@@ -125,7 +77,4 @@ internal static class BusinessPublicTextResolver
     {
         return string.IsNullOrWhiteSpace(culture) ? string.Empty : culture.Trim();
     }
-
-    private static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Empty =
-        new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 }

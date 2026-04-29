@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.CartCheckout;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.Catalog.Services;
 using Darwin.Domain.Entities.CartCheckout;
@@ -66,7 +66,7 @@ namespace Darwin.Application.CartCheckout.Commands
                 ?? throw new InvalidOperationException(_localizer["VariantNotFound"]);
 
             // Validate add-on selections and compute delta
-            var selIds = dto.SelectedAddOnValueIds?.Distinct().ToList() ?? new List<Guid>();
+            var selIds = dto.SelectedAddOnValueIds?.Distinct().OrderBy(id => id).ToList() ?? new List<Guid>();
             await _addOnPricing.ValidateSelectionsForVariantAsync(dto.VariantId, selIds, ct);
             var deltaMinor = await _addOnPricing.SumPriceDeltasAsync(selIds, ct);
 
@@ -79,7 +79,7 @@ namespace Darwin.Application.CartCheckout.Commands
                                .Join(_db.Set<Darwin.Domain.Entities.Pricing.TaxCategory>(), v => v.TaxCategoryId, t => t.Id, (v, t) => t.VatRate)
                                .FirstAsync(ct);
 
-            var selJson = JsonSerializer.Serialize(selIds);
+            var selJson = CartAddOnSelectionJson.NormalizeIds(selIds);
 
             // Try merge with existing line (same variant + same add-on configuration).
             // Do not rely on cart.Items here because the cart query does not eager-load items.
@@ -91,6 +91,23 @@ namespace Darwin.Application.CartCheckout.Commands
                     i.SelectedAddOnValueIdsJson == selJson,
                     ct)
                 .ConfigureAwait(false);
+
+            if (existing is null)
+            {
+                var candidateLines = await _db.Set<CartItem>()
+                    .Where(i =>
+                        !i.IsDeleted &&
+                        i.CartId == cart.Id &&
+                        i.VariantId == dto.VariantId)
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false);
+
+                existing = candidateLines.FirstOrDefault(i =>
+                    string.Equals(
+                        CartAddOnSelectionJson.NormalizeJsonOrNull(i.SelectedAddOnValueIdsJson) ?? "[]",
+                        selJson,
+                        StringComparison.Ordinal));
+            }
 
             if (existing != null)
             {

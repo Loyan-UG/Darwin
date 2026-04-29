@@ -375,7 +375,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public Guid CustomerId { get; set; }
         public ConsentType Type { get; set; } = ConsentType.MarketingEmail;
         public bool Granted { get; set; } = true;
-        public DateTime GrantedAtUtc { get; set; } = DateTime.UtcNow;
+        public DateTime GrantedAtUtc { get; set; }
         public DateTime? RevokedAtUtc { get; set; }
     }
 
@@ -551,7 +551,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public long RefundedAmountMinor { get; set; }
         public long SettledAmountMinor { get; set; }
         public long BalanceMinor { get; set; }
-        public DateTime DueDateUtc { get; set; } = DateTime.UtcNow.AddDays(14);
+        public DateTime DueDateUtc { get; set; }
         public DateTime? PaidAtUtc { get; set; }
         public bool IsFinancialContentLocked { get; set; }
         public string FinancialEditLockReason { get; set; } = string.Empty;

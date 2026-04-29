@@ -1,9 +1,10 @@
-﻿using System;
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
-using Darwin.Shared.Results;
 using Darwin.Domain.Entities.Catalog;
+using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -11,47 +12,47 @@ namespace Darwin.Application.Catalog.Commands
 {
     /// <summary>
     /// Performs a soft delete on a <see cref="Category"/> by setting <c>IsDeleted = true</c>.
-    /// This command does not cascade to child entities; higher-level business rules
-    /// should prevent deleting categories that are still referenced if necessary.
-    /// The handler is designed to be invoked from the Admin UI. It returns a
-    /// <see cref="Result"/> indicating success or a friendly error.
     /// </summary>
     public sealed class SoftDeleteCategoryHandler
     {
         private readonly IAppDbContext _db;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        /// <summary>
-        /// Creates a new instance tied to the application's DbContext abstraction.
-        /// </summary>
         public SoftDeleteCategoryHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
-        /// <summary>
-        /// Marks the category as soft-deleted when found and not already deleted.
-        /// The operation is idempotent; calling it for an already-deleted row succeeds.
-        /// </summary>
-        /// <param name="id">Category identifier.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A <see cref="Result"/> with <c>Succeeded = true</c> on success; otherwise a failure with a short message.
-        /// </returns>
-        public async Task<Result> HandleAsync(Guid id, CancellationToken ct = default)
+        public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion, CancellationToken ct = default)
         {
-            // Read tracking is needed to update IsDeleted.
+            if (id == Guid.Empty)
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
+
+            if (rowVersion is null || rowVersion.Length == 0)
+                return Result.Fail(_localizer["RowVersionRequired"]);
+
             var category = await _db.Set<Category>()
-                .FirstOrDefaultAsync(x => x.Id == id, ct);
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
 
             if (category is null)
                 return Result.Fail(_localizer["CategoryNotFound"]);
 
-            if (!category.IsDeleted)
-                category.IsDeleted = true;
+            var currentVersion = category.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
 
-            await _db.SaveChangesAsync(ct);
+            category.IsDeleted = true;
+
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -39,10 +40,10 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.Name.ToLower().Contains(q) ||
-                    (x.LegalName != null && x.LegalName.ToLower().Contains(q)));
+                    EF.Functions.Like(x.Name, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.LegalName != null && EF.Functions.Like(x.LegalName, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (operationalStatus.HasValue)

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Loyalty;
@@ -56,12 +57,12 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.user.Email.ToLower().Contains(term) ||
-                    (((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)).ToLower()).Contains(term) ||
-                    (x.rewardTier != null && x.rewardTier.Description != null && x.rewardTier.Description.ToLower().Contains(term)) ||
-                    (x.scan != null && x.scan.Outcome.ToLower().Contains(term)));
+                    EF.Functions.Like(x.user.Email, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)), term, QueryLikePattern.EscapeCharacter) ||
+                    (x.rewardTier != null && x.rewardTier.Description != null && EF.Functions.Like(x.rewardTier.Description, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.scan != null && EF.Functions.Like(x.scan.Outcome, term, QueryLikePattern.EscapeCharacter)));
             }
 
             if (status.HasValue)
@@ -71,20 +72,19 @@ namespace Darwin.Application.Loyalty.Queries
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
 
-            var items = await baseQuery
+            var rows = await baseQuery
                 .OrderByDescending(x => x.redemption.RedeemedAtUtc ?? x.redemption.CreatedAtUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(x => new LoyaltyRewardRedemptionListItemDto
+                .Select(x => new
                 {
                     Id = x.redemption.Id,
                     LoyaltyAccountId = x.redemption.LoyaltyAccountId,
                     BusinessId = x.redemption.BusinessId,
                     ConsumerUserId = x.account.UserId,
                     RewardTierId = x.redemption.LoyaltyRewardTierId,
-                    RewardLabel = x.rewardTier != null
-                        ? (!string.IsNullOrWhiteSpace(x.rewardTier.Description) ? x.rewardTier.Description! : x.rewardTier.RewardType.ToString())
-                        : x.redemption.LoyaltyRewardTierId.ToString(),
+                    RewardTierDescription = x.rewardTier != null ? x.rewardTier.Description : null,
+                    RewardTierType = x.rewardTier != null ? x.rewardTier.RewardType : (LoyaltyRewardType?)null,
                     PointsSpent = x.redemption.PointsSpent,
                     Status = x.redemption.Status,
                     RedeemedAtUtc = x.redemption.RedeemedAtUtc ?? x.redemption.CreatedAtUtc,
@@ -94,7 +94,7 @@ namespace Darwin.Application.Loyalty.Queries
                             ? x.user.Email
                             : ((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)).Trim(),
                     ConsumerEmail = x.user.Email,
-                    ScanStatus = x.scan != null ? x.scan.Status : null,
+                    ScanStatus = x.scan != null ? (LoyaltyScanStatus?)x.scan.Status : null,
                     ScanOutcome = x.scan != null ? x.scan.Outcome : null,
                     ScanFailureReason = x.scan != null ? x.scan.FailureReason : null,
                     BusinessLocationId = x.redemption.BusinessLocationId,
@@ -102,6 +102,31 @@ namespace Darwin.Application.Loyalty.Queries
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
+            var items = rows
+                .Select(x => new LoyaltyRewardRedemptionListItemDto
+                {
+                    Id = x.Id,
+                    LoyaltyAccountId = x.LoyaltyAccountId,
+                    BusinessId = x.BusinessId,
+                    ConsumerUserId = x.ConsumerUserId,
+                    RewardTierId = x.RewardTierId,
+                    RewardLabel = x.RewardTierDescription is { Length: > 0 }
+                        ? x.RewardTierDescription
+                        : x.RewardTierType?.ToString() ?? x.RewardTierId.ToString(),
+                    PointsSpent = x.PointsSpent,
+                    Status = x.Status,
+                    RedeemedAtUtc = x.RedeemedAtUtc,
+                    Note = x.Note,
+                    ConsumerDisplayName = x.ConsumerDisplayName,
+                    ConsumerEmail = x.ConsumerEmail,
+                    ScanStatus = x.ScanStatus,
+                    ScanOutcome = x.ScanOutcome,
+                    ScanFailureReason = x.ScanFailureReason,
+                    BusinessLocationId = x.BusinessLocationId,
+                    RowVersion = x.RowVersion
+                })
+                .ToList();
 
             return (items, total);
         }

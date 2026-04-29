@@ -39,8 +39,20 @@ public sealed class ProviderBackedSmsSender : ISmsSender
     {
         if (string.IsNullOrWhiteSpace(toPhoneE164)) throw new ArgumentNullException(nameof(toPhoneE164));
         if (string.IsNullOrWhiteSpace(text)) throw new ArgumentNullException(nameof(text));
+        var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
+        if (!string.IsNullOrWhiteSpace(correlationKey) &&
+            await _db.Set<ChannelDispatchAudit>()
+                .AsNoTracking()
+                .AnyAsync(x => !x.IsDeleted && x.CorrelationKey == correlationKey && x.Status == "Sent", ct)
+                .ConfigureAwait(false))
+        {
+            _logger.LogInformation("Skipping duplicate SMS send for correlation {CorrelationKey}.", correlationKey);
+            return;
+        }
 
-        var settings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+        var settings = await _db.Set<SiteSetting>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => !x.IsDeleted, ct);
         if (settings is null || !settings.SmsEnabled)
         {
             throw new InvalidOperationException("SMS transport is disabled.");
@@ -65,7 +77,7 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             Provider = settings.SmsProvider!.Trim(),
             FlowKey = string.IsNullOrWhiteSpace(context?.FlowKey) ? null : context.FlowKey.Trim(),
             TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim(),
-            CorrelationKey = string.IsNullOrWhiteSpace(context?.CorrelationKey) ? null : context.CorrelationKey.Trim(),
+            CorrelationKey = correlationKey,
             BusinessId = context?.BusinessId,
             RecipientAddress = toPhoneE164,
             IntendedRecipientAddress = string.IsNullOrWhiteSpace(context?.IntendedRecipientAddress) ? toPhoneE164 : context.IntendedRecipientAddress.Trim(),
@@ -102,8 +114,9 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
+                var completedAtUtc = DateTime.UtcNow;
                 audit.Status = "Failed";
-                audit.CompletedAtUtc = DateTime.UtcNow;
+                audit.CompletedAtUtc = completedAtUtc;
                 audit.FailureMessage = BuildFailure(body);
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
                 _logger.LogError("Twilio SMS send failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
@@ -121,8 +134,9 @@ public sealed class ProviderBackedSmsSender : ISmsSender
         }
         catch (Exception ex) when (audit.Status == "Pending")
         {
+            var completedAtUtc = DateTime.UtcNow;
             audit.Status = "Failed";
-            audit.CompletedAtUtc = DateTime.UtcNow;
+            audit.CompletedAtUtc = completedAtUtc;
             audit.FailureMessage = BuildFailure(ex.Message);
             await _db.SaveChangesAsync(ct);
             _logger.LogError(ex, "Twilio SMS send failed before receiving a provider response.");
@@ -163,5 +177,10 @@ public sealed class ProviderBackedSmsSender : ISmsSender
         }
 
         return null;
+    }
+
+    private static string? NormalizeCorrelationKey(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

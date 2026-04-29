@@ -98,6 +98,7 @@ public sealed class GetMyLoyaltyOverviewHandler
             LastAccrualAtUtc = accounts
                 .Where(x => x.LastAccrualAtUtc.HasValue)
                 .Select(x => x.LastAccrualAtUtc)
+                .DefaultIfEmpty()
                 .Max(),
             Accounts = accounts
         });

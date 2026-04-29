@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
@@ -40,14 +41,14 @@ namespace Darwin.Application.CRM.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.opportunity.Title.ToLower().Contains(q) ||
-                    x.customer.FirstName.ToLower().Contains(q) ||
-                    x.customer.LastName.ToLower().Contains(q) ||
-                    (x.user != null && x.user.Email.ToLower().Contains(q)) ||
-                    (x.user != null && x.user.FirstName != null && x.user.FirstName.ToLower().Contains(q)) ||
-                    (x.user != null && x.user.LastName != null && x.user.LastName.ToLower().Contains(q)));
+                    EF.Functions.Like(x.opportunity.Title, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.customer.FirstName, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.customer.LastName, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.user != null && EF.Functions.Like(x.user.Email, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.user != null && x.user.FirstName != null && EF.Functions.Like(x.user.FirstName, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.user != null && x.user.LastName != null && EF.Functions.Like(x.user.LastName, q, QueryLikePattern.EscapeCharacter)));
             }
 
             var closingSoonThreshold = DateTime.UtcNow.Date.AddDays(14);

@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
@@ -8,12 +9,15 @@ using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace Darwin.Application.Billing.Queries
 {
     public sealed class GetPaymentsPageHandler
     {
         private const int MaxPageSize = 200;
+        private static readonly string DisputeLostMarkerPattern = QueryLikePattern.Contains("[DisputeReview:Lost;");
+        private static readonly string DisputeWonMarkerPattern = QueryLikePattern.Contains("[DisputeReview:Won;");
 
         private readonly IAppDbContext _db;
 
@@ -71,35 +75,35 @@ namespace Darwin.Application.Billing.Queries
                          x.Status == PaymentStatus.Refunded ||
                          _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
                         (x.FailureReason == null ||
-                         (!x.FailureReason.Contains("[DisputeReview:Won;") &&
-                          !x.FailureReason.Contains("[DisputeReview:Lost;")))),
+                         (!EF.Functions.Like(x.FailureReason, DisputeWonMarkerPattern, QueryLikePattern.EscapeCharacter) &&
+                          !EF.Functions.Like(x.FailureReason, DisputeLostMarkerPattern, QueryLikePattern.EscapeCharacter)))),
                     _ => paymentsQuery
                 };
             }
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 paymentsQuery = paymentsQuery.Where(x =>
-                    x.Provider.ToLower().Contains(term) ||
-                    x.Currency.ToLower().Contains(term) ||
-                    (x.ProviderTransactionRef != null && x.ProviderTransactionRef.ToLower().Contains(term)) ||
-                    (x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef.ToLower().Contains(term)) ||
-                    (x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef.ToLower().Contains(term)) ||
-                    (x.OrderId.HasValue && _db.Set<Order>().Any(o => o.Id == x.OrderId.Value && !o.IsDeleted && o.OrderNumber.ToLower().Contains(term))) ||
+                    EF.Functions.Like(x.Provider, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Currency, term, QueryLikePattern.EscapeCharacter) ||
+                    (x.ProviderTransactionRef != null && EF.Functions.Like(x.ProviderTransactionRef, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.ProviderPaymentIntentRef != null && EF.Functions.Like(x.ProviderPaymentIntentRef, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.ProviderCheckoutSessionRef != null && EF.Functions.Like(x.ProviderCheckoutSessionRef, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.OrderId.HasValue && _db.Set<Order>().Any(o => o.Id == x.OrderId.Value && !o.IsDeleted && EF.Functions.Like(o.OrderNumber, term, QueryLikePattern.EscapeCharacter))) ||
                     (x.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
                         c.Id == x.CustomerId.Value &&
                         !c.IsDeleted &&
-                        (c.FirstName.ToLower().Contains(term) ||
-                         c.LastName.ToLower().Contains(term) ||
-                         c.Email.ToLower().Contains(term) ||
-                         (c.CompanyName != null && c.CompanyName.ToLower().Contains(term))))) ||
+                        (EF.Functions.Like(c.FirstName, term, QueryLikePattern.EscapeCharacter) ||
+                         EF.Functions.Like(c.LastName, term, QueryLikePattern.EscapeCharacter) ||
+                         EF.Functions.Like(c.Email, term, QueryLikePattern.EscapeCharacter) ||
+                         (c.CompanyName != null && EF.Functions.Like(c.CompanyName, term, QueryLikePattern.EscapeCharacter))))) ||
                     (x.UserId.HasValue && _db.Set<User>().Any(u =>
                         u.Id == x.UserId.Value &&
                         !u.IsDeleted &&
-                        (u.Email.ToLower().Contains(term) ||
-                         (u.FirstName != null && u.FirstName.ToLower().Contains(term)) ||
-                         (u.LastName != null && u.LastName.ToLower().Contains(term))))));
+                        (EF.Functions.Like(u.Email, term, QueryLikePattern.EscapeCharacter) ||
+                         (u.FirstName != null && EF.Functions.Like(u.FirstName, term, QueryLikePattern.EscapeCharacter)) ||
+                         (u.LastName != null && EF.Functions.Like(u.LastName, term, QueryLikePattern.EscapeCharacter))))));
             }
 
             var total = await paymentsQuery.CountAsync(ct).ConfigureAwait(false);
@@ -132,11 +136,12 @@ namespace Darwin.Application.Billing.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            await EnrichPaymentsAsync(items, ct).ConfigureAwait(false);
+            var nowUtc = DateTime.UtcNow;
+            await EnrichPaymentsAsync(items, nowUtc, ct).ConfigureAwait(false);
             return (items, total);
         }
 
-        private async Task EnrichPaymentsAsync(List<PaymentListItemDto> items, CancellationToken ct)
+        private async Task EnrichPaymentsAsync(List<PaymentListItemDto> items, DateTime nowUtc, CancellationToken ct)
         {
             if (items.Count == 0)
             {
@@ -258,7 +263,7 @@ namespace Darwin.Application.Billing.Queries
                     item.CreatedAtUtc,
                     item.PaidAtUtc,
                     latestRefundEvents.TryGetValue(item.Id, out var lastRefundEventAtUtc) ? lastRefundEventAtUtc : null);
-                item.OpenAgeHours = BillingPaymentTimelineFormatter.CalculateOpenAgeHours(item.CreatedAtUtc, item.PaidAtUtc);
+                item.OpenAgeHours = BillingPaymentTimelineFormatter.CalculateOpenAgeHours(item.CreatedAtUtc, item.PaidAtUtc, nowUtc);
                 item.ProviderReferenceState = BillingPaymentTimelineFormatter.ResolveProviderReferenceState(
                     item.ProviderTransactionRef,
                     item.ProviderPaymentIntentRef,
@@ -292,6 +297,9 @@ namespace Darwin.Application.Billing.Queries
 
     public sealed class GetPaymentOpsSummaryHandler
     {
+        private static readonly string DisputeLostMarkerPattern = QueryLikePattern.Contains("[DisputeReview:Lost;");
+        private static readonly string DisputeWonMarkerPattern = QueryLikePattern.Contains("[DisputeReview:Won;");
+
         private readonly IAppDbContext _db;
 
         public GetPaymentOpsSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -354,8 +362,8 @@ namespace Darwin.Application.Billing.Queries
                      x.Status == PaymentStatus.Refunded ||
                      _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
                     (x.FailureReason == null ||
-                     (!x.FailureReason.Contains("[DisputeReview:Won;") &&
-                      !x.FailureReason.Contains("[DisputeReview:Lost;"))), ct).ConfigureAwait(false)
+                     (!EF.Functions.Like(x.FailureReason, DisputeWonMarkerPattern, QueryLikePattern.EscapeCharacter) &&
+                      !EF.Functions.Like(x.FailureReason, DisputeLostMarkerPattern, QueryLikePattern.EscapeCharacter))), ct).ConfigureAwait(false)
             };
             return summary;
         }
@@ -465,7 +473,8 @@ namespace Darwin.Application.Billing.Queries
                 dto.CreatedAtUtc,
                 dto.PaidAtUtc,
                 dto.Refunds.Count == 0 ? null : dto.Refunds.Max(x => x.CompletedAtUtc ?? x.CreatedAtUtc));
-            dto.OpenAgeHours = BillingPaymentTimelineFormatter.CalculateOpenAgeHours(dto.CreatedAtUtc, dto.PaidAtUtc);
+            var nowUtc = DateTime.UtcNow;
+            dto.OpenAgeHours = BillingPaymentTimelineFormatter.CalculateOpenAgeHours(dto.CreatedAtUtc, dto.PaidAtUtc, nowUtc);
             dto.ProviderReferenceState = BillingPaymentTimelineFormatter.ResolveProviderReferenceState(
                 dto.ProviderTransactionRef,
                 dto.ProviderPaymentIntentRef,
@@ -540,25 +549,29 @@ namespace Darwin.Application.Billing.Queries
                 return new List<PaymentProviderEventItemDto>();
             }
 
-            var paymentIntentRef = string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentRef) ? null : dto.ProviderPaymentIntentRef.Trim().ToLowerInvariant();
-            var checkoutSessionRef = string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionRef) ? null : dto.ProviderCheckoutSessionRef.Trim().ToLowerInvariant();
-            var providerTransactionRef = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef) ? null : dto.ProviderTransactionRef.Trim().ToLowerInvariant();
+            var paymentIntentRef = string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentRef) ? null : dto.ProviderPaymentIntentRef.Trim();
+            var checkoutSessionRef = string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionRef) ? null : dto.ProviderCheckoutSessionRef.Trim();
+            var providerTransactionRef = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef) ? null : dto.ProviderTransactionRef.Trim();
 
             if (paymentIntentRef is null && checkoutSessionRef is null && providerTransactionRef is null)
             {
                 return new List<PaymentProviderEventItemDto>();
             }
 
+            var paymentIntentPattern = paymentIntentRef is null ? null : QueryLikePattern.Contains(paymentIntentRef);
+            var checkoutSessionPattern = checkoutSessionRef is null ? null : QueryLikePattern.Contains(checkoutSessionRef);
+            var providerTransactionPattern = providerTransactionRef is null ? null : QueryLikePattern.Contains(providerTransactionRef);
+
             var events = await _db.Set<EventLog>()
                 .AsNoTracking()
                 .Where(x =>
                     !x.IsDeleted &&
                     x.Type.StartsWith("StripeWebhook:") &&
-                    ((paymentIntentRef != null && x.PropertiesJson.ToLower().Contains(paymentIntentRef)) ||
-                     (checkoutSessionRef != null && x.PropertiesJson.ToLower().Contains(checkoutSessionRef)) ||
-                     (providerTransactionRef != null && x.PropertiesJson.ToLower().Contains(providerTransactionRef))))
+                    ((paymentIntentPattern != null && EF.Functions.Like(x.PropertiesJson, paymentIntentPattern, QueryLikePattern.EscapeCharacter)) ||
+                     (checkoutSessionPattern != null && EF.Functions.Like(x.PropertiesJson, checkoutSessionPattern, QueryLikePattern.EscapeCharacter)) ||
+                     (providerTransactionPattern != null && EF.Functions.Like(x.PropertiesJson, providerTransactionPattern, QueryLikePattern.EscapeCharacter))))
                 .OrderByDescending(x => x.OccurredAtUtc)
-                .Take(12)
+                .Take(50)
                 .Select(x => new
                 {
                     EventType = x.Type,
@@ -569,22 +582,29 @@ namespace Darwin.Application.Billing.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            return events.Select(x => new PaymentProviderEventItemDto
-            {
-                EventType = x.EventType,
-                OccurredAtUtc = x.OccurredAtUtc,
-                IdempotencyKey = x.IdempotencyKey,
-                CorrelationKind = BillingProviderAuditFormatter.ResolveCorrelationKind(
+            return events
+                .Where(x => BillingProviderAuditFormatter.HasCorrelation(
                     x.PropertiesJson,
                     paymentIntentRef,
                     checkoutSessionRef,
-                    providerTransactionRef),
-                CorrelationReference = BillingProviderAuditFormatter.ResolveCorrelationReference(
-                    x.PropertiesJson,
-                    paymentIntentRef,
-                    checkoutSessionRef,
-                    providerTransactionRef)
-            }).ToList();
+                    providerTransactionRef))
+                .Take(12)
+                .Select(x => new PaymentProviderEventItemDto
+                {
+                    EventType = x.EventType,
+                    OccurredAtUtc = x.OccurredAtUtc,
+                    IdempotencyKey = x.IdempotencyKey,
+                    CorrelationKind = BillingProviderAuditFormatter.ResolveCorrelationKind(
+                        x.PropertiesJson,
+                        paymentIntentRef,
+                        checkoutSessionRef,
+                        providerTransactionRef),
+                    CorrelationReference = BillingProviderAuditFormatter.ResolveCorrelationReference(
+                        x.PropertiesJson,
+                        paymentIntentRef,
+                        checkoutSessionRef,
+                        providerTransactionRef)
+                }).ToList();
         }
     }
 
@@ -635,21 +655,21 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 refundsQuery = refundsQuery.Where(x =>
-                    x.Refund.Reason.ToLower().Contains(term) ||
-                    x.Payment.Provider.ToLower().Contains(term) ||
-                    (x.Payment.ProviderTransactionRef != null && x.Payment.ProviderTransactionRef.ToLower().Contains(term)) ||
-                    (x.Payment.ProviderPaymentIntentRef != null && x.Payment.ProviderPaymentIntentRef.ToLower().Contains(term)) ||
-                    (x.Payment.ProviderCheckoutSessionRef != null && x.Payment.ProviderCheckoutSessionRef.ToLower().Contains(term)) ||
-                    _db.Set<Order>().Any(o => o.Id == x.Refund.OrderId && !o.IsDeleted && o.OrderNumber.ToLower().Contains(term)) ||
+                    EF.Functions.Like(x.Refund.Reason, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Payment.Provider, term, QueryLikePattern.EscapeCharacter) ||
+                    (x.Payment.ProviderTransactionRef != null && EF.Functions.Like(x.Payment.ProviderTransactionRef, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Payment.ProviderPaymentIntentRef != null && EF.Functions.Like(x.Payment.ProviderPaymentIntentRef, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Payment.ProviderCheckoutSessionRef != null && EF.Functions.Like(x.Payment.ProviderCheckoutSessionRef, term, QueryLikePattern.EscapeCharacter)) ||
+                    _db.Set<Order>().Any(o => o.Id == x.Refund.OrderId && !o.IsDeleted && EF.Functions.Like(o.OrderNumber, term, QueryLikePattern.EscapeCharacter)) ||
                     (x.Payment.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
                         c.Id == x.Payment.CustomerId.Value &&
                         !c.IsDeleted &&
-                        (c.FirstName.ToLower().Contains(term) ||
-                         c.LastName.ToLower().Contains(term) ||
-                         c.Email.ToLower().Contains(term) ||
-                         (c.CompanyName != null && c.CompanyName.ToLower().Contains(term)))))
+                        (EF.Functions.Like(c.FirstName, term, QueryLikePattern.EscapeCharacter) ||
+                         EF.Functions.Like(c.LastName, term, QueryLikePattern.EscapeCharacter) ||
+                         EF.Functions.Like(c.Email, term, QueryLikePattern.EscapeCharacter) ||
+                         (c.CompanyName != null && EF.Functions.Like(c.CompanyName, term, QueryLikePattern.EscapeCharacter)))))
                 );
             }
 
@@ -681,11 +701,12 @@ namespace Darwin.Application.Billing.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            await EnrichRefundsAsync(items, ct).ConfigureAwait(false);
+            var nowUtc = DateTime.UtcNow;
+            await EnrichRefundsAsync(items, nowUtc, ct).ConfigureAwait(false);
             return (items, total);
         }
 
-        private async Task EnrichRefundsAsync(List<BillingRefundListItemDto> items, CancellationToken ct)
+        private async Task EnrichRefundsAsync(List<BillingRefundListItemDto> items, DateTime nowUtc, CancellationToken ct)
         {
             if (items.Count == 0)
             {
@@ -736,7 +757,7 @@ namespace Darwin.Application.Billing.Queries
                 }
 
                 item.LastRefundEventAtUtc = item.CompletedAtUtc ?? item.CreatedAtUtc;
-                item.OpenAgeHours = BillingRefundTimelineFormatter.CalculateOpenAgeHours(item.CreatedAtUtc, item.CompletedAtUtc);
+                item.OpenAgeHours = BillingRefundTimelineFormatter.CalculateOpenAgeHours(item.CreatedAtUtc, item.CompletedAtUtc, nowUtc);
                 item.ProviderReferenceState = BillingRefundTimelineFormatter.ResolveProviderReferenceState(
                     item.PaymentProviderReference,
                     item.PaymentProviderPaymentIntentRef,
@@ -817,10 +838,10 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 accountsQuery = accountsQuery.Where(x =>
-                    x.Name.ToLower().Contains(term) ||
-                    (x.Code != null && x.Code.ToLower().Contains(term)));
+                    EF.Functions.Like(x.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    (x.Code != null && EF.Functions.Like(x.Code, term, QueryLikePattern.EscapeCharacter)));
             }
 
             var total = await accountsQuery.CountAsync(ct).ConfigureAwait(false);
@@ -911,10 +932,10 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 expensesQuery = expensesQuery.Where(x =>
-                    x.Category.ToLower().Contains(term) ||
-                    x.Description.ToLower().Contains(term));
+                    EF.Functions.Like(x.Category, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Description, term, QueryLikePattern.EscapeCharacter));
             }
 
             var total = await expensesQuery.CountAsync(ct).ConfigureAwait(false);
@@ -1022,16 +1043,16 @@ namespace Darwin.Application.Billing.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 journalEntriesQuery = journalEntriesQuery.Where(x =>
-                    x.Description.ToLower().Contains(term) ||
+                    EF.Functions.Like(x.Description, term, QueryLikePattern.EscapeCharacter) ||
                     x.Lines.Any(l =>
                         !l.IsDeleted &&
                         _db.Set<FinancialAccount>().Any(a =>
                             a.Id == l.AccountId &&
                             !a.IsDeleted &&
-                            (a.Name.ToLower().Contains(term) ||
-                             (a.Code != null && a.Code.ToLower().Contains(term))))));
+                            (EF.Functions.Like(a.Name, term, QueryLikePattern.EscapeCharacter) ||
+                             (a.Code != null && EF.Functions.Like(a.Code, term, QueryLikePattern.EscapeCharacter))))));
             }
 
             var total = await journalEntriesQuery.CountAsync(ct).ConfigureAwait(false);
@@ -1192,9 +1213,9 @@ namespace Darwin.Application.Billing.Queries
             return lastEventAtUtc;
         }
 
-        public static int CalculateOpenAgeHours(DateTime createdAtUtc, DateTime? paidAtUtc)
+        public static int CalculateOpenAgeHours(DateTime createdAtUtc, DateTime? paidAtUtc, DateTime nowUtc)
         {
-            var endAtUtc = paidAtUtc ?? DateTime.UtcNow;
+            var endAtUtc = paidAtUtc ?? nowUtc;
             var age = endAtUtc - createdAtUtc;
             return age.TotalHours <= 0 ? 0 : (int)Math.Floor(age.TotalHours);
         }
@@ -1235,9 +1256,9 @@ namespace Darwin.Application.Billing.Queries
 
     internal static class BillingRefundTimelineFormatter
     {
-        public static int CalculateOpenAgeHours(DateTime createdAtUtc, DateTime? completedAtUtc)
+        public static int CalculateOpenAgeHours(DateTime createdAtUtc, DateTime? completedAtUtc, DateTime nowUtc)
         {
-            var endAtUtc = completedAtUtc ?? DateTime.UtcNow;
+            var endAtUtc = completedAtUtc ?? nowUtc;
             var age = endAtUtc - createdAtUtc;
             return age.TotalHours <= 0 ? 0 : (int)Math.Floor(age.TotalHours);
         }
@@ -1271,6 +1292,17 @@ namespace Darwin.Application.Billing.Queries
 
     internal static class BillingProviderAuditFormatter
     {
+        public static bool HasCorrelation(
+            string propertiesJson,
+            string? paymentIntentRef,
+            string? checkoutSessionRef,
+            string? providerTransactionRef)
+        {
+            return Contains(propertiesJson, paymentIntentRef) ||
+                   Contains(propertiesJson, checkoutSessionRef) ||
+                   Contains(propertiesJson, providerTransactionRef);
+        }
+
         public static string ResolveCorrelationKind(
             string propertiesJson,
             string? paymentIntentRef,
@@ -1337,8 +1369,62 @@ namespace Darwin.Application.Billing.Queries
 
         private static bool Contains(string propertiesJson, string? value)
         {
-            return !string.IsNullOrWhiteSpace(value) &&
-                   propertiesJson.Contains(value, StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(propertiesJson))
+            {
+                return false;
+            }
+
+            try
+            {
+                using var document = JsonDocument.Parse(propertiesJson);
+                return ContainsJsonValue(document.RootElement, value);
+            }
+            catch (JsonException)
+            {
+                return propertiesJson.Contains(value, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        private static bool ContainsJsonValue(JsonElement element, string value)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    foreach (var property in element.EnumerateObject())
+                    {
+                        if (ContainsJsonValue(property.Value, value))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+
+                case JsonValueKind.Array:
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        if (ContainsJsonValue(item, value))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+
+                case JsonValueKind.String:
+                    return string.Equals(element.GetString(), value, StringComparison.OrdinalIgnoreCase);
+
+                case JsonValueKind.Number:
+                    return string.Equals(element.GetRawText(), value, StringComparison.OrdinalIgnoreCase);
+
+                default:
+                    return false;
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
@@ -53,19 +54,19 @@ namespace Darwin.Application.Businesses.Queries
                         : string.IsNullOrWhiteSpace(((inviter.FirstName ?? string.Empty) + " " + (inviter.LastName ?? string.Empty)).Trim())
                             ? inviter.Email
                             : ((inviter.FirstName ?? string.Empty) + " " + (inviter.LastName ?? string.Empty)).Trim(),
-                    EffectiveStatus = invitation.Status == BusinessInvitationStatus.Pending && invitation.ExpiresAtUtc < utcNow
+                    EffectiveStatus = invitation.Status == BusinessInvitationStatus.Pending && invitation.ExpiresAtUtc <= utcNow
                         ? BusinessInvitationStatus.Expired
                         : invitation.Status
                 };
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
-                var statusMatches = BusinessInvitationSearch.ResolveStatusSearch(q);
-                var roleMatches = BusinessInvitationSearch.ResolveRoleSearch(q);
+                var q = QueryLikePattern.Contains(query);
+                var statusMatches = BusinessInvitationSearch.ResolveStatusSearch(query);
+                var roleMatches = BusinessInvitationSearch.ResolveRoleSearch(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.Invitation.Email.ToLower().Contains(q) ||
-                    x.InvitedByDisplayName.ToLower().Contains(q) ||
+                    EF.Functions.Like(x.Invitation.Email, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.InvitedByDisplayName, q, QueryLikePattern.EscapeCharacter) ||
                     statusMatches.Contains(x.EffectiveStatus) ||
                     roleMatches.Contains(x.Invitation.Role));
             }
@@ -112,15 +113,37 @@ namespace Darwin.Application.Businesses.Queries
     {
         public static IReadOnlyList<BusinessInvitationStatus> ResolveStatusSearch(string term)
         {
-            return Enum.GetValues<BusinessInvitationStatus>()
-                .Where(status => status.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
+            return Resolve(term, new (BusinessInvitationStatus Value, string[] Tokens)[]
+            {
+                (BusinessInvitationStatus.Pending, ["pending", "open"]),
+                (BusinessInvitationStatus.Accepted, ["accepted", "accept"]),
+                (BusinessInvitationStatus.Revoked, ["revoked", "revoke", "cancelled", "canceled"]),
+                (BusinessInvitationStatus.Expired, ["expired", "expire"])
+            });
         }
 
         public static IReadOnlyList<BusinessMemberRole> ResolveRoleSearch(string term)
         {
-            return Enum.GetValues<BusinessMemberRole>()
-                .Where(role => role.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+            return Resolve(term, new (BusinessMemberRole Value, string[] Tokens)[]
+            {
+                (BusinessMemberRole.Owner, ["owner"]),
+                (BusinessMemberRole.Manager, ["manager"]),
+                (BusinessMemberRole.Staff, ["staff"])
+            });
+        }
+
+        private static IReadOnlyList<T> Resolve<T>(string term, IReadOnlyList<(T Value, string[] Tokens)> entries)
+            where T : struct, Enum
+        {
+            var normalized = term.Trim();
+            if (normalized.Length == 0)
+            {
+                return Array.Empty<T>();
+            }
+
+            return entries
+                .Where(entry => entry.Tokens.Any(token => token.Contains(normalized, StringComparison.OrdinalIgnoreCase)))
+                .Select(entry => entry.Value)
                 .ToArray();
         }
     }

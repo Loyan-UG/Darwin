@@ -702,9 +702,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var parsedRowVersion = string.IsNullOrWhiteSpace(rowVersion)
-                ? Array.Empty<byte>()
-                : Convert.FromBase64String(rowVersion);
+            var parsedRowVersion = DecodeBase64RowVersion(rowVersion);
 
             var result = await _setCancelAtPeriodEnd.HandleAsync(
                 businessId,
@@ -740,8 +738,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 query: null,
                 filter: BusinessMemberSupportFilter.All,
                 ct);
+            var nowUtc = DateTime.UtcNow;
             var attentionMembers = items
-                .Where(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > DateTime.UtcNow))
+                .Where(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > nowUtc))
                 .Take(5)
                 .Select(x => new BusinessMemberListItemVm
                 {
@@ -762,7 +761,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return PartialView("~/Views/Businesses/_SetupMembersPreview.cshtml", new BusinessSetupMembersPreviewVm
             {
                 BusinessId = businessId,
-                AttentionCount = items.Count(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > DateTime.UtcNow)),
+                AttentionCount = items.Count(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > nowUtc)),
                 Items = attentionMembers
             });
         }

@@ -62,14 +62,22 @@ namespace Darwin.Application.Catalog.Commands
             // 4) Concurrency guard: RowVersion must match the current value
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
-            if (!currentVersion.SequenceEqual(requestVersion))
+            if (requestVersion.Length == 0 || !currentVersion.SequenceEqual(requestVersion))
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
 
             // 5) Soft delete the aggregate root. 
             //    EF global query filter will hide this and any dependent rows still referencing it.
             entity.IsDeleted = true;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

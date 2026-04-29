@@ -41,7 +41,7 @@ namespace Darwin.Infrastructure.Security.Jwt
         {
             var settings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
-                .FirstAsync(ct)
+                .FirstAsync(x => !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (!settings.JwtEnabled)
@@ -131,7 +131,7 @@ namespace Darwin.Infrastructure.Security.Jwt
 
             var settings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
-                .FirstAsync(ct)
+                .FirstAsync(x => !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             string? effectiveDeviceId = null;
@@ -170,7 +170,7 @@ namespace Darwin.Infrastructure.Security.Jwt
 
             var settings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
-                .FirstAsync(ct)
+                .FirstAsync(x => !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             var tokens = _db.Set<UserToken>();

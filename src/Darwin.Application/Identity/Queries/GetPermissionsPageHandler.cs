@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application;
+using Darwin.Application.Common;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
@@ -43,8 +44,10 @@ namespace Darwin.Application.Identity.Queries
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var term = searchTerm.Trim().ToLowerInvariant();
-                query = query.Where(p => p.Key.ToLower().Contains(term) || p.DisplayName.ToLower().Contains(term));
+                var term = QueryLikePattern.Contains(searchTerm);
+                query = query.Where(p =>
+                    EF.Functions.Like(p.Key, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(p.DisplayName, term, QueryLikePattern.EscapeCharacter));
             }
 
             var total = await query.CountAsync(ct);

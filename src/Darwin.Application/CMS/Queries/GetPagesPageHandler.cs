@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Enums;
@@ -43,7 +44,7 @@ namespace Darwin.Application.CMS.Queries
         {
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
+            query = string.IsNullOrWhiteSpace(query) ? null : QueryLikePattern.Contains(query);
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
             var nowUtc = DateTime.UtcNow;
 
@@ -52,8 +53,8 @@ namespace Darwin.Application.CMS.Queries
                 .Where(p =>
                     !p.IsDeleted &&
                     (query == null ||
-                     p.Translations.Any(t => t.Title.ToLower().Contains(query)) ||
-                     p.Translations.Any(t => t.Slug.ToLower().Contains(query))));
+                     p.Translations.Any(t => !t.IsDeleted && EF.Functions.Like(t.Title, query, QueryLikePattern.EscapeCharacter)) ||
+                     p.Translations.Any(t => !t.IsDeleted && EF.Functions.Like(t.Slug, query, QueryLikePattern.EscapeCharacter))));
 
             q = filter switch
             {
@@ -77,8 +78,8 @@ namespace Darwin.Application.CMS.Queries
                 .Select(p => new PageListItemDto
                 {
                     Id = p.Id,
-                    Title = p.Translations.Where(t => t.Culture == culture).Select(t => t.Title).FirstOrDefault()
-                        ?? p.Translations.Select(t => t.Title).FirstOrDefault(),
+                    Title = p.Translations.Where(t => !t.IsDeleted && t.Culture == culture).Select(t => t.Title).FirstOrDefault()
+                        ?? p.Translations.Where(t => !t.IsDeleted).Select(t => t.Title).FirstOrDefault(),
                     Status = p.Status,
                     PublishStartUtc = p.PublishStartUtc,
                     PublishEndUtc = p.PublishEndUtc,

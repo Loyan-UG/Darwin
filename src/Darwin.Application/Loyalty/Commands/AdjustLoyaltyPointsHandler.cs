@@ -89,7 +89,7 @@ namespace Darwin.Application.Loyalty.Commands
 
             // Optional optimistic concurrency check when a row version is supplied.
             if (dto.RowVersion is not null &&
-                !account.RowVersion.SequenceEqual(dto.RowVersion))
+                !(account.RowVersion ?? Array.Empty<byte>()).SequenceEqual(dto.RowVersion))
             {
                 return Result<AdjustLoyaltyPointsResultDto>.Fail(
                     _localizer["ConcurrencyConflictLoyaltyAccountModified"]);

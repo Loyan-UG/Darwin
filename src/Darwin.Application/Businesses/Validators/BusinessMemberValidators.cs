@@ -26,7 +26,7 @@ namespace Darwin.Application.Businesses.Validators
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.BusinessId).NotEmpty();
             RuleFor(x => x.UserId).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.OverrideReason)
                 .NotEmpty()
                 .MaximumLength(1000)
@@ -42,7 +42,7 @@ namespace Darwin.Application.Businesses.Validators
         public BusinessMemberDeleteDtoValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.OverrideReason)
                 .NotEmpty()
                 .MaximumLength(1000)

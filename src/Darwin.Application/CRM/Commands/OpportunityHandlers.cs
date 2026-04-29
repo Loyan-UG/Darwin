@@ -84,7 +84,9 @@ namespace Darwin.Application.CRM.Commands
                 throw new InvalidOperationException(_localizer["OpportunityNotFound"]);
             }
 
-            if (!opportunity.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = opportunity.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -104,7 +106,14 @@ namespace Darwin.Application.CRM.Commands
                 UnitPriceMinor = x.UnitPriceMinor
             }).ToList();
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 }

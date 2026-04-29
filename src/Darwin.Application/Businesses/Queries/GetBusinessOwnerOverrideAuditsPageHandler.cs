@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -60,12 +61,12 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.AffectedUserDisplayName.ToLower().Contains(q) ||
-                    x.AffectedUserEmail.ToLower().Contains(q) ||
-                    x.Reason.ToLower().Contains(q) ||
-                    (x.ActorDisplayName != null && x.ActorDisplayName.ToLower().Contains(q)));
+                    EF.Functions.Like(x.AffectedUserDisplayName, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.AffectedUserEmail, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Reason, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.ActorDisplayName != null && EF.Functions.Like(x.ActorDisplayName, q, QueryLikePattern.EscapeCharacter)));
             }
 
             var total = await baseQuery.CountAsync(ct);

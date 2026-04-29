@@ -52,9 +52,9 @@ namespace Darwin.Application.Orders.Commands
                 throw new InvalidOperationException(_localizer["PaymentNotFoundForOrder"]);
             }
 
-            if (payment.Status is PaymentStatus.Failed or PaymentStatus.Voided)
+            if (payment.Status is not (PaymentStatus.Captured or PaymentStatus.Completed))
             {
-                throw new ValidationException(_localizer["RefundsNotAllowedForFailedOrVoidedPayments"]);
+                throw new ValidationException(_localizer["OnlyCapturedOrCompletedPaymentsCanBeRefunded"]);
             }
 
             if (!string.Equals(payment.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase))
@@ -73,6 +73,7 @@ namespace Darwin.Application.Orders.Commands
                 throw new ValidationException(_localizer["RefundAmountExceedsRemainingCapturedAmount"]);
             }
 
+            var nowUtc = DateTime.UtcNow;
             var refund = new Refund
             {
                 OrderId = dto.OrderId,
@@ -81,7 +82,7 @@ namespace Darwin.Application.Orders.Commands
                 Currency = dto.Currency.ToUpperInvariant(),
                 Reason = dto.Reason.Trim(),
                 Status = RefundStatus.Completed,
-                CompletedAtUtc = DateTime.UtcNow
+                CompletedAtUtc = nowUtc
             };
 
             _db.Set<Refund>().Add(refund);

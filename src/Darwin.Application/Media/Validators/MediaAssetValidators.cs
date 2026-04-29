@@ -29,7 +29,7 @@ namespace Darwin.Application.CMS.Media.Validators
         public MediaAssetEditValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.Alt).MaximumLength(256);
             RuleFor(x => x.Title).MaximumLength(256).When(x => x.Title != null);
             RuleFor(x => x.Role).MaximumLength(64).When(x => x.Role != null);

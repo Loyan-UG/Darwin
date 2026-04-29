@@ -62,7 +62,9 @@ namespace Darwin.Application.Catalog.Commands
 
 
             // Concurrency check
-            if (!product.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = product.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ProductModifiedByAnotherUserPleaseReload"]);
 
             // Map basic fields
@@ -73,7 +75,14 @@ namespace Darwin.Application.Catalog.Commands
             SyncTranslations(product, dto);
             SyncVariants(product, dto);
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ProductModifiedByAnotherUserPleaseReload"]);
+            }
         }
 
         private void SyncTranslations(Product product, ProductEditDto dto)

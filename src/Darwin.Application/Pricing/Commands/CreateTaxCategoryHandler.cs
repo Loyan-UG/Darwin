@@ -34,13 +34,14 @@ namespace Darwin.Application.Pricing.Commands
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new ValidationException(v.Errors);
 
+            var normalizedName = dto.Name.Trim();
             var exists = await _db.Set<TaxCategory>().AsNoTracking()
-                .AnyAsync(t => t.Name.ToLower() == dto.Name.ToLower(), ct);
+                .AnyAsync(t => t.Name == normalizedName, ct);
             if (exists) throw new ValidationException(_localizer["TaxCategoryNameMustBeUnique"]);
 
             var entity = new TaxCategory
             {
-                Name = dto.Name.Trim(),
+                Name = normalizedName,
                 VatRate = dto.VatRate,
                 EffectiveFromUtc = dto.EffectiveFromUtc,
                 Notes = dto.Notes

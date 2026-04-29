@@ -38,19 +38,32 @@ namespace Darwin.Application.Pricing.Commands
             var entity = await _db.Set<TaxCategory>().FirstOrDefaultAsync(t => t.Id == dto.Id, ct);
             if (entity is null) throw new InvalidOperationException(_localizer["TaxCategoryNotFound"]);
 
-            if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+                throw new ValidationException(_localizer["RowVersionRequired"]);
+
+            var currentRowVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (!currentRowVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
+            var normalizedName = dto.Name.Trim();
             var exists = await _db.Set<TaxCategory>().AsNoTracking()
-                .AnyAsync(t => t.Id != dto.Id && t.Name.ToLower() == dto.Name.ToLower(), ct);
+                .AnyAsync(t => t.Id != dto.Id && t.Name == normalizedName, ct);
             if (exists) throw new ValidationException(_localizer["TaxCategoryNameMustBeUnique"]);
 
-            entity.Name = dto.Name.Trim();
+            entity.Name = normalizedName;
             entity.VatRate = dto.VatRate;
             entity.EffectiveFromUtc = dto.EffectiveFromUtc;
             entity.Notes = dto.Notes;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 }

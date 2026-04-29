@@ -11,7 +11,7 @@ namespace Darwin.Application.Identity.Validators
         public UserRolesUpdateValidator()
         {
             RuleFor(x => x.UserId).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.RoleIds).NotNull();
         }
     }

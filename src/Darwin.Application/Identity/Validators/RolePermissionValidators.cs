@@ -11,7 +11,7 @@ namespace Darwin.Application.Identity.Validators
         public RolePermissionsUpdateValidator()
         {
             RuleFor(x => x.RoleId).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.PermissionIds).NotNull();
             // Detailed existence checks are performed in the handler against the database.
         }

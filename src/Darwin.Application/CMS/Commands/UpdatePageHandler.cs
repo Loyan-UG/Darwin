@@ -38,7 +38,9 @@ namespace Darwin.Application.CMS.Commands
             if (entity == null)
                 throw new ValidationException(_localizer["PageNotFound"]);
 
-            if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? System.Array.Empty<byte>();
+            var currentVersion = entity.RowVersion ?? System.Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["PageModifiedByAnotherUser"]);
 
             var sanitizer = HtmlSanitizerFactory.Create();
@@ -66,7 +68,14 @@ namespace Darwin.Application.CMS.Commands
 
             PageRootSnapshot.SyncFromPrimaryTranslation(entity);
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["PageModifiedByAnotherUser"]);
+            }
         }
     }
 }

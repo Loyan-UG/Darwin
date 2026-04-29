@@ -52,7 +52,7 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public bool EmailConfirmed { get; set; }
         public DateTime? LockoutEndUtc { get; set; }
         public int MobileDeviceCount { get; set; }
-        public bool IsLockedOut => LockoutEndUtc.HasValue && LockoutEndUtc.Value > DateTime.UtcNow;
+        public bool IsLockedOut { get; set; }
 
         /// <summary>Concurrency token to detect conflicting updates.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -175,8 +175,8 @@ namespace Darwin.WebAdmin.ViewModels.Identity
 
         public UserAddressesSectionVm AddressesSection { get; set; } = new();
 
-        /// <summary>Returns whether the user is currently locked out.</summary>
-        public bool IsLockedOut => LockoutEndUtc.HasValue && LockoutEndUtc.Value > DateTime.UtcNow;
+        /// <summary>Indicates whether the user is currently locked out at render time.</summary>
+        public bool IsLockedOut { get; set; }
     }
 
     /// <summary>

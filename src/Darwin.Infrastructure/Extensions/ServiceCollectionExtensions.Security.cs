@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,17 +28,73 @@ namespace Darwin.Infrastructure.Extensions
             var keysPath = configuration["DataProtection:KeysPath"];
             if (string.IsNullOrWhiteSpace(keysPath))
             {
-                // Fallback: use a local subfolder under the current content root.
-                keysPath = Path.Combine(AppContext.BaseDirectory, "dpkeys");
+                keysPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Darwin",
+                    "DataProtectionKeys");
             }
 
             Directory.CreateDirectory(keysPath);
 
-            services.AddDataProtection()
-                    .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
-            // .SetApplicationName("Darwin") // Optional: set if multiple apps share the same keys.
+            var builder = services
+                .AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+                .SetApplicationName(configuration["DataProtection:ApplicationName"] ?? "Darwin");
+
+            var certificate = TryFindProtectionCertificate(configuration);
+            if (certificate is not null)
+            {
+                builder.ProtectKeysWithCertificate(certificate);
+            }
+            else if (configuration.GetValue<bool>("DataProtection:RequireKeyEncryption"))
+            {
+                throw new InvalidOperationException(
+                    "DataProtection:RequireKeyEncryption is true, but no usable DataProtection certificate was found. " +
+                    "Configure DataProtection:CertificateThumbprint and optional StoreName/StoreLocation.");
+            }
 
             return services;
+        }
+
+        private static X509Certificate2? TryFindProtectionCertificate(IConfiguration configuration)
+        {
+            var thumbprint = NormalizeThumbprint(configuration["DataProtection:CertificateThumbprint"]);
+            if (string.IsNullOrWhiteSpace(thumbprint))
+            {
+                return null;
+            }
+
+            var storeName = Enum.TryParse<StoreName>(
+                configuration["DataProtection:CertificateStoreName"],
+                ignoreCase: true,
+                out var configuredStoreName)
+                ? configuredStoreName
+                : StoreName.My;
+
+            var storeLocation = Enum.TryParse<StoreLocation>(
+                configuration["DataProtection:CertificateStoreLocation"],
+                ignoreCase: true,
+                out var configuredStoreLocation)
+                ? configuredStoreLocation
+                : StoreLocation.CurrentUser;
+
+            using var store = new X509Store(storeName, storeLocation);
+            store.Open(OpenFlags.ReadOnly);
+
+            return store.Certificates
+                .Find(X509FindType.FindByThumbprint, thumbprint, validOnly: false)
+                .OfType<X509Certificate2>()
+                .FirstOrDefault(certificate => certificate.HasPrivateKey);
+        }
+
+        private static string? NormalizeThumbprint(string? thumbprint)
+        {
+            if (string.IsNullOrWhiteSpace(thumbprint))
+            {
+                return null;
+            }
+
+            return thumbprint.Replace(" ", string.Empty, StringComparison.Ordinal).ToUpperInvariant();
         }
 
 

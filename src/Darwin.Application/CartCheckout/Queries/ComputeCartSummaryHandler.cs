@@ -141,13 +141,13 @@ namespace Darwin.Application.CartCheckout.Queries
                         ValueId = v.Id,
                         OptionId = v.AddOnOptionId,
                         PriceDeltaMinor = v.PriceDeltaMinor,
-                        ValueLabel = v.Translations.Where(t => t.Culture == normalizedCulture).Select(t => t.Label).FirstOrDefault()
-                            ?? v.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
+                        ValueLabel = v.Translations.Where(t => !t.IsDeleted && t.Culture == normalizedCulture).Select(t => t.Label).FirstOrDefault()
+                            ?? v.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
                             ?? v.Label,
                         OptionLabel = _db.Set<AddOnOption>()
                             .Where(o => o.Id == v.AddOnOptionId && !o.IsDeleted)
-                            .Select(o => o.Translations.Where(t => t.Culture == normalizedCulture).Select(t => t.Label).FirstOrDefault()
-                                ?? o.Translations.Where(t => t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
+                            .Select(o => o.Translations.Where(t => !t.IsDeleted && t.Culture == normalizedCulture).Select(t => t.Label).FirstOrDefault()
+                                ?? o.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
                                 ?? o.Label)
                             .FirstOrDefault() ?? string.Empty
                     })
@@ -223,7 +223,7 @@ namespace Darwin.Application.CartCheckout.Queries
                         !p.IsDeleted &&
                         p.IsActive &&
                         p.Code != null &&
-                        p.Code.ToUpper() == normalizedCode &&
+                        p.Code == normalizedCode &&
                         (p.StartsAtUtc == null || p.StartsAtUtc <= now) &&
                         (p.EndsAtUtc == null || p.EndsAtUtc >= now), ct);
 

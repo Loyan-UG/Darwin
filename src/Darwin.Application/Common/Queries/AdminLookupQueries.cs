@@ -183,20 +183,31 @@ namespace Darwin.Application.Common.Queries
 
         public GetFinancialAccountLookupHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public Task<List<LookupItemDto>> HandleAsync(Guid businessId, CancellationToken ct = default)
+        public async Task<List<LookupItemDto>> HandleAsync(Guid businessId, CancellationToken ct = default)
         {
-            return _db.Set<FinancialAccount>()
+            var rows = await _db.Set<FinancialAccount>()
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted && x.BusinessId == businessId)
                 .OrderBy(x => x.Code)
                 .ThenBy(x => x.Name)
+                .Select(x => new
+                {
+                    Id = x.Id,
+                    x.Code,
+                    x.Name,
+                    x.Type
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            return rows
                 .Select(x => new LookupItemDto
                 {
                     Id = x.Id,
                     Label = string.IsNullOrWhiteSpace(x.Code) ? x.Name : x.Code + " - " + x.Name,
                     SecondaryLabel = x.Type.ToString()
                 })
-                .ToListAsync(ct);
+                .ToList();
         }
     }
 
@@ -209,19 +220,31 @@ namespace Darwin.Application.Common.Queries
 
         public GetPaymentLookupHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public Task<List<LookupItemDto>> HandleAsync(CancellationToken ct = default)
+        public async Task<List<LookupItemDto>> HandleAsync(CancellationToken ct = default)
         {
-            return _db.Set<Payment>()
+            var rows = await _db.Set<Payment>()
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted)
                 .OrderByDescending(x => x.PaidAtUtc ?? x.CreatedAtUtc)
+                .Select(x => new
+                {
+                    Id = x.Id,
+                    x.Provider,
+                    x.Currency,
+                    x.AmountMinor,
+                    x.Status
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            return rows
                 .Select(x => new LookupItemDto
                 {
                     Id = x.Id,
                     Label = x.Provider + " - " + x.Currency + " " + ((decimal)x.AmountMinor / 100M).ToString("0.00"),
                     SecondaryLabel = x.Status.ToString()
                 })
-                .ToListAsync(ct);
+                .ToList();
         }
     }
 }

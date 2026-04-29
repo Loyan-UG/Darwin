@@ -17,7 +17,7 @@ namespace Darwin.Application.Identity.Validators
         public PermissionEditValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.DisplayName).NotEmpty();
         }
     }
@@ -31,7 +31,7 @@ namespace Darwin.Application.Identity.Validators
         public PermissionDeleteValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 }

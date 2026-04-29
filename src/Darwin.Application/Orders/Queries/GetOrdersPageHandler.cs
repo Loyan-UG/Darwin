@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Orders;
 using Microsoft.EntityFrameworkCore;
@@ -30,15 +31,15 @@ namespace Darwin.Application.Orders.Queries
             if (pageSize < 1) pageSize = 20;
             if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
+            query = string.IsNullOrWhiteSpace(query) ? null : QueryLikePattern.Contains(query);
 
             var baseQuery = _db.Set<Order>()
                 .AsNoTracking()
                 .Where(o => !o.IsDeleted)
                 .Where(o =>
                     query == null ||
-                    o.OrderNumber.ToLower().Contains(query) ||
-                    o.Currency.ToLower().Contains(query));
+                    EF.Functions.Like(o.OrderNumber, query, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(o.Currency, query, QueryLikePattern.EscapeCharacter));
 
             baseQuery = filter switch
             {

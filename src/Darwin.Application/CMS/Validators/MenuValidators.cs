@@ -25,7 +25,9 @@ namespace Darwin.Application.CMS.Validators
         public MenuEditDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
             RuleFor(x => x.Name).NotEmpty().MaximumLength(128);
             RuleForEach(x => x.Items).SetValidator(new MenuItemDtoValidator(localizer));
         }

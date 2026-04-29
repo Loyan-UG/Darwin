@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
 using Microsoft.EntityFrameworkCore;
@@ -66,18 +67,18 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.Audit.RecipientEmail.ToLower().Contains(q) ||
-                    (x.Audit.IntendedRecipientEmail != null && x.Audit.IntendedRecipientEmail.ToLower().Contains(q)) ||
-                    x.Audit.Subject.ToLower().Contains(q) ||
-                    x.Audit.Status.ToLower().Contains(q) ||
-                    x.Audit.Provider.ToLower().Contains(q) ||
-                    (x.Audit.FlowKey != null && x.Audit.FlowKey.ToLower().Contains(q)) ||
-                    (x.Audit.TemplateKey != null && x.Audit.TemplateKey.ToLower().Contains(q)) ||
-                    (x.Audit.CorrelationKey != null && x.Audit.CorrelationKey.ToLower().Contains(q)) ||
-                    (x.Audit.ProviderMessageId != null && x.Audit.ProviderMessageId.ToLower().Contains(q)) ||
-                    (x.BusinessName != null && x.BusinessName.ToLower().Contains(q)));
+                    EF.Functions.Like(x.Audit.RecipientEmail, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.Audit.IntendedRecipientEmail != null && EF.Functions.Like(x.Audit.IntendedRecipientEmail, q, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(x.Audit.Subject, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Audit.Status, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Audit.Provider, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.Audit.FlowKey != null && EF.Functions.Like(x.Audit.FlowKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Audit.TemplateKey != null && EF.Functions.Like(x.Audit.TemplateKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Audit.CorrelationKey != null && EF.Functions.Like(x.Audit.CorrelationKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Audit.ProviderMessageId != null && EF.Functions.Like(x.Audit.ProviderMessageId, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.BusinessName != null && EF.Functions.Like(x.BusinessName, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (!string.IsNullOrWhiteSpace(recipientEmail))
@@ -265,6 +266,7 @@ namespace Darwin.Application.Businesses.Queries
                     chainResolvedOnly,
                     businessId,
                     stalePendingThresholdUtc,
+                    nowUtc,
                     ct)
                 .ConfigureAwait(false);
 
@@ -384,6 +386,7 @@ namespace Darwin.Application.Businesses.Queries
             bool chainResolvedOnly,
             Guid? businessId,
             DateTime stalePendingThresholdUtc,
+            DateTime nowUtc,
             CancellationToken ct)
         {
             if (repeatedFailuresOnly ||
@@ -416,17 +419,17 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(query);
                 queuedQuery = queuedQuery.Where(x =>
-                    x.Operation.RecipientEmail.ToLower().Contains(q) ||
-                    (x.Operation.IntendedRecipientEmail != null && x.Operation.IntendedRecipientEmail.ToLower().Contains(q)) ||
-                    x.Operation.Subject.ToLower().Contains(q) ||
-                    x.Operation.Provider.ToLower().Contains(q) ||
-                    x.Operation.Status.ToLower().Contains(q) ||
-                    (x.Operation.FlowKey != null && x.Operation.FlowKey.ToLower().Contains(q)) ||
-                    (x.Operation.TemplateKey != null && x.Operation.TemplateKey.ToLower().Contains(q)) ||
-                    (x.Operation.CorrelationKey != null && x.Operation.CorrelationKey.ToLower().Contains(q)) ||
-                    (x.BusinessName != null && x.BusinessName.ToLower().Contains(q)));
+                    EF.Functions.Like(x.Operation.RecipientEmail, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.Operation.IntendedRecipientEmail != null && EF.Functions.Like(x.Operation.IntendedRecipientEmail, q, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(x.Operation.Subject, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Operation.Provider, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Operation.Status, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.Operation.FlowKey != null && EF.Functions.Like(x.Operation.FlowKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Operation.TemplateKey != null && EF.Functions.Like(x.Operation.TemplateKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Operation.CorrelationKey != null && EF.Functions.Like(x.Operation.CorrelationKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.BusinessName != null && EF.Functions.Like(x.BusinessName, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (!string.IsNullOrWhiteSpace(recipientEmail))
@@ -457,7 +460,6 @@ namespace Darwin.Application.Businesses.Queries
                 queuedQuery = queuedQuery.Where(x => x.Operation.Status == "Failed" && x.Operation.BusinessId != null);
             }
 
-            var nowUtc = DateTime.UtcNow;
             var rows = await queuedQuery
                 .OrderByDescending(x => x.Operation.LastAttemptAtUtc ?? x.Operation.CreatedAtUtc)
                 .ToListAsync(ct)

@@ -56,7 +56,8 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var retryCutoffUtc = DateTime.UtcNow.AddSeconds(-options.RetryCooldownSeconds);
+        var nowUtc = DateTime.UtcNow;
+        var retryCutoffUtc = nowUtc.AddSeconds(-options.RetryCooldownSeconds);
 
         var items = await db.Set<EmailDispatchOperation>()
             .Where(x => !x.IsDeleted)
@@ -72,14 +73,17 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
         foreach (var item in items)
         {
             item.AttemptCount += 1;
-            item.LastAttemptAtUtc = DateTime.UtcNow;
-            await db.SaveChangesAsync(ct).ConfigureAwait(false);
+            item.LastAttemptAtUtc = nowUtc;
+            if (!await QueueSaveResilience.TrySaveClaimAsync(db, _logger, "email dispatch operation", item.Id, ct).ConfigureAwait(false))
+            {
+                continue;
+            }
 
             try
             {
                 await ProcessOneAsync(scope.ServiceProvider, item, ct).ConfigureAwait(false);
                 item.Status = "Succeeded";
-                item.ProcessedAtUtc = DateTime.UtcNow;
+                item.ProcessedAtUtc = nowUtc;
                 item.FailureReason = null;
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
@@ -89,7 +93,7 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
                 _logger.LogWarning(ex, "Email dispatch operation {OperationId} failed.", item.Id);
             }
 
-            await db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "email dispatch operation", item.Id, ct).ConfigureAwait(false);
         }
     }
 

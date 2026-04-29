@@ -20,7 +20,7 @@ namespace Darwin.Application.Shipping.Validators
         public ShippingMethodEditValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
             RuleFor(x => x.Carrier).NotEmpty().MaximumLength(64);
             RuleFor(x => x.Service).NotEmpty().MaximumLength(64);

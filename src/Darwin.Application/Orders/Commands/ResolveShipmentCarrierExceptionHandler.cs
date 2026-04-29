@@ -23,9 +23,15 @@ public sealed class ResolveShipmentCarrierExceptionHandler
 
     public async Task<Result> HandleAsync(ResolveShipmentCarrierExceptionDto dto, CancellationToken ct = default)
     {
-        if (dto.ShipmentId == Guid.Empty || dto.RowVersion.Length == 0)
+        if (dto.ShipmentId == Guid.Empty)
         {
             return Result.Fail(_localizer["InvalidDeleteRequest"]);
+        }
+
+        var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+        if (rowVersion.Length == 0)
+        {
+            return Result.Fail(_localizer["RowVersionRequired"]);
         }
 
         var normalizedNote = dto.ResolutionNote?.Trim();
@@ -43,7 +49,8 @@ public sealed class ResolveShipmentCarrierExceptionHandler
             return Result.Fail(_localizer["ShipmentNotFoundForCarrierResolution"]);
         }
 
-        if (!shipment.RowVersion.SequenceEqual(dto.RowVersion))
+        var currentRowVersion = shipment.RowVersion ?? Array.Empty<byte>();
+        if (!currentRowVersion.SequenceEqual(rowVersion))
         {
             return Result.Fail(_localizer["ItemConcurrencyConflict"]);
         }

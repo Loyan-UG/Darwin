@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,13 +41,13 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.Name.ToLower().Contains(q) ||
-                    (x.LegalName != null && x.LegalName.ToLower().Contains(q)) ||
-                    (x.SupportEmail != null && x.SupportEmail.ToLower().Contains(q)) ||
-                    (x.CommunicationSenderName != null && x.CommunicationSenderName.ToLower().Contains(q)) ||
-                    (x.CommunicationReplyToEmail != null && x.CommunicationReplyToEmail.ToLower().Contains(q)));
+                    EF.Functions.Like(x.Name, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.LegalName != null && EF.Functions.Like(x.LegalName, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.SupportEmail != null && EF.Functions.Like(x.SupportEmail, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.CommunicationSenderName != null && EF.Functions.Like(x.CommunicationSenderName, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.CommunicationReplyToEmail != null && EF.Functions.Like(x.CommunicationReplyToEmail, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (setupOnly)

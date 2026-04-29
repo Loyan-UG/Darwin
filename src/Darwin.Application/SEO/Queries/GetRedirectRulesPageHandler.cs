@@ -33,6 +33,7 @@ namespace Darwin.Application.SEO.Queries
                 .Select(r => new RedirectRuleListItemDto
                 {
                     Id = r.Id,
+                    RowVersion = r.RowVersion,
                     FromPath = r.FromPath,
                     To = r.To,
                     IsPermanent = r.IsPermanent,

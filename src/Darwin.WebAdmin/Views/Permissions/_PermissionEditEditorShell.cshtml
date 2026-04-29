@@ -59,7 +59,7 @@
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="Key" />
-        <input type="hidden" asp-for="RowVersion" />
+        <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
         <input type="hidden" asp-for="IsSystem" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -103,7 +103,7 @@
                                 data-bs-target="#confirmDeleteModal"
                                 data-action="@Url.Action("Delete", "Permissions")"
                                 data-id="@Model.Id"
-                                data-rowversion="@Convert.ToBase64String(Model.RowVersion)"
+                                data-rowversion="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))"
                                 data-name="@Model.Key"
                                 data-hx-target="#permission-editor-shell"
                                 data-hx-swap="outerHTML"

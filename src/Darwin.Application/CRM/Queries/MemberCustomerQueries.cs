@@ -111,11 +111,23 @@ public sealed class GetCurrentMemberCustomerContextHandler
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        var consents = await _db.Set<Consent>()
+        var consentRows = await _db.Set<Consent>()
             .AsNoTracking()
             .Where(x => x.CustomerId == customer.Customer.Id)
             .OrderByDescending(x => x.GrantedAtUtc)
             .Take(20)
+            .Select(x => new
+            {
+                Id = x.Id,
+                x.Type,
+                Granted = x.Granted,
+                GrantedAtUtc = x.GrantedAtUtc,
+                RevokedAtUtc = x.RevokedAtUtc
+            })
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        var consents = consentRows
             .Select(x => new MemberCustomerConsentDto
             {
                 Id = x.Id,
@@ -124,19 +136,18 @@ public sealed class GetCurrentMemberCustomerContextHandler
                 GrantedAtUtc = x.GrantedAtUtc,
                 RevokedAtUtc = x.RevokedAtUtc
             })
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+            .ToList();
 
-        var interactions = await _db.Set<Interaction>()
+        var interactionRows = await _db.Set<Interaction>()
             .AsNoTracking()
             .Where(x => x.CustomerId == customer.Customer.Id)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(20)
-            .Select(x => new MemberCustomerInteractionDto
+            .Select(x => new
             {
                 Id = x.Id,
-                Type = x.Type.ToString(),
-                Channel = x.Channel.ToString(),
+                x.Type,
+                x.Channel,
                 Subject = x.Subject,
                 ContentPreview = x.Content == null
                     ? null
@@ -145,6 +156,18 @@ public sealed class GetCurrentMemberCustomerContextHandler
             })
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
+        var interactions = interactionRows
+            .Select(x => new MemberCustomerInteractionDto
+            {
+                Id = x.Id,
+                Type = x.Type.ToString(),
+                Channel = x.Channel.ToString(),
+                Subject = x.Subject,
+                ContentPreview = x.ContentPreview,
+                CreatedAtUtc = x.CreatedAtUtc
+            })
+            .ToList();
 
         var displayName = ((customer.User.FirstName ?? string.Empty) + " " + (customer.User.LastName ?? string.Empty)).Trim();
         if (string.IsNullOrWhiteSpace(displayName))

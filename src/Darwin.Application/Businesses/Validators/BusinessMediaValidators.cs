@@ -27,7 +27,7 @@ namespace Darwin.Application.Businesses.Validators
             RuleFor(x => x.BusinessId).NotEmpty();
             RuleFor(x => x.Url).NotEmpty().MaximumLength(1000);
             RuleFor(x => x.Caption).MaximumLength(500);
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 
@@ -39,7 +39,7 @@ namespace Darwin.Application.Businesses.Validators
         public BusinessMediaDeleteDtoValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 }

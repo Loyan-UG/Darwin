@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using System.Text.Json;
+using Darwin.Application.AdminTextOverrides;
 using Darwin.Application.Businesses.DTOs;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
@@ -48,6 +47,7 @@ namespace Darwin.Application.Businesses.Validators
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.OperationalStatus).IsInEnum();
             RuleFor(x => x.DefaultCurrency).NotEmpty().MaximumLength(3);
             RuleFor(x => x.DefaultCulture).NotEmpty().MaximumLength(20);
             RuleFor(x => x.DefaultTimeZoneId).NotEmpty().MaximumLength(64);
@@ -70,7 +70,7 @@ namespace Darwin.Application.Businesses.Validators
             RuleFor(x => x.LegalName).MaximumLength(300);
             RuleFor(x => x.TaxId).MaximumLength(100);
             RuleFor(x => x.ShortDescription).MaximumLength(1000);
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 
@@ -82,7 +82,7 @@ namespace Darwin.Application.Businesses.Validators
         public BusinessDeleteDtoValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 
@@ -94,7 +94,7 @@ namespace Darwin.Application.Businesses.Validators
         public BusinessLifecycleActionDtoValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.Note).MaximumLength(500);
         }
     }
@@ -110,10 +110,9 @@ namespace Darwin.Application.Businesses.Validators
 
             try
             {
-                var root = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
-                return root is not null;
+                return AdminTextOverrideJsonCatalog.IsValid(json);
             }
-            catch (JsonException)
+            catch (ArgumentException)
             {
                 return false;
             }

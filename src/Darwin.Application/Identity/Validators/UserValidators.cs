@@ -21,7 +21,7 @@ namespace Darwin.Application.Identity.Validators
         public UserEditValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.Locale).NotEmpty();
             RuleFor(x => x.Timezone).NotEmpty();
             RuleFor(x => x.Currency).NotEmpty().Length(3);

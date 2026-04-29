@@ -51,12 +51,7 @@ public sealed class ProcessStripeWebhookHandler
             return Result<StripeWebhookProcessingResultDto>.Fail(_localizer["StripeWebhookEventTypeRequired"]);
         }
 
-        var existing = await _db.Set<EventLog>()
-            .AsNoTracking()
-            .AnyAsync(x => x.IdempotencyKey == eventId, ct)
-            .ConfigureAwait(false);
-
-        if (existing)
+        if (await EventAlreadyProcessedAsync(eventId, ct).ConfigureAwait(false))
         {
             return Result<StripeWebhookProcessingResultDto>.Ok(new StripeWebhookProcessingResultDto
             {
@@ -119,8 +114,32 @@ public sealed class ProcessStripeWebhookHandler
                 break;
         }
 
-        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateException)
+        {
+            if (await EventAlreadyProcessedAsync(eventId, ct).ConfigureAwait(false))
+            {
+                result.IsDuplicate = true;
+                result.MatchedPaymentId = null;
+                result.MatchedSubscriptionInvoiceId = null;
+                result.MatchedBusinessSubscriptionId = null;
+                return Result<StripeWebhookProcessingResultDto>.Ok(result);
+            }
+
+            throw;
+        }
+
         return Result<StripeWebhookProcessingResultDto>.Ok(result);
+    }
+
+    private Task<bool> EventAlreadyProcessedAsync(string eventId, CancellationToken ct)
+    {
+        return _db.Set<EventLog>()
+            .AsNoTracking()
+            .AnyAsync(x => !x.IsDeleted && x.IdempotencyKey == eventId, ct);
     }
 
     private async Task ApplyCheckoutSessionCompletedAsync(

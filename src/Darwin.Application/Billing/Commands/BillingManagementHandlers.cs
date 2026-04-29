@@ -77,9 +77,16 @@ namespace Darwin.Application.Billing.Commands
                 throw new InvalidOperationException(_localizer["PaymentNotFound"]);
             }
 
-            if (!payment.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = payment.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            if (!BillingStatusTransitionPolicy.IsPaymentTransitionAllowed(payment.Status, dto.Status))
+            {
+                throw new ValidationException(_localizer["UnsupportedPaymentStatusTransition"]);
             }
 
             payment.BusinessId = dto.BusinessId;
@@ -96,11 +103,57 @@ namespace Darwin.Application.Billing.Commands
             payment.ProviderCheckoutSessionRef = NormalizeOptional(dto.ProviderCheckoutSessionRef);
             payment.PaidAtUtc = dto.PaidAtUtc;
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private static string? NormalizeOptional(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    internal static class BillingStatusTransitionPolicy
+    {
+        public static bool IsPaymentTransitionAllowed(Domain.Enums.PaymentStatus current, Domain.Enums.PaymentStatus target)
+        {
+            if (current == target)
+            {
+                return true;
+            }
+
+            return current switch
+            {
+                Domain.Enums.PaymentStatus.Pending => target is
+                    Domain.Enums.PaymentStatus.Authorized or
+                    Domain.Enums.PaymentStatus.Captured or
+                    Domain.Enums.PaymentStatus.Completed or
+                    Domain.Enums.PaymentStatus.Failed or
+                    Domain.Enums.PaymentStatus.Voided,
+
+                Domain.Enums.PaymentStatus.Authorized => target is
+                    Domain.Enums.PaymentStatus.Captured or
+                    Domain.Enums.PaymentStatus.Completed or
+                    Domain.Enums.PaymentStatus.Failed or
+                    Domain.Enums.PaymentStatus.Voided,
+
+                Domain.Enums.PaymentStatus.Captured => target is
+                    Domain.Enums.PaymentStatus.Completed or
+                    Domain.Enums.PaymentStatus.Refunded,
+
+                Domain.Enums.PaymentStatus.Completed => target == Domain.Enums.PaymentStatus.Refunded,
+
+                Domain.Enums.PaymentStatus.Failed or
+                Domain.Enums.PaymentStatus.Refunded or
+                Domain.Enums.PaymentStatus.Voided => false,
+
+                _ => false
+            };
+        }
     }
 
     public sealed class CreateFinancialAccountHandler
@@ -164,7 +217,9 @@ namespace Darwin.Application.Billing.Commands
                 throw new InvalidOperationException(_localizer["FinancialAccountNotFound"]);
             }
 
-            if (!account.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = account.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -174,7 +229,14 @@ namespace Darwin.Application.Billing.Commands
             account.Type = dto.Type;
             account.Code = NormalizeOptional(dto.Code);
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private static string? NormalizeOptional(string? value) =>
@@ -241,7 +303,9 @@ namespace Darwin.Application.Billing.Commands
                 throw new InvalidOperationException(_localizer["ExpenseNotFound"]);
             }
 
-            if (!expense.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = expense.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -253,7 +317,14 @@ namespace Darwin.Application.Billing.Commands
             expense.AmountMinor = dto.AmountMinor;
             expense.ExpenseDateUtc = dto.ExpenseDateUtc;
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 
@@ -325,7 +396,9 @@ namespace Darwin.Application.Billing.Commands
                 throw new InvalidOperationException(_localizer["JournalEntryNotFound"]);
             }
 
-            if (!entry.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = entry.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -343,7 +416,14 @@ namespace Darwin.Application.Billing.Commands
                 Memo = NormalizeOptional(x.Memo)
             }).ToList();
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private static string? NormalizeOptional(string? value) =>

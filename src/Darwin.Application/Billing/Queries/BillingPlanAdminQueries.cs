@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Enums;
@@ -31,11 +32,11 @@ public sealed class GetBillingPlansAdminPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim().ToLowerInvariant();
+            var term = QueryLikePattern.Contains(query);
             baseQuery = baseQuery.Where(x =>
-                x.Code.ToLower().Contains(term) ||
-                x.Name.ToLower().Contains(term) ||
-                (x.Description != null && x.Description.ToLower().Contains(term)));
+                EF.Functions.Like(x.Code, term, QueryLikePattern.EscapeCharacter) ||
+                EF.Functions.Like(x.Name, term, QueryLikePattern.EscapeCharacter) ||
+                (x.Description != null && EF.Functions.Like(x.Description, term, QueryLikePattern.EscapeCharacter)));
         }
 
         baseQuery = filter switch

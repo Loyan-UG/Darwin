@@ -1,4 +1,4 @@
-﻿using Darwin.Application.Catalog.DTOs;
+using Darwin.Application.Catalog.DTOs;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
 
@@ -25,10 +25,12 @@ namespace Darwin.Application.Catalog.Validators
 
     public sealed class CategoryEditDtoValidator : AbstractValidator<CategoryEditDto>
     {
-        public CategoryEditDtoValidator()
+        public CategoryEditDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
             RuleForEach(x => x.Translations).SetValidator(new CategoryTranslationDtoValidator());
         }
     }

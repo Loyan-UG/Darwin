@@ -91,8 +91,9 @@ namespace Darwin.Application.Orders.Commands
         private async Task<string> NextOrderNumberAsync(CancellationToken ct)
         {
             // Simple approach: use count+1. Replace with a dedicated sequence table in the future to avoid race conditions.
+            var nowUtc = DateTime.UtcNow;
             var lastCount = await _db.Set<Order>().AsNoTracking().CountAsync(ct);
-            return $"D-{DateTime.UtcNow:yyyyMMdd}-{lastCount + 1:D5}";
+            return $"D-{nowUtc:yyyyMMdd}-{lastCount + 1:D5}";
         }
     }
 }

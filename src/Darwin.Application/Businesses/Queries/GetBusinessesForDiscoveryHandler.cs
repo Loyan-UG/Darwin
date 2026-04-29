@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Application.Common.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Loyalty;
@@ -59,11 +60,11 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.Query))
             {
-                var q = request.Query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(request.Query);
                 businessQuery = businessQuery.Where(x =>
-                    x.Name.ToLower().Contains(q) ||
-                    (x.ShortDescription != null && x.ShortDescription.ToLower().Contains(q)) ||
-                    (x.AdminTextOverridesJson != null && x.AdminTextOverridesJson.ToLower().Contains(q)));
+                    EF.Functions.Like(x.Name, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.ShortDescription != null && EF.Functions.Like(x.ShortDescription, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.AdminTextOverridesJson != null && EF.Functions.Like(x.AdminTextOverridesJson, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (request.HasActiveLoyaltyProgram.HasValue)
@@ -98,9 +99,9 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.City))
             {
-                var city = request.City.Trim().ToLowerInvariant();
+                var city = QueryLikePattern.Contains(request.City);
                 primaryLocationQuery = primaryLocationQuery.Where(l =>
-                    l.City != null && l.City.ToLower().Contains(city));
+                    l.City != null && EF.Functions.Like(l.City, city, QueryLikePattern.EscapeCharacter));
             }
 
             if (!string.IsNullOrWhiteSpace(request.CountryCode))
@@ -112,17 +113,17 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.AddressQuery))
             {
-                var aq = request.AddressQuery.Trim().ToLowerInvariant();
+                var aq = QueryLikePattern.Contains(request.AddressQuery);
 
                 // Match against common address fields and location name to support partial address search.
                 primaryLocationQuery = primaryLocationQuery.Where(l =>
-                    (l.Name != null && l.Name.ToLower().Contains(aq)) ||
-                    (l.AddressLine1 != null && l.AddressLine1.ToLower().Contains(aq)) ||
-                    (l.AddressLine2 != null && l.AddressLine2.ToLower().Contains(aq)) ||
-                    (l.City != null && l.City.ToLower().Contains(aq)) ||
-                    (l.Region != null && l.Region.ToLower().Contains(aq)) ||
-                    (l.PostalCode != null && l.PostalCode.ToLower().Contains(aq)) ||
-                    (l.CountryCode != null && l.CountryCode.ToLower().Contains(aq)));
+                    (l.Name != null && EF.Functions.Like(l.Name, aq, QueryLikePattern.EscapeCharacter)) ||
+                    (l.AddressLine1 != null && EF.Functions.Like(l.AddressLine1, aq, QueryLikePattern.EscapeCharacter)) ||
+                    (l.AddressLine2 != null && EF.Functions.Like(l.AddressLine2, aq, QueryLikePattern.EscapeCharacter)) ||
+                    (l.City != null && EF.Functions.Like(l.City, aq, QueryLikePattern.EscapeCharacter)) ||
+                    (l.Region != null && EF.Functions.Like(l.Region, aq, QueryLikePattern.EscapeCharacter)) ||
+                    (l.PostalCode != null && EF.Functions.Like(l.PostalCode, aq, QueryLikePattern.EscapeCharacter)) ||
+                    (l.CountryCode != null && EF.Functions.Like(l.CountryCode, aq, QueryLikePattern.EscapeCharacter)));
             }
 
             // Optional proximity: apply a DB-agnostic bounding box filter in SQL.

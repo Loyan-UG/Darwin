@@ -1,13 +1,14 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using System.Collections;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -30,31 +31,25 @@ namespace Darwin.Application.Identity.Commands
             _localizer = localizer;
         }
 
-        /// <summary>
-        /// Marks a permission as deleted when possible.
-        /// </summary>
-        /// <param name="dto">Delete DTO with id and row version.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>A result indicating success or failure.</returns>
         public async Task<Result> HandleAsync(PermissionDeleteDto dto, CancellationToken ct = default)
         {
-            await _validator.ValidateAndThrowAsync(dto, ct);
+            var validation = await _validator.ValidateAsync(dto, ct);
+            if (!validation.IsValid)
+                return Result.Fail(dto.RowVersion is null || dto.RowVersion.Length == 0
+                    ? _localizer["RowVersionRequired"]
+                    : _localizer["InvalidDeleteRequest"]);
 
             var permission = await _db.Set<Permission>().FirstOrDefaultAsync(p => p.Id == dto.Id && !p.IsDeleted, ct);
             if (permission is null)
                 return Result.Fail(_localizer["PermissionNotFound"]);
 
-            // Concurrency check
-            if (permission.RowVersion is not null && dto.RowVersion is not null && permission.RowVersion.Length > 0)
-            {
-                if (!StructuralComparisons.StructuralEqualityComparer.Equals(permission.RowVersion, dto.RowVersion))
-                    return Result.Fail(_localizer["ConcurrencyConflict"]);
-            }
+            var currentVersion = permission.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(dto.RowVersion))
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
 
             if (permission.IsSystem)
                 return Result.Fail(_localizer["SystemPermissionsCannotBeDeleted"]);
 
-            // Check role assignments
             var assigned = await _db.Set<RolePermission>()
                 .AnyAsync(rp => rp.PermissionId == permission.Id && !rp.IsDeleted, ct);
 
@@ -62,7 +57,15 @@ namespace Darwin.Application.Identity.Commands
                 return Result.Fail(_localizer["PermissionAssignedToRolesCannotDelete"]);
 
             permission.IsDeleted = true;
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

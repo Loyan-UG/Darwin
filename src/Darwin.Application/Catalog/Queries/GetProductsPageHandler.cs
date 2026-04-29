@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Catalog.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,7 +42,7 @@ namespace Darwin.Application.Catalog.Queries
         {
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
+            query = string.IsNullOrWhiteSpace(query) ? null : QueryLikePattern.Contains(query);
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
 
             var productsQuery = _db.Set<Product>()
@@ -49,9 +50,9 @@ namespace Darwin.Application.Catalog.Queries
                 .Where(p =>
                     !p.IsDeleted &&
                     (query == null ||
-                     p.Translations.Any(t => !t.IsDeleted && t.Name.ToLower().Contains(query)) ||
-                     p.Translations.Any(t => !t.IsDeleted && t.Slug != null && t.Slug.ToLower().Contains(query)) ||
-                     p.Variants.Any(v => !v.IsDeleted && v.Sku.ToLower().Contains(query))));
+                     p.Translations.Any(t => !t.IsDeleted && EF.Functions.Like(t.Name, query, QueryLikePattern.EscapeCharacter)) ||
+                     p.Translations.Any(t => !t.IsDeleted && t.Slug != null && EF.Functions.Like(t.Slug, query, QueryLikePattern.EscapeCharacter)) ||
+                     p.Variants.Any(v => !v.IsDeleted && EF.Functions.Like(v.Sku, query, QueryLikePattern.EscapeCharacter))));
 
             productsQuery = filter switch
             {

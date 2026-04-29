@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Common;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
@@ -54,13 +55,13 @@ public sealed class GetMobileDevicesPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim().ToLowerInvariant();
+            var term = QueryLikePattern.Contains(query);
             baseQuery = baseQuery.Where(x =>
-                x.user.Email.ToLower().Contains(term) ||
-                (((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)).ToLower()).Contains(term) ||
-                x.device.DeviceId.ToLower().Contains(term) ||
-                (x.device.AppVersion != null && x.device.AppVersion.ToLower().Contains(term)) ||
-                (x.device.DeviceModel != null && x.device.DeviceModel.ToLower().Contains(term)));
+                EF.Functions.Like(x.user.Email, term, QueryLikePattern.EscapeCharacter) ||
+                EF.Functions.Like(((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)), term, QueryLikePattern.EscapeCharacter) ||
+                EF.Functions.Like(x.device.DeviceId, term, QueryLikePattern.EscapeCharacter) ||
+                (x.device.AppVersion != null && EF.Functions.Like(x.device.AppVersion, term, QueryLikePattern.EscapeCharacter)) ||
+                (x.device.DeviceModel != null && EF.Functions.Like(x.device.DeviceModel, term, QueryLikePattern.EscapeCharacter)));
         }
 
         if (platform.HasValue)

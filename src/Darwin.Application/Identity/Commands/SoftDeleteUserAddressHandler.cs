@@ -1,9 +1,9 @@
-﻿using System.Collections;
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
-using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
@@ -30,27 +30,33 @@ namespace Darwin.Application.Identity.Commands
 
         public async Task<Result> HandleAsync(AddressDeleteDto dto, CancellationToken ct = default)
         {
-            await _validator.ValidateAndThrowAsync(dto, ct);
+            var validation = await _validator.ValidateAsync(dto, ct);
+            if (!validation.IsValid)
+                return Result.Fail(dto.RowVersion is null || dto.RowVersion.Length == 0
+                    ? _localizer["RowVersionRequired"]
+                    : _localizer["InvalidDeleteRequest"]);
 
             var address = await _db.Set<Address>().FirstOrDefaultAsync(a => a.Id == dto.Id && !a.IsDeleted, ct);
             if (address is null)
                 return Result.Fail(_localizer["AddressNotFound"]);
 
-            // Concurrency check
-            if (address.RowVersion is not null && dto.RowVersion is not null && address.RowVersion.Length > 0)
-            {
-                if (!StructuralComparisons.StructuralEqualityComparer.Equals(address.RowVersion, dto.RowVersion))
-                    return Result.Fail(_localizer["ConcurrencyConflict"]);
-            }
+            var currentVersion = address.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(dto.RowVersion))
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
 
-            // Clear defaults if any
             address.IsDefaultBilling = false;
             address.IsDefaultShipping = false;
-
-            // Soft delete
             address.IsDeleted = true;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

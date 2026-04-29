@@ -383,7 +383,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 return RedirectOrHtmx(nameof(Payments), new { businessId, page, pageSize, q, queue });
             }
 
-            var version = DecodeRowVersion(rowVersion);
+            var version = DecodeBase64RowVersion(rowVersion);
 
             var result = await _updatePaymentDisputeReview
                 .HandleAsync(new UpdatePaymentDisputeReviewDto
@@ -537,7 +537,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 return RedirectOrHtmx(nameof(Webhooks), new { page, pageSize, q, queue });
             }
 
-            var version = DecodeRowVersion(rowVersion);
+            var version = DecodeBase64RowVersion(rowVersion);
 
             var result = await _updateBillingWebhookDelivery
                 .HandleAsync(new UpdateBillingWebhookDeliveryDto
@@ -893,21 +893,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
+            var nowUtc = DateTime.UtcNow;
             var vm = new PaymentEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,
-                CreatedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = nowUtc,
                 Currency = defaultCurrency,
                 Status = PaymentStatus.Pending,
-                LastFinancialEventAtUtc = DateTime.UtcNow,
+                LastFinancialEventAtUtc = nowUtc,
                 ProviderReferenceState = "Reference missing",
                 NeedsReconciliation = true,
                 SupportPlaybooks = BuildPaymentSupportPlaybooks(new PaymentEditDto
                 {
-                    CreatedAtUtc = DateTime.UtcNow,
+                    CreatedAtUtc = nowUtc,
                     Currency = defaultCurrency,
                     Status = PaymentStatus.Pending,
-                    LastFinancialEventAtUtc = DateTime.UtcNow,
+                    LastFinancialEventAtUtc = nowUtc,
                     ProviderReferenceState = "Reference missing",
                     NeedsReconciliation = true
                 })
@@ -1355,10 +1356,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public async Task<IActionResult> CreateExpense(Guid? businessId = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var nowUtc = DateTime.UtcNow;
             var vm = new ExpenseEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,
-                ExpenseDateUtc = DateTime.UtcNow
+                ExpenseDateUtc = nowUtc
             };
             await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderExpenseEditor(vm, isCreate: true);
@@ -1528,10 +1530,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public async Task<IActionResult> CreateJournalEntry(Guid? businessId = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var nowUtc = DateTime.UtcNow;
             var vm = new JournalEntryEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,
-                EntryDateUtc = DateTime.UtcNow,
+                EntryDateUtc = nowUtc,
                 Lines =
                 [
                     new JournalEntryLineVm(),
@@ -1716,23 +1719,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             while (vm.Lines.Count < 2)
             {
                 vm.Lines.Add(new JournalEntryLineVm());
-            }
-        }
-
-        private static byte[] DecodeRowVersion(string? rowVersion)
-        {
-            if (string.IsNullOrWhiteSpace(rowVersion))
-            {
-                return Array.Empty<byte>();
-            }
-
-            try
-            {
-                return Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                return Array.Empty<byte>();
             }
         }
 

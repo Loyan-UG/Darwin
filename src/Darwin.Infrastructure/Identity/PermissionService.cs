@@ -28,7 +28,7 @@ namespace Darwin.Infrastructure.Identity
 
         /// <summary>
         /// Returns true when the user has the given permission key via any of their roles.
-        /// Comparison is case-insensitive on the key and ignores soft-deleted links.
+        /// Comparison uses the database key collation/citext behavior and ignores soft-deleted links.
         /// </summary>
         /// <param name="userId">User identifier.</param>
         /// <param name="permissionKey">Stable permission key (e.g. "FullAdminAccess").</param>
@@ -38,7 +38,7 @@ namespace Darwin.Infrastructure.Identity
             if (userId == Guid.Empty) return false;
             if (string.IsNullOrWhiteSpace(permissionKey)) return false;
 
-            var normalized = permissionKey.Trim().ToUpperInvariant();
+            var normalized = permissionKey.Trim();
 
             // SELECT 1
             // FROM   UserRoles ur
@@ -46,7 +46,7 @@ namespace Darwin.Infrastructure.Identity
             // JOIN   Permissions p ON p.Id = rp.PermissionId
             // WHERE  ur.UserId = @userId
             //   AND  ur.IsDeleted = 0 AND rp.IsDeleted = 0 AND p.IsDeleted = 0
-            //   AND  UPPER(p.Key) = @normalized
+            //   AND  p.Key = @normalized
             var has = await
                 (from ur in _db.Set<Darwin.Domain.Entities.Identity.UserRole>().AsNoTracking()
                  join rp in _db.Set<Darwin.Domain.Entities.Identity.RolePermission>().AsNoTracking()
@@ -55,7 +55,7 @@ namespace Darwin.Infrastructure.Identity
                      on rp.PermissionId equals p.Id
                  where ur.UserId == userId
                        && !ur.IsDeleted && !rp.IsDeleted && !p.IsDeleted
-                       && p.Key.ToUpper() == normalized
+                       && p.Key == normalized
                  select p.Id)
                 .AnyAsync(ct);
 

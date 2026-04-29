@@ -63,6 +63,11 @@ namespace Darwin.Application.Orders.Commands
             if (dto.AmountMinor <= 0 || dto.AmountMinor > order.GrandTotalGrossMinor)
                 throw new ValidationException(_localizer["InvalidPaymentAmount"]);
 
+            if (dto.Status is PaymentStatus.Refunded or PaymentStatus.Voided)
+                throw new ValidationException(_localizer["PaymentCreateStatusInvalid"]);
+
+            var nowUtc = DateTime.UtcNow;
+
             // Map to domain entity.
             var payment = new Payment
             {
@@ -75,14 +80,14 @@ namespace Darwin.Application.Orders.Commands
                 Currency = dto.Currency,
                 Status = dto.Status,
                 FailureReason = dto.Status == PaymentStatus.Failed ? dto.FailureReason : null,
-                PaidAtUtc = dto.Status == PaymentStatus.Captured ? DateTime.UtcNow : null
+                PaidAtUtc = dto.Status is PaymentStatus.Captured or PaymentStatus.Completed ? nowUtc : null
             };
 
             await _db.Set<Payment>().AddAsync(payment, ct);
 
             // Optional: if a captured payment is recorded while order is still early-stage,
             // advance to Paid to reduce clicks for admins.
-            if (dto.Status == PaymentStatus.Captured &&
+            if (dto.Status is PaymentStatus.Captured or PaymentStatus.Completed &&
                 (order.Status == OrderStatus.Created || order.Status == OrderStatus.Confirmed))
             {
                 order.Status = OrderStatus.Paid;

@@ -106,7 +106,9 @@ namespace Darwin.Application.CRM.Commands
                 throw new InvalidOperationException(_localizer["CustomerNotFound"]);
             }
 
-            if (!customer.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = customer.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -171,7 +173,14 @@ namespace Darwin.Application.CRM.Commands
                 existingAddress.IsDefaultShipping = addressDto.IsDefaultShipping;
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private static CustomerAddress MapAddress(CustomerAddressDto dto)
@@ -258,7 +267,9 @@ namespace Darwin.Application.CRM.Commands
                 throw new InvalidOperationException(_localizer["LeadNotFound"]);
             }
 
-            if (!lead.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = lead.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -274,7 +285,14 @@ namespace Darwin.Application.CRM.Commands
             lead.AssignedToUserId = dto.AssignedToUserId;
             lead.CustomerId = dto.CustomerId;
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private static string? NormalizeOptional(string? value) =>
@@ -307,7 +325,9 @@ namespace Darwin.Application.CRM.Commands
                 throw new InvalidOperationException(_localizer["LeadNotFound"]);
             }
 
-            if (!lead.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = lead.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -315,7 +335,15 @@ namespace Darwin.Application.CRM.Commands
             if (lead.CustomerId.HasValue)
             {
                 lead.Status = LeadStatus.Converted;
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+                }
+
                 return lead.CustomerId.Value;
             }
 
@@ -371,7 +399,15 @@ namespace Darwin.Application.CRM.Commands
             lead.CustomerId = existingCustomer.Id;
             lead.Status = LeadStatus.Converted;
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
             return existingCustomer.Id;
         }
 

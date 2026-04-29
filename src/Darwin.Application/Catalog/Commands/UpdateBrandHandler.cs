@@ -42,7 +42,9 @@ namespace Darwin.Application.Catalog.Commands
             if (brand is null) throw new InvalidOperationException(_localizer["BrandNotFound"]);
 
             // Concurrency check
-            if (!brand.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = brand.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             // Unique slug check if changed
@@ -96,7 +98,14 @@ namespace Darwin.Application.Catalog.Commands
                 throw new FluentValidation.ValidationException(_localizer["DuplicateCulturesNotAllowed"]);
             }
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 }

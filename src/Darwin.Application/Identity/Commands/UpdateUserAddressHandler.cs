@@ -38,12 +38,10 @@ namespace Darwin.Application.Identity.Commands
             if (address is null)
                 return Result.Fail(_localizer["AddressNotFound"]);
 
-            // Concurrency check
-            if (address.RowVersion is not null && dto.RowVersion is not null && address.RowVersion.Length > 0)
-            {
-                if (!StructuralComparisons.StructuralEqualityComparer.Equals(address.RowVersion, dto.RowVersion))
-                    return Result.Fail(_localizer["ConcurrencyConflict"]);
-            }
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = address.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
 
             // Update fields
             address.FullName = dto.FullName;
@@ -88,7 +86,15 @@ namespace Darwin.Application.Identity.Commands
                 address.IsDefaultShipping = false;
             }
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

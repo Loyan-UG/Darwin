@@ -1,6 +1,7 @@
 using Darwin.WebAdmin.Auth;
 using Darwin.WebAdmin.Localization;
 using Darwin.WebAdmin.Security;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -37,6 +38,29 @@ namespace Darwin.WebAdmin.Controllers.Admin
         protected void AddModelErrorMessage(string key)
         {
             ModelState.AddModelError(string.Empty, T(key));
+        }
+
+        protected void SetValidationErrorMessage(ValidationException ex, string fallbackKey)
+        {
+            var firstError = ex.Errors?.FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.ErrorMessage));
+            TempData["Error"] = firstError?.ErrorMessage ?? T(fallbackKey);
+        }
+
+        protected static byte[] DecodeBase64RowVersion(string? rowVersion)
+        {
+            if (string.IsNullOrWhiteSpace(rowVersion))
+            {
+                return Array.Empty<byte>();
+            }
+
+            try
+            {
+                return Convert.FromBase64String(rowVersion);
+            }
+            catch (FormatException)
+            {
+                return Array.Empty<byte>();
+            }
         }
     }
 }

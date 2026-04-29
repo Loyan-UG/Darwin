@@ -30,9 +30,15 @@ public sealed class ProvisionBusinessOnboardingHandler
 
     public async Task<Result<BusinessProvisionOnboardingResultDto>> HandleAsync(BusinessLifecycleActionDto dto, CancellationToken ct = default)
     {
-        if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+        if (dto.Id == Guid.Empty)
         {
             return Result<BusinessProvisionOnboardingResultDto>.Fail(_localizer["InvalidDeleteRequest"]);
+        }
+
+        var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+        if (rowVersion.Length == 0)
+        {
+            return Result<BusinessProvisionOnboardingResultDto>.Fail(_localizer["RowVersionRequired"]);
         }
 
         var business = await _db.Set<Business>()
@@ -44,7 +50,8 @@ public sealed class ProvisionBusinessOnboardingHandler
             return Result<BusinessProvisionOnboardingResultDto>.Fail(_localizer["BusinessNotFound"]);
         }
 
-        if (!business.RowVersion.SequenceEqual(dto.RowVersion))
+        var currentVersion = business.RowVersion ?? Array.Empty<byte>();
+        if (!currentVersion.SequenceEqual(rowVersion))
         {
             return Result<BusinessProvisionOnboardingResultDto>.Fail(_localizer["ConcurrencyConflictDetected"]);
         }

@@ -1,38 +1,58 @@
-﻿using System;
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Catalog;
+using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Commands
 {
     /// <summary>
     /// Performs a soft delete of a <see cref="Product"/> by setting <c>IsDeleted = true</c>.
-    /// Soft delete preserves audit trail and avoids hard data removal, which is important
-    /// for historical orders and references. No-op when the entity is already deleted or missing.
     /// </summary>
     public sealed class SoftDeleteProductHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        /// <summary>
-        /// Constructs the handler with the application DbContext abstraction.
-        /// </summary>
-        public SoftDeleteProductHandler(IAppDbContext db) => _db = db;
-
-        /// <summary>
-        /// Marks the specified product as deleted and commits the change.
-        /// </summary>
-        public async Task HandleAsync(Guid id, CancellationToken ct = default)
+        public SoftDeleteProductHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
-            var entity = await _db.Set<Product>()
-                                  .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
 
-            if (entity is null) return;
+        public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion, CancellationToken ct = default)
+        {
+            if (id == Guid.Empty)
+                return Result.Fail(_localizer["InvalidDeleteRequest"]);
 
-            entity.IsDeleted = true;
-            await _db.SaveChangesAsync(ct);
+            if (rowVersion is null || rowVersion.Length == 0)
+                return Result.Fail(_localizer["RowVersionRequired"]);
+
+            var product = await _db.Set<Product>()
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
+
+            if (product is null)
+                return Result.Fail(_localizer["ProductNotFound"]);
+
+            var currentVersion = product.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+
+            product.IsDeleted = true;
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
+            return Result.Ok();
         }
     }
 }

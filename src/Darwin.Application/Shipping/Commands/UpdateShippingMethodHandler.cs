@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Shipping;
 using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Validators;
 using Darwin.Domain.Entities.Shipping;
@@ -41,17 +42,24 @@ namespace Darwin.Application.Shipping.Commands
 
             if (method is null) throw new InvalidOperationException(_localizer["ShippingMethodNotFound"]);
 
-            if (!method.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+                throw new ValidationException(_localizer["RowVersionRequired"]);
+
+            var currentRowVersion = method.RowVersion ?? Array.Empty<byte>();
+            if (!currentRowVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
+            var carrier = ShippingMethodConventions.NormalizeCarrier(dto.Carrier);
+            var service = dto.Service.Trim();
             var exists = await _db.Set<ShippingMethod>().AsNoTracking()
-                .AnyAsync(m => m.Id != dto.Id && m.Carrier == dto.Carrier && m.Service == dto.Service, ct);
+                .AnyAsync(m => m.Id != dto.Id && m.Carrier == carrier && m.Service == service, ct);
             if (exists)
                 throw new ValidationException(_localizer["ShippingMethodCarrierServiceMustBeUnique"]);
 
             method.Name = dto.Name.Trim();
-            method.Carrier = dto.Carrier.Trim();
-            method.Service = dto.Service.Trim();
+            method.Carrier = carrier;
+            method.Service = service;
             method.CountriesCsv = string.IsNullOrWhiteSpace(dto.CountriesCsv) ? null : dto.CountriesCsv.Trim();
             method.IsActive = dto.IsActive;
             method.Currency = string.IsNullOrWhiteSpace(dto.Currency) ? null : dto.Currency.Trim();
@@ -68,7 +76,15 @@ namespace Darwin.Application.Shipping.Commands
                 });
             }
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
+
     }
 }

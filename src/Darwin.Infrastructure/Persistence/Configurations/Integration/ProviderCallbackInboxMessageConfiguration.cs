@@ -18,6 +18,9 @@ public sealed class ProviderCallbackInboxMessageConfiguration : IEntityTypeConfi
         builder.Property(x => x.FailureReason).HasMaxLength(1024);
 
         builder.HasIndex(x => new { x.Provider, x.Status, x.CreatedAtUtc });
-        builder.HasIndex(x => x.IdempotencyKey);
+        builder.HasIndex(x => new { x.Provider, x.IdempotencyKey })
+            .IsUnique()
+            .HasDatabaseName("UX_ProviderCallbackInboxMessages_Provider_IdempotencyKey")
+            .HasFilter("[IdempotencyKey] IS NOT NULL AND [IsDeleted] = 0");
     }
 }

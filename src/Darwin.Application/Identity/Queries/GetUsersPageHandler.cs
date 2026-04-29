@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Identity.DTOs;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,11 +37,11 @@ namespace Darwin.Application.Identity.Queries
 
             if (!string.IsNullOrWhiteSpace(emailFilter))
             {
-                var term = emailFilter.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(emailFilter);
                 q = q.Where(u =>
-                    u.Email.ToLower().Contains(term) ||
-                    (u.FirstName != null && u.FirstName.ToLower().Contains(term)) ||
-                    (u.LastName != null && u.LastName.ToLower().Contains(term)));
+                    EF.Functions.Like(u.Email, term, QueryLikePattern.EscapeCharacter) ||
+                    (u.FirstName != null && EF.Functions.Like(u.FirstName, term, QueryLikePattern.EscapeCharacter)) ||
+                    (u.LastName != null && EF.Functions.Like(u.LastName, term, QueryLikePattern.EscapeCharacter)));
             }
 
             var total = await q.CountAsync(ct);

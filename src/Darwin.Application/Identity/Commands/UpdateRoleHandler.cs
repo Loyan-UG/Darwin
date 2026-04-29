@@ -5,7 +5,6 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using System;
-using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,10 +40,9 @@ namespace Darwin.Application.Identity.Commands
             if (role == null) return Result.Fail(_localizer["RoleNotFound"]);
             if (role.IsSystem) return Result.Fail(_localizer["SystemRolesCannotBeEdited"]);
 
-            // optimistic concurrency (RowVersion)
-            if (dto.RowVersion != null && role.RowVersion != null &&
-                dto.RowVersion.Length > 0 && role.RowVersion.Length > 0 &&
-                !StructuralComparisons.StructuralEqualityComparer.Equals(dto.RowVersion, role.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = role.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
             }
@@ -53,7 +51,15 @@ namespace Darwin.Application.Identity.Commands
             role.DisplayName = dto.DisplayName?.Trim() ?? string.Empty;
             role.Description = dto.Description;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
+            }
+
             return Result.Ok();
         }
     }

@@ -38,19 +38,25 @@ namespace Darwin.Application.Pricing.Commands
             var entity = await _db.Set<Promotion>().FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
             if (entity is null) throw new InvalidOperationException(_localizer["PromotionNotFound"]);
 
-            if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+                throw new ValidationException(_localizer["RowVersionRequired"]);
+
+            var currentRowVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (!currentRowVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
-            if (!string.IsNullOrWhiteSpace(dto.Code))
+            var normalizedCode = string.IsNullOrWhiteSpace(dto.Code) ? null : CouponEligibility.NormalizeCode(dto.Code);
+            if (normalizedCode is not null)
             {
                 var exists = await _db.Set<Promotion>().AsNoTracking()
-                    .AnyAsync(p => p.Id != dto.Id && p.IsActive && p.Code != null && p.Code.ToLower() == dto.Code.ToLower(), ct);
+                    .AnyAsync(p => p.Id != dto.Id && p.IsActive && p.Code == normalizedCode, ct);
                 if (exists)
                     throw new ValidationException(_localizer["CouponCodeMustBeUniqueAmongActivePromotions"]);
             }
 
             entity.Name = dto.Name.Trim();
-            entity.Code = string.IsNullOrWhiteSpace(dto.Code) ? null : dto.Code.Trim();
+            entity.Code = normalizedCode;
             entity.Type = dto.Type;
             entity.AmountMinor = dto.AmountMinor;
             entity.Percent = dto.Percent;
@@ -63,7 +69,14 @@ namespace Darwin.Application.Pricing.Commands
             entity.PerCustomerLimit = dto.PerCustomerLimit;
             entity.IsActive = dto.IsActive;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
     }
 }

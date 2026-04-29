@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -44,11 +45,11 @@ namespace Darwin.Application.Identity.Queries
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var s = search.Trim().ToLowerInvariant();
+                var s = QueryLikePattern.Contains(search);
                 query = query.Where(r =>
-                    r.Key.ToLower().Contains(s) ||
-                    (r.DisplayName != null && r.DisplayName.ToLower().Contains(s)) ||
-                    (r.Description != null && r.Description.ToLower().Contains(s)));
+                    EF.Functions.Like(r.Key, s, QueryLikePattern.EscapeCharacter) ||
+                    (r.DisplayName != null && EF.Functions.Like(r.DisplayName, s, QueryLikePattern.EscapeCharacter)) ||
+                    (r.Description != null && EF.Functions.Like(r.Description, s, QueryLikePattern.EscapeCharacter)));
             }
 
             var total = await query.CountAsync(ct);

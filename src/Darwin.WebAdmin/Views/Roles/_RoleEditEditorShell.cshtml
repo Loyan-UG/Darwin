@@ -21,7 +21,7 @@
 
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="Key" />
-        <input type="hidden" asp-for="RowVersion" />
+        <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
         <input type="hidden" asp-for="IsSystem" />
 
         <div class="card mb-3">
@@ -70,7 +70,7 @@
                             data-bs-target="#confirmDeleteModal"
                             data-action="@Url.Action("Delete", "Roles")"
                             data-id="@Model.Id"
-                            data-rowversion="@Convert.ToBase64String(Model.RowVersion)"
+                            data-rowversion="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))"
                             data-name="@Model.DisplayName"
                             data-hx-target="#role-editor-shell"
                             data-hx-swap="outerHTML"

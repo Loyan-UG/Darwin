@@ -538,7 +538,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         [StringLength(64)]
         public string OrderNumber { get; set; } = string.Empty;
 
-        public DateTime OrderedAtUtc { get; set; } = DateTime.UtcNow;
+        public DateTime OrderedAtUtc { get; set; }
 
         [Required]
         public string Status { get; set; } = "Draft";

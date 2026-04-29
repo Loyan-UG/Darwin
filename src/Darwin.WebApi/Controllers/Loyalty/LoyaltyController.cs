@@ -94,6 +94,11 @@ public sealed class LoyaltyController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["BusinessIdRequired"]);
         }
 
+        if (!Enum.IsDefined(request.Mode))
+        {
+            return BadRequestProblem(_validationLocalizer["ModeInvalid"]);
+        }
+
         var dto = new PrepareScanSessionDto
         {
             BusinessId = request.BusinessId,
@@ -436,6 +441,11 @@ public sealed class LoyaltyController : ApiControllerBase
         if (string.IsNullOrWhiteSpace(request.Title))
         {
             return BadRequestProblem(_validationLocalizer["TitleRequired"]);
+        }
+
+        if (!Enum.IsDefined(request.EventType))
+        {
+            return BadRequestProblem(_validationLocalizer["PromotionInteractionEventTypeInvalid"]);
         }
 
         var result = await _trackPromotionInteractionHandler

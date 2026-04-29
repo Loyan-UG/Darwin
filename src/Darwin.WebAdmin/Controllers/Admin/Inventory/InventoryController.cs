@@ -1027,15 +1027,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 return RedirectOrHtmx(nameof(StockTransfers), new { businessId, warehouseId, page, pageSize, q, filter });
             }
 
-            byte[] version;
-            try
-            {
-                version = Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+            var version = DecodeBase64RowVersion(rowVersion);
 
             try
             {
@@ -1179,11 +1171,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         public async Task<IActionResult> CreatePurchaseOrder(Guid? businessId = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            var nowUtc = DateTime.UtcNow;
             var vm = new PurchaseOrderEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,
-                OrderedAtUtc = DateTime.UtcNow,
-                OrderNumber = $"PO-{DateTime.UtcNow:yyyyMMddHHmm}"
+                OrderedAtUtc = nowUtc,
+                OrderNumber = $"PO-{nowUtc:yyyyMMddHHmm}"
             };
             EnsurePurchaseOrderRows(vm);
             await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -1295,15 +1288,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 return RedirectOrHtmx(nameof(PurchaseOrders), new { businessId, page, pageSize, q, filter });
             }
 
-            byte[] version;
-            try
-            {
-                version = Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+            var version = DecodeBase64RowVersion(rowVersion);
 
             try
             {

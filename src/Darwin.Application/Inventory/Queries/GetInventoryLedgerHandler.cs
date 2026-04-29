@@ -1,4 +1,5 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Domain.Entities.Inventory;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,9 @@ namespace Darwin.Application.Inventory.Queries
     /// </summary>
 public sealed class GetInventoryLedgerHandler
 {
+    private static readonly string ReservationPattern = QueryLikePattern.Contains("Reservation");
+    private static readonly string ReservePattern = QueryLikePattern.Contains("Reserve");
+
     private readonly IAppDbContext _db;
     public GetInventoryLedgerHandler(IAppDbContext db) => _db = db;
 
@@ -33,8 +37,8 @@ public sealed class GetInventoryLedgerHandler
                 InventoryLedgerQueueFilter.Inbound => q.Where(x => x.transaction.QuantityDelta > 0),
                 InventoryLedgerQueueFilter.Outbound => q.Where(x => x.transaction.QuantityDelta < 0),
                 InventoryLedgerQueueFilter.Reservations => q.Where(x =>
-                    x.transaction.Reason.Contains("Reserve") ||
-                    x.transaction.Reason.Contains("Reservation")),
+                    EF.Functions.Like(x.transaction.Reason, ReservePattern, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.transaction.Reason, ReservationPattern, QueryLikePattern.EscapeCharacter)),
                 _ => q
             };
 
@@ -77,7 +81,9 @@ public sealed class GetInventoryLedgerHandler
                 TotalCount = await q.CountAsync(ct).ConfigureAwait(false),
                 InboundCount = await q.CountAsync(x => x.QuantityDelta > 0, ct).ConfigureAwait(false),
                 OutboundCount = await q.CountAsync(x => x.QuantityDelta < 0, ct).ConfigureAwait(false),
-                ReservationCount = await q.CountAsync(x => x.Reason.Contains("Reserve") || x.Reason.Contains("Reservation"), ct).ConfigureAwait(false)
+                ReservationCount = await q.CountAsync(x =>
+                    EF.Functions.Like(x.Reason, ReservePattern, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Reason, ReservationPattern, QueryLikePattern.EscapeCharacter), ct).ConfigureAwait(false)
             };
         }
     }

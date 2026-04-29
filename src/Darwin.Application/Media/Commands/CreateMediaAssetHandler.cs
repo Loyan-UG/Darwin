@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.CMS.Media;
 using Darwin.Application.CMS.Media.DTOs;
 using Darwin.Application.CMS.Media.Validators;
 using Darwin.Domain.Entities.CMS;
@@ -33,11 +34,12 @@ namespace Darwin.Application.CMS.Media.Commands
                 ContentHash = string.IsNullOrWhiteSpace(dto.ContentHash) ? null : dto.ContentHash.Trim(),
                 Width = dto.Width,
                 Height = dto.Height,
-                Role = string.IsNullOrWhiteSpace(dto.Role) ? null : dto.Role.Trim()
+                Role = MediaAssetRoleConventions.NormalizeRole(dto.Role)
             };
 
             _db.Set<MediaAsset>().Add(entity);
             await _db.SaveChangesAsync(ct);
         }
+
     }
 }

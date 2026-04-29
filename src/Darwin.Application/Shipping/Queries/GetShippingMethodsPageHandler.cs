@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
+using Darwin.Application.Shipping;
 using Darwin.Application.Shipping.DTOs;
 using Darwin.Domain.Entities.Shipping;
 using Microsoft.EntityFrameworkCore;
@@ -34,12 +36,12 @@ namespace Darwin.Application.Shipping.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 baseQuery = baseQuery.Where(m =>
-                    m.Name.ToLower().Contains(term) ||
-                    m.Carrier.ToLower().Contains(term) ||
-                    m.Service.ToLower().Contains(term) ||
-                    (m.CountriesCsv != null && m.CountriesCsv.ToLower().Contains(term)));
+                    EF.Functions.Like(m.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(m.Carrier, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(m.Service, term, QueryLikePattern.EscapeCharacter) ||
+                    (m.CountriesCsv != null && EF.Functions.Like(m.CountriesCsv, term, QueryLikePattern.EscapeCharacter)));
             }
 
             baseQuery = filter switch
@@ -47,10 +49,7 @@ namespace Darwin.Application.Shipping.Queries
                 ShippingMethodQueueFilter.Active => baseQuery.Where(m => m.IsActive),
                 ShippingMethodQueueFilter.Inactive => baseQuery.Where(m => !m.IsActive),
                 ShippingMethodQueueFilter.MissingRates => baseQuery.Where(m => !m.Rates.Any(r => !r.IsDeleted)),
-                ShippingMethodQueueFilter.Dhl => baseQuery.Where(m =>
-                    m.Carrier.ToLower().Contains("dhl") ||
-                    m.Name.ToLower().Contains("dhl") ||
-                    m.Service.ToLower().Contains("dhl")),
+                ShippingMethodQueueFilter.Dhl => baseQuery.Where(m => m.Carrier == ShippingMethodConventions.DhlCarrier),
                 ShippingMethodQueueFilter.GlobalCoverage => baseQuery.Where(m => m.CountriesCsv == null || m.CountriesCsv == string.Empty),
                 ShippingMethodQueueFilter.MultiRate => baseQuery.Where(m => m.Rates.Count(r => !r.IsDeleted) > 1),
                 _ => baseQuery
@@ -73,7 +72,7 @@ namespace Darwin.Application.Shipping.Queries
                     Currency = m.Currency,
                     IsActive = m.IsActive,
                     RatesCount = m.Rates.Count(r => !r.IsDeleted),
-                    IsDhl = m.Carrier.ToLower().Contains("dhl") || m.Name.ToLower().Contains("dhl") || m.Service.ToLower().Contains("dhl"),
+                    IsDhl = m.Carrier == ShippingMethodConventions.DhlCarrier,
                     HasGlobalCoverage = m.CountriesCsv == null || m.CountriesCsv == string.Empty,
                     HasMultipleRates = m.Rates.Count(r => !r.IsDeleted) > 1,
                     ModifiedAtUtc = m.ModifiedAtUtc
@@ -99,10 +98,7 @@ namespace Darwin.Application.Shipping.Queries
                 ActiveCount = await methods.CountAsync(x => x.IsActive, ct).ConfigureAwait(false),
                 InactiveCount = await methods.CountAsync(x => !x.IsActive, ct).ConfigureAwait(false),
                 MissingRatesCount = await methods.CountAsync(x => !x.Rates.Any(r => !r.IsDeleted), ct).ConfigureAwait(false),
-                DhlCount = await methods.CountAsync(x =>
-                    x.Carrier.ToLower().Contains("dhl") ||
-                    x.Name.ToLower().Contains("dhl") ||
-                    x.Service.ToLower().Contains("dhl"), ct).ConfigureAwait(false),
+                DhlCount = await methods.CountAsync(x => x.Carrier == ShippingMethodConventions.DhlCarrier, ct).ConfigureAwait(false),
                 GlobalCoverageCount = await methods.CountAsync(x => x.CountriesCsv == null || x.CountriesCsv == string.Empty, ct).ConfigureAwait(false),
                 MultiRateCount = await methods.CountAsync(x => x.Rates.Count(r => !r.IsDeleted) > 1, ct).ConfigureAwait(false)
             };

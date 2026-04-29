@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
@@ -36,7 +37,7 @@ namespace Darwin.Application.Orders.Queries
                 TotalCount = await activeQuery.CountAsync(ct).ConfigureAwait(false),
                 PendingCount = await activeQuery.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
                 FailedCount = await activeQuery.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
-                ProcessedCount = await activeQuery.CountAsync(x => x.Status == "Processed", ct).ConfigureAwait(false),
+                ProcessedCount = await activeQuery.CountAsync(x => x.Status == "Processed" || x.Status == "Succeeded", ct).ConfigureAwait(false),
                 StalePendingCount = await activeQuery.CountAsync(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
                 CancelledCount = await baseQuery.CountAsync(x => x.IsDeleted, ct).ConfigureAwait(false)
             };
@@ -61,16 +62,16 @@ namespace Darwin.Application.Orders.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = filter.Query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(filter.Query);
                 query = query.Where(x =>
-                    x.Provider.ToLower().Contains(q) ||
-                    x.OperationType.ToLower().Contains(q) ||
-                    (x.FailureReason != null && x.FailureReason.ToLower().Contains(q)) ||
+                    EF.Functions.Like(x.Provider, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.OperationType, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason, q, QueryLikePattern.EscapeCharacter)) ||
                     _db.Set<Shipment>().Any(s => s.Id == x.ShipmentId &&
                         !s.IsDeleted &&
-                        ((s.TrackingNumber != null && s.TrackingNumber.ToLower().Contains(q)) ||
-                         (s.ProviderShipmentReference != null && s.ProviderShipmentReference.ToLower().Contains(q)) ||
-                         _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && o.OrderNumber.ToLower().Contains(q)))));
+                        ((s.TrackingNumber != null && EF.Functions.Like(s.TrackingNumber, q, QueryLikePattern.EscapeCharacter)) ||
+                         (s.ProviderShipmentReference != null && EF.Functions.Like(s.ProviderShipmentReference, q, QueryLikePattern.EscapeCharacter)) ||
+                         _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && EF.Functions.Like(o.OrderNumber, q, QueryLikePattern.EscapeCharacter)))));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))
@@ -88,7 +89,9 @@ namespace Darwin.Application.Orders.Queries
             if (!string.IsNullOrWhiteSpace(filter.Status))
             {
                 var status = filter.Status.Trim();
-                query = query.Where(x => x.Status == status);
+                query = string.Equals(status, "Processed", StringComparison.OrdinalIgnoreCase)
+                    ? query.Where(x => x.Status == "Processed" || x.Status == "Succeeded")
+                    : query.Where(x => x.Status == status);
             }
 
             if (filter.FailedOnly)
@@ -145,7 +148,7 @@ namespace Darwin.Application.Orders.Queries
                     OrderNumber = orderNumber,
                     Provider = x.Provider,
                     OperationType = x.OperationType,
-                    Status = x.Status,
+                    Status = NormalizeStatus(x.Status),
                     AttemptCount = x.AttemptCount,
                     LastAttemptAtUtc = x.LastAttemptAtUtc,
                     ProcessedAtUtc = x.ProcessedAtUtc,
@@ -159,6 +162,13 @@ namespace Darwin.Application.Orders.Queries
             }).ToList();
 
             return (items, total, summary, providers, operationTypes);
+        }
+
+        private static string NormalizeStatus(string status)
+        {
+            return string.Equals(status, "Succeeded", StringComparison.OrdinalIgnoreCase)
+                ? "Processed"
+                : status;
         }
     }
 }

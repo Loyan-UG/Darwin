@@ -4,6 +4,7 @@ using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,13 +30,12 @@ namespace Darwin.Application.CMS.Commands
         }
 
         /// <summary>
-        /// Soft-deletes the specified page by Id. If the page is system-protected or not found,
-        /// a failure result is returned. When a row version is supplied, an optimistic
-        /// concurrency check is performed.
+        /// Soft-deletes the specified page by Id. If the page is not found, a failure result is returned.
+        /// A row version is required so the delete cannot overwrite a newer admin edit.
         /// </summary>
         /// <param name="id">Page identifier.</param>
         /// <param name="rowVersion">
-        /// Optional concurrency token; when provided, the current entity version must match.
+        /// Concurrency token from the UI; the current entity version must match.
         /// </param>
         /// <param name="ct">Cancellation token.</param>
         public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion, CancellationToken ct = default)
@@ -44,17 +44,25 @@ namespace Darwin.Application.CMS.Commands
             if (page is null)
                 return Result.Fail(_localizer["PageNotFound"]);
 
-            if (rowVersion is not null)
-            {
-                // Optimistic concurrency: ensure the incoming token matches the current one.
-                if (page.RowVersion is null || !page.RowVersion.SequenceEqual(rowVersion))
-                    return Result.Fail(_localizer["PageConcurrencyConflict"]);
-            }
+            if (rowVersion is null || rowVersion.Length == 0)
+                return Result.Fail(_localizer["RowVersionRequired"]);
+
+            var currentVersion = page.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
+                return Result.Fail(_localizer["PageConcurrencyConflict"]);
 
             page.IsDeleted = true;
             page.ModifiedAtUtc = DateTime.UtcNow;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["PageConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

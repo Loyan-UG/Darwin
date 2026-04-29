@@ -207,6 +207,9 @@
   <data name="ModeInvalid" xml:space="preserve">
     <value>Mode ist ungueltig.</value>
   </data>
+  <data name="PromotionInteractionEventTypeInvalid" xml:space="preserve">
+    <value>Der Promotion-Interaktionstyp ist ungueltig.</value>
+  </data>
   <data name="AtLeastOneRewardRequiredForRedemption" xml:space="preserve">
     <value>Fuer eine Einloesung muss mindestens eine Belohnung ausgewaehlt werden.</value>
   </data>
@@ -272,6 +275,9 @@
   </data>
   <data name="InvalidPaymentAmount" xml:space="preserve">
     <value>Ungueltiger Zahlungsbetrag.</value>
+  </data>
+  <data name="PaymentCreateStatusInvalid" xml:space="preserve">
+    <value>Zahlungen koennen nicht direkt als erstattet oder storniert erstellt werden.</value>
   </data>
   <data name="InvalidShipmentLineOrderMismatch" xml:space="preserve">
     <value>Ungueltige Versandzeile: Die Bestellzeile gehoert nicht zur Bestellung.</value>
@@ -449,6 +455,9 @@
   </data>
   <data name="UnsupportedInvoiceStatusTransition" xml:space="preserve">
     <value>Ungueltiger Rechnungsstatuswechsel.</value>
+  </data>
+  <data name="UnsupportedPaymentStatusTransition" xml:space="preserve">
+    <value>Ungueltiger Zahlungsstatuswechsel.</value>
   </data>
   <data name="OnlyInvoicesWithLinkedPaymentCanBeRefunded" xml:space="preserve">
     <value>Nur Rechnungen mit verknuepfter Zahlung koennen erstattet werden.</value>
@@ -953,6 +962,21 @@
   <data name="BusinessCampaignNameAndTitleRequired" xml:space="preserve">
     <value>Name und Titel sind erforderlich.</value>
   </data>
+  <data name="BusinessCampaignChannelsInvalid" xml:space="preserve">
+    <value>Kampagnenkanaele sind ungueltig. Waehlen Sie mindestens einen unterstuetzten Kanal aus.</value>
+  </data>
+  <data name="BusinessCampaignJsonInvalid" xml:space="preserve">
+    <value>Kampagnen-Targeting und Payload-JSON muessen gueltige JSON-Objekte sein.</value>
+  </data>
+  <data name="BusinessCampaignScheduleInvalid" xml:space="preserve">
+    <value>Der Kampagnenstart muss vor oder gleich dem Kampagnenende liegen.</value>
+  </data>
+  <data name="BusinessCampaignEligibilityRulesInvalid" xml:space="preserve">
+    <value>Kampagnen-Eignungsregeln sind ungueltig. Punktebereiche muessen nicht negativ sein und Min darf Max nicht ueberschreiten.</value>
+  </data>
+  <data name="BusinessCampaignCannotActivateExpired" xml:space="preserve">
+    <value>Abgelaufene Kampagnen koennen nicht aktiviert werden.</value>
+  </data>
   <data name="BusinessCampaignNotFound" xml:space="preserve">
     <value>Die Kampagne wurde nicht gefunden.</value>
   </data>
@@ -1235,6 +1259,9 @@
   <data name="BusinessSuspendedAccess" xml:space="preserve">
     <value>Der Geschaeftszugang ist derzeit ausgesetzt.</value>
   </data>
+  <data name="BusinessLifecycleUnsupportedAction" xml:space="preserve">
+    <value>Die angeforderte Geschaefts-Lifecycle-Aktion wird fuer den aktuellen Status nicht unterstuetzt.</value>
+  </data>
   <data name="BusinessInactiveAccess" xml:space="preserve">
     <value>Der Geschaeftszugang ist derzeit inaktiv.</value>
   </data>
@@ -1334,6 +1361,9 @@
   <data name="CampaignDeliveryNotFound" xml:space="preserve">
     <value>Kampagnenzustellung wurde nicht gefunden.</value>
   </data>
+  <data name="CampaignDeliveryStatusInvalid" xml:space="preserve">
+    <value>Der Kampagnenzustellungsstatus ist ungueltig.</value>
+  </data>
   <data name="ProviderCallbackInboxMessageNotFound" xml:space="preserve">
     <value>Die Provider-Callback-Inbox-Nachricht wurde nicht gefunden.</value>
   </data>
@@ -1396,5 +1426,8 @@
   </data>
   <data name="LoyaltyScanSessionCannotExpire" xml:space="preserve">
     <value>Nur ausstehende Scan-Sitzungen nach ihrer Ablaufzeit koennen ablaufen gelassen werden.</value>
+  </data>
+  <data name="ProviderWebhookPayloadTooLarge" xml:space="preserve">
+    <value>Die Provider-Webhook-Nutzlast ist zu gross.</value>
   </data>
 </root>

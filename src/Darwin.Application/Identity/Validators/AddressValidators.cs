@@ -33,7 +33,7 @@ namespace Darwin.Application.Identity.Validators
         public AddressEditValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
 
             RuleFor(x => x.Street1).NotEmpty().MaximumLength(300);
             RuleFor(x => x.PostalCode).NotEmpty().MaximumLength(32);
@@ -56,7 +56,7 @@ namespace Darwin.Application.Identity.Validators
         public AddressDeleteValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 }

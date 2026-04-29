@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.CartCheckout;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
 using Microsoft.EntityFrameworkCore;
@@ -26,12 +27,19 @@ namespace Darwin.Application.CartCheckout.Commands
 
         public async Task HandleAsync(CartUpdateQtyDto dto, CancellationToken ct = default)
         {
+            var selectedAddOnValueIdsJson = CartAddOnSelectionJson.NormalizeJsonOrNull(dto.SelectedAddOnValueIdsJson);
+            var originalSelectedAddOnValueIdsJson = string.IsNullOrWhiteSpace(dto.SelectedAddOnValueIdsJson)
+                ? null
+                : dto.SelectedAddOnValueIdsJson.Trim();
+
             var line = await _db.Set<CartItem>()
                 .FirstOrDefaultAsync(i =>
                     !i.IsDeleted &&
                     i.CartId == dto.CartId &&
                     i.VariantId == dto.VariantId &&
-                    (dto.SelectedAddOnValueIdsJson == null || i.SelectedAddOnValueIdsJson == dto.SelectedAddOnValueIdsJson),
+                    (selectedAddOnValueIdsJson == null ||
+                     i.SelectedAddOnValueIdsJson == selectedAddOnValueIdsJson ||
+                     i.SelectedAddOnValueIdsJson == originalSelectedAddOnValueIdsJson),
                     ct);
 
             if (line == null) throw new InvalidOperationException(_localizer["CartLineNotFound"]);

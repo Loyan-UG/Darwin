@@ -41,7 +41,9 @@ namespace Darwin.Application.Catalog.Commands
                 throw new ValidationException(_localizer["CategoryNotFound"]);
 
             // Concurrency
-            if (!entity.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? System.Array.Empty<byte>();
+            var currentVersion = entity.RowVersion ?? System.Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["CategoryModifiedByAnotherUser"]);
 
             entity.ParentId = dto.ParentId;
@@ -74,7 +76,14 @@ namespace Darwin.Application.Catalog.Commands
                 translation.MetaDescription = t.MetaDescription?.Trim();
             }
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["CategoryModifiedByAnotherUser"]);
+            }
         }
     }
 }

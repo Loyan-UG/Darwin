@@ -44,7 +44,7 @@ public sealed class BusinessSubscriptionInvoiceListItemDto
     public bool HasHostedInvoiceUrl => !string.IsNullOrWhiteSpace(HostedInvoiceUrl);
     public bool HasPdfUrl => !string.IsNullOrWhiteSpace(PdfUrl);
     public bool IsStripe => string.Equals(Provider, "Stripe", StringComparison.OrdinalIgnoreCase);
-    public bool IsOverdue => Status == SubscriptionInvoiceStatus.Open && DueAtUtc.HasValue && DueAtUtc.Value < DateTime.UtcNow;
+    public bool IsOverdue { get; init; }
 }
 
 /// <summary>

@@ -1,7 +1,6 @@
-﻿using Darwin.Application.SEO.DTOs;
+using Darwin.Application.SEO.DTOs;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
-using System.Text.RegularExpressions;
 
 namespace Darwin.Application.SEO.Validators
 {
@@ -29,7 +28,9 @@ namespace Darwin.Application.SEO.Validators
         public RedirectRuleEditValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
 
             RuleFor(x => x.FromPath)
                 .NotEmpty()

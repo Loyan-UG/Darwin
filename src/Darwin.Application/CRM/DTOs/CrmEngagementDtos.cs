@@ -57,7 +57,7 @@ namespace Darwin.Application.CRM.DTOs
         public Guid CustomerId { get; set; }
         public ConsentType Type { get; set; } = ConsentType.MarketingEmail;
         public bool Granted { get; set; }
-        public DateTime GrantedAtUtc { get; set; } = DateTime.UtcNow;
+        public DateTime GrantedAtUtc { get; set; }
         public DateTime? RevokedAtUtc { get; set; }
     }
 

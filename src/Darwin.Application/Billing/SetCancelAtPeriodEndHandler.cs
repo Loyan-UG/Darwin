@@ -44,7 +44,9 @@ public sealed class SetCancelAtPeriodEndHandler
             return Result<BusinessSubscriptionStatusDto>.Fail(_localizer["SubscriptionNotFound"]);
         }
 
-        if (!entity.RowVersion.SequenceEqual(rowVersion ?? Array.Empty<byte>()))
+        var requestedVersion = rowVersion ?? Array.Empty<byte>();
+        var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+        if (requestedVersion.Length == 0 || !currentVersion.SequenceEqual(requestedVersion))
         {
             return Result<BusinessSubscriptionStatusDto>.Fail(_localizer["SubscriptionConcurrencyConflict"]);
         }
@@ -73,7 +75,7 @@ public sealed class SetCancelAtPeriodEndHandler
         {
             HasSubscription = true,
             SubscriptionId = entity.Id,
-            RowVersion = entity.RowVersion,
+            RowVersion = entity.RowVersion ?? Array.Empty<byte>(),
             Status = entity.Status.ToString(),
             Provider = entity.Provider,
             PlanCode = string.Empty,

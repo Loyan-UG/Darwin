@@ -44,6 +44,7 @@ namespace Darwin.Application.Meta.Queries
             // Single-row settings contract: DB schema is expected to enforce exactly one record.
             var settings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
+                .Where(x => !x.IsDeleted)
                 .SingleOrDefaultAsync(ct)
                 .ConfigureAwait(false);
 

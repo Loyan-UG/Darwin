@@ -61,7 +61,9 @@ namespace Darwin.WebApi.Security
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
-                var s = db.Set<SiteSetting>().AsNoTracking().FirstOrDefault();
+                var s = db.Set<SiteSetting>()
+                    .AsNoTracking()
+                    .FirstOrDefault(x => !x.IsDeleted);
                 if (s is null)
                 {
                     throw new InvalidOperationException(_validationLocalizer["JwtValidationSiteSettingsMissing"]);

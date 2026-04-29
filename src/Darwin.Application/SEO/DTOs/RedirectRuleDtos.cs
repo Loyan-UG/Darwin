@@ -30,6 +30,7 @@ namespace Darwin.Application.SEO.DTOs
     public sealed class RedirectRuleListItemDto
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string FromPath { get; set; } = string.Empty;
         public string To { get; set; } = string.Empty;
         public bool IsPermanent { get; set; }

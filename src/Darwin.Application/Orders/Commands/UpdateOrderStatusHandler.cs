@@ -75,7 +75,12 @@ namespace Darwin.Application.Orders.Commands
                 throw new ValidationException(_localizer["OrderNotFound"]);
 
             // Concurrency guard (RowVersion lives in BaseEntity).
-            if (!order.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+                throw new ValidationException(_localizer["RowVersionRequired"]);
+
+            var currentRowVersion = order.RowVersion ?? Array.Empty<byte>();
+            if (!currentRowVersion.SequenceEqual(rowVersion))
                 throw new ValidationException(_localizer["ConcurrencyConflictOrderModified"]);
 
             // Policy check: allowed transitions.

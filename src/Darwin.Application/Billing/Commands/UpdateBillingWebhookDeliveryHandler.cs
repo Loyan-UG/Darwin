@@ -22,9 +22,15 @@ namespace Darwin.Application.Billing.Commands
 
         public async Task<Result> HandleAsync(UpdateBillingWebhookDeliveryDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
             var delivery = await _db.Set<WebhookDelivery>()
@@ -36,7 +42,8 @@ namespace Darwin.Application.Billing.Commands
                 return Result.Fail(_localizer["WebhookDeliveryNotFound"]);
             }
 
-            if (!delivery.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentVersion = delivery.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
@@ -46,29 +53,36 @@ namespace Darwin.Application.Billing.Commands
                 return Result.Fail(_localizer["WebhookDeliveryUnsupportedAction"]);
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
 
         private static bool TryApplyAction(WebhookDelivery delivery, string action)
         {
             var now = DateTime.UtcNow;
-            switch (action)
+            switch ((action ?? string.Empty).Trim().ToUpperInvariant())
             {
-                case "MarkSucceeded":
+                case "MARKSUCCEEDED":
                     delivery.IsDeleted = false;
                     delivery.Status = "Succeeded";
                     delivery.ResponseCode ??= 200;
                     delivery.LastAttemptAtUtc = now;
                     break;
-                case "Requeue":
+                case "REQUEUE":
                     delivery.IsDeleted = false;
                     delivery.Status = "Pending";
-                    delivery.RetryCount++;
                     delivery.ResponseCode = null;
-                    delivery.LastAttemptAtUtc = now;
+                    delivery.LastAttemptAtUtc = null;
                     break;
-                case "Suppress":
+                case "SUPPRESS":
                     delivery.Status = "Suppressed";
                     delivery.IsDeleted = true;
                     delivery.LastAttemptAtUtc = now;

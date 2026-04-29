@@ -22,9 +22,15 @@ namespace Darwin.Application.Orders.Commands
 
         public async Task<Result> HandleAsync(UpdateShipmentProviderOperationDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
             var operation = await _db.Set<ShipmentProviderOperation>()
@@ -36,7 +42,8 @@ namespace Darwin.Application.Orders.Commands
                 return Result.Fail(_localizer["ShipmentProviderOperationNotFound"]);
             }
 
-            if (!operation.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentRowVersion = operation.RowVersion ?? Array.Empty<byte>();
+            if (!currentRowVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
@@ -46,28 +53,36 @@ namespace Darwin.Application.Orders.Commands
                 return Result.Fail(_localizer["ShipmentProviderOperationUnsupportedAction"]);
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
 
         private static bool TryApplyAction(ShipmentProviderOperation operation, UpdateShipmentProviderOperationDto dto)
         {
             var now = DateTime.UtcNow;
-            switch (dto.Action)
+            switch ((dto.Action ?? string.Empty).Trim().ToUpperInvariant())
             {
-                case "MarkProcessed":
+                case "MARKPROCESSED":
                     operation.Status = "Processed";
                     operation.ProcessedAtUtc = now;
                     operation.FailureReason = null;
                     break;
-                case "MarkFailed":
+                case "MARKFAILED":
                     operation.Status = "Failed";
                     operation.LastAttemptAtUtc = now;
                     operation.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason)
                         ? "Marked failed by WebAdmin operator."
                         : dto.FailureReason.Trim();
                     break;
-                case "Requeue":
+                case "REQUEUE":
                     operation.IsDeleted = false;
                     operation.Status = "Pending";
                     operation.AttemptCount = 0;
@@ -75,7 +90,7 @@ namespace Darwin.Application.Orders.Commands
                     operation.ProcessedAtUtc = null;
                     operation.FailureReason = null;
                     break;
-                case "Cancel":
+                case "CANCEL":
                     operation.IsDeleted = true;
                     operation.Status = "Cancelled";
                     operation.LastAttemptAtUtc = now;

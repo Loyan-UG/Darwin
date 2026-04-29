@@ -27,10 +27,10 @@ namespace Darwin.Application.Businesses.Queries
         {
             var nowUtc = DateTime.UtcNow;
 
-            var business = await _db.Set<Business>()
+            var businessRow = await _db.Set<Business>()
                 .AsNoTracking()
                 .Where(x => x.Id == businessId)
-                .Select(x => new BusinessCommunicationProfileDto
+                .Select(x => new
                 {
                     Id = x.Id,
                     Name = x.Name,
@@ -39,7 +39,7 @@ namespace Darwin.Application.Businesses.Queries
                     DefaultCulture = x.DefaultCulture,
                     DefaultTimeZoneId = x.DefaultTimeZoneId,
                     IsActive = x.IsActive,
-                    OperationalStatus = x.OperationalStatus.ToString(),
+                    x.OperationalStatus,
                     SupportEmail = x.SupportEmail,
                     CommunicationSenderName = x.CommunicationSenderName,
                     CommunicationReplyToEmail = x.CommunicationReplyToEmail,
@@ -54,10 +54,32 @@ namespace Darwin.Application.Businesses.Queries
                 .SingleOrDefaultAsync(ct)
                 .ConfigureAwait(false);
 
-            if (business is null)
+            if (businessRow is null)
             {
                 return null;
             }
+
+            var business = new BusinessCommunicationProfileDto
+            {
+                Id = businessRow.Id,
+                Name = businessRow.Name,
+                LegalName = businessRow.LegalName,
+                ContactEmail = businessRow.ContactEmail,
+                DefaultCulture = businessRow.DefaultCulture,
+                DefaultTimeZoneId = businessRow.DefaultTimeZoneId,
+                IsActive = businessRow.IsActive,
+                OperationalStatus = businessRow.OperationalStatus.ToString(),
+                SupportEmail = businessRow.SupportEmail,
+                CommunicationSenderName = businessRow.CommunicationSenderName,
+                CommunicationReplyToEmail = businessRow.CommunicationReplyToEmail,
+                CustomerEmailNotificationsEnabled = businessRow.CustomerEmailNotificationsEnabled,
+                CustomerMarketingEmailsEnabled = businessRow.CustomerMarketingEmailsEnabled,
+                OperationalAlertEmailsEnabled = businessRow.OperationalAlertEmailsEnabled,
+                MissingSupportEmail = businessRow.MissingSupportEmail,
+                MissingSenderIdentity = businessRow.MissingSenderIdentity,
+                PendingInvitationCount = businessRow.PendingInvitationCount,
+                OpenInvitationCount = businessRow.OpenInvitationCount
+            };
 
             business.PendingActivationMemberCount = await (
                 from member in _db.Set<BusinessMember>().AsNoTracking()

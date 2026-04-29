@@ -63,7 +63,8 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
-        var retryCutoffUtc = DateTime.UtcNow.AddSeconds(-options.RetryCooldownSeconds);
+        var nowUtc = DateTime.UtcNow;
+        var retryCutoffUtc = nowUtc.AddSeconds(-options.RetryCooldownSeconds);
         var deliveries = await db.Set<WebhookDelivery>()
             .Where(x => !x.IsDeleted)
             .Where(x => x.Status == "Pending" || x.Status == "Failed")
@@ -97,17 +98,17 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         {
             if (!subscriptions.TryGetValue(delivery.SubscriptionId, out var subscription) || !subscription.IsActive)
             {
-                delivery.LastAttemptAtUtc = DateTime.UtcNow;
+                delivery.LastAttemptAtUtc = nowUtc;
                 delivery.RetryCount = options.MaxAttempts;
                 delivery.Status = "Failed";
                 continue;
             }
 
             events.TryGetValue(delivery.EventRefId ?? Guid.Empty, out var eventLog);
-            await DispatchAsync(db, delivery, subscription, eventLog, options, ct).ConfigureAwait(false);
+            await DispatchAsync(db, delivery, subscription, eventLog, options, nowUtc, ct).ConfigureAwait(false);
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await QueueSaveResilience.TrySaveBatchAsync(db, _logger, "webhook delivery inactive subscription", ct).ConfigureAwait(false);
     }
 
     private async Task DispatchAsync(
@@ -116,17 +117,23 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         WebhookSubscription subscription,
         EventLog? eventLog,
         WebhookDeliveryWorkerOptions options,
+        DateTime nowUtc,
         CancellationToken ct)
     {
-        var nowUtc = DateTime.UtcNow;
         delivery.LastAttemptAtUtc = nowUtc;
         delivery.RetryCount += 1;
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        if (!await QueueSaveResilience.TrySaveClaimAsync(db, _logger, "webhook delivery", delivery.Id, ct).ConfigureAwait(false))
+        {
+            return;
+        }
 
         var payload = BuildEnvelope(delivery, subscription, eventLog, nowUtc);
         var payloadJson = JsonSerializer.Serialize(payload, SerializerOptions);
         delivery.PayloadHash = ComputePayloadHash(payloadJson);
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        if (!await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "webhook delivery payload hash", delivery.Id, ct).ConfigureAwait(false))
+        {
+            return;
+        }
 
         try
         {
@@ -187,7 +194,7 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
                 delivery.RetryCount);
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await QueueSaveResilience.TrySaveCompletionAsync(db, _logger, "webhook delivery", delivery.Id, ct).ConfigureAwait(false);
     }
 
     private static WebhookEnvelope BuildEnvelope(
@@ -206,7 +213,7 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
             IdempotencyKey = string.IsNullOrWhiteSpace(delivery.IdempotencyKey)
                 ? $"webhook-delivery-{delivery.Id:N}"
                 : delivery.IdempotencyKey!,
-            PayloadHash = delivery.PayloadHash,
+            PayloadHash = null,
             Event = eventLog is null
                 ? null
                 : new EventEnvelope

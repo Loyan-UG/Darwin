@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Application.Common.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Microsoft.EntityFrameworkCore;
@@ -50,11 +51,11 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.Query))
             {
-                var q = request.Query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(request.Query);
                 businessQuery = businessQuery.Where(x =>
-                    x.Name.ToLower().Contains(q) ||
-                    (x.ShortDescription != null && x.ShortDescription.ToLower().Contains(q)) ||
-                    (x.AdminTextOverridesJson != null && x.AdminTextOverridesJson.ToLower().Contains(q)));
+                    EF.Functions.Like(x.Name, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.ShortDescription != null && EF.Functions.Like(x.ShortDescription, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.AdminTextOverridesJson != null && EF.Functions.Like(x.AdminTextOverridesJson, q, QueryLikePattern.EscapeCharacter)));
             }
 
             var b = request.Bounds;

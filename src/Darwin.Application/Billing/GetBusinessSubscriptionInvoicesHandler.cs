@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -85,13 +86,13 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim().ToLowerInvariant();
+            var term = QueryLikePattern.Contains(query);
             invoices = invoices.Where(x =>
-                x.Provider.ToLower().Contains(term) ||
-                (x.ProviderInvoiceId != null && x.ProviderInvoiceId.ToLower().Contains(term)) ||
-                (x.PlanName != null && x.PlanName.ToLower().Contains(term)) ||
-                (x.PlanCode != null && x.PlanCode.ToLower().Contains(term)) ||
-                (x.FailureReason != null && x.FailureReason.ToLower().Contains(term)));
+                EF.Functions.Like(x.Provider, term, QueryLikePattern.EscapeCharacter) ||
+                (x.ProviderInvoiceId != null && EF.Functions.Like(x.ProviderInvoiceId, term, QueryLikePattern.EscapeCharacter)) ||
+                (x.PlanName != null && EF.Functions.Like(x.PlanName, term, QueryLikePattern.EscapeCharacter)) ||
+                (x.PlanCode != null && EF.Functions.Like(x.PlanCode, term, QueryLikePattern.EscapeCharacter)) ||
+                (x.FailureReason != null && EF.Functions.Like(x.FailureReason, term, QueryLikePattern.EscapeCharacter)));
         }
 
         var total = await invoices.CountAsync(ct).ConfigureAwait(false);
@@ -124,7 +125,10 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
                     PlanName = x.PlanName is null
                         ? null
                         : BillingLocalizedTextResolver.ResolvePlanName(x.PlanName, x.PlanFeaturesJson, culture),
-                    PlanCode = x.PlanCode
+                    PlanCode = x.PlanCode,
+                    IsOverdue = x.Status == SubscriptionInvoiceStatus.Open &&
+                                x.DueAtUtc.HasValue &&
+                                x.DueAtUtc.Value < nowUtc
                 })
                 .ToList(),
             Total = total

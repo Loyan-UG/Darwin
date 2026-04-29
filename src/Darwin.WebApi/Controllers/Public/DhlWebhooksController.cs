@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.Queries;
 using Darwin.Contracts.Shipping;
 using Darwin.Domain.Entities.Integration;
+using Darwin.WebApi.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -53,14 +54,13 @@ public sealed class DhlWebhooksController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["DhlWebhookAuthenticationNotConfigured"]);
         }
 
-        Request.EnableBuffering();
-        string rawPayload;
-        using (var reader = new StreamReader(Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true))
+        var payloadRead = await ProviderWebhookPayloadReader.ReadAsync(Request, ct).ConfigureAwait(false);
+        if (payloadRead.PayloadTooLarge)
         {
-            rawPayload = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
+            return PayloadTooLargeProblem(_validationLocalizer["ProviderWebhookPayloadTooLarge"]);
         }
 
-        Request.Body.Position = 0;
+        var rawPayload = payloadRead.Payload;
 
         if (string.IsNullOrWhiteSpace(rawPayload))
         {
@@ -102,23 +102,12 @@ public sealed class DhlWebhooksController : ApiControllerBase
         }
 
         var idempotencyKey = BuildIdempotencyKey(request);
-        var existing = await _db.Set<ProviderCallbackInboxMessage>()
-            .AsNoTracking()
-            .AnyAsync(x => !x.IsDeleted && x.Provider == "DHL" && x.IdempotencyKey == idempotencyKey, ct)
-            .ConfigureAwait(false);
-
-        if (!existing)
-        {
-            _db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
-            {
-                Provider = "DHL",
-                CallbackType = carrierEventKey,
-                IdempotencyKey = idempotencyKey,
-                PayloadJson = rawPayload,
-                Status = "Pending"
-            });
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
-        }
+        var existing = await AddInboxMessageIfNewAsync(
+            provider: "DHL",
+            callbackType: carrierEventKey,
+            idempotencyKey,
+            rawPayload,
+            ct).ConfigureAwait(false);
 
         return Ok(new
         {
@@ -128,6 +117,51 @@ public sealed class DhlWebhooksController : ApiControllerBase
             carrierEventKey,
             instance = Request.GetDisplayUrl()
         });
+    }
+
+    private async Task<bool> AddInboxMessageIfNewAsync(
+        string provider,
+        string callbackType,
+        string idempotencyKey,
+        string rawPayload,
+        CancellationToken ct)
+    {
+        var existing = await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false);
+        if (existing)
+        {
+            return true;
+        }
+
+        _db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = provider,
+            CallbackType = callbackType,
+            IdempotencyKey = idempotencyKey,
+            PayloadJson = rawPayload,
+            Status = "Pending"
+        });
+
+        try
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return false;
+        }
+        catch (DbUpdateException)
+        {
+            if (await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false))
+            {
+                return true;
+            }
+
+            throw;
+        }
+    }
+
+    private Task<bool> InboxMessageExistsAsync(string provider, string idempotencyKey, CancellationToken ct)
+    {
+        return _db.Set<ProviderCallbackInboxMessage>()
+            .AsNoTracking()
+            .AnyAsync(x => !x.IsDeleted && x.Provider == provider && x.IdempotencyKey == idempotencyKey, ct);
     }
 
     private static bool TryVerifySignature(string rawPayload, string signatureHeader, string secret)

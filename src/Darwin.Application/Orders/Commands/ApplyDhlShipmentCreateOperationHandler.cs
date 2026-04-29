@@ -72,11 +72,12 @@ namespace Darwin.Application.Orders.Commands
 
             shipment.LastCarrierEventKey = "shipment.provider_created";
 
+            var nowUtc = DateTime.UtcNow;
             await ShipmentCarrierEventRecorder.AddIfMissingAsync(
                 _db,
                 shipment,
                 "shipment.provider_created",
-                DateTime.UtcNow,
+                nowUtc,
                 "Created",
                 ct: ct).ConfigureAwait(false);
 

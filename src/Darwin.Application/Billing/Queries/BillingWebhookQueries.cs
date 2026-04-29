@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Integration;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -31,8 +32,10 @@ public sealed class GetBillingWebhookSubscriptionsPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim().ToLowerInvariant();
-            subscriptions = subscriptions.Where(x => x.EventType.ToLower().Contains(term) || x.CallbackUrl.ToLower().Contains(term));
+            var term = QueryLikePattern.Contains(query);
+            subscriptions = subscriptions.Where(x =>
+                EF.Functions.Like(x.EventType, term, QueryLikePattern.EscapeCharacter) ||
+                EF.Functions.Like(x.CallbackUrl, term, QueryLikePattern.EscapeCharacter));
         }
 
         var total = await subscriptions.CountAsync(ct).ConfigureAwait(false);
@@ -62,6 +65,10 @@ public sealed class GetBillingWebhookSubscriptionsPageHandler
 public sealed class GetBillingWebhookDeliveriesPageHandler
 {
     private const int MaxPageSize = 200;
+    private static readonly string ChargeEventPattern = QueryLikePattern.Contains("charge");
+    private static readonly string DisputeEventPattern = QueryLikePattern.Contains("dispute");
+    private static readonly string PaymentIntentEventPattern = QueryLikePattern.Contains("payment_intent");
+    private static readonly string RefundEventPattern = QueryLikePattern.Contains("refund");
 
     private readonly IAppDbContext _db;
 
@@ -102,12 +109,12 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim().ToLowerInvariant();
+            var term = QueryLikePattern.Contains(query);
             deliveries = deliveries.Where(x =>
-                x.EventType.ToLower().Contains(term) ||
-                x.CallbackUrl.ToLower().Contains(term) ||
-                x.Status.ToLower().Contains(term) ||
-                (x.IdempotencyKey != null && x.IdempotencyKey.ToLower().Contains(term)));
+                EF.Functions.Like(x.EventType, term, QueryLikePattern.EscapeCharacter) ||
+                EF.Functions.Like(x.CallbackUrl, term, QueryLikePattern.EscapeCharacter) ||
+                EF.Functions.Like(x.Status, term, QueryLikePattern.EscapeCharacter) ||
+                (x.IdempotencyKey != null && EF.Functions.Like(x.IdempotencyKey, term, QueryLikePattern.EscapeCharacter)));
         }
 
         var total = await deliveries.CountAsync(ct).ConfigureAwait(false);
@@ -144,10 +151,12 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
             BillingWebhookDeliveryQueueFilter.Succeeded => deliveries.Where(x => x.Status == "Succeeded"),
             BillingWebhookDeliveryQueueFilter.RetryPending => deliveries.Where(x => x.Status != "Succeeded" && x.RetryCount > 0),
             BillingWebhookDeliveryQueueFilter.PaymentExceptions => deliveries.Where(x =>
-                (x.EventType.Contains("payment_intent") || x.EventType.Contains("charge") || x.EventType.Contains("refund")) &&
+                (EF.Functions.Like(x.EventType, PaymentIntentEventPattern, QueryLikePattern.EscapeCharacter) ||
+                 EF.Functions.Like(x.EventType, ChargeEventPattern, QueryLikePattern.EscapeCharacter) ||
+                 EF.Functions.Like(x.EventType, RefundEventPattern, QueryLikePattern.EscapeCharacter)) &&
                 (x.Status != "Succeeded" || x.RetryCount > 0)),
             BillingWebhookDeliveryQueueFilter.DisputeSignals => deliveries.Where(x =>
-                x.EventType.Contains("dispute") || x.EventType.Contains("charge.dispute")),
+                EF.Functions.Like(x.EventType, DisputeEventPattern, QueryLikePattern.EscapeCharacter)),
             _ => deliveries
         };
 
@@ -279,6 +288,11 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
 
 public sealed class GetBillingWebhookOpsSummaryHandler
 {
+    private static readonly string ChargeEventPattern = QueryLikePattern.Contains("charge");
+    private static readonly string DisputeEventPattern = QueryLikePattern.Contains("dispute");
+    private static readonly string PaymentIntentEventPattern = QueryLikePattern.Contains("payment_intent");
+    private static readonly string RefundEventPattern = QueryLikePattern.Contains("refund");
+
     private readonly IAppDbContext _db;
 
     public GetBillingWebhookOpsSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -306,10 +320,12 @@ public sealed class GetBillingWebhookOpsSummaryHandler
             SucceededDeliveryCount = await deliveries.CountAsync(x => x.Status == "Succeeded", ct).ConfigureAwait(false),
             RetryPendingCount = await deliveries.CountAsync(x => x.Status != "Succeeded" && x.RetryCount > 0, ct).ConfigureAwait(false),
             PaymentExceptionCount = await deliveryEvents.CountAsync(x =>
-                (x.EventType.ToLower().Contains("payment_intent") || x.EventType.ToLower().Contains("charge") || x.EventType.ToLower().Contains("refund")) &&
+                (EF.Functions.Like(x.EventType, PaymentIntentEventPattern, QueryLikePattern.EscapeCharacter) ||
+                 EF.Functions.Like(x.EventType, ChargeEventPattern, QueryLikePattern.EscapeCharacter) ||
+                 EF.Functions.Like(x.EventType, RefundEventPattern, QueryLikePattern.EscapeCharacter)) &&
                 (x.Status != "Succeeded" || x.RetryCount > 0), ct).ConfigureAwait(false),
             DisputeSignalCount = await deliveryEvents.CountAsync(x =>
-                x.EventType.ToLower().Contains("dispute") || x.EventType.ToLower().Contains("charge.dispute"), ct).ConfigureAwait(false)
+                EF.Functions.Like(x.EventType, DisputeEventPattern, QueryLikePattern.EscapeCharacter), ct).ConfigureAwait(false)
         };
     }
 }

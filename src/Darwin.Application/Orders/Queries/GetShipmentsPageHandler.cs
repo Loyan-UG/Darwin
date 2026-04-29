@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Integration;
@@ -73,12 +74,12 @@ public sealed class GetShipmentsPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = query.Trim().ToLowerInvariant();
+            var term = QueryLikePattern.Contains(query);
             shipments = shipments.Where(s =>
-                s.Carrier.ToLower().Contains(term) ||
-                (s.Service != null && s.Service.ToLower().Contains(term)) ||
-                (s.TrackingNumber != null && s.TrackingNumber.ToLower().Contains(term)) ||
-                _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && o.OrderNumber.ToLower().Contains(term)));
+                EF.Functions.Like(s.Carrier, term, QueryLikePattern.EscapeCharacter) ||
+                (s.Service != null && EF.Functions.Like(s.Service, term, QueryLikePattern.EscapeCharacter)) ||
+                (s.TrackingNumber != null && EF.Functions.Like(s.TrackingNumber, term, QueryLikePattern.EscapeCharacter)) ||
+                _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && EF.Functions.Like(o.OrderNumber, term, QueryLikePattern.EscapeCharacter)));
         }
 
         var total = await shipments.CountAsync(ct);

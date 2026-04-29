@@ -6,7 +6,6 @@ using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using System.Collections;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,12 +46,10 @@ namespace Darwin.Application.Identity.Commands
             if (permission is null)
                 return Result.Fail(_localizer["PermissionNotFound"]);
 
-            // Concurrency check
-            if (permission.RowVersion is not null && dto.RowVersion is not null && permission.RowVersion.Length > 0)
-            {
-                if (!StructuralComparisons.StructuralEqualityComparer.Equals(permission.RowVersion, dto.RowVersion))
-                    return Result.Fail(_localizer["ConcurrencyConflict"]);
-            }
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = permission.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
 
             // Since DisplayName and Description have private setters, update via EF's entry
             var type = typeof(Permission);
@@ -61,7 +58,15 @@ namespace Darwin.Application.Identity.Commands
             var descriptionProp = type.GetProperty(nameof(Permission.Description), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             descriptionProp!.SetValue(permission, dto.Description);
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

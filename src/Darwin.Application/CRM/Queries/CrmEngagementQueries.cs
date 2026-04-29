@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Microsoft.EntityFrameworkCore;
@@ -103,8 +104,10 @@ namespace Darwin.Application.CRM.Queries
             var baseQuery = _db.Set<CustomerSegment>().AsNoTracking().Where(x => !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
-                baseQuery = baseQuery.Where(x => x.Name.ToLower().Contains(term) || (x.Description != null && x.Description.ToLower().Contains(term)));
+                var term = QueryLikePattern.Contains(query);
+                baseQuery = baseQuery.Where(x =>
+                    EF.Functions.Like(x.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    (x.Description != null && EF.Functions.Like(x.Description, term, QueryLikePattern.EscapeCharacter)));
             }
 
             baseQuery = filter switch

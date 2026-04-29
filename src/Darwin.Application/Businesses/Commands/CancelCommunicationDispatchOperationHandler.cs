@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
@@ -22,17 +23,23 @@ namespace Darwin.Application.Businesses.Commands
 
         public async Task<Result> HandleAsync(CancelCommunicationDispatchOperationDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
             }
 
-            if (string.Equals(dto.Channel, "Email", StringComparison.OrdinalIgnoreCase))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
             {
-                return await CancelEmailOperationAsync(dto, ct).ConfigureAwait(false);
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
-            return await CancelChannelOperationAsync(dto, ct).ConfigureAwait(false);
+            if (string.Equals(dto.Channel, "Email", StringComparison.OrdinalIgnoreCase))
+            {
+                return await CancelEmailOperationAsync(dto, rowVersion, ct).ConfigureAwait(false);
+            }
+
+            return await CancelChannelOperationAsync(dto, rowVersion, ct).ConfigureAwait(false);
         }
 
         public async Task<Result<int>> HandleChannelBatchAsync(CancelChannelDispatchOperationsBatchDto dto, CancellationToken ct = default)
@@ -71,16 +78,16 @@ namespace Darwin.Application.Businesses.Commands
 
             if (!string.IsNullOrWhiteSpace(dto.Query))
             {
-                var q = dto.Query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(dto.Query);
                 query = query.Where(x =>
-                    x.RecipientAddress.ToLower().Contains(q) ||
-                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.ToLower().Contains(q)) ||
-                    x.Provider.ToLower().Contains(q) ||
-                    x.MessageText.ToLower().Contains(q) ||
-                    (x.FlowKey != null && x.FlowKey.ToLower().Contains(q)) ||
-                    (x.TemplateKey != null && x.TemplateKey.ToLower().Contains(q)) ||
-                    (x.CorrelationKey != null && x.CorrelationKey.ToLower().Contains(q)) ||
-                    (x.FailureReason != null && x.FailureReason.ToLower().Contains(q)));
+                    EF.Functions.Like(x.RecipientAddress, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.IntendedRecipientAddress != null && EF.Functions.Like(x.IntendedRecipientAddress, q, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(x.Provider, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.MessageText, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.FlowKey != null && EF.Functions.Like(x.FlowKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.TemplateKey != null && EF.Functions.Like(x.TemplateKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.CorrelationKey != null && EF.Functions.Like(x.CorrelationKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (!string.IsNullOrWhiteSpace(dto.RecipientAddress))
@@ -136,7 +143,7 @@ namespace Darwin.Application.Businesses.Commands
             return Result<int>.Ok(operations.Count);
         }
 
-        private async Task<Result> CancelEmailOperationAsync(CancelCommunicationDispatchOperationDto dto, CancellationToken ct)
+        private async Task<Result> CancelEmailOperationAsync(CancelCommunicationDispatchOperationDto dto, byte[] rowVersion, CancellationToken ct)
         {
             var operation = await _db.Set<EmailDispatchOperation>()
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
@@ -147,10 +154,10 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["CommunicationDispatchOperationNotFound"]);
             }
 
-            return await CancelOperationAsync(operation, dto.RowVersion, ct).ConfigureAwait(false);
+            return await CancelOperationAsync(operation, rowVersion, ct).ConfigureAwait(false);
         }
 
-        private async Task<Result> CancelChannelOperationAsync(CancelCommunicationDispatchOperationDto dto, CancellationToken ct)
+        private async Task<Result> CancelChannelOperationAsync(CancelCommunicationDispatchOperationDto dto, byte[] rowVersion, CancellationToken ct)
         {
             var operation = await _db.Set<ChannelDispatchOperation>()
                 .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
@@ -161,7 +168,7 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["CommunicationDispatchOperationNotFound"]);
             }
 
-            return await CancelOperationAsync(operation, dto.RowVersion, ct).ConfigureAwait(false);
+            return await CancelOperationAsync(operation, rowVersion, ct).ConfigureAwait(false);
         }
 
         private async Task<Result> CancelOperationAsync(Domain.Common.BaseEntity operation, byte[] rowVersion, CancellationToken ct)
@@ -171,7 +178,8 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Ok();
             }
 
-            if (!operation.RowVersion.SequenceEqual(rowVersion))
+            var currentVersion = operation.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }

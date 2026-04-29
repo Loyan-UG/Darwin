@@ -11,7 +11,7 @@ namespace Darwin.Application.Identity.Validators
         public UserProfileEditValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.Locale).NotEmpty();
             RuleFor(x => x.Timezone).NotEmpty();
             RuleFor(x => x.Currency).NotEmpty().Length(3);
@@ -25,7 +25,7 @@ namespace Darwin.Application.Identity.Validators
     {
         public UpdateMemberPreferencesValidator()
         {
-            RuleFor(x => x.RowVersion).NotNull().Must(x => x.Length > 0);
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 
@@ -49,7 +49,7 @@ namespace Darwin.Application.Identity.Validators
         public UserDeleteValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
         }
     }
 }

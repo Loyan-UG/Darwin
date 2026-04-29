@@ -35,6 +35,12 @@ namespace Darwin.Application.Identity.Commands
         /// </summary>
         public async Task<Result> HandleAsync(RolePermissionsUpdateDto dto, CancellationToken ct = default)
         {
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
+            }
+
             var v = _validator.Validate(dto);
             if (!v.IsValid) return Result.Fail(_localizer["InvalidRolePermissionsPayload"]);
 
@@ -44,7 +50,8 @@ namespace Darwin.Application.Identity.Commands
             if (role is null) return Result.Fail(_localizer["RoleNotFound"]);
 
             // App-level optimistic concurrency check (IAppDbContext has no Entry API)
-            if (!role.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentRowVersion = role.RowVersion ?? Array.Empty<byte>();
+            if (!currentRowVersion.SequenceEqual(rowVersion))
                 return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
 
             // Validate permissions exist (non-deleted)
@@ -90,7 +97,15 @@ namespace Darwin.Application.Identity.Commands
             // Touch role's ModifiedAtUtc for audit trail
             role.ModifiedAtUtc = DateTime.UtcNow;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
+            }
+
             return Result.Ok();
         }
     }

@@ -88,18 +88,15 @@ namespace Darwin.Application.Loyalty.Queries
                     on tx.Id equals scan.ResultingTransactionId into scanGroup
                 from scan in scanGroup.DefaultIfEmpty()
                 orderby redemption.CreatedAtUtc descending
-                select new LoyaltyRewardRedemptionListItemDto
+                select new
                 {
                     Id = redemption.Id,
                     LoyaltyAccountId = redemption.LoyaltyAccountId,
                     BusinessId = redemption.BusinessId,
                     ConsumerUserId = account.UserId,
                     RewardTierId = redemption.LoyaltyRewardTierId,
-                    RewardLabel = rewardTier != null
-                        ? (!string.IsNullOrWhiteSpace(rewardTier.Description)
-                            ? rewardTier.Description!
-                            : rewardTier.RewardType.ToString())
-                        : redemption.LoyaltyRewardTierId.ToString(),
+                    RewardTierDescription = rewardTier != null ? rewardTier.Description : null,
+                    RewardTierType = rewardTier != null ? rewardTier.RewardType : (Darwin.Domain.Enums.LoyaltyRewardType?)null,
                     PointsSpent = redemption.PointsSpent,
                     Status = redemption.Status,
                     RedeemedAtUtc = redemption.RedeemedAtUtc ?? redemption.CreatedAtUtc,
@@ -109,7 +106,7 @@ namespace Darwin.Application.Loyalty.Queries
                             ? user.Email
                             : ((user.FirstName ?? string.Empty) + " " + (user.LastName ?? string.Empty)).Trim(),
                     ConsumerEmail = user.Email,
-                    ScanStatus = scan != null ? scan.Status : null,
+                    ScanStatus = scan != null ? (Darwin.Domain.Enums.LoyaltyScanStatus?)scan.Status : null,
                     ScanOutcome = scan != null ? scan.Outcome : null,
                     ScanFailureReason = scan != null ? scan.FailureReason : null,
                     BusinessLocationId = redemption.BusinessLocationId,
@@ -121,7 +118,30 @@ namespace Darwin.Application.Loyalty.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            return items;
+            return items
+                .Select(x => new LoyaltyRewardRedemptionListItemDto
+                {
+                    Id = x.Id,
+                    LoyaltyAccountId = x.LoyaltyAccountId,
+                    BusinessId = x.BusinessId,
+                    ConsumerUserId = x.ConsumerUserId,
+                    RewardTierId = x.RewardTierId,
+                    RewardLabel = x.RewardTierDescription is { Length: > 0 }
+                        ? x.RewardTierDescription
+                        : x.RewardTierType?.ToString() ?? x.RewardTierId.ToString(),
+                    PointsSpent = x.PointsSpent,
+                    Status = x.Status,
+                    RedeemedAtUtc = x.RedeemedAtUtc,
+                    Note = x.Note,
+                    ConsumerDisplayName = x.ConsumerDisplayName,
+                    ConsumerEmail = x.ConsumerEmail,
+                    ScanStatus = x.ScanStatus,
+                    ScanOutcome = x.ScanOutcome,
+                    ScanFailureReason = x.ScanFailureReason,
+                    BusinessLocationId = x.BusinessLocationId,
+                    RowVersion = x.RowVersion
+                })
+                .ToList();
         }
     }
 }

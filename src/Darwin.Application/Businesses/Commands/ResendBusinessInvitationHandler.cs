@@ -79,7 +79,10 @@ namespace Darwin.Application.Businesses.Commands
             await _db.SaveChangesAsync(ct);
 
             var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(invitation.Token);
-            var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var siteSettings = await _db.Set<SiteSetting>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => !x.IsDeleted, ct)
+                .ConfigureAwait(false);
             var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(business.DefaultCulture, siteSettings?.DefaultCulture);
             var subjectTemplate = CommunicationTemplateDefaults.ResolveTemplate(
                 _communicationLocalizer,

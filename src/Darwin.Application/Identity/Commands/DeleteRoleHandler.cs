@@ -1,59 +1,60 @@
-﻿using System;
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
-using Darwin.Shared.Results;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Identity.Commands
 {
     /// <summary>
-    /// Soft-deletes a role if it is not a system role. System roles are protected
-    /// and cannot be removed. When the role does not exist, a not-found result is
-    /// returned. This handler updates audit fields and respects global query filters.
+    /// Soft-deletes a role if it is not a system role.
     /// </summary>
     public sealed class DeleteRoleHandler
     {
         private readonly IAppDbContext _db;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        /// <summary>
-        /// Creates a new handler using the application's DbContext abstraction.
-        /// </summary>
         public DeleteRoleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
-            _db = db;
-            _localizer = localizer;
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
-        /// <summary>
-        /// Deletes the specified role by id using a soft-delete. If the role is
-        /// marked as system (<c>IsSystem</c>), the operation is rejected with a
-        /// validation-like failure.
-        /// </summary>
-        /// <param name="id">The role identifier.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A successful result when deleted; a failure result when not found or
-        /// when the role is system-protected.
-        /// </returns>
-        public async Task<Result> HandleAsync(Guid id, CancellationToken ct = default)
+        public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion, CancellationToken ct = default)
         {
-            // Global filter hides IsDeleted==true; explicit single-row fetch
-            var role = await _db.Set<Role>().FirstOrDefaultAsync(r => r.Id == id, ct);
+            if (id == Guid.Empty)
+                return Result.Fail(_localizer["RoleNotFound"]);
+
+            if (rowVersion is null || rowVersion.Length == 0)
+                return Result.Fail(_localizer["RowVersionRequired"]);
+
+            var role = await _db.Set<Role>().FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted, ct);
             if (role is null)
                 return Result.Fail(_localizer["RoleNotFound"]);
 
             if (role.IsSystem)
                 return Result.Fail(_localizer["SystemProtectedRoleCannotBeDeleted"]);
 
-            // Soft delete
+            var currentVersion = role.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
+
             role.IsDeleted = true;
             role.ModifiedAtUtc = DateTime.UtcNow;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
     }

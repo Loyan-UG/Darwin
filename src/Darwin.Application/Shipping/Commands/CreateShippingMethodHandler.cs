@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Shipping;
 using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Validators;
 using Darwin.Domain.Entities.Shipping;
@@ -35,16 +36,18 @@ namespace Darwin.Application.Shipping.Commands
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
+            var carrier = ShippingMethodConventions.NormalizeCarrier(dto.Carrier);
+            var service = dto.Service.Trim();
             var exists = await _db.Set<ShippingMethod>().AsNoTracking()
-                .AnyAsync(m => m.Carrier == dto.Carrier && m.Service == dto.Service, ct);
+                .AnyAsync(m => m.Carrier == carrier && m.Service == service, ct);
             if (exists)
                 throw new ValidationException(_localizer["ShippingMethodCarrierServiceMustBeUnique"]);
 
             var method = new ShippingMethod
             {
                 Name = dto.Name.Trim(),
-                Carrier = dto.Carrier.Trim(),
-                Service = dto.Service.Trim(),
+                Carrier = carrier,
+                Service = service,
                 CountriesCsv = string.IsNullOrWhiteSpace(dto.CountriesCsv) ? null : dto.CountriesCsv.Trim(),
                 IsActive = dto.IsActive,
                 Currency = string.IsNullOrWhiteSpace(dto.Currency) ? null : dto.Currency.Trim()
@@ -64,5 +67,6 @@ namespace Darwin.Application.Shipping.Commands
             _db.Set<ShippingMethod>().Add(method);
             await _db.SaveChangesAsync(ct);
         }
+
     }
 }

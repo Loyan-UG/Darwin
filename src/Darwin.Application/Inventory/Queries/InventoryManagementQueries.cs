@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Inventory;
@@ -48,11 +49,11 @@ namespace Darwin.Application.Inventory.Queries
             var warehousesQuery = _db.Set<Warehouse>().AsNoTracking().Where(x => x.BusinessId == businessId && !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 warehousesQuery = warehousesQuery.Where(x =>
-                    x.Name.ToLower().Contains(term) ||
-                    (x.Description != null && x.Description.ToLower().Contains(term)) ||
-                    (x.Location != null && x.Location.ToLower().Contains(term)));
+                    EF.Functions.Like(x.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    (x.Description != null && EF.Functions.Like(x.Description, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Location != null && EF.Functions.Like(x.Location, term, QueryLikePattern.EscapeCharacter)));
             }
 
             warehousesQuery = filter switch
@@ -143,12 +144,12 @@ namespace Darwin.Application.Inventory.Queries
             var suppliersQuery = _db.Set<Supplier>().AsNoTracking().Where(x => x.BusinessId == businessId && !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 suppliersQuery = suppliersQuery.Where(x =>
-                    x.Name.ToLower().Contains(term) ||
-                    x.Email.ToLower().Contains(term) ||
-                    x.Phone.ToLower().Contains(term) ||
-                    (x.Address != null && x.Address.ToLower().Contains(term)));
+                    EF.Functions.Like(x.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Email, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Phone, term, QueryLikePattern.EscapeCharacter) ||
+                    (x.Address != null && EF.Functions.Like(x.Address, term, QueryLikePattern.EscapeCharacter)));
             }
 
             suppliersQuery = filter switch
@@ -248,10 +249,10 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
+                var term = QueryLikePattern.Contains(query);
                 stockLevelsQuery = stockLevelsQuery.Where(x =>
-                    x.variant.Sku.ToLower().Contains(term) ||
-                    x.warehouse.Name.ToLower().Contains(term));
+                    EF.Functions.Like(x.variant.Sku, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.warehouse.Name, term, QueryLikePattern.EscapeCharacter));
             }
 
             stockLevelsQuery = filter switch
@@ -343,11 +344,11 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
-                var statusMatches = InventorySearchTermResolver.ResolveTransferStatusSearch(term);
+                var term = QueryLikePattern.Contains(query);
+                var statusMatches = InventorySearchTermResolver.ResolveTransferStatusSearch(query);
                 stockTransfersQuery = stockTransfersQuery.Where(x =>
-                    x.fromWarehouse.Name.ToLower().Contains(term) ||
-                    x.toWarehouse.Name.ToLower().Contains(term) ||
+                    EF.Functions.Like(x.fromWarehouse.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.toWarehouse.Name, term, QueryLikePattern.EscapeCharacter) ||
                     statusMatches.Contains(x.transfer.Status));
             }
 
@@ -363,18 +364,18 @@ namespace Darwin.Application.Inventory.Queries
 
             var total = await stockTransfersQuery.CountAsync(ct).ConfigureAwait(false);
 
-            var items = await stockTransfersQuery
+            var stockTransferRows = await stockTransfersQuery
                 .OrderByDescending(x => x.transfer.CreatedAtUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(x => new StockTransferListItemDto
+                .Select(x => new
                 {
                     Id = x.transfer.Id,
                     FromWarehouseId = x.transfer.FromWarehouseId,
                     ToWarehouseId = x.transfer.ToWarehouseId,
                     FromWarehouseName = x.fromWarehouse.Name,
                     ToWarehouseName = x.toWarehouse.Name,
-                    Status = x.transfer.Status.ToString(),
+                    Status = x.transfer.Status,
                     LineCount = x.transfer.Lines.Count(line => !line.IsDeleted),
                     CreatedAtUtc = x.transfer.CreatedAtUtc,
                     IsStale = x.transfer.Status == Domain.Enums.TransferStatus.InTransit && x.transfer.CreatedAtUtc <= staleInTransitCutoffUtc,
@@ -382,6 +383,22 @@ namespace Darwin.Application.Inventory.Queries
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
+            var items = stockTransferRows
+                .Select(x => new StockTransferListItemDto
+                {
+                    Id = x.Id,
+                    FromWarehouseId = x.FromWarehouseId,
+                    ToWarehouseId = x.ToWarehouseId,
+                    FromWarehouseName = x.FromWarehouseName,
+                    ToWarehouseName = x.ToWarehouseName,
+                    Status = x.Status.ToString(),
+                    LineCount = x.LineCount,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    IsStale = x.IsStale,
+                    RowVersion = x.RowVersion
+                })
+                .ToList();
 
             return (items, total);
         }
@@ -469,11 +486,11 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = query.Trim().ToLowerInvariant();
-                var statusMatches = InventorySearchTermResolver.ResolvePurchaseOrderStatusSearch(term);
+                var term = QueryLikePattern.Contains(query);
+                var statusMatches = InventorySearchTermResolver.ResolvePurchaseOrderStatusSearch(query);
                 purchaseOrdersQuery = purchaseOrdersQuery.Where(x =>
-                    x.order.OrderNumber.ToLower().Contains(term) ||
-                    x.supplier.Name.ToLower().Contains(term) ||
+                    EF.Functions.Like(x.order.OrderNumber, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.supplier.Name, term, QueryLikePattern.EscapeCharacter) ||
                     statusMatches.Contains(x.order.Status));
             }
 
@@ -489,18 +506,18 @@ namespace Darwin.Application.Inventory.Queries
 
             var total = await purchaseOrdersQuery.CountAsync(ct).ConfigureAwait(false);
 
-            var items = await purchaseOrdersQuery
+            var purchaseOrderRows = await purchaseOrdersQuery
                 .OrderByDescending(x => x.order.OrderedAtUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(x => new PurchaseOrderListItemDto
+                .Select(x => new
                 {
                     Id = x.order.Id,
                     SupplierId = x.order.SupplierId,
                     BusinessId = x.order.BusinessId,
                     OrderNumber = x.order.OrderNumber,
                     SupplierName = x.supplier.Name,
-                    Status = x.order.Status.ToString(),
+                    Status = x.order.Status,
                     OrderedAtUtc = x.order.OrderedAtUtc,
                     LineCount = x.order.Lines.Count(line => !line.IsDeleted),
                     IsStale = x.order.Status == Domain.Enums.PurchaseOrderStatus.Issued && x.order.OrderedAtUtc <= staleIssuedCutoffUtc,
@@ -508,6 +525,22 @@ namespace Darwin.Application.Inventory.Queries
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
+            var items = purchaseOrderRows
+                .Select(x => new PurchaseOrderListItemDto
+                {
+                    Id = x.Id,
+                    SupplierId = x.SupplierId,
+                    BusinessId = x.BusinessId,
+                    OrderNumber = x.OrderNumber,
+                    SupplierName = x.SupplierName,
+                    Status = x.Status.ToString(),
+                    OrderedAtUtc = x.OrderedAtUtc,
+                    LineCount = x.LineCount,
+                    IsStale = x.IsStale,
+                    RowVersion = x.RowVersion
+                })
+                .ToList();
 
             return (items, total);
         }
@@ -578,15 +611,38 @@ namespace Darwin.Application.Inventory.Queries
     {
         public static IReadOnlyList<Domain.Enums.TransferStatus> ResolveTransferStatusSearch(string term)
         {
-            return Enum.GetValues<Domain.Enums.TransferStatus>()
-                .Where(status => status.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
+            return Resolve(term, new (Domain.Enums.TransferStatus Value, string[] Tokens)[]
+            {
+                (Domain.Enums.TransferStatus.Draft, ["draft"]),
+                (Domain.Enums.TransferStatus.InTransit, ["intransit", "in transit", "transit"]),
+                (Domain.Enums.TransferStatus.Completed, ["completed", "complete"]),
+                (Domain.Enums.TransferStatus.Cancelled, ["cancelled", "canceled", "cancel"])
+            });
         }
 
         public static IReadOnlyList<Domain.Enums.PurchaseOrderStatus> ResolvePurchaseOrderStatusSearch(string term)
         {
-            return Enum.GetValues<Domain.Enums.PurchaseOrderStatus>()
-                .Where(status => status.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+            return Resolve(term, new (Domain.Enums.PurchaseOrderStatus Value, string[] Tokens)[]
+            {
+                (Domain.Enums.PurchaseOrderStatus.Draft, ["draft"]),
+                (Domain.Enums.PurchaseOrderStatus.Issued, ["issued", "issue"]),
+                (Domain.Enums.PurchaseOrderStatus.Received, ["received", "receive"]),
+                (Domain.Enums.PurchaseOrderStatus.Cancelled, ["cancelled", "canceled", "cancel"])
+            });
+        }
+
+        private static IReadOnlyList<T> Resolve<T>(string term, IReadOnlyList<(T Value, string[] Tokens)> entries)
+            where T : struct, Enum
+        {
+            var normalized = term.Trim();
+            if (normalized.Length == 0)
+            {
+                return Array.Empty<T>();
+            }
+
+            return entries
+                .Where(entry => entry.Tokens.Any(token => token.Contains(normalized, StringComparison.OrdinalIgnoreCase)))
+                .Select(entry => entry.Value)
                 .ToArray();
         }
     }

@@ -22,11 +22,11 @@ namespace Darwin.Application.Identity.Commands
 
         public async Task<Result<Guid>> HandleAsync(string key, string displayName, string? description, bool isSystem = false, CancellationToken ct = default)
         {
-            var normalized = key.Trim().ToUpperInvariant();
-            var exists = await _db.Set<Permission>().AnyAsync(p => p.Key.ToUpper() == normalized && !p.IsDeleted, ct);
+            var normalized = key.Trim();
+            var exists = await _db.Set<Permission>().AnyAsync(p => p.Key == normalized && !p.IsDeleted, ct);
             if (exists) return Result<Guid>.Fail(_localizer["PermissionKeyAlreadyExists"]);
 
-            var permission = new Permission(key, displayName, isSystem, description);
+            var permission = new Permission(normalized, displayName, isSystem, description);
             _db.Set<Permission>().Add(permission);
             await _db.SaveChangesAsync(ct);
             return Result<Guid>.Ok(permission.Id);

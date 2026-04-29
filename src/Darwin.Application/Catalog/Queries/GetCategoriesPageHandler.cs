@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Catalog.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,7 +41,7 @@ namespace Darwin.Application.Catalog.Queries
         {
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
-            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim().ToLowerInvariant();
+            query = string.IsNullOrWhiteSpace(query) ? null : QueryLikePattern.Contains(query);
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
 
             var q = _db.Set<Category>()
@@ -48,8 +49,8 @@ namespace Darwin.Application.Catalog.Queries
                 .Where(c =>
                     !c.IsDeleted &&
                     (query == null ||
-                     c.Translations.Any(t => !t.IsDeleted && t.Name.ToLower().Contains(query)) ||
-                     c.Translations.Any(t => !t.IsDeleted && t.Slug != null && t.Slug.ToLower().Contains(query))));
+                     c.Translations.Any(t => !t.IsDeleted && EF.Functions.Like(t.Name, query, QueryLikePattern.EscapeCharacter)) ||
+                     c.Translations.Any(t => !t.IsDeleted && t.Slug != null && EF.Functions.Like(t.Slug, query, QueryLikePattern.EscapeCharacter))));
 
             q = filter switch
             {

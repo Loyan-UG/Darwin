@@ -276,8 +276,9 @@ public sealed class PlaceOrderFromCartHandler
 
     private async Task<string> NextOrderNumberAsync(CancellationToken ct)
     {
+        var nowUtc = DateTime.UtcNow;
         var lastCount = await _db.Set<Order>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
-        return $"D-{DateTime.UtcNow:yyyyMMdd}-{lastCount + 1:D5}";
+        return $"D-{nowUtc:yyyyMMdd}-{lastCount + 1:D5}";
     }
 
     private static string BuildSummaryKey(Guid variantId, string? selectedAddOnValueIdsJson)

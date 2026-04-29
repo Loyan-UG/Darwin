@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Integration;
 using Microsoft.EntityFrameworkCore;
 
@@ -113,6 +114,7 @@ namespace Darwin.Application.Businesses.Queries
                 pageSize = 20;
             }
 
+            var nowUtc = DateTime.UtcNow;
             var query = _db.Set<ChannelDispatchAudit>().AsNoTracking().Where(x => !x.IsDeleted);
             if (filter.BusinessId.HasValue)
             {
@@ -121,16 +123,16 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = filter.Query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(filter.Query);
                 query = query.Where(x =>
-                    x.RecipientAddress.ToLower().Contains(q) ||
-                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.ToLower().Contains(q)) ||
-                    x.Provider.ToLower().Contains(q) ||
-                    x.MessagePreview.ToLower().Contains(q) ||
-                    (x.FlowKey != null && x.FlowKey.ToLower().Contains(q)) ||
-                    (x.TemplateKey != null && x.TemplateKey.ToLower().Contains(q)) ||
-                    (x.CorrelationKey != null && x.CorrelationKey.ToLower().Contains(q)) ||
-                    (x.ProviderMessageId != null && x.ProviderMessageId.ToLower().Contains(q)));
+                    EF.Functions.Like(x.RecipientAddress, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.IntendedRecipientAddress != null && EF.Functions.Like(x.IntendedRecipientAddress, q, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(x.Provider, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.MessagePreview, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.FlowKey != null && EF.Functions.Like(x.FlowKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.TemplateKey != null && EF.Functions.Like(x.TemplateKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.CorrelationKey != null && EF.Functions.Like(x.CorrelationKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.ProviderMessageId != null && EF.Functions.Like(x.ProviderMessageId, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.RecipientAddress))
@@ -185,7 +187,7 @@ namespace Darwin.Application.Businesses.Queries
 
             var chainContext = BuildChainContext(rows);
             var filteredRows = rows.AsEnumerable();
-            var providerContext = BuildProviderContext(rows);
+            var providerContext = BuildProviderContext(rows, nowUtc);
             if (filter.RepeatedFailuresOnly)
             {
                 filteredRows = filteredRows.Where(x => IsRepeatedFailure(chainContext[x.Id]));
@@ -198,12 +200,12 @@ namespace Darwin.Application.Businesses.Queries
 
             if (filter.ActionReadyOnly)
             {
-                filteredRows = filteredRows.Where(x => BuildActionPolicy(x, chainContext[x.Id]).CanRerunNow);
+                filteredRows = filteredRows.Where(x => BuildActionPolicy(x, chainContext[x.Id], nowUtc).CanRerunNow);
             }
 
             if (filter.ActionBlockedOnly)
             {
-                filteredRows = filteredRows.Where(x => !BuildActionPolicy(x, chainContext[x.Id]).CanRerunNow);
+                filteredRows = filteredRows.Where(x => !BuildActionPolicy(x, chainContext[x.Id], nowUtc).CanRerunNow);
             }
 
             if (filter.EscalationCandidatesOnly)
@@ -235,7 +237,7 @@ namespace Darwin.Application.Businesses.Queries
             var auditItems = filteredRowsList
                 .Select(x =>
                 {
-                    var actionPolicy = BuildActionPolicy(x, chainContext[x.Id]);
+                    var actionPolicy = BuildActionPolicy(x, chainContext[x.Id], nowUtc);
                     var escalationPolicy = BuildEscalationPolicy(x, chainContext[x.Id]);
                     return new ChannelDispatchAuditListItemDto
                     {
@@ -286,7 +288,7 @@ namespace Darwin.Application.Businesses.Queries
                 .Take(pageSize)
                 .ToList();
 
-            var summary = BuildSummary(rows, chainContext, providerContext);
+            var summary = BuildSummary(rows, chainContext, providerContext, nowUtc);
             summary.QueuedPendingCount = queuedItems.Count(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase));
             summary.QueuedFailedCount = queuedItems.Count(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase));
             ChannelDispatchAuditChainSummaryDto? chainSummary = null;
@@ -298,7 +300,7 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))
             {
-                providerSummary = BuildProviderSummary(rows, filter.Provider, filter.Channel, filter.FlowKey);
+                providerSummary = BuildProviderSummary(rows, filter.Provider, filter.Channel, filter.FlowKey, nowUtc);
             }
 
             return (items, total, summary, chainSummary, providerSummary);
@@ -307,9 +309,10 @@ namespace Darwin.Application.Businesses.Queries
         private static ChannelDispatchAuditSummaryDto BuildSummary(
             List<ChannelDispatchAudit> rows,
             Dictionary<Guid, ChannelDispatchAuditChainContext> chainContext,
-            Dictionary<Guid, ChannelDispatchProviderContext> providerContext)
+            Dictionary<Guid, ChannelDispatchProviderContext> providerContext,
+            DateTime nowUtc)
         {
-            var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
+            var recentThresholdUtc = nowUtc.AddHours(-24);
             return new ChannelDispatchAuditSummaryDto
             {
                 TotalCount = rows.Count,
@@ -322,8 +325,8 @@ namespace Darwin.Application.Businesses.Queries
                 AdminTestCount = rows.Count(x => string.Equals(x.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase)),
                 RepeatedFailureCount = rows.Count(x => IsRepeatedFailure(chainContext[x.Id])),
                 PriorSuccessContextCount = rows.Count(x => chainContext[x.Id].LastSuccessfulAttemptAtUtc.HasValue),
-                ActionReadyCount = rows.Count(x => BuildActionPolicy(x, chainContext[x.Id]).CanRerunNow),
-                ActionBlockedCount = rows.Count(x => !BuildActionPolicy(x, chainContext[x.Id]).CanRerunNow),
+                ActionReadyCount = rows.Count(x => BuildActionPolicy(x, chainContext[x.Id], nowUtc).CanRerunNow),
+                ActionBlockedCount = rows.Count(x => !BuildActionPolicy(x, chainContext[x.Id], nowUtc).CanRerunNow),
                 EscalationCandidateCount = rows.Count(x => BuildEscalationPolicy(x, chainContext[x.Id]).NeedsEscalationReview),
                 HeavyChainCount = rows.Count(x => IsHeavyChain(chainContext[x.Id])),
                 ProviderReviewCount = rows.Count(x => NeedsProviderReview(providerContext[x.Id])),
@@ -359,16 +362,16 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = filter.Query.Trim().ToLowerInvariant();
+                var q = QueryLikePattern.Contains(filter.Query);
                 query = query.Where(x =>
-                    x.RecipientAddress.ToLower().Contains(q) ||
-                    (x.IntendedRecipientAddress != null && x.IntendedRecipientAddress.ToLower().Contains(q)) ||
-                    x.Provider.ToLower().Contains(q) ||
-                    x.MessageText.ToLower().Contains(q) ||
-                    (x.FlowKey != null && x.FlowKey.ToLower().Contains(q)) ||
-                    (x.TemplateKey != null && x.TemplateKey.ToLower().Contains(q)) ||
-                    (x.CorrelationKey != null && x.CorrelationKey.ToLower().Contains(q)) ||
-                    (x.FailureReason != null && x.FailureReason.ToLower().Contains(q)));
+                    EF.Functions.Like(x.RecipientAddress, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.IntendedRecipientAddress != null && EF.Functions.Like(x.IntendedRecipientAddress, q, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(x.Provider, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.MessageText, q, QueryLikePattern.EscapeCharacter) ||
+                    (x.FlowKey != null && EF.Functions.Like(x.FlowKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.TemplateKey != null && EF.Functions.Like(x.TemplateKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.CorrelationKey != null && EF.Functions.Like(x.CorrelationKey, q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.RecipientAddress))
@@ -559,9 +562,10 @@ namespace Darwin.Application.Businesses.Queries
             List<ChannelDispatchAudit> rows,
             string provider,
             string? channel,
-            string? flowKey)
+            string? flowKey,
+            DateTime nowUtc)
         {
-            var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
+            var recentThresholdUtc = nowUtc.AddHours(-24);
             var recentRows = rows
                 .Where(x => x.AttemptedAtUtc >= recentThresholdUtc)
                 .ToList();
@@ -753,9 +757,9 @@ namespace Darwin.Application.Businesses.Queries
 
         private static ChannelDispatchActionPolicy BuildActionPolicy(
             ChannelDispatchAudit row,
-            ChannelDispatchAuditChainContext context)
+            ChannelDispatchAuditChainContext context,
+            DateTime nowUtc)
         {
-            var nowUtc = DateTime.UtcNow;
             if (string.Equals(row.FlowKey, ChannelDispatchAuditVocabulary.FlowKeys.PhoneVerification, StringComparison.OrdinalIgnoreCase))
             {
                 return new ChannelDispatchActionPolicy
@@ -857,9 +861,9 @@ namespace Darwin.Application.Businesses.Queries
             public string? Reason { get; init; }
         }
 
-        private static Dictionary<Guid, ChannelDispatchProviderContext> BuildProviderContext(List<ChannelDispatchAudit> rows)
+        private static Dictionary<Guid, ChannelDispatchProviderContext> BuildProviderContext(List<ChannelDispatchAudit> rows, DateTime nowUtc)
         {
-            var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
+            var recentThresholdUtc = nowUtc.AddHours(-24);
             var lookup = new Dictionary<Guid, ChannelDispatchProviderContext>(rows.Count);
             foreach (var group in rows
                          .GroupBy(x => new

@@ -19,6 +19,7 @@ namespace Darwin.Application.Catalog.Validators
                 t.RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             });
             RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.SelectionMode).IsInEnum();
             RuleFor(x => x.MinSelections).GreaterThanOrEqualTo(0);
             RuleFor(x => x.MaxSelections).GreaterThanOrEqualTo(0).When(x => x.MaxSelections.HasValue);
             RuleForEach(x => x.Options).SetValidator(new AddOnOptionValidator());
@@ -30,10 +31,12 @@ namespace Darwin.Application.Catalog.Validators
     /// </summary>
     public sealed class AddOnGroupEditValidator : AbstractValidator<AddOnGroupEditDto>
     {
-        public AddOnGroupEditValidator()
+        public AddOnGroupEditValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
             RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
             RuleForEach(x => x.Translations).ChildRules(t =>
             {
@@ -41,6 +44,7 @@ namespace Darwin.Application.Catalog.Validators
                 t.RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             });
             RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.SelectionMode).IsInEnum();
             RuleFor(x => x.MinSelections).GreaterThanOrEqualTo(0);
             RuleFor(x => x.MaxSelections).GreaterThanOrEqualTo(0).When(x => x.MaxSelections.HasValue);
             RuleForEach(x => x.Options).SetValidator(new AddOnOptionValidator());
@@ -88,7 +92,8 @@ namespace Darwin.Application.Catalog.Validators
             RuleFor(x => x.AddOnGroupId).NotEmpty();
             RuleFor(x => x.ProductIds).NotNull();
             // Replacing the full set is allowed to be empty.
-            RuleFor(x => x.RowVersion).NotNull().Must(rv => rv.Length > 0)
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
                 .WithMessage(localizer["RowVersionRequired"]);
         }
     }
@@ -98,10 +103,12 @@ namespace Darwin.Application.Catalog.Validators
     /// </summary>
     public sealed class AddOnGroupAttachToVariantsValidator : AbstractValidator<AddOnGroupAttachToVariantsDto>
     {
-        public AddOnGroupAttachToVariantsValidator()
+        public AddOnGroupAttachToVariantsValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.AddOnGroupId).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
             RuleFor(x => x.VariantIds).NotNull();
             RuleForEach(x => x.VariantIds).NotEmpty();
         }

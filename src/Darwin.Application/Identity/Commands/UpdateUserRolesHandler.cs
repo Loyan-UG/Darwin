@@ -34,6 +34,12 @@ namespace Darwin.Application.Identity.Commands
         /// </summary>
         public async Task<Result> HandleAsync(UserRolesUpdateDto dto, CancellationToken ct = default)
         {
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
+            }
+
             var v = _validator.Validate(dto);
             if (!v.IsValid) return Result.Fail(_localizer["InvalidUserRolesPayload"]);
 
@@ -42,7 +48,8 @@ namespace Darwin.Application.Identity.Commands
             if (user is null) return Result.Fail(_localizer["UserNotFoundOrInactive"]);
 
             // App-level optimistic concurrency check
-            if (!user.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentRowVersion = user.RowVersion ?? Array.Empty<byte>();
+            if (!currentRowVersion.SequenceEqual(rowVersion))
                 return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
 
             // Validate roles exist (non-deleted)
@@ -88,7 +95,15 @@ namespace Darwin.Application.Identity.Commands
             // Touch user's ModifiedAtUtc for audit trail
             user.ModifiedAtUtc = DateTime.UtcNow;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflictReloadAndRetry"]);
+            }
+
             return Result.Ok();
         }
     }

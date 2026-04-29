@@ -89,7 +89,10 @@ namespace Darwin.Application.Identity.Commands
             _db.Set<UserToken>().Add(tokenEntity);
             await _db.SaveChangesAsync(ct);
 
-            var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var siteSettings = await _db.Set<SiteSetting>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => !x.IsDeleted, ct)
+                .ConfigureAwait(false);
             var communicationCulture = CommunicationTemplateDefaults.NormalizeCulture(user.Locale, siteSettings?.DefaultCulture);
             var subjectTemplate = CommunicationTemplateDefaults.ResolveTemplate(
                 _communicationLocalizer,

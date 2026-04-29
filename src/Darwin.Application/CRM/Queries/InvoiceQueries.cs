@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
@@ -31,10 +32,10 @@ namespace Darwin.Application.CRM.Queries
             var baseQuery = _db.Set<Invoice>().AsNoTracking().Where(x => !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
-                var hasGuidQuery = Guid.TryParse(q, out var guidQuery);
+                var q = QueryLikePattern.Contains(query);
+                var hasGuidQuery = Guid.TryParse(query.Trim(), out var guidQuery);
                 baseQuery = baseQuery.Where(x =>
-                    x.Currency.ToLower().Contains(q) ||
+                    EF.Functions.Like(x.Currency, q, QueryLikePattern.EscapeCharacter) ||
                     (hasGuidQuery &&
                      ((x.CustomerId.HasValue && x.CustomerId.Value == guidQuery) ||
                       (x.OrderId.HasValue && x.OrderId.Value == guidQuery) ||

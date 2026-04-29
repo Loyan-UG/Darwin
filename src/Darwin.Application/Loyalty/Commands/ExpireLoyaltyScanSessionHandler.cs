@@ -51,7 +51,9 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result.Fail(_localizer["LoyaltyScanSessionNotFound"]);
             }
 
-            if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["LoyaltyScanSessionConcurrencyConflict"]);
             }

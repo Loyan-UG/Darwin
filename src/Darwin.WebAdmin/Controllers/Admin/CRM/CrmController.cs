@@ -248,6 +248,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return RedirectOrHtmx(nameof(Customers), new { });
             }
 
+            var nowUtc = DateTime.UtcNow;
             var vm = new CustomerEditVm
             {
                 Id = dto.Id,
@@ -307,7 +308,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     IsDefaultShipping = x.IsDefaultShipping
                 }).ToList(),
                 NewInteraction = new InteractionCreateVm { CustomerId = dto.Id },
-                NewConsent = new ConsentCreateVm { CustomerId = dto.Id, GrantedAtUtc = DateTime.UtcNow },
+                NewConsent = new ConsentCreateVm { CustomerId = dto.Id, GrantedAtUtc = nowUtc },
                 SegmentAssignment = new AssignCustomerSegmentVm { CustomerId = dto.Id }
             };
 
@@ -398,11 +399,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 PaidAtUtc = x.PaidAtUtc,
                 RowVersion = x.RowVersion
             }).ToList();
+            var todayUtc = DateTime.UtcNow.Date;
 
             return RenderInvoicesWorkspace(new InvoicesListVm
             {
                 Summary = MapSummary(summary, settings.DefaultCurrency),
-                OpsSummary = BuildInvoiceOpsSummary(invoiceItems),
+                OpsSummary = BuildInvoiceOpsSummary(invoiceItems, todayUtc),
                 Playbooks = BuildInvoicePlaybooks(),
                 TaxPolicy = MapTaxPolicy(settings),
                 Page = page,
@@ -793,10 +795,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var opportunityItems = items.ToList();
+            var todayUtc = DateTime.UtcNow.Date;
             var vm = new OpportunitiesListVm
             {
                 Summary = MapSummary(summary, settings.DefaultCurrency),
-                OpsSummary = BuildOpportunityOpsSummary(opportunityItems),
+                OpsSummary = BuildOpportunityOpsSummary(opportunityItems, todayUtc),
                 Playbooks = BuildOpportunityPlaybooks(),
                 Page = page,
                 PageSize = pageSize,
@@ -844,7 +847,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return RedirectOrHtmx(nameof(Leads), new { page, pageSize, q, filter });
             }
 
-            var version = DecodeRowVersion(rowVersion);
+            var version = DecodeBase64RowVersion(rowVersion);
 
             var result = await _updateLeadLifecycle
                 .HandleAsync(new UpdateLeadLifecycleDto
@@ -891,7 +894,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return RedirectOrHtmx(nameof(Opportunities), new { page, pageSize, q, filter });
             }
 
-            var version = DecodeRowVersion(rowVersion);
+            var version = DecodeBase64RowVersion(rowVersion);
 
             var result = await _updateOpportunityLifecycle
                 .HandleAsync(new UpdateOpportunityLifecycleDto
@@ -1579,23 +1582,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             vm.PaymentOptions = await _referenceData.GetPaymentOptionsAsync(vm.PaymentId, includeEmpty: true, ct).ConfigureAwait(false);
         }
 
-        private static byte[] DecodeRowVersion(string? rowVersion)
-        {
-            if (string.IsNullOrWhiteSpace(rowVersion))
-            {
-                return Array.Empty<byte>();
-            }
-
-            try
-            {
-                return Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                return Array.Empty<byte>();
-            }
-        }
-
         private void AddLocalizedModelError(string fallbackKey, Exception ex)
         {
             ModelState.AddModelError(string.Empty, T(fallbackKey));
@@ -1813,9 +1799,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
         }
 
-        private static OpportunityOpsSummaryVm BuildOpportunityOpsSummary(IReadOnlyCollection<OpportunityListItemDto> items)
+        private static OpportunityOpsSummaryVm BuildOpportunityOpsSummary(IReadOnlyCollection<OpportunityListItemDto> items, DateTime todayUtc)
         {
-            var closingSoonThreshold = DateTime.UtcNow.Date.AddDays(14);
+            var closingSoonThreshold = todayUtc.AddDays(14);
             return new OpportunityOpsSummaryVm
             {
                 OpenCount = items.Count(x => x.Stage != Darwin.Domain.Enums.OpportunityStage.ClosedWon && x.Stage != Darwin.Domain.Enums.OpportunityStage.ClosedLost),
@@ -1851,14 +1837,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
         }
 
-        private InvoiceOpsSummaryVm BuildInvoiceOpsSummary(List<InvoiceListItemVm> items)
+        private InvoiceOpsSummaryVm BuildInvoiceOpsSummary(List<InvoiceListItemVm> items, DateTime todayUtc)
         {
-            var now = DateTime.UtcNow.Date;
             return new InvoiceOpsSummaryVm
             {
                 DraftCount = items.Count(x => x.Status == Darwin.Domain.Enums.InvoiceStatus.Draft),
-                DueSoonCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date >= now && x.DueDateUtc.Date <= now.AddDays(7)),
-                OverdueCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date < now),
+                DueSoonCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date >= todayUtc && x.DueDateUtc.Date <= todayUtc.AddDays(7)),
+                OverdueCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date < todayUtc),
                 MissingVatIdCount = items.Count(x => x.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(x.CustomerVatId)),
                 RefundedCount = items.Count(x => x.RefundedAmountMinor > 0)
             };

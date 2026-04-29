@@ -34,10 +34,11 @@ namespace Darwin.Application.Pricing.Commands
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new ValidationException(v.Errors);
 
+            var normalizedCode = string.IsNullOrWhiteSpace(dto.Code) ? null : CouponEligibility.NormalizeCode(dto.Code);
             if (!string.IsNullOrWhiteSpace(dto.Code))
             {
                 var exists = await _db.Set<Promotion>().AsNoTracking()
-                    .AnyAsync(p => p.IsActive && p.Code != null && p.Code.ToLower() == dto.Code.ToLower(), ct);
+                    .AnyAsync(p => p.IsActive && p.Code == normalizedCode, ct);
                 if (exists)
                     throw new ValidationException(_localizer["CouponCodeMustBeUniqueAmongActivePromotions"]);
             }
@@ -45,7 +46,7 @@ namespace Darwin.Application.Pricing.Commands
             var entity = new Promotion
             {
                 Name = dto.Name.Trim(),
-                Code = string.IsNullOrWhiteSpace(dto.Code) ? null : dto.Code.Trim(),
+                Code = normalizedCode,
                 Type = dto.Type,
                 AmountMinor = dto.AmountMinor,
                 Percent = dto.Percent,

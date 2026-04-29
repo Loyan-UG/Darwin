@@ -249,19 +249,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            try
-            {
-                var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
-                var result = await _softDelete.HandleAsync(dto, ct);
-                if (!result.Succeeded)
-                    SetWarningMessage("PermissionDeleteFailed");
-                else
-                    SetSuccessMessage("PermissionDeleted");
-            }
-            catch (Exception)
-            {
-                SetErrorMessage("PermissionDeleteFailed");
-            }
+            var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
+            var result = await _softDelete.HandleAsync(dto, ct);
+            if (result.Succeeded)
+                SetSuccessMessage("PermissionDeleted");
+            else
+                TempData["Error"] = result.Error ?? T("PermissionDeleteFailed");
 
             return RedirectOrHtmx(nameof(Index), new { });
         }

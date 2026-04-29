@@ -40,7 +40,13 @@ namespace Darwin.Application.CMS.Media.Commands
                 return Result.Fail(_localizer["MediaAssetNotFound"]);
             }
 
-            if (rowVersion is null || !entity.RowVersion.SequenceEqual(rowVersion))
+            if (rowVersion is null || rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
+            }
+
+            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -56,7 +62,15 @@ namespace Darwin.Application.CMS.Media.Commands
             }
 
             _db.Set<MediaAsset>().Remove(entity);
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflictDetected"]);
+            }
+
             return Result.Ok();
         }
 

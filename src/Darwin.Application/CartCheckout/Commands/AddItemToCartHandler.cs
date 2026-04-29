@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.CartCheckout;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.Catalog.Services;
 using Darwin.Domain.Entities.CartCheckout;
@@ -86,13 +85,29 @@ namespace Darwin.Application.CartCheckout.Commands
             var vatRate = tax.VatRate;
 
             // Merge: same variant + same add-on set → single line
-            var selectedJson = JsonSerializer.Serialize(dto.SelectedAddOnValueIds.OrderBy(x => x)); // sorted for stable equality
+            var selectedJson = CartAddOnSelectionJson.NormalizeIds(dto.SelectedAddOnValueIds);
             var existing = await _db.Set<CartItem>()
                 .FirstOrDefaultAsync(li =>
                     li.CartId == cart.Id &&
                     li.VariantId == dto.VariantId &&
                     li.SelectedAddOnValueIdsJson == selectedJson &&
                     !li.IsDeleted, ct);
+
+            if (existing is null)
+            {
+                var candidateLines = await _db.Set<CartItem>()
+                    .Where(li =>
+                        li.CartId == cart.Id &&
+                        li.VariantId == dto.VariantId &&
+                        !li.IsDeleted)
+                    .ToListAsync(ct);
+
+                existing = candidateLines.FirstOrDefault(li =>
+                    string.Equals(
+                        CartAddOnSelectionJson.NormalizeJsonOrNull(li.SelectedAddOnValueIdsJson) ?? "[]",
+                        selectedJson,
+                        StringComparison.Ordinal));
+            }
 
             if (existing != null)
             {

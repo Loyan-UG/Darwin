@@ -5,7 +5,6 @@ using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using System.Collections;
 
 
 namespace Darwin.Application.Identity.Commands
@@ -48,12 +47,10 @@ namespace Darwin.Application.Identity.Commands
             if (user is null)
                 return Result.Fail(_localizer["UserNotFound"]);
 
-            // Concurrency check
-            if (user.RowVersion is not null && dto.RowVersion is not null && user.RowVersion.Length > 0)
-            {
-                if (!StructuralComparisons.StructuralEqualityComparer.Equals(user.RowVersion, dto.RowVersion))
-                    return Result.Fail(_localizer["ConcurrencyConflict"]);
-            }
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = user.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
 
             // Update allowed fields
             user.FirstName = dto.FirstName;
@@ -64,7 +61,14 @@ namespace Darwin.Application.Identity.Commands
             user.PhoneE164 = dto.PhoneE164;
             user.IsActive = dto.IsActive;
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ConcurrencyConflict"]);
+            }
 
             return Result.Ok();
         }

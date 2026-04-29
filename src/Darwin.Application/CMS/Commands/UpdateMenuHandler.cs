@@ -40,13 +40,22 @@ namespace Darwin.Application.CMS.Commands
             if (menu is null) throw new InvalidOperationException(_localizer["MenuNotFound"]);
 
             // Concurrency check
-            if (!menu.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? System.Array.Empty<byte>();
+            var currentVersion = menu.RowVersion ?? System.Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             menu.Name = dto.Name.Trim();
             SyncItems(menu, dto);
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private static void SyncItems(Menu menu, MenuEditDto dto)

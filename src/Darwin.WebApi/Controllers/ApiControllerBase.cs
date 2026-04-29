@@ -148,6 +148,28 @@ namespace Darwin.WebApi.Controllers
         }
 
         /// <summary>
+        /// Creates a consistent 413 (Payload Too Large) response using the shared contracts problem shape.
+        /// </summary>
+        /// <param name="title">Short summary of the problem.</param>
+        /// <param name="detail">Optional detail message.</param>
+        /// <returns>HTTP 413 response with <see cref="ContractProblemDetails"/> body.</returns>
+        protected IActionResult PayloadTooLargeProblem(string title, string? detail = null)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                throw new ArgumentException("Title is required.", nameof(title));
+
+            var problem = new ContractProblemDetails
+            {
+                Status = StatusCodes.Status413PayloadTooLarge,
+                Title = title.Trim(),
+                Detail = string.IsNullOrWhiteSpace(detail) ? null : detail.Trim(),
+                Instance = HttpContext?.Request?.Path.Value
+            };
+
+            return StatusCode(StatusCodes.Status413PayloadTooLarge, problem);
+        }
+
+        /// <summary>
         /// Resolves the current authenticated user identifier from common JWT claim types.
         /// </summary>
         /// <returns>The current user identifier, or <c>null</c> when the request is anonymous.</returns>

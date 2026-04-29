@@ -1,10 +1,10 @@
-﻿using System.Collections;
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
-using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Shared.Results;
@@ -25,7 +25,6 @@ namespace Darwin.Application.Identity.Commands
         private readonly IValidator<UserDeleteDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        /// <summary>Creates a new handler instance.</summary>
         public SoftDeleteUserHandler(
             IAppDbContext db,
             IJwtTokenService jwt,
@@ -40,26 +39,21 @@ namespace Darwin.Application.Identity.Commands
             _localizer = localizer;
         }
 
-        /// <summary>
-        /// Marks the specified user as deleted. If the user is marked as system, the operation fails.
-        /// </summary>
-        /// <param name="dto">The delete request containing id and concurrency token.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>A result indicating success or failure.</returns>
         public async Task<Result<UserDeleteOutcomeDto>> HandleAsync(UserDeleteDto dto, CancellationToken ct = default)
         {
-            await _validator.ValidateAndThrowAsync(dto, ct);
+            var validation = await _validator.ValidateAsync(dto, ct);
+            if (!validation.IsValid)
+                return Result<UserDeleteOutcomeDto>.Fail(dto.RowVersion is null || dto.RowVersion.Length == 0
+                    ? _localizer["RowVersionRequired"]
+                    : _localizer["InvalidDeleteRequest"]);
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.Id && !u.IsDeleted, ct);
             if (user is null)
                 return Result<UserDeleteOutcomeDto>.Fail(_localizer["UserNotFound"]);
 
-            // Concurrency check
-            if (user.RowVersion is not null && dto.RowVersion is not null && user.RowVersion.Length > 0)
-            {
-                if (!StructuralComparisons.StructuralEqualityComparer.Equals(user.RowVersion, dto.RowVersion))
-                    return Result<UserDeleteOutcomeDto>.Fail(_localizer["ConcurrencyConflict"]);
-            }
+            var currentVersion = user.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(dto.RowVersion))
+                return Result<UserDeleteOutcomeDto>.Fail(_localizer["ConcurrencyConflict"]);
 
             if (user.IsSystem)
                 return Result<UserDeleteOutcomeDto>.Fail(_localizer["SystemUsersCannotBeDeleted"]);
@@ -83,7 +77,15 @@ namespace Darwin.Application.Identity.Commands
                 outcome.WasSoftDeleted = true;
             }
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result<UserDeleteOutcomeDto>.Fail(_localizer["ConcurrencyConflict"]);
+            }
+
             await _jwt.RevokeAllForUserAsync(user.Id, ct);
 
             return Result<UserDeleteOutcomeDto>.Ok(outcome);

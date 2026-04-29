@@ -64,7 +64,7 @@
           hx-swap="outerHTML">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="RoleId" />
-        <input type="hidden" asp-for="RowVersion" />
+        <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
 
         <div class="col-12">
             <div class="card">

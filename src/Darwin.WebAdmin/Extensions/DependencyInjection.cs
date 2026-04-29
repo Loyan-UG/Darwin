@@ -553,7 +553,7 @@ namespace Darwin.WebAdmin.Extensions
 
             services.AddScoped<IValidator<ProductEditDto>>(sp =>
             {
-                var baseValidator = new ProductEditDtoValidator();
+                var baseValidator = new ProductEditDtoValidator(sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 var unique = new ProductEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<ProductEditDto>(baseValidator, unique);
             });
@@ -568,7 +568,7 @@ namespace Darwin.WebAdmin.Extensions
 
             services.AddScoped<IValidator<CategoryEditDto>>(sp =>
             {
-                var baseValidator = new CategoryEditDtoValidator();
+                var baseValidator = new CategoryEditDtoValidator(sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 var unique = new CategoryEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<CategoryEditDto>(baseValidator, unique);
             });
@@ -583,7 +583,7 @@ namespace Darwin.WebAdmin.Extensions
 
             services.AddScoped<IValidator<PageEditDto>>(sp =>
             {
-                var baseValidator = new PageEditDtoValidator();
+                var baseValidator = new PageEditDtoValidator(sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 var unique = new PageEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<PageEditDto>(baseValidator, unique);
             });

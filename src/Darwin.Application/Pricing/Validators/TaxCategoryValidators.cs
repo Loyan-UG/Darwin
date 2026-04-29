@@ -17,7 +17,7 @@ namespace Darwin.Application.Pricing.Validators
         public TaxCategoryEditValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(128);
             RuleFor(x => x.VatRate).InclusiveBetween(0m, 1m);
         }

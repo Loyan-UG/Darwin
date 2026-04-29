@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Catalog.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -55,7 +56,7 @@ namespace Darwin.Application.Catalog.Queries
         {
             return _db.Set<AddOnGroup>()
                 .AsNoTracking()
-                .Where(g => !g.IsDeleted && (q == null || g.Name.ToLower().Contains(q)))
+                .Where(g => !g.IsDeleted && (q == null || EF.Functions.Like(g.Name, q, QueryLikePattern.EscapeCharacter)))
                 .Select(g => new AddOnGroupListItemDto
                 {
                     Id = g.Id,
@@ -63,7 +64,7 @@ namespace Darwin.Application.Catalog.Queries
                     Currency = g.Currency,
                     IsActive = g.IsActive,
                     IsGlobal = g.IsGlobal,
-                    OptionsCount = g.Options.Count,
+                    OptionsCount = g.Options.Count(x => !x.IsDeleted),
                     AttachmentCount =
                         _db.Set<AddOnGroupVariant>().Count(x => x.AddOnGroupId == g.Id && !x.IsDeleted) +
                         _db.Set<AddOnGroupProduct>().Count(x => x.AddOnGroupId == g.Id && !x.IsDeleted) +
@@ -87,7 +88,7 @@ namespace Darwin.Application.Catalog.Queries
 
             var groups = _db.Set<AddOnGroup>()
                 .AsNoTracking()
-                .Where(g => !g.IsDeleted && (q == null || g.Name.ToLower().Contains(q)))
+                .Where(g => !g.IsDeleted && (q == null || EF.Functions.Like(g.Name, q, QueryLikePattern.EscapeCharacter)))
                 .Select(g => new
                 {
                     g.IsActive,
@@ -114,7 +115,7 @@ namespace Darwin.Application.Catalog.Queries
     {
         public static string? NormalizeQuery(string? q)
         {
-            return string.IsNullOrWhiteSpace(q) ? null : q.Trim().ToLowerInvariant();
+            return string.IsNullOrWhiteSpace(q) ? null : QueryLikePattern.Contains(q);
         }
     }
 }

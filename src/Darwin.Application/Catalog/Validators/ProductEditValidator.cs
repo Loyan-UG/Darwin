@@ -1,7 +1,8 @@
-﻿using Darwin.Application.Catalog.DTOs;
-using FluentValidation;
 using System;
 using System.Linq;
+using Darwin.Application.Catalog.DTOs;
+using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Catalog.Validators
 {
@@ -20,10 +21,12 @@ namespace Darwin.Application.Catalog.Validators
     /// </remarks>
     public sealed class ProductEditDtoValidator : AbstractValidator<ProductEditDto>
     {
-        public ProductEditDtoValidator()
+        public ProductEditDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
             RuleFor(x => x.Translations).NotEmpty();
             RuleFor(x => x.Variants).NotEmpty();
             RuleFor(x => x.Translations)

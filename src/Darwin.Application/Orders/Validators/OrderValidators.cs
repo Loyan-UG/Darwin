@@ -101,7 +101,9 @@ namespace Darwin.Application.Orders.Validators
         public UpdateOrderStatusValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.OrderId).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(localizer["RowVersionRequired"]);
             RuleFor(x => x.NewStatus).IsInEnum();
             RuleFor(x => x.WarehouseId)
                 .Must(x => !x.HasValue || x.Value != Guid.Empty)

@@ -10,6 +10,8 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            CreateTryParseJsonbFunction(migrationBuilder);
+
             ConvertToJsonb(migrationBuilder, "Identity", "UserEngagementSnapshots", "SnapshotJson", "'{}'::jsonb");
             ConvertToJsonb(migrationBuilder, "Settings", "SiteSettings", "SmsExtraSettingsJson", "NULL");
             ConvertToJsonb(migrationBuilder, "Settings", "SiteSettings", "OpenGraphDefaultsJson", "NULL");
@@ -26,6 +28,8 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
             CreateJsonbGinIndex(migrationBuilder, "Settings", "SiteSettings", "FeatureFlagsJson");
             CreateJsonbGinIndex(migrationBuilder, "Businesses", "BusinessLocations", "OpeningHoursJson");
             CreateJsonbGinIndex(migrationBuilder, "Integration", "AnalyticsExportJobs", "ParametersJson");
+
+            DropTryParseJsonbFunction(migrationBuilder);
         }
 
         /// <inheritdoc />
@@ -47,6 +51,34 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
             ConvertJsonbToText(migrationBuilder, "Settings", "SiteSettings", "OpenGraphDefaultsJson", "character varying(2000)");
             ConvertJsonbToText(migrationBuilder, "Settings", "SiteSettings", "SmsExtraSettingsJson", "character varying(2000)");
             ConvertJsonbToText(migrationBuilder, "Identity", "UserEngagementSnapshots", "SnapshotJson", "character varying(8000)");
+
+            DropTryParseJsonbFunction(migrationBuilder);
+        }
+
+        private static void CreateTryParseJsonbFunction(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.Sql("""
+                CREATE OR REPLACE FUNCTION public.darwin_try_parse_jsonb(value text, fallback jsonb)
+                RETURNS jsonb
+                LANGUAGE plpgsql
+                IMMUTABLE
+                AS $$
+                BEGIN
+                    IF value IS NULL OR btrim(value) = '' THEN
+                        RETURN fallback;
+                    END IF;
+
+                    RETURN value::jsonb;
+                EXCEPTION WHEN others THEN
+                    RETURN fallback;
+                END;
+                $$;
+                """);
+        }
+
+        private static void DropTryParseJsonbFunction(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.Sql("""DROP FUNCTION IF EXISTS public.darwin_try_parse_jsonb(text, jsonb);""");
         }
 
         private static void ConvertToJsonb(
@@ -59,11 +91,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
             migrationBuilder.Sql($"""
                 ALTER TABLE "{schema}"."{table}"
                 ALTER COLUMN "{column}" TYPE jsonb
-                USING CASE
-                    WHEN "{column}" IS NULL THEN {emptyValue}
-                    WHEN btrim("{column}") = '' THEN {emptyValue}
-                    ELSE "{column}"::jsonb
-                END;
+                USING public.darwin_try_parse_jsonb("{column}", {emptyValue});
                 """);
         }
 

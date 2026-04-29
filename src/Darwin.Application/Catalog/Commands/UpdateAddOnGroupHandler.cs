@@ -20,13 +20,14 @@ namespace Darwin.Application.Catalog.Commands
     public sealed class UpdateAddOnGroupHandler
     {
         private readonly IAppDbContext _db;
-        private readonly AddOnGroupEditValidator _validator = new();
+        private readonly AddOnGroupEditValidator _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public UpdateAddOnGroupHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _localizer = localizer;
+            _validator = new AddOnGroupEditValidator(localizer);
         }
 
         public async Task HandleAsync(AddOnGroupEditDto dto, CancellationToken ct = default)
@@ -43,7 +44,9 @@ namespace Darwin.Application.Catalog.Commands
 
             if (g == null) throw new InvalidOperationException(_localizer["AddOnGroupNotFound"]);
 
-            if (!g.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = g.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
             g.Name = dto.Name.Trim();
@@ -57,7 +60,14 @@ namespace Darwin.Application.Catalog.Commands
 
             SyncOptions(g, dto);
 
-            await _db.SaveChangesAsync(ct);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
         }
 
         private void SyncOptions(AddOnGroup group, AddOnGroupEditDto dto)

@@ -33,8 +33,7 @@ namespace Darwin.Application.Pricing.Queries
                 .FirstOrDefaultAsync(p =>
                     !p.IsDeleted &&
                     p.IsActive &&
-                    p.Code != null &&
-                    p.Code.ToUpper() == normalizedCode &&
+                    p.Code == normalizedCode &&
                     (!p.StartsAtUtc.HasValue || p.StartsAtUtc <= now) &&
                     (!p.EndsAtUtc.HasValue || now <= p.EndsAtUtc), ct);
 

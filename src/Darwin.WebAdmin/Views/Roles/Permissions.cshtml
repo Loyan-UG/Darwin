@@ -1,4 +1,4 @@
-﻿@model Darwin.WebAdmin.ViewModels.Identity.RolePermissionsEditVm
+@model Darwin.WebAdmin.ViewModels.Identity.RolePermissionsEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
     ViewData["Title"] = T.T("EditRolePermissions");
@@ -15,7 +15,7 @@
 <form asp-action="Permissions" method="post" class="row g-3">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="RoleId" />
-    <input type="hidden" asp-for="RowVersion" />
+    <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
 
     <div class="col-12">
         <div class="card">

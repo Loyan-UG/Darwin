@@ -22,9 +22,15 @@ namespace Darwin.Application.Businesses.Commands
 
         public async Task<Result> HandleAsync(UpdateProviderCallbackInboxMessageDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
             var message = await _db.Set<ProviderCallbackInboxMessage>()
@@ -36,7 +42,8 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["ProviderCallbackInboxMessageNotFound"]);
             }
 
-            if (!message.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentVersion = message.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
@@ -46,29 +53,39 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["ProviderCallbackInboxUnsupportedAction"]);
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
 
         private static bool TryApplyAction(ProviderCallbackInboxMessage message, UpdateProviderCallbackInboxMessageDto dto)
         {
             var now = DateTime.UtcNow;
-            switch (dto.Action)
+            switch ((dto.Action ?? string.Empty).Trim().ToUpperInvariant())
             {
-                case "MarkProcessed":
+                case "MARKPROCESSED":
                     message.Status = "Processed";
                     message.ProcessedAtUtc = now;
                     message.FailureReason = null;
                     break;
-                case "MarkFailed":
+                case "MARKFAILED":
                     message.Status = "Failed";
                     message.LastAttemptAtUtc = now;
                     message.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason)
                         ? "Marked failed by WebAdmin operator."
                         : dto.FailureReason.Trim();
                     break;
-                case "Requeue":
+                case "REQUEUE":
                     message.Status = "Pending";
+                    message.AttemptCount = 0;
+                    message.LastAttemptAtUtc = null;
                     message.ProcessedAtUtc = null;
                     message.FailureReason = null;
                     break;

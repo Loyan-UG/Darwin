@@ -254,13 +254,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         public async Task<IActionResult> TemplatePreviews(string? flowKey = null, string? channel = null, CancellationToken ct = default)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var previewedAtUtc = DateTime.UtcNow;
             var vm = new CommunicationTemplatePreviewsVm
             {
                 FlowKey = flowKey ?? string.Empty,
                 Channel = channel ?? string.Empty,
                 FlowItems = BuildTemplatePreviewFlowItems(flowKey),
                 ChannelItems = BuildTemplatePreviewChannelItems(channel),
-                Items = BuildTemplatePreviews(settings, flowKey, channel)
+                Items = BuildTemplatePreviews(settings, flowKey, channel, previewedAtUtc)
             };
 
             return RenderTemplatePreviewsWorkspace(vm);
@@ -365,15 +366,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 });
             }
 
-            byte[] version;
-            try
-            {
-                version = Convert.FromBase64String(rowVersion);
-            }
-            catch (FormatException)
-            {
-                version = Array.Empty<byte>();
-            }
+            var version = DecodeBase64RowVersion(rowVersion);
 
             var result = await _updateProviderCallbackInboxMessage
                 .HandleAsync(new UpdateProviderCallbackInboxMessageDto
@@ -1320,10 +1313,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var requestedBy = User?.Identity?.Name ?? T("CommunicationChannelFamilyOperatorPlaceholder");
+            var nowUtc = DateTime.UtcNow;
             var placeholders = BuildCommunicationTestPlaceholders(
                 channel: DescribeCommunicationChannel("Email"),
                 requestedBy: requestedBy,
-                attemptedAtUtc: DateTime.UtcNow,
+                attemptedAtUtc: nowUtc,
                 testTarget: settings.CommunicationTestInboxEmail,
                 transportState: DescribeCommunicationTransportState(emailTransportConfigured));
             var prefix = string.IsNullOrWhiteSpace(settings.TransactionalEmailSubjectPrefix)
@@ -1444,9 +1438,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessId);
             }
 
+            var nowUtc = DateTime.UtcNow;
             var smsCooldownUntilUtc = await GetChannelTestCooldownUntilUtcAsync(
                 "SMS",
                 settings.CommunicationTestSmsRecipientE164,
+                nowUtc,
                 ct).ConfigureAwait(false);
             if (smsCooldownUntilUtc.HasValue)
             {
@@ -1483,7 +1479,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 BuildCommunicationTestPlaceholders(
                     channel: DescribeCommunicationChannel("SMS"),
                     requestedBy: requestedBy,
-                    attemptedAtUtc: DateTime.UtcNow,
+                    attemptedAtUtc: nowUtc,
                     testTarget: settings.CommunicationTestSmsRecipientE164,
                     transportState: DescribeCommunicationTransportState(smsTransportConfigured)));
             _db.Set<ChannelDispatchOperation>().Add(new ChannelDispatchOperation
@@ -1614,9 +1610,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessId);
             }
 
+            var nowUtc = DateTime.UtcNow;
             var whatsAppCooldownUntilUtc = await GetChannelTestCooldownUntilUtcAsync(
                 "WhatsApp",
                 settings.CommunicationTestWhatsAppRecipientE164,
+                nowUtc,
                 ct).ConfigureAwait(false);
             if (whatsAppCooldownUntilUtc.HasValue)
             {
@@ -1653,7 +1651,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 BuildCommunicationTestPlaceholders(
                     channel: DescribeCommunicationChannel("WhatsApp"),
                     requestedBy: requestedBy,
-                    attemptedAtUtc: DateTime.UtcNow,
+                    attemptedAtUtc: nowUtc,
                     testTarget: settings.CommunicationTestWhatsAppRecipientE164,
                     transportState: DescribeCommunicationTransportState(whatsAppTransportConfigured)));
             _db.Set<ChannelDispatchOperation>().Add(new ChannelDispatchOperation
@@ -1756,11 +1754,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private async Task<DateTime?> GetChannelTestCooldownUntilUtcAsync(
             string channel,
             string recipientAddress,
+            DateTime nowUtc,
             CancellationToken ct)
         {
             var latestAttemptAtUtc = await _db.Set<ChannelDispatchAudit>()
                 .AsNoTracking()
                 .Where(x =>
+                    !x.IsDeleted &&
                     x.FlowKey == "AdminCommunicationTest" &&
                     x.Channel == channel &&
                     x.RecipientAddress == recipientAddress)
@@ -1775,7 +1775,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var cooldownUntilUtc = latestAttemptAtUtc.Value.AddMinutes(5);
-            return cooldownUntilUtc > DateTime.UtcNow ? cooldownUntilUtc : null;
+            return cooldownUntilUtc > nowUtc ? cooldownUntilUtc : null;
         }
 
         private static IEnumerable<SelectListItem> BuildPageSizeItems(int selectedPageSize)
@@ -2273,14 +2273,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return output;
         }
 
-        private List<CommunicationTemplatePreviewItemVm> BuildTemplatePreviews(SiteSettingDto settings, string? flowKey, string? channel)
+        private List<CommunicationTemplatePreviewItemVm> BuildTemplatePreviews(SiteSettingDto settings, string? flowKey, string? channel, DateTime previewedAtUtc)
         {
-            var attemptedAtUtc = DateTime.UtcNow;
             var emailSample = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["email"] = "operator@example.com",
                 ["token"] = "731904",
-                ["expires_at_utc"] = attemptedAtUtc.AddHours(2).ToString("yyyy-MM-dd HH:mm:ss"),
+                ["expires_at_utc"] = previewedAtUtc.AddHours(2).ToString("yyyy-MM-dd HH:mm:ss"),
                 ["business_name"] = "Darwin Demo Store",
                 ["acceptance_link_html"] = "<a href=\"https://admin.example.test/invitations/accept\">Accept invitation</a>",
                 ["invitation_intro_html"] = "You have been invited to manage Darwin Demo Store.",
@@ -2333,7 +2332,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     bodyTemplate: settings.CommunicationTestEmailBodyTemplate,
                     bodyFallback: T("CommunicationTemplateInventoryAdminTestEmailBodyFallback"),
                     supportedTokens: "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
-                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("Email"), T("CommunicationChannelFamilyOperatorPlaceholder"), attemptedAtUtc, settings.CommunicationTestInboxEmail ?? "operator@example.com", DescribeCommunicationTransportState(true))),
+                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("Email"), T("CommunicationChannelFamilyOperatorPlaceholder"), previewedAtUtc, settings.CommunicationTestInboxEmail ?? "operator@example.com", DescribeCommunicationTransportState(true))),
                 BuildChannelTemplatePreview(
                     flowKey: "PhoneVerification",
                     flowName: T("CommunicationTemplateInventoryPhoneVerificationFlow"),
@@ -2343,7 +2342,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     template: settings.PhoneVerificationSmsTemplate,
                     fallback: T("CommunicationTemplateInventoryPhoneVerificationSmsFallback"),
                     supportedTokens: "{phone_e164}, {token}, {expires_at_utc}",
-                    sample: BuildPhoneVerificationPlaceholders("+4915112345678", "731904", attemptedAtUtc.AddMinutes(10))),
+                    sample: BuildPhoneVerificationPlaceholders("+4915112345678", "731904", previewedAtUtc.AddMinutes(10))),
                 BuildChannelTemplatePreview(
                     flowKey: "PhoneVerification",
                     flowName: T("CommunicationTemplateInventoryPhoneVerificationFlow"),
@@ -2353,7 +2352,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     template: settings.PhoneVerificationWhatsAppTemplate,
                     fallback: T("CommunicationTemplateInventoryPhoneVerificationWhatsAppFallback"),
                     supportedTokens: "{phone_e164}, {token}, {expires_at_utc}",
-                    sample: BuildPhoneVerificationPlaceholders("+4915112345678", "731904", attemptedAtUtc.AddMinutes(10))),
+                    sample: BuildPhoneVerificationPlaceholders("+4915112345678", "731904", previewedAtUtc.AddMinutes(10))),
                 BuildChannelTemplatePreview(
                     flowKey: "AdminCommunicationTest",
                     flowName: T("CommunicationTemplateInventoryAdminTestFlow"),
@@ -2363,7 +2362,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     template: settings.CommunicationTestSmsTemplate,
                     fallback: T("CommunicationTemplateInventoryAdminTestSmsBodyFallback"),
                     supportedTokens: "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
-                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("SMS"), T("CommunicationChannelFamilyOperatorPlaceholder"), attemptedAtUtc, settings.CommunicationTestSmsRecipientE164 ?? "+4915112345678", DescribeCommunicationTransportState(true))),
+                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("SMS"), T("CommunicationChannelFamilyOperatorPlaceholder"), previewedAtUtc, settings.CommunicationTestSmsRecipientE164 ?? "+4915112345678", DescribeCommunicationTransportState(true))),
                 BuildChannelTemplatePreview(
                     flowKey: "AdminCommunicationTest",
                     flowName: T("CommunicationTemplateInventoryAdminTestFlow"),
@@ -2373,7 +2372,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     template: settings.CommunicationTestWhatsAppTemplate,
                     fallback: T("CommunicationTemplateInventoryAdminTestWhatsAppBodyFallback"),
                     supportedTokens: "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
-                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("WhatsApp"), T("CommunicationChannelFamilyOperatorPlaceholder"), attemptedAtUtc, settings.CommunicationTestWhatsAppRecipientE164 ?? "+4915112345678", DescribeCommunicationTransportState(true)))
+                    sample: BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("WhatsApp"), T("CommunicationChannelFamilyOperatorPlaceholder"), previewedAtUtc, settings.CommunicationTestWhatsAppRecipientE164 ?? "+4915112345678", DescribeCommunicationTransportState(true)))
             };
 
             return items
@@ -2523,6 +2522,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private List<ChannelMessageFamilyVm> BuildChannelTemplateFamilies(SiteSettingDto settings, string? flowKey)
         {
+            var nowUtc = DateTime.UtcNow;
+            var phoneVerificationExpiresAtUtc = nowUtc.AddMinutes(10);
             var families = new List<ChannelMessageFamilyVm>();
 
             if (string.IsNullOrWhiteSpace(flowKey) || string.Equals(flowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
@@ -2538,7 +2539,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                         RenderTemplate(
                             settings.PhoneVerificationSmsTemplate,
                             T("CommunicationTemplateInventoryPhoneVerificationSmsFallback"),
-                            BuildPhoneVerificationPlaceholders("+4915112345678", "731904", DateTime.UtcNow.AddMinutes(10))),
+                            BuildPhoneVerificationPlaceholders("+4915112345678", "731904", phoneVerificationExpiresAtUtc)),
                         T("CommunicationChannelFamilyPhoneVerificationSmsPreviewFallback")),
                     SupportedTokens = "{phone_e164}, {token}, {expires_at_utc}",
                     TargetSurface = T("CommunicationChannelFamilyPhoneVerificationTargetSurface"),
@@ -2560,7 +2561,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                         RenderTemplate(
                             settings.PhoneVerificationWhatsAppTemplate,
                             T("CommunicationTemplateInventoryPhoneVerificationWhatsAppFallback"),
-                            BuildPhoneVerificationPlaceholders("+4915112345678", "731904", DateTime.UtcNow.AddMinutes(10))),
+                            BuildPhoneVerificationPlaceholders("+4915112345678", "731904", phoneVerificationExpiresAtUtc)),
                         T("CommunicationChannelFamilyPhoneVerificationWhatsAppPreviewFallback")),
                     SupportedTokens = "{phone_e164}, {token}, {expires_at_utc}",
                     TargetSurface = T("CommunicationChannelFamilyPhoneVerificationTargetSurface"),
@@ -2586,7 +2587,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                         RenderTemplate(
                             settings.CommunicationTestSmsTemplate,
                             T("CommunicationTemplateInventoryAdminTestSmsBodyFallback"),
-                            BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("SMS"), T("CommunicationChannelFamilyOperatorPlaceholder"), DateTime.UtcNow, settings.CommunicationTestSmsRecipientE164 ?? "+4915112345678", T("Ready"))),
+                            BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("SMS"), T("CommunicationChannelFamilyOperatorPlaceholder"), nowUtc, settings.CommunicationTestSmsRecipientE164 ?? "+4915112345678", T("Ready"))),
                         T("CommunicationChannelFamilyAdminTestSmsPreviewFallback")),
                     SupportedTokens = "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
                     TargetSurface = settings.CommunicationTestSmsRecipientE164 ?? T("CommunicationChannelFamilyReservedTestTargetMissing"),
@@ -2608,7 +2609,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                         RenderTemplate(
                             settings.CommunicationTestWhatsAppTemplate,
                             T("CommunicationTemplateInventoryAdminTestWhatsAppBodyFallback"),
-                            BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("WhatsApp"), T("CommunicationChannelFamilyOperatorPlaceholder"), DateTime.UtcNow, settings.CommunicationTestWhatsAppRecipientE164 ?? "+4915112345678", T("Ready"))),
+                            BuildCommunicationTestPlaceholders(DescribeCommunicationChannel("WhatsApp"), T("CommunicationChannelFamilyOperatorPlaceholder"), nowUtc, settings.CommunicationTestWhatsAppRecipientE164 ?? "+4915112345678", T("Ready"))),
                         T("CommunicationChannelFamilyAdminTestWhatsAppPreviewFallback")),
                     SupportedTokens = "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
                     TargetSurface = settings.CommunicationTestWhatsAppRecipientE164 ?? T("CommunicationChannelFamilyReservedTestTargetMissing"),

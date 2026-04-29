@@ -10,6 +10,7 @@ namespace Darwin.Application.Pricing.Validators
         {
             RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
             RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.Type).IsInEnum();
 
             RuleFor(x => x.Percent)
                 .InclusiveBetween(0m, 100m)
@@ -35,9 +36,10 @@ namespace Darwin.Application.Pricing.Validators
         public PromotionEditValidator()
         {
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.RowVersion).NotEmpty();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
             RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.Type).IsInEnum();
 
             RuleFor(x => x.Percent)
                 .InclusiveBetween(0m, 100m)

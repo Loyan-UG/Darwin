@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Integration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -53,13 +54,24 @@ namespace Darwin.Infrastructure.Notifications.Smtp
             EmailDispatchContext? context = null)
         {
             if (string.IsNullOrWhiteSpace(toEmail)) throw new ArgumentNullException(nameof(toEmail));
+            var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
+            if (!string.IsNullOrWhiteSpace(correlationKey) &&
+                await _db.Set<EmailDispatchAudit>()
+                    .AsNoTracking()
+                    .AnyAsync(x => !x.IsDeleted && x.CorrelationKey == correlationKey && x.Status == "Sent", ct)
+                    .ConfigureAwait(false))
+            {
+                _logger.LogInformation("Skipping duplicate SMTP email send for correlation {CorrelationKey}.", correlationKey);
+                return;
+            }
+
             var attemptedAtUtc = DateTime.UtcNow;
             var audit = new EmailDispatchAudit
             {
                 Provider = "SMTP",
                 FlowKey = string.IsNullOrWhiteSpace(context?.FlowKey) ? null : context.FlowKey.Trim(),
                 TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim(),
-                CorrelationKey = string.IsNullOrWhiteSpace(context?.CorrelationKey) ? null : context.CorrelationKey.Trim(),
+                CorrelationKey = correlationKey,
                 BusinessId = context?.BusinessId,
                 RecipientEmail = toEmail,
                 IntendedRecipientEmail = string.IsNullOrWhiteSpace(context?.IntendedRecipientEmail) ? toEmail : context.IntendedRecipientEmail.Trim(),
@@ -105,6 +117,11 @@ namespace Darwin.Infrastructure.Notifications.Smtp
                 await _db.SaveChangesAsync(ct);
                 throw;
             }
+        }
+
+        private static string? NormalizeCorrelationKey(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
     }
 }

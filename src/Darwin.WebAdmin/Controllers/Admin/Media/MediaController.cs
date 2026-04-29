@@ -289,7 +289,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -297,8 +297,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            await _softDelete.HandleAsync(id, ct).ConfigureAwait(false);
-            SetSuccessMessage("MediaDeleted");
+            var result = await _softDelete.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
+            if (result.Succeeded)
+                SetSuccessMessage("MediaDeleted");
+            else
+                TempData["Error"] = result.Error ?? T("MediaAssetNotFound");
+
             return RedirectOrHtmx(nameof(Index), new { });
         }
 

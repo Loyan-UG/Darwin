@@ -26,7 +26,7 @@
           hx-swap="outerHTML">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="UserId" />
-        <input type="hidden" asp-for="RowVersion" />
+        <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
         <input type="hidden" asp-for="UserEmail" />
         <input type="hidden" asp-for="UserDisplay" />
         <input type="hidden" asp-for="ReturnToIndex" />

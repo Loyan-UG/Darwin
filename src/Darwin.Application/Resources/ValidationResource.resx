@@ -207,6 +207,9 @@
   <data name="ModeInvalid" xml:space="preserve">
     <value>Mode is invalid.</value>
   </data>
+  <data name="PromotionInteractionEventTypeInvalid" xml:space="preserve">
+    <value>Promotion interaction event type is invalid.</value>
+  </data>
   <data name="AtLeastOneRewardRequiredForRedemption" xml:space="preserve">
     <value>At least one reward must be selected for redemption.</value>
   </data>
@@ -272,6 +275,9 @@
   </data>
   <data name="InvalidPaymentAmount" xml:space="preserve">
     <value>Invalid payment amount.</value>
+  </data>
+  <data name="PaymentCreateStatusInvalid" xml:space="preserve">
+    <value>Payments cannot be created directly as refunded or voided.</value>
   </data>
   <data name="InvalidShipmentLineOrderMismatch" xml:space="preserve">
     <value>Invalid shipment line: order line does not belong to the order.</value>
@@ -449,6 +455,9 @@
   </data>
   <data name="UnsupportedInvoiceStatusTransition" xml:space="preserve">
     <value>Unsupported invoice status transition.</value>
+  </data>
+  <data name="UnsupportedPaymentStatusTransition" xml:space="preserve">
+    <value>Unsupported payment status transition.</value>
   </data>
   <data name="OnlyInvoicesWithLinkedPaymentCanBeRefunded" xml:space="preserve">
     <value>Only invoices with a linked payment can be refunded.</value>
@@ -953,6 +962,21 @@
   <data name="BusinessCampaignNameAndTitleRequired" xml:space="preserve">
     <value>Name and title are required.</value>
   </data>
+  <data name="BusinessCampaignChannelsInvalid" xml:space="preserve">
+    <value>Campaign channels are invalid. Select at least one supported channel.</value>
+  </data>
+  <data name="BusinessCampaignJsonInvalid" xml:space="preserve">
+    <value>Campaign targeting and payload JSON must be valid JSON objects.</value>
+  </data>
+  <data name="BusinessCampaignScheduleInvalid" xml:space="preserve">
+    <value>Campaign start time must be before or equal to end time.</value>
+  </data>
+  <data name="BusinessCampaignEligibilityRulesInvalid" xml:space="preserve">
+    <value>Campaign eligibility rules are invalid. Point ranges must be non-negative and min must not exceed max.</value>
+  </data>
+  <data name="BusinessCampaignCannotActivateExpired" xml:space="preserve">
+    <value>Expired campaigns cannot be activated.</value>
+  </data>
   <data name="BusinessCampaignNotFound" xml:space="preserve">
     <value>Campaign was not found.</value>
   </data>
@@ -1235,6 +1259,9 @@
   <data name="BusinessSuspendedAccess" xml:space="preserve">
     <value>Business access is currently suspended.</value>
   </data>
+  <data name="BusinessLifecycleUnsupportedAction" xml:space="preserve">
+    <value>The requested business lifecycle action is not supported for the current status.</value>
+  </data>
   <data name="BusinessInactiveAccess" xml:space="preserve">
     <value>Business access is currently inactive.</value>
   </data>
@@ -1334,6 +1361,9 @@
   <data name="CampaignDeliveryNotFound" xml:space="preserve">
     <value>Campaign delivery was not found.</value>
   </data>
+  <data name="CampaignDeliveryStatusInvalid" xml:space="preserve">
+    <value>Campaign delivery status is invalid.</value>
+  </data>
   <data name="ProviderCallbackInboxMessageNotFound" xml:space="preserve">
     <value>Provider callback inbox message was not found.</value>
   </data>
@@ -1396,5 +1426,8 @@
   </data>
   <data name="LoyaltyScanSessionCannotExpire" xml:space="preserve">
     <value>Only pending scan sessions past their expiry time can be expired.</value>
+  </data>
+  <data name="ProviderWebhookPayloadTooLarge" xml:space="preserve">
+    <value>Provider webhook payload is too large.</value>
   </data>
 </root>

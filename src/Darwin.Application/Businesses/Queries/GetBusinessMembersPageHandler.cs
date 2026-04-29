@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
@@ -57,11 +58,11 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = query.Trim().ToLowerInvariant();
-                var roleMatches = BusinessSearchTermResolver.ResolveMemberRoleSearch(q);
+                var q = QueryLikePattern.Contains(query);
+                var roleMatches = BusinessSearchTermResolver.ResolveMemberRoleSearch(query);
                 baseQuery = baseQuery.Where(x =>
-                    x.UserDisplayName.ToLower().Contains(q) ||
-                    x.UserEmail.ToLower().Contains(q) ||
+                    EF.Functions.Like(x.UserDisplayName, q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.UserEmail, q, QueryLikePattern.EscapeCharacter) ||
                     roleMatches.Contains(x.Member.Role));
             }
 
@@ -109,8 +110,20 @@ namespace Darwin.Application.Businesses.Queries
     {
         public static IReadOnlyList<BusinessMemberRole> ResolveMemberRoleSearch(string term)
         {
-            return Enum.GetValues<BusinessMemberRole>()
-                .Where(role => role.ToString().Contains(term, StringComparison.OrdinalIgnoreCase))
+            var normalized = term.Trim();
+            if (normalized.Length == 0)
+            {
+                return Array.Empty<BusinessMemberRole>();
+            }
+
+            return new (BusinessMemberRole Value, string[] Tokens)[]
+            {
+                (BusinessMemberRole.Owner, ["owner"]),
+                (BusinessMemberRole.Manager, ["manager"]),
+                (BusinessMemberRole.Staff, ["staff"])
+            }
+                .Where(entry => entry.Tokens.Any(token => token.Contains(normalized, StringComparison.OrdinalIgnoreCase)))
+                .Select(entry => entry.Value)
                 .ToArray();
         }
     }

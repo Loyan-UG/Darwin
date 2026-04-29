@@ -83,7 +83,9 @@ namespace Darwin.Application.Inventory.Commands
                 throw new InvalidOperationException(_localizer["WarehouseNotFound"]);
             }
 
-            if (!warehouse.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = warehouse.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -107,7 +109,7 @@ namespace Darwin.Application.Inventory.Commands
             warehouse.Location = InventoryManagementHandlerSupport.NormalizeOptional(dto.Location);
             warehouse.IsDefault = dto.IsDefault;
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
         }
 
     }
@@ -173,7 +175,9 @@ namespace Darwin.Application.Inventory.Commands
                 throw new InvalidOperationException(_localizer["SupplierNotFound"]);
             }
 
-            if (!supplier.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = supplier.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -185,7 +189,7 @@ namespace Darwin.Application.Inventory.Commands
             supplier.Address = InventoryManagementHandlerSupport.NormalizeOptional(dto.Address);
             supplier.Notes = InventoryManagementHandlerSupport.NormalizeOptional(dto.Notes);
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
         }
 
     }
@@ -267,7 +271,9 @@ namespace Darwin.Application.Inventory.Commands
                 throw new InvalidOperationException(_localizer["StockLevelNotFound"]);
             }
 
-            if (!stockLevel.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = stockLevel.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -281,7 +287,7 @@ namespace Darwin.Application.Inventory.Commands
             stockLevel.InTransitQuantity = dto.InTransitQuantity;
 
             await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.ProductVariantId, _localizer, ct);
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
         }
     }
 
@@ -353,7 +359,9 @@ namespace Darwin.Application.Inventory.Commands
                 throw new InvalidOperationException(_localizer["StockTransferNotFound"]);
             }
 
-            if (!transfer.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = transfer.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -369,7 +377,7 @@ namespace Darwin.Application.Inventory.Commands
                 Quantity = x.Quantity
             }).ToList();
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
         }
     }
 
@@ -390,9 +398,15 @@ namespace Darwin.Application.Inventory.Commands
 
         public async Task<Result> HandleAsync(StockTransferLifecycleActionDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
             var transfer = await _db.Set<StockTransfer>()
@@ -405,9 +419,10 @@ namespace Darwin.Application.Inventory.Commands
                 return Result.Fail(_localizer["StockTransferNotFound"]);
             }
 
-            if (!transfer.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentVersion = transfer.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
             var variantIdsToRefresh = new HashSet<Guid>();
@@ -447,7 +462,15 @@ namespace Darwin.Application.Inventory.Commands
                 await InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, variantId, _localizer, ct).ConfigureAwait(false);
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
 
@@ -618,7 +641,9 @@ namespace Darwin.Application.Inventory.Commands
                 throw new InvalidOperationException(_localizer["PurchaseOrderNotFound"]);
             }
 
-            if (!order.RowVersion.SequenceEqual(dto.RowVersion))
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = order.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
@@ -638,7 +663,7 @@ namespace Darwin.Application.Inventory.Commands
                 TotalCostMinor = x.TotalCostMinor
             }).ToList();
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InventoryManagementHandlerSupport.SaveChangesOrThrowConcurrencyAsync(_db, _localizer, ct).ConfigureAwait(false);
         }
     }
 
@@ -659,9 +684,15 @@ namespace Darwin.Application.Inventory.Commands
 
         public async Task<Result> HandleAsync(PurchaseOrderLifecycleActionDto dto, CancellationToken ct = default)
         {
-            if (dto.Id == Guid.Empty || dto.RowVersion.Length == 0)
+            if (dto.Id == Guid.Empty)
             {
                 return Result.Fail(_localizer["InvalidDeleteRequest"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0)
+            {
+                return Result.Fail(_localizer["RowVersionRequired"]);
             }
 
             var order = await _db.Set<PurchaseOrder>()
@@ -674,9 +705,10 @@ namespace Darwin.Application.Inventory.Commands
                 return Result.Fail(_localizer["PurchaseOrderNotFound"]);
             }
 
-            if (!order.RowVersion.SequenceEqual(dto.RowVersion))
+            var currentVersion = order.RowVersion ?? Array.Empty<byte>();
+            if (!currentVersion.SequenceEqual(rowVersion))
             {
-                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
             var action = (dto.Action ?? string.Empty).Trim();
@@ -711,7 +743,15 @@ namespace Darwin.Application.Inventory.Commands
                 return Result.Fail(_localizer["PurchaseOrderLifecycleUnsupportedAction"]);
             }
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Fail(_localizer["ItemConcurrencyConflict"]);
+            }
+
             return Result.Ok();
         }
 
@@ -787,5 +827,20 @@ namespace Darwin.Application.Inventory.Commands
 
         public static string? NormalizeOptional(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        public static async Task SaveChangesOrThrowConcurrencyAsync(
+            IAppDbContext db,
+            IStringLocalizer<ValidationResource> localizer,
+            CancellationToken ct)
+        {
+            try
+            {
+                await db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(localizer["ConcurrencyConflictDetected"]);
+            }
+        }
     }
 }
