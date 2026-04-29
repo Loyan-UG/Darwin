@@ -20,6 +20,10 @@ namespace Darwin.Application.Businesses.DTOs
         public string? IntendedRecipientEmail { get; set; }
         public string Subject { get; set; } = string.Empty;
         public string? ProviderMessageId { get; set; }
+        public string? LatestProviderCallbackEvent { get; set; }
+        public string? LatestProviderCallbackStatus { get; set; }
+        public string? LatestProviderCallbackReason { get; set; }
+        public DateTime? LatestProviderCallbackOccurredAtUtc { get; set; }
         public string Status { get; set; } = string.Empty;
         public DateTime AttemptedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }

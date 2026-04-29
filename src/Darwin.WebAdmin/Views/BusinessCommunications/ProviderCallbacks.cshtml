@@ -4,6 +4,7 @@
     ViewData["Title"] = T.T("ProviderCallbackInboxTitle");
 
     string ProviderCallbacksUrl() => Url.Action("ProviderCallbacks", "BusinessCommunications") ?? string.Empty;
+    string FilteredProviderCallbacksUrl(string? provider = null, string? status = null, bool? failedOnly = null, bool? stalePendingOnly = null, string? query = null) => Url.Action("ProviderCallbacks", "BusinessCommunications", new { provider, status, failedOnly, stalePendingOnly, query }) ?? string.Empty;
     string BusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
     string TemplatePreviewsUrl() => Url.Action("TemplatePreviews", "BusinessCommunications") ?? string.Empty;
     string CallbackPageUrl(int page) => Url.Action("ProviderCallbacks", "BusinessCommunications", new
@@ -122,6 +123,77 @@
             <div class="card-body">
                 <div class="text-muted small">@T.T("Retried")</div>
                 <div class="h4 mb-0">@Model.Summary.RetriedCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <a asp-action="ProviderCallbacks" asp-route-provider="Brevo" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo")"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("BrevoProviderCallbacks")</div>
+                <div class="h4 mb-0">@Model.Summary.BrevoTotalCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a asp-action="ProviderCallbacks" asp-route-provider="Brevo" asp-route-status="Pending" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo", status: "Pending")"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("BrevoPendingCallbacks")</div>
+                <div class="h4 mb-0">@Model.Summary.BrevoPendingCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a asp-action="ProviderCallbacks" asp-route-provider="Brevo" asp-route-failedOnly="true" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo", failedOnly: true)"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("BrevoFailedCallbacks")</div>
+                <div class="h4 mb-0">@Model.Summary.BrevoFailedCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a asp-action="ProviderCallbacks" asp-route-provider="Brevo" asp-route-stalePendingOnly="true" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo", stalePendingOnly: true)"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("BrevoStalePendingCallbacks")</div>
+                <div class="h4 mb-0">@Model.Summary.BrevoStalePendingCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a asp-action="ProviderCallbacks" asp-route-provider="Brevo" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo")"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("BrevoDeliveryFailureEvents")</div>
+                <div class="h4 mb-0">@Model.Summary.BrevoDeliveryFailureEventCount</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">@T.T("BrevoRecent24HourCallbacks")</div>
+                <div class="h4 mb-0">@Model.Summary.BrevoRecent24HourCount</div>
             </div>
         </div>
     </div>

@@ -13,6 +13,7 @@
     string GlobalChannelAuditsUrl() => Url.Action("ChannelAudits", "BusinessCommunications") ?? string.Empty;
     string GlobalTemplatePreviewsUrl() => Url.Action("TemplatePreviews", "BusinessCommunications") ?? string.Empty;
     string GlobalProviderCallbacksUrl() => Url.Action("ProviderCallbacks", "BusinessCommunications") ?? string.Empty;
+    string BrevoProviderCallbacksUrl(string? status = null, bool? failedOnly = null, bool? stalePendingOnly = null) => Url.Action("ProviderCallbacks", "BusinessCommunications", new { provider = "Brevo", status, failedOnly, stalePendingOnly }) ?? string.Empty;
     string TemplatePreviewFlowUrl(string flowKey) => Url.Action("TemplatePreviews", "BusinessCommunications", new { flowKey }) ?? string.Empty;
     string SiteSettingsUrl(string fragment) => Url.Action("Edit", "SiteSettings", new { fragment }) ?? string.Empty;
     string BusinessCommunicationsSetupUrl() => Url.Action("Index", "BusinessCommunications", new { setupOnly = true }) ?? string.Empty;
@@ -121,6 +122,9 @@
             || string.Equals(x.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase)
             || string.Equals(x.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase)
             || string.Equals(x.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase)));
+    var brevoProviderAttentionCount = Model.ProviderCallbackSummary.BrevoFailedCount
+        + Model.ProviderCallbackSummary.BrevoStalePendingCount
+        + Model.ProviderCallbackSummary.BrevoDeliveryFailureEventCount;
     var channelEscalationCount = Model.ChannelAuditSummary.FailedCount + Model.ChannelAuditSummary.PhoneVerificationCount;
     var channelActionBlockedCount = Model.ChannelAuditSummary.ActionBlockedCount;
     var channelEscalationFollowUpCount = Model.ChannelAuditSummary.EscalationCandidateCount + Model.ChannelAuditSummary.RepeatedFailureCount;
@@ -323,6 +327,7 @@
                     <div class="small text-muted">@T.T("Communications"): <strong>@emailRetryBlockedCount</strong></div>
                     <div class="small text-muted">@T.T("CommunicationTemplateInventoryTitle"): <strong>@emailChainFollowUpCount</strong></div>
                     <div class="small text-muted">@T.T("RuntimeExecution"): <strong>@communicationRuntimeExecutionAttentionCount</strong> (@T.T("OpenFailedInvitationEmails"): @failedInvitationAttentionCount / @T.T("UsersFilterUnconfirmed") / @T.T("OpenFailedActivationEmails"): @failedActivationAttentionCount / @T.T("FailedAdminTests"): @failedAdminTestAttentionCount / @T.T("OpenFailedPasswordResets"): @failedPasswordResetAttentionCount)</div>
+                    <div class="small text-muted">@T.T("BrevoProviderCallbacks"): <strong>@brevoProviderAttentionCount</strong> (@T.T("Pending"): @Model.ProviderCallbackSummary.BrevoPendingCount / @T.T("Failed"): @Model.ProviderCallbackSummary.BrevoFailedCount / @T.T("BrevoDeliveryFailureEvents"): @Model.ProviderCallbackSummary.BrevoDeliveryFailureEventCount / @T.T("Recent24Hours"): @Model.ProviderCallbackSummary.BrevoRecent24HourCount)</div>
                     <div class="small text-muted">@T.T("RetryBlocked"): <strong>@emailRetryBlockedCount</strong></div>
                     <div class="small text-muted">@T.T("HeavyChains"): <strong>@emailChainFollowUpCount</strong></div>
                     <div class="d-flex gap-2 flex-wrap mt-auto">
@@ -386,9 +391,24 @@
                            asp-route-retryReadyOnly="true"
                            class="btn btn-sm btn-outline-success"
                        hx-get="@EmailAuditsRetryReadyUrl()"
+                            hx-target="#business-communications-workspace-shell"
+                            hx-swap="outerHTML"
+                            hx-push-url="true">@T.T("RetryReady")</a>
+                        <a asp-action="ProviderCallbacks"
+                           asp-route-provider="Brevo"
+                           class="btn btn-sm btn-outline-info"
+                           hx-get="@BrevoProviderCallbacksUrl()"
                            hx-target="#business-communications-workspace-shell"
                            hx-swap="outerHTML"
-                           hx-push-url="true">@T.T("RetryReady")</a>
+                           hx-push-url="true">@T.T("BrevoProviderCallbacks")</a>
+                        <a asp-action="ProviderCallbacks"
+                           asp-route-provider="Brevo"
+                           asp-route-failedOnly="true"
+                           class="btn btn-sm btn-outline-danger"
+                           hx-get="@BrevoProviderCallbacksUrl(failedOnly: true)"
+                           hx-target="#business-communications-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">@T.T("BrevoFailedCallbacks")</a>
                         <a asp-action="EmailAudits"
                            asp-route-retryBlockedOnly="true"
                            class="btn btn-sm btn-outline-warning"

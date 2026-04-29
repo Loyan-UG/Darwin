@@ -10,6 +10,15 @@ namespace Darwin.Application.Businesses.Queries
     public sealed class GetProviderCallbackInboxPageHandler
     {
         private static readonly TimeSpan StalePendingThreshold = TimeSpan.FromMinutes(30);
+        private static readonly HashSet<string> BrevoDeliveryFailureEvents = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "hard_bounce",
+            "soft_bounce",
+            "spam",
+            "blocked",
+            "invalid",
+            "error"
+        };
         private readonly IAppDbContext _db;
 
         public GetProviderCallbackInboxPageHandler(IAppDbContext db)
@@ -38,8 +47,17 @@ namespace Darwin.Application.Businesses.Queries
                 FailedCount = await baseQuery.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
                 ProcessedCount = await baseQuery.CountAsync(x => x.Status == "Processed" || x.Status == "Succeeded", ct).ConfigureAwait(false),
                 StalePendingCount = await baseQuery.CountAsync(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
-                RetriedCount = await baseQuery.CountAsync(x => x.AttemptCount > 0, ct).ConfigureAwait(false)
+                RetriedCount = await baseQuery.CountAsync(x => x.AttemptCount > 0, ct).ConfigureAwait(false),
+                BrevoTotalCount = await baseQuery.CountAsync(x => x.Provider == "Brevo", ct).ConfigureAwait(false),
+                BrevoPendingCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.Status == "Pending", ct).ConfigureAwait(false),
+                BrevoFailedCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.Status == "Failed", ct).ConfigureAwait(false),
+                BrevoProcessedCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && (x.Status == "Processed" || x.Status == "Succeeded"), ct).ConfigureAwait(false),
+                BrevoStalePendingCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
+                BrevoRecent24HourCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.CreatedAtUtc >= now.AddHours(-24), ct).ConfigureAwait(false)
             };
+            summary.BrevoDeliveryFailureEventCount = await baseQuery
+                .CountAsync(x => x.Provider == "Brevo" && BrevoDeliveryFailureEvents.Contains(x.CallbackType), ct)
+                .ConfigureAwait(false);
 
             var providers = await baseQuery
                 .Select(x => x.Provider)

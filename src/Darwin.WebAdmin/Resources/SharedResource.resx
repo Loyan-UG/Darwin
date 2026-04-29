@@ -11341,4 +11341,34 @@
   <data name="BrevoWebhookEvents" xml:space="preserve">
     <value>Brevo webhook events</value>
   </data>
+  <data name="BrevoLatestWebhookAt" xml:space="preserve">
+    <value>at {0}</value>
+  </data>
+  <data name="BrevoLatestWebhookStatus" xml:space="preserve">
+    <value>Status: {0}</value>
+  </data>
+  <data name="BrevoLatestWebhookReason" xml:space="preserve">
+    <value>Provider reason: {0}</value>
+  </data>
+  <data name="BrevoProviderCallbacks" xml:space="preserve">
+    <value>Brevo callbacks</value>
+  </data>
+  <data name="BrevoPendingCallbacks" xml:space="preserve">
+    <value>Brevo pending callbacks</value>
+  </data>
+  <data name="BrevoFailedCallbacks" xml:space="preserve">
+    <value>Brevo failed callbacks</value>
+  </data>
+  <data name="BrevoStalePendingCallbacks" xml:space="preserve">
+    <value>Brevo stale pending</value>
+  </data>
+  <data name="BrevoDeliveryFailureEvents" xml:space="preserve">
+    <value>Brevo delivery failure events</value>
+  </data>
+  <data name="BrevoRecent24HourCallbacks" xml:space="preserve">
+    <value>Brevo last 24h</value>
+  </data>
+  <data name="Recent24Hours" xml:space="preserve">
+    <value>Last 24h</value>
+  </data>
 </root>

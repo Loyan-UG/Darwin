@@ -106,6 +106,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var (channelAudits, channelAuditSummary) = await _getChannelDispatchActivity
                 .HandleAsync(null, 8, ct)
                 .ConfigureAwait(false);
+            var (_, _, providerCallbackSummary, _) = await _getProviderCallbackInboxPage
+                .HandleAsync(1, 10, new ProviderCallbackInboxFilterDto(), ct)
+                .ConfigureAwait(false);
 
             var vm = new BusinessCommunicationOpsVm
             {
@@ -162,6 +165,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ChannelOperations = BuildChannelOperations(settings),
                 ChannelTemplateFamilies = BuildChannelTemplateFamilies(settings, null),
                 ResendPolicies = BuildResendPolicies(),
+                ProviderCallbackSummary = MapProviderCallbackSummary(providerCallbackSummary),
                 ChannelAuditSummary = new ChannelDispatchAuditSummaryVm
                 {
                     TotalCount = channelAuditSummary.TotalCount,
@@ -190,6 +194,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     IntendedRecipientEmail = x.IntendedRecipientEmail,
                     Subject = x.Subject,
                     ProviderMessageId = x.ProviderMessageId,
+                    LatestProviderCallbackEvent = x.LatestProviderCallbackEvent,
+                    LatestProviderCallbackStatus = x.LatestProviderCallbackStatus,
+                    LatestProviderCallbackReason = x.LatestProviderCallbackReason,
+                    LatestProviderCallbackOccurredAtUtc = x.LatestProviderCallbackOccurredAtUtc,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
@@ -304,15 +312,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Status = filter.Status,
                 StalePendingOnly = stalePendingOnly,
                 FailedOnly = failedOnly,
-                Summary = new ProviderCallbackInboxSummaryVm
-                {
-                    TotalCount = summary.TotalCount,
-                    PendingCount = summary.PendingCount,
-                    FailedCount = summary.FailedCount,
-                    ProcessedCount = summary.ProcessedCount,
-                    StalePendingCount = summary.StalePendingCount,
-                    RetriedCount = summary.RetriedCount
-                },
+                Summary = MapProviderCallbackSummary(summary),
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 ProviderItems = BuildProviderCallbackProviderItems(providers, provider),
                 StatusItems = BuildProviderCallbackStatusItems(status),
@@ -510,6 +510,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     IntendedRecipientEmail = x.IntendedRecipientEmail,
                     Subject = x.Subject,
                     ProviderMessageId = x.ProviderMessageId,
+                    LatestProviderCallbackEvent = x.LatestProviderCallbackEvent,
+                    LatestProviderCallbackStatus = x.LatestProviderCallbackStatus,
+                    LatestProviderCallbackReason = x.LatestProviderCallbackReason,
+                    LatestProviderCallbackOccurredAtUtc = x.LatestProviderCallbackOccurredAtUtc,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
@@ -706,6 +710,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     IntendedRecipientEmail = x.IntendedRecipientEmail,
                     Subject = x.Subject,
                     ProviderMessageId = x.ProviderMessageId,
+                    LatestProviderCallbackEvent = x.LatestProviderCallbackEvent,
+                    LatestProviderCallbackStatus = x.LatestProviderCallbackStatus,
+                    LatestProviderCallbackReason = x.LatestProviderCallbackReason,
+                    LatestProviderCallbackOccurredAtUtc = x.LatestProviderCallbackOccurredAtUtc,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
@@ -1906,6 +1914,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return View("ProviderCallbacks", vm);
+        }
+
+        private static ProviderCallbackInboxSummaryVm MapProviderCallbackSummary(ProviderCallbackInboxSummaryDto summary)
+        {
+            return new ProviderCallbackInboxSummaryVm
+            {
+                TotalCount = summary.TotalCount,
+                PendingCount = summary.PendingCount,
+                FailedCount = summary.FailedCount,
+                ProcessedCount = summary.ProcessedCount,
+                StalePendingCount = summary.StalePendingCount,
+                RetriedCount = summary.RetriedCount,
+                BrevoTotalCount = summary.BrevoTotalCount,
+                BrevoPendingCount = summary.BrevoPendingCount,
+                BrevoFailedCount = summary.BrevoFailedCount,
+                BrevoProcessedCount = summary.BrevoProcessedCount,
+                BrevoStalePendingCount = summary.BrevoStalePendingCount,
+                BrevoDeliveryFailureEventCount = summary.BrevoDeliveryFailureEventCount,
+                BrevoRecent24HourCount = summary.BrevoRecent24HourCount
+            };
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

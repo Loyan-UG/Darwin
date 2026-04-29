@@ -357,7 +357,7 @@ This file should always describe **what is true now**, not only future intent.
 # 2026-04-29 Test Backlog Note - Brevo Transactional Email
 
 - Add integration coverage for `Email:Provider=Brevo` using Brevo sandbox mode (`X-Sib-Sandbox=drop`) so the API contract can be validated without sending real emails.
-- Add configuration/DI coverage proving `IEmailSender` resolves to Brevo or SMTP based on `Email:Provider`, and fails fast for unsupported providers.
+- Add configuration/DI coverage proving `IEmailSender` resolves to Brevo or SMTP based on `Email:Provider`, fails fast for unsupported providers, and fails startup when Brevo is active without required Brevo options.
 - Add Worker coverage for queued `EmailDispatchOperation.Provider=Brevo` and legacy `SMTP` rows, verifying status transitions and `ProviderMessageId` capture.
 - Add WebApi coverage for the Brevo webhook endpoint: Basic Auth required, oversized payload rejected, invalid payload rejected, duplicate event idempotency, and valid event persisted into `ProviderCallbackInboxMessages`.
 - Add Worker coverage for Brevo webhook processing against `EmailDispatchAudit`: delivered/open/click keep successful audit state, hard/soft bounce/spam/blocked/invalid/error mark the audit failed with provider reason.

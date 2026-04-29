@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
@@ -209,6 +211,8 @@ namespace Darwin.Application.Businesses.Queries
 
                 ApplyRetryPolicy(item, nowUtc);
             }
+
+            await AttachBrevoCallbackStateAsync(baseItems, ct).ConfigureAwait(false);
 
             var filteredItems = baseItems.AsEnumerable();
 
@@ -549,6 +553,180 @@ namespace Darwin.Application.Businesses.Queries
             item.RetryPolicyState = "Ready";
         }
 
+        private async Task AttachBrevoCallbackStateAsync(List<EmailDispatchAuditListItemDto> items, CancellationToken ct)
+        {
+            var messageIds = items
+                .Where(x =>
+                    !x.IsQueueOperation &&
+                    string.Equals(x.Provider, "Brevo", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(x.ProviderMessageId))
+                .Select(x => x.ProviderMessageId!.Trim())
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            if (messageIds.Count == 0)
+            {
+                return;
+            }
+
+            var predicate = BuildBrevoCallbackPredicate(messageIds);
+            var callbackRows = await _db.Set<ProviderCallbackInboxMessage>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.Provider == "Brevo")
+                .Where(predicate)
+                .Select(x => new BrevoCallbackInboxProjection
+                {
+                    CallbackType = x.CallbackType,
+                    Status = x.Status,
+                    FailureReason = x.FailureReason,
+                    PayloadJson = x.PayloadJson,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    ProcessedAtUtc = x.ProcessedAtUtc
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            var latestByMessageId = callbackRows
+                .Select(TryMapBrevoCallbackState)
+                .Where(x => x is not null)
+                .Select(x => x!)
+                .Where(x => messageIds.Contains(x.MessageId, StringComparer.Ordinal))
+                .GroupBy(x => x.MessageId, StringComparer.Ordinal)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x
+                        .OrderByDescending(y => y.OccurredAtUtc ?? y.ProcessedAtUtc ?? y.CreatedAtUtc)
+                        .First(),
+                    StringComparer.Ordinal);
+
+            foreach (var item in items)
+            {
+                if (item.ProviderMessageId is null ||
+                    !latestByMessageId.TryGetValue(item.ProviderMessageId.Trim(), out var callback))
+                {
+                    continue;
+                }
+
+                item.LatestProviderCallbackEvent = callback.EventName;
+                item.LatestProviderCallbackStatus = callback.Status;
+                item.LatestProviderCallbackReason = callback.Reason;
+                item.LatestProviderCallbackOccurredAtUtc = callback.OccurredAtUtc ?? callback.ProcessedAtUtc ?? callback.CreatedAtUtc;
+            }
+        }
+
+        private static Expression<Func<ProviderCallbackInboxMessage, bool>> BuildBrevoCallbackPredicate(IReadOnlyList<string> messageIds)
+        {
+            var parameter = Expression.Parameter(typeof(ProviderCallbackInboxMessage), "x");
+            Expression body = Expression.Constant(false);
+            var containsMethod = typeof(string).GetMethod(nameof(string.Contains), new[] { typeof(string) })
+                ?? throw new InvalidOperationException("String.Contains(string) method was not found.");
+            var idempotencyKey = Expression.Property(parameter, nameof(ProviderCallbackInboxMessage.IdempotencyKey));
+            var payloadJson = Expression.Property(parameter, nameof(ProviderCallbackInboxMessage.PayloadJson));
+
+            foreach (var messageId in messageIds)
+            {
+                var value = Expression.Constant(messageId);
+                var idempotencyContains = Expression.AndAlso(
+                    Expression.NotEqual(idempotencyKey, Expression.Constant(null, typeof(string))),
+                    Expression.Call(idempotencyKey, containsMethod, value));
+                var payloadContains = Expression.Call(payloadJson, containsMethod, value);
+                body = Expression.OrElse(body, Expression.OrElse(idempotencyContains, payloadContains));
+            }
+
+            return Expression.Lambda<Func<ProviderCallbackInboxMessage, bool>>(body, parameter);
+        }
+
+        private static BrevoCallbackState? TryMapBrevoCallbackState(BrevoCallbackInboxProjection row)
+        {
+            string? messageId = null;
+            string? reason = null;
+            DateTime? occurredAtUtc = null;
+
+            try
+            {
+                using var document = JsonDocument.Parse(row.PayloadJson);
+                var root = document.RootElement;
+                messageId = ReadString(root, "message-id");
+                reason = ReadString(root, "reason");
+                occurredAtUtc = ReadUnixSeconds(root, "ts_event") ??
+                                ReadUnixSeconds(root, "ts") ??
+                                ReadUnixMilliseconds(root, "ts_epoch");
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(messageId))
+            {
+                return null;
+            }
+
+            return new BrevoCallbackState
+            {
+                MessageId = messageId.Trim(),
+                EventName = row.CallbackType.Trim(),
+                Status = row.Status.Trim(),
+                Reason = string.IsNullOrWhiteSpace(reason) ? row.FailureReason : reason.Trim(),
+                CreatedAtUtc = row.CreatedAtUtc,
+                ProcessedAtUtc = row.ProcessedAtUtc,
+                OccurredAtUtc = occurredAtUtc
+            };
+        }
+
+        private static string? ReadString(JsonElement root, string propertyName)
+        {
+            return root.ValueKind == JsonValueKind.Object &&
+                   root.TryGetProperty(propertyName, out var value) &&
+                   value.ValueKind == JsonValueKind.String
+                ? value.GetString()?.Trim()
+                : null;
+        }
+
+        private static DateTime? ReadUnixSeconds(JsonElement root, string propertyName)
+        {
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty(propertyName, out var value))
+            {
+                return null;
+            }
+
+            if (value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var seconds))
+            {
+                return DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime;
+            }
+
+            if (value.ValueKind == JsonValueKind.String &&
+                long.TryParse(value.GetString(), out seconds))
+            {
+                return DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime;
+            }
+
+            return null;
+        }
+
+        private static DateTime? ReadUnixMilliseconds(JsonElement root, string propertyName)
+        {
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty(propertyName, out var value))
+            {
+                return null;
+            }
+
+            if (value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var milliseconds))
+            {
+                return DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).UtcDateTime;
+            }
+
+            if (value.ValueKind == JsonValueKind.String &&
+                long.TryParse(value.GetString(), out milliseconds))
+            {
+                return DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).UtcDateTime;
+            }
+
+            return null;
+        }
+
         private static bool IsSupportedRetryFlow(string? flowKey)
         {
             return string.Equals(flowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase) ||
@@ -560,6 +738,27 @@ namespace Darwin.Application.Businesses.Queries
         {
             return string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private sealed class BrevoCallbackState
+        {
+            public string MessageId { get; set; } = string.Empty;
+            public string EventName { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
+            public string? Reason { get; set; }
+            public DateTime CreatedAtUtc { get; set; }
+            public DateTime? ProcessedAtUtc { get; set; }
+            public DateTime? OccurredAtUtc { get; set; }
+        }
+
+        private sealed class BrevoCallbackInboxProjection
+        {
+            public string CallbackType { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
+            public string? FailureReason { get; set; }
+            public string PayloadJson { get; set; } = string.Empty;
+            public DateTime CreatedAtUtc { get; set; }
+            public DateTime? ProcessedAtUtc { get; set; }
         }
 
         private async Task<EmailDispatchAuditChainSummaryDto?> BuildChainSummaryAsync(

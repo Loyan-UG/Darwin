@@ -8,6 +8,14 @@ Use environment variables, platform secrets, or a server-side secret store for s
 
 Production `appsettings.json` intentionally leaves secrets and provider-owned identities empty or disabled. Missing required values should fail fast or keep the integration disabled until the server environment supplies real values.
 
+For local Docker Desktop usage, copy `.env.example` to `.env` and set local-only values there. The `.env` file, `_shared_keys/`, local logs, and build artifacts are intentionally ignored by Git and must not be committed.
+
+Before committing infrastructure/configuration changes, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-secrets.ps1
+```
+
 Common environment variable shape:
 
 ```powershell
@@ -99,6 +107,7 @@ Current implementation details:
 
 - Direct application sends resolve `IEmailSender` based on `Email:Provider`.
 - Queued admin communication-test emails store the active provider name and `Darwin.Worker` dispatches either `Brevo` or `SMTP`.
+- Startup validation fails fast when `Email:Provider=Brevo` but `Email:Brevo:ApiKey`, `Email:Brevo:SenderEmail`, or a valid timeout are not configured.
 - Brevo sends through `POST /v3/smtp/email`.
 - Brevo request payload includes sender, reply-to when configured, HTML content, generated text content, tags, and correlation/idempotency headers when the current flow supplies a correlation key.
 - `EmailDispatchAudit.ProviderMessageId` stores the Brevo `messageId` when Brevo returns it.

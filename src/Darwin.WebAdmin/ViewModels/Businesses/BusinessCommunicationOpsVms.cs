@@ -42,6 +42,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public List<ChannelMessageFamilyVm> ChannelTemplateFamilies { get; set; } = new();
         public List<CommunicationResendPolicyVm> ResendPolicies { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();
+        public ProviderCallbackInboxSummaryVm ProviderCallbackSummary { get; set; } = new();
         public ChannelDispatchAuditSummaryVm ChannelAuditSummary { get; set; } = new();
         public List<ChannelDispatchAuditListItemVm> RecentChannelAudits { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
@@ -177,6 +178,13 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int ProcessedCount { get; set; }
         public int StalePendingCount { get; set; }
         public int RetriedCount { get; set; }
+        public int BrevoTotalCount { get; set; }
+        public int BrevoPendingCount { get; set; }
+        public int BrevoFailedCount { get; set; }
+        public int BrevoProcessedCount { get; set; }
+        public int BrevoStalePendingCount { get; set; }
+        public int BrevoDeliveryFailureEventCount { get; set; }
+        public int BrevoRecent24HourCount { get; set; }
     }
 
     public sealed class ProviderCallbackInboxListItemVm
@@ -224,6 +232,10 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string? IntendedRecipientEmail { get; set; }
         public string Subject { get; set; } = string.Empty;
         public string? ProviderMessageId { get; set; }
+        public string? LatestProviderCallbackEvent { get; set; }
+        public string? LatestProviderCallbackStatus { get; set; }
+        public string? LatestProviderCallbackReason { get; set; }
+        public DateTime? LatestProviderCallbackOccurredAtUtc { get; set; }
         public string Status { get; set; } = string.Empty;
         public DateTime AttemptedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }

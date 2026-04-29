@@ -4,15 +4,15 @@ services:
     container_name: darwin-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: darwin_dev
-      POSTGRES_USER: darwin
-      POSTGRES_PASSWORD: Darwin_Postgres_Dev_123!
+      POSTGRES_DB: ${DARWIN_POSTGRES_DB:?Set DARWIN_POSTGRES_DB in a local .env file}
+      POSTGRES_USER: ${DARWIN_POSTGRES_USER:?Set DARWIN_POSTGRES_USER in a local .env file}
+      POSTGRES_PASSWORD: ${DARWIN_POSTGRES_PASSWORD:?Set DARWIN_POSTGRES_PASSWORD in a local .env file}
     ports:
       - "5432:5432"
     volumes:
       - darwin-postgres-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U darwin -d darwin_dev"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -22,8 +22,8 @@ services:
     container_name: darwin-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@darwin.dev.example.com
-      PGADMIN_DEFAULT_PASSWORD: Darwin_pgAdmin_Dev_123!
+      PGADMIN_DEFAULT_EMAIL: ${DARWIN_PGADMIN_EMAIL:?Set DARWIN_PGADMIN_EMAIL in a local .env file}
+      PGADMIN_DEFAULT_PASSWORD: ${DARWIN_PGADMIN_PASSWORD:?Set DARWIN_PGADMIN_PASSWORD in a local .env file}
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
       - "5050:80"

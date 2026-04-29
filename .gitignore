@@ -12,6 +12,11 @@ obj/
 **/appsettings.*.Development.json
 **/secrets.json
 **/local.settings.json   # (Azure Functions)
+.env
+.env.*
+!.env.example
+_shared_keys/
+**/_shared_keys/
 
 # Allow committed development baseline configs (no real secrets, used by structure tests)
 !/src/Darwin.WebAdmin/appsettings.Development.json
@@ -87,6 +92,7 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 .dotnet-runtime/
+.dotnet/
 
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt

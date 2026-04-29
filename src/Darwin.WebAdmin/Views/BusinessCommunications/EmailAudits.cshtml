@@ -1011,6 +1011,24 @@
                                        hx-swap="outerHTML"
                                        hx-push-url="true">@T.T("BrevoWebhookEvents")</a>
                                 </div>
+                                @if (!string.IsNullOrWhiteSpace(item.LatestProviderCallbackEvent))
+                                {
+                                    <div class="small text-muted mt-1">
+                                        <span class="badge text-bg-info">@item.LatestProviderCallbackEvent</span>
+                                        @if (item.LatestProviderCallbackOccurredAtUtc.HasValue)
+                                        {
+                                            <span>@string.Format(T.T("BrevoLatestWebhookAt"), item.LatestProviderCallbackOccurredAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(item.LatestProviderCallbackStatus))
+                                        {
+                                            <span>@string.Format(T.T("BrevoLatestWebhookStatus"), item.LatestProviderCallbackStatus)</span>
+                                        }
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(item.LatestProviderCallbackReason))
+                                    {
+                                        <div class="small text-muted">@string.Format(T.T("BrevoLatestWebhookReason"), item.LatestProviderCallbackReason)</div>
+                                    }
+                                }
                             }
                         }
                     </td>

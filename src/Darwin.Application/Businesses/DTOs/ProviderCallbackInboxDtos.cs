@@ -26,6 +26,13 @@ namespace Darwin.Application.Businesses.DTOs
         public int ProcessedCount { get; set; }
         public int StalePendingCount { get; set; }
         public int RetriedCount { get; set; }
+        public int BrevoTotalCount { get; set; }
+        public int BrevoPendingCount { get; set; }
+        public int BrevoFailedCount { get; set; }
+        public int BrevoProcessedCount { get; set; }
+        public int BrevoStalePendingCount { get; set; }
+        public int BrevoDeliveryFailureEventCount { get; set; }
+        public int BrevoRecent24HourCount { get; set; }
     }
 
     public sealed class ProviderCallbackInboxFilterDto
