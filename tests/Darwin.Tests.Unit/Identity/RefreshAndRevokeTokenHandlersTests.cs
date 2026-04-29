@@ -240,21 +240,24 @@ public sealed class RefreshAndRevokeTokenHandlersTests
             _revokeAllCount = revokeAllCount;
         }
 
-        public (string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc) IssueTokens(
+        public Task<(string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc)> IssueTokensAsync(
             Guid userId, string email, string? deviceId,
             IEnumerable<string>? scopes = null,
-            Guid? preferredBusinessId = null)
-            => ("access-token", DateTime.UtcNow.AddMinutes(30), "refresh-token", DateTime.UtcNow.AddDays(7));
+            Guid? preferredBusinessId = null, CancellationToken ct = default)
+            => Task.FromResult(("access-token", DateTime.UtcNow.AddMinutes(30), "refresh-token", DateTime.UtcNow.AddDays(7)));
 
-        public Guid? ValidateRefreshToken(string refreshToken, string? deviceId) => _validatedUserId;
+        public Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, string? deviceId, CancellationToken ct = default) => Task.FromResult(_validatedUserId);
 
-        public void RevokeRefreshToken(string refreshToken, string? deviceId)
-            => RevokedTokens.Add((refreshToken, deviceId));
+        public Task RevokeRefreshTokenAsync(string refreshToken, string? deviceId, CancellationToken ct = default)
+        {
+            RevokedTokens.Add((refreshToken, deviceId));
+            return Task.CompletedTask;
+        }
 
-        public int RevokeAllForUser(Guid userId)
+        public Task<int> RevokeAllForUserAsync(Guid userId, CancellationToken ct = default)
         {
             RevokedUserIds.Add(userId);
-            return _revokeAllCount;
+            return Task.FromResult(_revokeAllCount);
         }
     }
 
