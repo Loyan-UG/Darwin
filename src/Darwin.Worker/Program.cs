@@ -1,6 +1,8 @@
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Extensions;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Billing;
+using Darwin.Application.Notifications;
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Worker;
@@ -22,6 +24,9 @@ builder.Services.Configure<ShipmentProviderOperationWorkerOptions>(builder.Confi
 builder.Services.Configure<WebhookDeliveryWorkerOptions>(builder.Configuration.GetSection("WebhookDeliveryWorker"));
 builder.Services.AddScoped<ApplyDhlShipmentCreateOperationHandler>();
 builder.Services.AddScoped<ApplyDhlShipmentLabelOperationHandler>();
+builder.Services.AddScoped<ApplyShipmentCarrierEventHandler>();
+builder.Services.AddScoped<ProcessStripeWebhookHandler>();
+builder.Services.AddScoped<ProcessBrevoTransactionalEmailWebhookHandler>();
 builder.Services.AddHostedService<EmailDispatchOperationBackgroundService>();
 builder.Services.AddHostedService<ChannelDispatchOperationBackgroundService>();
 builder.Services.AddHostedService<InactiveReminderBackgroundService>();

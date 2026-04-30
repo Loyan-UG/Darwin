@@ -2,6 +2,7 @@ using Darwin.Infrastructure.Extensions;
 using Darwin.WebApi.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -32,7 +33,9 @@ namespace Darwin.WebApi.Extensions
             {
                 // Developer-friendly exception page, DB bootstrap, and Swagger UI in development.
                 app.UseDeveloperExceptionPage();
-                await app.Services.MigrateAndSeedAsync();
+                await app.Services.MigrateAndSeedAsync(
+                    app.Configuration.GetValue("DatabaseStartup:ApplyMigrations", true),
+                    app.Configuration.GetValue("DatabaseStartup:Seed", true));
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }

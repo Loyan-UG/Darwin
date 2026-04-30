@@ -163,6 +163,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string Status { get; set; } = string.Empty;
         public bool StalePendingOnly { get; set; }
         public bool FailedOnly { get; set; }
+        public bool DeliveryFailureOnly { get; set; }
         public ProviderCallbackInboxSummaryVm Summary { get; set; } = new();
         public List<ProviderCallbackInboxListItemVm> Items { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();

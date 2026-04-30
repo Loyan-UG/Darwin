@@ -11371,4 +11371,28 @@
   <data name="Recent24Hours" xml:space="preserve">
     <value>Last 24h</value>
   </data>
+  <data name="ProviderCallbackOperatorPlaybook" xml:space="preserve">
+    <value>Operator playbook</value>
+  </data>
+  <data name="ProviderCallbackPlaybookFailedTitle" xml:space="preserve">
+    <value>Failed callback processing</value>
+  </data>
+  <data name="ProviderCallbackPlaybookFailedBody" xml:space="preserve">
+    <value>Open failed callbacks first. Review the failure reason, requeue after fixing the cause, or mark processed only when the provider event has been handled outside the worker.</value>
+  </data>
+  <data name="ProviderCallbackPlaybookStaleTitle" xml:space="preserve">
+    <value>Stale pending callbacks</value>
+  </data>
+  <data name="ProviderCallbackPlaybookStaleBody" xml:space="preserve">
+    <value>Pending callbacks older than the worker threshold usually indicate a stopped worker, database permission issue, or repeated processing error. Confirm the worker is running before manual actions.</value>
+  </data>
+  <data name="ProviderCallbackPlaybookBrevoFailureTitle" xml:space="preserve">
+    <value>Brevo delivery failures</value>
+  </data>
+  <data name="ProviderCallbackPlaybookBrevoFailureBody" xml:space="preserve">
+    <value>Brevo bounce, spam, blocked, invalid, and error events should be matched with the email audit row and recipient history before retrying or contacting the recipient.</value>
+  </data>
+  <data name="ProviderCallbackBrevoFailureRowGuidance" xml:space="preserve">
+    <value>Delivery failure event: inspect the linked email audit, provider reason, and recipient address before retrying.</value>
+  </data>
 </root>

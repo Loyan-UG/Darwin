@@ -32,13 +32,27 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var loggedDisabled = false;
+
         while (!stoppingToken.IsCancellationRequested)
         {
             var options = Normalize(_options.Value);
             if (!options.Enabled)
             {
+                if (!loggedDisabled)
+                {
+                    _logger.LogInformation("Webhook delivery worker is disabled.");
+                    loggedDisabled = true;
+                }
+
                 await Task.Delay(TimeSpan.FromSeconds(options.PollIntervalSeconds), stoppingToken).ConfigureAwait(false);
                 continue;
+            }
+
+            if (loggedDisabled)
+            {
+                _logger.LogInformation("Webhook delivery worker enabled.");
+                loggedDisabled = false;
             }
 
             try

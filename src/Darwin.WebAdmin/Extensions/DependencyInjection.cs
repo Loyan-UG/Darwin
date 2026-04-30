@@ -130,8 +130,7 @@ namespace Darwin.WebAdmin.Extensions
                 }
             });
 
-            // Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
-            // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
+            // Password hashing (Argon2id), security stamps, WebAuthn, TOTP, and JWT helpers.
             services.AddIdentityInfrastructure();
             services.AddJwtAuthCore();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -169,7 +168,7 @@ namespace Darwin.WebAdmin.Extensions
                 });
 
 
-            // SMTP email sender. :contentReference[oaicite:3]{index=3}
+            // Transactional email infrastructure; provider selection is configuration-driven.
             services.AddNotificationsInfrastructure(config);
 
 

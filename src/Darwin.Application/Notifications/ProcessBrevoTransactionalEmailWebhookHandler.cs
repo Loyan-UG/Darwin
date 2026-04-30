@@ -148,17 +148,16 @@ public sealed class ProcessBrevoTransactionalEmailWebhookHandler
         {
             using var document = JsonDocument.Parse(rawPayloadJson);
             var root = document.RootElement;
-            payload.Event = ReadString(root, "event") ?? string.Empty;
-            payload.Email = ReadString(root, "email");
-            payload.Subject = ReadString(root, "subject");
-            payload.MessageId = ReadString(root, "message-id");
-            payload.CorrelationKey = ReadString(root, "X-Correlation-Key") ??
-                                     ReadString(root, "Idempotency-Key") ??
-                                     ReadString(root, "X-Mailin-custom");
-            payload.Reason = ReadString(root, "reason");
+            payload.Event = NormalizeEvent(ReadStringAny(root, "event", "Event"));
+            payload.Email = ReadStringAny(root, "email", "Email");
+            payload.Subject = ReadStringAny(root, "subject", "Subject");
+            payload.MessageId = ReadStringAny(root, "message-id", "messageId", "message_id", "messageIdLong");
+            payload.CorrelationKey = ReadStringAny(root, "X-Correlation-Key", "x-correlation-key", "Idempotency-Key", "idempotency-key", "X-Mailin-custom", "x-mailin-custom");
+            payload.Reason = ReadStringAny(root, "reason", "Reason", "message", "Message");
             payload.OccurredAtUtc = ReadUnixSeconds(root, "ts_event") ??
                                     ReadUnixSeconds(root, "ts") ??
-                                    ReadUnixMilliseconds(root, "ts_epoch");
+                                    ReadUnixMilliseconds(root, "ts_epoch") ??
+                                    ReadUnixSeconds(root, "date");
 
             return !string.IsNullOrWhiteSpace(payload.Event);
         }
@@ -174,6 +173,25 @@ public sealed class ProcessBrevoTransactionalEmailWebhookHandler
         {
             return false;
         }
+    }
+
+    private static string NormalizeEvent(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() ?? string.Empty;
+    }
+
+    private static string? ReadStringAny(JsonElement root, params string[] propertyNames)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            var value = ReadString(root, propertyName);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 
     private static string? ReadString(JsonElement root, string propertyName)

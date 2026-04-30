@@ -69,18 +69,36 @@ namespace Darwin.Infrastructure.Extensions
         /// <summary>
         /// Applies pending migrations and runs idempotent seeding. Call once on application startup.
         /// </summary>
-        public static async Task MigrateAndSeedAsync(this IServiceProvider sp, CancellationToken ct = default)
+        public static async Task MigrateAndSeedAsync(
+            this IServiceProvider sp,
+            bool applyMigrations = true,
+            bool seed = true,
+            CancellationToken ct = default)
         {
             using var scope = sp.CreateScope();
             var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbStartup");
             var db = scope.ServiceProvider.GetRequiredService<DarwinDbContext>();
 
-            logger.LogInformation("Applying database migrations…");
-            await db.Database.MigrateAsync(ct);
+            if (applyMigrations)
+            {
+                logger.LogInformation("Applying database migrations...");
+                await db.Database.MigrateAsync(ct);
+            }
+            else
+            {
+                logger.LogInformation("Skipping database migrations because DatabaseStartup:ApplyMigrations is disabled.");
+            }
 
-            logger.LogInformation("Seeding baseline data…");
-            var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-            await seeder.SeedAsync(ct);
+            if (seed)
+            {
+                logger.LogInformation("Seeding baseline data...");
+                var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+                await seeder.SeedAsync(ct);
+            }
+            else
+            {
+                logger.LogInformation("Skipping baseline data seeding because DatabaseStartup:Seed is disabled.");
+            }
 
             // Identity seed
             //var identitySeed = scope.ServiceProvider.GetRequiredService<Darwin.Infrastructure.Persistence.Seed.IdentitySeed>();

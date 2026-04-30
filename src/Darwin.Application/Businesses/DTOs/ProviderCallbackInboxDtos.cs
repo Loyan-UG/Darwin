@@ -42,6 +42,7 @@ namespace Darwin.Application.Businesses.DTOs
         public string Status { get; set; } = string.Empty;
         public bool StalePendingOnly { get; set; }
         public bool FailedOnly { get; set; }
+        public bool DeliveryFailureOnly { get; set; }
     }
 
     public sealed class UpdateProviderCallbackInboxMessageDto

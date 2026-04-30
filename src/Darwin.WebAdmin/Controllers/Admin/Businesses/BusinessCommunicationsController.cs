@@ -287,6 +287,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             string? status = null,
             bool stalePendingOnly = false,
             bool failedOnly = false,
+            bool deliveryFailureOnly = false,
             CancellationToken ct = default)
         {
             var filter = new ProviderCallbackInboxFilterDto
@@ -295,7 +296,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Provider = provider ?? string.Empty,
                 Status = status ?? string.Empty,
                 StalePendingOnly = stalePendingOnly,
-                FailedOnly = failedOnly
+                FailedOnly = failedOnly,
+                DeliveryFailureOnly = deliveryFailureOnly
             };
 
             var (items, total, summary, providers) = await _getProviderCallbackInboxPage
@@ -312,6 +314,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Status = filter.Status,
                 StalePendingOnly = stalePendingOnly,
                 FailedOnly = failedOnly,
+                DeliveryFailureOnly = deliveryFailureOnly,
                 Summary = MapProviderCallbackSummary(summary),
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 ProviderItems = BuildProviderCallbackProviderItems(providers, provider),
@@ -352,6 +355,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             string? status = null,
             bool stalePendingOnly = false,
             bool failedOnly = false,
+            bool deliveryFailureOnly = false,
             CancellationToken ct = default)
         {
             if (id == Guid.Empty || string.IsNullOrWhiteSpace(action))
@@ -365,7 +369,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     provider,
                     status,
                     stalePendingOnly,
-                    failedOnly
+                    failedOnly,
+                    deliveryFailureOnly
                 });
             }
 
@@ -404,7 +409,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 provider,
                 status,
                 stalePendingOnly,
-                failedOnly
+                failedOnly,
+                deliveryFailureOnly
             });
         }
 

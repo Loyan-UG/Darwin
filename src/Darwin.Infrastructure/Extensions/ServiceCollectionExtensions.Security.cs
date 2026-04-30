@@ -11,8 +11,7 @@ namespace Darwin.Infrastructure.Extensions
     /// <summary>
     /// Registers ASP.NET Core Data Protection with a persisted key ring suitable for shared hosting.
     /// Keys are stored on disk at a configurable path to ensure Unprotect() works across app restarts
-    /// and multiple processes on the same machine. In production, consider a network share or
-    /// cloud-backed key ring (Azure Blob/Redis/etc.)—see TODOs at the end of this file.
+    /// and multiple processes on the same deployment.
     /// </summary>
     public static class ServiceCollectionExtensionsSecurity
     {
@@ -25,7 +24,7 @@ namespace Darwin.Infrastructure.Extensions
         /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
         public static IServiceCollection AddSharedHostingDataProtection(this IServiceCollection services, IConfiguration configuration)
         {
-            var keysPath = configuration["DataProtection:KeysPath"];
+            var keysPath = configuration["DataProtection:KeysPath"]?.Trim();
             if (string.IsNullOrWhiteSpace(keysPath))
             {
                 keysPath = Path.Combine(
@@ -39,9 +38,9 @@ namespace Darwin.Infrastructure.Extensions
             var builder = services
                 .AddDataProtection()
                 .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
-                .SetApplicationName(configuration["DataProtection:ApplicationName"] ?? "Darwin");
+                .SetApplicationName(ResolveApplicationName(configuration));
 
-            var certificate = TryFindProtectionCertificate(configuration);
+            var certificate = FindProtectionCertificate(configuration);
             if (certificate is not null)
             {
                 builder.ProtectKeysWithCertificate(certificate);
@@ -49,14 +48,20 @@ namespace Darwin.Infrastructure.Extensions
             else if (configuration.GetValue<bool>("DataProtection:RequireKeyEncryption"))
             {
                 throw new InvalidOperationException(
-                    "DataProtection:RequireKeyEncryption is true, but no usable DataProtection certificate was found. " +
+                    "DataProtection:RequireKeyEncryption is true, but no valid DataProtection certificate was found. " +
                     "Configure DataProtection:CertificateThumbprint and optional StoreName/StoreLocation.");
             }
 
             return services;
         }
 
-        private static X509Certificate2? TryFindProtectionCertificate(IConfiguration configuration)
+        private static string ResolveApplicationName(IConfiguration configuration)
+        {
+            var applicationName = configuration["DataProtection:ApplicationName"]?.Trim();
+            return string.IsNullOrWhiteSpace(applicationName) ? "Darwin" : applicationName;
+        }
+
+        private static X509Certificate2? FindProtectionCertificate(IConfiguration configuration)
         {
             var thumbprint = NormalizeThumbprint(configuration["DataProtection:CertificateThumbprint"]);
             if (string.IsNullOrWhiteSpace(thumbprint))
@@ -81,10 +86,23 @@ namespace Darwin.Infrastructure.Extensions
             using var store = new X509Store(storeName, storeLocation);
             store.Open(OpenFlags.ReadOnly);
 
-            return store.Certificates
+            var now = DateTimeOffset.UtcNow;
+            var certificate = store.Certificates
                 .Find(X509FindType.FindByThumbprint, thumbprint, validOnly: false)
                 .OfType<X509Certificate2>()
-                .FirstOrDefault(certificate => certificate.HasPrivateKey);
+                .FirstOrDefault(candidate =>
+                    candidate.HasPrivateKey &&
+                    candidate.NotBefore.ToUniversalTime() <= now.UtcDateTime &&
+                    candidate.NotAfter.ToUniversalTime() > now.UtcDateTime);
+
+            if (certificate is null)
+            {
+                throw new InvalidOperationException(
+                    "DataProtection:CertificateThumbprint is configured, but no matching valid certificate with a private key was found. " +
+                    "Verify the thumbprint, store name, store location, private-key permissions, and certificate validity window.");
+            }
+
+            return certificate;
         }
 
         private static string? NormalizeThumbprint(string? thumbprint)
@@ -94,15 +112,10 @@ namespace Darwin.Infrastructure.Extensions
                 return null;
             }
 
-            return thumbprint.Replace(" ", string.Empty, StringComparison.Ordinal).ToUpperInvariant();
+            return new string(thumbprint
+                .Where(c => !char.IsWhiteSpace(c) && c != '\u200e' && c != '\u200f')
+                .Select(char.ToUpperInvariant)
+                .ToArray());
         }
-
-
-        // TODO(Backlog): AddAzureBlobDataProtection(...) that reads: /or Redis
-        // DataProtection:Azure:ConnectionString
-        // DataProtection:Azure:ContainerName
-        // DataProtection:Azure:BlobName
-        // and calls .PersistKeysToAzureBlobStorage(...)
-
     }
 }

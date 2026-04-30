@@ -4,7 +4,7 @@
     ViewData["Title"] = T.T("ProviderCallbackInboxTitle");
 
     string ProviderCallbacksUrl() => Url.Action("ProviderCallbacks", "BusinessCommunications") ?? string.Empty;
-    string FilteredProviderCallbacksUrl(string? provider = null, string? status = null, bool? failedOnly = null, bool? stalePendingOnly = null, string? query = null) => Url.Action("ProviderCallbacks", "BusinessCommunications", new { provider, status, failedOnly, stalePendingOnly, query }) ?? string.Empty;
+    string FilteredProviderCallbacksUrl(string? provider = null, string? status = null, bool? failedOnly = null, bool? stalePendingOnly = null, bool? deliveryFailureOnly = null, string? query = null) => Url.Action("ProviderCallbacks", "BusinessCommunications", new { provider, status, failedOnly, stalePendingOnly, deliveryFailureOnly, query }) ?? string.Empty;
     string BusinessCommunicationsUrl() => Url.Action("Index", "BusinessCommunications") ?? string.Empty;
     string TemplatePreviewsUrl() => Url.Action("TemplatePreviews", "BusinessCommunications") ?? string.Empty;
     string CallbackPageUrl(int page) => Url.Action("ProviderCallbacks", "BusinessCommunications", new
@@ -15,7 +15,8 @@
         provider = Model.Provider,
         status = Model.Status,
         stalePendingOnly = Model.StalePendingOnly,
-        failedOnly = Model.FailedOnly
+        failedOnly = Model.FailedOnly,
+        deliveryFailureOnly = Model.DeliveryFailureOnly
     }) ?? string.Empty;
 
     int totalPages = Math.Max(1, (int)Math.Ceiling(Model.Total / (double)Math.Max(1, Model.PageSize)));
@@ -35,6 +36,15 @@
         "Pending" => T.T("Pending"),
         _ => string.IsNullOrWhiteSpace(status) ? T.T("CommonUnclassified") : T.T(status)
     };
+
+    bool IsBrevoDeliveryFailure(string? provider, string? callbackType) =>
+        string.Equals(provider, "Brevo", StringComparison.OrdinalIgnoreCase) &&
+        (string.Equals(callbackType, "hard_bounce", StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(callbackType, "soft_bounce", StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(callbackType, "spam", StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(callbackType, "blocked", StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(callbackType, "invalid", StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(callbackType, "error", StringComparison.OrdinalIgnoreCase));
 }
 
 <div id="business-communications-workspace-shell">
@@ -178,8 +188,8 @@
         </a>
     </div>
     <div class="col-md-2">
-        <a asp-action="ProviderCallbacks" asp-route-provider="Brevo" class="card text-decoration-none text-reset border-0 shadow-sm"
-           hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo")"
+        <a asp-action="ProviderCallbacks" asp-route-provider="Brevo" asp-route-deliveryFailureOnly="true" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo", deliveryFailureOnly: true)"
            hx-target="#business-communications-workspace-shell"
            hx-swap="outerHTML"
            hx-push-url="true">
@@ -194,6 +204,54 @@
             <div class="card-body">
                 <div class="text-muted small">@T.T("BrevoRecent24HourCallbacks")</div>
                 <div class="h4 mb-0">@Model.Summary.BrevoRecent24HourCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent fw-semibold">@T.T("ProviderCallbackOperatorPlaybook")</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="fw-semibold mb-1">@T.T("ProviderCallbackPlaybookFailedTitle")</div>
+                    <p class="small text-muted mb-3">@T.T("ProviderCallbackPlaybookFailedBody")</p>
+                    <a asp-action="ProviderCallbacks"
+                       asp-route-failedOnly="true"
+                       class="btn btn-sm btn-outline-danger"
+                       hx-get="@FilteredProviderCallbacksUrl(failedOnly: true)"
+                       hx-target="#business-communications-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("OpenFailed")</a>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="fw-semibold mb-1">@T.T("ProviderCallbackPlaybookStaleTitle")</div>
+                    <p class="small text-muted mb-3">@T.T("ProviderCallbackPlaybookStaleBody")</p>
+                    <a asp-action="ProviderCallbacks"
+                       asp-route-stalePendingOnly="true"
+                       class="btn btn-sm btn-outline-warning"
+                       hx-get="@FilteredProviderCallbacksUrl(stalePendingOnly: true)"
+                       hx-target="#business-communications-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("StalePending")</a>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="border rounded p-3 h-100">
+                    <div class="fw-semibold mb-1">@T.T("ProviderCallbackPlaybookBrevoFailureTitle")</div>
+                    <p class="small text-muted mb-3">@T.T("ProviderCallbackPlaybookBrevoFailureBody")</p>
+                    <a asp-action="ProviderCallbacks"
+                       asp-route-provider="Brevo"
+                       asp-route-deliveryFailureOnly="true"
+                       class="btn btn-sm btn-outline-dark"
+                       hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo", deliveryFailureOnly: true)"
+                       hx-target="#business-communications-workspace-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">@T.T("BrevoProviderCallbacks")</a>
+                </div>
             </div>
         </div>
     </div>
@@ -233,6 +291,10 @@
                     <input class="form-check-input" type="checkbox" id="failedOnly" name="failedOnly" value="true" checked="@Model.FailedOnly" />
                     <label class="form-check-label" for="failedOnly">@T.T("FailedOnly")</label>
                 </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="deliveryFailureOnly" name="deliveryFailureOnly" value="true" checked="@Model.DeliveryFailureOnly" />
+                    <label class="form-check-label" for="deliveryFailureOnly">@T.T("BrevoDeliveryFailureEvents")</label>
+                </div>
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">@T.T("ApplyFilters")</button>
@@ -271,7 +333,13 @@
                     var rowVersion = Convert.ToBase64String(item.RowVersion);
                     <tr>
                         <td class="fw-semibold">@item.Provider</td>
-                        <td>@item.CallbackType</td>
+                        <td>
+                            <div>@item.CallbackType</div>
+                            @if (IsBrevoDeliveryFailure(item.Provider, item.CallbackType))
+                            {
+                                <span class="badge text-bg-danger">@T.T("BrevoDeliveryFailureEvents")</span>
+                            }
+                        </td>
                         <td>
                             <span class="badge @StatusBadgeClass(item.Status)">@StatusLabel(item.Status)</span>
                             @if (item.IsStalePending)
@@ -301,6 +369,10 @@
                             {
                                 <div class="small text-danger mt-1">@item.FailureReason</div>
                             }
+                            @if (IsBrevoDeliveryFailure(item.Provider, item.CallbackType))
+                            {
+                                <div class="small text-warning-emphasis mt-1">@T.T("ProviderCallbackBrevoFailureRowGuidance")</div>
+                            }
                         </td>
                         <td>
                             <div class="d-flex flex-wrap gap-2">
@@ -321,6 +393,7 @@
                                         <input type="hidden" name="status" value="@Model.Status" />
                                         <input type="hidden" name="stalePendingOnly" value="@Model.StalePendingOnly.ToString().ToLowerInvariant()" />
                                         <input type="hidden" name="failedOnly" value="@Model.FailedOnly.ToString().ToLowerInvariant()" />
+                                        <input type="hidden" name="deliveryFailureOnly" value="@Model.DeliveryFailureOnly.ToString().ToLowerInvariant()" />
                                         <button type="submit" class="btn btn-sm btn-outline-success">@T.T("MarkProcessed")</button>
                                     </form>
                                 }
@@ -341,6 +414,7 @@
                                         <input type="hidden" name="status" value="@Model.Status" />
                                         <input type="hidden" name="stalePendingOnly" value="@Model.StalePendingOnly.ToString().ToLowerInvariant()" />
                                         <input type="hidden" name="failedOnly" value="@Model.FailedOnly.ToString().ToLowerInvariant()" />
+                                        <input type="hidden" name="deliveryFailureOnly" value="@Model.DeliveryFailureOnly.ToString().ToLowerInvariant()" />
                                         <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("Requeue")</button>
                                     </form>
                                 }
@@ -362,6 +436,7 @@
                                         <input type="hidden" name="status" value="@Model.Status" />
                                         <input type="hidden" name="stalePendingOnly" value="@Model.StalePendingOnly.ToString().ToLowerInvariant()" />
                                         <input type="hidden" name="failedOnly" value="@Model.FailedOnly.ToString().ToLowerInvariant()" />
+                                        <input type="hidden" name="deliveryFailureOnly" value="@Model.DeliveryFailureOnly.ToString().ToLowerInvariant()" />
                                         <input type="hidden" name="failureReason" value="@T.T("ProviderCallbackMarkedFailedByOperator")" />
                                         <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("MarkFailed")</button>
                                     </form>

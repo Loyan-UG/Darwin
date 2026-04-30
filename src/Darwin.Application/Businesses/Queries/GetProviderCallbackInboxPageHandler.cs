@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Linq.Expressions;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common;
@@ -10,15 +11,14 @@ namespace Darwin.Application.Businesses.Queries
     public sealed class GetProviderCallbackInboxPageHandler
     {
         private static readonly TimeSpan StalePendingThreshold = TimeSpan.FromMinutes(30);
-        private static readonly HashSet<string> BrevoDeliveryFailureEvents = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "hard_bounce",
-            "soft_bounce",
-            "spam",
-            "blocked",
-            "invalid",
-            "error"
-        };
+        private static readonly Expression<Func<ProviderCallbackInboxMessage, bool>> BrevoDeliveryFailurePredicate =
+            x => x.Provider == "Brevo" &&
+                 (x.CallbackType == "hard_bounce" ||
+                  x.CallbackType == "soft_bounce" ||
+                  x.CallbackType == "spam" ||
+                  x.CallbackType == "blocked" ||
+                  x.CallbackType == "invalid" ||
+                  x.CallbackType == "error");
         private readonly IAppDbContext _db;
 
         public GetProviderCallbackInboxPageHandler(IAppDbContext db)
@@ -56,7 +56,7 @@ namespace Darwin.Application.Businesses.Queries
                 BrevoRecent24HourCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.CreatedAtUtc >= now.AddHours(-24), ct).ConfigureAwait(false)
             };
             summary.BrevoDeliveryFailureEventCount = await baseQuery
-                .CountAsync(x => x.Provider == "Brevo" && BrevoDeliveryFailureEvents.Contains(x.CallbackType), ct)
+                .CountAsync(BrevoDeliveryFailurePredicate, ct)
                 .ConfigureAwait(false);
 
             var providers = await baseQuery
@@ -102,6 +102,11 @@ namespace Darwin.Application.Businesses.Queries
             if (filter.StalePendingOnly)
             {
                 query = query.Where(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc);
+            }
+
+            if (filter.DeliveryFailureOnly)
+            {
+                query = query.Where(BrevoDeliveryFailurePredicate);
             }
 
             var total = await query.CountAsync(ct).ConfigureAwait(false);

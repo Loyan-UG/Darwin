@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -48,7 +49,9 @@ namespace Darwin.WebAdmin.Extensions
             {
                 app.UseDeveloperExceptionPage();
                 // Apply migrations + seed before any middleware reads settings from a fresh database.
-                await app.Services.MigrateAndSeedAsync();
+                await app.Services.MigrateAndSeedAsync(
+                    app.Configuration.GetValue("DatabaseStartup:ApplyMigrations", true),
+                    app.Configuration.GetValue("DatabaseStartup:Seed", true));
             }
             else
             {

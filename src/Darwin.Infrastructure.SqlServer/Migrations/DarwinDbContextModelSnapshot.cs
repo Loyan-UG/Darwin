@@ -5248,6 +5248,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasDatabaseName("UX_ProviderCallbackInboxMessages_Provider_IdempotencyKey")
                         .HasFilter("[IdempotencyKey] IS NOT NULL AND [IsDeleted] = 0");
 
+                    b.HasIndex("Provider", "CallbackType", "CreatedAtUtc")
+                        .HasDatabaseName("IX_ProviderCallbackInboxMessages_Provider_CallbackType_CreatedAtUtc");
+
                     b.HasIndex("Provider", "Status", "CreatedAtUtc");
 
                     b.ToTable("ProviderCallbackInboxMessages", "Integration");

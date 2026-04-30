@@ -10,6 +10,8 @@ Production `appsettings.json` intentionally leaves secrets and provider-owned id
 
 For local Docker Desktop usage, copy `.env.example` to `.env` and set local-only values there. The `.env` file, `_shared_keys/`, local logs, and build artifacts are intentionally ignored by Git and must not be committed.
 
+Development `appsettings.Development.json` files intentionally keep database connection strings empty. Supply `ConnectionStrings__PostgreSql` or `ConnectionStrings__DefaultConnection` through a local `.env`, process environment, or .NET user-secrets before running WebAdmin, WebApi, or Worker locally.
+
 Before committing infrastructure/configuration changes, run:
 
 ```powershell
@@ -21,6 +23,8 @@ Common environment variable shape:
 ```powershell
 $env:Persistence__Provider = "PostgreSql"
 $env:ConnectionStrings__PostgreSql = "Host=...;Port=5432;Database=darwin;Username=darwin_app;Password=..."
+$env:DatabaseStartup__ApplyMigrations = "false"
+$env:DatabaseStartup__Seed = "false"
 $env:Email__Provider = "Brevo"
 $env:Email__Brevo__ApiKey = "xkeysib-..."
 $env:Email__Brevo__SenderEmail = "no-reply@example.com"
@@ -48,14 +52,20 @@ Minimum PostgreSQL preflight:
 
 ```sql
 create database darwin;
-create user darwin_app with encrypted password 'REPLACE_ME';
-grant connect on database darwin to darwin_app;
+create role darwin_owner login password 'REPLACE_WITH_OWNER_PASSWORD';
+create role darwin_app login password 'REPLACE_WITH_APP_PASSWORD';
+grant connect on database darwin to darwin_owner, darwin_app;
+grant create on database darwin to darwin_owner;
 ```
 
 Migration-time role must be able to create required extensions:
 
 - `citext`
 - `pg_trgm`
+
+Run EF migrations with `darwin_owner`. Run WebAdmin, WebApi, and Worker with `darwin_app` after granting runtime access to all Darwin module schemas. See `docs/postgresql-migration-runbook.md` for the grant script.
+
+WebAdmin and WebApi can still self-bootstrap in Development, but production and restricted-role runtime processes must set `DatabaseStartup:ApplyMigrations=false` and `DatabaseStartup:Seed=false`. Apply migrations and seed through a controlled owner-role deployment step before starting runtime services.
 
 ## Transactional Email: Brevo
 
@@ -112,6 +122,7 @@ Current implementation details:
 - Brevo request payload includes sender, reply-to when configured, HTML content, generated text content, tags, and correlation/idempotency headers when the current flow supplies a correlation key.
 - `EmailDispatchAudit.ProviderMessageId` stores the Brevo `messageId` when Brevo returns it.
 - Brevo transactional webhooks are received at `/api/v1/public/notifications/brevo/webhooks`, require configured Basic Auth, are stored idempotently in `ProviderCallbackInboxMessages`, and are processed by `ProviderCallbackWorker`.
+- Brevo webhook idempotency is based on a SHA-256 key derived from event name, provider message id, and provider timestamp, so long provider identifiers are not truncated into collision-prone keys.
 
 Operational gaps intentionally kept in backlog:
 
@@ -146,12 +157,14 @@ Use SMTP only for local development, emergency fallback, or customer environment
 - Use a shared `DataProtection:KeysPath` across WebAdmin, WebApi, and Worker on the same deployment.
 - Enable `DataProtection:RequireKeyEncryption=true` in production when certificate-backed key encryption is available.
 - Configure `DataProtection:CertificateThumbprint` before enabling encryption enforcement.
+- If `DataProtection:CertificateThumbprint` is configured, startup fails unless the certificate exists in the configured store, has a private key, and is currently within its validity window.
+- Grant the app/service identity read access to the certificate private key and read/write access to `DataProtection:KeysPath`.
 
 ## WebApi Authentication
 
 - Set `Jwt__SigningKey` to a high-entropy secret of at least 32 bytes.
 - Keep `Jwt__Issuer` and `Jwt__Audience` aligned with the mobile/client configuration.
-- Rotate JWT signing keys through Site Settings after go-live; do not rely on seeded development keys for production.
+- Rotate JWT signing keys through Site Settings before go-live; do not rely on the public development-only seeded JWT key for any shared, staging, or production environment.
 
 ## Push Providers
 
@@ -186,3 +199,4 @@ After deployment:
 5. Turn sandbox mode off and send one controlled email to the configured test inbox.
 6. Confirm Brevo shows the message in transactional logs and Darwin stores the provider message id.
 7. Trigger or replay one Brevo webhook event and confirm `ProviderCallbackInboxMessages` records then processes it.
+8. Open WebAdmin business communication monitoring and confirm Brevo provider-callback totals, failed/stale counts, and latest webhook state are visible for operators.

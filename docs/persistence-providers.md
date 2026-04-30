@@ -44,9 +44,9 @@ Default local services:
 
 - PostgreSQL: `localhost:5432`
 - Database: `darwin_dev`
-- User: `darwin`
+- User: `darwin_app`
 - pgAdmin: `http://localhost:5050`
-- pgAdmin login: `admin@darwin.dev.example.com`
+- pgAdmin login: value from local `.env` (`DARWIN_PGADMIN_EMAIL`)
 
 The development connection string is named `ConnectionStrings:PostgreSql`.
 
@@ -128,6 +128,7 @@ Remove-Item Env:\Persistence__Provider
 - Do not convert text-searched JSON columns to `jsonb` until their query paths have been migrated away from raw `LIKE` or string `Contains` semantics. Current examples include provider callback payload search and business admin text override search. Event-log payment-reference lookup still uses PostgreSQL trigram search to find candidate Stripe webhook payloads, but final correlation now uses JSON-aware value matching in application code. Cart-line add-on JSON remains text-backed for equality matching, but application writes and request matching now canonicalize add-on IDs to distinct sorted GUID JSON before comparison.
 - Admin text override JSON remains text-backed because business discovery still uses text search over the override document. Parsing and validation now go through the shared `AdminTextOverrideJsonCatalog`, so WebAdmin, WebApi-facing public business text resolution, business edits, and site-setting edits agree on the same structure while PostgreSQL keeps trigram acceleration and JSON validity constraints.
 - Provider callback payload JSON remains text-backed so WebAdmin operator search can continue using the existing trigram index. Public Stripe/DHL webhook ingress now enforces a 256 KiB raw-payload cap before persisting `ProviderCallbackInboxMessages.PayloadJson`; WebAdmin list previews summarize Stripe/DHL payloads into operational fields and redact obvious sensitive keys for unknown providers.
+- Provider callback operational views use direct equality filters for provider, status, and callback type. Shared mapping now includes `IX_ProviderCallbackInboxMessages_Provider_CallbackType_CreatedAtUtc` in both provider lanes so Brevo delivery-failure and recent-event summaries stay efficient without provider-specific query shapes.
 - Queue status vocabularies must stay stable across worker writers and WebAdmin operator queries. Provider callback inbox and shipment provider operation queues use `Pending`, `Failed`, and `Processed`; read/query paths intentionally treat legacy `Succeeded` rows as processed for compatibility.
 - PostgreSQL still accelerates selected text-searched JSON fields with trigram indexes while preserving current query behavior. Current examples are `Integration.EventLogs.PropertiesJson`, `Integration.ProviderCallbackInboxMessages.PayloadJson`, and `Businesses.Businesses.AdminTextOverridesJson`.
 - PostgreSQL protects remaining text-backed JSON columns with `NOT VALID` check constraints backed by `public.darwin_is_valid_jsonb(text)`. This preserves low-risk migration behavior for existing databases while rejecting invalid JSON on new or updated rows.
@@ -158,7 +159,7 @@ Before calling provider changes production-ready, validate migration application
 Schema sanity check for PostgreSQL:
 
 ```powershell
-docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select table_schema, table_name from information_schema.tables where table_schema = 'public' order by table_name;"
+docker exec darwin-postgres psql -U darwin_app -d darwin_dev -c "select table_schema, table_name from information_schema.tables where table_schema = 'public' order by table_name;"
 ```
 
 Expected result: only `__EFMigrationsHistory` should remain in `public`.
@@ -166,13 +167,13 @@ Expected result: only `__EFMigrationsHistory` should remain in `public`.
 PostgreSQL extension sanity checks:
 
 ```powershell
-docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select extname from pg_extension where extname in ('pg_trgm', 'citext') order by extname;"
-docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select table_schema, table_name, column_name from information_schema.columns where udt_name = 'citext' order by table_schema, table_name, column_name;"
-docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select table_schema, table_name, column_name from information_schema.columns where udt_name = 'jsonb' order by table_schema, table_name, column_name;"
-docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select schemaname, indexname from pg_indexes where indexname like 'IX_PG_%_JsonbGin' order by schemaname, indexname;"
-docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select schemaname, indexname from pg_indexes where indexname in ('IX_PG_EventLogs_PropertiesJson_Trgm', 'IX_PG_ProviderCallbackInboxMessages_PayloadJson_Trgm', 'IX_PG_Businesses_AdminTextOverridesJson_Trgm') order by schemaname, indexname;"
-docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select schemaname, count(*) as index_count from pg_indexes where indexname like 'IX_PG_%_Like_Trgm' group by schemaname order by schemaname;"
-docker exec darwin-postgres psql -U darwin -d darwin_dev -c "select n.nspname as schema, c.relname as table_name, con.conname, con.convalidated from pg_constraint con join pg_class c on c.oid = con.conrelid join pg_namespace n on n.oid = c.relnamespace where con.conname like 'CK_PG_%_ValidJson' order by n.nspname, c.relname, con.conname;"
+docker exec darwin-postgres psql -U darwin_app -d darwin_dev -c "select extname from pg_extension where extname in ('pg_trgm', 'citext') order by extname;"
+docker exec darwin-postgres psql -U darwin_app -d darwin_dev -c "select table_schema, table_name, column_name from information_schema.columns where udt_name = 'citext' order by table_schema, table_name, column_name;"
+docker exec darwin-postgres psql -U darwin_app -d darwin_dev -c "select table_schema, table_name, column_name from information_schema.columns where udt_name = 'jsonb' order by table_schema, table_name, column_name;"
+docker exec darwin-postgres psql -U darwin_app -d darwin_dev -c "select schemaname, indexname from pg_indexes where indexname like 'IX_PG_%_JsonbGin' order by schemaname, indexname;"
+docker exec darwin-postgres psql -U darwin_app -d darwin_dev -c "select schemaname, indexname from pg_indexes where indexname in ('IX_PG_EventLogs_PropertiesJson_Trgm', 'IX_PG_ProviderCallbackInboxMessages_PayloadJson_Trgm', 'IX_PG_Businesses_AdminTextOverridesJson_Trgm') order by schemaname, indexname;"
+docker exec darwin-postgres psql -U darwin_app -d darwin_dev -c "select schemaname, count(*) as index_count from pg_indexes where indexname like 'IX_PG_%_Like_Trgm' group by schemaname order by schemaname;"
+docker exec darwin-postgres psql -U darwin_app -d darwin_dev -c "select n.nspname as schema, c.relname as table_name, con.conname, con.convalidated from pg_constraint con join pg_class c on c.oid = con.conrelid join pg_namespace n on n.oid = c.relnamespace where con.conname like 'CK_PG_%_ValidJson' order by n.nspname, c.relname, con.conname;"
 ```
 
 Expected current PostgreSQL JSON baseline: 21 `jsonb` columns and 14 `IX_PG_*_JsonbGin` indexes after all PostgreSQL migrations are applied.
@@ -200,6 +201,16 @@ Latest provider webhook validation result: `Darwin.WebApi` builds successfully a
 
 Latest provider callback preview validation result: `Darwin.Application` and `Darwin.WebAdmin` build successfully after replacing raw provider callback list previews with JSON-aware Stripe/DHL summaries plus sensitive-key redaction for unknown providers. Local PostgreSQL `darwin_dev` currently has no provider callback inbox rows to sample.
 
+Latest provider callback operational-index validation result: `AddProviderCallbackInboxOperationalIndexes` was generated for both `Darwin.Infrastructure.PostgreSql` and `Darwin.Infrastructure.SqlServer`. Brevo callback ingress now stores a bounded SHA-256 idempotency key derived from event name, provider message id, and provider timestamp instead of truncating the raw compound key. The PostgreSQL migration was applied to local `darwin_dev`, `dotnet ef migrations list` reports no pending PostgreSQL migrations, and `Darwin.WebAdmin` starts against the PostgreSQL provider and returns the expected authenticated redirect from `/`.
+
+Latest restricted-runtime role validation result: `DatabaseStartup:ApplyMigrations=false` and `DatabaseStartup:Seed=false` now allow Development hosts to run against the restricted PostgreSQL `darwin_app` role after migrations/seed are applied by an owner-capable role. `Darwin.WebAdmin` returned the expected authenticated `302` from `/BusinessCommunications/ProviderCallbacks?provider=Brevo&deliveryFailureOnly=true`, and `Darwin.WebApi` returned HTTP `200` from `/api/v1/public/businesses/category-kinds` using the same restricted runtime role. `Darwin.Worker` also started with the restricted role; Development defaults kept email, channel, provider-callback, shipment-provider, inactive-reminder, and webhook-delivery workers disabled, and each worker now logs its disabled state explicitly during smoke runs.
+
+Latest Brevo webhook smoke result: `Darwin.WebApi` accepted a Brevo `hard_bounce` payload through `/api/v1/public/notifications/brevo/webhooks` with Basic Auth configured through environment variables and the restricted PostgreSQL runtime role. Reposting the same payload returned `duplicate=true`, only one `Integration.ProviderCallbackInboxMessages` row was persisted, and the temporary smoke row was removed after validation.
+
+Latest Brevo provider-callback worker smoke result: `Darwin.Worker` processed a temporary Brevo `hard_bounce` inbox row with only `ProviderCallbackWorker` enabled. The matching `Integration.EmailDispatchAudits` row moved from `Sent` to `Failed` with the provider reason, the inbox row moved to `Processed`, and the temporary audit/inbox rows were removed after validation.
+
+Latest Stripe provider-callback worker smoke result: `Darwin.Worker` processed a temporary Stripe `payment_intent.succeeded` inbox row with only `ProviderCallbackWorker` enabled. The inbox row moved to `Processed`, one `Integration.EventLogs` row was written with the Stripe event id as idempotency key, and the temporary inbox/event-log rows were removed after validation.
+
 Migration-script audit result: idempotent scripts generated successfully for both provider lanes. The PostgreSQL script was clean for unwanted `dbo` references and application table creation in `public`. The SQL Server script still contains historical unqualified table creation in old migrations, but the current lane includes 9 explicit `ALTER SCHEMA ... TRANSFER` moves that align those legacy tables into `Integration`, `Orders`, `Catalog`, and `Shipping`; the latest SQL Server and PostgreSQL model snapshots have no unqualified `ToTable(...)` mappings.
 
 Latest migration freshness validation result: applying the full PostgreSQL migration lane to a fresh Docker database (`darwin_migration_validation_20260429`) and the full SQL Server migration lane to a fresh `sqlpreview` database (`Darwin_MigrationValidation_20260429`) completed successfully. Both provider databases contained the new active-operation/audit/shipping uniqueness indexes (`UX_ShipmentProviderOperations_ActivePending`, `UX_EmailDispatchAudits_ActiveCorrelation`, `UX_ChannelDispatchAudits_ActiveChannelCorrelation`, and `UX_ShippingMethods_ActiveCarrierService`), retained only migration history in the provider-default schema, and were dropped after validation.
@@ -210,6 +221,6 @@ SQL Server fresh-bootstrap validation result: applying the full SQL Server migra
 
 Development Data Protection note: Worker and web entry points use shared Data Protection registration so identity/secret services can resolve during startup. Current local development settings point WebAdmin, WebApi, and Worker at `E:\_Projects\Darwin\_shared_keys` with `DataProtection:ApplicationName=Darwin` so cookies/tokens protected by shared infrastructure remain readable across entry points that intentionally share keys.
 
-Production Data Protection note: production settings should point `DataProtection:KeysPath` at a durable shared location. Certificate-based key encryption is supported through `DataProtection:CertificateThumbprint`, `DataProtection:CertificateStoreName` (default `My`), and `DataProtection:CertificateStoreLocation` (default `CurrentUser`). Set `DataProtection:RequireKeyEncryption=true` in production environments that must fail startup rather than run with an unencrypted key ring when the certificate is missing.
+Production Data Protection note: production settings should point `DataProtection:KeysPath` at a durable shared location. Certificate-based key encryption is supported through `DataProtection:CertificateThumbprint`, `DataProtection:CertificateStoreName` (default `My`), and `DataProtection:CertificateStoreLocation` (default `CurrentUser`). Startup now fails when a configured thumbprint cannot be resolved to a currently valid certificate with a private key, and `DataProtection:RequireKeyEncryption=true` also fails startup when no thumbprint is configured. Grant the app identity read access to the certificate private key and read/write access to the shared key-ring directory.
 
 EF tooling alignment validation result: the local global `dotnet-ef` tool was aligned to `10.0.6`. `has-pending-model-changes` reports no pending model changes for both `Darwin.Infrastructure.SqlServer` and `Darwin.Infrastructure.PostgreSql`, and idempotent migration scripts generate successfully for both provider lanes without EF tooling version mismatch warnings.

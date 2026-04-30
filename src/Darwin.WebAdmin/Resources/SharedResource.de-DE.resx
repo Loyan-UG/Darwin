@@ -11371,4 +11371,28 @@
   <data name="Recent24Hours" xml:space="preserve">
     <value>Letzte 24 Std.</value>
   </data>
+  <data name="ProviderCallbackOperatorPlaybook" xml:space="preserve">
+    <value>Operator-Playbook</value>
+  </data>
+  <data name="ProviderCallbackPlaybookFailedTitle" xml:space="preserve">
+    <value>Fehlgeschlagene Callback-Verarbeitung</value>
+  </data>
+  <data name="ProviderCallbackPlaybookFailedBody" xml:space="preserve">
+    <value>Öffnen Sie zuerst fehlgeschlagene Callbacks. Prüfen Sie den Fehlergrund, stellen Sie nach Behebung der Ursache erneut ein, oder markieren Sie nur dann als verarbeitet, wenn das Anbieterereignis außerhalb des Workers bearbeitet wurde.</value>
+  </data>
+  <data name="ProviderCallbackPlaybookStaleTitle" xml:space="preserve">
+    <value>Veraltete ausstehende Callbacks</value>
+  </data>
+  <data name="ProviderCallbackPlaybookStaleBody" xml:space="preserve">
+    <value>Ausstehende Callbacks, die älter als der Worker-Schwellenwert sind, weisen meist auf einen gestoppten Worker, ein Datenbankberechtigungsproblem oder wiederholte Verarbeitungsfehler hin. Prüfen Sie vor manuellen Aktionen, ob der Worker läuft.</value>
+  </data>
+  <data name="ProviderCallbackPlaybookBrevoFailureTitle" xml:space="preserve">
+    <value>Brevo-Zustellfehler</value>
+  </data>
+  <data name="ProviderCallbackPlaybookBrevoFailureBody" xml:space="preserve">
+    <value>Brevo-Bounce-, Spam-, Blocked-, Invalid- und Error-Ereignisse sollten vor einem erneuten Versand oder einer Kontaktaufnahme mit dem Empfänger mit dem E-Mail-Audit und der Empfängerhistorie abgeglichen werden.</value>
+  </data>
+  <data name="ProviderCallbackBrevoFailureRowGuidance" xml:space="preserve">
+    <value>Zustellfehlerereignis: Prüfen Sie vor einem erneuten Versand das verknüpfte E-Mail-Audit, den Anbietergrund und die Empfängeradresse.</value>
+  </data>
 </root>

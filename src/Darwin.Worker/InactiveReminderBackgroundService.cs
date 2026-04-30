@@ -26,7 +26,7 @@ public sealed class InactiveReminderBackgroundService : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Inactive reminder worker started.");
+        var loggedDisabled = false;
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -34,8 +34,20 @@ public sealed class InactiveReminderBackgroundService : BackgroundService
 
             if (!options.Enabled)
             {
+                if (!loggedDisabled)
+                {
+                    _logger.LogInformation("Inactive reminder worker is disabled.");
+                    loggedDisabled = true;
+                }
+
                 await DelaySafeAsync(options.Interval, stoppingToken).ConfigureAwait(false);
                 continue;
+            }
+
+            if (loggedDisabled)
+            {
+                _logger.LogInformation("Inactive reminder worker enabled.");
+                loggedDisabled = false;
             }
 
             try

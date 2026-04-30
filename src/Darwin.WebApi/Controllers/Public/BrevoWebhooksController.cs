@@ -187,11 +187,9 @@ public sealed class BrevoWebhooksController : ApiControllerBase
         {
             using var document = JsonDocument.Parse(rawPayload);
             var root = document.RootElement;
-            eventName = ReadString(root, "event")?.Trim() ?? string.Empty;
-            messageId = ReadString(root, "message-id")?.Trim() ?? string.Empty;
-            eventTimestamp = ReadScalarAsString(root, "ts_event") ??
-                             ReadScalarAsString(root, "ts") ??
-                             ReadScalarAsString(root, "ts_epoch") ??
+            eventName = NormalizeCallbackType(ReadStringAny(root, "event", "Event"));
+            messageId = ReadStringAny(root, "message-id", "messageId", "message_id", "messageIdLong")?.Trim() ?? string.Empty;
+            eventTimestamp = ReadScalarAsStringAny(root, "ts_event", "ts", "ts_epoch", "date", "Date") ??
                              string.Empty;
 
             return !string.IsNullOrWhiteSpace(eventName) &&
@@ -207,7 +205,28 @@ public sealed class BrevoWebhooksController : ApiControllerBase
     private static string BuildIdempotencyKey(string eventName, string messageId, string eventTimestamp)
     {
         var value = string.Concat(eventName.Trim(), "::", messageId.Trim(), "::", eventTimestamp.Trim());
-        return value.Length <= 256 ? value : value[..256];
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
+        return string.Concat("brevo::", hash);
+    }
+
+    private static string NormalizeCallbackType(string? value)
+    {
+        var normalized = value?.Trim().ToLowerInvariant() ?? string.Empty;
+        return normalized.Length <= 64 ? normalized : normalized[..64];
+    }
+
+    private static string? ReadStringAny(JsonElement root, params string[] propertyNames)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            var value = ReadString(root, propertyName);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
     }
 
     private static string? ReadString(JsonElement root, string propertyName)
@@ -215,6 +234,20 @@ public sealed class BrevoWebhooksController : ApiControllerBase
         return root.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String
             ? property.GetString()
             : null;
+    }
+
+    private static string? ReadScalarAsStringAny(JsonElement root, params string[] propertyNames)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            var value = ReadScalarAsString(root, propertyName);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 
     private static string? ReadScalarAsString(JsonElement root, string propertyName)
