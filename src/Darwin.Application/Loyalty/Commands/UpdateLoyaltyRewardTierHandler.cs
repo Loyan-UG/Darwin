@@ -49,10 +49,13 @@ namespace Darwin.Application.Loyalty.Commands
             if (!programExists)
                 throw new ValidationException(_localizer["LoyaltyProgramNotFound"]);
 
-            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
-            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
-            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
-                throw new ValidationException(_localizer["ConcurrencyConflictRewardTierModified"]);
+            var rowVersion = dto.RowVersion;
+            if (rowVersion is { Length: > 0 })
+            {
+                var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+                if (!currentVersion.SequenceEqual(rowVersion))
+                    throw new ValidationException(_localizer["ConcurrencyConflictRewardTierModified"]);
+            }
 
             entity.LoyaltyProgramId = dto.LoyaltyProgramId;
             entity.PointsRequired = dto.PointsRequired;

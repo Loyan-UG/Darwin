@@ -255,7 +255,7 @@ public sealed class BrandValidatorsTests
             RowVersion = new byte[] { 1, 2, 3 }
         };
 
-        var result = new BrandDeleteValidator().Validate(dto);
+        var result = new BrandDeleteValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeTrue("a valid delete request should pass");
     }
@@ -269,7 +269,7 @@ public sealed class BrandValidatorsTests
             RowVersion = new byte[] { 1 }
         };
 
-        var result = new BrandDeleteValidator().Validate(dto);
+        var result = new BrandDeleteValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("Id must not be empty for a delete");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Id));
@@ -284,7 +284,7 @@ public sealed class BrandValidatorsTests
             RowVersion = null!
         };
 
-        var result = new BrandDeleteValidator().Validate(dto);
+        var result = new BrandDeleteValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("RowVersion must not be null for a delete");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.RowVersion));

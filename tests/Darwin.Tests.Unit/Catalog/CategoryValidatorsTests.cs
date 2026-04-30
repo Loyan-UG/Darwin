@@ -216,7 +216,7 @@ public sealed class CategoryValidatorsTests
             }
         };
 
-        var result = new CategoryEditDtoValidator().Validate(dto);
+        var result = new CategoryEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeTrue("a valid category edit should pass");
     }
@@ -234,7 +234,7 @@ public sealed class CategoryValidatorsTests
             }
         };
 
-        var result = new CategoryEditDtoValidator().Validate(dto);
+        var result = new CategoryEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("Id must not be empty for an edit");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Id));
@@ -253,7 +253,7 @@ public sealed class CategoryValidatorsTests
             }
         };
 
-        var result = new CategoryEditDtoValidator().Validate(dto);
+        var result = new CategoryEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("RowVersion must not be null for an edit");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.RowVersion));
@@ -272,7 +272,7 @@ public sealed class CategoryValidatorsTests
             }
         };
 
-        var result = new CategoryEditDtoValidator().Validate(dto);
+        var result = new CategoryEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("translation Slug must not exceed 200 characters in an edit");
     }
@@ -289,7 +289,7 @@ public sealed class CategoryValidatorsTests
             Translations = new List<CategoryTranslationDto>()
         };
 
-        var result = new CategoryEditDtoValidator().Validate(dto);
+        var result = new CategoryEditDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeTrue("the edit validator does not mandate at least one translation");
     }

@@ -30,6 +30,7 @@ public sealed class LoyaltyRewardTierHandlerTests
         var tierId = Guid.NewGuid();
         var programId = Guid.NewGuid();
 
+        db.Set<LoyaltyProgram>().Add(new LoyaltyProgram { Id = programId, Name = "Test Program" });
         var entity = new LoyaltyRewardTier
         {
             Id = tierId,
@@ -116,11 +117,13 @@ public sealed class LoyaltyRewardTierHandlerTests
     {
         await using var db = RewardTierTestDbContext.Create();
         var tierId = Guid.NewGuid();
+        var programId = Guid.NewGuid();
 
+        db.Set<LoyaltyProgram>().Add(new LoyaltyProgram { Id = programId, Name = "Test Program" });
         var entity = new LoyaltyRewardTier
         {
             Id = tierId,
-            LoyaltyProgramId = Guid.NewGuid(),
+            LoyaltyProgramId = programId,
             PointsRequired = 100,
             RewardType = LoyaltyRewardType.FreeItem
         };
@@ -132,7 +135,7 @@ public sealed class LoyaltyRewardTierHandlerTests
         var act = () => handler.HandleAsync(new LoyaltyRewardTierEditDto
         {
             Id = tierId,
-            LoyaltyProgramId = entity.LoyaltyProgramId,
+            LoyaltyProgramId = programId,
             PointsRequired = 200,
             RewardType = LoyaltyRewardType.FreeItem,
             RowVersion = [0xDE, 0xAD] // stale version
@@ -275,6 +278,13 @@ public sealed class LoyaltyRewardTierHandlerTests
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Ignore<GeoCoordinate>();
+
+            modelBuilder.Entity<LoyaltyProgram>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.RewardTiers);
+            });
 
             modelBuilder.Entity<LoyaltyRewardTier>(builder =>
             {

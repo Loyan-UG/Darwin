@@ -61,11 +61,14 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result.Fail(_localizer["LoyaltyAccountNotFound"]);
             }
 
-            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
-            var currentVersion = account.RowVersion ?? Array.Empty<byte>();
-            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+            var rowVersion = dto.RowVersion;
+            if (rowVersion is { Length: > 0 })
             {
-                return Result.Fail(_localizer["LoyaltyAccountConcurrencyConflict"]);
+                var currentVersion = account.RowVersion ?? Array.Empty<byte>();
+                if (!currentVersion.SequenceEqual(rowVersion))
+                {
+                    return Result.Fail(_localizer["LoyaltyAccountConcurrencyConflict"]);
+                }
             }
 
             if (account.Status == LoyaltyAccountStatus.Suspended)

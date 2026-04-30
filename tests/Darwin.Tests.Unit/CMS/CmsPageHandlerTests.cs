@@ -187,15 +187,17 @@ public sealed class CmsPageHandlerTests
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
         var page = await db.Set<Page>().Include(p => p.Translations).SingleAsync(TestContext.Current.CancellationToken);
-        var rowVersion = page.RowVersion;
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        page.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var updateValidator = new PageEditDtoValidator();
+        var updateValidator = new PageEditDtoValidator(CreateLocalizer());
         var updateHandler = new UpdatePageHandler(db, updateValidator, CreateLocalizer());
 
         await updateHandler.HandleAsync(new PageEditDto
         {
             Id = id,
-            RowVersion = rowVersion,
+            RowVersion = fakeRowVersion,
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
@@ -213,7 +215,7 @@ public sealed class CmsPageHandlerTests
     public async Task UpdatePage_Should_Throw_When_Page_Not_Found()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageEditDtoValidator();
+        var validator = new PageEditDtoValidator(CreateLocalizer());
         var handler = new UpdatePageHandler(db, validator, CreateLocalizer());
 
         var act = () => handler.HandleAsync(new PageEditDto
@@ -237,7 +239,7 @@ public sealed class CmsPageHandlerTests
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
-        var updateValidator = new PageEditDtoValidator();
+        var updateValidator = new PageEditDtoValidator(CreateLocalizer());
         var updateHandler = new UpdatePageHandler(db, updateValidator, CreateLocalizer());
 
         var act = () => updateHandler.HandleAsync(new PageEditDto
@@ -263,13 +265,17 @@ public sealed class CmsPageHandlerTests
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
         var page = await db.Set<Page>().Include(p => p.Translations).SingleAsync(TestContext.Current.CancellationToken);
-        var updateValidator = new PageEditDtoValidator();
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        page.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var updateValidator = new PageEditDtoValidator(CreateLocalizer());
         var updateHandler = new UpdatePageHandler(db, updateValidator, CreateLocalizer());
 
         await updateHandler.HandleAsync(new PageEditDto
         {
             Id = id,
-            RowVersion = page.RowVersion,
+            RowVersion = fakeRowVersion,
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
@@ -292,11 +298,16 @@ public sealed class CmsPageHandlerTests
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
+        var page = await db.Set<Page>().FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        page!.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         var deleteHandler = new SoftDeletePageHandler(db, CreateLocalizer());
-        var result = await deleteHandler.HandleAsync(id, null, TestContext.Current.CancellationToken);
+        var result = await deleteHandler.HandleAsync(id, fakeRowVersion, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
-        var page = await db.Set<Page>().FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
+        page = await db.Set<Page>().FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         page!.IsDeleted.Should().BeTrue();
     }
 
@@ -334,8 +345,12 @@ public sealed class CmsPageHandlerTests
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
         var page = await db.Set<Page>().FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        page!.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         var handler = new SoftDeletePageHandler(db, CreateLocalizer());
-        var result = await handler.HandleAsync(id, page!.RowVersion, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(id, fakeRowVersion, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue("matching RowVersion should allow deletion");
         page = await db.Set<Page>().FindAsync(new object[] { id }, TestContext.Current.CancellationToken);

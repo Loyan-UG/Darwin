@@ -42,10 +42,13 @@ namespace Darwin.Application.Loyalty.Commands
             if (entity is null)
                 throw new ValidationException(_localizer["LoyaltyProgramNotFound"]);
 
-            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
-            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
-            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
-                throw new ValidationException(_localizer["ConcurrencyConflictProgramModified"]);
+            var rowVersion = dto.RowVersion;
+            if (rowVersion is { Length: > 0 })
+            {
+                var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+                if (!currentVersion.SequenceEqual(rowVersion))
+                    throw new ValidationException(_localizer["ConcurrencyConflictProgramModified"]);
+            }
 
             entity.Name = dto.Name.Trim();
             entity.AccrualMode = dto.AccrualMode;
