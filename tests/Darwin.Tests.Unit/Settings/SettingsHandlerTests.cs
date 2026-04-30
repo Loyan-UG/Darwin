@@ -126,10 +126,10 @@ public sealed class SettingsHandlerTests
     }
 
     [Fact]
-    public async Task GetCultures_Should_Return_Empty_Array_When_SupportedCulturesCsv_Is_Empty_String()
+    public async Task GetCultures_Should_Return_Default_Cultures_When_SupportedCulturesCsv_Is_Empty_String()
     {
-        // When SupportedCulturesCsv is "" (not null), the null-coalescing fallback does not
-        // trigger and the handler returns an empty culture list. This test documents that behavior.
+        // When SupportedCulturesCsv is "" (empty), the handler falls back to
+        // SiteSettingDto.SupportedCulturesCsvDefault to ensure cultures are always available.
         await using var db = SettingsTestDbContext.Create();
         db.Set<SiteSetting>().Add(BuildSetting("de-DE", ""));
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -138,7 +138,8 @@ public sealed class SettingsHandlerTests
         var (defaultCulture, cultures) = await handler.HandleAsync(TestContext.Current.CancellationToken);
 
         defaultCulture.Should().Be("de-DE", "the default culture should still be returned");
-        cultures.Should().BeEmpty("an empty-string CSV cannot produce any culture codes");
+        cultures.Should().NotBeEmpty("an empty-string CSV falls back to default cultures");
+        cultures.Should().Contain("de-DE", "the default culture should always be included");
     }
 
     [Fact]

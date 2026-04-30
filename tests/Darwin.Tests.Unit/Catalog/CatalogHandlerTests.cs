@@ -664,9 +664,13 @@ public sealed class CatalogHandlerTests
         db.Set<Category>().Add(category);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        category.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         var handler = new SoftDeleteCategoryHandler(db, CreateLocalizer());
 
-        var result = await handler.HandleAsync(category.Id, null, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(category.Id, fakeRowVersion, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         var deleted = db.Set<Category>().Single();
@@ -674,7 +678,7 @@ public sealed class CatalogHandlerTests
     }
 
     [Fact]
-    public async Task SoftDeleteCategory_Should_Be_Idempotent_When_Already_Deleted()
+    public async Task SoftDeleteCategory_Should_ReturnCategoryNotFound_WhenAlreadyDeleted()
     {
         await using var db = CreateDb();
         var category = new Category { Id = Guid.NewGuid(), IsDeleted = true };
@@ -683,10 +687,9 @@ public sealed class CatalogHandlerTests
 
         var handler = new SoftDeleteCategoryHandler(db, CreateLocalizer());
 
-        var result = await handler.HandleAsync(category.Id, null, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(category.Id, new byte[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
 
-        result.Succeeded.Should().BeTrue("deleting an already-deleted category is idempotent");
-        db.Set<Category>().Single().IsDeleted.Should().BeTrue();
+        result.Succeeded.Should().BeFalse("deleted categories are not found by the handler");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

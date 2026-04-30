@@ -347,7 +347,7 @@ public sealed class OpportunityQueryHandlerTests
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Title).IsRequired();
                 b.Property(x => x.RowVersion).IsRequired();
-                b.Ignore(x => x.Interactions);
+                b.HasMany(x => x.Interactions).WithOne().HasForeignKey(i => i.OpportunityId);
             });
 
             modelBuilder.Entity<OpportunityItem>(b =>

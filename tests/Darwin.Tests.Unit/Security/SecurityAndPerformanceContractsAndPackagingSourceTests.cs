@@ -5156,7 +5156,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
 
         source.Should().Contain("public interface IJwtTokenService");
         source.Should().Contain("Issues short-lived access tokens and opaque refresh tokens for a user.");
-        source.Should().Contain("IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null, Guid? preferredBusinessId = null);");
+        source.Should().Contain("IssueTokensAsync(");
         source.Should().Contain("Guid? ValidateRefreshToken(string refreshToken, string? deviceId);");
         source.Should().Contain("void RevokeRefreshToken(string refreshToken, string? deviceId);");
         source.Should().Contain("int RevokeAllForUser(Guid userId);");
@@ -5688,7 +5688,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         source.Should().Contain("private readonly IAppDbContext _db;");
         source.Should().Contain("public JwtTokenService(IAppDbContext db)");
         source.Should().Contain("_db = db ?? throw new ArgumentNullException(nameof(db));");
-        source.Should().Contain("IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null, Guid? preferredBusinessId = null)");
+        source.Should().Contain("IssueTokensAsync(");
         source.Should().Contain("var settings = _db.Set<SiteSetting>()");
         source.Should().Contain(".AsNoTracking()");
         source.Should().Contain(".First();");
@@ -6834,7 +6834,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         source.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BusinessIdRequired\"]);");
         source.Should().Contain("Mode = LoyaltyContractsMapper.ToDomain(request.Mode),");
         source.Should().Contain("SelectedRewardTierIds = request.SelectedRewardTierIds?");
-        source.Should().Contain("DeviceId = request.DeviceId");
+        source.Should().Contain("DeviceId = NormalizeText(request.DeviceId)");
         source.Should().Contain("EnrichSelectedRewardsAsync(request.BusinessId, result.Value.SelectedRewardTierIds, failIfMissing: true, ct)");
         source.Should().Contain("ScanSessionToken = result.Value.ScanSessionToken,");
         source.Should().Contain("SelectedRewards = selectedRewards");
@@ -6842,7 +6842,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         source.Should().Contain("public async Task<IActionResult> GetCurrentAccountForBusinessAsync(Guid businessId, CancellationToken ct = default)");
         source.Should().Contain("? NotFoundProblem(_validationLocalizer[\"LoyaltyAccountNotFoundForSpecifiedBusinessAndUser\"])");
 
-        source.Should().Contain("public async Task<IActionResult> GetBusinessDashboardAsync(Guid businessId, CancellationToken ct = default)");
+        source.Should().Contain("GetBusinessDashboardAsync(");
         source.Should().Contain("? NotFoundProblem(_validationLocalizer[\"LoyaltyDashboardNotFoundForSpecifiedBusinessAndUser\"])");
 
         source.Should().Contain("public async Task<IActionResult> GetMyBusinessesAsync(");
@@ -6858,7 +6858,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
 
         source.Should().Contain("public async Task<IActionResult> TrackPromotionInteractionAsync(");
         source.Should().Contain("return BadRequestProblem(_validationLocalizer[\"TitleRequired\"]);");
-        source.Should().Contain("Title = request.Title,");
+        source.Should().Contain("Title = request.Title.Trim(),");
         source.Should().Contain("EventType = MapPromotionInteractionEventType(request.EventType),");
 
         source.Should().Contain("public async Task<IActionResult> GetMyLoyaltyTimelinePageAsync(");

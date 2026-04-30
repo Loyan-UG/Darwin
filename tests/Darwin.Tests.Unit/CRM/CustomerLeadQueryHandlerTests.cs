@@ -632,7 +632,7 @@ public sealed class CustomerLeadQueryHandlerTests
                 b.Property(x => x.Email).IsRequired();
                 b.Property(x => x.Phone).IsRequired();
                 b.Property(x => x.RowVersion).IsRequired();
-                b.Ignore(x => x.Interactions);
+                b.HasMany(x => x.Interactions).WithOne().HasForeignKey(i => i.LeadId);
             });
 
             modelBuilder.Entity<Opportunity>(b =>

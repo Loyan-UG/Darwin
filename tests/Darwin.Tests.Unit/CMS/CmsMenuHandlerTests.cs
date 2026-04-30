@@ -273,12 +273,15 @@ public sealed class CmsMenuHandlerTests
         await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
         var menu = await db.Set<Menu>().Include(m => m.Items).ThenInclude(i => i.Translations).SingleAsync(TestContext.Current.CancellationToken);
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        menu.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var updateHandler = new UpdateMenuHandler(db, CreateLocalizer());
         await updateHandler.HandleAsync(new MenuEditDto
         {
             Id = menu.Id,
-            RowVersion = menu.RowVersion,
+            RowVersion = fakeRowVersion,
             Name = "updated-nav",
             Items = new List<MenuItemDto>
             {
@@ -304,9 +307,10 @@ public sealed class CmsMenuHandlerTests
         }, TestContext.Current.CancellationToken);
 
         var updated = await db.Set<Menu>().Include(m => m.Items).ThenInclude(i => i.Translations).SingleAsync(TestContext.Current.CancellationToken);
+        var activeItems = updated.Items.Where(i => !i.IsDeleted).ToList();
         updated.Name.Should().Be("updated-nav");
-        updated.Items.Should().HaveCount(2);
-        updated.Items.Should().NotContain(i => i.Url == "/home", "old items should be replaced");
+        activeItems.Should().HaveCount(2);
+        activeItems.Should().NotContain(i => i.Url == "/home", "old items should be replaced");
     }
 
     [Fact]
@@ -362,7 +366,7 @@ public sealed class CmsMenuHandlerTests
         var act = () => updateHandler.HandleAsync(new MenuEditDto
         {
             Id = menu.Id,
-            RowVersion = menu.RowVersion,
+            RowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 },
             Name = "",
             Items = new List<MenuItemDto>()
         }, TestContext.Current.CancellationToken);
@@ -380,17 +384,21 @@ public sealed class CmsMenuHandlerTests
         var menu = await db.Set<Menu>().Include(m => m.Items).SingleAsync(TestContext.Current.CancellationToken);
         menu.Items.Should().HaveCount(1, "sanity check: one item was created");
 
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        menu.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         var updateHandler = new UpdateMenuHandler(db, CreateLocalizer());
         await updateHandler.HandleAsync(new MenuEditDto
         {
             Id = menu.Id,
-            RowVersion = menu.RowVersion,
+            RowVersion = fakeRowVersion,
             Name = "main-navigation",
             Items = new List<MenuItemDto>()  // remove all items
         }, TestContext.Current.CancellationToken);
 
         var updated = await db.Set<Menu>().Include(m => m.Items).SingleAsync(TestContext.Current.CancellationToken);
-        updated.Items.Should().BeEmpty("all items should be removed");
+        updated.Items.Where(i => !i.IsDeleted).Should().BeEmpty("all items should be removed");
     }
 
     // ─── GetMenuForEditHandler ────────────────────────────────────────────────

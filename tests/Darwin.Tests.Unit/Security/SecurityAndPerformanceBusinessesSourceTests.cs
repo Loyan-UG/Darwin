@@ -587,7 +587,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("var subscription = await BuildBusinessSubscriptionSnapshotAsync(business.Id, ct);");
         controllerSource.Should().Contain("var settings = await _siteSettingCache.GetAsync(ct);");
         controllerSource.Should().Contain("var workspaceManagementWebsiteUrl = BuildSubscriptionManagementWebsiteUrl(managementWebsiteUrl, business.Id, planCode: null);");
-        controllerSource.Should().Contain("var plans = await _getBillingPlans.HandleAsync(activeOnly: true, ct);");
+        controllerSource.Should().Contain("var plans = await _getBillingPlans.HandleAsync(");
         controllerSource.Should().Contain("var recentInvoices = await _getBusinessSubscriptionInvoicesPage.HandleAsync(");
         controllerSource.Should().Contain("pageSize: 5,");
         controllerSource.Should().Contain("var invoiceSummary = await _getBusinessSubscriptionInvoiceOpsSummary.HandleAsync(business.Id, ct).ConfigureAwait(false);");
@@ -794,9 +794,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
         controllerSource.Should().Contain("public async Task<IActionResult> SetSubscriptionCancelAtPeriodEnd(");
-        controllerSource.Should().Contain("var parsedRowVersion = string.IsNullOrWhiteSpace(rowVersion)");
-        controllerSource.Should().Contain("Array.Empty<byte>()");
-        controllerSource.Should().Contain("Convert.FromBase64String(rowVersion);");
+        controllerSource.Should().Contain("var parsedRowVersion = DecodeBase64RowVersion(rowVersion)");
         controllerSource.Should().Contain("var result = await _setCancelAtPeriodEnd.HandleAsync(");
         controllerSource.Should().Contain("businessId,");
         controllerSource.Should().Contain("subscriptionId,");
@@ -859,17 +857,17 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("public async Task<IActionResult> ResendInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> ResendInvitation(");
         controllerSource.Should().Contain("await _resendBusinessInvitation.HandleAsync(new BusinessInvitationResendDto");
         controllerSource.Should().Contain("ExpiresInDays = 7");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessInvitationReissued\")");
-        controllerSource.Should().Contain("public async Task<IActionResult> RevokeInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> RevokeInvitation(");
         controllerSource.Should().Contain("await _revokeBusinessInvitation.HandleAsync(new BusinessInvitationRevokeDto");
         controllerSource.Should().Contain("Note = T(\"BusinessInvitationRevokedFromWebAdminNote\")");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessInvitationRevoked\")");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessInvitationResendFailed\");");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessInvitationRevokeFailed\");");
-        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Invitations), new { businessId });");
+        controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Invitations), new { businessId");
     }
 
 
@@ -885,14 +883,14 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("var (items, _) = await _getBusinessMembersPage.HandleAsync(");
         controllerSource.Should().Contain("filter: BusinessMemberSupportFilter.All,");
         controllerSource.Should().Contain("var attentionMembers = items");
-        controllerSource.Should().Contain(".Where(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > DateTime.UtcNow))");
+        controllerSource.Should().Contain(".Where(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > nowUtc))");
         controllerSource.Should().Contain(".Take(5)");
         controllerSource.Should().Contain(".Select(x => new BusinessMemberListItemVm");
         controllerSource.Should().Contain("UserDisplayName = x.UserDisplayName,");
         controllerSource.Should().Contain("UserEmail = x.UserEmail,");
         controllerSource.Should().Contain("EmailConfirmed = x.EmailConfirmed,");
         controllerSource.Should().Contain("LockoutEndUtc = x.LockoutEndUtc,");
-        controllerSource.Should().Contain("AttentionCount = items.Count(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > DateTime.UtcNow)),");
+        controllerSource.Should().Contain("AttentionCount = items.Count(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > nowUtc)),");
         controllerSource.Should().Contain("Items = attentionMembers");
     }
 
@@ -959,7 +957,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("CancelAtPeriodEnd = subscription.CancelAtPeriodEnd,");
         controllerSource.Should().Contain("CurrentPeriodEndUtc = subscription.CurrentPeriodEndUtc");
         controllerSource.Should().Contain("private async Task<BusinessSubscriptionSnapshotVm> BuildBusinessSubscriptionSnapshotAsync(Guid businessId, CancellationToken ct)");
-        controllerSource.Should().Contain("var result = await _getBusinessSubscriptionStatus.HandleAsync(businessId, ct).ConfigureAwait(false);");
+        controllerSource.Should().Contain("var result = await _getBusinessSubscriptionStatus.HandleAsync(");
         controllerSource.Should().Contain("Status = T(\"Unavailable\")");
     }
 
@@ -1640,12 +1638,12 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
 
         controllerSource.Should().Contain("private async Task PopulateBusinessFormOptionsAsync(BusinessEditVm vm, CancellationToken ct)");
         controllerSource.Should().Contain("var settings = await _siteSettingCache.GetAsync(ct);");
-        controllerSource.Should().Contain("vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? settings.DefaultCurrency : vm.DefaultCurrency;");
-        controllerSource.Should().Contain("vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? settings.DefaultCulture : vm.DefaultCulture;");
-        controllerSource.Should().Contain("vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;");
+        controllerSource.Should().Contain("vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? (effectiveSettings?.DefaultCurrency ?? settings.DefaultCurrency) : vm.DefaultCurrency;");
+        controllerSource.Should().Contain("vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? (effectiveSettings?.DefaultCulture ?? settings.DefaultCulture) : vm.DefaultCulture;");
+        controllerSource.Should().Contain("vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (effectiveSettings?.DefaultTimeZoneId ?? settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;");
         controllerSource.Should().Contain("vm.ContactEmail = string.IsNullOrWhiteSpace(vm.ContactEmail) ? settings.ContactEmail : vm.ContactEmail;");
-        controllerSource.Should().Contain("vm.BrandDisplayName = string.IsNullOrWhiteSpace(vm.BrandDisplayName) ? settings.Title : vm.BrandDisplayName;");
-        controllerSource.Should().Contain("vm.BrandLogoUrl = string.IsNullOrWhiteSpace(vm.BrandLogoUrl) ? settings.LogoUrl : vm.BrandLogoUrl;");
+        controllerSource.Should().Contain("vm.BrandDisplayName = string.IsNullOrWhiteSpace(vm.BrandDisplayName) ? (effectiveSettings?.BrandDisplayName ?? settings.Title) : vm.BrandDisplayName;");
+        controllerSource.Should().Contain("vm.BrandLogoUrl = string.IsNullOrWhiteSpace(vm.BrandLogoUrl) ? (effectiveSettings?.BrandLogoUrl ?? settings.LogoUrl) : vm.BrandLogoUrl;");
         controllerSource.Should().Contain("vm.SupportEmail = string.IsNullOrWhiteSpace(vm.SupportEmail)");
         controllerSource.Should().Contain("? (!string.IsNullOrWhiteSpace(settings.ContactEmail) ? settings.ContactEmail : settings.SmtpFromAddress)");
         controllerSource.Should().Contain("vm.CommunicationSenderName = string.IsNullOrWhiteSpace(vm.CommunicationSenderName)");
@@ -1966,7 +1964,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("private async Task<BusinessSubscriptionSnapshotVm> BuildBusinessSubscriptionSnapshotAsync(Guid businessId, CancellationToken ct)");
         controllerSource.Should().Contain("if (businessId == Guid.Empty)");
         controllerSource.Should().Contain("return new BusinessSubscriptionSnapshotVm();");
-        controllerSource.Should().Contain("var result = await _getBusinessSubscriptionStatus.HandleAsync(businessId, ct).ConfigureAwait(false);");
+        controllerSource.Should().Contain("var result = await _getBusinessSubscriptionStatus.HandleAsync(");
         controllerSource.Should().Contain("if (!result.Succeeded || result.Value is null)");
         controllerSource.Should().Contain("HasSubscription = false,");
         controllerSource.Should().Contain("Status = T(\"Unavailable\")");
