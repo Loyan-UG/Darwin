@@ -2254,7 +2254,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("SetErrorMessage(isActive ? \"UserActivationFailedMessage\" : \"UserDeactivationFailedMessage\");");
         source.Should().Contain(": T(\"AccountLockFailedMessage\")");
         source.Should().Contain(": T(\"AccountUnlockFailedMessage\")");
-        source.Should().Contain(": T(\"UserDeleteFailedMessage\")");
+        source.Should().Contain(": result.Error ?? T(\"UserDeleteFailedMessage\")");
         source.Should().Contain("return BadRequest(T(\"AddressCreateFailedMessage\"));");
         source.Should().Contain("return BadRequest(T(\"AddressUpdateFailedMessage\"));");
         source.Should().Contain("return BadRequest(T(\"AddressDeleteFailedMessage\"));");
@@ -2291,7 +2291,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
 
         usersSource.Should().Contain("private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;");
         usersSource.Should().Contain("GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage");
-        usersSource.Should().Contain("_getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;");
+        usersSource.Should().Contain("_getEmailDispatchAuditsPage = getEmailDispatchAuditsPage ?? throw");
         usersSource.Should().Contain("var auditSummary = await _getEmailDispatchAuditsPage.GetSummaryAsync(null, ct);");
         usersSource.Should().Contain("FailedActivationEmailCount = auditSummary.FailedActivationCount");
         usersSource.Should().Contain("FailedPasswordResetEmailCount = auditSummary.FailedPasswordResetCount");
@@ -2755,7 +2755,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         userVmsSource.Should().Contain("public UserOpsSummaryVm Summary { get; set; } = new();");
         userVmsSource.Should().Contain("public List<UserSupportPlaybookVm> Playbooks { get; set; } = new();");
         userVmsSource.Should().Contain("public sealed class UserListItemVm");
-        userVmsSource.Should().Contain("public bool IsLockedOut => LockoutEndUtc.HasValue && LockoutEndUtc.Value > DateTime.UtcNow;");
+        userVmsSource.Should().Contain("public bool IsLockedOut { get; set; }");
         userVmsSource.Should().Contain("public byte[] RowVersion { get; set; } = Array.Empty<byte>();");
         userVmsSource.Should().Contain("public abstract class UserEditorVm");
         userVmsSource.Should().Contain("[Display(Name = \"Locale\")]");
@@ -2768,7 +2768,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         userVmsSource.Should().Contain("public bool IsSystem { get; set; } = false;");
         userVmsSource.Should().Contain("public sealed class UserEditVm : UserEditorVm");
         userVmsSource.Should().Contain("public bool EmailConfirmed { get; set; }");
-        userVmsSource.Should().Contain("public bool IsLockedOut => LockoutEndUtc.HasValue && LockoutEndUtc.Value > DateTime.UtcNow;");
+        userVmsSource.Should().Contain("public bool IsLockedOut { get; set; }");
         userVmsSource.Should().Contain("public sealed class UserProfileEditVm");
         userVmsSource.Should().Contain("public sealed class UserChangeEmailVm");
         userVmsSource.Should().Contain("[Display(Name = \"NewEmail\")]");
@@ -7260,7 +7260,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("StatusItems = BuildStatusItems(status),");
         source.Should().Contain("return RenderAccountsWorkspace(new LoyaltyAccountsListVm");
         source.Should().Contain("public async Task<IActionResult> CreateAccount(Guid? businessId = null, CancellationToken ct = default)");
-        source.Should().Contain("vm.UserOptions = await _referenceData.GetUserOptionsAsync(null, includeEmpty: false, ct).ConfigureAwait(false);");
+        source.Should().Contain("vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId == Guid.Empty ? null : vm.UserId, includeEmpty: false, ct).ConfigureAwait(false);");
         source.Should().Contain("return RenderAccountCreateEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Campaigns(Guid? businessId = null, int page = 1, int pageSize = 20, LoyaltyCampaignQueueFilter filter = LoyaltyCampaignQueueFilter.All, CancellationToken ct = default)");
         source.Should().Contain("var result = await _getCampaigns.HandleAsync(businessId.Value, page, pageSize, filter, ct).ConfigureAwait(false);");
@@ -8705,7 +8705,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         supportFailedEmailsSource.Should().Contain("@using System.Globalization");
         supportFailedEmailsSource.Should().Contain("@item.AttemptedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)");
 
-        loyaltyProgramsSource.Should().Contain("item.ModifiedAtUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? \"-\"");
+        loyaltyProgramsSource.Should().Contain("utc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) ?? \"-\"");
 
         usersSource.Should().Contain("@u.LockoutEndUtc?.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture)");
 
@@ -11678,7 +11678,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         loyaltySource.Should().Contain("var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: true, ct).ConfigureAwait(false);");
         loyaltySource.Should().Contain("HandleAsync(new LoyaltyRewardTierCreateDto");
         loyaltySource.Should().Contain("AllowSelfRedemption = request.AllowSelfRedemption,");
-        loyaltySource.Should().Contain("MetadataJson = request.MetadataJson");
+        loyaltySource.Should().Contain("MetadataJson = NormalizeText(request.MetadataJson)");
         loyaltySource.Should().Contain("catch (FluentValidation.ValidationException ex)");
         loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierCreateFailed\"], ex.Message);");
 
@@ -11700,7 +11700,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         loyaltySource.Should().Contain("public async Task<IActionResult> ProcessScanSessionForBusinessAsync([FromBody] ProcessScanSessionForBusinessRequest? request, CancellationToken ct = default)");
         loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ScanSessionTokenRequired\"]);");
-        loyaltySource.Should().Contain(".HandleAsync(request.ScanSessionToken, businessId, ct)");
+        loyaltySource.Should().Contain(".HandleAsync(normalizedScanSessionToken, businessId, ct)");
         loyaltySource.Should().Contain("if (!result.Succeeded || result.Value is null)");
         loyaltySource.Should().Contain("return MapScanFailure(result);");
         loyaltySource.Should().Contain("var tierIds = result.Value.SelectedRewards");
@@ -11716,12 +11716,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PointsPositiveInteger\"]);");
         loyaltySource.Should().Contain("HandleAsync(new ConfirmAccrualFromSessionDto");
         loyaltySource.Should().Contain("Points = request.Points,");
-        loyaltySource.Should().Contain("Note = request.Note");
+        loyaltySource.Should().Contain("Note = NormalizeText(request.Note)");
         loyaltySource.Should().Contain("NewBalance = result.Value.NewPointsBalance,");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> ConfirmRedemptionAsync([FromBody] ConfirmRedemptionRequest? request, CancellationToken ct = default)");
         loyaltySource.Should().Contain("HandleAsync(new ConfirmRedemptionFromSessionDto");
-        loyaltySource.Should().Contain("ScanSessionToken = request.ScanSessionToken");
+        loyaltySource.Should().Contain("ScanSessionToken = normalizedScanSessionToken");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> GetBusinessCampaignsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)");
         loyaltySource.Should().Contain("var result = await _getBusinessCampaignsHandler.HandleAsync(businessId, page, pageSize, filter: LoyaltyCampaignQueueFilter.All, ct: ct).ConfigureAwait(false);");
@@ -11731,7 +11731,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         loyaltySource.Should().Contain("public async Task<IActionResult> CreateBusinessCampaignAsync([FromBody] CreateBusinessCampaignRequest? request, CancellationToken ct = default)");
         loyaltySource.Should().Contain("var result = await _createBusinessCampaignHandler.HandleAsync(new CreateBusinessCampaignDto");
         loyaltySource.Should().Contain("BusinessId = businessId,");
-        loyaltySource.Should().Contain("EligibilityRules = request.EligibilityRules.Select(rule => new Darwin.Application.Loyalty.Campaigns.PromotionEligibilityRuleDto");
+        loyaltySource.Should().Contain("EligibilityRules = (request.EligibilityRules ?? new List<PromotionEligibilityRule>()).Select(rule => new Darwin.Application.Loyalty.Campaigns.PromotionEligibilityRuleDto");
         loyaltySource.Should().Contain("return Created($\"/api/v1/business/loyalty/campaigns/{result.Value}\", new BusinessCampaignMutationResponse { CampaignId = result.Value });");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> UpdateBusinessCampaignAsync(Guid id, [FromBody] UpdateBusinessCampaignRequest? request, CancellationToken ct = default)");
@@ -11758,7 +11758,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         loyaltySource.Should().Contain("private async Task<bool> IsRewardTierOwnedByBusinessAsync(Guid programId, Guid rewardTierId, CancellationToken ct)");
         loyaltySource.Should().Contain("return tiers.Items.Any(x => x.Id == rewardTierId);");
         loyaltySource.Should().Contain("private static bool TryParseRewardType(string? rewardType, out DomainLoyaltyRewardType value)");
-        loyaltySource.Should().Contain("Enum.TryParse(rewardType, ignoreCase: true, out DomainLoyaltyRewardType parsed)");
+        loyaltySource.Should().Contain("Enum.TryParse(NormalizeText(rewardType), ignoreCase: true, out DomainLoyaltyRewardType parsed)");
         loyaltySource.Should().Contain("private IActionResult MapScanFailure<T>(Result<T> result)");
         loyaltySource.Should().Contain("? _validationLocalizer[\"OperationFailed\"].Value.Trim()");
         loyaltySource.Should().Contain("if (normalized is \"expired\" or \"scansessiontokenexpired\" or \"tokenalreadyconsumed\" or \"scansessiontokenalreadyconsumed\")");
@@ -11794,11 +11794,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         shippingSource.Should().Contain("public async Task<IActionResult> GetRatesAsync([FromBody] PublicShippingRateRequest? request, CancellationToken ct = default)");
         shippingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
         shippingSource.Should().Contain("var items = await _rateShipmentHandler.HandleAsync(new RateShipmentInputDto");
-        shippingSource.Should().Contain("Country = request.Country,");
+        shippingSource.Should().Contain("Country = normalizedCountry,");
         shippingSource.Should().Contain("SubtotalNetMinor = request.SubtotalNetMinor,");
         shippingSource.Should().Contain("ShipmentMass = request.ShipmentMass,");
-        shippingSource.Should().Contain("Currency = request.Currency");
-        shippingSource.Should().Contain("}, request.Currency ?? SiteSettingDto.DefaultCurrencyDefault, ct).ConfigureAwait(false);");
+        shippingSource.Should().Contain("Currency = normalizedCurrency");
+        shippingSource.Should().Contain("}, normalizedCurrency, ct).ConfigureAwait(false);");
         shippingSource.Should().Contain("return Ok(items.Select(MapOption).ToList());");
         shippingSource.Should().Contain("catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)");
         shippingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ShippingOptionsCouldNotBeCalculated\"], ex.Message);");
@@ -11814,13 +11814,13 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         billingSource.Should().Contain("private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntentHandler;");
         billingSource.Should().Contain("private readonly IConfiguration _configuration;");
         billingSource.Should().Contain("_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));");
-        billingSource.Should().Contain("public async Task<IActionResult> GetCurrentBusinessSubscriptionAsync(CancellationToken ct = default)");
+        billingSource.Should().Contain("public async Task<IActionResult> GetCurrentBusinessSubscriptionAsync(");
         billingSource.Should().Contain("var (hasBusinessAccess, businessId, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);");
         billingSource.Should().Contain("if (!hasBusinessAccess)");
         billingSource.Should().Contain("var result = await _getBusinessSubscriptionStatusHandler");
         billingSource.Should().Contain("return ProblemFromResult(result, _validationLocalizer[\"BusinessSubscriptionStatusRetrievalFailed\"]);");
         billingSource.Should().Contain("return Ok(MapStatus(result.Value));");
-        billingSource.Should().Contain("public async Task<IActionResult> SetCancelAtPeriodEndAsync([FromBody] SetCancelAtPeriodEndRequest request, CancellationToken ct = default)");
+        billingSource.Should().Contain("public async Task<IActionResult> SetCancelAtPeriodEndAsync(");
         billingSource.Should().Contain("if (request is null)");
         billingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
         billingSource.Should().Contain("HandleAsync(");

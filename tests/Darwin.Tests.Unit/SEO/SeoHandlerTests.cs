@@ -251,10 +251,16 @@ public sealed class SeoHandlerTests
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
-        await handler.HandleAsync(id, null, TestContext.Current.CancellationToken);
-
         var entity = await db.Set<RedirectRule>().FindAsync([id], TestContext.Current.CancellationToken);
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        entity!.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, fakeRowVersion, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        entity = await db.Set<RedirectRule>().FindAsync([id], TestContext.Current.CancellationToken);
         entity!.IsDeleted.Should().BeTrue("soft delete should set the IsDeleted flag");
     }
 

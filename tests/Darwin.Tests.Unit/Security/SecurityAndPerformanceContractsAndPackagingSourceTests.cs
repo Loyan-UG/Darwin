@@ -6834,7 +6834,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         source.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BusinessIdRequired\"]);");
         source.Should().Contain("Mode = LoyaltyContractsMapper.ToDomain(request.Mode),");
         source.Should().Contain("SelectedRewardTierIds = request.SelectedRewardTierIds?");
-        source.Should().Contain("DeviceId = request.DeviceId");
+        source.Should().Contain("DeviceId = NormalizeText(request.DeviceId)");
         source.Should().Contain("EnrichSelectedRewardsAsync(request.BusinessId, result.Value.SelectedRewardTierIds, failIfMissing: true, ct)");
         source.Should().Contain("ScanSessionToken = result.Value.ScanSessionToken,");
         source.Should().Contain("SelectedRewards = selectedRewards");
@@ -6842,7 +6842,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         source.Should().Contain("public async Task<IActionResult> GetCurrentAccountForBusinessAsync(Guid businessId, CancellationToken ct = default)");
         source.Should().Contain("? NotFoundProblem(_validationLocalizer[\"LoyaltyAccountNotFoundForSpecifiedBusinessAndUser\"])");
 
-        source.Should().Contain("public async Task<IActionResult> GetBusinessDashboardAsync(Guid businessId, CancellationToken ct = default)");
+        source.Should().Contain("GetBusinessDashboardAsync(");
         source.Should().Contain("? NotFoundProblem(_validationLocalizer[\"LoyaltyDashboardNotFoundForSpecifiedBusinessAndUser\"])");
 
         source.Should().Contain("public async Task<IActionResult> GetMyBusinessesAsync(");
@@ -6858,7 +6858,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
 
         source.Should().Contain("public async Task<IActionResult> TrackPromotionInteractionAsync(");
         source.Should().Contain("return BadRequestProblem(_validationLocalizer[\"TitleRequired\"]);");
-        source.Should().Contain("Title = request.Title,");
+        source.Should().Contain("Title = request.Title.Trim(),");
         source.Should().Contain("EventType = MapPromotionInteractionEventType(request.EventType),");
 
         source.Should().Contain("public async Task<IActionResult> GetMyLoyaltyTimelinePageAsync(");

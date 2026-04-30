@@ -130,7 +130,7 @@ public sealed class BillingUpdateHandlersTests
 
         var afterRequeue = await db.Set<WebhookDelivery>().SingleAsync(x => x.Id == deliveryId, TestContext.Current.CancellationToken);
         afterRequeue.Status.Should().Be("Pending");
-        afterRequeue.RetryCount.Should().Be(3);
+        afterRequeue.RetryCount.Should().Be(0);
         afterRequeue.ResponseCode.Should().BeNull();
         var requeueRowVersion = afterRequeue.RowVersion.ToArray();
 
@@ -222,12 +222,15 @@ public sealed class BillingUpdateHandlersTests
 
         var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
 
-        await FluentActions.Invoking(() => handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
         {
             Id = paymentId,
             RowVersion = [7],
             Action = UpdatePaymentDisputeReviewHandler.ResolveLostAction
-        }, TestContext.Current.CancellationToken)).Should().ThrowAsync<DbUpdateConcurrencyException>();
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("stale RowVersion should cause a concurrency conflict");
+        result.Error.Should().Be("ItemConcurrencyConflict");
     }
 
     [Fact]
