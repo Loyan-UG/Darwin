@@ -4,9 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -21,13 +23,17 @@ namespace Darwin.Application.Identity.Commands
 
         private readonly IAppDbContext _db;
         private readonly IWebAuthnService _webauthn;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IValidator<WebAuthnFinishLoginDto> _validator;
 
-        public FinishLoginHandler(IAppDbContext db, IWebAuthnService webauthn, IStringLocalizer<ValidationResource> localizer)
+        public FinishLoginHandler(IAppDbContext db, IWebAuthnService webauthn, IClock clock, IStringLocalizer<ValidationResource> localizer, IValidator<WebAuthnFinishLoginDto> validator)
         {
             _db = db;
             _webauthn = webauthn;
+            _clock = clock;
             _localizer = localizer;
+            _validator = validator;
         }
 
         /// <summary>
@@ -37,7 +43,9 @@ namespace Darwin.Application.Identity.Commands
         /// <param name="ct">Cancellation token.</param>
         public async Task<Result> HandleAsync(WebAuthnFinishLoginDto dto, CancellationToken ct = default)
         {
-            var nowUtc = DateTime.UtcNow;
+            await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
+
+            var nowUtc = _clock.UtcNow;
             var token = await _db.Set<UserToken>()
                 .FirstOrDefaultAsync(t => t.Id == dto.ChallengeTokenId
                                           && t.Purpose == Purpose
@@ -57,7 +65,11 @@ namespace Darwin.Application.Identity.Commands
 
             // Update counter and last-used
             var cred = await _db.Set<UserWebAuthnCredential>()
-                .FirstOrDefaultAsync(c => c.CredentialId == verified.CredentialId && !c.IsDeleted, ct);
+                .FirstOrDefaultAsync(c =>
+                    c.UserId == token.UserId &&
+                    c.CredentialId == verified.CredentialId &&
+                    !c.IsDeleted,
+                    ct);
 
             if (cred is null)
                 return Result.Fail(_localizer["CredentialNotFoundAfterVerification"]);

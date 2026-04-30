@@ -9,8 +9,9 @@ using Darwin.Domain.Entities.Integration;
 using Darwin.WebApi.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
@@ -24,6 +25,7 @@ namespace Darwin.WebApi.Controllers.Public;
 public sealed class DhlWebhooksController : ApiControllerBase
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+    private const int Sha256HexLength = 64;
 
     private readonly IAppDbContext _db;
     private readonly GetSiteSettingHandler _getSiteSettingHandler;
@@ -41,6 +43,8 @@ public sealed class DhlWebhooksController : ApiControllerBase
 
     [HttpPost]
     [HttpPost("/api/v1/shipping/dhl/webhooks")]
+    [EnableRateLimiting("provider-webhook")]
+    [RequestTimeout("provider-webhook")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ReceiveAsync(CancellationToken ct = default)
@@ -68,7 +72,7 @@ public sealed class DhlWebhooksController : ApiControllerBase
         }
 
         var apiKeyHeader = Request.Headers["X-DHL-Key"].ToString();
-        if (!string.Equals(apiKeyHeader, siteSetting.DhlApiKey, StringComparison.Ordinal))
+        if (!FixedTimeSha256Equals(apiKeyHeader, siteSetting.DhlApiKey))
         {
             return BadRequestProblem(_validationLocalizer["DhlWebhookApiKeyInvalid"]);
         }
@@ -112,10 +116,7 @@ public sealed class DhlWebhooksController : ApiControllerBase
         return Ok(new
         {
             received = true,
-            duplicate = existing,
-            providerShipmentReference,
-            carrierEventKey,
-            instance = Request.GetDisplayUrl()
+            duplicate = existing
         });
     }
 
@@ -174,6 +175,11 @@ public sealed class DhlWebhooksController : ApiControllerBase
         var normalizedHeader = signatureHeader.StartsWith("sha256=", StringComparison.OrdinalIgnoreCase)
             ? signatureHeader["sha256=".Length..]
             : signatureHeader;
+        normalizedHeader = normalizedHeader.Trim();
+        if (normalizedHeader.Length != Sha256HexLength)
+        {
+            return false;
+        }
 
         var key = Encoding.UTF8.GetBytes(secret);
         var payload = Encoding.UTF8.GetBytes(rawPayload);
@@ -189,6 +195,18 @@ public sealed class DhlWebhooksController : ApiControllerBase
         {
             return false;
         }
+    }
+
+    private static bool FixedTimeSha256Equals(string? left, string? right)
+    {
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+        {
+            return false;
+        }
+
+        var leftHash = SHA256.HashData(Encoding.UTF8.GetBytes(left.Trim()));
+        var rightHash = SHA256.HashData(Encoding.UTF8.GetBytes(right.Trim()));
+        return CryptographicOperations.FixedTimeEquals(leftHash, rightHash);
     }
 
     private static string BuildIdempotencyKey(DhlShipmentCallbackRequest request)

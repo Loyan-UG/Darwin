@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Shared.Results;
@@ -11,13 +12,16 @@ public sealed class ResolveShipmentCarrierExceptionHandler
 {
     private const string ResolutionEventKey = "shipment.exception_resolved";
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
     public ResolveShipmentCarrierExceptionHandler(
         IAppDbContext db,
+        IClock clock,
         IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
@@ -55,7 +59,7 @@ public sealed class ResolveShipmentCarrierExceptionHandler
             return Result.Fail(_localizer["ItemConcurrencyConflict"]);
         }
 
-        var now = DateTime.UtcNow;
+        var now = _clock.UtcNow;
         shipment.LastCarrierEventKey = ResolutionEventKey;
 
         await ShipmentCarrierEventRecorder.AddIfMissingAsync(

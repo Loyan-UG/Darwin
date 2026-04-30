@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Shared.Results;
@@ -9,14 +10,20 @@ namespace Darwin.Application.Orders.Commands
 {
     public sealed class UpdateShipmentProviderOperationHandler
     {
+        private const int MaxActionLength = 64;
+        private const int MaxFailureReasonLength = 1024;
+
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public UpdateShipmentProviderOperationHandler(
             IAppDbContext db,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -48,7 +55,7 @@ namespace Darwin.Application.Orders.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            if (!TryApplyAction(operation, dto))
+            if (!TryApplyAction(operation, dto, _clock.UtcNow))
             {
                 return Result.Fail(_localizer["ShipmentProviderOperationUnsupportedAction"]);
             }
@@ -94,10 +101,9 @@ namespace Darwin.Application.Orders.Commands
                     ct);
         }
 
-        private static bool TryApplyAction(ShipmentProviderOperation operation, UpdateShipmentProviderOperationDto dto)
+        private static bool TryApplyAction(ShipmentProviderOperation operation, UpdateShipmentProviderOperationDto dto, DateTime now)
         {
-            var now = DateTime.UtcNow;
-            switch ((dto.Action ?? string.Empty).Trim().ToUpperInvariant())
+            switch (NormalizeAction(dto.Action))
             {
                 case "MARKPROCESSED":
                     operation.Status = "Processed";
@@ -108,9 +114,10 @@ namespace Darwin.Application.Orders.Commands
                     operation.Status = "Failed";
                     operation.LastAttemptAtUtc = now;
                     operation.ProcessedAtUtc = null;
-                    operation.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason)
+                    var failedReason = Truncate(dto.FailureReason?.Trim(), MaxFailureReasonLength);
+                    operation.FailureReason = string.IsNullOrWhiteSpace(failedReason)
                         ? "Marked failed by WebAdmin operator."
-                        : dto.FailureReason.Trim();
+                        : failedReason;
                     break;
                 case "REQUEUE":
                     operation.IsDeleted = false;
@@ -125,9 +132,10 @@ namespace Darwin.Application.Orders.Commands
                     operation.Status = "Cancelled";
                     operation.LastAttemptAtUtc = now;
                     operation.ProcessedAtUtc = null;
-                    operation.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason)
+                    var cancelledReason = Truncate(dto.FailureReason?.Trim(), MaxFailureReasonLength);
+                    operation.FailureReason = string.IsNullOrWhiteSpace(cancelledReason)
                         ? "Cancelled by WebAdmin operator."
-                        : dto.FailureReason.Trim();
+                        : cancelledReason;
                     break;
                 default:
                     return false;
@@ -139,6 +147,26 @@ namespace Darwin.Application.Orders.Commands
         private static bool IsRequeueAction(string? action)
         {
             return string.Equals((action ?? string.Empty).Trim(), "Requeue", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeAction(string? action)
+        {
+            if (string.IsNullOrWhiteSpace(action))
+            {
+                return string.Empty;
+            }
+
+            var trimmed = action.Trim();
+            return trimmed.Length > MaxActionLength
+                ? string.Empty
+                : trimmed.ToUpperInvariant();
+        }
+
+        private static string? Truncate(string? value, int maxLength)
+        {
+            return value is null || value.Length <= maxLength
+                ? value
+                : value[..maxLength];
         }
     }
 }

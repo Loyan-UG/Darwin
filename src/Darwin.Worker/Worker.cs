@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -16,17 +17,20 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IOptions<WebhookDeliveryWorkerOptions> _options;
+    private readonly IClock _clock;
     private readonly ILogger<WebhookDeliveryBackgroundService> _logger;
 
     public WebhookDeliveryBackgroundService(
         IServiceScopeFactory scopeFactory,
         IHttpClientFactory httpClientFactory,
         IOptions<WebhookDeliveryWorkerOptions> options,
+        IClock clock,
         ILogger<WebhookDeliveryBackgroundService> logger)
     {
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -77,7 +81,7 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var retryCutoffUtc = nowUtc.AddSeconds(-options.RetryCooldownSeconds);
         var deliveries = await db.Set<WebhookDelivery>()
             .Where(x => !x.IsDeleted)

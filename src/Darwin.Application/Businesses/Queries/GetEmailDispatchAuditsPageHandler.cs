@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
@@ -24,10 +25,12 @@ namespace Darwin.Application.Businesses.Queries
         private const int MaxRetryAttemptsPerWindow = 3;
         private const int MaxPageSize = 200;
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetEmailDispatchAuditsPageHandler(IAppDbContext db)
+        public GetEmailDispatchAuditsPageHandler(IAppDbContext db, IClock clock)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         public async Task<(List<EmailDispatchAuditListItemDto> Items, int Total, EmailDispatchAuditChainSummaryDto? ChainSummary)> HandleAsync(
@@ -52,7 +55,7 @@ namespace Darwin.Application.Businesses.Queries
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
             if (pageSize > MaxPageSize) pageSize = MaxPageSize;
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var stalePendingThresholdUtc = nowUtc.AddMinutes(-15);
             const int slowDeliveryThresholdSeconds = 60;
 
@@ -136,7 +139,7 @@ namespace Darwin.Application.Businesses.Queries
                     Status = x.Audit.Status,
                     AttemptedAtUtc = x.Audit.AttemptedAtUtc,
                     CompletedAtUtc = x.Audit.CompletedAtUtc,
-                    FailureMessage = x.Audit.FailureMessage,
+                    FailureMessage = OperatorDisplayTextSanitizer.SanitizeFailureText(x.Audit.FailureMessage),
                     QueueAttemptCount = 0
                 })
                 .ToListAsync(ct)
@@ -302,7 +305,7 @@ namespace Darwin.Application.Businesses.Queries
                 queued = queued.Where(x => x.BusinessId == businessId.Value);
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var recentThresholdUtc = nowUtc.AddHours(-24);
             var stalePendingThresholdUtc = nowUtc.AddMinutes(-15);
             var retryCooldownThresholdUtc = nowUtc.Subtract(RetryCooldown);
@@ -487,7 +490,7 @@ namespace Darwin.Application.Businesses.Queries
                     Status = x.Operation.Status,
                     AttemptedAtUtc = x.Operation.LastAttemptAtUtc ?? x.Operation.CreatedAtUtc,
                     CompletedAtUtc = x.Operation.ProcessedAtUtc,
-                    FailureMessage = x.Operation.FailureReason,
+                    FailureMessage = OperatorDisplayTextSanitizer.SanitizeFailureText(x.Operation.FailureReason),
                     QueueAttemptCount = x.Operation.AttemptCount,
                     AttemptAgeMinutes = (int)Math.Max(0, (nowUtc - (x.Operation.LastAttemptAtUtc ?? x.Operation.CreatedAtUtc)).TotalMinutes),
                     CompletionLatencySeconds = x.Operation.ProcessedAtUtc.HasValue
@@ -609,7 +612,7 @@ namespace Darwin.Application.Businesses.Queries
 
                 item.LatestProviderCallbackEvent = callback.EventName;
                 item.LatestProviderCallbackStatus = callback.Status;
-                item.LatestProviderCallbackReason = callback.Reason;
+                item.LatestProviderCallbackReason = OperatorDisplayTextSanitizer.SanitizeFailureText(callback.Reason);
                 item.LatestProviderCallbackOccurredAtUtc = callback.OccurredAtUtc ?? callback.ProcessedAtUtc ?? callback.CreatedAtUtc;
             }
         }
@@ -847,7 +850,7 @@ namespace Darwin.Application.Businesses.Queries
                         Subject = x.Subject,
                         IntendedRecipientEmail = x.IntendedRecipientEmail,
                         ProviderMessageId = x.ProviderMessageId,
-                        FailureMessage = x.FailureMessage,
+                        FailureMessage = OperatorDisplayTextSanitizer.SanitizeFailureText(x.FailureMessage),
                         CompletedAtUtc = x.CompletedAtUtc
                     })
                     .ToList()

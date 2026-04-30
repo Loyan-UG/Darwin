@@ -21,6 +21,8 @@ namespace Darwin.Application.Identity.Commands
     /// </summary>
     public sealed class ResetPasswordHandler
     {
+        private const string PasswordResetPurpose = "PasswordReset";
+
         private readonly IAppDbContext _db;
         private readonly IUserPasswordHasher _hasher;
         private readonly ISecurityStampService _stamps;
@@ -64,14 +66,15 @@ namespace Darwin.Application.Identity.Commands
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
+            var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
             var user = await _db.Set<User>()
-                .FirstOrDefaultAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
+                .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail && !u.IsDeleted, ct);
 
             if (user == null)
                 return Result.Fail(_localizer["InvalidTokenOrEmail"]);
 
             var token = await _db.Set<UserToken>()
-                .Where(t => t.UserId == user.Id && t.Purpose == "PasswordReset" && t.Value == dto.Token)
+                .Where(t => t.UserId == user.Id && t.Purpose == PasswordResetPurpose && t.Value == dto.Token)
                 .FirstOrDefaultAsync(ct);
 
             var now = _clock.UtcNow;

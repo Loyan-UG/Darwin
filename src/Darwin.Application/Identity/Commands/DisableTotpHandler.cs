@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -17,11 +18,16 @@ namespace Darwin.Application.Identity.Commands
     public sealed class DisableTotpHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IValidator<TotpDisableDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public DisableTotpHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public DisableTotpHandler(
+            IAppDbContext db,
+            IValidator<TotpDisableDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _validator = validator;
             _localizer = localizer;
         }
 
@@ -30,6 +36,8 @@ namespace Darwin.Application.Identity.Commands
         /// </summary>
         public async Task<Result> HandleAsync(TotpDisableDto dto, CancellationToken ct = default)
         {
+            await _validator.ValidateAndThrowAsync(dto, ct);
+
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
             if (user is null) return Result.Fail(_localizer["UserNotFound"]);
 

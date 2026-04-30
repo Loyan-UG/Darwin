@@ -3,6 +3,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using System;
@@ -20,17 +21,25 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IJwtTokenService _jwt;
+        private readonly IValidator<RefreshRequestDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public RefreshTokenHandler(IAppDbContext db, IJwtTokenService jwt, IStringLocalizer<ValidationResource> localizer)
+        public RefreshTokenHandler(
+            IAppDbContext db,
+            IJwtTokenService jwt,
+            IValidator<RefreshRequestDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _jwt = jwt;
+            _validator = validator;
             _localizer = localizer;
         }
 
         public async Task<Result<AuthResultDto>> HandleAsync(RefreshRequestDto dto, CancellationToken ct = default)
         {
+            await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
+
             var userId = await _jwt.ValidateRefreshTokenAsync(dto.RefreshToken, dto.DeviceId, ct).ConfigureAwait(false);
             if (userId is null)
                 return Result<AuthResultDto>.Fail(_localizer["InvalidOrExpiredRefreshToken"]);

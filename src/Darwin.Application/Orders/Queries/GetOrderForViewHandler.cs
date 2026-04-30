@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Orders;
 using Microsoft.EntityFrameworkCore;
@@ -84,6 +85,14 @@ namespace Darwin.Application.Orders.Queries
                     }).ToList()
                 })
                 .FirstOrDefaultAsync(ct);
+
+            if (o is not null)
+            {
+                foreach (var payment in o.Payments)
+                {
+                    payment.FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(payment.FailureReason);
+                }
+            }
 
             return o;
         }

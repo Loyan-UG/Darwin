@@ -1,7 +1,9 @@
 using Darwin.Infrastructure.Extensions;
 using Darwin.WebApi.Middleware;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Swashbuckle.AspNetCore.Swagger;
@@ -46,6 +48,8 @@ namespace Darwin.WebApi.Extensions
                 app.UseHsts();
             }
 
+            app.UseForwardedHeaders();
+
             if (!env.IsDevelopment())
             {
                 app.UseHttpsRedirection();
@@ -53,20 +57,30 @@ namespace Darwin.WebApi.Extensions
 
             app.UseRouting();
 
+            app.UseMiddleware<ErrorHandlingMiddleware>();
+            app.UseRequestTimeouts();
+
             // Apply ASP.NET Core rate limiting policies before authentication,
             // so rejected requests are short-circuited early.
             app.UseRateLimiter();
 
-            // Idempotency middleware: prevents duplicate processing of mutating requests
-            app.UseMiddleware<Darwin.WebApi.Middleware.IdempotencyMiddleware>();
-
             app.UseAuthentication();
 
-            app.UseMiddleware<ErrorHandlingMiddleware>();
+            // Idempotency middleware scopes duplicate detection to the authenticated
+            // principal, route, and request body before authorization executes handlers.
+            app.UseMiddleware<Darwin.WebApi.Middleware.IdempotencyMiddleware>();
 
             app.UseAuthorization();
 
             app.MapControllers();
+            app.MapHealthChecks("/health/live", new HealthCheckOptions
+            {
+                Predicate = _ => false
+            });
+            app.MapHealthChecks("/health/ready", new HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains("ready")
+            });
 
             return app;
         }

@@ -1,3 +1,4 @@
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Application.Billing.Queries;
@@ -48,6 +49,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         private readonly UpdateJournalEntryHandler _updateJournalEntry;
         private readonly AdminReferenceDataService _referenceData;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IClock _clock;
 
         public BillingController(
             GetPaymentsPageHandler getPaymentsPage,
@@ -81,7 +83,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             CreateJournalEntryHandler createJournalEntry,
             UpdateJournalEntryHandler updateJournalEntry,
             AdminReferenceDataService referenceData,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            IClock clock)
         {
             _getPaymentsPage = getPaymentsPage ?? throw new ArgumentNullException(nameof(getPaymentsPage));
             _getPaymentOpsSummary = getPaymentOpsSummary ?? throw new ArgumentNullException(nameof(getPaymentOpsSummary));
@@ -115,6 +118,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             _updateJournalEntry = updateJournalEntry ?? throw new ArgumentNullException(nameof(updateJournalEntry));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
             _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         [HttpGet]
@@ -893,7 +897,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var vm = new PaymentEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,
@@ -1356,7 +1360,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public async Task<IActionResult> CreateExpense(Guid? businessId = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var vm = new ExpenseEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,
@@ -1530,7 +1534,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public async Task<IActionResult> CreateJournalEntry(Guid? businessId = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var vm = new JournalEntryEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,

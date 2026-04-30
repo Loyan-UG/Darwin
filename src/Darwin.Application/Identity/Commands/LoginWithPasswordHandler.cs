@@ -1,6 +1,7 @@
 ﻿using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Security;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
@@ -23,14 +24,16 @@ namespace Darwin.Application.Identity.Commands
         private readonly IJwtTokenService _jwt;
         private readonly ILoginRateLimiter _limiter;
         private readonly IUserPasswordHasher _hasher;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public LoginWithPasswordHandler(IAppDbContext db, IJwtTokenService jwt, ILoginRateLimiter limiter, IUserPasswordHasher hasher, IStringLocalizer<ValidationResource> localizer)
+        public LoginWithPasswordHandler(IAppDbContext db, IJwtTokenService jwt, ILoginRateLimiter limiter, IUserPasswordHasher hasher, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
             _jwt = jwt;
             _limiter = limiter;
             _hasher = hasher;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -80,7 +83,7 @@ namespace Darwin.Application.Identity.Commands
                     return Result<AuthResultDto>.Fail(_localizer["InvalidCredentials"]);
                 }
 
-                var nowUtc = DateTime.UtcNow;
+                var nowUtc = _clock.UtcNow;
                 if (user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > nowUtc)
                 {
                     return Result<AuthResultDto>.Fail(_localizer["AccountLocked"]);

@@ -213,7 +213,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            ErrorMessage = ResolveProfileSaveFailureMessage(ex.Message);
+            ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfileSaveFailed);
         }
         finally
         {

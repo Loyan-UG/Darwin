@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
@@ -27,11 +28,13 @@ namespace Darwin.Application.Loyalty.Commands
     public sealed class ExpireLoyaltyScanSessionHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ExpireLoyaltyScanSessionHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public ExpireLoyaltyScanSessionHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -58,7 +61,7 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result.Fail(_localizer["LoyaltyScanSessionConcurrencyConflict"]);
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             if (entity.Status != LoyaltyScanStatus.Pending || entity.ExpiresAtUtc > nowUtc)
             {
                 return Result.Fail(_localizer["LoyaltyScanSessionCannotExpire"]);
@@ -84,7 +87,7 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<ExpireExpiredLoyaltyScanSessionsResultDto>.Fail(_localizer["BusinessIdRequired"]);
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var sessions = await _db.Set<ScanSession>()
                 .Where(x => !x.IsDeleted && x.BusinessId == dto.BusinessId && x.Status == LoyaltyScanStatus.Pending && x.ExpiresAtUtc <= nowUtc)
                 .OrderBy(x => x.ExpiresAtUtc)

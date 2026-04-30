@@ -40,7 +40,7 @@ namespace Darwin.Application.Loyalty.Queries
             query = filter switch
             {
                 LoyaltyRewardTierQueueFilter.SelfRedemption => query.Where(x => x.AllowSelfRedemption),
-                LoyaltyRewardTierQueueFilter.MissingDescription => query.Where(x => x.Description == null || x.Description == string.Empty),
+                LoyaltyRewardTierQueueFilter.MissingDescription => query.Where(x => x.Description == null || x.Description.Trim() == string.Empty),
                 LoyaltyRewardTierQueueFilter.DiscountRewards => query.Where(x => x.RewardType == LoyaltyRewardType.PercentDiscount || x.RewardType == LoyaltyRewardType.AmountDiscount),
                 LoyaltyRewardTierQueueFilter.FreeItem => query.Where(x => x.RewardType == LoyaltyRewardType.FreeItem),
                 _ => query
@@ -75,14 +75,18 @@ namespace Darwin.Application.Loyalty.Queries
                 .AsNoTracking()
                 .Where(x => x.LoyaltyProgramId == loyaltyProgramId && !x.IsDeleted);
 
-            return new LoyaltyRewardTierOpsSummaryDto
-            {
-                TotalCount = await query.CountAsync(ct).ConfigureAwait(false),
-                SelfRedemptionCount = await query.CountAsync(x => x.AllowSelfRedemption, ct).ConfigureAwait(false),
-                MissingDescriptionCount = await query.CountAsync(x => x.Description == null || x.Description == string.Empty, ct).ConfigureAwait(false),
-                DiscountRewardCount = await query.CountAsync(x => x.RewardType == LoyaltyRewardType.PercentDiscount || x.RewardType == LoyaltyRewardType.AmountDiscount, ct).ConfigureAwait(false),
-                FreeItemCount = await query.CountAsync(x => x.RewardType == LoyaltyRewardType.FreeItem, ct).ConfigureAwait(false)
-            };
+            return await query
+                .GroupBy(_ => 1)
+                .Select(g => new LoyaltyRewardTierOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    SelfRedemptionCount = g.Count(x => x.AllowSelfRedemption),
+                    MissingDescriptionCount = g.Count(x => x.Description == null || x.Description.Trim() == string.Empty),
+                    DiscountRewardCount = g.Count(x => x.RewardType == LoyaltyRewardType.PercentDiscount || x.RewardType == LoyaltyRewardType.AmountDiscount),
+                    FreeItemCount = g.Count(x => x.RewardType == LoyaltyRewardType.FreeItem)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new LoyaltyRewardTierOpsSummaryDto();
         }
     }
 }

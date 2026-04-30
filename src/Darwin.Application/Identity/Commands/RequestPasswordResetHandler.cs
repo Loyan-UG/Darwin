@@ -28,6 +28,8 @@ namespace Darwin.Application.Identity.Commands
     /// </summary>
     public sealed class RequestPasswordResetHandler
     {
+        private const string PasswordResetPurpose = "PasswordReset";
+
         private readonly IAppDbContext _db;
         private readonly IEmailSender _email;
         private readonly IClock _clock;
@@ -71,29 +73,35 @@ namespace Darwin.Application.Identity.Commands
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
+            var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
             var user = await _db.Set<User>()
-                .FirstOrDefaultAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
+                .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail && !u.IsDeleted, ct);
 
             // Never reveal whether the email exists to the caller.
             if (user == null)
                 return Result.Ok();
 
-            // Invalidate any previously issued (but unused) tokens.
+            var nowUtc = _clock.UtcNow;
+
+            // Invalidate prior active tokens and clear out expired reset tokens for this purpose.
             var old = await _db.Set<UserToken>()
-                .Where(t => t.UserId == user.Id && t.Purpose == "PasswordReset" && t.UsedAtUtc == null)
+                .Where(t =>
+                    t.UserId == user.Id &&
+                    t.Purpose == PasswordResetPurpose &&
+                    (t.UsedAtUtc == null || (t.ExpiresAtUtc != null && t.ExpiresAtUtc <= nowUtc)))
                 .ToListAsync(ct);
 
             if (old.Count > 0)
             {
                 foreach (var t in old)
-                    t.UsedAtUtc = _clock.UtcNow;
+                    t.UsedAtUtc = nowUtc;
             }
 
             // Generate an opaque, URL-safe token; persist with expiry.
             var token = RandomTokenGenerator.UrlSafeToken(32);
-            var expires = _clock.UtcNow.AddHours(2);
+            var expires = nowUtc.AddHours(2);
 
-            var tokenEntity = new UserToken(user.Id, "PasswordReset", token, expires);
+            var tokenEntity = new UserToken(user.Id, PasswordResetPurpose, token, expires);
             _db.Set<UserToken>().Add(tokenEntity);
             await _db.SaveChangesAsync(ct);
 

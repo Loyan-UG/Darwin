@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Integration;
@@ -11,10 +12,12 @@ namespace Darwin.Application.Orders.Queries
     {
         private static readonly TimeSpan StalePendingThreshold = TimeSpan.FromMinutes(30);
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetShipmentProviderOperationsPageHandler(IAppDbContext db)
+        public GetShipmentProviderOperationsPageHandler(IAppDbContext db, IClock clock)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         public async Task<(List<ShipmentProviderOperationListItemDto> Items, int Total, ShipmentProviderOperationSummaryDto Summary, List<string> Providers, List<string> OperationTypes)> HandleAsync(
@@ -27,18 +30,30 @@ namespace Darwin.Application.Orders.Queries
             pageSize = Math.Clamp(pageSize, 10, 100);
             filter ??= new ShipmentProviderOperationFilterDto();
 
-            var now = DateTime.UtcNow;
+            var now = _clock.UtcNow;
             var staleBeforeUtc = now.Subtract(StalePendingThreshold);
             var baseQuery = _db.Set<ShipmentProviderOperation>().AsNoTracking();
             var activeQuery = baseQuery.Where(x => !x.IsDeleted);
 
+            var activeSummary = await activeQuery
+                .GroupBy(_ => 1)
+                .Select(g => new ShipmentProviderOperationSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    PendingCount = g.Count(x => x.Status == "Pending"),
+                    FailedCount = g.Count(x => x.Status == "Failed"),
+                    ProcessedCount = g.Count(x => x.Status == "Processed" || x.Status == "Succeeded"),
+                    StalePendingCount = g.Count(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new ShipmentProviderOperationSummaryDto();
             var summary = new ShipmentProviderOperationSummaryDto
             {
-                TotalCount = await activeQuery.CountAsync(ct).ConfigureAwait(false),
-                PendingCount = await activeQuery.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
-                FailedCount = await activeQuery.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
-                ProcessedCount = await activeQuery.CountAsync(x => x.Status == "Processed" || x.Status == "Succeeded", ct).ConfigureAwait(false),
-                StalePendingCount = await activeQuery.CountAsync(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
+                TotalCount = activeSummary.TotalCount,
+                PendingCount = activeSummary.PendingCount,
+                FailedCount = activeSummary.FailedCount,
+                ProcessedCount = activeSummary.ProcessedCount,
+                StalePendingCount = activeSummary.StalePendingCount,
                 CancelledCount = await baseQuery.CountAsync(x => x.IsDeleted, ct).ConfigureAwait(false)
             };
 
@@ -155,7 +170,7 @@ namespace Darwin.Application.Orders.Queries
                     CreatedAtUtc = x.CreatedAtUtc,
                     AgeMinutes = Math.Max(0, (int)(now - x.CreatedAtUtc).TotalMinutes),
                     IsStalePending = x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc,
-                    FailureReason = x.FailureReason,
+                    FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(x.FailureReason),
                     TrackingNumber = shipment?.TrackingNumber,
                     LabelUrl = shipment?.LabelUrl
                 };

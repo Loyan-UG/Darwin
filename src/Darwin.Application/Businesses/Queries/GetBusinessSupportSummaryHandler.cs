@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
@@ -18,10 +19,12 @@ namespace Darwin.Application.Businesses.Queries
     public sealed class GetBusinessSupportSummaryHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetBusinessSupportSummaryHandler(IAppDbContext db)
+        public GetBusinessSupportSummaryHandler(IAppDbContext db, IClock clock)
         {
             _db = db;
+            _clock = clock;
         }
 
         /// <summary>
@@ -29,157 +32,148 @@ namespace Darwin.Application.Businesses.Queries
         /// </summary>
         public async Task<BusinessSupportSummaryDto> HandleAsync(Guid? selectedBusinessId = null, CancellationToken ct = default)
         {
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
 
-            var attentionBusinessQuery = _db.Set<Business>().AsNoTracking().Where(x =>
-                !x.IsDeleted &&
-                (x.OperationalStatus != BusinessOperationalStatus.Approved ||
-                 !x.IsActive ||
-                 !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner) ||
-                 !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary) ||
-                 string.IsNullOrWhiteSpace(x.ContactEmail) ||
-                 string.IsNullOrWhiteSpace(x.LegalName)));
-
-            var pendingApprovalCount = await _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && x.OperationalStatus == BusinessOperationalStatus.PendingApproval, ct)
+            var businesses = _db.Set<Business>().AsNoTracking().Where(x => !x.IsDeleted);
+            var businessSummary = await businesses
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    PendingApprovalCount = g.Count(x => x.OperationalStatus == BusinessOperationalStatus.PendingApproval),
+                    SuspendedCount = g.Count(x => x.OperationalStatus == BusinessOperationalStatus.Suspended),
+                    ApprovedInactiveCount = g.Count(x => x.OperationalStatus == BusinessOperationalStatus.Approved && !x.IsActive),
+                    MissingOwnerCount = g.Count(x => !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner)),
+                    MissingPrimaryLocationCount = g.Count(x => !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary)),
+                    MissingContactEmailCount = g.Count(x => x.ContactEmail == null || x.ContactEmail.Trim() == string.Empty),
+                    MissingLegalNameCount = g.Count(x => x.LegalName == null || x.LegalName.Trim() == string.Empty),
+                    AttentionCount = g.Count(x =>
+                        x.OperationalStatus != BusinessOperationalStatus.Approved ||
+                        !x.IsActive ||
+                        !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner) ||
+                        !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary) ||
+                        x.ContactEmail == null ||
+                        x.ContactEmail.Trim() == string.Empty ||
+                        x.LegalName == null ||
+                        x.LegalName.Trim() == string.Empty)
+                })
+                .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
 
-            var suspendedCount = await _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && x.OperationalStatus == BusinessOperationalStatus.Suspended, ct)
+            var invitationSummary = await _db.Set<BusinessInvitation>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    PendingInvitationsCount = g.Count(x => x.Status == BusinessInvitationStatus.Pending),
+                    OpenInvitationsCount = g.Count(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired)
+                })
+                .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
 
-            var approvedInactiveCount = await _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && x.OperationalStatus == BusinessOperationalStatus.Approved && !x.IsActive, ct)
-                .ConfigureAwait(false);
-
-            var missingOwnerCount = await _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && !m.IsDeleted && m.IsActive && m.Role == BusinessMemberRole.Owner), ct)
-                .ConfigureAwait(false);
-
-            var missingPrimaryLocationCount = await _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary), ct)
-                .ConfigureAwait(false);
-
-            var missingContactEmailCount = await _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && string.IsNullOrWhiteSpace(x.ContactEmail), ct)
-                .ConfigureAwait(false);
-
-            var missingLegalNameCount = await _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && string.IsNullOrWhiteSpace(x.LegalName), ct)
-                .ConfigureAwait(false);
-
-            var attentionCount = await attentionBusinessQuery.CountAsync(ct).ConfigureAwait(false);
-
-            var pendingInvitationsCount = await _db.Set<BusinessInvitation>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && x.Status == BusinessInvitationStatus.Pending, ct)
-                .ConfigureAwait(false);
-
-            var openInvitationsCount = await _db.Set<BusinessInvitation>().AsNoTracking()
-                .CountAsync(x => !x.IsDeleted && (x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired), ct)
-                .ConfigureAwait(false);
-
-            var pendingActivationCount = await
+            var memberSummary = await
                 (from member in _db.Set<BusinessMember>().AsNoTracking()
                  join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id
-                 where !member.IsDeleted && !user.IsDeleted && member.IsActive && !user.EmailConfirmed
-                 select member.Id)
-                .CountAsync(ct)
-                .ConfigureAwait(false);
-
-            var lockedMembersCount = await
-                (from member in _db.Set<BusinessMember>().AsNoTracking()
-                 join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id
-                 where !member.IsDeleted && !user.IsDeleted && user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > nowUtc
-                 select member.Id)
-                .CountAsync(ct)
+                 where !member.IsDeleted && !user.IsDeleted
+                 group new { member, user } by 1 into g
+                 select new
+                 {
+                     PendingActivationCount = g.Count(x => x.member.IsActive && !x.user.EmailConfirmed),
+                     LockedMembersCount = g.Count(x => x.user.LockoutEndUtc.HasValue && x.user.LockoutEndUtc.Value > nowUtc)
+                 })
+                .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
 
             var failedEmailAuditQuery = _db.Set<EmailDispatchAudit>()
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted && x.Status == "Failed");
 
-            var failedInvitationCount = await failedEmailAuditQuery
-                .CountAsync(x => x.FlowKey == "BusinessInvitation", ct)
-                .ConfigureAwait(false);
-
-            var failedActivationCount = await failedEmailAuditQuery
-                .CountAsync(x => x.FlowKey == "AccountActivation", ct)
-                .ConfigureAwait(false);
-
-            var failedPasswordResetCount = await failedEmailAuditQuery
-                .CountAsync(x => x.FlowKey == "PasswordReset", ct)
-                .ConfigureAwait(false);
-
-            var failedAdminTestCount = await failedEmailAuditQuery
-                .CountAsync(x => x.FlowKey == "AdminCommunicationTest", ct)
+            var failedEmailSummary = await failedEmailAuditQuery
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    FailedInvitationCount = g.Count(x => x.FlowKey == "BusinessInvitation"),
+                    FailedActivationCount = g.Count(x => x.FlowKey == "AccountActivation"),
+                    FailedPasswordResetCount = g.Count(x => x.FlowKey == "PasswordReset"),
+                    FailedAdminTestCount = g.Count(x => x.FlowKey == "AdminCommunicationTest")
+                })
+                .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
 
             var dto = new BusinessSupportSummaryDto
             {
-                PendingApprovalBusinessCount = pendingApprovalCount,
-                SuspendedBusinessCount = suspendedCount,
-                ApprovedInactiveBusinessCount = approvedInactiveCount,
-                MissingOwnerBusinessCount = missingOwnerCount,
-                MissingPrimaryLocationBusinessCount = missingPrimaryLocationCount,
-                MissingContactEmailBusinessCount = missingContactEmailCount,
-                MissingLegalNameBusinessCount = missingLegalNameCount,
-                PendingInvitationCount = pendingInvitationsCount,
-                AttentionBusinessCount = attentionCount,
-                OpenInvitationCount = openInvitationsCount,
-                PendingActivationMemberCount = pendingActivationCount,
-                LockedMemberCount = lockedMembersCount,
-                FailedInvitationCount = failedInvitationCount,
-                FailedActivationCount = failedActivationCount,
-                FailedPasswordResetCount = failedPasswordResetCount,
-                FailedAdminTestCount = failedAdminTestCount
+                PendingApprovalBusinessCount = businessSummary?.PendingApprovalCount ?? 0,
+                SuspendedBusinessCount = businessSummary?.SuspendedCount ?? 0,
+                ApprovedInactiveBusinessCount = businessSummary?.ApprovedInactiveCount ?? 0,
+                MissingOwnerBusinessCount = businessSummary?.MissingOwnerCount ?? 0,
+                MissingPrimaryLocationBusinessCount = businessSummary?.MissingPrimaryLocationCount ?? 0,
+                MissingContactEmailBusinessCount = businessSummary?.MissingContactEmailCount ?? 0,
+                MissingLegalNameBusinessCount = businessSummary?.MissingLegalNameCount ?? 0,
+                PendingInvitationCount = invitationSummary?.PendingInvitationsCount ?? 0,
+                AttentionBusinessCount = businessSummary?.AttentionCount ?? 0,
+                OpenInvitationCount = invitationSummary?.OpenInvitationsCount ?? 0,
+                PendingActivationMemberCount = memberSummary?.PendingActivationCount ?? 0,
+                LockedMemberCount = memberSummary?.LockedMembersCount ?? 0,
+                FailedInvitationCount = failedEmailSummary?.FailedInvitationCount ?? 0,
+                FailedActivationCount = failedEmailSummary?.FailedActivationCount ?? 0,
+                FailedPasswordResetCount = failedEmailSummary?.FailedPasswordResetCount ?? 0,
+                FailedAdminTestCount = failedEmailSummary?.FailedAdminTestCount ?? 0
             };
 
             if (selectedBusinessId.HasValue)
             {
                 var businessId = selectedBusinessId.Value;
 
-                dto.SelectedBusinessPendingInvitationCount = await _db.Set<BusinessInvitation>().AsNoTracking()
-                    .CountAsync(x => x.BusinessId == businessId && !x.IsDeleted && x.Status == BusinessInvitationStatus.Pending, ct)
+                var selectedInvitationSummary = await _db.Set<BusinessInvitation>()
+                    .AsNoTracking()
+                    .Where(x => x.BusinessId == businessId && !x.IsDeleted)
+                    .GroupBy(_ => 1)
+                    .Select(g => new
+                    {
+                        PendingInvitationCount = g.Count(x => x.Status == BusinessInvitationStatus.Pending),
+                        OpenInvitationCount = g.Count(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired)
+                    })
+                    .FirstOrDefaultAsync(ct)
                     .ConfigureAwait(false);
 
-                dto.SelectedBusinessOpenInvitationCount = await _db.Set<BusinessInvitation>().AsNoTracking()
-                    .CountAsync(x => x.BusinessId == businessId && !x.IsDeleted && (x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired), ct)
-                    .ConfigureAwait(false);
+                dto.SelectedBusinessPendingInvitationCount = selectedInvitationSummary?.PendingInvitationCount ?? 0;
+                dto.SelectedBusinessOpenInvitationCount = selectedInvitationSummary?.OpenInvitationCount ?? 0;
 
-                dto.SelectedBusinessPendingActivationCount =
+                var selectedMemberSummary =
                     await (from member in _db.Set<BusinessMember>().AsNoTracking()
                            join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id
-                           where member.BusinessId == businessId && !member.IsDeleted && member.IsActive && !user.IsDeleted && !user.EmailConfirmed
-                           select member.Id)
-                    .CountAsync(ct)
+                           where member.BusinessId == businessId && !member.IsDeleted && !user.IsDeleted
+                           group new { member, user } by 1 into g
+                           select new
+                           {
+                               PendingActivationCount = g.Count(x => x.member.IsActive && !x.user.EmailConfirmed),
+                               LockedMemberCount = g.Count(x => x.user.LockoutEndUtc.HasValue && x.user.LockoutEndUtc.Value > nowUtc)
+                           })
+                    .FirstOrDefaultAsync(ct)
                     .ConfigureAwait(false);
 
-                dto.SelectedBusinessLockedMemberCount =
-                    await (from member in _db.Set<BusinessMember>().AsNoTracking()
-                           join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id
-                           where member.BusinessId == businessId && !member.IsDeleted && !user.IsDeleted && user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > nowUtc
-                           select member.Id)
-                    .CountAsync(ct)
-                    .ConfigureAwait(false);
+                dto.SelectedBusinessPendingActivationCount = selectedMemberSummary?.PendingActivationCount ?? 0;
+                dto.SelectedBusinessLockedMemberCount = selectedMemberSummary?.LockedMemberCount ?? 0;
 
                 var selectedBusinessFailedEmailAuditQuery = failedEmailAuditQuery
                     .Where(x => x.BusinessId == businessId);
 
-                dto.SelectedBusinessFailedInvitationCount = await selectedBusinessFailedEmailAuditQuery
-                    .CountAsync(x => x.FlowKey == "BusinessInvitation", ct)
+                var selectedFailedEmailSummary = await selectedBusinessFailedEmailAuditQuery
+                    .GroupBy(_ => 1)
+                    .Select(g => new
+                    {
+                        FailedInvitationCount = g.Count(x => x.FlowKey == "BusinessInvitation"),
+                        FailedActivationCount = g.Count(x => x.FlowKey == "AccountActivation"),
+                        FailedPasswordResetCount = g.Count(x => x.FlowKey == "PasswordReset"),
+                        FailedAdminTestCount = g.Count(x => x.FlowKey == "AdminCommunicationTest")
+                    })
+                    .FirstOrDefaultAsync(ct)
                     .ConfigureAwait(false);
 
-                dto.SelectedBusinessFailedActivationCount = await selectedBusinessFailedEmailAuditQuery
-                    .CountAsync(x => x.FlowKey == "AccountActivation", ct)
-                    .ConfigureAwait(false);
-
-                dto.SelectedBusinessFailedPasswordResetCount = await selectedBusinessFailedEmailAuditQuery
-                    .CountAsync(x => x.FlowKey == "PasswordReset", ct)
-                    .ConfigureAwait(false);
-
-                dto.SelectedBusinessFailedAdminTestCount = await selectedBusinessFailedEmailAuditQuery
-                    .CountAsync(x => x.FlowKey == "AdminCommunicationTest", ct)
-                    .ConfigureAwait(false);
+                dto.SelectedBusinessFailedInvitationCount = selectedFailedEmailSummary?.FailedInvitationCount ?? 0;
+                dto.SelectedBusinessFailedActivationCount = selectedFailedEmailSummary?.FailedActivationCount ?? 0;
+                dto.SelectedBusinessFailedPasswordResetCount = selectedFailedEmailSummary?.FailedPasswordResetCount ?? 0;
+                dto.SelectedBusinessFailedAdminTestCount = selectedFailedEmailSummary?.FailedAdminTestCount ?? 0;
             }
 
             return dto;

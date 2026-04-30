@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Storage.Abstractions;
 using Microsoft.Maui.Storage;
 
@@ -32,14 +33,21 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
     };
 
     private readonly IKeyValueStore _keyValueStore;
+    private readonly ITokenStore _tokenStore;
+    private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BusinessActivityTracker"/> class.
     /// </summary>
-    public BusinessActivityTracker(IKeyValueStore keyValueStore)
+    public BusinessActivityTracker(
+        IKeyValueStore keyValueStore,
+        ITokenStore tokenStore,
+        TimeProvider timeProvider)
     {
         _keyValueStore = keyValueStore ?? throw new ArgumentNullException(nameof(keyValueStore));
+        _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     /// <inheritdoc />
@@ -85,7 +93,7 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var now = DateTime.UtcNow;
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
         var fromUtc = now - (lookbackWindow <= TimeSpan.Zero ? TimeSpan.FromDays(7) : lookbackWindow);
 
         var entries = await LoadEntriesAsync(cancellationToken);
@@ -148,10 +156,11 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            var entries = await LoadEntriesCoreAsync(cancellationToken);
+            var storageKey = await ResolveStorageKeyAsync(cancellationToken).ConfigureAwait(false);
+            var entries = await LoadEntriesCoreAsync(storageKey, cancellationToken);
             entries.Add(new BusinessActivityEntry
             {
-                OccurredAtUtc = DateTime.UtcNow,
+                OccurredAtUtc = _timeProvider.GetUtcNow().UtcDateTime,
                 Kind = kind,
                 CustomerDisplayName = NormalizeCustomer(customerDisplayName),
                 PointsDelta = pointsDelta
@@ -163,7 +172,7 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
                 .OrderBy(x => x.OccurredAtUtc)
                 .ToList();
 
-            await SaveEntriesCoreAsync(trimmed, cancellationToken);
+            await SaveEntriesCoreAsync(storageKey, trimmed, cancellationToken);
         }
         finally
         {
@@ -178,7 +187,8 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            return await LoadEntriesCoreAsync(cancellationToken);
+            var storageKey = await ResolveStorageKeyAsync(cancellationToken).ConfigureAwait(false);
+            return await LoadEntriesCoreAsync(storageKey, cancellationToken);
         }
         finally
         {
@@ -186,11 +196,11 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         }
     }
 
-    private async Task<List<BusinessActivityEntry>> LoadEntriesCoreAsync(CancellationToken cancellationToken)
+    private async Task<List<BusinessActivityEntry>> LoadEntriesCoreAsync(string storageKey, CancellationToken cancellationToken)
     {
-        await EnsureLegacyPayloadMigratedAsync(cancellationToken);
+        await EnsureLegacyPayloadMigratedAsync(storageKey, cancellationToken);
 
-        var raw = await _keyValueStore.GetAsync(StorageKey, cancellationToken);
+        var raw = await _keyValueStore.GetAsync(storageKey, cancellationToken);
         if (string.IsNullOrWhiteSpace(raw))
         {
             return new List<BusinessActivityEntry>();
@@ -208,28 +218,49 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         }
     }
 
-    private Task SaveEntriesCoreAsync(List<BusinessActivityEntry> entries, CancellationToken cancellationToken)
+    private Task SaveEntriesCoreAsync(string storageKey, List<BusinessActivityEntry> entries, CancellationToken cancellationToken)
     {
         var serialized = JsonSerializer.Serialize(entries, JsonOptions);
-        return _keyValueStore.SetAsync(StorageKey, serialized, cancellationToken);
+        return _keyValueStore.SetAsync(storageKey, serialized, cancellationToken);
     }
 
-    private async Task EnsureLegacyPayloadMigratedAsync(CancellationToken cancellationToken)
+    private async Task EnsureLegacyPayloadMigratedAsync(string storageKey, CancellationToken cancellationToken)
     {
-        var migrationMarker = await _keyValueStore.GetAsync(LegacyMigrationFlagKey, cancellationToken);
+        var migrationMarkerKey = $"{storageKey}:migrated";
+        var migrationMarker = await _keyValueStore.GetAsync(migrationMarkerKey, cancellationToken);
         if (string.Equals(migrationMarker, bool.TrueString, StringComparison.Ordinal))
         {
             return;
         }
 
+        var scopedPayloadExists = !string.IsNullOrWhiteSpace(await _keyValueStore.GetAsync(storageKey, cancellationToken));
         var legacyPayload = Preferences.Default.Get(StorageKey, string.Empty);
-        if (!string.IsNullOrWhiteSpace(legacyPayload))
+        if (!scopedPayloadExists && !string.IsNullOrWhiteSpace(legacyPayload))
         {
-            await _keyValueStore.SetAsync(StorageKey, legacyPayload, cancellationToken);
+            await _keyValueStore.SetAsync(storageKey, legacyPayload, cancellationToken);
             Preferences.Default.Remove(StorageKey);
         }
 
-        await _keyValueStore.SetAsync(LegacyMigrationFlagKey, bool.TrueString, cancellationToken);
+        var legacyDbPayload = await _keyValueStore.GetAsync(StorageKey, cancellationToken);
+        if (!scopedPayloadExists && !string.IsNullOrWhiteSpace(legacyDbPayload))
+        {
+            await _keyValueStore.SetAsync(storageKey, legacyDbPayload, cancellationToken);
+            await _keyValueStore.RemoveAsync(StorageKey, cancellationToken);
+        }
+
+        await _keyValueStore.SetAsync(migrationMarkerKey, bool.TrueString, cancellationToken);
+        await _keyValueStore.RemoveAsync(LegacyMigrationFlagKey, cancellationToken);
+    }
+
+    private async Task<string> ResolveStorageKeyAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var (accessToken, _) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
+        var scope = JwtClaimReader.BuildBusinessOperatorScope(accessToken);
+        return string.IsNullOrWhiteSpace(scope)
+            ? StorageKey
+            : $"{StorageKey}:{scope}";
     }
 
     private static string NormalizeCustomer(string? customerDisplayName)

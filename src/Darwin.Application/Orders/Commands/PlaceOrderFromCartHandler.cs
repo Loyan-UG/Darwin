@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CartCheckout.Queries;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
@@ -19,6 +20,7 @@ namespace Darwin.Application.Orders.Commands;
 public sealed class PlaceOrderFromCartHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly ComputeCartSummaryHandler _computeCartSummaryHandler;
     private readonly Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler _createStorefrontCheckoutIntentHandler;
     private readonly IStringLocalizer<ValidationResource> _localizer;
@@ -28,11 +30,13 @@ public sealed class PlaceOrderFromCartHandler
     /// </summary>
     public PlaceOrderFromCartHandler(
         IAppDbContext db,
+        IClock clock,
         ComputeCartSummaryHandler computeCartSummaryHandler,
         Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler createStorefrontCheckoutIntentHandler,
         IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
         _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
@@ -283,7 +287,7 @@ public sealed class PlaceOrderFromCartHandler
 
     private async Task<string> NextOrderNumberAsync(CancellationToken ct)
     {
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
 
         for (var attempt = 0; attempt < 5; attempt++)
         {

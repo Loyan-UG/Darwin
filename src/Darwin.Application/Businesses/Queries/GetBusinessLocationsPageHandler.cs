@@ -36,9 +36,12 @@ namespace Darwin.Application.Businesses.Queries
             {
                 BusinessLocationQueueFilter.Primary => baseQuery.Where(x => x.IsPrimary),
                 BusinessLocationQueueFilter.MissingAddress => baseQuery.Where(x =>
-                    string.IsNullOrWhiteSpace(x.AddressLine1) ||
-                    string.IsNullOrWhiteSpace(x.City) ||
-                    string.IsNullOrWhiteSpace(x.CountryCode)),
+                    x.AddressLine1 == null ||
+                    x.AddressLine1.Trim() == string.Empty ||
+                    x.City == null ||
+                    x.City.Trim() == string.Empty ||
+                    x.CountryCode == null ||
+                    x.CountryCode.Trim() == string.Empty),
                 BusinessLocationQueueFilter.MissingCoordinates => baseQuery.Where(x => x.Coordinate == null),
                 _ => baseQuery
             };
@@ -69,9 +72,12 @@ namespace Darwin.Application.Businesses.Queries
                     CountryCode = x.CountryCode,
                     IsPrimary = x.IsPrimary,
                     HasAddress =
-                        !string.IsNullOrWhiteSpace(x.AddressLine1) &&
-                        !string.IsNullOrWhiteSpace(x.City) &&
-                        !string.IsNullOrWhiteSpace(x.CountryCode),
+                        x.AddressLine1 != null &&
+                        x.AddressLine1.Trim() != string.Empty &&
+                        x.City != null &&
+                        x.City.Trim() != string.Empty &&
+                        x.CountryCode != null &&
+                        x.CountryCode.Trim() != string.Empty,
                     HasCoordinates = x.Coordinate != null,
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
@@ -87,16 +93,30 @@ namespace Darwin.Application.Businesses.Queries
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
+            var summary = await baseQuery
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    TotalCount = g.Count(),
+                    PrimaryCount = g.Count(x => x.IsPrimary),
+                    MissingAddressCount = g.Count(x =>
+                        x.AddressLine1 == null ||
+                        x.AddressLine1.Trim() == string.Empty ||
+                        x.City == null ||
+                        x.City.Trim() == string.Empty ||
+                        x.CountryCode == null ||
+                        x.CountryCode.Trim() == string.Empty),
+                    MissingCoordinatesCount = g.Count(x => x.Coordinate == null)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false);
+
             return new BusinessLocationOpsSummaryDto
             {
-                TotalCount = await baseQuery.CountAsync(ct).ConfigureAwait(false),
-                PrimaryCount = await baseQuery.CountAsync(x => x.IsPrimary, ct).ConfigureAwait(false),
-                MissingAddressCount = await baseQuery.CountAsync(
-                    x => string.IsNullOrWhiteSpace(x.AddressLine1) ||
-                         string.IsNullOrWhiteSpace(x.City) ||
-                         string.IsNullOrWhiteSpace(x.CountryCode),
-                    ct).ConfigureAwait(false),
-                MissingCoordinatesCount = await baseQuery.CountAsync(x => x.Coordinate == null, ct).ConfigureAwait(false)
+                TotalCount = summary?.TotalCount ?? 0,
+                PrimaryCount = summary?.PrimaryCount ?? 0,
+                MissingAddressCount = summary?.MissingAddressCount ?? 0,
+                MissingCoordinatesCount = summary?.MissingCoordinatesCount ?? 0
             };
         }
     }

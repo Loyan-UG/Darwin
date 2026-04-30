@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Domain.Entities.CMS;
@@ -19,10 +20,12 @@ namespace Darwin.Application.CMS.Queries
     public sealed class GetPagesPageHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetPagesPageHandler(IAppDbContext db)
+        public GetPagesPageHandler(IAppDbContext db, IClock clock)
         {
             _db = db;
+            _clock = clock;
         }
 
         public async Task<(IReadOnlyList<PageListItemDto> Items, int Total)> HandleAsync(
@@ -46,7 +49,7 @@ namespace Darwin.Application.CMS.Queries
             pageSize = pageSize < 1 ? 20 : pageSize;
             query = string.IsNullOrWhiteSpace(query) ? null : QueryLikePattern.Contains(query);
             filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim().ToLowerInvariant();
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
 
             var q = _db.Set<Page>()
                 .AsNoTracking()
@@ -99,15 +102,17 @@ namespace Darwin.Application.CMS.Queries
     public sealed class GetPageOpsSummaryHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetPageOpsSummaryHandler(IAppDbContext db)
+        public GetPageOpsSummaryHandler(IAppDbContext db, IClock clock)
         {
             _db = db;
+            _clock = clock;
         }
 
         public async Task<PageOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var pages = _db.Set<Page>().AsNoTracking().Where(p => !p.IsDeleted);
 
             return new PageOpsSummaryDto

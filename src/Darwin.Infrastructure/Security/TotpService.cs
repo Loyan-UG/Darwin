@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Services;
 
 namespace Darwin.Infrastructure.Security
 {
@@ -13,6 +14,13 @@ namespace Darwin.Infrastructure.Security
     {
         private const int StepSeconds = 30;
         private const int Digits = 6;
+        private const int MaxWindow = 5;
+        private readonly IClock _clock;
+
+        public TotpService(IClock clock)
+        {
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         /// <summary>
         ///     Verifies a user-supplied TOTP code against a Base32-encoded secret.
@@ -26,10 +34,12 @@ namespace Darwin.Infrastructure.Security
         {
             if (string.IsNullOrWhiteSpace(base32Secret) || string.IsNullOrWhiteSpace(code))
                 return false;
-            if (!int.TryParse(code, out var codeInt)) return false;
+            var normalizedCode = code.Trim();
+            if (normalizedCode.Length != Digits || !int.TryParse(normalizedCode, out var codeInt)) return false;
 
-            var utc = DateTime.UtcNow;
-            for (var w = -window; w <= window; w++)
+            var boundedWindow = Math.Clamp(window, 0, MaxWindow);
+            var utc = _clock.UtcNow;
+            for (var w = -boundedWindow; w <= boundedWindow; w++)
             {
                 var computed = ComputeTotp(base32Secret, utc.AddSeconds(w * StepSeconds));
                 if (computed == codeInt) return true;
@@ -44,7 +54,7 @@ namespace Darwin.Infrastructure.Security
         /// <returns>Numeric code rendered as string (zero-padded).</returns>
         public string GenerateCode(string base32Secret)
         {
-            var code = ComputeTotp(base32Secret, DateTime.UtcNow);
+            var code = ComputeTotp(base32Secret, _clock.UtcNow);
             return code.ToString(new string('0', Digits));
         }
 

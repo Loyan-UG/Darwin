@@ -99,12 +99,11 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
                 var statusCode = (int)response.StatusCode;
                 var responseBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
                 _logger.LogWarning(
-                    "Inactive reminder gateway rejected dispatch. Attempt={Attempt}/{MaxAttempts}, StatusCode={StatusCode}, UserId={UserId}, Body={Body}",
+                    "Inactive reminder gateway rejected dispatch. Attempt={Attempt}/{MaxAttempts}, StatusCode={StatusCode}, UserId={UserId}",
                     attempt,
                     maxAttempts,
                     statusCode,
-                    userId,
-                    TruncateForLog(responseBody));
+                    userId);
 
                 var providerFailureCode = MapProviderFailureCodeFromBody(responseBody);
                 if (!string.IsNullOrWhiteSpace(providerFailureCode))
@@ -469,19 +468,6 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
             >= 500 and <= 599 => "Gateway.ServerError",
             _ => $"Gateway.Http{statusCode}"
         };
-    }
-
-    /// <summary>
-    /// Truncates long response bodies in logs to avoid oversized log entries.
-    /// </summary>
-    private static string TruncateForLog(string? body)
-    {
-        if (string.IsNullOrWhiteSpace(body))
-        {
-            return string.Empty;
-        }
-
-        return body.Length <= 300 ? body : body[..300];
     }
 
     /// <summary>

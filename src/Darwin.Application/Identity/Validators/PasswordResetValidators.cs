@@ -8,7 +8,7 @@ namespace Darwin.Application.Identity.Validators
     {
         public RequestPasswordResetValidator()
         {
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
         }
     }
 
@@ -19,7 +19,7 @@ namespace Darwin.Application.Identity.Validators
     {
         public RequestEmailConfirmationValidator()
         {
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
         }
     }
 
@@ -30,8 +30,8 @@ namespace Darwin.Application.Identity.Validators
     {
         public ConfirmEmailValidator()
         {
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
-            RuleFor(x => x.Token).NotEmpty();
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
+            RuleFor(x => x.Token).NotEmpty().MaximumLength(256);
         }
     }
 
@@ -39,8 +39,8 @@ namespace Darwin.Application.Identity.Validators
     {
         public ResetPasswordValidator(IStringLocalizer<ValidationResource> localizer)
         {
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
-            RuleFor(x => x.Token).NotEmpty();
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
+            RuleFor(x => x.Token).NotEmpty().MaximumLength(256);
             RuleFor(x => x.NewPassword).ApplyPasswordPolicy(localizer);
         }
     }

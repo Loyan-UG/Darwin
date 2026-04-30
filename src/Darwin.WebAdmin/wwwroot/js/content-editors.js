@@ -84,8 +84,11 @@
                         formData.append('file', file);
 
                         try {
+                            const token = root.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                            const headers = token ? { RequestVerificationToken: token } : {};
                             const resp = await fetch(uploadUrl, {
                                 method: 'POST',
+                                headers,
                                 body: formData
                             });
 

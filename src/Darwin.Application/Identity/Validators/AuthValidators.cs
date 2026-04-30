@@ -8,8 +8,8 @@ namespace Darwin.Application.Identity.Validators
     {
         public SignInValidator()
         {
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
-            RuleFor(x => x.Password).NotEmpty();
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
+            RuleFor(x => x.Password).NotEmpty().MaximumLength(256);
             RuleFor(x => x.AntiBotToken).MaximumLength(2048);
             RuleFor(x => x.AntiBotHoneypot).MaximumLength(256);
             RuleFor(x => x.ClientIpAddress).MaximumLength(64);
@@ -21,7 +21,7 @@ namespace Darwin.Application.Identity.Validators
     {
         public PasswordResetRequestValidator()
         {
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
         }
     }
 
@@ -29,8 +29,8 @@ namespace Darwin.Application.Identity.Validators
     {
         public PasswordResetConfirmValidator(IStringLocalizer<ValidationResource> localizer)
         {
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
-            RuleFor(x => x.Token).NotEmpty();
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
+            RuleFor(x => x.Token).NotEmpty().MaximumLength(256);
             RuleFor(x => x.NewPassword).ApplyPasswordPolicy(localizer);
         }
     }
@@ -39,8 +39,9 @@ namespace Darwin.Application.Identity.Validators
     {
         public PasswordLoginRequestValidator()
         {
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
-            RuleFor(x => x.PasswordPlain).NotEmpty().MinimumLength(6);
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
+            RuleFor(x => x.PasswordPlain).NotEmpty().MinimumLength(6).MaximumLength(256);
+            RuleFor(x => x.DeviceId).MaximumLength(128);
         }
     }
 
@@ -48,7 +49,8 @@ namespace Darwin.Application.Identity.Validators
     {
         public RefreshRequestValidator()
         {
-            RuleFor(x => x.RefreshToken).NotEmpty();
+            RuleFor(x => x.RefreshToken).NotEmpty().MaximumLength(512);
+            RuleFor(x => x.DeviceId).MaximumLength(128);
         }
     }
 
@@ -58,6 +60,8 @@ namespace Darwin.Application.Identity.Validators
         {
             RuleFor(x => x).Must(x => x.UserId.HasValue || !string.IsNullOrWhiteSpace(x.RefreshToken))
                            .WithMessage(localizer["EitherUserIdOrRefreshTokenRequired"]);
+            RuleFor(x => x.RefreshToken).MaximumLength(512);
+            RuleFor(x => x.DeviceId).MaximumLength(128);
         }
     }
 }

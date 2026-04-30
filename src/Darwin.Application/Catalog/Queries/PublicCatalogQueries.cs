@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.CMS;
@@ -76,11 +77,16 @@ public sealed class GetPublishedProductsPageHandler
     private const int MaxPageSize = 200;
 
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetPublishedProductsPageHandler"/> class.
     /// </summary>
-    public GetPublishedProductsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+    public GetPublishedProductsPageHandler(IAppDbContext db, IClock clock)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
 
     /// <summary>
     /// Returns a page of published products for the requested culture and optional category slug.
@@ -100,7 +106,7 @@ public sealed class GetPublishedProductsPageHandler
         var defaultCulture = SiteSettingDto.DefaultCultureDefault;
         categorySlug = string.IsNullOrWhiteSpace(categorySlug) ? null : categorySlug.Trim();
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var baseQuery = _db.Set<Product>()
             .AsNoTracking()
             .Where(x =>
@@ -166,11 +172,16 @@ public sealed class GetPublishedProductsPageHandler
 public sealed class GetPublishedProductBySlugHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetPublishedProductBySlugHandler"/> class.
     /// </summary>
-    public GetPublishedProductBySlugHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+    public GetPublishedProductBySlugHandler(IAppDbContext db, IClock clock)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
 
     /// <summary>
     /// Returns a published product detail for the requested localized slug.
@@ -185,7 +196,7 @@ public sealed class GetPublishedProductBySlugHandler
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var defaultCulture = SiteSettingDto.DefaultCultureDefault;
         var normalizedSlug = slug.Trim();
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
 
         return await _db.Set<Product>()
             .AsNoTracking()

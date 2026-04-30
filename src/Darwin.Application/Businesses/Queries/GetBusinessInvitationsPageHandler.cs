@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
@@ -22,8 +23,13 @@ namespace Darwin.Application.Businesses.Queries
         private const int MaxPageSize = 200;
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetBusinessInvitationsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetBusinessInvitationsPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(List<BusinessInvitationListItemDto> Items, int Total)> HandleAsync(
             Guid businessId,
@@ -37,7 +43,7 @@ namespace Darwin.Application.Businesses.Queries
             if (pageSize < 1) pageSize = 20;
             if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            var utcNow = DateTime.UtcNow;
+            var utcNow = _clock.UtcNow;
 
             var baseQuery =
                 from invitation in _db.Set<BusinessInvitation>().AsNoTracking()

@@ -1,8 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Text;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Security;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
@@ -25,6 +28,7 @@ namespace Darwin.Application.Identity.Auth.Commands
         private readonly IStringLocalizer<ValidationResource> _localizer;
         private readonly IAuthAntiBotVerifier _antiBot;
         private readonly ILoginRateLimiter _limiter;
+        private readonly IClock _clock;
 
         public SignInHandler(
             IAppDbContext db,
@@ -32,7 +36,8 @@ namespace Darwin.Application.Identity.Auth.Commands
             IValidator<SignInDto> validator,
             IStringLocalizer<ValidationResource> localizer,
             IAuthAntiBotVerifier antiBot,
-            ILoginRateLimiter limiter)
+            ILoginRateLimiter limiter,
+            IClock clock)
         {
             _db = db;
             _hasher = hasher;
@@ -40,6 +45,7 @@ namespace Darwin.Application.Identity.Auth.Commands
             _localizer = localizer;
             _antiBot = antiBot;
             _limiter = limiter;
+            _clock = clock;
         }
 
         public async Task<SignInResultDto> HandleAsync(SignInDto dto, CancellationToken ct = default)
@@ -76,6 +82,12 @@ namespace Darwin.Application.Identity.Auth.Commands
                 return new SignInResultDto { Succeeded = false, FailureReason = _localizer["InvalidCredentials"] };
             }
 
+            if (user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > _clock.UtcNow)
+            {
+                await _limiter.RecordAsync(rateKey, ct).ConfigureAwait(false);
+                return new SignInResultDto { Succeeded = false, FailureReason = _localizer["AccountLocked"] };
+            }
+
             if (!_hasher.Verify(user.PasswordHash, dto.Password))
             {
                 await _limiter.RecordAsync(rateKey, ct).ConfigureAwait(false);
@@ -105,7 +117,8 @@ namespace Darwin.Application.Identity.Auth.Commands
         private static string BuildRateKey(string? ipAddress, string normalizedEmail)
         {
             var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress.Trim();
-            return $"webadmin-login:{ip}:{normalizedEmail}";
+            var emailHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(normalizedEmail)));
+            return $"webadmin-login:{ip}:{emailHash}";
         }
     }
 }

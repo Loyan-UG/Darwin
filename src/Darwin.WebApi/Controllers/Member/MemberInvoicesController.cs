@@ -173,9 +173,9 @@ public sealed class MemberInvoicesController : ApiControllerBase
                 ExpiresAtUtc = result.ExpiresAtUtc
             });
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            return BadRequestProblem(_validationLocalizer["PaymentIntentCreationFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["PaymentIntentCreationFailed"]);
         }
     }
 

@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Common;
+using Darwin.Infrastructure.Adapters.Time;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Infrastructure.Persistence.Db
@@ -14,13 +16,16 @@ namespace Darwin.Infrastructure.Persistence.Db
     /// </summary>
     public sealed partial class DarwinDbContext
     {
+        private static readonly IClock FallbackClock = new SystemClock();
         private readonly ICurrentUserService? _currentUser;
+        private readonly IClock? _clock;
 
         // This ctor is used by DI when ICurrentUserService is available (web runtime).
-        public DarwinDbContext(DbContextOptions<DarwinDbContext> options, ICurrentUserService currentUser)
+        public DarwinDbContext(DbContextOptions<DarwinDbContext> options, ICurrentUserService currentUser, IClock clock)
             : this(options) // call base part ctor
         {
             _currentUser = currentUser;
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         public override int SaveChanges()
@@ -40,7 +45,7 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// </summary>
         private void ApplyAudit()
         {
-            var now = DateTime.UtcNow;
+            var now = (_clock ?? FallbackClock).UtcNow;
             var usesClientManagedRowVersion =
                 Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
 

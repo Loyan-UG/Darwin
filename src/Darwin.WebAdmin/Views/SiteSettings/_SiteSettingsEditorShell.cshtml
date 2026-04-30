@@ -751,13 +751,13 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 <div class="col-md-6 mb-3">
                     <label asp-for="JwtSigningKey" class="form-label"></label>
                     <field-help title="@T.T("SiteSettingsSigningKeyTitle")" content="@T.T("SiteSettingsSigningKeyHelp")" placement="right"></field-help>
-                    <input asp-for="JwtSigningKey" class="form-control" autocomplete="new-password" />
+                    <input asp-for="JwtSigningKey" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="JwtSigningKey" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="JwtPreviousSigningKey" class="form-label"></label>
                     <field-help title="@T.T("SiteSettingsPreviousSigningKeyTitle")" content="@T.T("SiteSettingsPreviousSigningKeyHelp")" placement="right"></field-help>
-                    <input asp-for="JwtPreviousSigningKey" class="form-control" autocomplete="new-password" />
+                    <input asp-for="JwtPreviousSigningKey" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="JwtPreviousSigningKey" class="text-danger"></span>
                 </div>
             </div>
@@ -892,12 +892,12 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 </div>
                 <div class="col-md-6">
                     <label asp-for="StripeSecretKey" class="form-label"></label>
-                    <input asp-for="StripeSecretKey" class="form-control" autocomplete="new-password" />
+                    <input asp-for="StripeSecretKey" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="StripeSecretKey" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="StripeWebhookSecret" class="form-label"></label>
-                    <input asp-for="StripeWebhookSecret" class="form-control" autocomplete="new-password" />
+                    <input asp-for="StripeWebhookSecret" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="StripeWebhookSecret" class="text-danger"></span>
                 </div>
             </div>
@@ -1115,12 +1115,12 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 </div>
                 <div class="col-md-4">
                     <label asp-for="DhlApiKey" class="form-label"></label>
-                    <input asp-for="DhlApiKey" class="form-control" autocomplete="off" />
+                    <input asp-for="DhlApiKey" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="DhlApiKey" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="DhlApiSecret" class="form-label"></label>
-                    <input asp-for="DhlApiSecret" class="form-control" autocomplete="new-password" />
+                    <input asp-for="DhlApiSecret" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="DhlApiSecret" class="text-danger"></span>
                 </div>
             </div>
@@ -1309,7 +1309,7 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="WhatsAppAccessToken" class="form-label"></label>
-                    <input asp-for="WhatsAppAccessToken" class="form-control" />
+                    <input asp-for="WhatsAppAccessToken" class="form-control" type="password" autocomplete="new-password" />
                 </div>
             </div>
 
@@ -1421,7 +1421,7 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmsApiKey" class="form-label"></label>
-                    <input asp-for="SmsApiKey" class="form-control" />
+                    <input asp-for="SmsApiKey" class="form-control" type="password" autocomplete="new-password" />
                 </div>
             </div>
 

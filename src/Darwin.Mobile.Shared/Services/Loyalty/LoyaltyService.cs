@@ -1,6 +1,7 @@
 ﻿using Darwin.Contracts.Billing;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Models.Loyalty;
 using Darwin.Shared.Results;
 using System;
@@ -27,10 +28,12 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
     public sealed class LoyaltyService : ILoyaltyService
     {
         private readonly IApiClient _apiClient;
+        private readonly TimeProvider _timeProvider;
 
-        public LoyaltyService(IApiClient apiClient)
+        public LoyaltyService(IApiClient apiClient, TimeProvider timeProvider)
         {
             _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+            _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         }
 
         /// <inheritdoc />
@@ -90,10 +93,10 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                 // Propagate cancellation to caller so callers can respect timeout/token semantics.
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Any other error is treated as a network/transport/parsing failure from the client's perspective.
-                return Result<ScanSessionClientModel>.Fail($"Network error while preparing scan session: {ex.Message}");
+                return Result<ScanSessionClientModel>.Fail(MobileErrorMessages.NetworkFailure("preparing scan session"));
             }
         }
 
@@ -122,9 +125,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<LoyaltyAccountSummary>.Fail($"Network error while retrieving account summary: {ex.Message}");
+                return Result<LoyaltyAccountSummary>.Fail(MobileErrorMessages.NetworkFailure("retrieving account summary"));
             }
         }
 
@@ -155,9 +158,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail($"Network error while retrieving rewards: {ex.Message}");
+                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail(MobileErrorMessages.NetworkFailure("retrieving rewards"));
             }
         }
 
@@ -211,9 +214,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<BusinessScanSessionClientModel>.Fail($"Network error while processing scan: {ex.Message}");
+                return Result<BusinessScanSessionClientModel>.Fail(MobileErrorMessages.NetworkFailure("processing scan"));
             }
         }
 
@@ -273,16 +276,16 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                     BusinessId = Guid.Empty,
                     BusinessName = string.Empty,
                     PointsBalance = payload.NewBalance ?? 0,
-                    LastAccrualAtUtc = DateTime.UtcNow
+                    LastAccrualAtUtc = _timeProvider.GetUtcNow().UtcDateTime
                 });
             }
             catch (OperationCanceledException)
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<LoyaltyAccountSummary>.Fail($"Network error while confirming accrual: {ex.Message}");
+                return Result<LoyaltyAccountSummary>.Fail(MobileErrorMessages.NetworkFailure("confirming accrual"));
             }
         }
 
@@ -323,16 +326,16 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                     BusinessId = Guid.Empty,
                     BusinessName = string.Empty,
                     PointsBalance = payload.NewBalance ?? 0,
-                    LastAccrualAtUtc = DateTime.UtcNow
+                    LastAccrualAtUtc = _timeProvider.GetUtcNow().UtcDateTime
                 });
             }
             catch (OperationCanceledException)
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<LoyaltyAccountSummary>.Fail($"Network error while confirming redemption: {ex.Message}");
+                return Result<LoyaltyAccountSummary>.Fail(MobileErrorMessages.NetworkFailure("confirming redemption"));
             }
         }
 
@@ -354,9 +357,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<IReadOnlyList<LoyaltyAccountSummary>>.Fail($"Network error while retrieving accounts: {ex.Message}");
+                return Result<IReadOnlyList<LoyaltyAccountSummary>>.Fail(MobileErrorMessages.NetworkFailure("retrieving accounts"));
             }
         }
 
@@ -378,9 +381,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<MyLoyaltyOverviewResponse>.Fail($"Network error while retrieving loyalty overview: {ex.Message}");
+                return Result<MyLoyaltyOverviewResponse>.Fail(MobileErrorMessages.NetworkFailure("retrieving loyalty overview"));
             }
         }
 
@@ -405,9 +408,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<IReadOnlyList<PointsTransaction>>.Fail($"Network error while retrieving history: {ex.Message}");
+                return Result<IReadOnlyList<PointsTransaction>>.Fail(MobileErrorMessages.NetworkFailure("retrieving history"));
             }
         }
 
@@ -432,9 +435,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<MyLoyaltyBusinessDashboard>.Fail($"Network error while retrieving loyalty dashboard: {ex.Message}");
+                return Result<MyLoyaltyBusinessDashboard>.Fail(MobileErrorMessages.NetworkFailure("retrieving loyalty dashboard"));
             }
         }
 
@@ -463,9 +466,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail($"Network error while retrieving my businesses: {ex.Message}");
+                return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail(MobileErrorMessages.NetworkFailure("retrieving my businesses"));
             }
         }
 
@@ -492,9 +495,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<GetMyLoyaltyTimelinePageResponse>.Fail($"Network error while retrieving timeline: {ex.Message}");
+                return Result<GetMyLoyaltyTimelinePageResponse>.Fail(MobileErrorMessages.NetworkFailure("retrieving timeline"));
             }
         }
 
@@ -525,9 +528,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<LoyaltyAccountSummary>.Fail($"Network error while joining loyalty: {ex.Message}");
+                return Result<LoyaltyAccountSummary>.Fail(MobileErrorMessages.NetworkFailure("joining loyalty"));
             }
         }
 
@@ -556,9 +559,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<LoyaltyRewardSummary?>.Fail($"Network error while retrieving next reward: {ex.Message}");
+                return Result<LoyaltyRewardSummary?>.Fail(MobileErrorMessages.NetworkFailure("retrieving next reward"));
             }
         }
 
@@ -599,9 +602,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<MyPromotionsResponse>.Fail($"Network error while retrieving promotions: {ex.Message}");
+                return Result<MyPromotionsResponse>.Fail(MobileErrorMessages.NetworkFailure("retrieving promotions"));
             }
         }
 
@@ -626,9 +629,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<BusinessRewardConfigurationResponse>.Fail($"Network error while retrieving business reward configuration: {ex.Message}");
+                return Result<BusinessRewardConfigurationResponse>.Fail(MobileErrorMessages.NetworkFailure("retrieving business reward configuration"));
             }
         }
 
@@ -663,9 +666,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result.Fail($"Network error while tracking promotion interaction: {ex.Message}");
+                return Result.Fail(MobileErrorMessages.NetworkFailure("tracking promotion interaction"));
             }
         }
 
@@ -696,9 +699,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<BusinessRewardTierMutationResponse>.Fail($"Network error while creating reward tier: {ex.Message}");
+                return Result<BusinessRewardTierMutationResponse>.Fail(MobileErrorMessages.NetworkFailure("creating reward tier"));
             }
         }
 
@@ -730,9 +733,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<BusinessRewardTierMutationResponse>.Fail($"Network error while updating reward tier: {ex.Message}");
+                return Result<BusinessRewardTierMutationResponse>.Fail(MobileErrorMessages.NetworkFailure("updating reward tier"));
             }
         }
 
@@ -764,9 +767,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<BusinessRewardTierMutationResponse>.Fail($"Network error while deleting reward tier: {ex.Message}");
+                return Result<BusinessRewardTierMutationResponse>.Fail(MobileErrorMessages.NetworkFailure("deleting reward tier"));
             }
         }
 
@@ -794,9 +797,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<GetBusinessCampaignsResponse>.Fail($"Network error while retrieving business campaigns: {ex.Message}");
+                return Result<GetBusinessCampaignsResponse>.Fail(MobileErrorMessages.NetworkFailure("retrieving business campaigns"));
             }
         }
 
@@ -828,9 +831,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<BusinessCampaignMutationResponse>.Fail($"Network error while creating business campaign: {ex.Message}");
+                return Result<BusinessCampaignMutationResponse>.Fail(MobileErrorMessages.NetworkFailure("creating business campaign"));
             }
         }
 
@@ -857,9 +860,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result.Fail($"Network error while updating business campaign: {ex.Message}");
+                return Result.Fail(MobileErrorMessages.NetworkFailure("updating business campaign"));
             }
         }
 
@@ -886,9 +889,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result.Fail($"Network error while setting campaign activation: {ex.Message}");
+                return Result.Fail(MobileErrorMessages.NetworkFailure("setting campaign activation"));
             }
         }
 
@@ -913,9 +916,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<BusinessSubscriptionStatusResponse>.Fail($"Network error while loading subscription status: {ex.Message}");
+                return Result<BusinessSubscriptionStatusResponse>.Fail(MobileErrorMessages.NetworkFailure("loading subscription status"));
             }
         }
 
@@ -952,9 +955,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<SetCancelAtPeriodEndResponse>.Fail($"Network error while updating cancellation preference: {ex.Message}");
+                return Result<SetCancelAtPeriodEndResponse>.Fail(MobileErrorMessages.NetworkFailure("updating cancellation preference"));
             }
         }
 
@@ -980,9 +983,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<GetBillingPlansResponse>.Fail($"Network error while retrieving billing plans: {ex.Message}");
+                return Result<GetBillingPlansResponse>.Fail(MobileErrorMessages.NetworkFailure("retrieving billing plans"));
             }
         }
 
@@ -1019,9 +1022,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<CreateSubscriptionCheckoutIntentResponse>.Fail($"Network error while creating checkout intent: {ex.Message}");
+                return Result<CreateSubscriptionCheckoutIntentResponse>.Fail(MobileErrorMessages.NetworkFailure("creating checkout intent"));
             }
         }
     }

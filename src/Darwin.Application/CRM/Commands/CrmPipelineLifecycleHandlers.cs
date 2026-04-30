@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Enums;
@@ -103,13 +104,16 @@ namespace Darwin.Application.CRM.Commands
     public sealed class UpdateOpportunityLifecycleHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public UpdateOpportunityLifecycleHandler(
             IAppDbContext db,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -141,7 +145,7 @@ namespace Darwin.Application.CRM.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            var todayUtc = DateTime.UtcNow.Date;
+            var todayUtc = _clock.UtcNow.Date;
             if (!TryApplyAction(opportunity, dto.Action, todayUtc))
             {
                 return Result.Fail(_localizer["OpportunityLifecycleUnsupportedAction"]);

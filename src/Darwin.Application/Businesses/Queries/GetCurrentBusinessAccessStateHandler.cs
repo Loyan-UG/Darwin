@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
@@ -13,13 +14,15 @@ namespace Darwin.Application.Businesses.Queries;
 public sealed class GetCurrentBusinessAccessStateHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetCurrentBusinessAccessStateHandler"/> class.
     /// </summary>
-    public GetCurrentBusinessAccessStateHandler(IAppDbContext db)
+    public GetCurrentBusinessAccessStateHandler(IAppDbContext db, IClock clock)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     /// <summary>
@@ -27,7 +30,7 @@ public sealed class GetCurrentBusinessAccessStateHandler
     /// </summary>
     public Task<BusinessAccessStateDto?> HandleAsync(Guid businessId, Guid userId, CancellationToken ct = default)
     {
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         return _db.Set<Business>()
             .AsNoTracking()
             .Where(x => x.Id == businessId && !x.IsDeleted)

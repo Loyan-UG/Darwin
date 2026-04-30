@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
@@ -15,14 +16,16 @@ namespace Darwin.Application.Orders.Commands;
 public sealed class CreateStorefrontPaymentIntentHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateStorefrontPaymentIntentHandler"/> class.
     /// </summary>
-    public CreateStorefrontPaymentIntentHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+    public CreateStorefrontPaymentIntentHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
@@ -105,7 +108,7 @@ public sealed class CreateStorefrontPaymentIntentHandler
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
         }
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         return new StorefrontPaymentIntentResultDto
         {
             OrderId = order.Id,
@@ -142,14 +145,16 @@ public sealed class CreateStorefrontPaymentIntentHandler
 public sealed class CompleteStorefrontPaymentHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompleteStorefrontPaymentHandler"/> class.
     /// </summary>
-    public CompleteStorefrontPaymentHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+    public CompleteStorefrontPaymentHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
@@ -159,7 +164,7 @@ public sealed class CompleteStorefrontPaymentHandler
     public async Task<CompleteStorefrontPaymentResultDto> HandleAsync(CompleteStorefrontPaymentDto dto, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(dto);
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         if (dto.OrderId == Guid.Empty || dto.PaymentId == Guid.Empty)
         {
             throw new InvalidOperationException(_localizer["OrderIdAndPaymentIdAreRequired"]);

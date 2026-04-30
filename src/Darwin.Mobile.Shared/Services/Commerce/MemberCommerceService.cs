@@ -5,6 +5,7 @@ using Darwin.Contracts.Common;
 using Darwin.Contracts.Invoices;
 using Darwin.Contracts.Orders;
 using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Common;
 using Darwin.Shared.Results;
 
 namespace Darwin.Mobile.Shared.Services.Commerce
@@ -164,9 +165,9 @@ namespace Darwin.Mobile.Shared.Services.Commerce
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<TResponse>.Fail($"Network error while retrieving {operation}: {ex.Message}");
+                return Result<TResponse>.Fail(MobileErrorMessages.NetworkFailure($"retrieving {operation}"));
             }
         }
 
@@ -190,9 +191,9 @@ namespace Darwin.Mobile.Shared.Services.Commerce
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<TResponse>.Fail($"Network error while creating {operation}: {ex.Message}");
+                return Result<TResponse>.Fail(MobileErrorMessages.NetworkFailure($"creating {operation}"));
             }
         }
 
@@ -212,9 +213,9 @@ namespace Darwin.Mobile.Shared.Services.Commerce
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<string>.Fail($"Network error while retrieving {operation}: {ex.Message}");
+                return Result<string>.Fail(MobileErrorMessages.NetworkFailure($"retrieving {operation}"));
             }
         }
     }

@@ -23,7 +23,9 @@ namespace Darwin.WebApi.Middleware
         /// </summary>
         /// <param name="next">The next request delegate in the pipeline.</param>
         /// <param name="logger">Logger to record middleware events and failures.</param>
-        public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
+        public ErrorHandlingMiddleware(
+            RequestDelegate next,
+            ILogger<ErrorHandlingMiddleware> logger)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -75,12 +77,11 @@ namespace Darwin.WebApi.Middleware
             var title = status == (int)HttpStatusCode.Unauthorized
                 ? "Unauthorized"
                 : "API Error";
-
             var problem = new ProblemDetails
             {
                 Status = status,
                 Title = title,
-                Detail = ex.Message,
+                Detail = "An unexpected error occurred while processing the request.",
                 Instance = context.Request?.Path.Value
             };
 

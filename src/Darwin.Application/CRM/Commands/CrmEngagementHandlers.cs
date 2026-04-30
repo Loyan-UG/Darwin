@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
@@ -95,18 +96,20 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<ConsentCreateDto> _validator;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateConsentHandler(IAppDbContext db, IValidator<ConsentCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
+        public CreateConsentHandler(IAppDbContext db, IValidator<ConsentCreateDto> validator, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Guid> HandleAsync(ConsentCreateDto dto, CancellationToken ct = default)
         {
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             if (dto.GrantedAtUtc == default)
             {
                 dto.GrantedAtUtc = nowUtc;

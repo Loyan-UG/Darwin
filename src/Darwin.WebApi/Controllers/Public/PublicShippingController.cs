@@ -4,7 +4,9 @@ using Darwin.Application.Shipping.Queries;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Shipping;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
@@ -14,9 +16,15 @@ namespace Darwin.WebApi.Controllers.Public;
 /// </summary>
 [ApiController]
 [AllowAnonymous]
+[EnableRateLimiting("public-storefront")]
+[RequestTimeout("public-storefront")]
 [Route("api/v1/public/shipping")]
 public sealed class PublicShippingController : ApiControllerBase
 {
+    private const int MaxShippingRateRequestBytes = 8 * 1024;
+    private const int CountryCodeLength = 2;
+    private const int CurrencyCodeLength = 3;
+
     private readonly RateShipmentHandler _rateShipmentHandler;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
@@ -34,6 +42,7 @@ public sealed class PublicShippingController : ApiControllerBase
     /// </summary>
     [HttpPost("rates")]
     [HttpPost("/api/v1/shipping/rates")]
+    [RequestSizeLimit(MaxShippingRateRequestBytes)]
     [ProducesResponseType(typeof(IReadOnlyList<PublicShippingOption>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetRatesAsync([FromBody] PublicShippingRateRequest? request, CancellationToken ct = default)
@@ -43,25 +52,35 @@ public sealed class PublicShippingController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
         }
 
+        var normalizedCountry = (request.Country ?? string.Empty).Trim();
+        if (normalizedCountry.Length != CountryCodeLength)
+        {
+            return BadRequestProblem(_validationLocalizer["ShippingRateCountryCodeInvalid"]);
+        }
+
+        var normalizedCurrency = string.IsNullOrWhiteSpace(request.Currency)
+            ? SiteSettingDto.DefaultCurrencyDefault
+            : request.Currency.Trim();
+        if (normalizedCurrency.Length != CurrencyCodeLength)
+        {
+            return BadRequestProblem(_validationLocalizer["ShippingRateCurrencyCodeInvalid"]);
+        }
+
         try
         {
-            var normalizedCountry = (request.Country ?? string.Empty).Trim().ToUpperInvariant();
-            var normalizedCurrency = string.IsNullOrWhiteSpace(request.Currency)
-                ? SiteSettingDto.DefaultCurrencyDefault
-                : request.Currency.Trim().ToUpperInvariant();
             var items = await _rateShipmentHandler.HandleAsync(new RateShipmentInputDto
             {
-                Country = normalizedCountry,
+                Country = normalizedCountry.ToUpperInvariant(),
                 SubtotalNetMinor = request.SubtotalNetMinor,
                 ShipmentMass = request.ShipmentMass,
-                Currency = normalizedCurrency
-            }, normalizedCurrency, ct).ConfigureAwait(false);
+                Currency = normalizedCurrency.ToUpperInvariant()
+            }, normalizedCurrency.ToUpperInvariant(), ct).ConfigureAwait(false);
 
             return Ok(items.Select(MapOption).ToList());
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["ShippingOptionsCouldNotBeCalculated"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["ShippingOptionsCouldNotBeCalculated"]);
         }
     }
 

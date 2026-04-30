@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Application.Common;
@@ -20,8 +21,13 @@ namespace Darwin.Application.Billing.Queries
         private static readonly string DisputeWonMarkerPattern = QueryLikePattern.Contains("[DisputeReview:Won;");
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetPaymentsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetPaymentsPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(List<PaymentListItemDto> Items, int Total)> HandleAsync(
             Guid businessId,
@@ -136,7 +142,7 @@ namespace Darwin.Application.Billing.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             await EnrichPaymentsAsync(items, nowUtc, ct).ConfigureAwait(false);
             return (items, total);
         }
@@ -291,6 +297,7 @@ namespace Darwin.Application.Billing.Queries
                     item.NeedsReconciliation ||
                     item.NeedsDisputeFollowUp ||
                     (!item.OrderId.HasValue && !item.InvoiceId.HasValue);
+                item.FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(item.FailureReason);
             }
         }
     }
@@ -310,70 +317,68 @@ namespace Darwin.Application.Billing.Queries
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
-            var paymentIds = await payments.Select(x => x.Id).ToListAsync(ct).ConfigureAwait(false);
-            var refundedPaymentIds = paymentIds.Count == 0
-                ? new HashSet<Guid>()
-                : (await _db.Set<Refund>()
-                    .AsNoTracking()
-                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId) && !x.IsDeleted)
-                    .Select(x => x.PaymentId)
-                    .Distinct()
-                    .ToListAsync(ct)
-                    .ConfigureAwait(false))
-                .ToHashSet();
-
-            var refundedStatusIds = await payments
-                .Where(x => x.Status == PaymentStatus.Refunded)
-                .Select(x => x.Id)
-                .ToListAsync(ct)
-                .ConfigureAwait(false);
-
-            var refundedIds = refundedStatusIds.ToHashSet();
-            refundedIds.UnionWith(refundedPaymentIds);
-
-            var summary = new PaymentOpsSummaryDto
+            var paymentSummaryRows = payments.Select(x => new
             {
-                PendingCount = await payments.CountAsync(x => x.Status == PaymentStatus.Pending || x.Status == PaymentStatus.Authorized, ct).ConfigureAwait(false),
-                FailedCount = await payments.CountAsync(x => x.Status == PaymentStatus.Failed, ct).ConfigureAwait(false),
-                UnlinkedCount = await payments.CountAsync(x => !x.OrderId.HasValue && !x.InvoiceId.HasValue, ct).ConfigureAwait(false),
-                ProviderLinkedCount = await payments.CountAsync(x =>
-                    (x.ProviderTransactionRef != null && x.ProviderTransactionRef != string.Empty) ||
-                    (x.ProviderPaymentIntentRef != null && x.ProviderPaymentIntentRef != string.Empty) ||
-                    (x.ProviderCheckoutSessionRef != null && x.ProviderCheckoutSessionRef != string.Empty), ct).ConfigureAwait(false),
-                RefundedCount = refundedIds.Count,
-                StripeCount = await payments.CountAsync(x => x.Provider == "Stripe", ct).ConfigureAwait(false),
-                MissingProviderRefCount = await payments.CountAsync(x =>
-                    (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty) &&
-                    (x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty) &&
-                    (x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty), ct).ConfigureAwait(false),
-                FailedStripeCount = await payments.CountAsync(x => x.Provider == "Stripe" && x.Status == PaymentStatus.Failed, ct).ConfigureAwait(false),
-                NeedsReconciliationCount = await payments.CountAsync(x =>
-                    x.Status == PaymentStatus.Pending ||
-                    x.Status == PaymentStatus.Authorized ||
-                    x.Status == PaymentStatus.Failed ||
-                    (x.Provider == "Stripe" &&
-                     (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty) &&
-                     (x.ProviderPaymentIntentRef == null || x.ProviderPaymentIntentRef == string.Empty) &&
-                     (x.ProviderCheckoutSessionRef == null || x.ProviderCheckoutSessionRef == string.Empty)) ||
-                    _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed), ct).ConfigureAwait(false),
-                DisputeFollowUpCount = await payments.CountAsync(x =>
-                    x.Provider == "Stripe" &&
-                    (x.Status == PaymentStatus.Failed ||
-                     x.Status == PaymentStatus.Refunded ||
-                     _db.Set<Refund>().Any(r => !r.IsDeleted && r.PaymentId == x.Id && r.Status == RefundStatus.Completed)) &&
-                    (x.FailureReason == null ||
-                     (!EF.Functions.Like(x.FailureReason, DisputeWonMarkerPattern, QueryLikePattern.EscapeCharacter) &&
-                      !EF.Functions.Like(x.FailureReason, DisputeLostMarkerPattern, QueryLikePattern.EscapeCharacter))), ct).ConfigureAwait(false)
-            };
-            return summary;
+                Payment = x,
+                HasCompletedRefund = _db.Set<Refund>().Any(r =>
+                    !r.IsDeleted &&
+                    r.PaymentId == x.Id &&
+                    r.Status == RefundStatus.Completed)
+            });
+
+            return await paymentSummaryRows
+                .GroupBy(_ => 1)
+                .Select(group => new PaymentOpsSummaryDto
+                {
+                    PendingCount = group.Count(x => x.Payment.Status == PaymentStatus.Pending || x.Payment.Status == PaymentStatus.Authorized),
+                    FailedCount = group.Count(x => x.Payment.Status == PaymentStatus.Failed),
+                    UnlinkedCount = group.Count(x => !x.Payment.OrderId.HasValue && !x.Payment.InvoiceId.HasValue),
+                    ProviderLinkedCount = group.Count(x =>
+                        (x.Payment.ProviderTransactionRef != null && x.Payment.ProviderTransactionRef != string.Empty) ||
+                        (x.Payment.ProviderPaymentIntentRef != null && x.Payment.ProviderPaymentIntentRef != string.Empty) ||
+                        (x.Payment.ProviderCheckoutSessionRef != null && x.Payment.ProviderCheckoutSessionRef != string.Empty)),
+                    RefundedCount = group.Count(x =>
+                        x.Payment.Status == PaymentStatus.Refunded ||
+                        x.HasCompletedRefund),
+                    StripeCount = group.Count(x => x.Payment.Provider == "Stripe"),
+                    MissingProviderRefCount = group.Count(x =>
+                        (x.Payment.ProviderTransactionRef == null || x.Payment.ProviderTransactionRef == string.Empty) &&
+                        (x.Payment.ProviderPaymentIntentRef == null || x.Payment.ProviderPaymentIntentRef == string.Empty) &&
+                        (x.Payment.ProviderCheckoutSessionRef == null || x.Payment.ProviderCheckoutSessionRef == string.Empty)),
+                    FailedStripeCount = group.Count(x => x.Payment.Provider == "Stripe" && x.Payment.Status == PaymentStatus.Failed),
+                    NeedsReconciliationCount = group.Count(x =>
+                        x.Payment.Status == PaymentStatus.Pending ||
+                        x.Payment.Status == PaymentStatus.Authorized ||
+                        x.Payment.Status == PaymentStatus.Failed ||
+                        (x.Payment.Provider == "Stripe" &&
+                         (x.Payment.ProviderTransactionRef == null || x.Payment.ProviderTransactionRef == string.Empty) &&
+                         (x.Payment.ProviderPaymentIntentRef == null || x.Payment.ProviderPaymentIntentRef == string.Empty) &&
+                         (x.Payment.ProviderCheckoutSessionRef == null || x.Payment.ProviderCheckoutSessionRef == string.Empty)) ||
+                        x.HasCompletedRefund),
+                    DisputeFollowUpCount = group.Count(x =>
+                        x.Payment.Provider == "Stripe" &&
+                        (x.Payment.Status == PaymentStatus.Failed ||
+                         x.Payment.Status == PaymentStatus.Refunded ||
+                         x.HasCompletedRefund) &&
+                        (x.Payment.FailureReason == null ||
+                         (!EF.Functions.Like(x.Payment.FailureReason, DisputeWonMarkerPattern, QueryLikePattern.EscapeCharacter) &&
+                          !EF.Functions.Like(x.Payment.FailureReason, DisputeLostMarkerPattern, QueryLikePattern.EscapeCharacter))))
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new PaymentOpsSummaryDto();
         }
     }
 
     public sealed class GetPaymentForEditHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetPaymentForEditHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetPaymentForEditHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public Task<PaymentEditDto?> HandleAsync(Guid id, CancellationToken ct = default)
         {
@@ -473,7 +478,7 @@ namespace Darwin.Application.Billing.Queries
                 dto.CreatedAtUtc,
                 dto.PaidAtUtc,
                 dto.Refunds.Count == 0 ? null : dto.Refunds.Max(x => x.CompletedAtUtc ?? x.CreatedAtUtc));
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             dto.OpenAgeHours = BillingPaymentTimelineFormatter.CalculateOpenAgeHours(dto.CreatedAtUtc, dto.PaidAtUtc, nowUtc);
             dto.ProviderReferenceState = BillingPaymentTimelineFormatter.ResolveProviderReferenceState(
                 dto.ProviderTransactionRef,
@@ -498,6 +503,7 @@ namespace Darwin.Application.Billing.Queries
                  dto.Status == PaymentStatus.Refunded ||
                  dto.RefundedAmountMinor > 0);
             dto.DisputeReviewState = UpdatePaymentDisputeReviewHandler.ResolveDisputeReviewState(dto.FailureReason);
+            dto.FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(dto.FailureReason);
 
             User? paymentUser = null;
             if (dto.UserId.HasValue)
@@ -613,8 +619,13 @@ namespace Darwin.Application.Billing.Queries
         private const int MaxPageSize = 200;
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetRefundsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetRefundsPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(List<BillingRefundListItemDto> Items, int Total)> HandleAsync(
             Guid businessId,
@@ -701,7 +712,7 @@ namespace Darwin.Application.Billing.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             await EnrichRefundsAsync(items, nowUtc, ct).ConfigureAwait(false);
             return (items, total);
         }
@@ -912,8 +923,13 @@ namespace Darwin.Application.Billing.Queries
         private const int MaxPageSize = 200;
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetExpensesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetExpensesPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(List<ExpenseListItemDto> Items, int Total)> HandleAsync(
             Guid businessId,
@@ -967,7 +983,7 @@ namespace Darwin.Application.Billing.Queries
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
-            var recentCutoffUtc = DateTime.UtcNow.AddDays(-30);
+            var recentCutoffUtc = _clock.UtcNow.AddDays(-30);
             const long highValueThresholdMinor = 100_00L;
 
             return new ExpenseOpsSummaryDto
@@ -1011,8 +1027,13 @@ namespace Darwin.Application.Billing.Queries
         private const int MaxPageSize = 200;
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetJournalEntriesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetJournalEntriesPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(List<JournalEntryListItemDto> Items, int Total)> HandleAsync(
             Guid businessId,
@@ -1032,7 +1053,7 @@ namespace Darwin.Application.Billing.Queries
 
             if (filter.HasValue)
             {
-                var recentCutoffUtc = DateTime.UtcNow.AddDays(-7);
+                var recentCutoffUtc = _clock.UtcNow.AddDays(-7);
                 journalEntriesQuery = filter.Value switch
                 {
                     JournalEntryQueueFilter.Recent => journalEntriesQuery.Where(x => x.EntryDateUtc >= recentCutoffUtc),
@@ -1084,7 +1105,7 @@ namespace Darwin.Application.Billing.Queries
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId && !x.IsDeleted);
 
-            var recentCutoffUtc = DateTime.UtcNow.AddDays(-7);
+            var recentCutoffUtc = _clock.UtcNow.AddDays(-7);
 
             return new JournalEntryOpsSummaryDto
             {

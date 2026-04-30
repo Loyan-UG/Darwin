@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Shared.Results;
@@ -9,14 +10,20 @@ namespace Darwin.Application.Businesses.Commands
 {
     public sealed class UpdateProviderCallbackInboxMessageHandler
     {
+        private const int MaxActionLength = 64;
+        private const int MaxFailureReasonLength = 1024;
+
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public UpdateProviderCallbackInboxMessageHandler(
             IAppDbContext db,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -48,7 +55,7 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            if (!TryApplyAction(message, dto))
+            if (!TryApplyAction(message, dto, _clock.UtcNow))
             {
                 return Result.Fail(_localizer["ProviderCallbackInboxUnsupportedAction"]);
             }
@@ -65,10 +72,9 @@ namespace Darwin.Application.Businesses.Commands
             return Result.Ok();
         }
 
-        private static bool TryApplyAction(ProviderCallbackInboxMessage message, UpdateProviderCallbackInboxMessageDto dto)
+        private static bool TryApplyAction(ProviderCallbackInboxMessage message, UpdateProviderCallbackInboxMessageDto dto, DateTime now)
         {
-            var now = DateTime.UtcNow;
-            switch ((dto.Action ?? string.Empty).Trim().ToUpperInvariant())
+            switch (NormalizeAction(dto.Action))
             {
                 case "MARKPROCESSED":
                     message.Status = "Processed";
@@ -79,9 +85,10 @@ namespace Darwin.Application.Businesses.Commands
                     message.Status = "Failed";
                     message.LastAttemptAtUtc = now;
                     message.ProcessedAtUtc = null;
-                    message.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason)
+                    var failureReason = Truncate(dto.FailureReason?.Trim(), MaxFailureReasonLength);
+                    message.FailureReason = string.IsNullOrWhiteSpace(failureReason)
                         ? "Marked failed by WebAdmin operator."
-                        : dto.FailureReason.Trim();
+                        : failureReason;
                     break;
                 case "REQUEUE":
                     message.Status = "Pending";
@@ -95,6 +102,26 @@ namespace Darwin.Application.Businesses.Commands
             }
 
             return true;
+        }
+
+        private static string NormalizeAction(string? action)
+        {
+            if (string.IsNullOrWhiteSpace(action))
+            {
+                return string.Empty;
+            }
+
+            var trimmed = action.Trim();
+            return trimmed.Length > MaxActionLength
+                ? string.Empty
+                : trimmed.ToUpperInvariant();
+        }
+
+        private static string? Truncate(string? value, int maxLength)
+        {
+            return value is null || value.Length <= maxLength
+                ? value
+                : value[..maxLength];
         }
     }
 }

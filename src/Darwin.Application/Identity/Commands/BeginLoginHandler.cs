@@ -4,9 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -22,13 +24,17 @@ namespace Darwin.Application.Identity.Commands
 
         private readonly IAppDbContext _db;
         private readonly IWebAuthnService _webauthn;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IValidator<WebAuthnBeginLoginDto> _validator;
 
-        public BeginLoginHandler(IAppDbContext db, IWebAuthnService webauthn, IStringLocalizer<ValidationResource> localizer)
+        public BeginLoginHandler(IAppDbContext db, IWebAuthnService webauthn, IClock clock, IStringLocalizer<ValidationResource> localizer, IValidator<WebAuthnBeginLoginDto> validator)
         {
             _db = db;
             _webauthn = webauthn;
+            _clock = clock;
             _localizer = localizer;
+            _validator = validator;
         }
 
         /// <summary>
@@ -39,6 +45,8 @@ namespace Darwin.Application.Identity.Commands
         public async Task<Result<WebAuthnBeginLoginResult>> HandleAsync(
             WebAuthnBeginLoginDto dto, CancellationToken ct = default)
         {
+            await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
+
             var user = await _db.Set<User>().AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
             if (user is null)
@@ -53,13 +61,15 @@ namespace Darwin.Application.Identity.Commands
             var (optionsJson, _) = await _webauthn.BeginLoginAsync(dto.UserId, allowedIds, ct);
 
             // Remove previous unused tokens for this purpose
+            var nowUtc = _clock.UtcNow;
             var oldTokens = await _db.Set<UserToken>()
-                .Where(t => t.UserId == dto.UserId && t.Purpose == Purpose && t.UsedAtUtc == null)
+                .Where(t => t.UserId == dto.UserId &&
+                            t.Purpose == Purpose &&
+                            (t.UsedAtUtc == null || (t.ExpiresAtUtc != null && t.ExpiresAtUtc <= nowUtc)))
                 .ToListAsync(ct);
             if (oldTokens.Count > 0)
                 _db.Set<UserToken>().RemoveRange(oldTokens);
 
-            var nowUtc = DateTime.UtcNow;
             var token = new UserToken(dto.UserId, Purpose, optionsJson, nowUtc.AddMinutes(10));
             _db.Set<UserToken>().Add(token);
             await _db.SaveChangesAsync(ct);

@@ -103,13 +103,17 @@ namespace Darwin.Application.Catalog.Queries
         {
             var brands = _db.Set<Brand>().AsNoTracking().Where(b => !b.IsDeleted);
 
-            return new BrandOpsSummaryDto
-            {
-                TotalCount = await brands.CountAsync(ct),
-                UnpublishedCount = await brands.CountAsync(b => !b.IsPublished, ct),
-                MissingSlugCount = await brands.CountAsync(b => b.Slug == null || b.Slug == string.Empty, ct),
-                MissingLogoCount = await brands.CountAsync(b => b.LogoMediaId == null, ct)
-            };
+            return await brands
+                .GroupBy(_ => 1)
+                .Select(g => new BrandOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    UnpublishedCount = g.Count(b => !b.IsPublished),
+                    MissingSlugCount = g.Count(b => b.Slug == null || b.Slug == string.Empty),
+                    MissingLogoCount = g.Count(b => b.LogoMediaId == null)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new BrandOpsSummaryDto();
         }
     }
 }

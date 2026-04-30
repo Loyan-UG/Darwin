@@ -39,11 +39,12 @@ namespace Darwin.Application.Identity.Services
         /// <summary>Verifies a TOTP code with allowed time-step drift.</summary>
         public static bool VerifyTotpCode(string secretBase32, DateTime utc, int code, int allowedDriftSteps = 1, int digits = 6, int periodSeconds = 30)
         {
+            var key = Base32Decode(secretBase32);
+            var counter = (long)Math.Floor((utc - DateTime.UnixEpoch).TotalSeconds / periodSeconds);
+
             for (var delta = -allowedDriftSteps; delta <= allowedDriftSteps; delta++)
             {
-                var key = Base32Decode(secretBase32);
-                var counter = (long)Math.Floor((utc - DateTime.UnixEpoch).TotalSeconds / periodSeconds) + delta;
-                var candidate = ComputeHotp(key, counter, digits);
+                var candidate = ComputeHotp(key, counter + delta, digits);
                 if (candidate == code) return true;
             }
             return false;

@@ -6,7 +6,6 @@ using Darwin.Mobile.Shared.Caching;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Security;
 using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -83,6 +82,7 @@ public sealed class AuthService : IAuthService, IDisposable
     private readonly ITokenStore _store;
     private readonly ApiOptions _opts;
     private readonly IDeviceIdProvider _deviceIdProvider;
+    private readonly TimeProvider _timeProvider;
 
     // SemaphoreSlim is used instead of lock so concurrent async callers do not trigger refresh storms.
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
@@ -93,13 +93,15 @@ public sealed class AuthService : IAuthService, IDisposable
         IMobileCacheService cache,
         ITokenStore store,
         ApiOptions opts,
-        IDeviceIdProvider deviceIdProvider)
+        IDeviceIdProvider deviceIdProvider,
+        TimeProvider timeProvider)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _opts = opts ?? throw new ArgumentNullException(nameof(opts));
         _deviceIdProvider = deviceIdProvider ?? throw new ArgumentNullException(nameof(deviceIdProvider));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     /// <inheritdoc />
@@ -140,7 +142,7 @@ public sealed class AuthService : IAuthService, IDisposable
         ct.ThrowIfCancellationRequested();
 
         var (rt, rtex) = await _store.GetRefreshAsync().ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(rt) || rtex is null || rtex <= DateTime.UtcNow)
+        if (string.IsNullOrWhiteSpace(rt) || rtex is null || rtex <= _timeProvider.GetUtcNow().UtcDateTime)
         {
             await ClearLocalSessionAsync(ct).ConfigureAwait(false);
             return false;
@@ -150,7 +152,7 @@ public sealed class AuthService : IAuthService, IDisposable
         try
         {
             var (currentRt, currentRtex) = await _store.GetRefreshAsync().ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(currentRt) || currentRtex is null || currentRtex <= DateTime.UtcNow)
+            if (string.IsNullOrWhiteSpace(currentRt) || currentRtex is null || currentRtex <= _timeProvider.GetUtcNow().UtcDateTime)
             {
                 return false;
             }
@@ -429,7 +431,7 @@ public sealed class AuthService : IAuthService, IDisposable
         await ApplyCachedBootstrapAsync(ct).ConfigureAwait(false);
 
         var (accessToken, accessExpiresUtc) = await _store.GetAccessAsync().ConfigureAwait(false);
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
 
         if (!string.IsNullOrWhiteSpace(accessToken) &&
             (!accessExpiresUtc.HasValue || accessExpiresUtc.Value > nowUtc))
@@ -449,7 +451,7 @@ public sealed class AuthService : IAuthService, IDisposable
 
             var (currentAccessToken, currentAccessExpiresUtc) = await _store.GetAccessAsync().ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(currentAccessToken) ||
-                (currentAccessExpiresUtc.HasValue && currentAccessExpiresUtc.Value <= DateTime.UtcNow))
+                (currentAccessExpiresUtc.HasValue && currentAccessExpiresUtc.Value <= _timeProvider.GetUtcNow().UtcDateTime))
             {
                 _api.SetBearerToken(null);
                 return false;
@@ -536,22 +538,7 @@ public sealed class AuthService : IAuthService, IDisposable
             return null;
         }
 
-        try
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jwt = handler.ReadJwtToken(accessToken);
-            var claimValue = jwt.Claims
-                .FirstOrDefault(c => string.Equals(c.Type, "business_id", StringComparison.OrdinalIgnoreCase))
-                ?.Value;
-
-            return Guid.TryParse(claimValue, out var businessId)
-                ? businessId
-                : null;
-        }
-        catch (ArgumentException)
-        {
-            return null;
-        }
+        return JwtClaimReader.GetBusinessId(accessToken);
     }
 
     private async Task ApplyCachedBootstrapAsync(CancellationToken ct)
@@ -620,37 +607,27 @@ public sealed class AuthService : IAuthService, IDisposable
             return;
         }
 
-        try
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jwt = handler.ReadJwtToken(accessToken);
-
-            if (!string.IsNullOrWhiteSpace(opts.JwtAudience))
-            {
-                var audClaim = jwt.Audiences;
-                if (audClaim != null && audClaim.Any() && !audClaim.Contains(opts.JwtAudience))
-                {
-                    throw new InvalidOperationException("Token audience does not match this app's expected audience.");
-                }
-            }
-
-            var hasBusinessId = jwt.Claims.Any(c =>
-                string.Equals(c.Type, "business_id", StringComparison.OrdinalIgnoreCase) &&
-                !string.IsNullOrWhiteSpace(c.Value));
-
-            if (opts.AppRole == MobileAppRole.Business && !hasBusinessId)
-            {
-                throw new InvalidOperationException("Received access token is not a Business token (missing business_id claim).");
-            }
-
-            if (opts.AppRole == MobileAppRole.Consumer && hasBusinessId)
-            {
-                throw new InvalidOperationException("Received access token appears to be a Business token. Please use a Consumer account.");
-            }
-        }
-        catch (ArgumentException)
+        var jwt = JwtClaimReader.TryReadToken(accessToken);
+        if (jwt is null)
         {
             throw new InvalidOperationException("Invalid access token format.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(opts.JwtAudience) && !jwt.Audiences.Contains(opts.JwtAudience))
+        {
+            throw new InvalidOperationException("Token audience does not match this app's expected audience.");
+        }
+
+        var hasBusinessId = JwtClaimReader.GetBusinessId(jwt).HasValue;
+
+        if (opts.AppRole == MobileAppRole.Business && !hasBusinessId)
+        {
+            throw new InvalidOperationException("Received access token is not a Business token (missing business_id claim).");
+        }
+
+        if (opts.AppRole == MobileAppRole.Consumer && hasBusinessId)
+        {
+            throw new InvalidOperationException("Received access token appears to be a Business token. Please use a Consumer account.");
         }
     }
 

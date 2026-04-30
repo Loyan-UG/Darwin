@@ -15,16 +15,32 @@ namespace Darwin.Mobile.Shared.Storage.Repositories;
 /// </summary>
 public sealed class OutboxRepository : IOutboxRepository
 {
+    private static readonly HashSet<string> AllowedMethods = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+    };
+
+    private const int MaxPathLength = 512;
+    private const int MaxJsonBodyLength = 32 * 1024;
+    private const int MaxLastErrorLength = 512;
+    private const int MaxBatchSize = 50;
+    private const int MaxAttempts = 8;
+
     private readonly ApiOptions _opts;
     private readonly LocalDatabase _database;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OutboxRepository"/> class.
     /// </summary>
-    public OutboxRepository(ApiOptions opts, LocalDatabase database)
+    public OutboxRepository(ApiOptions opts, LocalDatabase database, TimeProvider timeProvider)
     {
         _opts = opts ?? throw new ArgumentNullException(nameof(opts));
         _database = database ?? throw new ArgumentNullException(nameof(database));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     /// <inheritdoc />
@@ -32,9 +48,14 @@ public sealed class OutboxRepository : IOutboxRepository
     {
         ct.ThrowIfCancellationRequested();
 
+        var normalizedPath = NormalizePath(path);
+        var normalizedMethod = NormalizeMethod(method);
+        var normalizedBody = NormalizeJsonBody(jsonBody);
+
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
+        var maxOutbox = Math.Max(1, _opts.MaxOutbox);
         var totalCount = await connection.Table<OutboxMessageRecord>().CountAsync().ConfigureAwait(false);
-        if (totalCount >= _opts.MaxOutbox)
+        while (totalCount >= maxOutbox)
         {
             var oldest = await connection.Table<OutboxMessageRecord>()
                 .OrderBy(x => x.EnqueuedAtUtc)
@@ -44,16 +65,21 @@ public sealed class OutboxRepository : IOutboxRepository
             if (oldest is not null)
             {
                 await connection.DeleteAsync(oldest).ConfigureAwait(false);
+                totalCount--;
+            }
+            else
+            {
+                break;
             }
         }
 
         await connection.InsertAsync(new OutboxMessageRecord
         {
             Id = Guid.NewGuid().ToString("N"),
-            Path = path,
-            Method = string.IsNullOrWhiteSpace(method) ? "POST" : method.Trim().ToUpperInvariant(),
-            JsonBody = string.IsNullOrWhiteSpace(jsonBody) ? "{}" : jsonBody,
-            EnqueuedAtUtc = DateTime.UtcNow,
+            Path = normalizedPath,
+            Method = normalizedMethod,
+            JsonBody = normalizedBody,
+            EnqueuedAtUtc = _timeProvider.GetUtcNow().UtcDateTime,
             Attempts = 0,
             IsSucceeded = false
         }).ConfigureAwait(false);
@@ -64,16 +90,19 @@ public sealed class OutboxRepository : IOutboxRepository
     {
         ct.ThrowIfCancellationRequested();
 
-        var boundedCount = Math.Max(1, maxCount);
+        var boundedCount = Math.Clamp(maxCount, 1, MaxBatchSize);
+        var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
         var records = await connection.Table<OutboxMessageRecord>()
-            .Where(x => !x.IsSucceeded)
+            .Where(x => !x.IsSucceeded && x.Attempts < MaxAttempts)
             .OrderBy(x => x.EnqueuedAtUtc)
-            .Take(boundedCount)
+            .Take(boundedCount * 4)
             .ToListAsync()
             .ConfigureAwait(false);
 
         return records
+            .Where(record => IsReadyForRetry(record, nowUtc))
+            .Take(boundedCount)
             .Select(static record => new OutboxMessage
             {
                 Id = record.Id,
@@ -112,8 +141,78 @@ public sealed class OutboxRepository : IOutboxRepository
         }
 
         record.Attempts += 1;
-        record.LastError = error;
-        record.LastAttemptedAtUtc = DateTime.UtcNow;
+        record.LastError = NormalizeLastError(error);
+        record.LastAttemptedAtUtc = _timeProvider.GetUtcNow().UtcDateTime;
         await connection.UpdateAsync(record).ConfigureAwait(false);
+    }
+
+    private static string NormalizePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Outbox path is required.", nameof(path));
+        }
+
+        var normalized = path.Trim().TrimStart('/');
+        if (Uri.TryCreate(normalized, UriKind.Absolute, out _))
+        {
+            throw new ArgumentException("Outbox path must be a relative API path.", nameof(path));
+        }
+
+        if (normalized.Length > MaxPathLength)
+        {
+            throw new ArgumentException($"Outbox path cannot exceed {MaxPathLength} characters.", nameof(path));
+        }
+
+        return normalized;
+    }
+
+    private static string NormalizeMethod(string method)
+    {
+        var normalized = string.IsNullOrWhiteSpace(method)
+            ? "POST"
+            : method.Trim().ToUpperInvariant();
+
+        if (!AllowedMethods.Contains(normalized))
+        {
+            throw new ArgumentException("Outbox method must be POST, PUT, PATCH, or DELETE.", nameof(method));
+        }
+
+        return normalized;
+    }
+
+    private static string NormalizeJsonBody(string jsonBody)
+    {
+        var normalized = string.IsNullOrWhiteSpace(jsonBody) ? "{}" : jsonBody.Trim();
+        if (normalized.Length > MaxJsonBodyLength)
+        {
+            throw new ArgumentException($"Outbox payload cannot exceed {MaxJsonBodyLength} characters.", nameof(jsonBody));
+        }
+
+        return normalized;
+    }
+
+    private static string? NormalizeLastError(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return null;
+        }
+
+        var normalized = error.Trim();
+        return normalized.Length <= MaxLastErrorLength
+            ? normalized
+            : normalized[..MaxLastErrorLength].TrimEnd() + "...";
+    }
+
+    private static bool IsReadyForRetry(OutboxMessageRecord record, DateTime nowUtc)
+    {
+        if (!record.LastAttemptedAtUtc.HasValue || record.Attempts <= 0)
+        {
+            return true;
+        }
+
+        var delaySeconds = Math.Min(300, Math.Pow(2, Math.Min(record.Attempts, 8)));
+        return record.LastAttemptedAtUtc.Value.AddSeconds(delaySeconds) <= nowUtc;
     }
 }

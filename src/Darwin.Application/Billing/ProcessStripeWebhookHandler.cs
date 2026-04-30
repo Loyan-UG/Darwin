@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
@@ -16,11 +17,13 @@ namespace Darwin.Application.Billing;
 public sealed class ProcessStripeWebhookHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public ProcessStripeWebhookHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+    public ProcessStripeWebhookHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
@@ -66,7 +69,7 @@ public sealed class ProcessStripeWebhookHandler
             return Result<StripeWebhookProcessingResultDto>.Fail(_localizer["StripeWebhookPayloadInvalid"]);
         }
 
-        var occurredAtUtc = GetUnixDateTimeUtc(root, "created") ?? DateTime.UtcNow;
+        var occurredAtUtc = GetUnixDateTimeUtc(root, "created") ?? _clock.UtcNow;
         var result = new StripeWebhookProcessingResultDto
         {
             EventId = eventId,

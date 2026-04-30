@@ -7,6 +7,7 @@ using System.Net;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
@@ -79,6 +80,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly AdminReferenceDataService _referenceData;
         private readonly ISiteSettingCache _siteSettingCache;
         private readonly IBusinessEffectiveSettingsCache _businessEffectiveSettingsCache;
+        private readonly IClock _clock;
 
         public BusinessesController(
             GetBusinessesPageHandler getBusinessesPage,
@@ -122,7 +124,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             UnlockUserByAdminHandler unlockUser,
             AdminReferenceDataService referenceData,
             ISiteSettingCache siteSettingCache,
-            IBusinessEffectiveSettingsCache businessEffectiveSettingsCache)
+            IBusinessEffectiveSettingsCache businessEffectiveSettingsCache,
+            IClock clock)
         {
             _getBusinessesPage = getBusinessesPage;
             _getBusinessForEdit = getBusinessForEdit;
@@ -166,6 +169,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _referenceData = referenceData;
             _siteSettingCache = siteSettingCache;
             _businessEffectiveSettingsCache = businessEffectiveSettingsCache;
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         [HttpGet]
@@ -738,7 +742,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 query: null,
                 filter: BusinessMemberSupportFilter.All,
                 ct);
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var attentionMembers = items
                 .Where(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > nowUtc))
                 .Take(5)
@@ -1789,7 +1793,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var issuedAtUtc = DateTime.UtcNow;
+            var issuedAtUtc = _clock.UtcNow;
             var expiresAtUtc = issuedAtUtc.AddMinutes(2);
             var payload = BuildStaffAccessBadgePayload(dto, business, issuedAtUtc, expiresAtUtc);
 

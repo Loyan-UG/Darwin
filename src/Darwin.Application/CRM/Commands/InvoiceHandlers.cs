@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.Queries;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.Billing;
@@ -15,15 +16,18 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<InvoiceEditDto> _validator;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public UpdateInvoiceHandler(
             IAppDbContext db,
             IValidator<InvoiceEditDto> validator,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -95,7 +99,7 @@ namespace Darwin.Application.CRM.Commands
             invoice.TotalTaxMinor = dto.TotalTaxMinor;
             invoice.TotalGrossMinor = dto.TotalGrossMinor;
             invoice.DueDateUtc = dto.DueDateUtc;
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             invoice.PaidAtUtc = dto.Status == Darwin.Domain.Enums.InvoiceStatus.Paid ? dto.PaidAtUtc ?? nowUtc : dto.PaidAtUtc;
 
             if (previousPaymentId.HasValue && previousPaymentId != dto.PaymentId)
@@ -125,15 +129,18 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<InvoiceStatusTransitionDto> _validator;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public TransitionInvoiceStatusHandler(
             IAppDbContext db,
             IValidator<InvoiceStatusTransitionDto> validator,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -173,7 +180,7 @@ namespace Darwin.Application.CRM.Commands
 
                 case InvoiceStatus.Paid:
                 {
-                    var nowUtc = DateTime.UtcNow;
+                    var nowUtc = _clock.UtcNow;
                     var paidAtUtc = dto.PaidAtUtc ?? nowUtc;
                     if (payment is not null)
                     {
@@ -237,15 +244,18 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<InvoiceRefundCreateDto> _validator;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public CreateInvoiceRefundHandler(
             IAppDbContext db,
             IValidator<InvoiceRefundCreateDto> validator,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -323,7 +333,7 @@ namespace Darwin.Application.CRM.Commands
                 Currency = dto.Currency.ToUpperInvariant(),
                 Reason = dto.Reason.Trim(),
                 Status = RefundStatus.Completed,
-                CompletedAtUtc = DateTime.UtcNow
+                CompletedAtUtc = _clock.UtcNow
             };
 
             _db.Set<Refund>().Add(refund);

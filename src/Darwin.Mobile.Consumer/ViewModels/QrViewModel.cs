@@ -46,6 +46,7 @@ public sealed class QrViewModel : BaseViewModel
     private static readonly TimeSpan MinimumAutoRotationInterval = TimeSpan.FromMinutes(5);
 
     private readonly ILoyaltyService _loyaltyService;
+    private readonly TimeProvider _timeProvider;
 
     private string _qrToken = string.Empty;
     private ImageSource? _qrImage;
@@ -60,9 +61,10 @@ public sealed class QrViewModel : BaseViewModel
     private DateTimeOffset? _lastSuccessfulSessionRefreshUtc;
     private CancellationTokenSource? _rotationLoopCts;
 
-    public QrViewModel(ILoyaltyService loyaltyService)
+    public QrViewModel(ILoyaltyService loyaltyService, TimeProvider timeProvider)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         RefreshAccrualSessionCommand = new AsyncCommand(RefreshAccrualSessionAsync);
         RefreshRedemptionSessionCommand = new AsyncCommand(RefreshRedemptionSessionAsync);
     }
@@ -260,7 +262,7 @@ public sealed class QrViewModel : BaseViewModel
         Mode = session.Mode;
         QrToken = session.Token;
         ExpiresAtUtc = session.ExpiresAtUtc;
-        _lastSuccessfulSessionRefreshUtc = DateTimeOffset.UtcNow;
+        _lastSuccessfulSessionRefreshUtc = _timeProvider.GetUtcNow();
 
         if (session.Mode == LoyaltyScanMode.Redemption)
         {
@@ -291,7 +293,7 @@ public sealed class QrViewModel : BaseViewModel
                 Title = "RewardClaimIntent",
                 CtaKind = "OpenRedemptionQr",
                 EventType = PromotionInteractionEventType.Claim,
-                OccurredAtUtc = DateTime.UtcNow
+                OccurredAtUtc = _timeProvider.GetUtcNow().UtcDateTime
             }, CancellationToken.None).ConfigureAwait(false);
         }
         catch
@@ -366,8 +368,9 @@ public sealed class QrViewModel : BaseViewModel
                     continue;
                 }
 
-                var remainingUntilExpiry = expiry.Value - DateTimeOffset.UtcNow;
-                var elapsedSinceLastRefresh = DateTimeOffset.UtcNow - (_lastSuccessfulSessionRefreshUtc ?? DateTimeOffset.MinValue);
+                var nowUtc = _timeProvider.GetUtcNow();
+                var remainingUntilExpiry = expiry.Value - nowUtc;
+                var elapsedSinceLastRefresh = nowUtc - (_lastSuccessfulSessionRefreshUtc ?? DateTimeOffset.MinValue);
 
                 // Refresh immediately when token is already expired.
                 if (remainingUntilExpiry <= TimeSpan.Zero)
@@ -403,7 +406,7 @@ public sealed class QrViewModel : BaseViewModel
         }
 
         var due = _lastSuccessfulSessionRefreshUtc.Value + MinimumAutoRotationInterval;
-        var remaining = due - DateTimeOffset.UtcNow;
+        var remaining = due - _timeProvider.GetUtcNow();
 
         if (remaining <= TimeSpan.Zero)
         {

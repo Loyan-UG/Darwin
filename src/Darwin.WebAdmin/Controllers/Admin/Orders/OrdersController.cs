@@ -1,3 +1,4 @@
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common.Queries;
 using Darwin.Application.Common.DTOs;
 using Darwin.Application.Inventory.Queries;
@@ -41,6 +42,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         private readonly CreateOrderInvoiceHandler _createOrderInvoice;
         private readonly UpdateOrderStatusHandler _updateOrderStatus;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IClock _clock;
 
         public OrdersController(
             GetOrdersPageHandler getOrdersPage,
@@ -63,7 +65,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             AddRefundHandler addRefund,
             CreateOrderInvoiceHandler createOrderInvoice,
             UpdateOrderStatusHandler updateOrderStatus,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            IClock clock)
         {
             _getOrdersPage = getOrdersPage ?? throw new ArgumentNullException(nameof(getOrdersPage));
             _getShipmentsPage = getShipmentsPage ?? throw new ArgumentNullException(nameof(getShipmentsPage));
@@ -86,6 +89,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             _createOrderInvoice = createOrderInvoice ?? throw new ArgumentNullException(nameof(createOrderInvoice));
             _updateOrderStatus = updateOrderStatus ?? throw new ArgumentNullException(nameof(updateOrderStatus));
             _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         [HttpGet]
@@ -1247,7 +1251,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
             var businessOptions = await _getBusinessLookup.HandleAsync(ct).ConfigureAwait(false);
             var customerOptions = await _getCustomerLookup.HandleAsync(ct).ConfigureAwait(false);
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
 
             var vm = new OrderInvoiceCreateVm
             {

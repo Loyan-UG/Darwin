@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -30,7 +32,9 @@ namespace Darwin.WebApi.Middleware
     {
         private const string HeaderKey = "Idempotency-Key";
         private const string CachePrefix = "idempotency:";
-        private const string InProgressMarker = "__IN_PROGRESS__";
+        private const int MaxIdempotencyKeyLength = 256;
+        private const int MaxFingerprintBodyBytes = 256 * 1024;
+        private const int MaxCachedResponseBodyBytes = 64 * 1024;
 
         private readonly RequestDelegate _next;
         private readonly IMemoryCache _cache;
@@ -75,7 +79,25 @@ namespace Darwin.WebApi.Middleware
                 return;
             }
 
-            var cacheKey = CachePrefix + idempotencyKey;
+            if (idempotencyKey.Length > MaxIdempotencyKeyLength)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                context.Response.ContentType = "text/plain";
+                await context.Response.WriteAsync("Idempotency key is too long.").ConfigureAwait(false);
+                return;
+            }
+
+            var requestFingerprint = await BuildRequestFingerprintAsync(context, context.RequestAborted).ConfigureAwait(false);
+            if (requestFingerprint is null)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                context.Response.ContentType = "text/plain";
+                await context.Response.WriteAsync("Request body is too large for idempotency.", context.RequestAborted).ConfigureAwait(false);
+                return;
+            }
+
+            var keyFingerprint = Fingerprint(string.Concat(idempotencyKey, ":", requestFingerprint));
+            var cacheKey = CachePrefix + keyFingerprint;
 
             // Check cache
             if (_cache.TryGetValue(cacheKey, out IdempotencyEntry? existingEntry))
@@ -88,19 +110,20 @@ namespace Darwin.WebApi.Middleware
                 {
                     if (existingEntry.IsInProgress)
                     {
-                        _logger.LogInformation("Idempotency key {Key} is already in-progress. Returning 409.", idempotencyKey);
+                        _logger.LogInformation("Idempotency key fingerprint {KeyFingerprint} is already in-progress. Returning 409.", keyFingerprint);
                         context.Response.StatusCode = (int)HttpStatusCode.Conflict;
-                        await context.Response.WriteAsync("Request already in progress.").ConfigureAwait(false);
+                        context.Response.ContentType = "text/plain";
+                        await context.Response.WriteAsync("Request already in progress.", context.RequestAborted).ConfigureAwait(false);
                         return;
                     }
 
                     // Return cached response
-                    _logger.LogDebug("Idempotency key {Key} found in cache. Returning cached response.", idempotencyKey);
+                    _logger.LogDebug("Idempotency key fingerprint {KeyFingerprint} found in cache. Returning cached response.", keyFingerprint);
                     context.Response.StatusCode = existingEntry.StatusCode;
                     context.Response.ContentType = existingEntry.ContentType ?? "application/json";
                     if (existingEntry.Body is not null && existingEntry.Body.Length > 0)
                     {
-                        await context.Response.Body.WriteAsync(existingEntry.Body, 0, existingEntry.Body.Length).ConfigureAwait(false);
+                        await context.Response.Body.WriteAsync(existingEntry.Body.AsMemory(0, existingEntry.Body.Length), context.RequestAborted).ConfigureAwait(false);
                     }
 
                     return;
@@ -125,25 +148,40 @@ namespace Darwin.WebApi.Middleware
                 var respBytes = new byte[memoryStream.Length];
                 await context.Response.Body.ReadAsync(respBytes, 0, respBytes.Length).ConfigureAwait(false);
 
-                // Create final entry and cache it
-                var entry = new IdempotencyEntry
-                {
-                    IsInProgress = false,
-                    StatusCode = context.Response.StatusCode,
-                    ContentType = context.Response.ContentType,
-                    Body = respBytes
-                };
+                var shouldCacheResponse =
+                    context.Response.StatusCode < StatusCodes.Status500InternalServerError &&
+                    memoryStream.Length <= MaxCachedResponseBodyBytes;
 
-                // Replace cache entry atomically
-                _cache.Set(cacheKey, entry, _entryTtl);
+                if (shouldCacheResponse)
+                {
+                    var entry = new IdempotencyEntry
+                    {
+                        IsInProgress = false,
+                        StatusCode = context.Response.StatusCode,
+                        ContentType = context.Response.ContentType,
+                        Body = respBytes
+                    };
+
+                    // Replace cache entry atomically.
+                    _cache.Set(cacheKey, entry, _entryTtl);
+                }
+                else
+                {
+                    _cache.Remove(cacheKey);
+                    _logger.LogDebug(
+                        "Idempotency response for key fingerprint {KeyFingerprint} was not cached. StatusCode={StatusCode}, BodyBytes={BodyBytes}",
+                        keyFingerprint,
+                        context.Response.StatusCode,
+                        memoryStream.Length);
+                }
 
                 // Rewind and copy to original stream
                 context.Response.Body.Seek(0, SeekOrigin.Begin);
-                await context.Response.Body.CopyToAsync(originalBodyStream).ConfigureAwait(false);
+                await context.Response.Body.CopyToAsync(originalBodyStream, context.RequestAborted).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while processing idempotent request with key {Key}", idempotencyKey);
+                _logger.LogError(ex, "Error while processing idempotent request with key fingerprint {KeyFingerprint}", keyFingerprint);
                 // Remove in-progress marker to allow retries after failure.
                 _cache.Remove(cacheKey);
 
@@ -154,6 +192,80 @@ namespace Darwin.WebApi.Middleware
             {
                 context.Response.Body = originalBodyStream;
             }
+        }
+
+        private static string Fingerprint(string value)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
+            return Convert.ToHexString(bytes);
+        }
+
+        private static async Task<string?> BuildRequestFingerprintAsync(HttpContext context, System.Threading.CancellationToken ct)
+        {
+            var request = context.Request;
+            var bodyHash = await HashRequestBodyAsync(request, ct).ConfigureAwait(false);
+            if (bodyHash is null)
+            {
+                return null;
+            }
+
+            var userScope = ResolveUserScope(context);
+            var method = request.Method?.Trim().ToUpperInvariant() ?? string.Empty;
+            var path = request.Path.Value?.Trim().ToLowerInvariant() ?? string.Empty;
+            var query = request.QueryString.Value?.Trim().ToLowerInvariant() ?? string.Empty;
+            return string.Concat(userScope, "|", method, "|", path, "|", query, "|", bodyHash);
+        }
+
+        private static async Task<string?> HashRequestBodyAsync(HttpRequest request, System.Threading.CancellationToken ct)
+        {
+            if (request.ContentLength.GetValueOrDefault() > MaxFingerprintBodyBytes)
+            {
+                return null;
+            }
+
+            request.EnableBuffering();
+            request.Body.Position = 0;
+
+            using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            var buffer = new byte[8192];
+            var totalBytes = 0;
+            while (true)
+            {
+                var read = await request.Body.ReadAsync(buffer.AsMemory(0, buffer.Length), ct).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    break;
+                }
+
+                totalBytes += read;
+                if (totalBytes > MaxFingerprintBodyBytes)
+                {
+                    request.Body.Position = 0;
+                    return null;
+                }
+
+                hasher.AppendData(buffer.AsSpan(0, read));
+            }
+
+            request.Body.Position = 0;
+            return Convert.ToHexString(hasher.GetHashAndReset());
+        }
+
+        private static string ResolveUserScope(HttpContext context)
+        {
+            if (context.User?.Identity?.IsAuthenticated != true)
+            {
+                return "anonymous";
+            }
+
+            var userId =
+                context.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                context.User.FindFirstValue("sub") ??
+                context.User.FindFirstValue("uid");
+
+            return string.IsNullOrWhiteSpace(userId)
+                ? "authenticated"
+                : string.Concat("user:", userId.Trim());
         }
 
         private sealed class IdempotencyEntry

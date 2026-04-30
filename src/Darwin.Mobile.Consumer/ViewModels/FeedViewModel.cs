@@ -38,6 +38,7 @@ public sealed class FeedViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
+    private readonly TimeProvider _timeProvider;
 
     private bool _hasLoaded;
     private bool _isLoadingMore;
@@ -62,11 +63,13 @@ public sealed class FeedViewModel : BaseViewModel
     public FeedViewModel(
         ILoyaltyService loyaltyService,
         IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        TimeProvider timeProvider)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
         Items = new ObservableCollection<LoyaltyTimelineEntry>();
         PromotionItems = new ObservableCollection<PromotionFeedItem>();
@@ -615,7 +618,7 @@ public sealed class FeedViewModel : BaseViewModel
             .Select(group => group.First())
             .ToList();
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
         var suppressionWindow = ResolvePromotionSuppressionWindow(result.Value.AppliedPolicy);
         var displayCap = ResolvePromotionDisplayCap(result.Value.AppliedPolicy);
 
@@ -945,7 +948,7 @@ public sealed class FeedViewModel : BaseViewModel
                 Title = item.Title,
                 CtaKind = item.CtaKind,
                 EventType = eventType,
-                OccurredAtUtc = DateTime.UtcNow
+                OccurredAtUtc = _timeProvider.GetUtcNow().UtcDateTime
             }, CancellationToken.None).ConfigureAwait(false);
         }
         catch

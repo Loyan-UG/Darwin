@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Loyalty;
@@ -137,7 +138,7 @@ namespace Darwin.Application.Loyalty.Queries
                     ConsumerEmail = x.ConsumerEmail,
                     ScanStatus = x.ScanStatus,
                     ScanOutcome = x.ScanOutcome,
-                    ScanFailureReason = x.ScanFailureReason,
+                    ScanFailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(x.ScanFailureReason),
                     BusinessLocationId = x.BusinessLocationId,
                     RowVersion = x.RowVersion
                 })

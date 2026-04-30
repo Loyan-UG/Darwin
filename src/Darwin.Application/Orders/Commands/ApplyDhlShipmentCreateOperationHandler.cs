@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
@@ -19,13 +20,16 @@ namespace Darwin.Application.Orders.Commands
     public sealed class ApplyDhlShipmentCreateOperationHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public ApplyDhlShipmentCreateOperationHandler(
             IAppDbContext db,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -72,7 +76,7 @@ namespace Darwin.Application.Orders.Commands
 
             shipment.LastCarrierEventKey = "shipment.provider_created";
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             await ShipmentCarrierEventRecorder.AddIfMissingAsync(
                 _db,
                 shipment,

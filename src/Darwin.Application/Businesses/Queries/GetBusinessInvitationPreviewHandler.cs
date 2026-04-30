@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
@@ -18,12 +19,19 @@ namespace Darwin.Application.Businesses.Queries
     /// </summary>
     public sealed class GetBusinessInvitationPreviewHandler
     {
+        private const int MaxInvitationTokenLength = 256;
+
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public GetBusinessInvitationPreviewHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public GetBusinessInvitationPreviewHandler(
+            IAppDbContext db,
+            IClock clock,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -35,7 +43,12 @@ namespace Darwin.Application.Businesses.Queries
             }
 
             var trimmedToken = token.Trim();
-            var utcNow = DateTime.UtcNow;
+            if (trimmedToken.Length > MaxInvitationTokenLength)
+            {
+                return Result<BusinessInvitationPreviewDto>.Fail(_localizer["InvitationNotFound"]);
+            }
+
+            var utcNow = _clock.UtcNow;
 
             var invitation = await _db.Set<BusinessInvitation>()
                 .AsNoTracking()

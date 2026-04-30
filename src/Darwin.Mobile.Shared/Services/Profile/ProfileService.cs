@@ -4,8 +4,6 @@ using Darwin.Mobile.Shared.Caching;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Shared.Results;
 using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -291,29 +289,9 @@ public sealed class ProfileService : IProfileService
     private async Task<string> GetScopedCacheKeyAsync(string suffix, CancellationToken ct)
     {
         var (accessToken, _) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
-        var subject = ResolveSubject(accessToken);
+        var subject = JwtClaimReader.GetSubject(accessToken);
         return string.IsNullOrWhiteSpace(subject)
             ? suffix
             : $"{suffix}:{subject}";
-    }
-
-    private static string? ResolveSubject(string? accessToken)
-    {
-        if (string.IsNullOrWhiteSpace(accessToken))
-        {
-            return null;
-        }
-
-        try
-        {
-            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            return jwt.Claims.FirstOrDefault(static claim =>
-                string.Equals(claim.Type, JwtRegisteredClaimNames.Sub, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(claim.Type, "sub", StringComparison.OrdinalIgnoreCase))?.Value;
-        }
-        catch (ArgumentException)
-        {
-            return null;
-        }
     }
 }

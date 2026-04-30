@@ -50,7 +50,7 @@ namespace Darwin.Mobile.Shared.Resilience
                 {
                     return await operation(ct).ConfigureAwait(false);
                 }
-                catch (Exception ex) when (IsTransient(ex))
+                catch (Exception ex) when (IsTransient(ex, ct))
                 {
                     last = ex;
                     if (attempt == _maxAttempts)
@@ -80,8 +80,15 @@ namespace Darwin.Mobile.Shared.Resilience
         /// We consider low-level transport/timeouts (HttpRequestException, TaskCanceledException due to timeouts).
         /// We intentionally do NOT retry OperationCanceledException (explicit cancellation).
         /// </summary>
-        private static bool IsTransient(Exception ex)
-            => ex is HttpRequestException || ex is TaskCanceledException;
+        private static bool IsTransient(Exception ex, CancellationToken ct)
+        {
+            if (ct.IsCancellationRequested)
+            {
+                return false;
+            }
+
+            return ex is HttpRequestException || ex is TaskCanceledException;
+        }
 
         /// <summary>
         /// Compute exponential backoff with jitter (milliseconds).

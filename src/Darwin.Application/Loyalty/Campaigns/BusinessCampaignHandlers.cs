@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Enums;
 using Darwin.Domain.Entities.Marketing;
 using Darwin.Shared.Results;
@@ -19,6 +20,7 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class GetBusinessCampaignsHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         private const string DraftCampaignState = "Draft";
@@ -26,9 +28,10 @@ namespace Darwin.Application.Loyalty.Campaigns
         private const string ActiveCampaignState = "Active";
         private const string ExpiredCampaignState = "Expired";
 
-        public GetBusinessCampaignsHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public GetBusinessCampaignsHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -46,7 +49,7 @@ namespace Darwin.Application.Loyalty.Campaigns
                 .AsNoTracking()
                 .Where(c => !c.IsDeleted && c.BusinessId == businessId);
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             query = ApplyFilter(query, filter, nowUtc);
             var total = await query.CountAsync(ct).ConfigureAwait(false);
 
@@ -91,27 +94,24 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return new BusinessCampaignOpsSummaryDto();
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var query = _db.Set<Campaign>()
                 .AsNoTracking()
                 .Where(c => !c.IsDeleted && c.BusinessId == businessId);
 
-            var totalCount = await query.CountAsync(ct).ConfigureAwait(false);
-            var activeCount = await query.CountAsync(c => c.IsActive && (!c.StartsAtUtc.HasValue || c.StartsAtUtc <= nowUtc) && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc), ct).ConfigureAwait(false);
-            var scheduledCount = await query.CountAsync(c => c.IsActive && c.StartsAtUtc.HasValue && c.StartsAtUtc > nowUtc && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc), ct).ConfigureAwait(false);
-            var draftCount = await query.CountAsync(c => !c.IsActive && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc), ct).ConfigureAwait(false);
-            var expiredCount = await query.CountAsync(c => c.EndsAtUtc.HasValue && c.EndsAtUtc < nowUtc, ct).ConfigureAwait(false);
-            var pushEnabledCount = await query.CountAsync(c => (((short)c.Channels) & 2) == 2, ct).ConfigureAwait(false);
-
-            return new BusinessCampaignOpsSummaryDto
-            {
-                TotalCount = totalCount,
-                ActiveCount = activeCount,
-                ScheduledCount = scheduledCount,
-                DraftCount = draftCount,
-                ExpiredCount = expiredCount,
-                PushEnabledCount = pushEnabledCount
-            };
+            return await query
+                .GroupBy(_ => 1)
+                .Select(g => new BusinessCampaignOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    ActiveCount = g.Count(c => c.IsActive && (!c.StartsAtUtc.HasValue || c.StartsAtUtc <= nowUtc) && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc)),
+                    ScheduledCount = g.Count(c => c.IsActive && c.StartsAtUtc.HasValue && c.StartsAtUtc > nowUtc && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc)),
+                    DraftCount = g.Count(c => !c.IsActive && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc)),
+                    ExpiredCount = g.Count(c => c.EndsAtUtc.HasValue && c.EndsAtUtc < nowUtc),
+                    PushEnabledCount = g.Count(c => (((short)c.Channels) & 2) == 2)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new BusinessCampaignOpsSummaryDto();
         }
 
         private static IQueryable<Campaign> ApplyFilter(IQueryable<Campaign> query, LoyaltyCampaignQueueFilter filter, DateTime nowUtc)
@@ -229,16 +229,20 @@ namespace Darwin.Application.Loyalty.Campaigns
                 query = query.Where(x => x.CampaignId == campaignId.Value);
             }
 
-            return new CampaignDeliveryOpsSummaryDto
-            {
-                TotalCount = await query.CountAsync(ct).ConfigureAwait(false),
-                PendingCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Pending, ct).ConfigureAwait(false),
-                InProgressCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.InProgress, ct).ConfigureAwait(false),
-                FailedCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Failed, ct).ConfigureAwait(false),
-                SucceededCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Succeeded, ct).ConfigureAwait(false),
-                CancelledCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Cancelled, ct).ConfigureAwait(false),
-                NeedsAttentionCount = await query.CountAsync(x => x.Status == CampaignDeliveryStatus.Failed || x.Status == CampaignDeliveryStatus.InProgress, ct).ConfigureAwait(false)
-            };
+            return await query
+                .GroupBy(_ => 1)
+                .Select(g => new CampaignDeliveryOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    PendingCount = g.Count(x => x.Status == CampaignDeliveryStatus.Pending),
+                    InProgressCount = g.Count(x => x.Status == CampaignDeliveryStatus.InProgress),
+                    FailedCount = g.Count(x => x.Status == CampaignDeliveryStatus.Failed),
+                    SucceededCount = g.Count(x => x.Status == CampaignDeliveryStatus.Succeeded),
+                    CancelledCount = g.Count(x => x.Status == CampaignDeliveryStatus.Cancelled),
+                    NeedsAttentionCount = g.Count(x => x.Status == CampaignDeliveryStatus.Failed || x.Status == CampaignDeliveryStatus.InProgress)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new CampaignDeliveryOpsSummaryDto();
         }
 
         private IQueryable<CampaignDelivery> BuildBaseQuery(
@@ -653,11 +657,13 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class SetCampaignActivationHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public SetCampaignActivationHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public SetCampaignActivationHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -686,7 +692,7 @@ namespace Darwin.Application.Loyalty.Campaigns
 
             if (dto.IsActive)
             {
-                var nowUtc = DateTime.UtcNow;
+                var nowUtc = _clock.UtcNow;
                 if (!BusinessCampaignValidation.HasValidChannels((short)entity.Channels))
                 {
                     return Result.Fail(_localizer["BusinessCampaignChannelsInvalid"]);
@@ -729,11 +735,13 @@ namespace Darwin.Application.Loyalty.Campaigns
     public sealed class UpdateCampaignDeliveryStatusHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateCampaignDeliveryStatusHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public UpdateCampaignDeliveryStatusHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -785,7 +793,7 @@ namespace Darwin.Application.Loyalty.Campaigns
                 delivery.LastError = dto.OperatorNote.Trim();
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             delivery.LastAttemptAtUtc ??= nowUtc;
             if (nextStatus == CampaignDeliveryStatus.Succeeded && !delivery.FirstAttemptAtUtc.HasValue)
             {

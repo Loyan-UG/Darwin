@@ -43,7 +43,7 @@ public sealed class LocalDatabase
         var flags =
             SQLiteOpenFlags.ReadWrite |
             SQLiteOpenFlags.Create |
-            SQLiteOpenFlags.SharedCache;
+            SQLiteOpenFlags.FullMutex;
 
         return Task.FromResult(new SQLiteAsyncConnection(databasePath, flags));
     }

@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
@@ -12,8 +13,13 @@ namespace Darwin.Application.CRM.Queries
         private const int MaxPageSize = 200;
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetOpportunitiesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetOpportunitiesPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(List<OpportunityListItemDto> Items, int Total)> HandleAsync(
             int page,
@@ -51,7 +57,7 @@ namespace Darwin.Application.CRM.Queries
                     (x.user != null && x.user.LastName != null && EF.Functions.Like(x.user.LastName, q, QueryLikePattern.EscapeCharacter)));
             }
 
-            var closingSoonThreshold = DateTime.UtcNow.Date.AddDays(14);
+            var closingSoonThreshold = _clock.UtcNow.Date.AddDays(14);
 
             baseQuery = filter switch
             {

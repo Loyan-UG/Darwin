@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.Billing;
@@ -15,8 +16,13 @@ namespace Darwin.Application.CRM.Queries
         private const int MaxPageSize = 200;
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetInvoicesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetInvoicesPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(List<InvoiceListItemDto> Items, int Total)> HandleAsync(
             int page,
@@ -42,7 +48,7 @@ namespace Darwin.Application.CRM.Queries
                       (x.PaymentId.HasValue && x.PaymentId.Value == guidQuery))));
             }
 
-            var todayUtc = DateTime.UtcNow.Date;
+            var todayUtc = _clock.UtcNow.Date;
             var dueSoonThresholdUtc = todayUtc.AddDays(7);
             baseQuery = filter switch
             {

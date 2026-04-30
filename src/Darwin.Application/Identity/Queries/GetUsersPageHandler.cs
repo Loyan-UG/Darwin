@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.Identity.DTOs;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,13 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetUsersPageHandler
     {
         private readonly IAppDbContext _db;
-        public GetUsersPageHandler(IAppDbContext db) => _db = db;
+        private readonly IClock _clock;
+
+        public GetUsersPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(IReadOnlyList<UserListItemDto> Items, int Total)> HandleAsync(
             int page, int pageSize, string? emailFilter, UserQueueFilter filter = UserQueueFilter.All, CancellationToken ct = default)
@@ -25,7 +32,7 @@ namespace Darwin.Application.Identity.Queries
                 .AsNoTracking()
                 .Where(u => !u.IsDeleted);
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             q = filter switch
             {
                 UserQueueFilter.Unconfirmed => q.Where(u => !u.EmailConfirmed),
@@ -71,8 +78,13 @@ namespace Darwin.Application.Identity.Queries
     public sealed class GetUserOpsSummaryHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetUserOpsSummaryHandler(IAppDbContext db) => _db = db;
+        public GetUserOpsSummaryHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<UserOpsSummaryDto> HandleAsync(CancellationToken ct = default)
         {
@@ -80,7 +92,7 @@ namespace Darwin.Application.Identity.Queries
                 .AsNoTracking()
                 .Where(u => !u.IsDeleted);
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             return new UserOpsSummaryDto
             {
                 TotalCount = await users.CountAsync(ct).ConfigureAwait(false),

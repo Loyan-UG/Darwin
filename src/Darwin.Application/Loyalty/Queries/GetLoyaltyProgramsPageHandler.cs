@@ -45,7 +45,7 @@ namespace Darwin.Application.Loyalty.Queries
                 LoyaltyProgramQueueFilter.Active => query.Where(x => x.IsActive),
                 LoyaltyProgramQueueFilter.Inactive => query.Where(x => !x.IsActive),
                 LoyaltyProgramQueueFilter.PerCurrencyUnit => query.Where(x => x.AccrualMode == LoyaltyAccrualMode.PerCurrencyUnit),
-                LoyaltyProgramQueueFilter.MissingRules => query.Where(x => x.RulesJson == null || x.RulesJson == string.Empty),
+                LoyaltyProgramQueueFilter.MissingRules => query.Where(x => x.RulesJson == null || x.RulesJson.Trim() == string.Empty),
                 _ => query
             };
 
@@ -79,14 +79,18 @@ namespace Darwin.Application.Loyalty.Queries
             if (businessId.HasValue)
                 query = query.Where(x => x.BusinessId == businessId.Value);
 
-            return new LoyaltyProgramOpsSummaryDto
-            {
-                TotalCount = await query.CountAsync(ct).ConfigureAwait(false),
-                ActiveCount = await query.CountAsync(x => x.IsActive, ct).ConfigureAwait(false),
-                InactiveCount = await query.CountAsync(x => !x.IsActive, ct).ConfigureAwait(false),
-                PerCurrencyUnitCount = await query.CountAsync(x => x.AccrualMode == LoyaltyAccrualMode.PerCurrencyUnit, ct).ConfigureAwait(false),
-                MissingRulesCount = await query.CountAsync(x => x.RulesJson == null || x.RulesJson == string.Empty, ct).ConfigureAwait(false)
-            };
+            return await query
+                .GroupBy(_ => 1)
+                .Select(g => new LoyaltyProgramOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    ActiveCount = g.Count(x => x.IsActive),
+                    InactiveCount = g.Count(x => !x.IsActive),
+                    PerCurrencyUnitCount = g.Count(x => x.AccrualMode == LoyaltyAccrualMode.PerCurrencyUnit),
+                    MissingRulesCount = g.Count(x => x.RulesJson == null || x.RulesJson.Trim() == string.Empty)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new LoyaltyProgramOpsSummaryDto();
         }
     }
 }

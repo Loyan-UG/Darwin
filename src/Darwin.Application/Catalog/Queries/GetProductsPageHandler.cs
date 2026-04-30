@@ -103,14 +103,18 @@ namespace Darwin.Application.Catalog.Queries
         {
             var products = _db.Set<Product>().AsNoTracking().Where(p => !p.IsDeleted);
 
-            return new ProductOpsSummaryDto
-            {
-                TotalCount = await products.CountAsync(ct),
-                InactiveCount = await products.CountAsync(p => !p.IsActive, ct),
-                HiddenCount = await products.CountAsync(p => !p.IsVisible, ct),
-                SingleVariantCount = await products.CountAsync(p => p.Variants.Count(v => !v.IsDeleted) == 1, ct),
-                ScheduledCount = await products.CountAsync(p => p.PublishStartUtc != null || p.PublishEndUtc != null, ct)
-            };
+            return await products
+                .GroupBy(_ => 1)
+                .Select(g => new ProductOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    InactiveCount = g.Count(p => !p.IsActive),
+                    HiddenCount = g.Count(p => !p.IsVisible),
+                    SingleVariantCount = g.Count(p => p.Variants.Count(v => !v.IsDeleted) == 1),
+                    ScheduledCount = g.Count(p => p.PublishStartUtc != null || p.PublishEndUtc != null)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new ProductOpsSummaryDto();
         }
     }
 }

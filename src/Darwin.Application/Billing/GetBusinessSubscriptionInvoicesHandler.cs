@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Enums;
@@ -18,10 +19,12 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
     private const int MaxPageSize = 200;
 
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
-    public GetBusinessSubscriptionInvoicesPageHandler(IAppDbContext db)
+    public GetBusinessSubscriptionInvoicesPageHandler(IAppDbContext db, IClock clock)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task<GetBusinessSubscriptionInvoicesPageDto> HandleAsync(
@@ -67,20 +70,24 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
                            PlanFeaturesJson = plan != null ? plan.FeaturesJson : null
                        };
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         invoices = filter switch
         {
             BusinessSubscriptionInvoiceQueueFilter.Open => invoices.Where(x => x.Status == SubscriptionInvoiceStatus.Open),
             BusinessSubscriptionInvoiceQueueFilter.Paid => invoices.Where(x => x.Status == SubscriptionInvoiceStatus.Paid),
             BusinessSubscriptionInvoiceQueueFilter.Draft => invoices.Where(x => x.Status == SubscriptionInvoiceStatus.Draft),
             BusinessSubscriptionInvoiceQueueFilter.Uncollectible => invoices.Where(x => x.Status == SubscriptionInvoiceStatus.Uncollectible),
-            BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing => invoices.Where(x => string.IsNullOrWhiteSpace(x.HostedInvoiceUrl)),
+            BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing => invoices.Where(x =>
+                x.HostedInvoiceUrl == null ||
+                x.HostedInvoiceUrl.Trim() == string.Empty),
             BusinessSubscriptionInvoiceQueueFilter.Stripe => invoices.Where(x => x.Provider == "Stripe"),
             BusinessSubscriptionInvoiceQueueFilter.Overdue => invoices.Where(x =>
                 x.Status == SubscriptionInvoiceStatus.Open &&
                 x.DueAtUtc.HasValue &&
                 x.DueAtUtc.Value < nowUtc),
-            BusinessSubscriptionInvoiceQueueFilter.PdfMissing => invoices.Where(x => string.IsNullOrWhiteSpace(x.PdfUrl)),
+            BusinessSubscriptionInvoiceQueueFilter.PdfMissing => invoices.Where(x =>
+                x.PdfUrl == null ||
+                x.PdfUrl.Trim() == string.Empty),
             _ => invoices
         };
 
@@ -121,7 +128,7 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
                     PaidAtUtc = x.PaidAtUtc,
                     HostedInvoiceUrl = x.HostedInvoiceUrl,
                     PdfUrl = x.PdfUrl,
-                    FailureReason = x.FailureReason,
+                    FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(x.FailureReason),
                     PlanName = x.PlanName is null
                         ? null
                         : BillingLocalizedTextResolver.ResolvePlanName(x.PlanName, x.PlanFeaturesJson, culture),
@@ -142,33 +149,43 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
 public sealed class GetBusinessSubscriptionInvoiceOpsSummaryHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
-    public GetBusinessSubscriptionInvoiceOpsSummaryHandler(IAppDbContext db)
+    public GetBusinessSubscriptionInvoiceOpsSummaryHandler(IAppDbContext db, IClock clock)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task<BusinessSubscriptionInvoiceOpsSummaryDto> HandleAsync(Guid businessId, CancellationToken ct = default)
     {
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var invoices = _db.Set<SubscriptionInvoice>()
             .AsNoTracking()
             .Where(x => !x.IsDeleted && x.BusinessId == businessId);
 
-        return new BusinessSubscriptionInvoiceOpsSummaryDto
-        {
-            TotalCount = await invoices.CountAsync(ct).ConfigureAwait(false),
-            OpenCount = await invoices.CountAsync(x => x.Status == SubscriptionInvoiceStatus.Open, ct).ConfigureAwait(false),
-            PaidCount = await invoices.CountAsync(x => x.Status == SubscriptionInvoiceStatus.Paid, ct).ConfigureAwait(false),
-            DraftCount = await invoices.CountAsync(x => x.Status == SubscriptionInvoiceStatus.Draft, ct).ConfigureAwait(false),
-            UncollectibleCount = await invoices.CountAsync(x => x.Status == SubscriptionInvoiceStatus.Uncollectible, ct).ConfigureAwait(false),
-            HostedLinkMissingCount = await invoices.CountAsync(x => x.HostedInvoiceUrl == null || x.HostedInvoiceUrl == string.Empty, ct).ConfigureAwait(false),
-            StripeCount = await invoices.CountAsync(x => x.Provider == "Stripe", ct).ConfigureAwait(false),
-            OverdueCount = await invoices.CountAsync(x =>
-                x.Status == SubscriptionInvoiceStatus.Open &&
-                x.DueAtUtc.HasValue &&
-                x.DueAtUtc.Value < nowUtc, ct).ConfigureAwait(false),
-            PdfMissingCount = await invoices.CountAsync(x => x.PdfUrl == null || x.PdfUrl == string.Empty, ct).ConfigureAwait(false)
-        };
+        return await invoices
+            .GroupBy(_ => 1)
+            .Select(g => new BusinessSubscriptionInvoiceOpsSummaryDto
+            {
+                TotalCount = g.Count(),
+                OpenCount = g.Count(x => x.Status == SubscriptionInvoiceStatus.Open),
+                PaidCount = g.Count(x => x.Status == SubscriptionInvoiceStatus.Paid),
+                DraftCount = g.Count(x => x.Status == SubscriptionInvoiceStatus.Draft),
+                UncollectibleCount = g.Count(x => x.Status == SubscriptionInvoiceStatus.Uncollectible),
+                HostedLinkMissingCount = g.Count(x =>
+                    x.HostedInvoiceUrl == null ||
+                    x.HostedInvoiceUrl.Trim() == string.Empty),
+                StripeCount = g.Count(x => x.Provider == "Stripe"),
+                OverdueCount = g.Count(x =>
+                    x.Status == SubscriptionInvoiceStatus.Open &&
+                    x.DueAtUtc.HasValue &&
+                    x.DueAtUtc.Value < nowUtc),
+                PdfMissingCount = g.Count(x =>
+                    x.PdfUrl == null ||
+                    x.PdfUrl.Trim() == string.Empty)
+            })
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false) ?? new BusinessSubscriptionInvoiceOpsSummaryDto();
     }
 }

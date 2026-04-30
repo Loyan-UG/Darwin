@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing.Queries;
+using Darwin.Application.Common;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
@@ -92,6 +93,11 @@ namespace Darwin.Application.Orders.Queries
                         refundTotals.TryGetValue(item.Id, out var refundedAmountMinor) ? refundedAmountMinor : 0L);
                     item.NetCapturedAmountMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(item.AmountMinor, item.RefundedAmountMinor);
                 }
+            }
+
+            foreach (var item in items)
+            {
+                item.FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(item.FailureReason);
             }
 
             return (items, total);

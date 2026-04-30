@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,13 @@ namespace Darwin.Application.Identity.Commands
     public sealed class DeleteRoleHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public DeleteRoleHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public DeleteRoleHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -44,7 +47,7 @@ namespace Darwin.Application.Identity.Commands
                 return Result.Fail(_localizer["ConcurrencyConflict"]);
 
             role.IsDeleted = true;
-            role.ModifiedAtUtc = DateTime.UtcNow;
+            role.ModifiedAtUtc = _clock.UtcNow;
 
             try
             {

@@ -5,7 +5,9 @@ using Darwin.Application.CartCheckout.Queries;
 using Darwin.Contracts.Cart;
 using Darwin.Application.Settings.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
@@ -15,9 +17,15 @@ namespace Darwin.WebApi.Controllers.Public;
 /// </summary>
 [ApiController]
 [AllowAnonymous]
+[EnableRateLimiting("public-storefront")]
+[RequestTimeout("public-storefront")]
 [Route("api/v1/public/cart")]
 public sealed class PublicCartController : ApiControllerBase
 {
+    private const int MaxCartRequestBytes = 32 * 1024;
+    private const int MaxSelectedAddOnValueIds = 50;
+    private const int MaxSelectedAddOnValueIdsJsonLength = 4096;
+
     private readonly ComputeCartSummaryHandler _computeCartSummaryHandler;
     private readonly GetCartSummaryHandler _getCartSummaryHandler;
     private readonly AddOrIncreaseCartItemHandler _addOrIncreaseCartItemHandler;
@@ -74,6 +82,7 @@ public sealed class PublicCartController : ApiControllerBase
     /// </summary>
     [HttpPost("items")]
     [HttpPost("/api/v1/cart/items")]
+    [RequestSizeLimit(MaxCartRequestBytes)]
     [ProducesResponseType(typeof(PublicCartSummary), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AddItemAsync([FromBody] PublicCartAddItemRequest? request, CancellationToken ct = default)
@@ -100,6 +109,15 @@ public sealed class PublicCartController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["QuantityMustBePositiveInteger"]);
         }
 
+        var selectedAddOnValueIds = request.SelectedAddOnValueIds
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToList();
+        if (selectedAddOnValueIds.Count > MaxSelectedAddOnValueIds)
+        {
+            return BadRequestProblem(_validationLocalizer["TooManySelectedAddOnValues"]);
+        }
+
         try
         {
             await _addOrIncreaseCartItemHandler.HandleAsync(new CartAddItemDto
@@ -111,15 +129,12 @@ public sealed class PublicCartController : ApiControllerBase
                 UnitPriceNetMinor = request.UnitPriceNetMinor,
                 VatRate = request.VatRate,
                 Currency = NormalizeNullable(request.Currency),
-                SelectedAddOnValueIds = request.SelectedAddOnValueIds
-                    .Where(id => id != Guid.Empty)
-                    .Distinct()
-                    .ToList()
+                SelectedAddOnValueIds = selectedAddOnValueIds
             }, ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["CartItemAddFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["CartItemAddFailed"]);
         }
 
         var summary = await _getCartSummaryHandler.HandleAsync(userId, normalizedAnonymousId, null, ct).ConfigureAwait(false);
@@ -131,6 +146,7 @@ public sealed class PublicCartController : ApiControllerBase
     /// </summary>
     [HttpPut("items")]
     [HttpPut("/api/v1/cart/items")]
+    [RequestSizeLimit(MaxCartRequestBytes)]
     [ProducesResponseType(typeof(PublicCartSummary), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateItemAsync([FromBody] PublicCartUpdateItemRequest? request, CancellationToken ct = default)
@@ -145,6 +161,12 @@ public sealed class PublicCartController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["CartIdAndVariantIdMustNotBeEmpty"]);
         }
 
+        var normalizedSelectedAddOnValueIdsJson = NormalizeNullable(request.SelectedAddOnValueIdsJson);
+        if (normalizedSelectedAddOnValueIdsJson?.Length > MaxSelectedAddOnValueIdsJsonLength)
+        {
+            return BadRequestProblem(_validationLocalizer["SelectedAddOnValueIdsJsonTooLong"]);
+        }
+
         try
         {
             await _updateCartItemQuantityHandler.HandleAsync(new CartUpdateQtyDto
@@ -152,12 +174,12 @@ public sealed class PublicCartController : ApiControllerBase
                 CartId = request.CartId,
                 VariantId = request.VariantId,
                 Quantity = request.Quantity,
-                SelectedAddOnValueIdsJson = NormalizeNullable(request.SelectedAddOnValueIdsJson)
+                SelectedAddOnValueIdsJson = normalizedSelectedAddOnValueIdsJson
             }, ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["CartItemUpdateFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["CartItemUpdateFailed"]);
         }
 
         return await ReloadCartAsync(request.CartId, ct).ConfigureAwait(false);
@@ -168,6 +190,7 @@ public sealed class PublicCartController : ApiControllerBase
     /// </summary>
     [HttpDelete("items")]
     [HttpDelete("/api/v1/cart/items")]
+    [RequestSizeLimit(MaxCartRequestBytes)]
     [ProducesResponseType(typeof(PublicCartSummary), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RemoveItemAsync([FromBody] PublicCartRemoveItemRequest? request, CancellationToken ct = default)
@@ -182,11 +205,17 @@ public sealed class PublicCartController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["CartIdAndVariantIdMustNotBeEmpty"]);
         }
 
+        var normalizedSelectedAddOnValueIdsJson = NormalizeNullable(request.SelectedAddOnValueIdsJson);
+        if (normalizedSelectedAddOnValueIdsJson?.Length > MaxSelectedAddOnValueIdsJsonLength)
+        {
+            return BadRequestProblem(_validationLocalizer["SelectedAddOnValueIdsJsonTooLong"]);
+        }
+
         await _removeCartItemHandler.HandleAsync(new CartRemoveItemDto
         {
             CartId = request.CartId,
             VariantId = request.VariantId,
-            SelectedAddOnValueIdsJson = NormalizeNullable(request.SelectedAddOnValueIdsJson)
+            SelectedAddOnValueIdsJson = normalizedSelectedAddOnValueIdsJson
         }, ct).ConfigureAwait(false);
 
         return await ReloadCartAsync(request.CartId, ct).ConfigureAwait(false);
@@ -197,6 +226,7 @@ public sealed class PublicCartController : ApiControllerBase
     /// </summary>
     [HttpPost("coupon")]
     [HttpPost("/api/v1/cart/coupon")]
+    [RequestSizeLimit(MaxCartRequestBytes)]
     [ProducesResponseType(typeof(PublicCartSummary), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ApplyCouponAsync([FromBody] PublicCartApplyCouponRequest? request, CancellationToken ct = default)
@@ -221,7 +251,7 @@ public sealed class PublicCartController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["CouponApplyFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["CouponApplyFailed"]);
         }
 
         return await ReloadCartAsync(request.CartId, ct).ConfigureAwait(false);

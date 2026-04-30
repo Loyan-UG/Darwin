@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Businesses;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,9 +11,9 @@ namespace Darwin.Application.Businesses.Commands
 {
     internal static class BusinessEngagementStatsHelper
     {
-        public static async Task<int> RecalculateAndGetLikeCountAsync(IAppDbContext db, Guid businessId, CancellationToken ct)
+        public static async Task<int> RecalculateAndGetLikeCountAsync(IAppDbContext db, IClock clock, Guid businessId, CancellationToken ct)
         {
-            await RecalculateAsync(db, businessId, ct).ConfigureAwait(false);
+            await RecalculateAsync(db, clock, businessId, ct).ConfigureAwait(false);
 
             return await db.Set<BusinessEngagementStats>()
                 .AsNoTracking()
@@ -22,9 +23,9 @@ namespace Darwin.Application.Businesses.Commands
                 .ConfigureAwait(false);
         }
 
-        public static async Task<int> RecalculateAndGetFavoriteCountAsync(IAppDbContext db, Guid businessId, CancellationToken ct)
+        public static async Task<int> RecalculateAndGetFavoriteCountAsync(IAppDbContext db, IClock clock, Guid businessId, CancellationToken ct)
         {
-            await RecalculateAsync(db, businessId, ct).ConfigureAwait(false);
+            await RecalculateAsync(db, clock, businessId, ct).ConfigureAwait(false);
 
             return await db.Set<BusinessEngagementStats>()
                 .AsNoTracking()
@@ -34,8 +35,10 @@ namespace Darwin.Application.Businesses.Commands
                 .ConfigureAwait(false);
         }
 
-        public static async Task RecalculateAsync(IAppDbContext db, Guid businessId, CancellationToken ct)
+        public static async Task RecalculateAsync(IAppDbContext db, IClock clock, Guid businessId, CancellationToken ct)
         {
+            ArgumentNullException.ThrowIfNull(clock);
+
             var stats = await db.Set<BusinessEngagementStats>()
                 .SingleOrDefaultAsync(x => x.BusinessId == businessId && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
@@ -71,7 +74,7 @@ namespace Darwin.Application.Businesses.Commands
                 .CountAsync(ct)
                 .ConfigureAwait(false);
 
-            stats.SetSnapshot(ratingCount, ratingSum, likeCount, favoriteCount, DateTime.UtcNow);
+            stats.SetSnapshot(ratingCount, ratingSum, likeCount, favoriteCount, clock.UtcNow);
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
         }
     }

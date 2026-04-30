@@ -347,7 +347,7 @@ public sealed partial class LoginViewModel : BaseViewModel
                 return AppResources.ServerUnreachableMessage;
             }
 
-            var hint = BuildNetworkDiagnosticHint(ex, apiOptions.BaseUrl, raw);
+            var hint = BuildNetworkDiagnosticHint(ex, apiOptions.BaseUrl);
             return $"{AppResources.ServerUnreachableMessage}\n{hint}";
         }
 
@@ -374,20 +374,29 @@ public sealed partial class LoginViewModel : BaseViewModel
                typeName.Contains("TaskCanceledException", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string BuildNetworkDiagnosticHint(Exception ex, string baseUrl, string rawMessage)
+    private static string BuildNetworkDiagnosticHint(Exception ex, string baseUrl)
     {
         var sb = new StringBuilder();
 
         sb.Append("Diagnostic hint: ");
         sb.Append($"Exception={ex.GetType().Name}; ");
-        sb.Append($"BaseUrl={baseUrl}; ");
-        sb.Append($"Message={rawMessage}");
+        sb.Append($"BaseUrl={FormatBaseUrlForDiagnostics(baseUrl)}");
 
         if (ex.InnerException is not null)
         {
-            sb.Append($"; Inner={ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
+            sb.Append($"; Inner={ex.InnerException.GetType().Name}");
         }
 
         return sb.ToString();
+    }
+
+    private static string FormatBaseUrlForDiagnostics(string baseUrl)
+    {
+        if (Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
+        {
+            return uri.GetLeftPart(UriPartial.Authority);
+        }
+
+        return string.IsNullOrWhiteSpace(baseUrl) ? "<empty>" : "<configured>";
     }
 }

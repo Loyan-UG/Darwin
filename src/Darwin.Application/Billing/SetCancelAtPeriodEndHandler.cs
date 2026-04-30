@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Shared.Results;
+using Darwin.Application.Abstractions.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using System;
@@ -15,11 +16,13 @@ namespace Darwin.Application.Billing;
 public sealed class SetCancelAtPeriodEndHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public SetCancelAtPeriodEndHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+    public SetCancelAtPeriodEndHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
@@ -59,7 +62,7 @@ public sealed class SetCancelAtPeriodEndHandler
         }
         else if (!entity.CanceledAtUtc.HasValue)
         {
-            entity.CanceledAtUtc = DateTime.UtcNow;
+            entity.CanceledAtUtc = _clock.UtcNow;
         }
 
         try

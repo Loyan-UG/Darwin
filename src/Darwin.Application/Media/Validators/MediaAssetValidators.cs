@@ -10,8 +10,8 @@ namespace Darwin.Application.CMS.Media.Validators
     {
         public MediaAssetCreateValidator()
         {
-            RuleFor(x => x.Url).NotEmpty().MaximumLength(2048);
-            RuleFor(x => x.OriginalFileName).NotEmpty().MaximumLength(512);
+            RuleFor(x => x.Url).NotEmpty().MaximumLength(1000);
+            RuleFor(x => x.OriginalFileName).NotEmpty().MaximumLength(260);
             RuleFor(x => x.Alt).MaximumLength(256);
             RuleFor(x => x.Title).MaximumLength(256).When(x => x.Title != null);
             RuleFor(x => x.SizeBytes).GreaterThanOrEqualTo(0);

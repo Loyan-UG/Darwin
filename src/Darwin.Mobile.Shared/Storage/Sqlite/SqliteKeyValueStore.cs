@@ -10,14 +10,19 @@ namespace Darwin.Mobile.Shared.Storage.Sqlite;
 /// </summary>
 public sealed class SqliteKeyValueStore : IKeyValueStore
 {
+    private const int MaxKeyLength = 200;
+    private const int MaxValueLength = 256 * 1024;
+
     private readonly LocalDatabase _database;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqliteKeyValueStore"/> class.
     /// </summary>
-    public SqliteKeyValueStore(LocalDatabase database)
+    public SqliteKeyValueStore(LocalDatabase database, TimeProvider timeProvider)
     {
         _database = database ?? throw new ArgumentNullException(nameof(database));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     /// <inheritdoc />
@@ -25,12 +30,15 @@ public sealed class SqliteKeyValueStore : IKeyValueStore
     {
         ct.ThrowIfCancellationRequested();
 
+        var normalizedKey = NormalizeKey(key);
+        var normalizedValue = NormalizeValue(value);
+
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
         await connection.InsertOrReplaceAsync(new KeyValueRecord
         {
-            Key = key,
-            Value = value,
-            UpdatedAtUtc = DateTime.UtcNow
+            Key = normalizedKey,
+            Value = normalizedValue,
+            UpdatedAtUtc = _timeProvider.GetUtcNow().UtcDateTime
         }).ConfigureAwait(false);
     }
 
@@ -39,9 +47,11 @@ public sealed class SqliteKeyValueStore : IKeyValueStore
     {
         ct.ThrowIfCancellationRequested();
 
+        var normalizedKey = NormalizeKey(key);
+
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
         var record = await connection.Table<KeyValueRecord>()
-            .Where(x => x.Key == key)
+            .Where(x => x.Key == normalizedKey)
             .FirstOrDefaultAsync()
             .ConfigureAwait(false);
 
@@ -53,7 +63,40 @@ public sealed class SqliteKeyValueStore : IKeyValueStore
     {
         ct.ThrowIfCancellationRequested();
 
+        var normalizedKey = NormalizeKey(key);
+
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
-        await connection.DeleteAsync<KeyValueRecord>(key).ConfigureAwait(false);
+        await connection.DeleteAsync<KeyValueRecord>(normalizedKey).ConfigureAwait(false);
+    }
+
+    private static string NormalizeKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ArgumentException("Key is required.", nameof(key));
+        }
+
+        var normalized = key.Trim();
+        if (normalized.Length > MaxKeyLength)
+        {
+            throw new ArgumentException($"Key cannot exceed {MaxKeyLength} characters.", nameof(key));
+        }
+
+        return normalized;
+    }
+
+    private static string NormalizeValue(string value)
+    {
+        if (value is null)
+        {
+            throw new ArgumentNullException(nameof(value));
+        }
+
+        if (value.Length > MaxValueLength)
+        {
+            throw new ArgumentException($"Value cannot exceed {MaxValueLength} characters.", nameof(value));
+        }
+
+        return value;
     }
 }

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Infrastructure.Notifications;
@@ -21,15 +22,18 @@ public sealed class ProviderBackedSmsSender : ISmsSender
     private readonly IAppDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ProviderBackedSmsSender> _logger;
+    private readonly IClock _clock;
 
     public ProviderBackedSmsSender(
         IAppDbContext db,
         IHttpClientFactory httpClientFactory,
-        ILogger<ProviderBackedSmsSender> logger)
+        ILogger<ProviderBackedSmsSender> logger,
+        IClock clock)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task SendAsync(
@@ -41,7 +45,7 @@ public sealed class ProviderBackedSmsSender : ISmsSender
         if (string.IsNullOrWhiteSpace(toPhoneE164)) throw new ArgumentNullException(nameof(toPhoneE164));
         if (string.IsNullOrWhiteSpace(text)) throw new ArgumentNullException(nameof(text));
         var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
-        var pendingDuplicateCutoffUtc = DateTime.UtcNow.AddMinutes(-15);
+        var pendingDuplicateCutoffUtc = _clock.UtcNow.AddMinutes(-15);
         if (!string.IsNullOrWhiteSpace(correlationKey) &&
             await _db.Set<ChannelDispatchAudit>()
                 .AsNoTracking()
@@ -76,7 +80,7 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             throw new InvalidOperationException("Twilio SMS settings are incomplete.");
         }
 
-        var attemptedAtUtc = DateTime.UtcNow;
+        var attemptedAtUtc = _clock.UtcNow;
         var audit = new ChannelDispatchAudit
         {
             Channel = "SMS",
@@ -136,19 +140,22 @@ public sealed class ProviderBackedSmsSender : ISmsSender
             var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var completedAtUtc = DateTime.UtcNow;
+                var completedAtUtc = _clock.UtcNow;
                 audit.Status = "Failed";
                 audit.CompletedAtUtc = completedAtUtc;
-                audit.FailureMessage = BuildFailure(body);
+                audit.FailureMessage = NotificationLogSanitizer.ProviderFailure("Twilio SMS", (int)response.StatusCode);
                 await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMS dispatch audit provider failure", ct)
                     .ConfigureAwait(false);
-                _logger.LogError("Twilio SMS send failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
+                _logger.LogError(
+                    "Twilio SMS send failed with status {StatusCode} for recipient {Recipient}.",
+                    (int)response.StatusCode,
+                    NotificationLogSanitizer.MaskPhone(toPhoneE164));
                 throw new InvalidOperationException("SMS send failed.");
             }
 
             audit.ProviderMessageId = ExtractProviderMessageId(body);
             audit.Status = "Sent";
-            audit.CompletedAtUtc = DateTime.UtcNow;
+            audit.CompletedAtUtc = _clock.UtcNow;
             await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMS dispatch audit completion", ct)
                 .ConfigureAwait(false);
         }
@@ -158,10 +165,10 @@ public sealed class ProviderBackedSmsSender : ISmsSender
         }
         catch (Exception ex) when (audit.Status == "Pending")
         {
-            var completedAtUtc = DateTime.UtcNow;
+            var completedAtUtc = _clock.UtcNow;
             audit.Status = "Failed";
             audit.CompletedAtUtc = completedAtUtc;
-            audit.FailureMessage = BuildFailure(ex.Message);
+            audit.FailureMessage = NotificationLogSanitizer.TransportFailure("Twilio SMS");
             await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMS dispatch audit transport failure", ct)
                 .ConfigureAwait(false);
             _logger.LogError(ex, "Twilio SMS send failed before receiving a provider response.");
@@ -173,12 +180,6 @@ public sealed class ProviderBackedSmsSender : ISmsSender
     {
         var value = string.IsNullOrWhiteSpace(text) ? string.Empty : text.Trim();
         return value.Length <= 240 ? value : value[..240];
-    }
-
-    private static string BuildFailure(string body)
-    {
-        var value = string.IsNullOrWhiteSpace(body) ? "SMS send failed." : body.Trim();
-        return value.Length <= 2000 ? value : value[..2000];
     }
 
     private static string? ExtractProviderMessageId(string body)

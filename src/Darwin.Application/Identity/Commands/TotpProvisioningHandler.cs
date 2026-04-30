@@ -8,6 +8,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Services;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -20,11 +21,16 @@ namespace Darwin.Application.Identity.Commands
     public sealed class TotpProvisioningHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IValidator<TotpProvisionDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public TotpProvisioningHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public TotpProvisioningHandler(
+            IAppDbContext db,
+            IValidator<TotpProvisionDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -33,6 +39,8 @@ namespace Darwin.Application.Identity.Commands
         /// </summary>
         public async Task<Result<TotpProvisionResult>> HandleAsync(TotpProvisionDto dto, CancellationToken ct = default)
         {
+            await _validator.ValidateAndThrowAsync(dto, ct);
+
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
             if (user is null) return Result<TotpProvisionResult>.Fail(_localizer["UserNotFound"]);
 

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Billing;
-using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,12 @@ namespace Darwin.Application.Orders.Queries
         private const int MaxPageSize = 200;
 
         private readonly IAppDbContext _db;
-        public GetOrderShipmentsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        private readonly IClock _clock;
+        public GetOrderShipmentsPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         /// <summary>
         /// Executes a paged query over shipments of a given order.
@@ -41,7 +46,7 @@ namespace Darwin.Application.Orders.Queries
             if (attentionDelayHours < 1) attentionDelayHours = 24;
             if (trackingGraceHours < 1) trackingGraceHours = 12;
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var handoffThresholdUtc = nowUtc.AddHours(-attentionDelayHours);
             var trackingThresholdUtc = nowUtc.AddHours(-trackingGraceHours);
 
@@ -68,6 +73,25 @@ namespace Darwin.Application.Orders.Queries
             };
             var total = await baseQuery.CountAsync(ct);
 
+            var orderContext = await _db.Set<Order>()
+                .AsNoTracking()
+                .Where(o => o.Id == orderId && !o.IsDeleted)
+                .Select(o => new
+                {
+                    o.OrderNumber,
+                    DefaultRefundPaymentId = _db.Set<Payment>()
+                        .Where(p => p.OrderId == o.Id &&
+                            !p.IsDeleted &&
+                            (p.Status == PaymentStatus.Captured ||
+                             p.Status == PaymentStatus.Completed ||
+                             p.Status == PaymentStatus.Refunded))
+                        .OrderByDescending(p => p.PaidAtUtc ?? DateTime.MinValue)
+                        .Select(p => (Guid?)p.Id)
+                        .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false);
+
             var items = await baseQuery
                 .OrderByDescending(s => s.CreatedAtUtc)
                 .Skip((page - 1) * pageSize).Take(pageSize)
@@ -75,10 +99,7 @@ namespace Darwin.Application.Orders.Queries
                 {
                     Id = s.Id,
                     OrderId = s.OrderId,
-                    OrderNumber = _db.Set<Order>()
-                        .Where(o => o.Id == s.OrderId && !o.IsDeleted)
-                        .Select(o => o.OrderNumber)
-                        .FirstOrDefault() ?? string.Empty,
+                    OrderNumber = string.Empty,
                     Carrier = s.Carrier,
                     Service = s.Service,
                     ProviderShipmentReference = s.ProviderShipmentReference,
@@ -103,53 +124,24 @@ namespace Darwin.Application.Orders.Queries
                     LastCarrierEventKey = s.LastCarrierEventKey,
                     AttentionDelayHours = attentionDelayHours,
                     TrackingGraceHours = trackingGraceHours,
-                    DefaultRefundPaymentId = _db.Set<Payment>()
-                        .Where(p => p.OrderId == s.OrderId &&
-                            !p.IsDeleted &&
-                            (p.Status == PaymentStatus.Captured ||
-                             p.Status == PaymentStatus.Completed ||
-                             p.Status == PaymentStatus.Refunded))
-                        .OrderByDescending(p => p.PaidAtUtc ?? DateTime.MinValue)
-                        .Select(p => (Guid?)p.Id)
-                        .FirstOrDefault(),
+                    DefaultRefundPaymentId = null,
                     NeedsCarrierReview =
                         s.Carrier == "DHL" &&
                         ((s.Service == null || s.Service == string.Empty) ||
                          s.Status == Domain.Enums.ShipmentStatus.Returned ||
                          ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                           (s.TrackingNumber == null || s.TrackingNumber == string.Empty))),
-                    ProviderOperationQueued =
-                        _db.Set<ShipmentProviderOperation>().Any(op =>
-                            op.ShipmentId == s.Id &&
-                            !op.IsDeleted &&
-                            op.Provider == "DHL" &&
-                            op.Status == "Pending"),
-                    ProviderOperationFailed =
-                        _db.Set<ShipmentProviderOperation>().Any(op =>
-                            op.ShipmentId == s.Id &&
-                            !op.IsDeleted &&
-                            op.Provider == "DHL" &&
-                            op.Status == "Failed"),
-                    ProviderOperationType = _db.Set<ShipmentProviderOperation>()
-                        .Where(op => op.ShipmentId == s.Id &&
-                                     !op.IsDeleted &&
-                                     op.Provider == "DHL" &&
-                                     (op.Status == "Pending" || op.Status == "Failed"))
-                        .OrderByDescending(op => op.LastAttemptAtUtc ?? op.CreatedAtUtc)
-                        .Select(op => op.OperationType)
-                        .FirstOrDefault(),
-                    ProviderOperationFailureReason = _db.Set<ShipmentProviderOperation>()
-                        .Where(op => op.ShipmentId == s.Id &&
-                                     !op.IsDeleted &&
-                                     op.Provider == "DHL" &&
-                                     op.Status == "Failed")
-                        .OrderByDescending(op => op.LastAttemptAtUtc ?? op.CreatedAtUtc)
-                        .Select(op => op.FailureReason)
-                        .FirstOrDefault(),
                     RowVersion = s.RowVersion
                 })
                 .ToListAsync(ct);
 
+            foreach (var item in items)
+            {
+                item.OrderNumber = orderContext?.OrderNumber ?? string.Empty;
+                item.DefaultRefundPaymentId = orderContext?.DefaultRefundPaymentId;
+            }
+
+            await ShipmentListItemEnrichment.PopulateProviderOperationStateAsync(_db, items, ct).ConfigureAwait(false);
             await ShipmentCarrierEventProjection.PopulateRecentEventsAsync(_db, items, 3, ct).ConfigureAwait(false);
 
             foreach (var item in items)

@@ -114,7 +114,7 @@ namespace Darwin.Application.CRM.Queries
             {
                 CustomerSegmentQueueFilter.Empty => baseQuery.Where(x => x.Memberships.Count(membership => !membership.IsDeleted) == 0),
                 CustomerSegmentQueueFilter.InUse => baseQuery.Where(x => x.Memberships.Count(membership => !membership.IsDeleted) > 0),
-                CustomerSegmentQueueFilter.MissingDescription => baseQuery.Where(x => x.Description == null || x.Description == string.Empty),
+                CustomerSegmentQueueFilter.MissingDescription => baseQuery.Where(x => x.Description == null || x.Description.Trim() == string.Empty),
                 _ => baseQuery
             };
 
@@ -129,7 +129,7 @@ namespace Darwin.Application.CRM.Queries
                     Name = x.Name,
                     Description = x.Description,
                     MemberCount = x.Memberships.Count(membership => !membership.IsDeleted),
-                    HasDescription = x.Description != null && x.Description != string.Empty,
+                    HasDescription = x.Description != null && x.Description.Trim() != string.Empty,
                     CreatedAtUtc = x.CreatedAtUtc,
                     RowVersion = x.RowVersion
                 })
@@ -143,13 +143,17 @@ namespace Darwin.Application.CRM.Queries
         {
             var baseQuery = _db.Set<CustomerSegment>().AsNoTracking().Where(x => !x.IsDeleted);
 
-            return new CustomerSegmentOpsSummaryDto
-            {
-                TotalCount = await baseQuery.CountAsync(ct).ConfigureAwait(false),
-                EmptyCount = await baseQuery.CountAsync(x => x.Memberships.Count(membership => !membership.IsDeleted) == 0, ct).ConfigureAwait(false),
-                InUseCount = await baseQuery.CountAsync(x => x.Memberships.Count(membership => !membership.IsDeleted) > 0, ct).ConfigureAwait(false),
-                MissingDescriptionCount = await baseQuery.CountAsync(x => x.Description == null || x.Description == string.Empty, ct).ConfigureAwait(false)
-            };
+            return await baseQuery
+                .GroupBy(_ => 1)
+                .Select(g => new CustomerSegmentOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    EmptyCount = g.Count(x => x.Memberships.Count(membership => !membership.IsDeleted) == 0),
+                    InUseCount = g.Count(x => x.Memberships.Count(membership => !membership.IsDeleted) > 0),
+                    MissingDescriptionCount = g.Count(x => x.Description == null || x.Description.Trim() == string.Empty)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new CustomerSegmentOpsSummaryDto();
         }
     }
 

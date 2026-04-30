@@ -5,12 +5,15 @@ using Darwin.Application.Identity.Queries;
 using Darwin.Contracts.Identity;
 using Darwin.Shared.Results;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Security.Cryptography;
 using System.Security.Claims;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,6 +29,9 @@ namespace Darwin.WebApi.Controllers
     [Route("api/v1/member/auth")]
     public sealed class AuthController : ApiControllerBase
     {
+        private const int MaxAuthRequestBytes = 16 * 1024;
+        private const int MaxTokenRequestBytes = 32 * 1024;
+
         private readonly LoginWithPasswordHandler _loginWithPassword;
         private readonly RefreshTokenHandler _refresh;
         private readonly RevokeRefreshTokensHandler _revoke;
@@ -84,6 +90,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/login")]
         [AllowAnonymous]
         [EnableRateLimiting("auth-login")]
+        [RequestSizeLimit(MaxAuthRequestBytes)]
         public async Task<IActionResult> LoginAsync(
             [FromBody] PasswordLoginRequest? request,
             CancellationToken ct)
@@ -111,9 +118,9 @@ namespace Darwin.WebApi.Controllers
                 var authResult = result.Value;
 
                 _logger.LogInformation(
-                    "Login succeeded for user. UserId={UserId}, Email={Email}, Ip={Ip}",
+                    "Login succeeded for user. UserId={UserId}, EmailFingerprint={EmailFingerprint}, Ip={Ip}",
                     authResult.UserId,
-                    authResult.Email,
+                    Fingerprint(authResult.Email),
                     GetClientIp());
 
                 var tokenResponse = MapToTokenResponse(authResult);
@@ -121,12 +128,12 @@ namespace Darwin.WebApi.Controllers
             }
 
             _logger.LogWarning(
-                "Login failed. Email={Email}, Ip={Ip}, Error={Error}",
-                dto.Email,
+                "Login failed. EmailFingerprint={EmailFingerprint}, Ip={Ip}, Error={Error}",
+                Fingerprint(dto.Email),
                 GetClientIp(),
                 result.Error ?? "Unknown error");
 
-            return ProblemFromResult(result);
+            return ProblemFromResult(result, exposeDetail: false);
         }
 
 
@@ -140,6 +147,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("/api/v1/auth/refresh")]
         [AllowAnonymous]
         [EnableRateLimiting("auth-refresh")]
+        [RequestSizeLimit(MaxTokenRequestBytes)]
         public async Task<IActionResult> RefreshAsync(
             [FromBody] RefreshTokenRequest? request,
             CancellationToken ct)
@@ -157,30 +165,30 @@ namespace Darwin.WebApi.Controllers
             };
 
             var result = await _refresh.HandleAsync(dto, ct);
-            var tokenSuffix = GetRefreshTokenSuffix(dto.RefreshToken);
+            var tokenFingerprint = Fingerprint(dto.RefreshToken);
 
             if (result.Succeeded && result.Value is not null)
             {
                 var authResult = result.Value;
 
                 _logger.LogInformation(
-                    "Token refresh succeeded. UserId={UserId}, Email={Email}, Ip={Ip}, TokenSuffix={TokenSuffix}",
+                    "Token refresh succeeded. UserId={UserId}, EmailFingerprint={EmailFingerprint}, Ip={Ip}, TokenFingerprint={TokenFingerprint}",
                     authResult.UserId,
-                    authResult.Email,
+                    Fingerprint(authResult.Email),
                     GetClientIp(),
-                    tokenSuffix);
+                    tokenFingerprint);
 
                 var tokenResponse = MapToTokenResponse(authResult);
                 return Ok(tokenResponse);
             }
 
             _logger.LogWarning(
-                "Token refresh failed. Ip={Ip}, TokenSuffix={TokenSuffix}, Error={Error}",
+                "Token refresh failed. Ip={Ip}, TokenFingerprint={TokenFingerprint}, Error={Error}",
                 GetClientIp(),
-                tokenSuffix,
+                tokenFingerprint,
                 result.Error ?? "Unknown error");
 
-            return ProblemFromResult(result);
+            return ProblemFromResult(result, exposeDetail: false);
         }
 
 
@@ -192,6 +200,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("logout")]
         [HttpPost("/api/v1/auth/logout")]
         [Authorize]
+        [RequestSizeLimit(MaxTokenRequestBytes)]
         public async Task<IActionResult> LogoutAsync(
             [FromBody] LogoutRequest? request,
             CancellationToken ct)
@@ -211,27 +220,27 @@ namespace Darwin.WebApi.Controllers
             var result = await _revoke.HandleAsync(dto, ct);
 
             var userId = GetUserIdFromClaims(HttpContext.User);
-            var tokenSuffix = GetRefreshTokenSuffix(dto.RefreshToken);
+            var tokenFingerprint = Fingerprint(dto.RefreshToken);
 
             if (result.Succeeded)
             {
                 _logger.LogInformation(
-                    "Logout succeeded. UserId={UserId}, Ip={Ip}, TokenSuffix={TokenSuffix}",
+                    "Logout succeeded. UserId={UserId}, Ip={Ip}, TokenFingerprint={TokenFingerprint}",
                     FormatUserId(userId),
                     GetClientIp(),
-                    tokenSuffix);
+                    tokenFingerprint);
 
                 return Ok();
             }
 
             _logger.LogWarning(
-                "Logout failed. UserId={UserId}, Ip={Ip}, TokenSuffix={TokenSuffix}, Error={Error}",
+                "Logout failed. UserId={UserId}, Ip={Ip}, TokenFingerprint={TokenFingerprint}, Error={Error}",
                 FormatUserId(userId),
                 GetClientIp(),
-                tokenSuffix,
+                tokenFingerprint,
                 result.Error ?? "Unknown error");
 
-            return ProblemFromResult(result);
+            return ProblemFromResult(result, exposeDetail: false);
         }
 
 
@@ -287,7 +296,7 @@ namespace Darwin.WebApi.Controllers
                 GetClientIp(),
                 result.Error ?? "Unknown error");
 
-            return ProblemFromResult(result);
+            return ProblemFromResult(result, exposeDetail: false);
         }
 
 
@@ -297,6 +306,9 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("register")]
         [HttpPost("/api/v1/auth/register")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
+        [RequestTimeout("auth-sensitive")]
+        [RequestSizeLimit(MaxAuthRequestBytes)]
         public async Task<IActionResult> RegisterAsync(
             [FromBody] RegisterRequest? request,
             CancellationToken ct)
@@ -353,7 +365,10 @@ namespace Darwin.WebApi.Controllers
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to send confirmation email for newly registered user {Email}.", dto.Email);
+                    _logger.LogError(
+                        ex,
+                        "Failed to send confirmation email for newly registered user. EmailFingerprint={EmailFingerprint}",
+                        Fingerprint(dto.Email));
                 }
 
                 var response = new RegisterResponse
@@ -364,7 +379,7 @@ namespace Darwin.WebApi.Controllers
                 return Ok(response);
             }
 
-            return ProblemFromResult(result);
+            return ProblemFromResult(result, exposeDetail: false);
         }
 
 
@@ -374,6 +389,7 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("password/change")]
         [HttpPost("/api/v1/auth/password/change")]
         [Authorize]
+        [RequestSizeLimit(MaxAuthRequestBytes)]
         public async Task<IActionResult> ChangePasswordAsync(
             [FromBody] ChangePasswordRequest? request,
             CancellationToken ct)
@@ -412,7 +428,7 @@ namespace Darwin.WebApi.Controllers
                 return Ok();
             }
 
-            return ProblemFromResult(result);
+            return ProblemFromResult(result, exposeDetail: false);
         }
 
 
@@ -422,6 +438,9 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("email/request-confirmation")]
         [HttpPost("/api/v1/auth/email/request-confirmation")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
+        [RequestTimeout("auth-sensitive")]
+        [RequestSizeLimit(MaxAuthRequestBytes)]
         public async Task<IActionResult> RequestEmailConfirmationAsync(
             [FromBody] RequestEmailConfirmationRequest? request,
             CancellationToken ct)
@@ -442,7 +461,10 @@ namespace Darwin.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing email confirmation request for email {Email}", request.Email);
+                _logger.LogError(
+                    ex,
+                    "Error processing email confirmation request. EmailFingerprint={EmailFingerprint}",
+                    Fingerprint(request.Email));
             }
 
             return Ok();
@@ -454,6 +476,9 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("email/confirm")]
         [HttpPost("/api/v1/auth/email/confirm")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
+        [RequestTimeout("auth-sensitive")]
+        [RequestSizeLimit(MaxTokenRequestBytes)]
         public async Task<IActionResult> ConfirmEmailAsync(
             [FromBody] ConfirmEmailRequest? request,
             CancellationToken ct)
@@ -476,7 +501,7 @@ namespace Darwin.WebApi.Controllers
                 return Ok();
             }
 
-            return ProblemFromResult(result);
+            return ProblemFromResult(result, exposeDetail: false);
         }
 
         /// <summary>
@@ -485,6 +510,9 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("password/request-reset")]
         [HttpPost("/api/v1/auth/password/request-reset")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
+        [RequestTimeout("auth-sensitive")]
+        [RequestSizeLimit(MaxAuthRequestBytes)]
         public async Task<IActionResult> RequestPasswordResetAsync(
             [FromBody] RequestPasswordResetRequest? request,
             CancellationToken ct)
@@ -505,7 +533,10 @@ namespace Darwin.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing password reset request for email {Email}", dto.Email);
+                _logger.LogError(
+                    ex,
+                    "Error processing password reset request. EmailFingerprint={EmailFingerprint}",
+                    Fingerprint(dto.Email));
             }
             return Ok();
         }
@@ -518,6 +549,9 @@ namespace Darwin.WebApi.Controllers
         [HttpPost("password/reset")]
         [HttpPost("/api/v1/auth/password/reset")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
+        [RequestTimeout("auth-sensitive")]
+        [RequestSizeLimit(MaxTokenRequestBytes)]
         public async Task<IActionResult> ResetPasswordAsync(
             [FromBody] ResetPasswordRequest? request,
             CancellationToken ct)
@@ -539,7 +573,7 @@ namespace Darwin.WebApi.Controllers
             {
                 return Ok();
             }
-            return ProblemFromResult(result);
+            return ProblemFromResult(result, exposeDetail: false);
         }
 
 
@@ -594,16 +628,38 @@ namespace Darwin.WebApi.Controllers
         /// <typeparam name="T">Wrapped value type.</typeparam>
         /// <param name="result">Result returned from the Application layer.</param>
         /// <returns>HTTP response with RFC-7807 style problem details.</returns>
-        private IActionResult ProblemFromResult<T>(Result<T> result)
+        private IActionResult ProblemFromResult<T>(Result<T> result, bool exposeDetail = true)
         {
             var status = 400;
             var fallbackMessage = _validationLocalizer["OperationFailed"];
+            var detail = exposeDetail && !string.IsNullOrWhiteSpace(result.Error)
+                ? result.Error
+                : fallbackMessage;
 
             var problem = new Darwin.Contracts.Common.ProblemDetails
             {
                 Status = status,
                 Title = fallbackMessage,
-                Detail = result.Error ?? fallbackMessage,
+                Detail = detail,
+                Instance = HttpContext.Request?.Path.Value
+            };
+
+            return StatusCode(problem.Status != 0 ? problem.Status : 400, problem);
+        }
+
+        private IActionResult ProblemFromResult(Result result, bool exposeDetail = true)
+        {
+            var status = 400;
+            var fallbackMessage = _validationLocalizer["OperationFailed"];
+            var detail = exposeDetail && !string.IsNullOrWhiteSpace(result.Error)
+                ? result.Error
+                : fallbackMessage;
+
+            var problem = new Darwin.Contracts.Common.ProblemDetails
+            {
+                Status = status,
+                Title = fallbackMessage,
+                Detail = detail,
                 Instance = HttpContext.Request?.Path.Value
             };
 
@@ -621,7 +677,7 @@ namespace Darwin.WebApi.Controllers
         {
             var normalizedEmail = (email ?? string.Empty).Trim().ToUpperInvariant();
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            return $"{normalizedEmail}|{ip}";
+            return $"{Fingerprint(normalizedEmail)}|{ip}";
         }
 
         private static string? NormalizeText(string? value)
@@ -648,26 +704,14 @@ namespace Darwin.WebApi.Controllers
             return userId.HasValue ? userId.Value.ToString() : "unknown";
         }
 
-        /// <summary>
-        /// Produces a safe suffix representation of a refresh token for logging and correlation.
-        /// The full token is never written to logs.
-        /// </summary>
-        /// <param name="token">Original refresh token value.</param>
-        /// <returns>Suffix of the token or "null" when the input is not provided.</returns>
-        private static string GetRefreshTokenSuffix(string? token)
+        private static string Fingerprint(string? value)
         {
-            if (string.IsNullOrWhiteSpace(token))
+            if (string.IsNullOrWhiteSpace(value))
             {
                 return "null";
             }
 
-            var trimmed = token.Trim();
-            if (trimmed.Length <= 6)
-            {
-                return trimmed;
-            }
-
-            return trimmed[^6..];
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value.Trim()))).ToLowerInvariant();
         }
 
     }

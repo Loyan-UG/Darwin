@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Billing;
@@ -22,6 +23,7 @@ namespace Darwin.Application.Orders.Commands
     public sealed class AddPaymentHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IValidator<PaymentCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
@@ -30,10 +32,12 @@ namespace Darwin.Application.Orders.Commands
         /// </summary>
         public AddPaymentHandler(
             IAppDbContext db,
+            IClock clock,
             IValidator<PaymentCreateDto> validator,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
@@ -66,7 +70,7 @@ namespace Darwin.Application.Orders.Commands
             if (dto.Status is PaymentStatus.Refunded or PaymentStatus.Voided)
                 throw new ValidationException(_localizer["PaymentCreateStatusInvalid"]);
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
 
             // Map to domain entity.
             var payment = new Payment

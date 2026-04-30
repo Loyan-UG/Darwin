@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Shared.Results;
@@ -15,15 +16,18 @@ namespace Darwin.Application.Businesses.Commands
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public UpsertBusinessReviewHandler(
             IAppDbContext db,
             ICurrentUserService currentUser,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -54,7 +58,7 @@ namespace Darwin.Application.Businesses.Commands
             }
 
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
-            await BusinessEngagementStatsHelper.RecalculateAsync(_db, businessId, ct).ConfigureAwait(false);
+            await BusinessEngagementStatsHelper.RecalculateAsync(_db, _clock, businessId, ct).ConfigureAwait(false);
 
             return Result.Ok();
         }

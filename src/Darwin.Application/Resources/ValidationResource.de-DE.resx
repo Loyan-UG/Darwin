@@ -222,6 +222,9 @@
   <data name="PageMustBePositiveInteger" xml:space="preserve">
     <value>Page muss eine positive ganze Zahl sein.</value>
   </data>
+  <data name="PageMustBeBetween1And10000" xml:space="preserve">
+    <value>Page muss zwischen 1 und 10000 liegen.</value>
+  </data>
   <data name="PageSizeMustBeBetween1And200" xml:space="preserve">
     <value>PageSize muss zwischen 1 und 200 liegen.</value>
   </data>
@@ -708,6 +711,24 @@
   <data name="SelectedAddOnValuesDoNotBelongToApplicableGroups" xml:space="preserve">
     <value>Eine oder mehrere ausgewaehlte Add-on-Werte gehoeren nicht zu den anwendbaren Gruppen.</value>
   </data>
+  <data name="TooManySelectedAddOnValues" xml:space="preserve">
+    <value>Zu viele ausgewaehlte Add-on-Werte.</value>
+  </data>
+  <data name="SelectedAddOnValueIdsJsonTooLong" xml:space="preserve">
+    <value>Der Auswahl-Schluessel fuer Add-on-Werte ist zu lang.</value>
+  </data>
+  <data name="StorefrontCheckoutReferenceTooLong" xml:space="preserve">
+    <value>Die Storefront-Checkout-Referenz ist zu lang.</value>
+  </data>
+  <data name="StorefrontCheckoutFailureReasonTooLong" xml:space="preserve">
+    <value>Der Fehlergrund fuer den Storefront-Checkout ist zu lang.</value>
+  </data>
+  <data name="StorefrontCheckoutAddressFieldTooLong" xml:space="preserve">
+    <value>Die Storefront-Checkout-Adresse enthaelt ein zu langes Feld.</value>
+  </data>
+  <data name="StorefrontCheckoutAddressCountryCodeInvalid" xml:space="preserve">
+    <value>Der Laendercode der Storefront-Checkout-Adresse muss 2 Zeichen lang sein.</value>
+  </data>
   <data name="AddOnGroupRequiresMinimumSelections" xml:space="preserve">
     <value>Die Add-on-Gruppe '{0}' erfordert mindestens {1} Auswahl(en).</value>
   </data>
@@ -904,6 +925,12 @@
   </data>
   <data name="ShippingOptionsCouldNotBeCalculated" xml:space="preserve">
     <value>Versandoptionen konnten nicht berechnet werden.</value>
+  </data>
+  <data name="ShippingRateCountryCodeInvalid" xml:space="preserve">
+    <value>Das Versandziel muss ein 2-stelliger Laendercode sein.</value>
+  </data>
+  <data name="ShippingRateCurrencyCodeInvalid" xml:space="preserve">
+    <value>Die Versandwaehrung muss ein 3-stelliger Waehrungscode sein.</value>
   </data>
   <data name="InactiveReminderOutcomeInvalid" xml:space="preserve">
     <value>Das Ergebnis muss einer der folgenden Werte sein: Sent, Failed, Suppressed.</value>

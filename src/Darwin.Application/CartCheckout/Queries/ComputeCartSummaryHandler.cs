@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CartCheckout.DTOs;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Pricing;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
@@ -31,11 +32,13 @@ namespace Darwin.Application.CartCheckout.Queries
     public sealed class ComputeCartSummaryHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ComputeCartSummaryHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public ComputeCartSummaryHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -215,7 +218,7 @@ namespace Darwin.Application.CartCheckout.Queries
             // Apply promotion if any
             if (!string.IsNullOrWhiteSpace(cart.CouponCode))
             {
-                var now = DateTime.UtcNow;
+                var now = _clock.UtcNow;
                 var normalizedCode = CouponEligibility.NormalizeCode(cart.CouponCode);
                 var promo = await _db.Set<Promotion>()
                     .AsNoTracking()

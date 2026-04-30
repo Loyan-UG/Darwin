@@ -26,6 +26,7 @@ public sealed class DashboardViewModel : BaseViewModel
 {
     private readonly IBusinessActivityTracker _activityTracker;
     private readonly IBusinessAccessService _businessAccessService;
+    private readonly TimeProvider _timeProvider;
 
     private bool _loadedOnce;
     private bool _isOperationsAllowed = true;
@@ -42,10 +43,14 @@ public sealed class DashboardViewModel : BaseViewModel
     private int _totalAccruedPoints;
     private int _totalRedeemedPoints;
 
-    public DashboardViewModel(IBusinessActivityTracker activityTracker, IBusinessAccessService businessAccessService)
+    public DashboardViewModel(
+        IBusinessActivityTracker activityTracker,
+        IBusinessAccessService businessAccessService,
+        TimeProvider timeProvider)
     {
         _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
         _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
         TopCustomers = new ObservableCollection<BusinessTopCustomerItem>();
         RecentActivities = new ObservableCollection<BusinessActivityFeedItem>();
@@ -279,7 +284,7 @@ public sealed class DashboardViewModel : BaseViewModel
         try
         {
             var csv = BuildDashboardCsv(_lastSnapshot, LookbackDays);
-            var fileName = $"business-dashboard-{DateTime.UtcNow:yyyyMMdd-HHmmss}.csv";
+            var fileName = $"business-dashboard-{_timeProvider.GetUtcNow().UtcDateTime:yyyyMMdd-HHmmss}.csv";
             var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
 
             await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8).ConfigureAwait(false);
@@ -313,8 +318,9 @@ public sealed class DashboardViewModel : BaseViewModel
 
         try
         {
-            var pdfBytes = BuildDashboardPdfDocument(_lastSnapshot, LookbackDays);
-            var fileName = $"business-dashboard-{DateTime.UtcNow:yyyyMMdd-HHmmss}.pdf";
+            var generatedAtUtc = _timeProvider.GetUtcNow().UtcDateTime;
+            var pdfBytes = BuildDashboardPdfDocument(_lastSnapshot, LookbackDays, generatedAtUtc);
+            var fileName = $"business-dashboard-{_timeProvider.GetUtcNow().UtcDateTime:yyyyMMdd-HHmmss}.pdf";
             var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
 
             await File.WriteAllBytesAsync(filePath, pdfBytes, CancellationToken.None).ConfigureAwait(false);
@@ -389,9 +395,9 @@ public sealed class DashboardViewModel : BaseViewModel
     /// Builds a minimal PDF document without third-party dependencies.
     /// The payload intentionally uses plain ASCII text to keep output deterministic on all supported targets.
     /// </summary>
-    private static byte[] BuildDashboardPdfDocument(BusinessDashboardSnapshot snapshot, int lookbackDays)
+    private static byte[] BuildDashboardPdfDocument(BusinessDashboardSnapshot snapshot, int lookbackDays, DateTime generatedAtUtc)
     {
-        var lines = BuildDashboardReportLines(snapshot, lookbackDays);
+        var lines = BuildDashboardReportLines(snapshot, lookbackDays, generatedAtUtc);
         var content = BuildPdfTextStream(lines);
 
         var objects = new[]
@@ -434,12 +440,12 @@ public sealed class DashboardViewModel : BaseViewModel
     /// <summary>
     /// Creates business-readable report lines that are used for PDF export.
     /// </summary>
-    private static IReadOnlyList<string> BuildDashboardReportLines(BusinessDashboardSnapshot snapshot, int lookbackDays)
+    private static IReadOnlyList<string> BuildDashboardReportLines(BusinessDashboardSnapshot snapshot, int lookbackDays, DateTime generatedAtUtc)
     {
         var lines = new List<string>
         {
             AppResources.DashboardPdfTitle,
-            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfGeneratedAtFormat, AppResources.DashboardPdfGeneratedAtTimezoneLabel, DateTime.UtcNow),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfGeneratedAtFormat, AppResources.DashboardPdfGeneratedAtTimezoneLabel, generatedAtUtc),
             string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfWindowFormat, lookbackDays),
             string.Empty,
             AppResources.DashboardPdfSummarySectionTitle,

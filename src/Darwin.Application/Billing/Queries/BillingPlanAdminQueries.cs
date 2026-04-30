@@ -114,13 +114,26 @@ public sealed class GetBillingPlanOpsSummaryHandler
     {
         var plans = _db.Set<BillingPlan>().AsNoTracking().Where(x => !x.IsDeleted);
 
+        var planSummary = await plans
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalCount = g.Count(),
+                ActiveCount = g.Count(x => x.IsActive),
+                InactiveCount = g.Count(x => !x.IsActive),
+                TrialCount = g.Count(x => x.TrialDays != null && x.TrialDays > 0),
+                MissingFeaturesCount = g.Count(x => x.FeaturesJson == "{}" || x.FeaturesJson == "[]" || x.FeaturesJson == string.Empty)
+            })
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false);
+
         return new BillingPlanOpsSummaryDto
         {
-            TotalCount = await plans.CountAsync(ct).ConfigureAwait(false),
-            ActiveCount = await plans.CountAsync(x => x.IsActive, ct).ConfigureAwait(false),
-            InactiveCount = await plans.CountAsync(x => !x.IsActive, ct).ConfigureAwait(false),
-            TrialCount = await plans.CountAsync(x => x.TrialDays != null && x.TrialDays > 0, ct).ConfigureAwait(false),
-            MissingFeaturesCount = await plans.CountAsync(x => x.FeaturesJson == "{}" || x.FeaturesJson == "[]" || x.FeaturesJson == string.Empty, ct).ConfigureAwait(false),
+            TotalCount = planSummary?.TotalCount ?? 0,
+            ActiveCount = planSummary?.ActiveCount ?? 0,
+            InactiveCount = planSummary?.InactiveCount ?? 0,
+            TrialCount = planSummary?.TrialCount ?? 0,
+            MissingFeaturesCount = planSummary?.MissingFeaturesCount ?? 0,
             InUseCount = await _db.Set<BusinessSubscription>()
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted)

@@ -46,6 +46,7 @@ using Darwin.Application.Shipping.Queries;
 using Darwin.Application.Shipping.Validators;
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
+using Darwin.Infrastructure.Health;
 using Darwin.Infrastructure.Security.Jwt;
 using Darwin.Infrastructure.Security.LoginRateLimiter;
 using Darwin.WebAdmin.Auth;
@@ -270,6 +271,8 @@ namespace Darwin.WebAdmin.Extensions
 
             // Settings cache
             services.AddMemoryCache();
+            services.AddHealthChecks()
+                .AddCheck<DarwinDbContextHealthCheck>("database", tags: new[] { "ready" });
             services.AddScoped<ISiteSettingCache, SiteSettingCache>();
             services.AddScoped<IBusinessEffectiveSettingsCache, BusinessEffectiveSettingsCache>();
 

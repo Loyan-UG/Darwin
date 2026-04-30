@@ -6,7 +6,9 @@ using Darwin.Contracts.Common;
 using Darwin.WebApi.Controllers.Businesses;
 using Darwin.WebApi.Mappers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
@@ -16,9 +18,13 @@ namespace Darwin.WebApi.Controllers.Public;
 /// </summary>
 [ApiController]
 [AllowAnonymous]
+[EnableRateLimiting("public-storefront")]
+[RequestTimeout("public-storefront")]
 [Route("api/v1/public/businesses")]
 public sealed class PublicBusinessesController : ApiControllerBase
 {
+    private const int MaxPublicPage = 10_000;
+    private const int MaxBusinessDiscoveryRequestBytes = 16 * 1024;
     private const int MaxPageSize = 100;
 
     private readonly GetBusinessesForDiscoveryHandler _getBusinessesForDiscovery;
@@ -40,6 +46,7 @@ public sealed class PublicBusinessesController : ApiControllerBase
 
     [HttpPost("list")]
     [HttpPost("/api/v1/businesses/list")]
+    [RequestSizeLimit(MaxBusinessDiscoveryRequestBytes)]
     [ProducesResponseType(typeof(PagedResponse<BusinessSummary>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ListAsync([FromBody] BusinessListRequest? request, CancellationToken ct = default)
@@ -50,6 +57,11 @@ public sealed class PublicBusinessesController : ApiControllerBase
         }
 
         var page = request.Page < 1 ? 1 : request.Page;
+        if (page > MaxPublicPage)
+        {
+            return BadRequestProblem(_validationLocalizer["PageMustBeBetween1And10000"]);
+        }
+
         var pageSize = request.PageSize < 1 ? 20 : request.PageSize;
         if (pageSize > MaxPageSize)
         {
@@ -110,6 +122,7 @@ public sealed class PublicBusinessesController : ApiControllerBase
 
     [HttpPost("map")]
     [HttpPost("/api/v1/businesses/map")]
+    [RequestSizeLimit(MaxBusinessDiscoveryRequestBytes)]
     [ProducesResponseType(typeof(PagedResponse<BusinessSummary>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> MapAsync([FromBody] BusinessMapDiscoveryRequest? request, CancellationToken ct = default)
@@ -123,6 +136,10 @@ public sealed class PublicBusinessesController : ApiControllerBase
         if (page <= 0)
         {
             return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
+        }
+        if (page > MaxPublicPage)
+        {
+            return BadRequestProblem(_validationLocalizer["PageMustBeBetween1And10000"]);
         }
 
         var pageSize = request.PageSize.GetValueOrDefault(200);

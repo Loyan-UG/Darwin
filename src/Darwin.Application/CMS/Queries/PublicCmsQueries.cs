@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.CMS;
@@ -15,11 +16,16 @@ public sealed class GetPublishedPagesPageHandler
     private const int MaxPageSize = 200;
 
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetPublishedPagesPageHandler"/> class.
     /// </summary>
-    public GetPublishedPagesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+    public GetPublishedPagesPageHandler(IAppDbContext db, IClock clock)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
 
     /// <summary>
     /// Returns a page of published CMS pages for the requested culture.
@@ -33,7 +39,7 @@ public sealed class GetPublishedPagesPageHandler
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var defaultCulture = SiteSettingDto.DefaultCultureDefault;
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var baseQuery = _db.Set<Page>()
             .AsNoTracking()
             .Where(x =>
@@ -77,11 +83,16 @@ public sealed class GetPublishedPagesPageHandler
 public sealed class GetPublishedPageBySlugHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetPublishedPageBySlugHandler"/> class.
     /// </summary>
-    public GetPublishedPageBySlugHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+    public GetPublishedPageBySlugHandler(IAppDbContext db, IClock clock)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
 
     /// <summary>
     /// Returns a published page for the requested localized slug.
@@ -96,7 +107,7 @@ public sealed class GetPublishedPageBySlugHandler
         culture = string.IsNullOrWhiteSpace(culture) ? SiteSettingDto.DefaultCultureDefault : culture.Trim();
         var defaultCulture = SiteSettingDto.DefaultCultureDefault;
         var normalizedSlug = slug.Trim();
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
 
         return await _db.Set<Page>()
             .AsNoTracking()

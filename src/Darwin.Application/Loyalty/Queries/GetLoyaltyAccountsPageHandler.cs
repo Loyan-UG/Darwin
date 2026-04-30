@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Identity;
@@ -19,10 +20,12 @@ namespace Darwin.Application.Loyalty.Queries
     public sealed class GetLoyaltyAccountsPageHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetLoyaltyAccountsPageHandler(IAppDbContext db)
+        public GetLoyaltyAccountsPageHandler(IAppDbContext db, IClock clock)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         public async Task<(IReadOnlyList<LoyaltyAccountAdminListItemDto> Items, int Total)> HandleAsync(
@@ -85,7 +88,7 @@ namespace Darwin.Application.Loyalty.Queries
 
         public async Task<LoyaltyAccountOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
         {
-            var recentAccrualCutoffUtc = DateTime.UtcNow.AddDays(-30);
+            var recentAccrualCutoffUtc = _clock.UtcNow.AddDays(-30);
 
             return await _db.Set<LoyaltyAccount>()
                 .AsNoTracking()

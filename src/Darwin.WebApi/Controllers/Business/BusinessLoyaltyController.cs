@@ -180,9 +180,9 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
 
             return Ok(new BusinessRewardTierMutationResponse { RewardTierId = tierId, Success = true });
         }
-        catch (FluentValidation.ValidationException ex)
+        catch (FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["LoyaltyRewardTierCreateFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["LoyaltyRewardTierCreateFailed"]);
         }
     }
 
@@ -248,9 +248,9 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
 
             return Ok(new BusinessRewardTierMutationResponse { RewardTierId = request.RewardTierId, Success = true });
         }
-        catch (FluentValidation.ValidationException ex)
+        catch (FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["LoyaltyRewardTierUpdateFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["LoyaltyRewardTierUpdateFailed"]);
         }
     }
 

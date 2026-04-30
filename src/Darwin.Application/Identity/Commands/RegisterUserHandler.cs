@@ -40,7 +40,10 @@ namespace Darwin.Application.Identity.Commands
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
-            var exists = await _db.Set<User>().AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
+            var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
+            var exists = await _db.Set<User>().AnyAsync(
+                u => (u.NormalizedEmail == normalizedEmail || u.NormalizedUserName == normalizedEmail) && !u.IsDeleted,
+                ct);
             if (exists) return Result<Guid>.Fail(_localizer["EmailAlreadyInUse"]);
 
             var passwordHash = _hasher.Hash(dto.Password);

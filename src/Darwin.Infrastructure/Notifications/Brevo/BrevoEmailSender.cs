@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,17 +21,20 @@ public sealed class BrevoEmailSender : IEmailSender
     private readonly BrevoEmailOptions _options;
     private readonly ILogger<BrevoEmailSender> _logger;
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
     public BrevoEmailSender(
         HttpClient httpClient,
         IOptions<BrevoEmailOptions> options,
         ILogger<BrevoEmailSender> logger,
-        IAppDbContext db)
+        IAppDbContext db,
+        IClock clock)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _options = (options ?? throw new ArgumentNullException(nameof(options))).Value;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task SendAsync(
@@ -44,7 +48,7 @@ public sealed class BrevoEmailSender : IEmailSender
         ValidateOptions();
 
         var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
-        var pendingDuplicateCutoffUtc = DateTime.UtcNow.AddMinutes(-15);
+        var pendingDuplicateCutoffUtc = _clock.UtcNow.AddMinutes(-15);
         if (!string.IsNullOrWhiteSpace(correlationKey) &&
             await HasActiveEmailAuditAsync(correlationKey, pendingDuplicateCutoffUtc, ct).ConfigureAwait(false))
         {
@@ -52,7 +56,7 @@ public sealed class BrevoEmailSender : IEmailSender
             return;
         }
 
-        var attemptedAtUtc = DateTime.UtcNow;
+        var attemptedAtUtc = _clock.UtcNow;
         var audit = new EmailDispatchAudit
         {
             Provider = EmailProviderNames.Brevo,
@@ -99,25 +103,28 @@ public sealed class BrevoEmailSender : IEmailSender
             var responseBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException($"Brevo email send failed with HTTP {(int)response.StatusCode}: {Truncate(responseBody, 1000)}");
+                throw new InvalidOperationException(NotificationLogSanitizer.ProviderFailure(EmailProviderNames.Brevo, (int)response.StatusCode));
             }
 
             audit.ProviderMessageId = TryReadMessageId(responseBody);
             audit.Status = "Sent";
-            audit.CompletedAtUtc = DateTime.UtcNow;
+            audit.CompletedAtUtc = _clock.UtcNow;
             await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "Brevo email dispatch audit completion", ct)
                 .ConfigureAwait(false);
-            _logger.LogInformation("Brevo email sent to {Recipient} with message id {MessageId}.", toEmail, audit.ProviderMessageId);
+            _logger.LogInformation(
+                "Brevo email sent to {Recipient} with message id {MessageId}.",
+                NotificationLogSanitizer.MaskEmail(toEmail),
+                audit.ProviderMessageId);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
             throw;
         }
-        catch (Exception ex) when (audit.Status == "Pending")
+        catch (Exception) when (audit.Status == "Pending")
         {
             audit.Status = "Failed";
-            audit.CompletedAtUtc = DateTime.UtcNow;
-            audit.FailureMessage = Truncate(ex.Message, 2000);
+            audit.CompletedAtUtc = _clock.UtcNow;
+            audit.FailureMessage = NotificationLogSanitizer.TransportFailure(EmailProviderNames.Brevo);
             await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "Brevo email dispatch audit failure", ct)
                 .ConfigureAwait(false);
             throw;

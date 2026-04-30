@@ -1,3 +1,4 @@
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Queries;
@@ -51,6 +52,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly RemoveCustomerSegmentMembershipHandler _removeCustomerSegmentMembership;
         private readonly AdminReferenceDataService _referenceData;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IClock _clock;
 
         public CrmController(
             GetCustomersPageHandler getCustomersPage,
@@ -88,7 +90,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             AssignCustomerSegmentHandler assignCustomerSegment,
             RemoveCustomerSegmentMembershipHandler removeCustomerSegmentMembership,
             AdminReferenceDataService referenceData,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            IClock clock)
         {
             _getCustomersPage = getCustomersPage ?? throw new ArgumentNullException(nameof(getCustomersPage));
             _getCustomerForEdit = getCustomerForEdit ?? throw new ArgumentNullException(nameof(getCustomerForEdit));
@@ -126,6 +129,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _removeCustomerSegmentMembership = removeCustomerSegmentMembership ?? throw new ArgumentNullException(nameof(removeCustomerSegmentMembership));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
             _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         [HttpGet]
@@ -248,7 +252,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return RedirectOrHtmx(nameof(Customers), new { });
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var vm = new CustomerEditVm
             {
                 Id = dto.Id,
@@ -399,7 +403,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 PaidAtUtc = x.PaidAtUtc,
                 RowVersion = x.RowVersion
             }).ToList();
-            var todayUtc = DateTime.UtcNow.Date;
+            var todayUtc = _clock.UtcNow.Date;
 
             return RenderInvoicesWorkspace(new InvoicesListVm
             {
@@ -795,7 +799,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var opportunityItems = items.ToList();
-            var todayUtc = DateTime.UtcNow.Date;
+            var todayUtc = _clock.UtcNow.Date;
             var vm = new OpportunitiesListVm
             {
                 Summary = MapSummary(summary, settings.DefaultCurrency),

@@ -1,5 +1,7 @@
 using Darwin.Application.Businesses.DTOs;
+using Darwin.Application.Identity.Validators;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Businesses.Validators
 {
@@ -48,13 +50,16 @@ namespace Darwin.Application.Businesses.Validators
     /// </summary>
     public sealed class BusinessInvitationAcceptDtoValidator : AbstractValidator<BusinessInvitationAcceptDto>
     {
-        public BusinessInvitationAcceptDtoValidator()
+        public BusinessInvitationAcceptDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
-            RuleFor(x => x.Token).NotEmpty().MinimumLength(12);
+            RuleFor(x => x.Token).NotEmpty().MinimumLength(12).MaximumLength(256);
+            RuleFor(x => x.DeviceId).MaximumLength(128);
+            RuleFor(x => x.FirstName).MaximumLength(128);
+            RuleFor(x => x.LastName).MaximumLength(128);
 
             When(x => !string.IsNullOrWhiteSpace(x.Password), () =>
             {
-                RuleFor(x => x.Password!).MinimumLength(8);
+                RuleFor(x => x.Password!).MaximumLength(256).ApplyPasswordPolicy(localizer);
             });
         }
     }

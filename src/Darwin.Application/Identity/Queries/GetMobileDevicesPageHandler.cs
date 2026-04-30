@@ -84,7 +84,7 @@ public sealed class GetMobileDevicesPageHandler
             baseQuery = state switch
             {
                 "stale" => baseQuery.Where(x => !x.device.LastSeenAtUtc.HasValue || x.device.LastSeenAtUtc < staleCutoffUtc),
-                "missing-push" => baseQuery.Where(x => string.IsNullOrWhiteSpace(x.device.PushToken)),
+                "missing-push" => baseQuery.Where(x => x.device.PushToken == null || x.device.PushToken.Trim() == string.Empty),
                 "notifications-disabled" => baseQuery.Where(x => !x.device.NotificationsEnabled),
                 "business-members" => baseQuery.Where(x => x.MembershipCount > 0),
                 _ => baseQuery
@@ -110,7 +110,7 @@ public sealed class GetMobileDevicesPageHandler
                 AppVersion = x.device.AppVersion,
                 DeviceModel = x.device.DeviceModel,
                 NotificationsEnabled = x.device.NotificationsEnabled,
-                HasPushToken = !string.IsNullOrWhiteSpace(x.device.PushToken),
+                HasPushToken = x.device.PushToken != null && x.device.PushToken.Trim() != string.Empty,
                 IsActive = x.device.IsActive,
                 LastSeenAtUtc = x.device.LastSeenAtUtc,
                 BusinessMembershipCount = x.MembershipCount,

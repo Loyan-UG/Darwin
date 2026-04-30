@@ -18,6 +18,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
     [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
     public sealed class SiteSettingsController : AdminBaseController
     {
+        private const string SecretPlaceholder = "********";
         private readonly UpdateSiteSettingHandler _update;
         private readonly ISiteSettingCache _cache;
         private readonly IBusinessEffectiveSettingsCache _businessEffectiveSettingsCache;
@@ -57,7 +58,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             if (!ModelState.IsValid)
                 return RenderEditor(vm, fragment);
 
-            var dto = MapToUpdateDto(vm);
+            var current = await _cache.GetAsync(ct).ConfigureAwait(false);
+            var dto = MapToUpdateDto(vm, current);
 
             try
             {
@@ -142,8 +144,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             JwtAudience = dto.JwtAudience,
             JwtAccessTokenMinutes = dto.JwtAccessTokenMinutes,
             JwtRefreshTokenDays = dto.JwtRefreshTokenDays,
-            JwtSigningKey = dto.JwtSigningKey,
-            JwtPreviousSigningKey = dto.JwtPreviousSigningKey,
+            JwtSigningKey = ToRequiredSecretPlaceholder(dto.JwtSigningKey),
+            JwtPreviousSigningKey = ToSecretPlaceholder(dto.JwtPreviousSigningKey),
             JwtEmitScopes = dto.JwtEmitScopes,
             JwtSingleDeviceOnly = dto.JwtSingleDeviceOnly,
             JwtRequireDeviceBinding = dto.JwtRequireDeviceBinding,
@@ -159,8 +161,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             AccountDeletionUrl = dto.AccountDeletionUrl,
             StripeEnabled = dto.StripeEnabled,
             StripePublishableKey = dto.StripePublishableKey,
-            StripeSecretKey = dto.StripeSecretKey,
-            StripeWebhookSecret = dto.StripeWebhookSecret,
+            StripeSecretKey = ToSecretPlaceholder(dto.StripeSecretKey),
+            StripeWebhookSecret = ToSecretPlaceholder(dto.StripeWebhookSecret),
             StripeMerchantDisplayName = dto.StripeMerchantDisplayName,
             VatEnabled = dto.VatEnabled,
             DefaultVatRatePercent = dto.DefaultVatRatePercent,
@@ -175,8 +177,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             DhlEnabled = dto.DhlEnabled,
             DhlEnvironment = dto.DhlEnvironment,
             DhlApiBaseUrl = dto.DhlApiBaseUrl,
-            DhlApiKey = dto.DhlApiKey,
-            DhlApiSecret = dto.DhlApiSecret,
+            DhlApiKey = ToSecretPlaceholder(dto.DhlApiKey),
+            DhlApiSecret = ToSecretPlaceholder(dto.DhlApiSecret),
             DhlAccountNumber = dto.DhlAccountNumber,
             DhlShipperName = dto.DhlShipperName,
             DhlShipperEmail = dto.DhlShipperEmail,
@@ -218,7 +220,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             // WhatsApp
             WhatsAppEnabled = dto.WhatsAppEnabled,
             WhatsAppBusinessPhoneId = dto.WhatsAppBusinessPhoneId,
-            WhatsAppAccessToken = dto.WhatsAppAccessToken,
+            WhatsAppAccessToken = ToSecretPlaceholder(dto.WhatsAppAccessToken),
             WhatsAppFromPhoneE164 = dto.WhatsAppFromPhoneE164,
             WhatsAppAdminRecipientsCsv = dto.WhatsAppAdminRecipientsCsv,
 
@@ -234,7 +236,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             SmtpPort = dto.SmtpPort,
             SmtpEnableSsl = dto.SmtpEnableSsl,
             SmtpUsername = dto.SmtpUsername,
-            SmtpPassword = dto.SmtpPassword,
+            SmtpPassword = ToSecretPlaceholder(dto.SmtpPassword),
             SmtpFromAddress = dto.SmtpFromAddress,
             SmtpFromDisplayName = dto.SmtpFromDisplayName,
 
@@ -242,8 +244,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             SmsEnabled = dto.SmsEnabled,
             SmsProvider = dto.SmsProvider,
             SmsFromPhoneE164 = dto.SmsFromPhoneE164,
-            SmsApiKey = dto.SmsApiKey,
-            SmsApiSecret = dto.SmsApiSecret,
+            SmsApiKey = ToSecretPlaceholder(dto.SmsApiKey),
+            SmsApiSecret = ToSecretPlaceholder(dto.SmsApiSecret),
             SmsExtraSettingsJson = dto.SmsExtraSettingsJson,
 
             // Admin routing
@@ -272,7 +274,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
         /// <summary>
         /// Maps VM ? DTO for persistence.
         /// </summary>
-        private static SiteSettingDto MapToUpdateDto(SiteSettingVm vm) => new()
+        private static SiteSettingDto MapToUpdateDto(SiteSettingVm vm, SiteSettingDto current) => new()
         {
             Id = vm.Id,
             RowVersion = vm.RowVersion,
@@ -301,8 +303,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             JwtAudience = vm.JwtAudience,
             JwtAccessTokenMinutes = vm.JwtAccessTokenMinutes,
             JwtRefreshTokenDays = vm.JwtRefreshTokenDays,
-            JwtSigningKey = vm.JwtSigningKey,
-            JwtPreviousSigningKey = vm.JwtPreviousSigningKey,
+            JwtSigningKey = ResolveRequiredSecret(vm.JwtSigningKey, current.JwtSigningKey),
+            JwtPreviousSigningKey = ResolveSecret(vm.JwtPreviousSigningKey, current.JwtPreviousSigningKey),
             JwtEmitScopes = vm.JwtEmitScopes,
             JwtSingleDeviceOnly = vm.JwtSingleDeviceOnly,
             JwtRequireDeviceBinding = vm.JwtRequireDeviceBinding,
@@ -318,8 +320,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             AccountDeletionUrl = vm.AccountDeletionUrl,
             StripeEnabled = vm.StripeEnabled,
             StripePublishableKey = vm.StripePublishableKey,
-            StripeSecretKey = vm.StripeSecretKey,
-            StripeWebhookSecret = vm.StripeWebhookSecret,
+            StripeSecretKey = ResolveSecret(vm.StripeSecretKey, current.StripeSecretKey),
+            StripeWebhookSecret = ResolveSecret(vm.StripeWebhookSecret, current.StripeWebhookSecret),
             StripeMerchantDisplayName = vm.StripeMerchantDisplayName,
             VatEnabled = vm.VatEnabled,
             DefaultVatRatePercent = vm.DefaultVatRatePercent,
@@ -334,8 +336,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             DhlEnabled = vm.DhlEnabled,
             DhlEnvironment = vm.DhlEnvironment,
             DhlApiBaseUrl = vm.DhlApiBaseUrl,
-            DhlApiKey = vm.DhlApiKey,
-            DhlApiSecret = vm.DhlApiSecret,
+            DhlApiKey = ResolveSecret(vm.DhlApiKey, current.DhlApiKey),
+            DhlApiSecret = ResolveSecret(vm.DhlApiSecret, current.DhlApiSecret),
             DhlAccountNumber = vm.DhlAccountNumber,
             DhlShipperName = vm.DhlShipperName,
             DhlShipperEmail = vm.DhlShipperEmail,
@@ -377,7 +379,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             // WhatsApp
             WhatsAppEnabled = vm.WhatsAppEnabled,
             WhatsAppBusinessPhoneId = vm.WhatsAppBusinessPhoneId,
-            WhatsAppAccessToken = vm.WhatsAppAccessToken,
+            WhatsAppAccessToken = ResolveSecret(vm.WhatsAppAccessToken, current.WhatsAppAccessToken),
             WhatsAppFromPhoneE164 = vm.WhatsAppFromPhoneE164,
             WhatsAppAdminRecipientsCsv = vm.WhatsAppAdminRecipientsCsv,
 
@@ -393,7 +395,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             SmtpPort = vm.SmtpPort,
             SmtpEnableSsl = vm.SmtpEnableSsl,
             SmtpUsername = vm.SmtpUsername,
-            SmtpPassword = vm.SmtpPassword,
+            SmtpPassword = ResolveSecret(vm.SmtpPassword, current.SmtpPassword),
             SmtpFromAddress = vm.SmtpFromAddress,
             SmtpFromDisplayName = vm.SmtpFromDisplayName,
 
@@ -401,8 +403,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             SmsEnabled = vm.SmsEnabled,
             SmsProvider = vm.SmsProvider,
             SmsFromPhoneE164 = vm.SmsFromPhoneE164,
-            SmsApiKey = vm.SmsApiKey,
-            SmsApiSecret = vm.SmsApiSecret,
+            SmsApiKey = ResolveSecret(vm.SmsApiKey, current.SmsApiKey),
+            SmsApiSecret = ResolveSecret(vm.SmsApiSecret, current.SmsApiSecret),
             SmsExtraSettingsJson = vm.SmsExtraSettingsJson,
 
             // Admin routing
@@ -427,5 +429,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             PhoneVerificationPreferredChannel = vm.PhoneVerificationPreferredChannel,
             PhoneVerificationAllowFallback = vm.PhoneVerificationAllowFallback
         };
+
+        private static string? ToSecretPlaceholder(string? value)
+            => string.IsNullOrWhiteSpace(value) ? null : SecretPlaceholder;
+
+        private static string ToRequiredSecretPlaceholder(string value)
+            => string.IsNullOrWhiteSpace(value) ? string.Empty : SecretPlaceholder;
+
+        private static string ResolveRequiredSecret(string postedValue, string currentValue)
+            => string.IsNullOrWhiteSpace(postedValue) || IsSecretPlaceholder(postedValue)
+                ? currentValue
+                : postedValue.Trim();
+
+        private static string? ResolveSecret(string? postedValue, string? currentValue)
+            => string.IsNullOrWhiteSpace(postedValue) || IsSecretPlaceholder(postedValue)
+                ? currentValue
+                : postedValue.Trim();
+
+        private static bool IsSecretPlaceholder(string value)
+            => string.Equals(value.Trim(), SecretPlaceholder, StringComparison.Ordinal);
     }
 }

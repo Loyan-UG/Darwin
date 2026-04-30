@@ -122,7 +122,7 @@ namespace Darwin.Application.Loyalty.Queries
                     ConsumerEmail = x.ConsumerEmail,
                     ScanStatus = x.ScanStatus,
                     ScanOutcome = x.ScanOutcome,
-                    ScanFailureReason = x.ScanFailureReason,
+                    ScanFailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(x.ScanFailureReason),
                     BusinessLocationId = x.BusinessLocationId,
                     RowVersion = x.RowVersion
                 })

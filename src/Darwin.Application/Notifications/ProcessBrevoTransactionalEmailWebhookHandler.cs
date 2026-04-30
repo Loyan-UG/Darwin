@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
@@ -35,13 +36,16 @@ public sealed class ProcessBrevoTransactionalEmailWebhookHandler
     };
 
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
     public ProcessBrevoTransactionalEmailWebhookHandler(
         IAppDbContext db,
+        IClock clock,
         IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
@@ -61,7 +65,7 @@ public sealed class ProcessBrevoTransactionalEmailWebhookHandler
         if (FailureEvents.Contains(payload.Event))
         {
             audit.Status = "Failed";
-            audit.CompletedAtUtc = payload.OccurredAtUtc ?? DateTime.UtcNow;
+            audit.CompletedAtUtc = payload.OccurredAtUtc ?? _clock.UtcNow;
             audit.FailureMessage = BuildFailureMessage(payload);
         }
         else if (DeliveryEvents.Contains(payload.Event))
@@ -71,7 +75,7 @@ public sealed class ProcessBrevoTransactionalEmailWebhookHandler
                 audit.Status = "Sent";
             }
 
-            audit.CompletedAtUtc ??= payload.OccurredAtUtc ?? DateTime.UtcNow;
+            audit.CompletedAtUtc ??= payload.OccurredAtUtc ?? _clock.UtcNow;
         }
 
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -114,7 +118,7 @@ public sealed class ProcessBrevoTransactionalEmailWebhookHandler
         {
             var email = payload.Email.Trim();
             var subject = payload.Subject.Trim();
-            var cutoffUtc = DateTime.UtcNow.AddDays(-7);
+            var cutoffUtc = _clock.UtcNow.AddDays(-7);
             return await _db.Set<EmailDispatchAudit>()
                 .Where(x => !x.IsDeleted &&
                             x.Provider == ProviderName &&

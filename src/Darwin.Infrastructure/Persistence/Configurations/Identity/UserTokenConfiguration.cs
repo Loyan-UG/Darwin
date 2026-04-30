@@ -43,6 +43,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
 
             // Useful lookups
             builder.HasIndex(x => x.ExpiresAtUtc);
+            builder.HasIndex(x => new { x.Purpose, x.UsedAtUtc, x.ExpiresAtUtc })
+                .HasDatabaseName("IX_UserTokens_Purpose_UsedAtUtc_ExpiresAtUtc");
         }
     }
 }

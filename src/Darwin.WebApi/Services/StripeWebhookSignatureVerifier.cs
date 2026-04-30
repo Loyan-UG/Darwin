@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using Darwin.Application.Abstractions.Services;
 
 namespace Darwin.WebApi.Services;
 
@@ -10,6 +11,15 @@ namespace Darwin.WebApi.Services;
 public sealed class StripeWebhookSignatureVerifier
 {
     private static readonly TimeSpan DefaultTolerance = TimeSpan.FromMinutes(10);
+    private const int MaxSignatureHeaderLength = 1024;
+    private const int MaxSignatureCount = 5;
+    private const int Sha256HexLength = 64;
+    private readonly IClock _clock;
+
+    public StripeWebhookSignatureVerifier(IClock clock)
+    {
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
 
     public bool TryVerify(
         string payload,
@@ -25,7 +35,9 @@ public sealed class StripeWebhookSignatureVerifier
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(secret) || string.IsNullOrWhiteSpace(payload))
+        if (signatureHeader.Length > MaxSignatureHeaderLength ||
+            string.IsNullOrWhiteSpace(secret) ||
+            string.IsNullOrWhiteSpace(payload))
         {
             return false;
         }
@@ -36,7 +48,7 @@ public sealed class StripeWebhookSignatureVerifier
             return false;
         }
 
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var now = new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero).ToUnixTimeSeconds();
         if (Math.Abs(now - timestamp) > (long)DefaultTolerance.TotalSeconds)
         {
             return false;
@@ -87,6 +99,11 @@ public sealed class StripeWebhookSignatureVerifier
             if (string.Equals(keyValue[0], "v1", StringComparison.OrdinalIgnoreCase) &&
                 !string.IsNullOrWhiteSpace(keyValue[1]))
             {
+                if (signatures.Count >= MaxSignatureCount)
+                {
+                    return false;
+                }
+
                 signatures.Add(keyValue[1]);
             }
         }
@@ -97,7 +114,7 @@ public sealed class StripeWebhookSignatureVerifier
     private static bool TryDecodeHex(string value, out byte[] bytes)
     {
         bytes = Array.Empty<byte>();
-        if (string.IsNullOrWhiteSpace(value) || value.Length % 2 != 0)
+        if (string.IsNullOrWhiteSpace(value) || value.Length != Sha256HexLength)
         {
             return false;
         }

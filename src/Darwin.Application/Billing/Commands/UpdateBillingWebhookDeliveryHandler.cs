@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Shared.Results;
@@ -9,14 +10,19 @@ namespace Darwin.Application.Billing.Commands
 {
     public sealed class UpdateBillingWebhookDeliveryHandler
     {
+        private const int MaxActionLength = 64;
+
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public UpdateBillingWebhookDeliveryHandler(
             IAppDbContext db,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -48,7 +54,7 @@ namespace Darwin.Application.Billing.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            if (!TryApplyAction(delivery, dto.Action))
+            if (!TryApplyAction(delivery, dto.Action, _clock.UtcNow))
             {
                 return Result.Fail(_localizer["WebhookDeliveryUnsupportedAction"]);
             }
@@ -65,10 +71,9 @@ namespace Darwin.Application.Billing.Commands
             return Result.Ok();
         }
 
-        private static bool TryApplyAction(WebhookDelivery delivery, string action)
+        private static bool TryApplyAction(WebhookDelivery delivery, string action, DateTime now)
         {
-            var now = DateTime.UtcNow;
-            switch ((action ?? string.Empty).Trim().ToUpperInvariant())
+            switch (NormalizeAction(action))
             {
                 case "MARKSUCCEEDED":
                     delivery.IsDeleted = false;
@@ -93,6 +98,19 @@ namespace Darwin.Application.Billing.Commands
             }
 
             return true;
+        }
+
+        private static string NormalizeAction(string? action)
+        {
+            if (string.IsNullOrWhiteSpace(action))
+            {
+                return string.Empty;
+            }
+
+            var trimmed = action.Trim();
+            return trimmed.Length > MaxActionLength
+                ? string.Empty
+                : trimmed.ToUpperInvariant();
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
@@ -17,15 +18,17 @@ namespace Darwin.Application.Businesses.Queries
     public sealed class GetBusinessCommunicationProfileHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetBusinessCommunicationProfileHandler(IAppDbContext db)
+        public GetBusinessCommunicationProfileHandler(IAppDbContext db, IClock clock)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         public async Task<BusinessCommunicationProfileDto?> HandleAsync(Guid businessId, CancellationToken ct = default)
         {
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
 
             var businessRow = await _db.Set<Business>()
                 .AsNoTracking()

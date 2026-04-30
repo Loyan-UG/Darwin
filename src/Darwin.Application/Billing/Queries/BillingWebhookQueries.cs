@@ -312,20 +312,51 @@ public sealed class GetBillingWebhookOpsSummaryHandler
                                  subscription.EventType
                              };
 
+        var subscriptionSummary = await subscriptions
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                ActiveSubscriptionCount = group.Count(x => x.IsActive)
+            })
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false);
+
+        var deliverySummary = await deliveries
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                PendingDeliveryCount = group.Count(x => x.Status == "Pending"),
+                FailedDeliveryCount = group.Count(x => x.Status == "Failed"),
+                SucceededDeliveryCount = group.Count(x => x.Status == "Succeeded"),
+                RetryPendingCount = group.Count(x => x.Status != "Succeeded" && x.RetryCount > 0)
+            })
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false);
+
+        var eventSummary = await deliveryEvents
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                PaymentExceptionCount = group.Count(x =>
+                    (EF.Functions.Like(x.EventType, PaymentIntentEventPattern, QueryLikePattern.EscapeCharacter) ||
+                     EF.Functions.Like(x.EventType, ChargeEventPattern, QueryLikePattern.EscapeCharacter) ||
+                     EF.Functions.Like(x.EventType, RefundEventPattern, QueryLikePattern.EscapeCharacter)) &&
+                    (x.Status != "Succeeded" || x.RetryCount > 0)),
+                DisputeSignalCount = group.Count(x =>
+                    EF.Functions.Like(x.EventType, DisputeEventPattern, QueryLikePattern.EscapeCharacter))
+            })
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false);
+
         return new BillingWebhookOpsSummaryDto
         {
-            ActiveSubscriptionCount = await subscriptions.CountAsync(x => x.IsActive, ct).ConfigureAwait(false),
-            PendingDeliveryCount = await deliveries.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
-            FailedDeliveryCount = await deliveries.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
-            SucceededDeliveryCount = await deliveries.CountAsync(x => x.Status == "Succeeded", ct).ConfigureAwait(false),
-            RetryPendingCount = await deliveries.CountAsync(x => x.Status != "Succeeded" && x.RetryCount > 0, ct).ConfigureAwait(false),
-            PaymentExceptionCount = await deliveryEvents.CountAsync(x =>
-                (EF.Functions.Like(x.EventType, PaymentIntentEventPattern, QueryLikePattern.EscapeCharacter) ||
-                 EF.Functions.Like(x.EventType, ChargeEventPattern, QueryLikePattern.EscapeCharacter) ||
-                 EF.Functions.Like(x.EventType, RefundEventPattern, QueryLikePattern.EscapeCharacter)) &&
-                (x.Status != "Succeeded" || x.RetryCount > 0), ct).ConfigureAwait(false),
-            DisputeSignalCount = await deliveryEvents.CountAsync(x =>
-                EF.Functions.Like(x.EventType, DisputeEventPattern, QueryLikePattern.EscapeCharacter), ct).ConfigureAwait(false)
+            ActiveSubscriptionCount = subscriptionSummary?.ActiveSubscriptionCount ?? 0,
+            PendingDeliveryCount = deliverySummary?.PendingDeliveryCount ?? 0,
+            FailedDeliveryCount = deliverySummary?.FailedDeliveryCount ?? 0,
+            SucceededDeliveryCount = deliverySummary?.SucceededDeliveryCount ?? 0,
+            RetryPendingCount = deliverySummary?.RetryPendingCount ?? 0,
+            PaymentExceptionCount = eventSummary?.PaymentExceptionCount ?? 0,
+            DisputeSignalCount = eventSummary?.DisputeSignalCount ?? 0
         };
     }
 }

@@ -1,10 +1,8 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.Orders.DTOs;
-using Darwin.Domain.Entities.Billing;
-using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
-using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,8 +17,13 @@ public sealed class GetShipmentsPageHandler
     private const int MaxPageSize = 200;
 
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
-    public GetShipmentsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+    public GetShipmentsPageHandler(IAppDbContext db, IClock clock)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
 
     public async Task<(List<ShipmentListItemDto> Items, int Total)> HandleAsync(
         int page,
@@ -37,7 +40,7 @@ public sealed class GetShipmentsPageHandler
         if (attentionDelayHours < 1) attentionDelayHours = 24;
         if (trackingGraceHours < 1) trackingGraceHours = 12;
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var handoffThresholdUtc = nowUtc.AddHours(-attentionDelayHours);
         var trackingThresholdUtc = nowUtc.AddHours(-trackingGraceHours);
 
@@ -92,10 +95,7 @@ public sealed class GetShipmentsPageHandler
             {
                 Id = s.Id,
                 OrderId = s.OrderId,
-                OrderNumber = _db.Set<Order>()
-                    .Where(o => o.Id == s.OrderId && !o.IsDeleted)
-                    .Select(o => o.OrderNumber)
-                    .FirstOrDefault() ?? string.Empty,
+                OrderNumber = string.Empty,
                 Carrier = s.Carrier,
                 Service = s.Service,
                 ProviderShipmentReference = s.ProviderShipmentReference,
@@ -120,53 +120,19 @@ public sealed class GetShipmentsPageHandler
                 LastCarrierEventKey = s.LastCarrierEventKey,
                 AttentionDelayHours = attentionDelayHours,
                 TrackingGraceHours = trackingGraceHours,
-                DefaultRefundPaymentId = _db.Set<Payment>()
-                    .Where(p => p.OrderId == s.OrderId &&
-                        !p.IsDeleted &&
-                        (p.Status == PaymentStatus.Captured ||
-                         p.Status == PaymentStatus.Completed ||
-                         p.Status == PaymentStatus.Refunded))
-                    .OrderByDescending(p => p.PaidAtUtc ?? DateTime.MinValue)
-                    .Select(p => (Guid?)p.Id)
-                    .FirstOrDefault(),
+                DefaultRefundPaymentId = null,
                 NeedsCarrierReview =
                     s.Carrier == "DHL" &&
                     ((s.Service == null || s.Service == string.Empty) ||
                      s.Status == Domain.Enums.ShipmentStatus.Returned ||
                      ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                       (s.TrackingNumber == null || s.TrackingNumber == string.Empty))),
-                ProviderOperationQueued =
-                    _db.Set<ShipmentProviderOperation>().Any(op =>
-                        op.ShipmentId == s.Id &&
-                        !op.IsDeleted &&
-                        op.Provider == "DHL" &&
-                        op.Status == "Pending"),
-                ProviderOperationFailed =
-                    _db.Set<ShipmentProviderOperation>().Any(op =>
-                        op.ShipmentId == s.Id &&
-                        !op.IsDeleted &&
-                        op.Provider == "DHL" &&
-                        op.Status == "Failed"),
-                ProviderOperationType = _db.Set<ShipmentProviderOperation>()
-                    .Where(op => op.ShipmentId == s.Id &&
-                                 !op.IsDeleted &&
-                                 op.Provider == "DHL" &&
-                                 (op.Status == "Pending" || op.Status == "Failed"))
-                    .OrderByDescending(op => op.LastAttemptAtUtc ?? op.CreatedAtUtc)
-                    .Select(op => op.OperationType)
-                    .FirstOrDefault(),
-                ProviderOperationFailureReason = _db.Set<ShipmentProviderOperation>()
-                    .Where(op => op.ShipmentId == s.Id &&
-                                 !op.IsDeleted &&
-                                 op.Provider == "DHL" &&
-                                 op.Status == "Failed")
-                    .OrderByDescending(op => op.LastAttemptAtUtc ?? op.CreatedAtUtc)
-                    .Select(op => op.FailureReason)
-                    .FirstOrDefault(),
                 RowVersion = s.RowVersion
             })
             .ToListAsync(ct);
 
+        await ShipmentListItemEnrichment.PopulateOrderPaymentStateAsync(_db, items, ct).ConfigureAwait(false);
+        await ShipmentListItemEnrichment.PopulateProviderOperationStateAsync(_db, items, ct).ConfigureAwait(false);
         await ShipmentCarrierEventProjection.PopulateRecentEventsAsync(_db, items, 3, ct).ConfigureAwait(false);
 
         foreach (var item in items)
@@ -183,8 +149,13 @@ public sealed class GetShipmentsPageHandler
 public sealed class GetShipmentOpsSummaryHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
 
-    public GetShipmentOpsSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+    public GetShipmentOpsSummaryHandler(IAppDbContext db, IClock clock)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
 
     public async Task<ShipmentOpsSummaryDto> HandleAsync(
         int attentionDelayHours = 24,
@@ -194,46 +165,40 @@ public sealed class GetShipmentOpsSummaryHandler
         if (attentionDelayHours < 1) attentionDelayHours = 24;
         if (trackingGraceHours < 1) trackingGraceHours = 12;
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var handoffThresholdUtc = nowUtc.AddHours(-attentionDelayHours);
         var trackingThresholdUtc = nowUtc.AddHours(-trackingGraceHours);
         var shipments = _db.Set<Shipment>().AsNoTracking().Where(s => !s.IsDeleted);
 
-        return new ShipmentOpsSummaryDto
-        {
-            PendingCount = await shipments.CountAsync(
-                s => s.Status == Domain.Enums.ShipmentStatus.Pending || s.Status == Domain.Enums.ShipmentStatus.Packed,
-                ct).ConfigureAwait(false),
-            ShippedCount = await shipments.CountAsync(
-                s => s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered,
-                ct).ConfigureAwait(false),
-            MissingTrackingCount = await shipments.CountAsync(
-                s => (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
-                     (s.TrackingNumber == null || s.TrackingNumber == string.Empty),
-                ct).ConfigureAwait(false),
-            ReturnedCount = await shipments.CountAsync(s => s.Status == Domain.Enums.ShipmentStatus.Returned, ct).ConfigureAwait(false),
-            DhlCount = await shipments.CountAsync(s => s.Carrier == "DHL", ct).ConfigureAwait(false),
-            MissingServiceCount = await shipments.CountAsync(s => s.Service == null || s.Service == string.Empty, ct).ConfigureAwait(false),
-            AwaitingHandoffCount = await shipments.CountAsync(
-                s => (s.Status == Domain.Enums.ShipmentStatus.Pending || s.Status == Domain.Enums.ShipmentStatus.Packed) &&
-                     s.CreatedAtUtc <= handoffThresholdUtc,
-                ct).ConfigureAwait(false),
-            TrackingOverdueCount = await shipments.CountAsync(
-                s => s.Carrier == "DHL" &&
-                     (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
-                     (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
-                     ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc),
-                ct).ConfigureAwait(false),
-            CarrierReviewCount = await shipments.CountAsync(
-                s => s.Carrier == "DHL" &&
-                     ((s.Service == null || s.Service == string.Empty) ||
-                      s.Status == Domain.Enums.ShipmentStatus.Returned ||
-                      ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
-                       (s.TrackingNumber == null || s.TrackingNumber == string.Empty))),
-                ct).ConfigureAwait(false),
-            ReturnFollowUpCount = await shipments.CountAsync(
-                s => s.Status == Domain.Enums.ShipmentStatus.Returned,
-                ct).ConfigureAwait(false)
-        };
+        return await shipments
+            .GroupBy(_ => 1)
+            .Select(g => new ShipmentOpsSummaryDto
+            {
+                PendingCount = g.Count(s => s.Status == Domain.Enums.ShipmentStatus.Pending || s.Status == Domain.Enums.ShipmentStatus.Packed),
+                ShippedCount = g.Count(s => s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered),
+                MissingTrackingCount = g.Count(s =>
+                    (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+                    (s.TrackingNumber == null || s.TrackingNumber == string.Empty)),
+                ReturnedCount = g.Count(s => s.Status == Domain.Enums.ShipmentStatus.Returned),
+                DhlCount = g.Count(s => s.Carrier == "DHL"),
+                MissingServiceCount = g.Count(s => s.Service == null || s.Service == string.Empty),
+                AwaitingHandoffCount = g.Count(s =>
+                    (s.Status == Domain.Enums.ShipmentStatus.Pending || s.Status == Domain.Enums.ShipmentStatus.Packed) &&
+                    s.CreatedAtUtc <= handoffThresholdUtc),
+                TrackingOverdueCount = g.Count(s =>
+                    s.Carrier == "DHL" &&
+                    (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+                    (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
+                    ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc)),
+                CarrierReviewCount = g.Count(s =>
+                    s.Carrier == "DHL" &&
+                    ((s.Service == null || s.Service == string.Empty) ||
+                     s.Status == Domain.Enums.ShipmentStatus.Returned ||
+                     ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+                      (s.TrackingNumber == null || s.TrackingNumber == string.Empty)))),
+                ReturnFollowUpCount = g.Count(s => s.Status == Domain.Enums.ShipmentStatus.Returned)
+            })
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false) ?? new ShipmentOpsSummaryDto();
     }
 }

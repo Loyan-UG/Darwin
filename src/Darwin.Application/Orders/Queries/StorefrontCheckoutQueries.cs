@@ -3,6 +3,7 @@ using Darwin.Application.CartCheckout.Queries;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Queries;
+using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Identity;
@@ -235,33 +236,7 @@ public sealed class GetStorefrontOrderConfirmationHandler
                 x.Status,
                 x.BillingAddressJson,
                 x.ShippingAddressJson,
-                x.CreatedAtUtc,
-                Lines = x.Lines.Where(line => !line.IsDeleted).Select(line => new StorefrontOrderConfirmationLineDto
-                {
-                    Id = line.Id,
-                    VariantId = line.VariantId,
-                    Name = line.Name,
-                    Sku = line.Sku,
-                    Quantity = line.Quantity,
-                    UnitPriceGrossMinor = line.UnitPriceGrossMinor,
-                    LineGrossMinor = line.LineGrossMinor
-                }).ToList(),
-                Payments = x.Payments
-                    .Where(payment => !payment.IsDeleted)
-                    .OrderByDescending(payment => payment.CreatedAtUtc)
-                    .Select(payment => new StorefrontOrderConfirmationPaymentDto
-                {
-                    Id = payment.Id,
-                    CreatedAtUtc = payment.CreatedAtUtc,
-                    Provider = payment.Provider,
-                    ProviderReference = payment.ProviderTransactionRef,
-                    ProviderPaymentIntentReference = payment.ProviderPaymentIntentRef,
-                    ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionRef,
-                    AmountMinor = payment.AmountMinor,
-                    Currency = payment.Currency,
-                    Status = payment.Status,
-                    PaidAtUtc = payment.PaidAtUtc
-                }).ToList()
+                x.CreatedAtUtc
             })
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
@@ -270,6 +245,42 @@ public sealed class GetStorefrontOrderConfirmationHandler
         {
             return null;
         }
+
+        var lines = await _db.Set<OrderLine>()
+            .AsNoTracking()
+            .Where(line => line.OrderId == order.Id && !line.IsDeleted)
+            .Select(line => new StorefrontOrderConfirmationLineDto
+            {
+                Id = line.Id,
+                VariantId = line.VariantId,
+                Name = line.Name,
+                Sku = line.Sku,
+                Quantity = line.Quantity,
+                UnitPriceGrossMinor = line.UnitPriceGrossMinor,
+                LineGrossMinor = line.LineGrossMinor
+            })
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        var payments = await _db.Set<Payment>()
+            .AsNoTracking()
+            .Where(payment => payment.OrderId == order.Id && !payment.IsDeleted)
+            .OrderByDescending(payment => payment.CreatedAtUtc)
+            .Select(payment => new StorefrontOrderConfirmationPaymentDto
+            {
+                Id = payment.Id,
+                CreatedAtUtc = payment.CreatedAtUtc,
+                Provider = payment.Provider,
+                ProviderReference = payment.ProviderTransactionRef,
+                ProviderPaymentIntentReference = payment.ProviderPaymentIntentRef,
+                ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionRef,
+                AmountMinor = payment.AmountMinor,
+                Currency = payment.Currency,
+                Status = payment.Status,
+                PaidAtUtc = payment.PaidAtUtc
+            })
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
 
         return new StorefrontOrderConfirmationDto
         {
@@ -289,8 +300,8 @@ public sealed class GetStorefrontOrderConfirmationHandler
             BillingAddressJson = order.BillingAddressJson,
             ShippingAddressJson = order.ShippingAddressJson,
             CreatedAtUtc = order.CreatedAtUtc,
-            Lines = order.Lines,
-            Payments = order.Payments
+            Lines = lines,
+            Payments = payments
         };
     }
 

@@ -1,3 +1,4 @@
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Inventory.Commands;
 using Darwin.Application.Inventory.DTOs;
 using Darwin.Application.Inventory.Queries;
@@ -43,6 +44,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         private readonly UpdatePurchaseOrderLifecycleHandler _updatePurchaseOrderLifecycle;
         private readonly GetInventoryLedgerHandler _getLedger;
         private readonly AdminReferenceDataService _referenceData;
+        private readonly IClock _clock;
 
         public InventoryController(
             GetWarehousesPageHandler getWarehousesPage,
@@ -72,7 +74,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             UpdatePurchaseOrderHandler updatePurchaseOrder,
             UpdatePurchaseOrderLifecycleHandler updatePurchaseOrderLifecycle,
             GetInventoryLedgerHandler getLedger,
-            AdminReferenceDataService referenceData)
+            AdminReferenceDataService referenceData,
+            IClock clock)
         {
             _getWarehousesPage = getWarehousesPage ?? throw new ArgumentNullException(nameof(getWarehousesPage));
             _getWarehouseForEdit = getWarehouseForEdit ?? throw new ArgumentNullException(nameof(getWarehouseForEdit));
@@ -102,6 +105,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             _updatePurchaseOrderLifecycle = updatePurchaseOrderLifecycle ?? throw new ArgumentNullException(nameof(updatePurchaseOrderLifecycle));
             _getLedger = getLedger ?? throw new ArgumentNullException(nameof(getLedger));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         [HttpGet]
@@ -1171,7 +1175,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         public async Task<IActionResult> CreatePurchaseOrder(Guid? businessId = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var vm = new PurchaseOrderEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,

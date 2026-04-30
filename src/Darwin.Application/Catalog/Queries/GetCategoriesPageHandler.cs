@@ -100,14 +100,18 @@ namespace Darwin.Application.Catalog.Queries
         {
             var categories = _db.Set<Category>().AsNoTracking().Where(c => !c.IsDeleted);
 
-            return new CategoryOpsSummaryDto
-            {
-                TotalCount = await categories.CountAsync(ct),
-                InactiveCount = await categories.CountAsync(c => !c.IsActive, ct),
-                UnpublishedCount = await categories.CountAsync(c => !c.IsPublished, ct),
-                RootCount = await categories.CountAsync(c => c.ParentId == null, ct),
-                ChildCount = await categories.CountAsync(c => c.ParentId != null, ct)
-            };
+            return await categories
+                .GroupBy(_ => 1)
+                .Select(g => new CategoryOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    InactiveCount = g.Count(c => !c.IsActive),
+                    UnpublishedCount = g.Count(c => !c.IsPublished),
+                    RootCount = g.Count(c => c.ParentId == null),
+                    ChildCount = g.Count(c => c.ParentId != null)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new CategoryOpsSummaryDto();
         }
     }
 }

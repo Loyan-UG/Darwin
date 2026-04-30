@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Billing;
@@ -17,15 +18,18 @@ namespace Darwin.Application.Orders.Commands
     public sealed class AddRefundHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IValidator<RefundCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public AddRefundHandler(
             IAppDbContext db,
+            IClock clock,
             IValidator<RefundCreateDto> validator,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
@@ -73,7 +77,7 @@ namespace Darwin.Application.Orders.Commands
                 throw new ValidationException(_localizer["RefundAmountExceedsRemainingCapturedAmount"]);
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var refund = new Refund
             {
                 OrderId = dto.OrderId,
@@ -132,15 +136,18 @@ namespace Darwin.Application.Orders.Commands
     public sealed class CreateOrderInvoiceHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IValidator<OrderInvoiceCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public CreateOrderInvoiceHandler(
             IAppDbContext db,
+            IClock clock,
             IValidator<OrderInvoiceCreateDto> validator,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
@@ -193,7 +200,7 @@ namespace Darwin.Application.Orders.Commands
                 }
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var invoice = new Invoice
             {
                 BusinessId = dto.BusinessId,

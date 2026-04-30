@@ -1,8 +1,7 @@
 ﻿using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Shared.Results;
@@ -98,31 +97,21 @@ namespace Darwin.Mobile.Business.Services.Identity
 
             try
             {
-                var handler = new JwtSecurityTokenHandler();
-                var jwt = handler.ReadJwtToken(accessToken);
-
-                var businessClaim = jwt.Claims.FirstOrDefault(c =>
-                    string.Equals(c.Type, "business_id", StringComparison.OrdinalIgnoreCase));
-
-                if (businessClaim is null || !Guid.TryParse(businessClaim.Value, out businessId) || businessId == Guid.Empty)
+                var jwt = JwtClaimReader.TryReadToken(accessToken);
+                businessId = JwtClaimReader.GetBusinessId(jwt) ?? Guid.Empty;
+                if (jwt is null || businessId == Guid.Empty)
                 {
                     error = "Missing or invalid business_id claim.";
                     return false;
                 }
 
-                operatorEmail = jwt.Claims.FirstOrDefault(c =>
-                        string.Equals(c.Type, JwtRegisteredClaimNames.Email, StringComparison.OrdinalIgnoreCase))?.Value
-                    ?? jwt.Claims.FirstOrDefault(c =>
-                        string.Equals(c.Type, "email", StringComparison.OrdinalIgnoreCase))?.Value
-                    ?? jwt.Claims.FirstOrDefault(c =>
-                        string.Equals(c.Type, JwtRegisteredClaimNames.Sub, StringComparison.OrdinalIgnoreCase))?.Value
-                    ?? "unknown@operator";
+                operatorEmail = JwtClaimReader.GetEmailOrSubject(jwt) ?? "unknown@operator";
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                error = $"Failed to parse access token: {ex.Message}";
+                error = MobileErrorMessages.InvalidSession();
                 return false;
             }
         }

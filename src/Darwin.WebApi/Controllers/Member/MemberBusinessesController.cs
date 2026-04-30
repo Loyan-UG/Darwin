@@ -104,9 +104,9 @@ public sealed class MemberBusinessesController : ApiControllerBase
         {
             businessId = await _createBusinessHandler.HandleAsync(createBusinessDto, ct).ConfigureAwait(false);
         }
-        catch (FluentValidation.ValidationException ex)
+        catch (FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["BusinessOnboardingPayloadInvalid"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["BusinessOnboardingPayloadInvalid"]);
         }
 
         Guid businessMemberId;
@@ -120,9 +120,9 @@ public sealed class MemberBusinessesController : ApiControllerBase
                 IsActive = true
             }, ct).ConfigureAwait(false);
         }
-        catch (FluentValidation.ValidationException ex)
+        catch (FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["BusinessOwnerMembershipCreateFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["BusinessOwnerMembershipCreateFailed"]);
         }
 
         return Ok(new BusinessOnboardingResponse

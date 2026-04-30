@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Abstractions.Security;
 
 namespace Darwin.Infrastructure.Security.LoginRateLimiter
@@ -13,10 +14,16 @@ namespace Darwin.Infrastructure.Security.LoginRateLimiter
     public sealed class MemoryLoginRateLimiter : ILoginRateLimiter
     {
         private readonly ConcurrentDictionary<string, (int count, DateTime windowStartUtc)> _entries = new();
+        private readonly IClock _clock;
+
+        public MemoryLoginRateLimiter(IClock clock)
+        {
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public Task<bool> IsAllowedAsync(string key, int maxAttempts, int windowSeconds, CancellationToken ct = default)
         {
-            var now = DateTime.UtcNow;
+            var now = _clock.UtcNow;
             var window = TimeSpan.FromSeconds(Math.Max(1, windowSeconds));
             var entry = _entries.GetOrAdd(key, _ => (0, now));
 
@@ -31,7 +38,7 @@ namespace Darwin.Infrastructure.Security.LoginRateLimiter
 
         public Task RecordAsync(string key, CancellationToken ct = default)
         {
-            var now = DateTime.UtcNow;
+            var now = _clock.UtcNow;
             _entries.AddOrUpdate(key,
                 _ => (1, now),
                 (_, old) =>

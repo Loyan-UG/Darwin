@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.Pricing;
 using Darwin.Domain.Entities.CartCheckout;
@@ -19,11 +20,14 @@ namespace Darwin.Application.CartCheckout.Commands
     public sealed class ApplyCouponHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
-        public ApplyCouponHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+
+        public ApplyCouponHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
-            _db = db;
-            _localizer = localizer;
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task HandleAsync(CartApplyCouponDto dto, CancellationToken ct = default)
@@ -76,7 +80,7 @@ namespace Darwin.Application.CartCheckout.Commands
                 throw new InvalidOperationException(_localizer["CartVariantsNoLongerAvailable"]);
             }
 
-            var now = DateTime.UtcNow;
+            var now = _clock.UtcNow;
             var promo = await _db.Set<Promotion>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p =>

@@ -4,7 +4,10 @@ using Darwin.Application.Catalog.Queries;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Catalog;
 using Darwin.Contracts.Common;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
@@ -13,9 +16,14 @@ namespace Darwin.WebApi.Controllers.Public;
 /// Public catalog delivery endpoints for storefront listing and product-detail pages.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
+[EnableRateLimiting("public-content")]
+[RequestTimeout("public-content")]
 [Route("api/v1/public/catalog")]
 public sealed class PublicCatalogController : ApiControllerBase
 {
+    private const int MaxPublicPage = 10_000;
+
     private readonly GetPublishedCategoriesHandler _getPublishedCategoriesHandler;
     private readonly GetPublishedProductsPageHandler _getPublishedProductsPageHandler;
     private readonly GetPublishedProductBySlugHandler _getPublishedProductBySlugHandler;
@@ -52,6 +60,10 @@ public sealed class PublicCatalogController : ApiControllerBase
         if (normalizedPage <= 0)
         {
             return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
+        }
+        if (normalizedPage > MaxPublicPage)
+        {
+            return BadRequestProblem(_validationLocalizer["PageMustBeBetween1And10000"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(50);
@@ -96,6 +108,10 @@ public sealed class PublicCatalogController : ApiControllerBase
         if (normalizedPage <= 0)
         {
             return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
+        }
+        if (normalizedPage > MaxPublicPage)
+        {
+            return BadRequestProblem(_validationLocalizer["PageMustBeBetween1And10000"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(24);

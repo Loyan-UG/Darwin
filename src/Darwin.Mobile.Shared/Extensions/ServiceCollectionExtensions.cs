@@ -56,6 +56,7 @@ namespace Darwin.Mobile.Shared.Extensions
 
             services.AddSingleton(options);
             services.AddSingleton(legalLinksOptions);
+            services.AddSingleton(TimeProvider.System);
 
             ValidateLegalLinksConfiguration(legalLinksOptions);
 

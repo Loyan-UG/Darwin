@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
@@ -46,6 +47,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         private readonly GetUserWithRolesForEditHandler _getUserRoles;
         private readonly UpdateUserRolesHandler _updateUserRoles;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IClock _clock;
 
 
         /// <summary>
@@ -72,7 +74,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             SetDefaultUserAddressHandler setDefaultAddress,
             GetUserWithRolesForEditHandler getUserRoles,
             UpdateUserRolesHandler updateUserRoles,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            IClock clock)
         {
             _registerUser = registerUser ?? throw new ArgumentNullException(nameof(registerUser));
             _getUsersPage = getUsersPage ?? throw new ArgumentNullException(nameof(getUsersPage));
@@ -95,6 +98,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             _getUserRoles = getUserRoles ?? throw new ArgumentNullException(nameof(getUserRoles));
             _updateUserRoles = updateUserRoles ?? throw new ArgumentNullException(nameof(updateUserRoles));
             _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         /// <summary>
@@ -218,7 +222,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
             // Map user -> edit VM
             var u = result.Value;
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
 
             var vm = new UserEditVm
             {
@@ -1075,7 +1079,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var summary = await _getUserOpsSummary.HandleAsync(ct);
             var auditSummary = await _getEmailDispatchAuditsPage.GetSummaryAsync(null, ct);
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             return new UsersListVm
             {
                 Page = page,

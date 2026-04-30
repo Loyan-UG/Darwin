@@ -22,23 +22,27 @@ namespace Darwin.Mobile.Shared.Caching;
 public sealed class MobileCacheService : IMobileCacheService
 {
     private const string RegistryStorageKey = "cache:registry";
+    private const int MaxRegistryEntries = 256;
+    private const int MaxCacheKeyLength = 512;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly IKeyValueStore _keyValueStore;
+    private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _registryGate = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MobileCacheService"/> class.
     /// </summary>
-    public MobileCacheService(IKeyValueStore keyValueStore)
+    public MobileCacheService(IKeyValueStore keyValueStore, TimeProvider timeProvider)
     {
         _keyValueStore = keyValueStore ?? throw new ArgumentNullException(nameof(keyValueStore));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     /// <inheritdoc />
     public async Task<T?> GetFreshAsync<T>(string cacheKey, CancellationToken ct)
     {
         var entry = await GetEnvelopeAsync<T>(cacheKey, ct).ConfigureAwait(false);
-        if (entry is null || entry.ExpiresAtUtc <= DateTime.UtcNow)
+        if (entry is null || entry.ExpiresAtUtc <= _timeProvider.GetUtcNow().UtcDateTime)
         {
             return default;
         }
@@ -55,7 +59,7 @@ public sealed class MobileCacheService : IMobileCacheService
             return default;
         }
 
-        return entry.StoredAtUtc >= DateTime.UtcNow.Subtract(maxAge)
+        return entry.StoredAtUtc >= _timeProvider.GetUtcNow().UtcDateTime.Subtract(maxAge)
             ? entry.Value
             : default;
     }
@@ -65,17 +69,14 @@ public sealed class MobileCacheService : IMobileCacheService
     {
         ct.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(cacheKey))
-        {
-            throw new ArgumentException("Cache key is required.", nameof(cacheKey));
-        }
+        ValidateCacheKey(cacheKey);
 
         if (ttl <= TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(ttl), "TTL must be positive.");
         }
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
         var envelope = new CacheEnvelope<T>
         {
             StoredAtUtc = nowUtc,
@@ -94,10 +95,7 @@ public sealed class MobileCacheService : IMobileCacheService
     {
         ct.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(cacheKey))
-        {
-            throw new ArgumentException("Cache key is required.", nameof(cacheKey));
-        }
+        ValidateCacheKey(cacheKey);
 
         var storageKey = ToStorageKey(cacheKey);
         await _keyValueStore.RemoveAsync(storageKey, ct).ConfigureAwait(false);
@@ -163,6 +161,17 @@ public sealed class MobileCacheService : IMobileCacheService
             if (!keys.Add(storageKey))
             {
                 return;
+            }
+
+            while (keys.Count > MaxRegistryEntries)
+            {
+                var evictedKey = GetOldestRegisteredKey(keys);
+                if (string.IsNullOrWhiteSpace(evictedKey) || !keys.Remove(evictedKey))
+                {
+                    break;
+                }
+
+                await _keyValueStore.RemoveAsync(evictedKey, ct).ConfigureAwait(false);
             }
 
             await SaveRegistryCoreAsync(keys, ct).ConfigureAwait(false);
@@ -234,6 +243,29 @@ public sealed class MobileCacheService : IMobileCacheService
         }
 
         return builder.ToString();
+    }
+
+    private static void ValidateCacheKey(string cacheKey)
+    {
+        if (string.IsNullOrWhiteSpace(cacheKey))
+        {
+            throw new ArgumentException("Cache key is required.", nameof(cacheKey));
+        }
+
+        if (cacheKey.Trim().Length > MaxCacheKeyLength)
+        {
+            throw new ArgumentException($"Cache key cannot exceed {MaxCacheKeyLength} characters.", nameof(cacheKey));
+        }
+    }
+
+    private static string GetOldestRegisteredKey(HashSet<string> keys)
+    {
+        foreach (var key in keys)
+        {
+            return key;
+        }
+
+        return string.Empty;
     }
 
     private sealed class CacheEnvelope<T>

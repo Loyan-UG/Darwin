@@ -3,6 +3,7 @@ using Darwin.Infrastructure.Extensions;
 using Darwin.WebAdmin.Localization;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
@@ -73,16 +74,24 @@ namespace Darwin.WebAdmin.Extensions
 
             app.UseHttpsRedirection();
             app.UseWebAdminSecurityHeaders();
-            app.UseStaticFiles();
+            app.UseStaticFiles(BuildStaticFileOptions());
 
             app.UseRouting();
-            app.UseAdminTextOverrides();
             app.UseAuthentication();
+            app.UseAdminTextOverrides();
             app.UseAuthorization();
 
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+            app.MapHealthChecks("/health/live", new HealthCheckOptions
+            {
+                Predicate = _ => false
+            });
+            app.MapHealthChecks("/health/ready", new HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains("ready")
+            });
         }
 
         private static async Task<(CultureInfo[] SupportedCultures, string DefaultCulture)> LoadLocalizationSettingsAsync(IServiceProvider services)
@@ -134,30 +143,50 @@ namespace Darwin.WebAdmin.Extensions
 
         private static bool CanReadBusinessOverrideForm(HttpRequest request)
         {
-            return request.HasFormContentType &&
+            return request.HttpContext.User?.Identity?.IsAuthenticated == true &&
+                   request.ContentLength is > 0 and <= 16 * 1024 &&
+                   request.HasFormContentType &&
                    request.ContentType?.StartsWith("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase) == true;
+        }
+
+        private static StaticFileOptions BuildStaticFileOptions()
+        {
+            return new StaticFileOptions
+            {
+                OnPrepareResponse = context =>
+                {
+                    if (context.Context.Request.Path.StartsWithSegments("/uploads", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+                    }
+                }
+            };
         }
 
         private static void UseWebAdminSecurityHeaders(this WebApplication app)
         {
             app.Use(async (context, next) =>
             {
-                var headers = context.Response.Headers;
-                headers["Content-Security-Policy"] = string.Join("; ",
-                    "default-src 'self'",
-                    "script-src 'self'",
-                    "style-src 'self'",
-                    "img-src 'self' data: blob:",
-                    "font-src 'self'",
-                    "connect-src 'self'",
-                    "media-src 'self' blob:",
-                    "object-src 'none'",
-                    "base-uri 'self'",
-                    "form-action 'self'",
-                    "frame-ancestors 'none'");
-                headers["X-Content-Type-Options"] = "nosniff";
-                headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-                headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
+                context.Response.OnStarting(() =>
+                {
+                    var headers = context.Response.Headers;
+                    headers.TryAdd("Content-Security-Policy", string.Join("; ",
+                        "default-src 'self'",
+                        "script-src 'self'",
+                        "style-src 'self'",
+                        "img-src 'self' data: blob:",
+                        "font-src 'self'",
+                        "connect-src 'self'",
+                        "media-src 'self' blob:",
+                        "object-src 'none'",
+                        "base-uri 'self'",
+                        "form-action 'self'",
+                        "frame-ancestors 'none'"));
+                    headers.TryAdd("X-Content-Type-Options", "nosniff");
+                    headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
+                    headers.TryAdd("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+                    return Task.CompletedTask;
+                });
 
                 await next().ConfigureAwait(false);
             });

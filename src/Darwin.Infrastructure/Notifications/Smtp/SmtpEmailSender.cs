@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Infrastructure.Notifications;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,7 @@ namespace Darwin.Infrastructure.Notifications.Smtp
         private readonly SmtpEmailOptions _options;
         private readonly ILogger<SmtpEmailSender> _logger;
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
         /// <summary>
         ///     Creates an instance of the SMTP email sender.
@@ -32,12 +34,14 @@ namespace Darwin.Infrastructure.Notifications.Smtp
         public SmtpEmailSender(
             IOptions<SmtpEmailOptions> options,
             ILogger<SmtpEmailSender> logger,
-            IAppDbContext db)
+            IAppDbContext db,
+            IClock clock)
         {
             _options = (options ?? throw new ArgumentNullException(nameof(options))).Value
                        ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         /// <summary>
@@ -56,7 +60,7 @@ namespace Darwin.Infrastructure.Notifications.Smtp
         {
             if (string.IsNullOrWhiteSpace(toEmail)) throw new ArgumentNullException(nameof(toEmail));
             var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
-            var pendingDuplicateCutoffUtc = DateTime.UtcNow.AddMinutes(-15);
+            var pendingDuplicateCutoffUtc = _clock.UtcNow.AddMinutes(-15);
             if (!string.IsNullOrWhiteSpace(correlationKey) &&
                 await _db.Set<EmailDispatchAudit>()
                     .AsNoTracking()
@@ -71,7 +75,7 @@ namespace Darwin.Infrastructure.Notifications.Smtp
                 return;
             }
 
-            var attemptedAtUtc = DateTime.UtcNow;
+            var attemptedAtUtc = _clock.UtcNow;
             var audit = new EmailDispatchAudit
             {
                 Provider = "SMTP",
@@ -127,20 +131,24 @@ namespace Darwin.Infrastructure.Notifications.Smtp
 
                 await client.SendMailAsync(message);
                 audit.Status = "Sent";
-                audit.CompletedAtUtc = DateTime.UtcNow;
+                audit.CompletedAtUtc = _clock.UtcNow;
                 await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMTP email dispatch audit completion", ct)
                     .ConfigureAwait(false);
-                _logger.LogInformation("SMTP email sent to {Recipient} via {Host}:{Port}", toEmail, _options.Host, _options.Port);
+                _logger.LogInformation(
+                    "SMTP email sent to {Recipient} via {Host}:{Port}",
+                    NotificationLogSanitizer.MaskEmail(toEmail),
+                    _options.Host,
+                    _options.Port);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 throw;
             }
-            catch (Exception ex) when (audit.Status == "Pending")
+            catch (Exception) when (audit.Status == "Pending")
             {
                 audit.Status = "Failed";
-                audit.CompletedAtUtc = DateTime.UtcNow;
-                audit.FailureMessage = ex.Message.Length > 2000 ? ex.Message.Substring(0, 2000) : ex.Message;
+                audit.CompletedAtUtc = _clock.UtcNow;
+                audit.FailureMessage = NotificationLogSanitizer.TransportFailure(EmailProviderNames.Smtp);
                 await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "SMTP email dispatch audit failure", ct)
                     .ConfigureAwait(false);
                 throw;

@@ -6,7 +6,9 @@ using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Orders;
 using Darwin.Contracts.Shipping;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 using Darwin.WebApi.Services;
 
@@ -17,9 +19,26 @@ namespace Darwin.WebApi.Controllers.Public;
 /// </summary>
 [ApiController]
 [AllowAnonymous]
+[EnableRateLimiting("public-storefront")]
+[RequestTimeout("public-storefront")]
 [Route("api/v1/public/checkout")]
 public sealed class PublicCheckoutController : ApiControllerBase
 {
+    private const int MaxCheckoutRequestBytes = 32 * 1024;
+    private const int MaxOrderNumberLength = 64;
+    private const int MaxProviderLength = 64;
+    private const int MaxProviderReferenceLength = 256;
+    private const int MaxFailureReasonLength = 512;
+    private const int MaxCultureLength = 16;
+    private const int MaxAddressFullNameLength = 200;
+    private const int MaxAddressCompanyLength = 200;
+    private const int MaxAddressStreetLength = 300;
+    private const int MaxAddressPostalCodeLength = 32;
+    private const int MaxAddressCityLength = 150;
+    private const int MaxAddressStateLength = 150;
+    private const int MaxAddressCountryCodeLength = 2;
+    private const int MaxAddressPhoneLength = 20;
+
     private readonly CreateStorefrontCheckoutIntentHandler _createStorefrontCheckoutIntentHandler;
     private readonly PlaceOrderFromCartHandler _placeOrderFromCartHandler;
     private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;
@@ -54,6 +73,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     /// </summary>
     [HttpPost("intent")]
     [HttpPost("/api/v1/checkout/intent")]
+    [RequestSizeLimit(MaxCheckoutRequestBytes)]
     [ProducesResponseType(typeof(CreateCheckoutIntentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateIntentAsync([FromBody] CreateCheckoutIntentRequest? request, CancellationToken ct = default)
@@ -61,6 +81,12 @@ public sealed class PublicCheckoutController : ApiControllerBase
         if (request is null)
         {
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
+        }
+
+        var addressValidation = ValidateAddressBounds(request.ShippingAddress);
+        if (addressValidation is not null)
+        {
+            return BadRequestProblem(_validationLocalizer[addressValidation]);
         }
 
         try
@@ -91,7 +117,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["CheckoutIntentCreationFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["CheckoutIntentCreationFailed"]);
         }
     }
 
@@ -100,6 +126,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     /// </summary>
     [HttpPost("orders")]
     [HttpPost("/api/v1/checkout/orders")]
+    [RequestSizeLimit(MaxCheckoutRequestBytes)]
     [ProducesResponseType(typeof(PlaceOrderFromCartResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PlaceOrderAsync([FromBody] PlaceOrderFromCartRequest? request, CancellationToken ct = default)
@@ -107,6 +134,21 @@ public sealed class PublicCheckoutController : ApiControllerBase
         if (request is null)
         {
             return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
+        }
+
+        var billingAddressValidation = ValidateAddressBounds(request.BillingAddress);
+        var shippingAddressValidation = ValidateAddressBounds(request.ShippingAddress);
+        if (billingAddressValidation is not null || shippingAddressValidation is not null)
+        {
+            return BadRequestProblem(_validationLocalizer[billingAddressValidation ?? shippingAddressValidation!]);
+        }
+
+        var normalizedCulture = string.IsNullOrWhiteSpace(request.Culture)
+            ? SiteSettingDto.DefaultCultureDefault
+            : request.Culture.Trim();
+        if (normalizedCulture.Length > MaxCultureLength)
+        {
+            return BadRequestProblem(_validationLocalizer["StorefrontCheckoutReferenceTooLong"]);
         }
 
         try
@@ -121,7 +163,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 BillingAddress = MapAddress(request.BillingAddress),
                 ShippingAddress = MapAddress(request.ShippingAddress),
                 ShippingTotalMinor = request.ShippingTotalMinor,
-                Culture = string.IsNullOrWhiteSpace(request.Culture) ? SiteSettingDto.DefaultCultureDefault : request.Culture.Trim()
+                Culture = normalizedCulture
             }, ct).ConfigureAwait(false);
 
             return Ok(new PlaceOrderFromCartResponse
@@ -135,7 +177,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["OrderPlacementFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["OrderPlacementFailed"]);
         }
     }
 
@@ -144,6 +186,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     /// </summary>
     [HttpPost("orders/{orderId:guid}/payment-intent")]
     [HttpPost("/api/v1/checkout/orders/{orderId:guid}/payment-intent")]
+    [RequestSizeLimit(MaxCheckoutRequestBytes)]
     [ProducesResponseType(typeof(CreateStorefrontPaymentIntentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
@@ -158,6 +201,12 @@ public sealed class PublicCheckoutController : ApiControllerBase
         {
             var normalizedOrderNumber = NormalizeNullable(request?.OrderNumber);
             var normalizedProvider = NormalizeNullable(request?.Provider) ?? "Stripe";
+            if (normalizedOrderNumber?.Length > MaxOrderNumberLength ||
+                normalizedProvider.Length > MaxProviderLength)
+            {
+                return BadRequestProblem(_validationLocalizer["StorefrontCheckoutReferenceTooLong"]);
+            }
+
             var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto
             {
                 OrderId = orderId,
@@ -187,13 +236,14 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 ExpiresAtUtc = result.ExpiresAtUtc
             });
         }
-        catch (InvalidOperationException ex) when (string.Equals(ex.Message, "Order not found.", StringComparison.Ordinal))
+        catch (InvalidOperationException ex) when (IsLocalizedError(ex, "OrderNotFound") ||
+                                                   IsLocalizedError(ex, "OrderConfirmationContextIsInvalid"))
         {
             return NotFoundProblem(_validationLocalizer["OrderNotFound"]);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["PaymentIntentCreationFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["PaymentIntentCreationFailed"]);
         }
     }
 
@@ -202,6 +252,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     /// </summary>
     [HttpPost("orders/{orderId:guid}/payments/{paymentId:guid}/complete")]
     [HttpPost("/api/v1/checkout/orders/{orderId:guid}/payments/{paymentId:guid}/complete")]
+    [RequestSizeLimit(MaxCheckoutRequestBytes)]
     [ProducesResponseType(typeof(CompleteStorefrontPaymentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
@@ -222,6 +273,25 @@ public sealed class PublicCheckoutController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["UnsupportedStorefrontPaymentOutcome"]);
         }
 
+        var normalizedOrderNumber = NormalizeNullable(request.OrderNumber);
+        var normalizedProviderReference = NormalizeNullable(request.ProviderReference);
+        var normalizedProviderPaymentIntentReference = NormalizeNullable(request.ProviderPaymentIntentReference);
+        var normalizedProviderCheckoutSessionReference = NormalizeNullable(request.ProviderCheckoutSessionReference);
+        var normalizedFailureReason = NormalizeNullable(request.FailureReason);
+
+        if (normalizedOrderNumber?.Length > MaxOrderNumberLength ||
+            normalizedProviderReference?.Length > MaxProviderReferenceLength ||
+            normalizedProviderPaymentIntentReference?.Length > MaxProviderReferenceLength ||
+            normalizedProviderCheckoutSessionReference?.Length > MaxProviderReferenceLength)
+        {
+            return BadRequestProblem(_validationLocalizer["StorefrontCheckoutReferenceTooLong"]);
+        }
+
+        if (normalizedFailureReason?.Length > MaxFailureReasonLength)
+        {
+            return BadRequestProblem(_validationLocalizer["StorefrontCheckoutFailureReasonTooLong"]);
+        }
+
         try
         {
             var result = await _completeStorefrontPaymentHandler.HandleAsync(new CompleteStorefrontPaymentDto
@@ -229,12 +299,12 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 OrderId = orderId,
                 PaymentId = paymentId,
                 UserId = GetCurrentUserId(),
-                OrderNumber = NormalizeNullable(request.OrderNumber),
-                ProviderReference = NormalizeNullable(request.ProviderReference),
-                ProviderPaymentIntentReference = NormalizeNullable(request.ProviderPaymentIntentReference),
-                ProviderCheckoutSessionReference = NormalizeNullable(request.ProviderCheckoutSessionReference),
+                OrderNumber = normalizedOrderNumber,
+                ProviderReference = normalizedProviderReference,
+                ProviderPaymentIntentReference = normalizedProviderPaymentIntentReference,
+                ProviderCheckoutSessionReference = normalizedProviderCheckoutSessionReference,
                 Outcome = outcome,
-                FailureReason = NormalizeNullable(request.FailureReason)
+                FailureReason = normalizedFailureReason
             }, ct).ConfigureAwait(false);
 
             return Ok(new CompleteStorefrontPaymentResponse
@@ -246,16 +316,15 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 PaidAtUtc = result.PaidAtUtc
             });
         }
-        catch (InvalidOperationException ex) when (string.Equals(ex.Message, "Order not found.", StringComparison.Ordinal) ||
-                                                   string.Equals(ex.Message, "Payment not found for the order.", StringComparison.Ordinal))
+        catch (InvalidOperationException ex) when (IsLocalizedError(ex, "OrderNotFound") ||
+                                                   IsLocalizedError(ex, "OrderConfirmationContextIsInvalid") ||
+                                                   IsLocalizedError(ex, "PaymentNotFoundForOrder"))
         {
-            return NotFoundProblem(string.Equals(ex.Message, "Order not found.", StringComparison.Ordinal)
-                ? _validationLocalizer["OrderNotFound"]
-                : _validationLocalizer["PaymentNotFoundForOrder"]);
+            return NotFoundProblem(_validationLocalizer["OrderConfirmationNotFound"]);
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
-            return BadRequestProblem(_validationLocalizer["PaymentCompletionApplyFailed"], ex.Message);
+            return BadRequestProblem(_validationLocalizer["PaymentCompletionApplyFailed"]);
         }
     }
 
@@ -273,11 +342,17 @@ public sealed class PublicCheckoutController : ApiControllerBase
             return BadRequestProblem(_validationLocalizer["OrderIdRequired"]);
         }
 
+        var normalizedOrderNumber = NormalizeNullable(orderNumber);
+        if (normalizedOrderNumber?.Length > MaxOrderNumberLength)
+        {
+            return BadRequestProblem(_validationLocalizer["StorefrontCheckoutReferenceTooLong"]);
+        }
+
         var confirmation = await _getStorefrontOrderConfirmationHandler.HandleAsync(new GetStorefrontOrderConfirmationDto
         {
             OrderId = orderId,
             UserId = GetCurrentUserId(),
-            OrderNumber = NormalizeNullable(orderNumber)
+            OrderNumber = normalizedOrderNumber
         }, ct).ConfigureAwait(false);
 
         if (confirmation is null)
@@ -356,7 +431,44 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 PhoneE164 = NormalizeNullable(address.PhoneE164)
             };
 
+    private static string? ValidateAddressBounds(CheckoutAddress? address)
+    {
+        if (address is null)
+        {
+            return null;
+        }
+
+        if (IsTooLong(address.FullName, MaxAddressFullNameLength) ||
+            IsTooLong(address.Company, MaxAddressCompanyLength) ||
+            IsTooLong(address.Street1, MaxAddressStreetLength) ||
+            IsTooLong(address.Street2, MaxAddressStreetLength) ||
+            IsTooLong(address.PostalCode, MaxAddressPostalCodeLength) ||
+            IsTooLong(address.City, MaxAddressCityLength) ||
+            IsTooLong(address.State, MaxAddressStateLength) ||
+            IsTooLong(address.PhoneE164, MaxAddressPhoneLength))
+        {
+            return "StorefrontCheckoutAddressFieldTooLong";
+        }
+
+        var countryCode = NormalizeNullable(address.CountryCode);
+        if (countryCode is not null && countryCode.Length != MaxAddressCountryCodeLength)
+        {
+            return "StorefrontCheckoutAddressCountryCodeInvalid";
+        }
+
+        return null;
+    }
+
+    private static bool IsTooLong(string? value, int maxLength)
+        => NormalizeNullable(value)?.Length > maxLength;
+
     private static string? NormalizeNullable(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private bool IsLocalizedError(Exception exception, string resourceKey)
+        => string.Equals(
+            exception.Message,
+            _validationLocalizer[resourceKey],
+            StringComparison.Ordinal);
 
 }

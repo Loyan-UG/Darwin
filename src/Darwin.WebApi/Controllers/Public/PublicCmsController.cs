@@ -4,7 +4,10 @@ using Darwin.Application.CMS.Queries;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Contracts.Cms;
 using Darwin.Contracts.Common;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
@@ -13,9 +16,14 @@ namespace Darwin.WebApi.Controllers.Public;
 /// Public CMS delivery endpoints for storefront content, menus, and SEO-friendly page lookup.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
+[EnableRateLimiting("public-content")]
+[RequestTimeout("public-content")]
 [Route("api/v1/public/cms")]
 public sealed class PublicCmsController : ApiControllerBase
 {
+    private const int MaxPublicPage = 10_000;
+
     private readonly GetPublishedPagesPageHandler _getPublishedPagesPageHandler;
     private readonly GetPublishedPageBySlugHandler _getPublishedPageBySlugHandler;
     private readonly GetPublicMenuByNameHandler _getPublicMenuByNameHandler;
@@ -49,6 +57,10 @@ public sealed class PublicCmsController : ApiControllerBase
         if (normalizedPage <= 0)
         {
             return BadRequestProblem(_validationLocalizer["PageMustBePositiveInteger"]);
+        }
+        if (normalizedPage > MaxPublicPage)
+        {
+            return BadRequestProblem(_validationLocalizer["PageMustBeBetween1And10000"]);
         }
 
         var normalizedPageSize = pageSize.GetValueOrDefault(20);

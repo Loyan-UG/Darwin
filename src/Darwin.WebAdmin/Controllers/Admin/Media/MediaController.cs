@@ -165,6 +165,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         /// Accepts an uploaded media file, stores it safely under <c>wwwroot/uploads</c>, and persists metadata.
         /// </summary>
         [HttpPost]
+        [RequestSizeLimit(MaxUploadBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MaxUploadBytes, ValueLengthLimit = 4096, ValueCountLimit = 64)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(MediaAssetCreateVm vm, CancellationToken ct = default)
         {
@@ -181,15 +183,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 return RenderCreateEditor(vm);
             }
 
+            StoredUploadResult? stored = null;
             try
             {
-                var stored = await SaveUploadAsync(vm.File, ct).ConfigureAwait(false);
+                stored = await SaveUploadAsync(vm.File, ct).ConfigureAwait(false);
+                var originalFileName = SanitizeOriginalFileName(vm.File.FileName);
                 await _create.HandleAsync(new MediaAssetCreateDto
                 {
                     Url = stored.PublicUrl,
                     Alt = vm.Alt,
                     Title = vm.Title,
-                    OriginalFileName = vm.File.FileName,
+                    OriginalFileName = originalFileName,
                     SizeBytes = stored.SizeBytes,
                     ContentHash = stored.ContentHash,
                     Role = string.IsNullOrWhiteSpace(vm.Role) ? "LibraryAsset" : vm.Role
@@ -198,8 +202,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 SetSuccessMessage("MediaUploaded");
                 return RedirectOrHtmx(nameof(Index), new { });
             }
+            catch (InvalidDataException)
+            {
+                ModelState.AddModelError(nameof(vm.File), T("MediaUploadInvalidFileType"));
+                return RenderCreateEditor(vm);
+            }
             catch (Exception)
             {
+                if (stored is not null && System.IO.File.Exists(stored.PhysicalPath))
+                {
+                    System.IO.File.Delete(stored.PhysicalPath);
+                }
+
                 AddModelErrorMessage("MediaCreateFailed");
                 return RenderCreateEditor(vm);
             }
@@ -374,11 +388,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         /// Image upload endpoint for Quill. Returns JSON <c>{ url: "/uploads/..." }</c>.
         /// </summary>
         /// <remarks>
-        /// Quill sends multipart uploads through fetch without the admin form token, so this endpoint is the only
-        /// WebAdmin anti-forgery exception; it remains protected by admin authorization and strict file validation.
+        /// Quill sends multipart uploads through fetch with the admin form anti-forgery token. The endpoint remains
+        /// protected by admin authorization and strict file validation.
         /// </remarks>
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [RequestSizeLimit(MaxUploadBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MaxUploadBytes, ValueLengthLimit = 4096, ValueCountLimit = 16)]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)
         {
             if (file is null)
@@ -396,18 +412,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             try
             {
                 stored = await SaveUploadAsync(file, ct).ConfigureAwait(false);
+                var originalFileName = SanitizeOriginalFileName(file.FileName);
                 await _create.HandleAsync(new MediaAssetCreateDto
                 {
                     Url = stored.PublicUrl,
                     Alt = string.Empty,
-                    Title = file.FileName,
-                    OriginalFileName = file.FileName,
+                    Title = ToMediaTitle(originalFileName),
+                    OriginalFileName = originalFileName,
                     SizeBytes = stored.SizeBytes,
                     ContentHash = stored.ContentHash,
                     Role = "EditorAsset"
                 }, ct).ConfigureAwait(false);
 
                 return Json(new { url = stored.PublicUrl });
+            }
+            catch (InvalidDataException)
+            {
+                return BadRequest(new { error = T("MediaUploadInvalidFileType") });
             }
             catch (Exception)
             {
@@ -487,20 +508,55 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             return null;
         }
 
+        private static string SanitizeOriginalFileName(string? fileName)
+        {
+            var original = Path.GetFileName(fileName ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(original))
+            {
+                return "upload";
+            }
+
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var sanitizedChars = original
+                .Select(ch => char.IsControl(ch) || invalidChars.Contains(ch) ? '_' : ch)
+                .ToArray();
+            var sanitized = new string(sanitizedChars).Trim(' ', '.');
+            if (string.IsNullOrWhiteSpace(sanitized))
+            {
+                return "upload";
+            }
+
+            return sanitized.Length <= 260 ? sanitized : sanitized[..260];
+        }
+
+        private static string ToMediaTitle(string fileName)
+        {
+            return fileName.Length <= 256 ? fileName : fileName[..256];
+        }
+
         private async Task<StoredUploadResult> SaveUploadAsync(IFormFile file, CancellationToken ct)
         {
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var uploadsRoot = Path.Combine(GetWebRootPath(), "uploads");
-            Directory.CreateDirectory(uploadsRoot);
-
-            var fileName = $"{Guid.NewGuid():N}{ext}";
-            var fullPath = Path.Combine(uploadsRoot, fileName);
-
             await using var input = file.OpenReadStream();
             await using var buffer = new MemoryStream();
             await input.CopyToAsync(buffer, ct).ConfigureAwait(false);
 
             var bytes = buffer.ToArray();
+            if (!HasValidImageSignature(ext, bytes))
+            {
+                throw new InvalidDataException("Uploaded file signature does not match an allowed image format.");
+            }
+
+            var uploadsRoot = Path.Combine(GetWebRootPath(), "uploads");
+            Directory.CreateDirectory(uploadsRoot);
+
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            var fullPath = Path.Combine(uploadsRoot, fileName);
+            if (!IsPathUnderRoot(fullPath, uploadsRoot))
+            {
+                throw new InvalidDataException("Resolved upload path is outside the configured upload root.");
+            }
+
             await System.IO.File.WriteAllBytesAsync(fullPath, bytes, ct).ConfigureAwait(false);
 
             var hash = Convert.ToHexString(SHA256.HashData(bytes));
@@ -509,6 +565,43 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 PublicUrl: $"/uploads/{fileName}",
                 SizeBytes: bytes.LongLength,
                 ContentHash: hash);
+        }
+
+        private static bool HasValidImageSignature(string extension, byte[] bytes)
+        {
+            return extension switch
+            {
+                ".png" => bytes.Length >= 8 &&
+                    bytes[0] == 0x89 &&
+                    bytes[1] == 0x50 &&
+                    bytes[2] == 0x4E &&
+                    bytes[3] == 0x47 &&
+                    bytes[4] == 0x0D &&
+                    bytes[5] == 0x0A &&
+                    bytes[6] == 0x1A &&
+                    bytes[7] == 0x0A,
+                ".jpg" or ".jpeg" => bytes.Length >= 3 &&
+                    bytes[0] == 0xFF &&
+                    bytes[1] == 0xD8 &&
+                    bytes[2] == 0xFF,
+                ".gif" => bytes.Length >= 6 &&
+                    bytes[0] == 0x47 &&
+                    bytes[1] == 0x49 &&
+                    bytes[2] == 0x46 &&
+                    bytes[3] == 0x38 &&
+                    (bytes[4] == 0x37 || bytes[4] == 0x39) &&
+                    bytes[5] == 0x61,
+                ".webp" => bytes.Length >= 12 &&
+                    bytes[0] == 0x52 &&
+                    bytes[1] == 0x49 &&
+                    bytes[2] == 0x46 &&
+                    bytes[3] == 0x46 &&
+                    bytes[8] == 0x57 &&
+                    bytes[9] == 0x45 &&
+                    bytes[10] == 0x42 &&
+                    bytes[11] == 0x50,
+                _ => false
+            };
         }
 
         private string GetWebRootPath()
@@ -530,8 +623,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
 
             var relative = url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
             var fullPath = Path.GetFullPath(Path.Combine(GetWebRootPath(), relative));
-            var uploadsRoot = Path.GetFullPath(Path.Combine(GetWebRootPath(), "uploads")) + Path.DirectorySeparatorChar;
-            return fullPath.StartsWith(uploadsRoot, StringComparison.OrdinalIgnoreCase) ? fullPath : null;
+            var uploadsRoot = Path.Combine(GetWebRootPath(), "uploads");
+            return IsPathUnderRoot(fullPath, uploadsRoot) ? fullPath : null;
+        }
+
+        private static bool IsPathUnderRoot(string path, string root)
+        {
+            var normalizedRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            var normalizedPath = Path.GetFullPath(path);
+            return normalizedPath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
         }
 
         private sealed record StoredUploadResult(string PhysicalPath, string PublicUrl, long SizeBytes, string ContentHash);

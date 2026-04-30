@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
@@ -54,8 +55,14 @@ namespace Darwin.Application.CRM.Queries
                 CustomerQueueFilter.NeedsSegmentation => baseQuery.Where(x => x.customer.CustomerSegments.Count(segment => !segment.IsDeleted) == 0),
                 CustomerQueueFilter.HasOpportunities => baseQuery.Where(x => x.customer.Opportunities.Count(opportunity => !opportunity.IsDeleted) > 0),
                 CustomerQueueFilter.Business => baseQuery.Where(x => x.customer.TaxProfileType == CustomerTaxProfileType.Business),
-                CustomerQueueFilter.MissingVatId => baseQuery.Where(x => x.customer.TaxProfileType == CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(x.customer.VatId)),
-                CustomerQueueFilter.UsesPlatformLocaleFallback => baseQuery.Where(x => !x.customer.UserId.HasValue || x.user == null || string.IsNullOrWhiteSpace(x.user.Locale)),
+                CustomerQueueFilter.MissingVatId => baseQuery.Where(x =>
+                    x.customer.TaxProfileType == CustomerTaxProfileType.Business &&
+                    (x.customer.VatId == null || x.customer.VatId.Trim() == string.Empty)),
+                CustomerQueueFilter.UsesPlatformLocaleFallback => baseQuery.Where(x =>
+                    !x.customer.UserId.HasValue ||
+                    x.user == null ||
+                    x.user.Locale == null ||
+                    x.user.Locale.Trim() == string.Empty),
                 _ => baseQuery
             };
 
@@ -78,7 +85,10 @@ namespace Darwin.Application.CRM.Queries
                     TaxProfileType = x.customer.TaxProfileType,
                     VatId = x.customer.VatId,
                     Locale = x.customer.UserId.HasValue && x.user != null ? x.user.Locale : null,
-                    UsesPlatformLocaleFallback = !x.customer.UserId.HasValue || x.user == null || string.IsNullOrWhiteSpace(x.user.Locale),
+                    UsesPlatformLocaleFallback = !x.customer.UserId.HasValue ||
+                        x.user == null ||
+                        x.user.Locale == null ||
+                        x.user.Locale.Trim() == string.Empty,
                     SegmentCount = x.customer.CustomerSegments.Count(segment => !segment.IsDeleted),
                     OpportunityCount = x.customer.Opportunities.Count(opportunity => !opportunity.IsDeleted),
                     CreatedAtUtc = x.customer.CreatedAtUtc,
@@ -360,22 +370,39 @@ namespace Darwin.Application.CRM.Queries
     public sealed class GetCrmSummaryHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetCrmSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetCrmSummaryHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<CrmSummaryDto> HandleAsync(CancellationToken ct = default)
         {
-            var recentInteractionCutoffUtc = DateTime.UtcNow.AddDays(-7);
+            var recentInteractionCutoffUtc = _clock.UtcNow.AddDays(-7);
             var customerCount = await _db.Set<Customer>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
-            var leadCount = await _db.Set<Lead>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
-            var qualifiedLeadCount = await _db.Set<Lead>().AsNoTracking().CountAsync(x => x.Status == LeadStatus.Qualified, ct).ConfigureAwait(false);
-            var openOpportunityCount = await _db.Set<Opportunity>().AsNoTracking()
-                .CountAsync(x => x.Stage != OpportunityStage.ClosedWon && x.Stage != OpportunityStage.ClosedLost, ct)
+            var leadSummary = await _db.Set<Lead>()
+                .AsNoTracking()
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    LeadCount = g.Count(),
+                    QualifiedLeadCount = g.Count(x => x.Status == LeadStatus.Qualified)
+                })
+                .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
-            var openPipelineMinor = await _db.Set<Opportunity>().AsNoTracking()
+            var opportunitySummary = await _db.Set<Opportunity>()
+                .AsNoTracking()
                 .Where(x => x.Stage != OpportunityStage.ClosedWon && x.Stage != OpportunityStage.ClosedLost)
-                .SumAsync(x => (long?)x.EstimatedValueMinor, ct)
-                .ConfigureAwait(false) ?? 0L;
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    OpenOpportunityCount = g.Count(),
+                    OpenPipelineMinor = g.Sum(x => (long?)x.EstimatedValueMinor) ?? 0L
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false);
             var segmentCount = await _db.Set<CustomerSegment>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
             var recentInteractionCount = await _db.Set<Interaction>().AsNoTracking()
                 .CountAsync(x => x.CreatedAtUtc >= recentInteractionCutoffUtc, ct)
@@ -384,10 +411,10 @@ namespace Darwin.Application.CRM.Queries
             return new CrmSummaryDto
             {
                 CustomerCount = customerCount,
-                LeadCount = leadCount,
-                QualifiedLeadCount = qualifiedLeadCount,
-                OpenOpportunityCount = openOpportunityCount,
-                OpenPipelineMinor = openPipelineMinor,
+                LeadCount = leadSummary?.LeadCount ?? 0,
+                QualifiedLeadCount = leadSummary?.QualifiedLeadCount ?? 0,
+                OpenOpportunityCount = opportunitySummary?.OpenOpportunityCount ?? 0,
+                OpenPipelineMinor = opportunitySummary?.OpenPipelineMinor ?? 0L,
                 SegmentCount = segmentCount,
                 RecentInteractionCount = recentInteractionCount
             };

@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Enums;
@@ -18,13 +19,16 @@ namespace Darwin.Application.Billing.Commands
 
         private const string MarkerPrefix = "[DisputeReview:";
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public UpdatePaymentDisputeReviewHandler(
             IAppDbContext db,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -56,7 +60,7 @@ namespace Darwin.Application.Billing.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             if (!TryApplyAction(payment, dto.Action, dto.Note, nowUtc))
             {
                 return Result.Fail(_localizer["PaymentDisputeReviewUnsupportedAction"]);

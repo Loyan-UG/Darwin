@@ -11,6 +11,6 @@ public sealed class OutboxMessage
     public string Path { get; set; } = default!;
     public string Method { get; set; } = "POST";
     public string JsonBody { get; set; } = "{}";
-    public DateTime EnqueuedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime EnqueuedAtUtc { get; set; }
     public int Attempts { get; set; }
 }

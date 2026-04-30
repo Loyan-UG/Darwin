@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Linq.Expressions;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common;
 using Darwin.Domain.Entities.Integration;
@@ -20,10 +21,12 @@ namespace Darwin.Application.Businesses.Queries
                   x.CallbackType == "invalid" ||
                   x.CallbackType == "error");
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetProviderCallbackInboxPageHandler(IAppDbContext db)
+        public GetProviderCallbackInboxPageHandler(IAppDbContext db, IClock clock)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         public async Task<(List<ProviderCallbackInboxListItemDto> Items, int Total, ProviderCallbackInboxSummaryDto Summary, List<string> Providers)> HandleAsync(
@@ -36,28 +39,37 @@ namespace Darwin.Application.Businesses.Queries
             pageSize = Math.Clamp(pageSize, 10, 100);
             filter ??= new ProviderCallbackInboxFilterDto();
 
-            var now = DateTime.UtcNow;
+            var now = _clock.UtcNow;
             var staleBeforeUtc = now.Subtract(StalePendingThreshold);
             var baseQuery = _db.Set<ProviderCallbackInboxMessage>().AsNoTracking().Where(x => !x.IsDeleted);
 
-            var summary = new ProviderCallbackInboxSummaryDto
-            {
-                TotalCount = await baseQuery.CountAsync(ct).ConfigureAwait(false),
-                PendingCount = await baseQuery.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
-                FailedCount = await baseQuery.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
-                ProcessedCount = await baseQuery.CountAsync(x => x.Status == "Processed" || x.Status == "Succeeded", ct).ConfigureAwait(false),
-                StalePendingCount = await baseQuery.CountAsync(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
-                RetriedCount = await baseQuery.CountAsync(x => x.AttemptCount > 0, ct).ConfigureAwait(false),
-                BrevoTotalCount = await baseQuery.CountAsync(x => x.Provider == "Brevo", ct).ConfigureAwait(false),
-                BrevoPendingCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.Status == "Pending", ct).ConfigureAwait(false),
-                BrevoFailedCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.Status == "Failed", ct).ConfigureAwait(false),
-                BrevoProcessedCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && (x.Status == "Processed" || x.Status == "Succeeded"), ct).ConfigureAwait(false),
-                BrevoStalePendingCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc, ct).ConfigureAwait(false),
-                BrevoRecent24HourCount = await baseQuery.CountAsync(x => x.Provider == "Brevo" && x.CreatedAtUtc >= now.AddHours(-24), ct).ConfigureAwait(false)
-            };
-            summary.BrevoDeliveryFailureEventCount = await baseQuery
-                .CountAsync(BrevoDeliveryFailurePredicate, ct)
-                .ConfigureAwait(false);
+            var recent24HoursUtc = now.AddHours(-24);
+            var summary = await baseQuery
+                .GroupBy(_ => 1)
+                .Select(group => new ProviderCallbackInboxSummaryDto
+                {
+                    TotalCount = group.Count(),
+                    PendingCount = group.Count(x => x.Status == "Pending"),
+                    FailedCount = group.Count(x => x.Status == "Failed"),
+                    ProcessedCount = group.Count(x => x.Status == "Processed" || x.Status == "Succeeded"),
+                    StalePendingCount = group.Count(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc),
+                    RetriedCount = group.Count(x => x.AttemptCount > 0),
+                    BrevoTotalCount = group.Count(x => x.Provider == "Brevo"),
+                    BrevoPendingCount = group.Count(x => x.Provider == "Brevo" && x.Status == "Pending"),
+                    BrevoFailedCount = group.Count(x => x.Provider == "Brevo" && x.Status == "Failed"),
+                    BrevoProcessedCount = group.Count(x => x.Provider == "Brevo" && (x.Status == "Processed" || x.Status == "Succeeded")),
+                    BrevoStalePendingCount = group.Count(x => x.Provider == "Brevo" && x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc),
+                    BrevoDeliveryFailureEventCount = group.Count(x => x.Provider == "Brevo" &&
+                        (x.CallbackType == "hard_bounce" ||
+                         x.CallbackType == "soft_bounce" ||
+                         x.CallbackType == "spam" ||
+                         x.CallbackType == "blocked" ||
+                         x.CallbackType == "invalid" ||
+                         x.CallbackType == "error")),
+                    BrevoRecent24HourCount = group.Count(x => x.Provider == "Brevo" && x.CreatedAtUtc >= recent24HoursUtc)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new ProviderCallbackInboxSummaryDto();
 
             var providers = await baseQuery
                 .Select(x => x.Provider)
@@ -76,8 +88,7 @@ namespace Darwin.Application.Businesses.Queries
                     EF.Functions.Like(x.Provider, q, QueryLikePattern.EscapeCharacter) ||
                     EF.Functions.Like(x.CallbackType, q, QueryLikePattern.EscapeCharacter) ||
                     (x.IdempotencyKey != null && EF.Functions.Like(x.IdempotencyKey, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason, q, QueryLikePattern.EscapeCharacter)) ||
-                    EF.Functions.Like(x.PayloadJson, q, QueryLikePattern.EscapeCharacter));
+                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason, q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))
@@ -145,7 +156,7 @@ namespace Darwin.Application.Businesses.Queries
                 CreatedAtUtc = row.CreatedAtUtc,
                 AgeMinutes = Math.Max(0, (int)(now - row.CreatedAtUtc).TotalMinutes),
                 IsStalePending = IsStalePending(row, staleBeforeUtc),
-                FailureReason = row.FailureReason,
+                FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(row.FailureReason),
                 PayloadPreview = BuildPayloadPreview(row)
             };
         }
@@ -163,7 +174,7 @@ namespace Darwin.Application.Businesses.Queries
                 var root = document.RootElement;
                 if (root.ValueKind != JsonValueKind.Object)
                 {
-                    return Summarize(row.PayloadJson, 220);
+                    return "Payload captured; preview unavailable.";
                 }
 
                 if (string.Equals(row.Provider, "Stripe", StringComparison.OrdinalIgnoreCase))
@@ -185,7 +196,7 @@ namespace Darwin.Application.Businesses.Queries
             }
             catch (JsonException)
             {
-                return Summarize(row.PayloadJson, 220);
+                return "Payload captured; preview unavailable.";
             }
         }
 
@@ -205,7 +216,7 @@ namespace Darwin.Application.Businesses.Queries
                 AddPreviewPart(parts, "status", GetString(stripeObject, "status"));
             }
 
-            return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
+            return parts.Count == 0 ? "Stripe payload captured; preview unavailable." : string.Join("; ", parts);
         }
 
         private static string BuildDhlPayloadPreview(JsonElement root)
@@ -217,7 +228,7 @@ namespace Darwin.Application.Businesses.Queries
             AddPreviewPart(parts, "status", GetString(root, "providerStatus"));
             AddPreviewPart(parts, "occurredAtUtc", GetString(root, "occurredAtUtc"));
             AddPreviewPart(parts, "exception", GetString(root, "exceptionCode"));
-            return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
+            return parts.Count == 0 ? "DHL payload captured; preview unavailable." : string.Join("; ", parts);
         }
 
         private static string BuildBrevoPayloadPreview(JsonElement root)
@@ -225,11 +236,10 @@ namespace Darwin.Application.Businesses.Queries
             var parts = new List<string>();
             AddPreviewPart(parts, "event", GetString(root, "event"));
             AddPreviewPart(parts, "messageId", GetString(root, "message-id"));
-            AddPreviewPart(parts, "email", GetString(root, "email"));
-            AddPreviewPart(parts, "subject", GetString(root, "subject"));
+            AddPreviewPart(parts, "email", MaskEmail(GetString(root, "email")));
             AddPreviewPart(parts, "reason", GetString(root, "reason"));
             AddPreviewPart(parts, "ts", GetScalarText(root, "ts_event") ?? GetScalarText(root, "ts"));
-            return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
+            return parts.Count == 0 ? "Brevo payload captured; preview unavailable." : string.Join("; ", parts);
         }
 
         private static string BuildGenericPayloadPreview(JsonElement root)
@@ -250,7 +260,7 @@ namespace Darwin.Application.Businesses.Queries
 
                 var value = property.Value.ValueKind switch
                 {
-                    JsonValueKind.String => property.Value.GetString(),
+                    JsonValueKind.String => SanitizeScalar(property.Name, property.Value.GetString()),
                     JsonValueKind.Number => property.Value.GetRawText(),
                     JsonValueKind.True => "true",
                     JsonValueKind.False => "false",
@@ -261,7 +271,7 @@ namespace Darwin.Application.Businesses.Queries
                 AddPreviewPart(parts, property.Name, value);
             }
 
-            return parts.Count == 0 ? root.GetRawText() : string.Join("; ", parts);
+            return parts.Count == 0 ? "Payload captured; preview unavailable." : string.Join("; ", parts);
         }
 
         private static bool TryGetObject(JsonElement root, out JsonElement value, params string[] path)
@@ -311,7 +321,7 @@ namespace Darwin.Application.Businesses.Queries
         {
             if (!string.IsNullOrWhiteSpace(value))
             {
-                parts.Add($"{key}: {value.Trim()}");
+                parts.Add($"{key}: {Summarize(value.Trim(), 80)}");
             }
         }
 
@@ -323,6 +333,59 @@ namespace Darwin.Application.Businesses.Queries
                    key.Contains("signature", StringComparison.OrdinalIgnoreCase) ||
                    key.Contains("api_key", StringComparison.OrdinalIgnoreCase) ||
                    key.Contains("apikey", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string? SanitizeScalar(string key, string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            if (key.Contains("email", StringComparison.OrdinalIgnoreCase))
+            {
+                return MaskEmail(value);
+            }
+
+            if (key.Contains("phone", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("mobile", StringComparison.OrdinalIgnoreCase))
+            {
+                return MaskPhone(value);
+            }
+
+            return value.Trim();
+        }
+
+        private static string? MaskEmail(string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return null;
+            }
+
+            var normalized = email.Trim();
+            var at = normalized.IndexOf('@');
+            if (at <= 0)
+            {
+                return "***";
+            }
+
+            var local = normalized[..at];
+            var domain = normalized[(at + 1)..];
+            var prefix = local.Length <= 1 ? local : local[..Math.Min(2, local.Length)];
+            return $"{prefix}***@{domain}";
+        }
+
+        private static string? MaskPhone(string? phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                return null;
+            }
+
+            var normalized = phone.Trim();
+            var visible = Math.Min(4, normalized.Length);
+            return $"***{normalized[^visible..]}";
         }
 
         private static bool IsStalePending(ProviderCallbackInboxMessage row, DateTime staleBeforeUtc)

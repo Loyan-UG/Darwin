@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common;
 using Darwin.Domain.Entities.Integration;
@@ -14,10 +15,12 @@ namespace Darwin.Application.Businesses.Queries
     public sealed class GetChannelDispatchActivityHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetChannelDispatchActivityHandler(IAppDbContext db)
+        public GetChannelDispatchActivityHandler(IAppDbContext db, IClock clock)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         public async Task<(List<ChannelDispatchAuditListItemDto> Items, ChannelDispatchAuditSummaryDto Summary)> HandleAsync(
@@ -41,7 +44,7 @@ namespace Darwin.Application.Businesses.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
+            var recentThresholdUtc = _clock.UtcNow.AddHours(-24);
             var summary = new ChannelDispatchAuditSummaryDto
             {
                 TotalCount = rows.Count,
@@ -74,7 +77,7 @@ namespace Darwin.Application.Businesses.Queries
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
-                    FailureMessage = x.FailureMessage,
+                    FailureMessage = OperatorDisplayTextSanitizer.SanitizeFailureText(x.FailureMessage),
                     QueueAttemptCount = 0
                 })
                 .ToList();
@@ -114,7 +117,7 @@ namespace Darwin.Application.Businesses.Queries
                 pageSize = 20;
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var query = _db.Set<ChannelDispatchAudit>().AsNoTracking().Where(x => !x.IsDeleted);
             if (filter.BusinessId.HasValue)
             {
@@ -257,7 +260,7 @@ namespace Darwin.Application.Businesses.Queries
                         Status = x.Status,
                         AttemptedAtUtc = x.AttemptedAtUtc,
                         CompletedAtUtc = x.CompletedAtUtc,
-                        FailureMessage = x.FailureMessage,
+                        FailureMessage = OperatorDisplayTextSanitizer.SanitizeFailureText(x.FailureMessage),
                         QueueAttemptCount = 0,
                         NeedsOperatorFollowUp = NeedsOperatorFollowUp(x),
                         ChainAttemptCount = chainContext[x.Id].ChainAttemptCount,
@@ -452,7 +455,7 @@ namespace Darwin.Application.Businesses.Queries
                     Status = x.Status,
                     AttemptedAtUtc = x.LastAttemptAtUtc ?? x.CreatedAtUtc,
                     CompletedAtUtc = x.ProcessedAtUtc,
-                    FailureMessage = x.FailureReason,
+                    FailureMessage = OperatorDisplayTextSanitizer.SanitizeFailureText(x.FailureReason),
                     QueueAttemptCount = x.AttemptCount,
                     NeedsOperatorFollowUp = true,
                     ChainAttemptCount = 0,
@@ -551,7 +554,7 @@ namespace Darwin.Application.Businesses.Queries
                         MessagePreview = x.MessagePreview,
                         IntendedRecipientAddress = x.IntendedRecipientAddress,
                         ProviderMessageId = x.ProviderMessageId,
-                        FailureMessage = x.FailureMessage,
+                        FailureMessage = OperatorDisplayTextSanitizer.SanitizeFailureText(x.FailureMessage),
                         CompletedAtUtc = x.CompletedAtUtc
                     })
                     .ToList()

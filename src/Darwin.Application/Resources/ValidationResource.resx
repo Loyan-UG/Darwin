@@ -222,6 +222,9 @@
   <data name="PageMustBePositiveInteger" xml:space="preserve">
     <value>Page must be a positive integer.</value>
   </data>
+  <data name="PageMustBeBetween1And10000" xml:space="preserve">
+    <value>Page must be between 1 and 10000.</value>
+  </data>
   <data name="PageSizeMustBeBetween1And200" xml:space="preserve">
     <value>PageSize must be between 1 and 200.</value>
   </data>
@@ -708,6 +711,24 @@
   <data name="SelectedAddOnValuesDoNotBelongToApplicableGroups" xml:space="preserve">
     <value>One or more selected add-on values do not belong to applicable groups.</value>
   </data>
+  <data name="TooManySelectedAddOnValues" xml:space="preserve">
+    <value>Too many selected add-on values.</value>
+  </data>
+  <data name="SelectedAddOnValueIdsJsonTooLong" xml:space="preserve">
+    <value>Selected add-on value selection key is too long.</value>
+  </data>
+  <data name="StorefrontCheckoutReferenceTooLong" xml:space="preserve">
+    <value>Storefront checkout reference is too long.</value>
+  </data>
+  <data name="StorefrontCheckoutFailureReasonTooLong" xml:space="preserve">
+    <value>Storefront checkout failure reason is too long.</value>
+  </data>
+  <data name="StorefrontCheckoutAddressFieldTooLong" xml:space="preserve">
+    <value>Storefront checkout address contains a field that is too long.</value>
+  </data>
+  <data name="StorefrontCheckoutAddressCountryCodeInvalid" xml:space="preserve">
+    <value>Storefront checkout address country code must be a 2-letter country code.</value>
+  </data>
   <data name="AddOnGroupRequiresMinimumSelections" xml:space="preserve">
     <value>Add-on group '{0}' requires at least {1} selection(s).</value>
   </data>
@@ -904,6 +925,12 @@
   </data>
   <data name="ShippingOptionsCouldNotBeCalculated" xml:space="preserve">
     <value>Shipping options could not be calculated.</value>
+  </data>
+  <data name="ShippingRateCountryCodeInvalid" xml:space="preserve">
+    <value>Shipping destination country must be a 2-letter country code.</value>
+  </data>
+  <data name="ShippingRateCurrencyCodeInvalid" xml:space="preserve">
+    <value>Shipping rate currency must be a 3-letter currency code.</value>
   </data>
   <data name="InactiveReminderOutcomeInvalid" xml:space="preserve">
     <value>Outcome must be one of: Sent, Failed, Suppressed.</value>

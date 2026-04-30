@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Shared.Results;
@@ -60,62 +58,37 @@ public sealed class BusinessAuthorizationService : IBusinessAuthorizationService
             return Result<BusinessAuthorizationSnapshot>.Fail("No active access token found.");
         }
 
-        try
+        var jwt = JwtClaimReader.TryReadToken(accessToken);
+        if (jwt is null)
         {
-            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var scopes = ReadScopeSet(jwt.Claims);
-
-            var hasBusinessAccess = scopes.Contains("AccessLoyaltyBusiness", StringComparer.OrdinalIgnoreCase);
-            var isFullAdmin = scopes.Contains("FullAdminAccess", StringComparer.OrdinalIgnoreCase);
-
-            var hasAnyScope = scopes.Count > 0;
-            var useLegacyCompatibility = !hasAnyScope;
-
-            var snapshot = new BusinessAuthorizationSnapshot
-            {
-                RoleDisplayName = isFullAdmin
-                    ? AppResources.AuthorizationRoleAdministrator
-                    : hasBusinessAccess
-                        ? AppResources.AuthorizationRoleBusinessOperator
-                        : useLegacyCompatibility
-                            ? AppResources.AuthorizationRoleBusinessOperatorLegacy
-                            : AppResources.AuthorizationRoleRestricted,
-
-                // Compatibility mode: for old tokens without scope claims, keep existing app behavior.
-                CanEditRewards = useLegacyCompatibility || isFullAdmin || hasBusinessAccess,
-                CanConfirmRedemption = useLegacyCompatibility || isFullAdmin || hasBusinessAccess,
-                CanConfirmAccrual = useLegacyCompatibility || isFullAdmin || hasBusinessAccess,
-                IsLegacyTokenWithoutScopes = useLegacyCompatibility
-            };
-
-            return Result<BusinessAuthorizationSnapshot>.Ok(snapshot);
-        }
-        catch (Exception ex)
-        {
-            return Result<BusinessAuthorizationSnapshot>.Fail($"Failed to parse access token claims: {ex.Message}");
-        }
-    }
-
-    private static HashSet<string> ReadScopeSet(IEnumerable<System.Security.Claims.Claim> claims)
-    {
-        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var claim in claims)
-        {
-            if (!string.Equals(claim.Type, "scope", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(claim.Type, "scp", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(claim.Type, "permissions", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(claim.Type, "permission", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            foreach (var token in claim.Value.Split(new[] { ',', ' ', ';' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                set.Add(token.Trim());
-            }
+            return Result<BusinessAuthorizationSnapshot>.Fail(MobileErrorMessages.InvalidSession());
         }
 
-        return set;
+        var scopes = JwtClaimReader.ReadScopeSet(jwt);
+
+        var hasBusinessAccess = scopes.Contains("AccessLoyaltyBusiness", StringComparer.OrdinalIgnoreCase);
+        var isFullAdmin = scopes.Contains("FullAdminAccess", StringComparer.OrdinalIgnoreCase);
+
+        var hasAnyScope = scopes.Count > 0;
+        var useLegacyCompatibility = !hasAnyScope;
+
+        var snapshot = new BusinessAuthorizationSnapshot
+        {
+            RoleDisplayName = isFullAdmin
+                ? AppResources.AuthorizationRoleAdministrator
+                : hasBusinessAccess
+                    ? AppResources.AuthorizationRoleBusinessOperator
+                    : useLegacyCompatibility
+                        ? AppResources.AuthorizationRoleBusinessOperatorLegacy
+                        : AppResources.AuthorizationRoleRestricted,
+
+            // Compatibility mode: for old tokens without scope claims, keep existing app behavior.
+            CanEditRewards = useLegacyCompatibility || isFullAdmin || hasBusinessAccess,
+            CanConfirmRedemption = useLegacyCompatibility || isFullAdmin || hasBusinessAccess,
+            CanConfirmAccrual = useLegacyCompatibility || isFullAdmin || hasBusinessAccess,
+            IsLegacyTokenWithoutScopes = useLegacyCompatibility
+        };
+
+        return Result<BusinessAuthorizationSnapshot>.Ok(snapshot);
     }
 }

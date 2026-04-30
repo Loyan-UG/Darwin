@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common;
 using Darwin.Domain.Entities.Businesses;
@@ -21,8 +22,13 @@ namespace Darwin.Application.Businesses.Queries
         private const int MaxPageSize = 200;
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public GetBusinessMembersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetBusinessMembersPageHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        }
 
         public async Task<(List<BusinessMemberListItemDto> Items, int Total)> HandleAsync(
             Guid businessId,
@@ -66,7 +72,7 @@ namespace Darwin.Application.Businesses.Queries
                     roleMatches.Contains(x.Member.Role));
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
 
             baseQuery = filter switch
             {

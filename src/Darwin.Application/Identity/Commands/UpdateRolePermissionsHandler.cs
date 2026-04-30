@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
@@ -21,11 +22,13 @@ namespace Darwin.Application.Identity.Commands
     {
         private readonly IAppDbContext _db;
         private readonly RolePermissionsUpdateValidator _validator = new();
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateRolePermissionsHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public UpdateRolePermissionsHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -95,7 +98,7 @@ namespace Darwin.Application.Identity.Commands
                 link.IsDeleted = true;
 
             // Touch role's ModifiedAtUtc for audit trail
-            role.ModifiedAtUtc = DateTime.UtcNow;
+            role.ModifiedAtUtc = _clock.UtcNow;
 
             try
             {

@@ -30,6 +30,8 @@ namespace Darwin.Mobile.Shared.Security
         /// <inheritdoc />
         public async Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc)
         {
+            ValidateTokens(accessToken, refreshToken);
+
             await SecureStorage.SetAsync("access_token", accessToken).ConfigureAwait(false);
             await SecureStorage.SetAsync("access_expires", accessExpiresUtc.ToString("O")).ConfigureAwait(false);
             await SecureStorage.SetAsync("refresh_token", refreshToken).ConfigureAwait(false);
@@ -72,6 +74,8 @@ namespace Darwin.Mobile.Shared.Security
         /// <inheritdoc />
         public Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc)
         {
+            ValidateTokens(accessToken, refreshToken);
+
             _accessToken = accessToken;
             _accessExpiresUtc = accessExpiresUtc;
             _refreshToken = refreshToken;
@@ -97,5 +101,18 @@ namespace Darwin.Mobile.Shared.Security
             return Task.CompletedTask;
         }
 #endif
+
+        private static void ValidateTokens(string accessToken, string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                throw new ArgumentException("Access token is required.", nameof(accessToken));
+            }
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                throw new ArgumentException("Refresh token is required.", nameof(refreshToken));
+            }
+        }
     }
 }

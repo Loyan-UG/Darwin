@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
@@ -27,6 +28,7 @@ namespace Darwin.Application.Businesses.Commands
         private readonly ResendBusinessInvitationHandler _resendBusinessInvitation;
         private readonly RequestEmailConfirmationHandler _requestEmailConfirmation;
         private readonly RequestPasswordResetHandler _requestPasswordReset;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public RetryEmailDispatchAuditHandler(
@@ -34,18 +36,20 @@ namespace Darwin.Application.Businesses.Commands
             ResendBusinessInvitationHandler resendBusinessInvitation,
             RequestEmailConfirmationHandler requestEmailConfirmation,
             RequestPasswordResetHandler requestPasswordReset,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _resendBusinessInvitation = resendBusinessInvitation ?? throw new ArgumentNullException(nameof(resendBusinessInvitation));
             _requestEmailConfirmation = requestEmailConfirmation ?? throw new ArgumentNullException(nameof(requestEmailConfirmation));
             _requestPasswordReset = requestPasswordReset ?? throw new ArgumentNullException(nameof(requestPasswordReset));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
         public async Task<Result> HandleAsync(RetryEmailDispatchAuditDto dto, CancellationToken ct = default)
         {
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var retryChainThresholdUtc = nowUtc.Subtract(RetryChainWindow);
             var audit = await _db.Set<EmailDispatchAudit>()
                 .AsNoTracking()

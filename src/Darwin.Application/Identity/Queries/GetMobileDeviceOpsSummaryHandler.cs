@@ -39,16 +39,23 @@ public sealed class GetMobileDeviceOpsSummaryHandler
             .Select(x => x.UserId)
             .Distinct();
 
-        var totalActiveDevices = await baseDevices.CountAsync(ct).ConfigureAwait(false);
-        var staleDevicesCount = await baseDevices.CountAsync(x => !x.LastSeenAtUtc.HasValue || x.LastSeenAtUtc < staleCutoffUtc, ct).ConfigureAwait(false);
-        var devicesMissingPushTokenCount = await baseDevices.CountAsync(x => string.IsNullOrWhiteSpace(x.PushToken), ct).ConfigureAwait(false);
-        var notificationsDisabledCount = await baseDevices.CountAsync(x => !x.NotificationsEnabled, ct).ConfigureAwait(false);
-        var businessMemberDevicesCount = await baseDevices.CountAsync(x => businessMemberUserIds.Contains(x.UserId), ct).ConfigureAwait(false);
-        var androidDevicesCount = await baseDevices.CountAsync(x => x.Platform == MobilePlatform.Android, ct).ConfigureAwait(false);
-        var iosDevicesCount = await baseDevices.CountAsync(x => x.Platform == MobilePlatform.iOS, ct).ConfigureAwait(false);
+        var deviceSummary = await baseDevices
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalActiveDevices = g.Count(),
+                StaleDevicesCount = g.Count(x => !x.LastSeenAtUtc.HasValue || x.LastSeenAtUtc < staleCutoffUtc),
+                DevicesMissingPushTokenCount = g.Count(x => x.PushToken == null || x.PushToken.Trim() == string.Empty),
+                NotificationsDisabledCount = g.Count(x => !x.NotificationsEnabled),
+                BusinessMemberDevicesCount = g.Count(x => businessMemberUserIds.Contains(x.UserId)),
+                AndroidDevicesCount = g.Count(x => x.Platform == MobilePlatform.Android),
+                IosDevicesCount = g.Count(x => x.Platform == MobilePlatform.iOS)
+            })
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false);
 
         var recentVersions = await baseDevices
-            .Where(x => !string.IsNullOrWhiteSpace(x.AppVersion))
+            .Where(x => x.AppVersion != null && x.AppVersion.Trim() != string.Empty)
             .GroupBy(x => new { x.Platform, x.AppVersion })
             .Select(x => new MobileAppVersionSnapshotDto
             {
@@ -65,13 +72,13 @@ public sealed class GetMobileDeviceOpsSummaryHandler
 
         return new MobileDeviceOpsSummaryDto
         {
-            TotalActiveDevices = totalActiveDevices,
-            BusinessMemberDevicesCount = businessMemberDevicesCount,
-            StaleDevicesCount = staleDevicesCount,
-            DevicesMissingPushTokenCount = devicesMissingPushTokenCount,
-            NotificationsDisabledCount = notificationsDisabledCount,
-            AndroidDevicesCount = androidDevicesCount,
-            IosDevicesCount = iosDevicesCount,
+            TotalActiveDevices = deviceSummary?.TotalActiveDevices ?? 0,
+            BusinessMemberDevicesCount = deviceSummary?.BusinessMemberDevicesCount ?? 0,
+            StaleDevicesCount = deviceSummary?.StaleDevicesCount ?? 0,
+            DevicesMissingPushTokenCount = deviceSummary?.DevicesMissingPushTokenCount ?? 0,
+            NotificationsDisabledCount = deviceSummary?.NotificationsDisabledCount ?? 0,
+            AndroidDevicesCount = deviceSummary?.AndroidDevicesCount ?? 0,
+            IosDevicesCount = deviceSummary?.IosDevicesCount ?? 0,
             RecentVersions = recentVersions
         };
     }

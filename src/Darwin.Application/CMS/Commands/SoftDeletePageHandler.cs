@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.CMS;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -18,14 +19,16 @@ namespace Darwin.Application.CMS.Commands
     public sealed class SoftDeletePageHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         /// <summary>
         /// Initializes a new instance of the handler with the shared DbContext abstraction.
         /// </summary>
-        public SoftDeletePageHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public SoftDeletePageHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -52,7 +55,7 @@ namespace Darwin.Application.CMS.Commands
                 return Result.Fail(_localizer["PageConcurrencyConflict"]);
 
             page.IsDeleted = true;
-            page.ModifiedAtUtc = DateTime.UtcNow;
+            page.ModifiedAtUtc = _clock.UtcNow;
 
             try
             {

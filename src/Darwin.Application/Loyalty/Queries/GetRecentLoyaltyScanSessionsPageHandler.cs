@@ -86,7 +86,7 @@ namespace Darwin.Application.Loyalty.Queries
                     Mode = x.session.Mode,
                     Status = x.session.Status,
                     Outcome = x.session.Outcome,
-                    FailureReason = x.session.FailureReason,
+                    FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(x.session.FailureReason),
                     CreatedAtUtc = x.session.CreatedAtUtc,
                     ExpiresAtUtc = x.session.ExpiresAtUtc,
                     CompletedAtUtc = x.session.Status == LoyaltyScanStatus.Completed ? x.session.ModifiedAtUtc : null,

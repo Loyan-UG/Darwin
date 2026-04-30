@@ -9,7 +9,9 @@ using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Identity;
 using Darwin.WebApi.Controllers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Business;
@@ -23,6 +25,8 @@ namespace Darwin.WebApi.Controllers.Business;
 [Route("api/v1/business/auth")]
 public sealed class BusinessAuthController : ApiControllerBase
 {
+    private const int MaxInvitationAcceptRequestBytes = 16 * 1024;
+
     private readonly GetBusinessInvitationPreviewHandler _getBusinessInvitationPreviewHandler;
     private readonly AcceptBusinessInvitationHandler _acceptBusinessInvitationHandler;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
@@ -39,6 +43,8 @@ public sealed class BusinessAuthController : ApiControllerBase
 
     [HttpGet("invitations/preview")]
     [HttpGet("/api/v1/auth/business-invitations/preview")]
+    [EnableRateLimiting("auth-sensitive")]
+    [RequestTimeout("auth-sensitive")]
     [ProducesResponseType(typeof(BusinessInvitationPreviewResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PreviewInvitationAsync([FromQuery] string? token, CancellationToken ct = default)
@@ -71,6 +77,9 @@ public sealed class BusinessAuthController : ApiControllerBase
 
     [HttpPost("invitations/accept")]
     [HttpPost("/api/v1/auth/business-invitations/accept")]
+    [EnableRateLimiting("auth-sensitive")]
+    [RequestTimeout("auth-sensitive")]
+    [RequestSizeLimit(MaxInvitationAcceptRequestBytes)]
     [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AcceptInvitationAsync([FromBody] AcceptBusinessInvitationRequest? request, CancellationToken ct = default)

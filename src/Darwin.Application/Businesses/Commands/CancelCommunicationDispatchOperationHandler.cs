@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common;
 using Darwin.Domain.Entities.Integration;
@@ -13,13 +14,16 @@ namespace Darwin.Application.Businesses.Commands
         private static readonly TimeSpan InFlightProtectionWindow = TimeSpan.FromMinutes(2);
 
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public CancelCommunicationDispatchOperationHandler(
             IAppDbContext db,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -52,7 +56,7 @@ namespace Darwin.Application.Businesses.Commands
             }
 
             var limit = dto.Limit <= 0 ? 200 : Math.Min(dto.Limit, 200);
-            var inFlightCutoffUtc = DateTime.UtcNow.Subtract(InFlightProtectionWindow);
+            var inFlightCutoffUtc = _clock.UtcNow.Subtract(InFlightProtectionWindow);
             var query = _db.Set<ChannelDispatchOperation>()
                 .Where(x => !x.IsDeleted)
                 .Where(x => x.Status == "Pending" || x.Status == "Failed")
@@ -199,7 +203,7 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            if (lastAttemptAtUtc.HasValue && lastAttemptAtUtc.Value > DateTime.UtcNow.Subtract(InFlightProtectionWindow))
+            if (lastAttemptAtUtc.HasValue && lastAttemptAtUtc.Value > _clock.UtcNow.Subtract(InFlightProtectionWindow))
             {
                 return Result.Fail(_localizer["CommunicationDispatchOperationInFlight"]);
             }

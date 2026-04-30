@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing;
 using Darwin.Application.Notifications;
 using Darwin.Application.Orders.Commands;
@@ -18,15 +19,18 @@ public sealed class ProviderCallbackBackgroundService : BackgroundService
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptions<ProviderCallbackWorkerOptions> _options;
+    private readonly IClock _clock;
     private readonly ILogger<ProviderCallbackBackgroundService> _logger;
 
     public ProviderCallbackBackgroundService(
         IServiceScopeFactory scopeFactory,
         IOptions<ProviderCallbackWorkerOptions> options,
+        IClock clock,
         ILogger<ProviderCallbackBackgroundService> logger)
     {
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -76,7 +80,7 @@ public sealed class ProviderCallbackBackgroundService : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var retryCutoffUtc = nowUtc.AddSeconds(-options.RetryCooldownSeconds);
 
         var items = await db.Set<ProviderCallbackInboxMessage>()
@@ -102,7 +106,7 @@ public sealed class ProviderCallbackBackgroundService : BackgroundService
             {
                 await ProcessOneAsync(scope.ServiceProvider, item, ct).ConfigureAwait(false);
                 item.Status = "Processed";
-                item.ProcessedAtUtc = DateTime.UtcNow;
+                item.ProcessedAtUtc = _clock.UtcNow;
                 item.FailureReason = null;
             }
             catch (ValidationException ex)

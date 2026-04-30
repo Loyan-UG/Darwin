@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Settings;
@@ -19,13 +20,16 @@ namespace Darwin.Application.Orders.Commands
     public sealed class ApplyDhlShipmentLabelOperationHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
         public ApplyDhlShipmentLabelOperationHandler(
             IAppDbContext db,
+            IClock clock,
             IStringLocalizer<ValidationResource> localizer)
         {
             _db = db;
+            _clock = clock;
             _localizer = localizer;
         }
 
@@ -78,7 +82,7 @@ namespace Darwin.Application.Orders.Commands
                 shipment.Status = ShipmentStatus.Packed;
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             await ShipmentCarrierEventRecorder.AddIfMissingAsync(
                 _db,
                 shipment,

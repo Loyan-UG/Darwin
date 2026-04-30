@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Orders;
@@ -19,11 +20,13 @@ namespace Darwin.Application.Orders.Commands
     public sealed class CreateOrderHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly IValidator<OrderCreateDto> _validator;
 
-        public CreateOrderHandler(IAppDbContext db, IValidator<OrderCreateDto> validator)
+        public CreateOrderHandler(IAppDbContext db, IClock clock, IValidator<OrderCreateDto> validator)
         {
             _db = db;
+            _clock = clock;
             _validator = validator;
         }
 
@@ -91,7 +94,7 @@ namespace Darwin.Application.Orders.Commands
         private async Task<string> NextOrderNumberAsync(CancellationToken ct)
         {
             // Simple approach: use count+1. Replace with a dedicated sequence table in the future to avoid race conditions.
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var lastCount = await _db.Set<Order>().AsNoTracking().CountAsync(ct);
             return $"D-{nowUtc:yyyyMMdd}-{lastCount + 1:D5}";
         }

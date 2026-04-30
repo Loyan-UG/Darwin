@@ -121,12 +121,16 @@
         </a>
     </div>
     <div class="col-md-2">
-        <div class="card border-0 shadow-sm">
+        <a asp-action="ProviderCallbacks" asp-route-status="Processed" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@FilteredProviderCallbacksUrl(status: "Processed")"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
             <div class="card-body">
                 <div class="text-muted small">@T.T("Processed")</div>
                 <div class="h4 mb-0">@Model.Summary.ProcessedCount</div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-md-2">
         <div class="card border-0 shadow-sm">
@@ -200,12 +204,16 @@
         </a>
     </div>
     <div class="col-md-2">
-        <div class="card border-0 shadow-sm">
+        <a asp-action="ProviderCallbacks" asp-route-provider="Brevo" asp-route-status="Processed" class="card text-decoration-none text-reset border-0 shadow-sm"
+           hx-get="@FilteredProviderCallbacksUrl(provider: "Brevo", status: "Processed")"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
             <div class="card-body">
-                <div class="text-muted small">@T.T("BrevoRecent24HourCallbacks")</div>
-                <div class="h4 mb-0">@Model.Summary.BrevoRecent24HourCount</div>
+                <div class="text-muted small">@T.T("BrevoProcessedCallbacks")</div>
+                <div class="h4 mb-0">@Model.Summary.BrevoProcessedCount</div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

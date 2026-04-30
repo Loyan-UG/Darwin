@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -20,6 +21,7 @@ namespace Darwin.WebApi.Security
         private static readonly TimeSpan DefaultCacheDuration = TimeSpan.FromMinutes(1);
 
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IClock _clock;
         private readonly ILogger<JwtSigningParametersProvider> _logger;
         private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
@@ -34,10 +36,12 @@ namespace Darwin.WebApi.Security
         /// <param name="logger">Logger for diagnostics.</param>
         public JwtSigningParametersProvider(
             IServiceScopeFactory scopeFactory,
+            IClock clock,
             ILogger<JwtSigningParametersProvider> logger,
             IStringLocalizer<ValidationResource> validationLocalizer)
         {
             _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
         }
@@ -51,7 +55,7 @@ namespace Darwin.WebApi.Security
         {
             lock (_sync)
             {
-                var nowUtc = DateTime.UtcNow;
+                var nowUtc = _clock.UtcNow;
 
                 if (_cache is not null && (nowUtc - _lastReadUtc) <= DefaultCacheDuration)
                 {

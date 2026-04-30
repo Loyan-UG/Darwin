@@ -1,6 +1,7 @@
 ﻿using Darwin.Application.Billing;
 using Darwin.Contracts.Billing;
 using Darwin.Application;
+using Darwin.Application.Abstractions.Services;
 using Darwin.WebApi.Controllers;
 using Darwin.Application.Businesses.Queries;
 using Darwin.WebApi.Controllers.Businesses;
@@ -31,6 +32,7 @@ public sealed class BillingController : ApiControllerBase
     private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntentHandler;
     private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;
     private readonly IConfiguration _configuration;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public BillingController(
@@ -40,6 +42,7 @@ public sealed class BillingController : ApiControllerBase
         CreateSubscriptionCheckoutIntentHandler createSubscriptionCheckoutIntentHandler,
         GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler,
         IConfiguration configuration,
+        IClock clock,
         IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getBusinessSubscriptionStatusHandler = getBusinessSubscriptionStatusHandler ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionStatusHandler));
@@ -48,6 +51,7 @@ public sealed class BillingController : ApiControllerBase
         _createSubscriptionCheckoutIntentHandler = createSubscriptionCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createSubscriptionCheckoutIntentHandler));
         _getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
@@ -227,7 +231,7 @@ public sealed class BillingController : ApiControllerBase
         return Ok(new CreateSubscriptionCheckoutIntentResponse
         {
             CheckoutUrl = checkoutUrl,
-            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(15),
+            ExpiresAtUtc = _clock.UtcNow.AddMinutes(15),
             Provider = "Stripe"
         });
     }

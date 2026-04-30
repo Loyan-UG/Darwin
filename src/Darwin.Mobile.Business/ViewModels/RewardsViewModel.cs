@@ -37,6 +37,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
     private readonly IBusinessAuthorizationService _authorizationService;
     private readonly IBusinessActivityTracker _activityTracker;
     private readonly IBusinessAccessService _businessAccessService;
+    private readonly TimeProvider _timeProvider;
     private readonly List<BusinessCampaignEditorItem> _allCampaigns = new();
 
     private bool _loadedOnce;
@@ -92,12 +93,14 @@ public sealed partial class RewardsViewModel : BaseViewModel
         ILoyaltyService loyaltyService,
         IBusinessAuthorizationService authorizationService,
         IBusinessActivityTracker activityTracker,
-        IBusinessAccessService businessAccessService)
+        IBusinessAccessService businessAccessService,
+        TimeProvider timeProvider)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
         _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
         RewardTiers = new ObservableCollection<RewardTierEditorItem>();
         Campaigns = new ObservableCollection<BusinessCampaignEditorItem>();
@@ -1430,7 +1433,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         {
             if (!CampaignTargetingFixMetricsWindowStartedAtUtc.HasValue)
             {
-                CampaignTargetingFixMetricsWindowStartedAtUtc = DateTimeOffset.UtcNow;
+                CampaignTargetingFixMetricsWindowStartedAtUtc = _timeProvider.GetUtcNow();
             }
 
             if (changed)
@@ -1450,7 +1453,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Builds a corrected targeting JSON payload and indicates whether any change was applied.
     /// </summary>
-    private static bool TryBuildSchemaFixedTargetingJsonDocument(string normalizedJson, out string fixedJson, out bool changed)
+    private bool TryBuildSchemaFixedTargetingJsonDocument(string normalizedJson, out string fixedJson, out bool changed)
     {
         fixedJson = normalizedJson;
         changed = false;
@@ -1526,7 +1529,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Ensures DateWindow targeting includes valid UTC bounds and normalized range.
     /// </summary>
-    private static bool EnsureDateWindowSchemaFields(JsonElement root, IDictionary<string, object?> map)
+    private bool EnsureDateWindowSchemaFields(JsonElement root, IDictionary<string, object?> map)
     {
         var changed = false;
         var hasFrom = TryReadCampaignUtcDate(root, "eligibleFromUtc", out var eligibleFromUtc);
@@ -1534,14 +1537,14 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
         if (!hasFrom)
         {
-            eligibleFromUtc = DateTimeOffset.UtcNow;
+            eligibleFromUtc = _timeProvider.GetUtcNow();
             map["eligibleFromUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
             changed = true;
         }
 
         if (!hasTo)
         {
-            eligibleToUtc = (hasFrom ? eligibleFromUtc : DateTimeOffset.UtcNow).AddDays(7);
+            eligibleToUtc = (hasFrom ? eligibleFromUtc : _timeProvider.GetUtcNow()).AddDays(7);
             map["eligibleToUtc"] = eligibleToUtc.ToString("O", CultureInfo.InvariantCulture);
             changed = true;
         }
@@ -1573,8 +1576,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
         {
             CampaignTargetingFixAppliedCount = 0;
             CampaignTargetingFixNoChangeCount = 0;
-            CampaignTargetingFixMetricsWindowStartedAtUtc = DateTimeOffset.UtcNow;
-            CampaignTargetingFixMetricsLastResetAtUtc = DateTimeOffset.UtcNow;
+            CampaignTargetingFixMetricsWindowStartedAtUtc = _timeProvider.GetUtcNow();
+            CampaignTargetingFixMetricsLastResetAtUtc = _timeProvider.GetUtcNow();
             CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixMetricsResetMessage;
         });
     }

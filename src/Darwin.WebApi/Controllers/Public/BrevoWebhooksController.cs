@@ -8,8 +8,9 @@ using Darwin.Domain.Entities.Integration;
 using Darwin.Infrastructure.Notifications.Brevo;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
@@ -39,6 +40,8 @@ public sealed class BrevoWebhooksController : ApiControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("provider-webhook")]
+    [RequestTimeout("provider-webhook")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ReceiveAsync(CancellationToken ct = default)
@@ -76,10 +79,7 @@ public sealed class BrevoWebhooksController : ApiControllerBase
         return Ok(new
         {
             received = true,
-            duplicate = existing,
-            eventName,
-            messageId,
-            instance = Request.GetDisplayUrl()
+            duplicate = existing
         });
     }
 
@@ -167,10 +167,9 @@ public sealed class BrevoWebhooksController : ApiControllerBase
 
     private static bool FixedTimeEquals(string left, string right)
     {
-        var leftBytes = Encoding.UTF8.GetBytes(left);
-        var rightBytes = Encoding.UTF8.GetBytes(right);
-        return leftBytes.Length == rightBytes.Length &&
-               CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
+        var leftBytes = SHA256.HashData(Encoding.UTF8.GetBytes(left));
+        var rightBytes = SHA256.HashData(Encoding.UTF8.GetBytes(right));
+        return CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
     }
 
     private static bool TryParseEnvelope(string rawPayload, out string eventName, out string messageId, out string eventTimestamp)

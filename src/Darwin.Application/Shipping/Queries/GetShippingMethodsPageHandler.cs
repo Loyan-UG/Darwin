@@ -50,7 +50,7 @@ namespace Darwin.Application.Shipping.Queries
                 ShippingMethodQueueFilter.Inactive => baseQuery.Where(m => !m.IsActive),
                 ShippingMethodQueueFilter.MissingRates => baseQuery.Where(m => !m.Rates.Any(r => !r.IsDeleted)),
                 ShippingMethodQueueFilter.Dhl => baseQuery.Where(m => m.Carrier == ShippingMethodConventions.DhlCarrier),
-                ShippingMethodQueueFilter.GlobalCoverage => baseQuery.Where(m => m.CountriesCsv == null || m.CountriesCsv == string.Empty),
+                ShippingMethodQueueFilter.GlobalCoverage => baseQuery.Where(m => m.CountriesCsv == null || m.CountriesCsv.Trim() == string.Empty),
                 ShippingMethodQueueFilter.MultiRate => baseQuery.Where(m => m.Rates.Count(r => !r.IsDeleted) > 1),
                 _ => baseQuery
             };
@@ -73,7 +73,7 @@ namespace Darwin.Application.Shipping.Queries
                     IsActive = m.IsActive,
                     RatesCount = m.Rates.Count(r => !r.IsDeleted),
                     IsDhl = m.Carrier == ShippingMethodConventions.DhlCarrier,
-                    HasGlobalCoverage = m.CountriesCsv == null || m.CountriesCsv == string.Empty,
+                    HasGlobalCoverage = m.CountriesCsv == null || m.CountriesCsv.Trim() == string.Empty,
                     HasMultipleRates = m.Rates.Count(r => !r.IsDeleted) > 1,
                     ModifiedAtUtc = m.ModifiedAtUtc
                 }).ToListAsync(ct);
@@ -92,16 +92,20 @@ namespace Darwin.Application.Shipping.Queries
         {
             var methods = _db.Set<ShippingMethod>().AsNoTracking().Where(m => !m.IsDeleted);
 
-            return new ShippingMethodOpsSummaryDto
-            {
-                TotalCount = await methods.CountAsync(ct).ConfigureAwait(false),
-                ActiveCount = await methods.CountAsync(x => x.IsActive, ct).ConfigureAwait(false),
-                InactiveCount = await methods.CountAsync(x => !x.IsActive, ct).ConfigureAwait(false),
-                MissingRatesCount = await methods.CountAsync(x => !x.Rates.Any(r => !r.IsDeleted), ct).ConfigureAwait(false),
-                DhlCount = await methods.CountAsync(x => x.Carrier == ShippingMethodConventions.DhlCarrier, ct).ConfigureAwait(false),
-                GlobalCoverageCount = await methods.CountAsync(x => x.CountriesCsv == null || x.CountriesCsv == string.Empty, ct).ConfigureAwait(false),
-                MultiRateCount = await methods.CountAsync(x => x.Rates.Count(r => !r.IsDeleted) > 1, ct).ConfigureAwait(false)
-            };
+            return await methods
+                .GroupBy(_ => 1)
+                .Select(g => new ShippingMethodOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    ActiveCount = g.Count(x => x.IsActive),
+                    InactiveCount = g.Count(x => !x.IsActive),
+                    MissingRatesCount = g.Count(x => !x.Rates.Any(r => !r.IsDeleted)),
+                    DhlCount = g.Count(x => x.Carrier == ShippingMethodConventions.DhlCarrier),
+                    GlobalCoverageCount = g.Count(x => x.CountriesCsv == null || x.CountriesCsv.Trim() == string.Empty),
+                    MultiRateCount = g.Count(x => x.Rates.Count(r => !r.IsDeleted) > 1)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new ShippingMethodOpsSummaryDto();
         }
     }
 }

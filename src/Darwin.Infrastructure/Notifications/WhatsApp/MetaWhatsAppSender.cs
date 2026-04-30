@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Infrastructure.Notifications;
@@ -20,15 +21,18 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
     private readonly IAppDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<MetaWhatsAppSender> _logger;
+    private readonly IClock _clock;
 
     public MetaWhatsAppSender(
         IAppDbContext db,
         IHttpClientFactory httpClientFactory,
-        ILogger<MetaWhatsAppSender> logger)
+        ILogger<MetaWhatsAppSender> logger,
+        IClock clock)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public async Task SendTextAsync(
@@ -40,7 +44,7 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
         if (string.IsNullOrWhiteSpace(toPhoneE164)) throw new ArgumentNullException(nameof(toPhoneE164));
         if (string.IsNullOrWhiteSpace(text)) throw new ArgumentNullException(nameof(text));
         var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
-        var pendingDuplicateCutoffUtc = DateTime.UtcNow.AddMinutes(-15);
+        var pendingDuplicateCutoffUtc = _clock.UtcNow.AddMinutes(-15);
         if (!string.IsNullOrWhiteSpace(correlationKey) &&
             await _db.Set<ChannelDispatchAudit>()
                 .AsNoTracking()
@@ -69,7 +73,7 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
             throw new InvalidOperationException("WhatsApp transport settings are incomplete.");
         }
 
-        var attemptedAtUtc = DateTime.UtcNow;
+        var attemptedAtUtc = _clock.UtcNow;
         var audit = new ChannelDispatchAudit
         {
             Channel = "WhatsApp",
@@ -130,19 +134,22 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
             var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var completedAtUtc = DateTime.UtcNow;
+                var completedAtUtc = _clock.UtcNow;
                 audit.Status = "Failed";
                 audit.CompletedAtUtc = completedAtUtc;
-                audit.FailureMessage = BuildFailure(body);
+                audit.FailureMessage = NotificationLogSanitizer.ProviderFailure("WhatsApp", (int)response.StatusCode);
                 await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "WhatsApp dispatch audit provider failure", ct)
                     .ConfigureAwait(false);
-                _logger.LogError("WhatsApp send failed with status {StatusCode}: {Body}", (int)response.StatusCode, body);
+                _logger.LogError(
+                    "WhatsApp send failed with status {StatusCode} for recipient {Recipient}.",
+                    (int)response.StatusCode,
+                    NotificationLogSanitizer.MaskPhone(toPhoneE164));
                 throw new InvalidOperationException("WhatsApp send failed.");
             }
 
             audit.ProviderMessageId = ExtractProviderMessageId(body);
             audit.Status = "Sent";
-            audit.CompletedAtUtc = DateTime.UtcNow;
+            audit.CompletedAtUtc = _clock.UtcNow;
             await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "WhatsApp dispatch audit completion", ct)
                 .ConfigureAwait(false);
         }
@@ -152,10 +159,10 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
         }
         catch (Exception ex) when (audit.Status == "Pending")
         {
-            var completedAtUtc = DateTime.UtcNow;
+            var completedAtUtc = _clock.UtcNow;
             audit.Status = "Failed";
             audit.CompletedAtUtc = completedAtUtc;
-            audit.FailureMessage = BuildFailure(ex.Message);
+            audit.FailureMessage = NotificationLogSanitizer.TransportFailure("WhatsApp");
             await NotificationAuditSaveResilience.SaveAsync(_db, _logger, "WhatsApp dispatch audit transport failure", ct)
                 .ConfigureAwait(false);
             _logger.LogError(ex, "WhatsApp send failed before receiving a provider response.");
@@ -172,12 +179,6 @@ public sealed class MetaWhatsAppSender : IWhatsAppSender
     {
         var value = string.IsNullOrWhiteSpace(text) ? string.Empty : text.Trim();
         return value.Length <= 240 ? value : value[..240];
-    }
-
-    private static string BuildFailure(string body)
-    {
-        var value = string.IsNullOrWhiteSpace(body) ? "WhatsApp send failed." : body.Trim();
-        return value.Length <= 2000 ? value : value[..2000];
     }
 
     private static string? ExtractProviderMessageId(string body)

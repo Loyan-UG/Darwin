@@ -6,8 +6,9 @@ using Darwin.Domain.Entities.Integration;
 using Darwin.WebApi.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Controllers.Public;
@@ -39,6 +40,8 @@ public sealed class StripeWebhooksController : ApiControllerBase
 
     [HttpPost]
     [HttpPost("/api/v1/billing/stripe/webhooks")]
+    [EnableRateLimiting("provider-webhook")]
+    [RequestTimeout("provider-webhook")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ReceiveAsync(CancellationToken ct = default)
@@ -83,10 +86,7 @@ public sealed class StripeWebhooksController : ApiControllerBase
         return Ok(new
         {
             received = true,
-            duplicate = existing,
-            eventId = eventId.Trim(),
-            eventType = eventType.Trim(),
-            instance = Request.GetDisplayUrl()
+            duplicate = existing
         });
     }
 

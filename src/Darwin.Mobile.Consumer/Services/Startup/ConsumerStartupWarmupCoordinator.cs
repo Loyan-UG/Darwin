@@ -25,6 +25,7 @@ public sealed class ConsumerStartupWarmupCoordinator : IConsumerStartupWarmupCoo
     private readonly IProfileService _profileService;
     private readonly IBusinessService _businessService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
+    private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     private DateTime _lastWarmupCompletedUtc;
@@ -35,11 +36,13 @@ public sealed class ConsumerStartupWarmupCoordinator : IConsumerStartupWarmupCoo
     public ConsumerStartupWarmupCoordinator(
         IProfileService profileService,
         IBusinessService businessService,
-        IConsumerLoyaltySnapshotCache loyaltySnapshotCache)
+        IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
+        TimeProvider timeProvider)
     {
         _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
         _businessService = businessService ?? throw new ArgumentNullException(nameof(businessService));
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     /// <inheritdoc />
@@ -52,7 +55,7 @@ public sealed class ConsumerStartupWarmupCoordinator : IConsumerStartupWarmupCoo
 
         try
         {
-            if (_lastWarmupCompletedUtc > DateTime.UtcNow.Subtract(WarmupCooldown))
+            if (_lastWarmupCompletedUtc > _timeProvider.GetUtcNow().UtcDateTime.Subtract(WarmupCooldown))
             {
                 return;
             }
@@ -66,7 +69,7 @@ public sealed class ConsumerStartupWarmupCoordinator : IConsumerStartupWarmupCoo
                 WarmLoyaltyAsync(warmupToken),
                 WarmDiscoveryAsync(warmupToken)).ConfigureAwait(false);
 
-            _lastWarmupCompletedUtc = DateTime.UtcNow;
+            _lastWarmupCompletedUtc = _timeProvider.GetUtcNow().UtcDateTime;
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {

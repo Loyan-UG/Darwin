@@ -26,6 +26,7 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
 
     private readonly IBusinessIdentityContextService _identityContextService;
     private readonly IBusinessAuthorizationService _authorizationService;
+    private readonly TimeProvider _timeProvider;
 
     private string _badgePayload = string.Empty;
     private ImageSource? _badgeImage;
@@ -39,10 +40,12 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
 
     public StaffAccessBadgeViewModel(
         IBusinessIdentityContextService identityContextService,
-        IBusinessAuthorizationService authorizationService)
+        IBusinessAuthorizationService authorizationService,
+        TimeProvider timeProvider)
     {
         _identityContextService = identityContextService ?? throw new ArgumentNullException(nameof(identityContextService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
         RefreshBadgeCommand = new AsyncCommand(RefreshBadgeAsync, () => !IsBusy);
     }
@@ -169,7 +172,7 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
                 ? authorizationResult.Value.RoleDisplayName
                 : AppResources.StaffAccessBadgeUnknownRole;
 
-            var expiresAtUtc = DateTimeOffset.UtcNow.Add(BadgeLifetime);
+            var expiresAtUtc = _timeProvider.GetUtcNow().Add(BadgeLifetime);
             var payload = BuildBadgePayload(context, role, expiresAtUtc);
 
             RunOnMain(() =>
@@ -196,7 +199,7 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
         }
     }
 
-    private static string BuildBadgePayload(BusinessIdentityContext context, string roleDisplayName, DateTimeOffset expiresAtUtc)
+    private string BuildBadgePayload(BusinessIdentityContext context, string roleDisplayName, DateTimeOffset expiresAtUtc)
     {
         var payload = new
         {
@@ -206,7 +209,7 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
             BusinessName = context.BusinessName,
             OperatorEmail = context.OperatorEmail,
             Role = roleDisplayName,
-            IssuedAtUtc = DateTimeOffset.UtcNow,
+            IssuedAtUtc = _timeProvider.GetUtcNow(),
             ExpiresAtUtc = expiresAtUtc,
             Nonce = Guid.NewGuid().ToString("N")
         };
@@ -276,7 +279,7 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
                     continue;
                 }
 
-                if (expiresAtUtc.Value <= DateTimeOffset.UtcNow)
+                if (expiresAtUtc.Value <= _timeProvider.GetUtcNow())
                 {
                     await RefreshBadgeAsync().ConfigureAwait(false);
                 }
@@ -300,7 +303,7 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
             return;
         }
 
-        var remaining = ExpiresAtUtc.Value - DateTimeOffset.UtcNow;
+        var remaining = ExpiresAtUtc.Value - _timeProvider.GetUtcNow();
         if (remaining <= TimeSpan.Zero)
         {
             ExpiresInText = AppResources.StaffAccessBadgeExpired;

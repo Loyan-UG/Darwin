@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Abstractions.Security;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
@@ -12,13 +13,16 @@ namespace Darwin.WebApi.Security
     {
         private const string Purpose = "Darwin.WebApi.AuthAntiBot.v1";
         private readonly IDataProtector _protector;
+        private readonly IClock _clock;
         private readonly IOptionsMonitor<AuthAntiBotOptions> _options;
 
         public ProtectedAuthAntiBotVerifier(
             IDataProtectionProvider dataProtection,
+            IClock clock,
             IOptionsMonitor<AuthAntiBotOptions> options)
         {
             _protector = dataProtection.CreateProtector(Purpose);
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _options = options;
         }
 
@@ -49,7 +53,7 @@ namespace Darwin.WebApi.Security
                 return Task.FromResult(AuthAntiBotVerificationResult.Fail("Invalid challenge token."));
             }
 
-            var age = DateTimeOffset.UtcNow - issuedAtUtc;
+            var age = new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero) - issuedAtUtc;
             if (age < options.MinimumFormAge)
             {
                 return Task.FromResult(AuthAntiBotVerificationResult.Fail("Form submitted too quickly."));

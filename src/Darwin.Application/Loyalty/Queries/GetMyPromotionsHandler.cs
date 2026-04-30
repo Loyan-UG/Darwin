@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Loyalty;
@@ -38,12 +39,14 @@ namespace Darwin.Application.Loyalty.Queries
 
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public GetMyPromotionsHandler(IAppDbContext db, ICurrentUserService currentUser, IStringLocalizer<ValidationResource> localizer)
+        public GetMyPromotionsHandler(IAppDbContext db, ICurrentUserService currentUser, IClock clock, IStringLocalizer<ValidationResource> localizer)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
         }
 
@@ -86,7 +89,7 @@ namespace Darwin.Application.Loyalty.Queries
                 });
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var accountLookup = accounts.ToDictionary(x => x.BusinessId);
             var joinedBusinessIds = accountLookup.Keys.ToList();
             var items = new List<PromotionFeedItemDto>(capacity: baseMax * 2);

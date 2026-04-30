@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Pricing;
 using Darwin.Application.Pricing.DTOs;
 using Darwin.Application.Pricing.Validators;
@@ -18,16 +19,21 @@ namespace Darwin.Application.Pricing.Queries
     public sealed class ValidateCouponHandler
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
         private readonly ValidateCouponInputValidator _validator = new();
 
-        public ValidateCouponHandler(IAppDbContext db) => _db = db;
+        public ValidateCouponHandler(IAppDbContext db, IClock clock)
+        {
+            _db = db;
+            _clock = clock;
+        }
 
         public async Task<ValidateCouponResultDto> HandleAsync(ValidateCouponInputDto input, CancellationToken ct = default)
         {
             var v = _validator.Validate(input);
             if (!v.IsValid) throw new ValidationException(v.Errors);
 
-            var now = DateTime.UtcNow;
+            var now = _clock.UtcNow;
             var normalizedCode = CouponEligibility.NormalizeCode(input.Code);
             var promo = await _db.Set<Promotion>().AsNoTracking()
                 .FirstOrDefaultAsync(p =>

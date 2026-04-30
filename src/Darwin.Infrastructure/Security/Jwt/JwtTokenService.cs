@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
@@ -24,10 +25,12 @@ namespace Darwin.Infrastructure.Security.Jwt
     public sealed class JwtTokenService : IJwtTokenService
     {
         private readonly IAppDbContext _db;
+        private readonly IClock _clock;
 
-        public JwtTokenService(IAppDbContext db)
+        public JwtTokenService(IAppDbContext db, IClock clock)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         public async Task<(string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc)>
@@ -49,7 +52,7 @@ namespace Darwin.Infrastructure.Security.Jwt
                 throw new InvalidOperationException("JWT is disabled by SiteSetting (JwtEnabled = false).");
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var accessExp = nowUtc.AddMinutes(Math.Max(5, settings.JwtAccessTokenMinutes));
             var refreshExp = nowUtc.AddDays(Math.Max(1, settings.JwtRefreshTokenDays));
             var signingKey = new SymmetricSecurityKey(GetKeyBytes(settings.JwtSigningKey ?? string.Empty));
@@ -103,19 +106,20 @@ namespace Darwin.Infrastructure.Security.Jwt
 
             var purpose = BuildRefreshPurpose(effectiveDeviceId);
             var refreshToken = CreateOpaqueToken();
+            var refreshTokenHash = HashRefreshToken(refreshToken);
             var existingRow = await _db.Set<UserToken>()
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.Purpose == purpose, ct)
                 .ConfigureAwait(false);
 
             if (existingRow is not null)
             {
-                existingRow.Value = refreshToken;
+                existingRow.Value = refreshTokenHash;
                 existingRow.ExpiresAtUtc = refreshExp;
                 existingRow.UsedAtUtc = null;
             }
             else
             {
-                _db.Set<UserToken>().Add(new UserToken(userId, purpose, refreshToken, refreshExp));
+                _db.Set<UserToken>().Add(new UserToken(userId, purpose, refreshTokenHash, refreshExp));
             }
 
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -129,6 +133,7 @@ namespace Darwin.Infrastructure.Security.Jwt
                 return null;
             }
 
+            var normalizedRefreshToken = refreshToken.Trim();
             var settings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
                 .FirstAsync(x => !x.IsDeleted, ct)
@@ -146,19 +151,20 @@ namespace Darwin.Infrastructure.Security.Jwt
             }
 
             var purpose = BuildRefreshPurpose(effectiveDeviceId);
-            var row = await _db.Set<UserToken>()
+            var refreshTokenHash = HashRefreshToken(normalizedRefreshToken);
+            var nowUtc = _clock.UtcNow;
+            var userId = await _db.Set<UserToken>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => x.Purpose == purpose && x.Value == refreshToken && x.UsedAtUtc == null,
-                    ct)
+                .Where(
+                    x => x.Purpose == purpose &&
+                         (x.Value == refreshTokenHash || x.Value == normalizedRefreshToken) &&
+                         x.UsedAtUtc == null &&
+                         (x.ExpiresAtUtc == null || x.ExpiresAtUtc > nowUtc))
+                .Select(x => (Guid?)x.UserId)
+                .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
 
-            if (row is null || (row.ExpiresAtUtc.HasValue && row.ExpiresAtUtc.Value < DateTime.UtcNow))
-            {
-                return null;
-            }
-
-            return row.UserId;
+            return userId;
         }
 
         public async Task RevokeRefreshTokenAsync(string refreshToken, string? deviceId, CancellationToken ct = default)
@@ -168,33 +174,47 @@ namespace Darwin.Infrastructure.Security.Jwt
                 return;
             }
 
+            var normalizedRefreshToken = refreshToken.Trim();
             var settings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
                 .FirstAsync(x => !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             var tokens = _db.Set<UserToken>();
+            var refreshTokenHash = HashRefreshToken(normalizedRefreshToken);
             UserToken? row;
             if (settings.JwtRequireDeviceBinding && !string.IsNullOrWhiteSpace(deviceId))
             {
                 var purpose = BuildRefreshPurpose(deviceId.Trim());
-                row = await tokens.FirstOrDefaultAsync(x => x.Purpose == purpose && x.Value == refreshToken, ct).ConfigureAwait(false);
+                row = await tokens
+                    .FirstOrDefaultAsync(
+                        x => x.Purpose == purpose &&
+                             x.UsedAtUtc == null &&
+                             (x.Value == refreshTokenHash || x.Value == normalizedRefreshToken),
+                        ct)
+                    .ConfigureAwait(false);
             }
             else
             {
-                row = await tokens.FirstOrDefaultAsync(x => x.Value == refreshToken && x.Purpose.StartsWith("JwtRefresh"), ct).ConfigureAwait(false);
+                row = await tokens
+                    .FirstOrDefaultAsync(
+                        x => x.UsedAtUtc == null &&
+                             (x.Value == refreshTokenHash || x.Value == normalizedRefreshToken) &&
+                             x.Purpose.StartsWith("JwtRefresh"),
+                        ct)
+                    .ConfigureAwait(false);
             }
 
             if (row?.UsedAtUtc is null && row is not null)
             {
-                row.UsedAtUtc = DateTime.UtcNow;
+                row.UsedAtUtc = _clock.UtcNow;
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
             }
         }
 
         public async Task<int> RevokeAllForUserAsync(Guid userId, CancellationToken ct = default)
         {
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var rows = await _db.Set<UserToken>()
                 .Where(x => x.UserId == userId && x.Purpose.StartsWith("JwtRefresh"))
                 .ToListAsync(ct)
@@ -222,8 +242,8 @@ namespace Darwin.Infrastructure.Security.Jwt
         {
             if (preferredBusinessId.HasValue)
             {
-                var preferredMatch = await (from m in _db.Set<BusinessMember>()
-                                            join b in _db.Set<Business>() on m.BusinessId equals b.Id
+                var preferredMatch = await (from m in _db.Set<BusinessMember>().AsNoTracking()
+                                            join b in _db.Set<Business>().AsNoTracking() on m.BusinessId equals b.Id
                                             where m.UserId == userId
                                                   && m.BusinessId == preferredBusinessId.Value
                                                   && !m.IsDeleted
@@ -240,8 +260,8 @@ namespace Darwin.Infrastructure.Security.Jwt
                 }
             }
 
-            return await (from m in _db.Set<BusinessMember>()
-                          join b in _db.Set<Business>() on m.BusinessId equals b.Id
+            return await (from m in _db.Set<BusinessMember>().AsNoTracking()
+                          join b in _db.Set<Business>().AsNoTracking() on m.BusinessId equals b.Id
                           where m.UserId == userId
                                 && !m.IsDeleted
                                 && m.IsActive
@@ -292,6 +312,13 @@ namespace Darwin.Infrastructure.Security.Jwt
             Span<byte> bytes = stackalloc byte[32];
             RandomNumberGenerator.Fill(bytes);
             return Convert.ToHexString(bytes).ToLowerInvariant();
+        }
+
+        private static string HashRefreshToken(string refreshToken)
+        {
+            var bytes = Encoding.UTF8.GetBytes(refreshToken);
+            var hash = SHA256.HashData(bytes);
+            return Convert.ToHexString(hash).ToLowerInvariant();
         }
 
         private static string BuildRefreshPurpose(string? deviceId)

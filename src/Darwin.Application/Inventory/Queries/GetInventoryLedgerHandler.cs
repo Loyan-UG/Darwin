@@ -76,15 +76,19 @@ public sealed class GetInventoryLedgerHandler
                 q = q.Where(x => x.WarehouseId == warehouseId.Value);
             }
 
-            return new InventoryLedgerOpsSummaryDto
-            {
-                TotalCount = await q.CountAsync(ct).ConfigureAwait(false),
-                InboundCount = await q.CountAsync(x => x.QuantityDelta > 0, ct).ConfigureAwait(false),
-                OutboundCount = await q.CountAsync(x => x.QuantityDelta < 0, ct).ConfigureAwait(false),
-                ReservationCount = await q.CountAsync(x =>
-                    EF.Functions.Like(x.Reason, ReservePattern, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.Reason, ReservationPattern, QueryLikePattern.EscapeCharacter), ct).ConfigureAwait(false)
-            };
+            return await q
+                .GroupBy(_ => 1)
+                .Select(g => new InventoryLedgerOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    InboundCount = g.Count(x => x.QuantityDelta > 0),
+                    OutboundCount = g.Count(x => x.QuantityDelta < 0),
+                    ReservationCount = g.Count(x =>
+                        EF.Functions.Like(x.Reason, ReservePattern, QueryLikePattern.EscapeCharacter) ||
+                        EF.Functions.Like(x.Reason, ReservationPattern, QueryLikePattern.EscapeCharacter))
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new InventoryLedgerOpsSummaryDto();
         }
     }
 

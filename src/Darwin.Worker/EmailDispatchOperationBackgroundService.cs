@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Infrastructure.Notifications;
@@ -14,15 +15,18 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptions<EmailDispatchOperationWorkerOptions> _options;
+    private readonly IClock _clock;
     private readonly ILogger<EmailDispatchOperationBackgroundService> _logger;
 
     public EmailDispatchOperationBackgroundService(
         IServiceScopeFactory scopeFactory,
         IOptions<EmailDispatchOperationWorkerOptions> options,
+        IClock clock,
         ILogger<EmailDispatchOperationBackgroundService> logger)
     {
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -72,7 +76,7 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var retryCutoffUtc = nowUtc.AddSeconds(-options.RetryCooldownSeconds);
 
         var items = await db.Set<EmailDispatchOperation>()

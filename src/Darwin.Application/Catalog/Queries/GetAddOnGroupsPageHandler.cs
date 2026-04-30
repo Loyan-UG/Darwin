@@ -100,14 +100,18 @@ namespace Darwin.Application.Catalog.Queries
                         _db.Set<AddOnGroupBrand>().Count(x => x.AddOnGroupId == g.Id && !x.IsDeleted)
                 });
 
-            return new AddOnGroupOpsSummaryDto
-            {
-                TotalCount = await groups.CountAsync(ct),
-                InactiveCount = await groups.CountAsync(x => !x.IsActive, ct),
-                GlobalCount = await groups.CountAsync(x => x.IsGlobal, ct),
-                UnattachedCount = await groups.CountAsync(x => x.AttachmentCount == 0, ct),
-                VariantLinkedCount = await groups.CountAsync(x => x.AttachmentCount > 0 && !x.IsGlobal, ct)
-            };
+            return await groups
+                .GroupBy(_ => 1)
+                .Select(g => new AddOnGroupOpsSummaryDto
+                {
+                    TotalCount = g.Count(),
+                    InactiveCount = g.Count(x => !x.IsActive),
+                    GlobalCount = g.Count(x => x.IsGlobal),
+                    UnattachedCount = g.Count(x => x.AttachmentCount == 0),
+                    VariantLinkedCount = g.Count(x => x.AttachmentCount > 0 && !x.IsGlobal)
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false) ?? new AddOnGroupOpsSummaryDto();
         }
     }
 

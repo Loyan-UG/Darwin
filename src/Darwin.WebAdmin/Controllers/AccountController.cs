@@ -2,6 +2,7 @@ using System;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.Auth.Commands;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
@@ -23,6 +24,9 @@ namespace Darwin.WebAdmin.Controllers
     /// </summary>
     public sealed class AccountController : Controller
     {
+        private const int MaxAuthFormBytes = 16 * 1024;
+        private const int MaxPasskeyResponseBytes = 32 * 1024;
+
         private readonly SignInHandler _signIn;
         private readonly RegisterUserHandler _register;
         private readonly VerifyTotpForLoginHandler _verifyTotp;
@@ -34,6 +38,7 @@ namespace Darwin.WebAdmin.Controllers
         private readonly IAdminTextLocalizer _text;
         private readonly ISiteSettingCache _siteSettingCache;
         private readonly IAuthAntiBotChallengeService _antiBotChallenge;
+        private readonly IClock _clock;
 
         /// <summary>
         /// Initializes the controller with required Application services.
@@ -49,7 +54,8 @@ namespace Darwin.WebAdmin.Controllers
             IPermissionService permissions,
             IAdminTextLocalizer text,
             ISiteSettingCache siteSettingCache,
-            IAuthAntiBotChallengeService antiBotChallenge)
+            IAuthAntiBotChallengeService antiBotChallenge,
+            IClock clock)
         {
             _signIn = signIn ?? throw new ArgumentNullException(nameof(signIn));
             _register = register ?? throw new ArgumentNullException(nameof(register));
@@ -62,6 +68,7 @@ namespace Darwin.WebAdmin.Controllers
             _text = text ?? throw new ArgumentNullException(nameof(text));
             _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
             _antiBotChallenge = antiBotChallenge ?? throw new ArgumentNullException(nameof(antiBotChallenge));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         /// <summary>Renders the login page.</summary>
@@ -79,6 +86,8 @@ namespace Darwin.WebAdmin.Controllers
         /// </summary>
         [AllowAnonymous]
         [HttpPost("/account/login")]
+        [RequestSizeLimit(MaxAuthFormBytes)]
+        [RequestFormLimits(ValueLengthLimit = 4096, ValueCountLimit = 16)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LoginPost(
             [FromForm] string email,
@@ -156,6 +165,8 @@ namespace Darwin.WebAdmin.Controllers
         /// </summary>
         [AllowAnonymous]
         [HttpPost("/account/login-2fa")]
+        [RequestSizeLimit(MaxAuthFormBytes)]
+        [RequestFormLimits(ValueLengthLimit = 512, ValueCountLimit = 8)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LoginTwoFactorPost(
             [FromForm] string userId,
@@ -195,6 +206,8 @@ namespace Darwin.WebAdmin.Controllers
         /// <summary>Begins a WebAuthn (passkey) login ceremony.</summary>
         [AllowAnonymous]
         [HttpPost("/account/webauthn/begin-login")]
+        [RequestSizeLimit(MaxAuthFormBytes)]
+        [RequestFormLimits(ValueLengthLimit = 512, ValueCountLimit = 8)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> WebAuthnBeginLogin([FromForm] Guid userId, CancellationToken ct = default)
         {
@@ -215,6 +228,8 @@ namespace Darwin.WebAdmin.Controllers
         /// </summary>
         [AllowAnonymous]
         [HttpPost("/account/webauthn/finish-login")]
+        [RequestSizeLimit(MaxPasskeyResponseBytes)]
+        [RequestFormLimits(ValueLengthLimit = MaxPasskeyResponseBytes, ValueCountLimit = 16)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> WebAuthnFinishLogin(
             [FromForm] Guid userId,
@@ -267,6 +282,8 @@ namespace Darwin.WebAdmin.Controllers
         /// </summary>
         [AllowAnonymous]
         [HttpPost("/account/register")]
+        [RequestSizeLimit(MaxAuthFormBytes)]
+        [RequestFormLimits(ValueLengthLimit = 4096, ValueCountLimit = 16)]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegisterPost(
             [FromForm] string email,
@@ -359,7 +376,7 @@ namespace Darwin.WebAdmin.Controllers
             {
                 IsPersistent = persistent,
                 AllowRefresh = true,
-                ExpiresUtc = persistent ? DateTimeOffset.UtcNow.AddDays(30) : (DateTimeOffset?)null
+                ExpiresUtc = persistent ? new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero).AddDays(30) : (DateTimeOffset?)null
             };
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props);
         }

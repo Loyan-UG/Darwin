@@ -23,12 +23,15 @@ using Darwin.Application.Meta.Queries;                 // marker for Application
 // Clock/Time adapter
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
+using Darwin.Infrastructure.Health;
 using Darwin.WebApi.Auth;
 using Darwin.WebApi.Security;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Timeouts;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +40,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Globalization;
+using System.Net;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
@@ -107,12 +111,46 @@ namespace Darwin.WebApi.Extensions
             services.AddAuthorization();
             services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
             services.TryAddEnumerable(ServiceDescriptor.Scoped<IAuthorizationHandler, PermissionAuthorizationHandler>());
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.ForwardLimit = 1;
+
+                foreach (var proxy in configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? Array.Empty<string>())
+                {
+                    if (IPAddress.TryParse(proxy, out var address))
+                    {
+                        options.KnownProxies.Add(address);
+                    }
+                }
+
+                foreach (var network in configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? Array.Empty<string>())
+                {
+                    if (System.Net.IPNetwork.TryParse(network, out var ipNetwork))
+                    {
+                        options.KnownIPNetworks.Add(ipNetwork);
+                    }
+                }
+            });
 
             // ------------------------------------------------------------
             // 6) Notifications, caching, presentation helpers
             // ------------------------------------------------------------
             services.AddNotificationsInfrastructure(configuration);
             services.AddMemoryCache();
+            services.AddHealthChecks()
+                .AddCheck<DarwinDbContextHealthCheck>("database", tags: new[] { "ready" });
+            services.AddRequestTimeouts(options =>
+            {
+                options.DefaultPolicy = new RequestTimeoutPolicy
+                {
+                    Timeout = TimeSpan.FromSeconds(30)
+                };
+                options.AddPolicy("auth-sensitive", TimeSpan.FromSeconds(10));
+                options.AddPolicy("provider-webhook", TimeSpan.FromSeconds(10));
+                options.AddPolicy("public-storefront", TimeSpan.FromSeconds(15));
+                options.AddPolicy("public-content", TimeSpan.FromSeconds(10));
+            });
 
             services.AddSingleton<StorefrontCheckoutUrlBuilder>();
             services.TryAddSingleton<StripeWebhookSignatureVerifier>();
@@ -251,6 +289,70 @@ namespace Darwin.WebApi.Extensions
                         {
                             PermitLimit = 20,
                             Window = TimeSpan.FromSeconds(60),
+                            QueueLimit = 0,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                        });
+                });
+
+                options.AddPolicy("auth-sensitive", httpContext =>
+                {
+                    var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var partitionKey = string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey,
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 10,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                        });
+                });
+
+                options.AddPolicy("provider-webhook", httpContext =>
+                {
+                    var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var partitionKey = string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey,
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 60,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                        });
+                });
+
+                options.AddPolicy("public-storefront", httpContext =>
+                {
+                    var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var partitionKey = string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey,
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 120,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                        });
+                });
+
+                options.AddPolicy("public-content", httpContext =>
+                {
+                    var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var partitionKey = string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey,
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 240,
+                            Window = TimeSpan.FromMinutes(1),
                             QueueLimit = 0,
                             QueueProcessingOrder = QueueProcessingOrder.OldestFirst
                         });

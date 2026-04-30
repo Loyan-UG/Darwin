@@ -1,5 +1,6 @@
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Infrastructure.Notifications.Sms;
@@ -13,15 +14,18 @@ public sealed class ChannelDispatchOperationBackgroundService : BackgroundServic
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptions<ChannelDispatchOperationWorkerOptions> _options;
+    private readonly IClock _clock;
     private readonly ILogger<ChannelDispatchOperationBackgroundService> _logger;
 
     public ChannelDispatchOperationBackgroundService(
         IServiceScopeFactory scopeFactory,
         IOptions<ChannelDispatchOperationWorkerOptions> options,
+        IClock clock,
         ILogger<ChannelDispatchOperationBackgroundService> logger)
     {
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -71,7 +75,7 @@ public sealed class ChannelDispatchOperationBackgroundService : BackgroundServic
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var retryCutoffUtc = nowUtc.AddSeconds(-options.RetryCooldownSeconds);
 
         var items = await db.Set<ChannelDispatchOperation>()

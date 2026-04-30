@@ -265,9 +265,7 @@ public sealed class ShippingMethodsController : AdminBaseController
 
         if (!hasError)
         {
-            ModelState.AddModelError(
-                string.Empty,
-                string.IsNullOrWhiteSpace(ex.Message) ? T(fallbackKey) : ex.Message);
+            ModelState.AddModelError(string.Empty, T(fallbackKey));
         }
     }
 

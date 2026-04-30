@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application;
 using Darwin.Application.Identity;
 using Darwin.Application.Identity.DTOs;
@@ -22,11 +23,13 @@ namespace Darwin.Application.Identity.Queries;
 public sealed class GetInactiveReminderCandidatesHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public GetInactiveReminderCandidatesHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+    public GetInactiveReminderCandidatesHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
@@ -53,7 +56,7 @@ public sealed class GetInactiveReminderCandidatesHandler
         }
 
         var maxItems = Math.Clamp(request.MaxItems, 1, 1000);
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = _clock.UtcNow;
         var inactiveCutoffUtc = nowUtc.AddDays(-request.InactiveThresholdDays);
         var cooldown = TimeSpan.FromHours(request.CooldownHours);
 

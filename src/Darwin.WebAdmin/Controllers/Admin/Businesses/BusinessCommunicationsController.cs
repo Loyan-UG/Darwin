@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
@@ -42,6 +43,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly ISiteSettingCache _siteSettingCache;
         private readonly EmailDeliveryOptions _emailDeliveryOptions;
         private readonly BrevoEmailOptions _brevoEmailOptions;
+        private readonly IClock _clock;
 
         public BusinessCommunicationsController(
             GetBusinessCommunicationOpsSummaryHandler getSummary,
@@ -56,7 +58,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             IAppDbContext db,
             ISiteSettingCache siteSettingCache,
             IOptions<EmailDeliveryOptions> emailDeliveryOptions,
-            IOptions<BrevoEmailOptions> brevoEmailOptions)
+            IOptions<BrevoEmailOptions> brevoEmailOptions,
+            IClock clock)
         {
             _getSummary = getSummary ?? throw new ArgumentNullException(nameof(getSummary));
             _getSetupPage = getSetupPage ?? throw new ArgumentNullException(nameof(getSetupPage));
@@ -71,6 +74,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
             _emailDeliveryOptions = (emailDeliveryOptions ?? throw new ArgumentNullException(nameof(emailDeliveryOptions))).Value;
             _brevoEmailOptions = (brevoEmailOptions ?? throw new ArgumentNullException(nameof(brevoEmailOptions))).Value;
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         [HttpGet]
@@ -265,7 +269,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         public async Task<IActionResult> TemplatePreviews(string? flowKey = null, string? channel = null, CancellationToken ct = default)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
-            var previewedAtUtc = DateTime.UtcNow;
+            var previewedAtUtc = _clock.UtcNow;
             var vm = new CommunicationTemplatePreviewsVm
             {
                 FlowKey = flowKey ?? string.Empty,
@@ -1324,7 +1328,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var requestedBy = User?.Identity?.Name ?? T("CommunicationChannelFamilyOperatorPlaceholder");
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var placeholders = BuildCommunicationTestPlaceholders(
                 channel: DescribeCommunicationChannel("Email"),
                 requestedBy: requestedBy,
@@ -1452,7 +1456,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessId);
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var smsCooldownUntilUtc = await GetChannelTestCooldownUntilUtcAsync(
                 "SMS",
                 settings.CommunicationTestSmsRecipientE164,
@@ -1649,7 +1653,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessId);
             }
 
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var whatsAppCooldownUntilUtc = await GetChannelTestCooldownUntilUtcAsync(
                 "WhatsApp",
                 settings.CommunicationTestWhatsAppRecipientE164,
@@ -2635,7 +2639,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private List<ChannelMessageFamilyVm> BuildChannelTemplateFamilies(SiteSettingDto settings, string? flowKey)
         {
-            var nowUtc = DateTime.UtcNow;
+            var nowUtc = _clock.UtcNow;
             var phoneVerificationExpiresAtUtc = nowUtc.AddMinutes(10);
             var families = new List<ChannelMessageFamilyVm>();
 
