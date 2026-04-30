@@ -9,7 +9,7 @@ using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Billing.Commands
 {
-    public sealed class UpdatePaymentDisputeReviewHandler
+public sealed class UpdatePaymentDisputeReviewHandler
     {
         public const string UnderReviewAction = "UnderReview";
         public const string EvidenceSubmittedAction = "EvidenceSubmitted";
@@ -24,12 +24,11 @@ namespace Darwin.Application.Billing.Commands
 
         public UpdatePaymentDisputeReviewHandler(
             IAppDbContext db,
-            IClock clock,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Result> HandleAsync(UpdatePaymentDisputeReviewDto dto, CancellationToken ct = default)
@@ -131,15 +130,20 @@ namespace Darwin.Application.Billing.Commands
         private static string NormalizeAction(string? action) =>
             string.IsNullOrWhiteSpace(action) ? string.Empty : action.Trim();
 
-        private static string NormalizeNote(string? note)
+    private static string NormalizeNote(string? note)
+    {
+        if (string.IsNullOrWhiteSpace(note))
         {
-            if (string.IsNullOrWhiteSpace(note))
-            {
-                return "-";
-            }
-
-            return note.Trim().Replace("[", "(").Replace("]", ")").Replace(Environment.NewLine, " ");
+            return "-";
         }
+
+        return note.Trim()
+            .Replace("[", "(")
+            .Replace("]", ")")
+            .Replace("\r\n", " ")
+            .Replace("\n", " ")
+            .Replace("\r", " ");
+    }
 
         public static string ResolveDisputeReviewState(string? failureReason)
         {
@@ -196,3 +200,4 @@ namespace Darwin.Application.Billing.Commands
         }
     }
 }
+

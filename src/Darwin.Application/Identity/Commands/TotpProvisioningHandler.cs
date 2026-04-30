@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application;
+using Darwin.Application.Identity.Validators;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Services;
 using Darwin.Domain.Entities.Identity;
@@ -26,12 +27,19 @@ namespace Darwin.Application.Identity.Commands
 
         public TotpProvisioningHandler(
             IAppDbContext db,
+            IStringLocalizer<ValidationResource>? localizer = null)
+            : this(db, new TotpProvisionValidator(), localizer)
+        {
+        }
+
+        public TotpProvisioningHandler(
+            IAppDbContext db,
             IValidator<TotpProvisionDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         /// <summary>

@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.Validators;
 using Darwin.Application.Identity.Services;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
@@ -26,14 +27,22 @@ namespace Darwin.Application.Identity.Commands
 
         public EnableTotpHandler(
             IAppDbContext db,
-            IClock clock,
+            IStringLocalizer<ValidationResource>? localizer = null,
+            IClock? clock = null)
+            : this(db, new TotpEnableValidator(), localizer, clock)
+        {
+        }
+
+        public EnableTotpHandler(
+            IAppDbContext db,
             IValidator<TotpEnableDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null,
+            IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _validator = validator;
-            _localizer = localizer;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         /// <summary>
@@ -64,3 +73,4 @@ namespace Darwin.Application.Identity.Commands
         }
     }
 }
+

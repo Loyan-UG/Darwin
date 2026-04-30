@@ -1,4 +1,4 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Shared.Results;
@@ -25,11 +25,11 @@ namespace Darwin.Application.CMS.Commands
         /// <summary>
         /// Initializes a new instance of the handler with the shared DbContext abstraction.
         /// </summary>
-        public SoftDeletePageHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+        public SoftDeletePageHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
-            _localizer = localizer;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         /// <summary>
@@ -70,3 +70,4 @@ namespace Darwin.Application.CMS.Commands
         }
     }
 }
+

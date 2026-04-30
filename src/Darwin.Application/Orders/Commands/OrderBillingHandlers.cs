@@ -24,14 +24,13 @@ namespace Darwin.Application.Orders.Commands
 
         public AddRefundHandler(
             IAppDbContext db,
-            IClock clock,
             IValidator<RefundCreateDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Guid> HandleAsync(RefundCreateDto dto, CancellationToken ct = default)
@@ -142,14 +141,13 @@ namespace Darwin.Application.Orders.Commands
 
         public CreateOrderInvoiceHandler(
             IAppDbContext db,
-            IClock clock,
             IValidator<OrderInvoiceCreateDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Guid> HandleAsync(OrderInvoiceCreateDto dto, CancellationToken ct = default)
@@ -246,3 +244,4 @@ namespace Darwin.Application.Orders.Commands
         }
     }
 }
+

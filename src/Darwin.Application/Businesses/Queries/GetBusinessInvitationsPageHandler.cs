@@ -25,10 +25,10 @@ namespace Darwin.Application.Businesses.Queries
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
 
-        public GetBusinessInvitationsPageHandler(IAppDbContext db, IClock clock)
+        public GetBusinessInvitationsPageHandler(IAppDbContext db, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
         public async Task<(List<BusinessInvitationListItemDto> Items, int Total)> HandleAsync(

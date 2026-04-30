@@ -22,13 +22,12 @@ namespace Darwin.Application.CRM.Commands
         public UpdateInvoiceHandler(
             IAppDbContext db,
             IValidator<InvoiceEditDto> validator,
-            IClock clock,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task HandleAsync(InvoiceEditDto dto, CancellationToken ct = default)
@@ -135,13 +134,12 @@ namespace Darwin.Application.CRM.Commands
         public TransitionInvoiceStatusHandler(
             IAppDbContext db,
             IValidator<InvoiceStatusTransitionDto> validator,
-            IClock clock,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task HandleAsync(InvoiceStatusTransitionDto dto, CancellationToken ct = default)
@@ -250,13 +248,12 @@ namespace Darwin.Application.CRM.Commands
         public CreateInvoiceRefundHandler(
             IAppDbContext db,
             IValidator<InvoiceRefundCreateDto> validator,
-            IClock clock,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Guid> HandleAsync(InvoiceRefundCreateDto dto, CancellationToken ct = default)
@@ -361,3 +358,4 @@ namespace Darwin.Application.CRM.Commands
         }
     }
 }
+

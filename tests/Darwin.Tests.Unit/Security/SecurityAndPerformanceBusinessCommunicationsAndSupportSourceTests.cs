@@ -3543,7 +3543,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain("[\"phone_e164\"] = phoneE164,");
         controllerSource.Should().Contain("[\"token\"] = token,");
         controllerSource.Should().Contain("[\"expires_at_utc\"] = expiresAtUtc.ToString(\"yyyy-MM-dd HH:mm:ss\")");
-        controllerSource.Should().Contain("BuildPhoneVerificationPlaceholders(\"+4915112345678\", \"731904\", DateTime.UtcNow.AddMinutes(10))");
+        controllerSource.Should().Contain("BuildPhoneVerificationPlaceholders(\"+4915112345678\", \"731904\", previewedAtUtc.AddMinutes(10))");
         controllerSource.Should().Contain("SupportedTokens = \"{phone_e164}, {token}, {expires_at_utc}\"");
     }
 

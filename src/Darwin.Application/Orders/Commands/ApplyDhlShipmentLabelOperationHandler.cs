@@ -25,12 +25,11 @@ namespace Darwin.Application.Orders.Commands
 
         public ApplyDhlShipmentLabelOperationHandler(
             IAppDbContext db,
-            IClock clock,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
-            _localizer = localizer;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<ShipmentDetailDto> HandleAsync(Guid shipmentId, CancellationToken ct = default)
@@ -111,3 +110,4 @@ namespace Darwin.Application.Orders.Commands
         }
     }
 }
+

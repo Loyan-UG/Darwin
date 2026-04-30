@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -22,10 +22,10 @@ namespace Darwin.Application.Orders.Queries
 
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
-        public GetOrderShipmentsPageHandler(IAppDbContext db, IClock clock)
+        public GetOrderShipmentsPageHandler(IAppDbContext db, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
         /// <summary>

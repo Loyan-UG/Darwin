@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,11 +24,11 @@ namespace Darwin.Application.Identity.Commands
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateUserRolesHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+        public UpdateUserRolesHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
-            _localizer = localizer;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         /// <summary>
@@ -111,3 +111,4 @@ namespace Darwin.Application.Identity.Commands
         }
     }
 }
+

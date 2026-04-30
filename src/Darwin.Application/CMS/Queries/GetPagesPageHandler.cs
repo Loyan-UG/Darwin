@@ -22,10 +22,10 @@ namespace Darwin.Application.CMS.Queries
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
 
-        public GetPagesPageHandler(IAppDbContext db, IClock clock)
+        public GetPagesPageHandler(IAppDbContext db, IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
         public async Task<(IReadOnlyList<PageListItemDto> Items, int Total)> HandleAsync(
@@ -104,10 +104,10 @@ namespace Darwin.Application.CMS.Queries
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
 
-        public GetPageOpsSummaryHandler(IAppDbContext db, IClock clock)
+        public GetPageOpsSummaryHandler(IAppDbContext db, IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
         public async Task<PageOpsSummaryDto> HandleAsync(CancellationToken ct = default)

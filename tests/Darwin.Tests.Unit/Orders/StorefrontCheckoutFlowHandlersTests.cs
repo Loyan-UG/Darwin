@@ -5,6 +5,7 @@ using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
 using Darwin.Application.Shipping.Queries;
+using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
@@ -145,6 +146,619 @@ public sealed class StorefrontCheckoutFlowHandlersTests
         result.ShippingOptions.Should().HaveCount(2);
         result.SelectedShippingMethodId.Should().Be(dhlMethodId);
         result.SelectedShippingTotalMinor.Should().Be(590);
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenCartIdMissing()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto(), TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("CartIdRequired");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenCartNotFound()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = Guid.NewGuid()
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("CartNotFound");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenCartBelongsToDifferentUser()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var ownerId = Guid.NewGuid();
+
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            UserId = ownerId,
+            Currency = "EUR",
+            Items =
+            [
+                new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cartId,
+                    VariantId = Guid.NewGuid(),
+                    Quantity = 1,
+                    UnitPriceNetMinor = 1000,
+                    VatRate = 0.19m,
+                    SelectedAddOnValueIdsJson = "[]"
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = cartId,
+                UserId = Guid.NewGuid(),
+                ShippingAddress = new CheckoutAddressDto
+                {
+                    FullName = "Mia",
+                    Street1 = "X",
+                    PostalCode = "00000",
+                    City = "Berlin",
+                    CountryCode = "DE"
+                }
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("CartDoesNotBelongToCurrentUser");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenCartIsEmpty()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            Currency = "EUR"
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = cartId,
+                ShippingAddress = new CheckoutAddressDto
+                {
+                    FullName = "Mia",
+                    Street1 = "X",
+                    PostalCode = "00000",
+                    City = "Berlin",
+                    CountryCode = "DE"
+                }
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("CartIsEmpty");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenCartVariantsUnavailable()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var missingVariantId = Guid.NewGuid();
+
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            Currency = "EUR",
+            Items =
+            [
+                new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cartId,
+                    VariantId = missingVariantId,
+                    Quantity = 1,
+                    UnitPriceNetMinor = 1000,
+                    VatRate = 0.19m,
+                    SelectedAddOnValueIdsJson = "[]"
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = cartId,
+                ShippingAddress = new CheckoutAddressDto
+                {
+                    FullName = "Mia",
+                    Street1 = "X",
+                    PostalCode = "00000",
+                    City = "Berlin",
+                    CountryCode = "DE"
+                }
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("CartVariantsNoLongerAvailable");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_ReturnForDigitalOnlyItemsWithoutShipping()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            Sku = "DIGI-100",
+            BasePriceNetMinor = 500,
+            Currency = "EUR",
+            TaxCategoryId = taxCategoryId,
+            IsDigital = true,
+            PackageWeight = 0
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Digital",
+            VatRate = 0.19m
+        });
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            Currency = "EUR",
+            Items =
+            [
+                new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cartId,
+                    VariantId = variantId,
+                    Quantity = 2,
+                    UnitPriceNetMinor = 500,
+                    VatRate = 0.19m,
+                    SelectedAddOnValueIdsJson = "[]"
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var result = await handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+        {
+            CartId = cartId
+        }, TestContext.Current.CancellationToken);
+
+        result.RequiresShipping.Should().BeFalse();
+        result.ShippingCountryCode.Should().BeNull();
+        result.ShippingOptions.Should().BeEmpty();
+        result.SelectedShippingMethodId.Should().BeNull();
+        result.SelectedShippingTotalMinor.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenShippingCountryCodeMissing()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            Sku = "SHIP-100",
+            BasePriceNetMinor = 1000,
+            Currency = "EUR",
+            TaxCategoryId = taxCategoryId,
+            PackageWeight = 100
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            Currency = "EUR",
+            Items =
+            [
+                new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cartId,
+                    VariantId = variantId,
+                    Quantity = 1,
+                    UnitPriceNetMinor = 1000,
+                    VatRate = 0.19m,
+                    SelectedAddOnValueIdsJson = "[]"
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = cartId,
+                ShippingAddress = new CheckoutAddressDto
+                {
+                    FullName = "Mia",
+                    Street1 = "X",
+                    PostalCode = "10115",
+                    City = "Berlin",
+                    CountryCode = "   "
+                }
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("ShippingAddressWithCountryCodeRequired");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenSavedAddressUsedWithoutSignedInUser()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+        var shippingAddressId = Guid.NewGuid();
+
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            Sku = "SHIP-200",
+            BasePriceNetMinor = 1000,
+            Currency = "EUR",
+            TaxCategoryId = taxCategoryId,
+            PackageWeight = 100
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            Currency = "EUR",
+            Items =
+            [
+                new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cartId,
+                    VariantId = variantId,
+                    Quantity = 1,
+                    UnitPriceNetMinor = 1000,
+                    VatRate = 0.19m,
+                    SelectedAddOnValueIdsJson = "[]"
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = cartId,
+                ShippingAddressId = shippingAddressId
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("SignedInUserRequiredToUseSavedShippingAddress");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenSavedAddressDoesNotExist()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+        var shippingAddressId = Guid.NewGuid();
+
+        db.Set<Address>().Add(new Address
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            FullName = "Owner",
+            Street1 = "Main 1",
+            PostalCode = "10115",
+            City = "Berlin",
+            CountryCode = "DE"
+        });
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            Sku = "SHIP-300",
+            BasePriceNetMinor = 1000,
+            Currency = "EUR",
+            TaxCategoryId = taxCategoryId,
+            PackageWeight = 100
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            UserId = userId,
+            Currency = "EUR",
+            Items =
+            [
+                new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cartId,
+                    VariantId = variantId,
+                    Quantity = 1,
+                    UnitPriceNetMinor = 1000,
+                    VatRate = 0.19m,
+                    SelectedAddOnValueIdsJson = "[]"
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = cartId,
+                UserId = userId,
+                ShippingAddressId = shippingAddressId
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("SavedShippingAddressNotFound");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenNoShippingOptions()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            Sku = "SHIP-400",
+            BasePriceNetMinor = 1000,
+            Currency = "EUR",
+            TaxCategoryId = taxCategoryId,
+            PackageWeight = 100
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            Currency = "EUR",
+            Items =
+            [
+                new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cartId,
+                    VariantId = variantId,
+                    Quantity = 1,
+                    UnitPriceNetMinor = 1000,
+                    VatRate = 0.19m,
+                    SelectedAddOnValueIdsJson = "[]"
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = cartId,
+                ShippingAddress = new CheckoutAddressDto
+                {
+                    FullName = "Mia",
+                    Street1 = "X",
+                    PostalCode = "10117",
+                    City = "Berlin",
+                    CountryCode = "DE"
+                }
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("NoShippingOptionsAvailableForCurrentCheckout");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontCheckoutIntent_Should_Throw_WhenSelectedShippingMethodInvalid()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+        var shippingMethodId = Guid.NewGuid();
+
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            Sku = "SHIP-500",
+            BasePriceNetMinor = 1000,
+            Currency = "EUR",
+            TaxCategoryId = taxCategoryId,
+            PackageWeight = 100
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<ShippingMethod>().Add(new ShippingMethod
+        {
+            Id = shippingMethodId,
+            Name = "DHL Standard",
+            Carrier = "DHL",
+            Service = "Standard",
+            IsActive = true,
+            CountriesCsv = "DE",
+            Currency = "EUR",
+            Rates =
+            [
+                new ShippingRate
+                {
+                    Id = Guid.NewGuid(),
+                    ShippingMethodId = shippingMethodId,
+                    MaxShipmentMass = 2000,
+                    PriceMinor = 490,
+                    SortOrder = 1
+                }
+            ]
+        });
+        db.Set<Cart>().Add(new Cart
+        {
+            Id = cartId,
+            Currency = "EUR",
+            Items =
+            [
+                new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cartId,
+                    VariantId = variantId,
+                    Quantity = 1,
+                    UnitPriceNetMinor = 1000,
+                    VatRate = 0.19m,
+                    SelectedAddOnValueIdsJson = "[]"
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new TestStringLocalizer();
+        var handler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db, localizer), new RateShipmentHandler(db), localizer);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+            {
+                CartId = cartId,
+                SelectedShippingMethodId = Guid.NewGuid(),
+                ShippingAddress = new CheckoutAddressDto
+                {
+                    FullName = "Mia",
+                    Street1 = "X",
+                    PostalCode = "10117",
+                    City = "Berlin",
+                    CountryCode = "DE"
+                }
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("SelectedShippingMethodInvalidForCurrentCheckout");
     }
 
     [Fact]
@@ -308,6 +922,392 @@ public sealed class StorefrontCheckoutFlowHandlersTests
     }
 
     [Fact]
+    public async Task CompleteStorefrontPayment_Should_NotRequireProviderReferences_WhenNotProvided()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+        var fixedClock = new DateTime(2030, 4, 30, 12, 0, 0, DateTimeKind.Utc);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20260326-00005",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_pending",
+                    ProviderPaymentIntentRef = "pi_expected",
+                    ProviderCheckoutSessionRef = "cs_expected",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(
+            db,
+            new TestStringLocalizer(),
+            new FakeClock(fixedClock));
+
+        var result = await handler.HandleAsync(new CompleteStorefrontPaymentDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId,
+            OrderNumber = "D-20260326-00005",
+            Outcome = StorefrontPaymentOutcome.Succeeded,
+            ProviderReference = "psp_txn_1002"
+        }, TestContext.Current.CancellationToken);
+
+        result.OrderStatus.Should().Be(OrderStatus.Paid);
+        result.PaymentStatus.Should().Be(PaymentStatus.Captured);
+        result.PaidAtUtc.Should().Be(fixedClock);
+    }
+
+    [Fact]
+    public async Task CompleteStorefrontPayment_Should_MarkPaymentFailed_WhenOutcomeFailed()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20260326-00006",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_pending_failed",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(db, new TestStringLocalizer());
+
+        var result = await handler.HandleAsync(new CompleteStorefrontPaymentDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId,
+            OrderNumber = "D-20260326-00006",
+            Outcome = StorefrontPaymentOutcome.Failed,
+            FailureReason = "Card was declined."
+        }, TestContext.Current.CancellationToken);
+
+        result.OrderStatus.Should().Be(OrderStatus.Created);
+        result.PaymentStatus.Should().Be(PaymentStatus.Failed);
+        result.PaidAtUtc.Should().BeNull();
+
+        var persistedPayment = await db.Set<Payment>()
+            .AsNoTracking()
+            .SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        persistedPayment.Status.Should().Be(PaymentStatus.Failed);
+        persistedPayment.FailureReason.Should().Be("Card was declined.");
+    }
+
+    [Fact]
+    public async Task CompleteStorefrontPayment_Should_NotUpdate_WhenPaymentAlreadyFinalized()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+        var fixedClock = new DateTime(2030, 4, 30, 8, 0, 0, DateTimeKind.Utc);
+        var originalPaidAtUtc = fixedClock.AddHours(-1);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00001",
+            Currency = "EUR",
+            Status = OrderStatus.Paid,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_captured",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Captured,
+                    PaidAtUtc = originalPaidAtUtc
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(
+            db,
+            new TestStringLocalizer(),
+            new FakeClock(fixedClock));
+
+        var result = await handler.HandleAsync(new CompleteStorefrontPaymentDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId,
+            OrderNumber = "D-20300430-00001",
+            Outcome = StorefrontPaymentOutcome.Failed,
+            ProviderReference = "  new_provider_ref  ",
+            FailureReason = "should not be persisted"
+        }, TestContext.Current.CancellationToken);
+
+        result.OrderStatus.Should().Be(OrderStatus.Paid);
+        result.PaymentStatus.Should().Be(PaymentStatus.Captured);
+        result.PaidAtUtc.Should().Be(originalPaidAtUtc);
+
+        var persistedPayment = await db.Set<Payment>()
+            .AsNoTracking()
+            .SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        persistedPayment.Status.Should().Be(PaymentStatus.Captured);
+        persistedPayment.PaidAtUtc.Should().Be(originalPaidAtUtc);
+        persistedPayment.ProviderTransactionRef.Should().Be("chk_captured");
+    }
+
+    [Fact]
+    public async Task CompleteStorefrontPayment_Should_Throw_WhenProviderReferenceDoesNotMatch()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00002",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_pending",
+                    ProviderPaymentIntentRef = "pi_expected",
+                    ProviderCheckoutSessionRef = "cs_expected",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(db, new TestStringLocalizer());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CompleteStorefrontPaymentDto
+            {
+                OrderId = orderId,
+                PaymentId = paymentId,
+                OrderNumber = "D-20300430-00002",
+                Outcome = StorefrontPaymentOutcome.Succeeded,
+                ProviderPaymentIntentReference = "  pi_unexpected  "
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("StorefrontPaymentProviderReferenceMismatch");
+    }
+
+    [Fact]
+    public async Task CompleteStorefrontPayment_Should_Throw_WhenOutcomeUnsupported()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00003",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_pending",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(db, new TestStringLocalizer());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CompleteStorefrontPaymentDto
+            {
+                OrderId = orderId,
+                PaymentId = paymentId,
+                OrderNumber = "D-20300430-00003",
+                Outcome = (StorefrontPaymentOutcome)999
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("UnsupportedStorefrontPaymentOutcome");
+    }
+
+    [Fact]
+    public async Task CompleteStorefrontPayment_Should_Throw_WhenOrderNotFound()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var handler = new CompleteStorefrontPaymentHandler(db, new TestStringLocalizer());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CompleteStorefrontPaymentDto
+            {
+                OrderId = Guid.NewGuid(),
+                PaymentId = Guid.NewGuid(),
+                OrderNumber = "MISS-00000",
+                Outcome = StorefrontPaymentOutcome.Succeeded
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("OrderNotFound");
+    }
+
+    [Fact]
+    public async Task CompleteStorefrontPayment_Should_Throw_WhenPaymentNotFoundForOrder()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var foreignPaymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00017",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_other",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(db, new TestStringLocalizer());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CompleteStorefrontPaymentDto
+            {
+                OrderId = orderId,
+                PaymentId = foreignPaymentId,
+                OrderNumber = "D-20300430-00017",
+                Outcome = StorefrontPaymentOutcome.Succeeded
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("PaymentNotFoundForOrder");
+    }
+
+    [Fact]
+    public async Task CompleteStorefrontPayment_Should_Throw_WhenProviderCheckoutSessionReferenceDoesNotMatch()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00018",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_pending",
+                    ProviderPaymentIntentRef = "pi_expected",
+                    ProviderCheckoutSessionRef = "cs_expected",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(db, new TestStringLocalizer());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CompleteStorefrontPaymentDto
+            {
+                OrderId = orderId,
+                PaymentId = paymentId,
+                OrderNumber = "D-20300430-00018",
+                Outcome = StorefrontPaymentOutcome.Succeeded,
+                ProviderCheckoutSessionReference = "  cs_wrong  ",
+                ProviderPaymentIntentReference = "pi_expected"
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("StorefrontPaymentProviderReferenceMismatch");
+    }
+
+    [Fact]
     public async Task GetStorefrontOrderConfirmation_Should_ReturnNull_ForAnonymousAccess_ToMemberOwnedOrder()
     {
         await using var db = StorefrontCheckoutFlowTestDbContext.Create();
@@ -334,6 +1334,378 @@ public sealed class StorefrontCheckoutFlowHandlersTests
         }, TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateStorefrontPaymentIntent_Should_DefaultToStripe_WhenProviderIsBlank()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var existingOldPaymentId = Guid.NewGuid();
+        var existingNewPaymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00010",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 1200,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = existingOldPaymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_old",
+                    AmountMinor = 1200,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending,
+                    CreatedAtUtc = new DateTime(2029, 1, 1, 10, 0, 0, DateTimeKind.Utc)
+                },
+                new Payment
+                {
+                    Id = existingNewPaymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_new",
+                    AmountMinor = 1200,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending,
+                    CreatedAtUtc = new DateTime(2029, 1, 1, 11, 0, 0, DateTimeKind.Utc)
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateStorefrontPaymentIntentHandler(db, new TestStringLocalizer());
+        var fixedClock = new DateTime(2030, 4, 30, 11, 0, 0, DateTimeKind.Utc);
+
+        handler = new CreateStorefrontPaymentIntentHandler(
+            db,
+            new TestStringLocalizer(),
+            new FakeClock(fixedClock));
+
+        var result = await handler.HandleAsync(new CreateStorefrontPaymentIntentDto
+        {
+            OrderId = orderId,
+            OrderNumber = "D-20300430-00010",
+            Provider = "   "
+        }, TestContext.Current.CancellationToken);
+
+        result.PaymentId.Should().Be(existingNewPaymentId);
+        result.ProviderReference.Should().Be("chk_new");
+        result.Status.Should().Be(PaymentStatus.Pending);
+        result.ExpiresAtUtc.Should().Be(fixedClock.AddMinutes(15));
+    }
+
+    [Fact]
+    public async Task CreateStorefrontPaymentIntent_Should_Throw_WhenProviderIsUnsupported()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00011",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 1200,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}"
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateStorefrontPaymentIntentHandler(db, new TestStringLocalizer());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontPaymentIntentDto
+            {
+                OrderId = orderId,
+                OrderNumber = "D-20300430-00011",
+                Provider = "PayPal"
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("StorefrontPaymentProviderNotSupported");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontPaymentIntent_Should_CreateStripeReferences_WhenNoPendingMatch()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+        var fixedClock = new DateTime(2030, 4, 30, 12, 0, 0, DateTimeKind.Utc);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00012",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 3300,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_completed",
+                    ProviderPaymentIntentRef = "pi_old",
+                    ProviderCheckoutSessionRef = "cs_old",
+                    AmountMinor = 3300,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Failed
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateStorefrontPaymentIntentHandler(
+            db,
+            new TestStringLocalizer(),
+            new FakeClock(fixedClock));
+
+        var result = await handler.HandleAsync(new CreateStorefrontPaymentIntentDto
+        {
+            OrderId = orderId,
+            OrderNumber = "D-20300430-00012",
+            Provider = "Stripe"
+        }, TestContext.Current.CancellationToken);
+
+        result.PaymentId.Should().NotBe(paymentId);
+        result.Provider.Should().Be("Stripe");
+        result.ProviderReference.Should().StartWith("cs_");
+        result.ProviderPaymentIntentReference.Should().StartWith("pi_");
+        result.ProviderCheckoutSessionReference.Should().StartWith("cs_");
+        result.ExpiresAtUtc.Should().Be(fixedClock.AddMinutes(15));
+    }
+
+    [Fact]
+    public async Task CreateStorefrontPaymentIntent_Should_ReuseAuthorizedPayment_WhenExists()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var pendingId = Guid.NewGuid();
+        var authorizedId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00014",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 4000,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = pendingId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_pending",
+                    AmountMinor = 4000,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending,
+                    CreatedAtUtc = new DateTime(2029, 1, 1, 9, 0, 0, DateTimeKind.Utc)
+                },
+                new Payment
+                {
+                    Id = authorizedId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_authorized",
+                    AmountMinor = 4000,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Authorized,
+                    CreatedAtUtc = new DateTime(2029, 1, 1, 10, 0, 0, DateTimeKind.Utc)
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateStorefrontPaymentIntentHandler(db, new TestStringLocalizer());
+
+        var result = await handler.HandleAsync(new CreateStorefrontPaymentIntentDto
+        {
+            OrderId = orderId,
+            OrderNumber = "D-20300430-00014",
+            Provider = "Stripe"
+        }, TestContext.Current.CancellationToken);
+
+        result.PaymentId.Should().Be(authorizedId);
+        result.ProviderReference.Should().Be("chk_authorized");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontPaymentIntent_Should_Throw_WhenOrderCancelledOrRefunded()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var settledPaymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00015",
+            Currency = "EUR",
+            Status = OrderStatus.Refunded,
+            GrandTotalGrossMinor = 4000,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = settledPaymentId,
+                    OrderId = orderId,
+                    Provider = "Stripe",
+                    ProviderTransactionRef = "chk_settled",
+                    AmountMinor = 4000,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Captured
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateStorefrontPaymentIntentHandler(db, new TestStringLocalizer());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontPaymentIntentDto
+            {
+                OrderId = orderId,
+                OrderNumber = "D-20300430-00015",
+                Provider = "Stripe"
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("PaymentCannotBeInitiatedForCancelledOrRefundedOrder");
+    }
+
+    [Fact]
+    public async Task CreateStorefrontPaymentIntent_Should_Throw_WhenOrderNotFound()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var handler = new CreateStorefrontPaymentIntentHandler(db, new TestStringLocalizer());
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.HandleAsync(new CreateStorefrontPaymentIntentDto
+            {
+                OrderId = Guid.NewGuid(),
+                OrderNumber = "MISS-00000",
+                Provider = "Stripe"
+            }, TestContext.Current.CancellationToken));
+
+        ex.Message.Should().Be("OrderNotFound");
+    }
+
+    [Fact]
+    public async Task GetStorefrontOrderConfirmation_Should_ReturnNull_ForWrongMemberOrderAccess()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var ownerId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00016",
+            UserId = ownerId,
+            Currency = "EUR",
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}"
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetStorefrontOrderConfirmationHandler(db, new TestStringLocalizer());
+
+        var result = await handler.HandleAsync(new GetStorefrontOrderConfirmationDto
+        {
+            OrderId = orderId,
+            OrderNumber = "D-20300430-00016",
+            UserId = Guid.NewGuid()
+        }, TestContext.Current.CancellationToken);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetStorefrontOrderConfirmation_Should_ReturnOrder_ForAnonymousOrder()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00019",
+            UserId = null,
+            Currency = "EUR",
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}"
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetStorefrontOrderConfirmationHandler(db, new TestStringLocalizer());
+
+        var result = await handler.HandleAsync(new GetStorefrontOrderConfirmationDto
+        {
+            OrderId = orderId,
+            OrderNumber = "D-20300430-00019"
+        }, TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.OrderId.Should().Be(orderId);
+        result.OrderNumber.Should().Be("D-20300430-00019");
+    }
+
+    [Fact]
+    public async Task GetStorefrontOrderConfirmation_Should_ReturnOrder_ForCorrectMember()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var memberId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20300430-00013",
+            UserId = memberId,
+            Currency = "EUR",
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}"
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetStorefrontOrderConfirmationHandler(db, new TestStringLocalizer());
+
+        var result = await handler.HandleAsync(new GetStorefrontOrderConfirmationDto
+        {
+            OrderId = orderId,
+            OrderNumber = "D-20300430-00013",
+            UserId = memberId
+        }, TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.OrderId.Should().Be(orderId);
+        result.OrderNumber.Should().Be("D-20300430-00013");
     }
 
     private sealed class StorefrontCheckoutFlowTestDbContext : DbContext, IAppDbContext
@@ -430,6 +1802,17 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 builder.Property(x => x.RowVersion).IsRequired();
             });
 
+            modelBuilder.Entity<Address>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.FullName).IsRequired();
+                builder.Property(x => x.Street1).IsRequired();
+                builder.Property(x => x.PostalCode).IsRequired();
+                builder.Property(x => x.City).IsRequired();
+                builder.Property(x => x.CountryCode).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
             modelBuilder.Entity<Payment>(builder =>
             {
                 builder.HasKey(x => x.Id);
@@ -451,5 +1834,15 @@ public sealed class StorefrontCheckoutFlowHandlersTests
             Array.Empty<LocalizedString>();
 
         public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
+    }
+
+    private sealed class FakeClock : Darwin.Application.Abstractions.Services.IClock
+    {
+        public FakeClock(DateTime utcNow)
+        {
+            UtcNow = utcNow;
+        }
+
+        public DateTime UtcNow { get; }
     }
 }

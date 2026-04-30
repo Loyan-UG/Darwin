@@ -30,16 +30,15 @@ public sealed class PlaceOrderFromCartHandler
     /// </summary>
     public PlaceOrderFromCartHandler(
         IAppDbContext db,
-        IClock clock,
         ComputeCartSummaryHandler computeCartSummaryHandler,
         Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler createStorefrontCheckoutIntentHandler,
-        IStringLocalizer<ValidationResource> localizer)
+        IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
         _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
-        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
     }
 
     /// <summary>
@@ -315,3 +314,4 @@ public sealed class PlaceOrderFromCartHandler
             selectedAddOnValueIdsJson ?? "[]");
     }
 }
+

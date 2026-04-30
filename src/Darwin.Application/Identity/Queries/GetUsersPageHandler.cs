@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -19,10 +19,10 @@ namespace Darwin.Application.Identity.Queries
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
 
-        public GetUsersPageHandler(IAppDbContext db, IClock clock)
+        public GetUsersPageHandler(IAppDbContext db, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
         public async Task<(IReadOnlyList<UserListItemDto> Items, int Total)> HandleAsync(
@@ -80,10 +80,10 @@ namespace Darwin.Application.Identity.Queries
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
 
-        public GetUserOpsSummaryHandler(IAppDbContext db, IClock clock)
+        public GetUserOpsSummaryHandler(IAppDbContext db, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
         public async Task<UserOpsSummaryDto> HandleAsync(CancellationToken ct = default)

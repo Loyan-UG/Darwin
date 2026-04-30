@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
@@ -23,12 +24,19 @@ namespace Darwin.Application.Identity.Commands
 
         public DisableTotpHandler(
             IAppDbContext db,
+            IStringLocalizer<ValidationResource>? localizer = null)
+            : this(db, new TotpDisableValidator(), localizer)
+        {
+        }
+
+        public DisableTotpHandler(
+            IAppDbContext db,
             IValidator<TotpDisableDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null)
         {
             _db = db;
             _validator = validator;
-            _localizer = localizer;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         /// <summary>

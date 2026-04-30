@@ -20,11 +20,11 @@ namespace Darwin.Application.Identity.Commands
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public DeleteRoleHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+        public DeleteRoleHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion, CancellationToken ct = default)
@@ -62,3 +62,4 @@ namespace Darwin.Application.Identity.Commands
         }
     }
 }
+

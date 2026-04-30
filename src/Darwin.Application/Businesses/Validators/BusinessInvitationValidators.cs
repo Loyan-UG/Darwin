@@ -50,8 +50,10 @@ namespace Darwin.Application.Businesses.Validators
     /// </summary>
     public sealed class BusinessInvitationAcceptDtoValidator : AbstractValidator<BusinessInvitationAcceptDto>
     {
-        public BusinessInvitationAcceptDtoValidator(IStringLocalizer<ValidationResource> localizer)
+        public BusinessInvitationAcceptDtoValidator(IStringLocalizer<ValidationResource>? localizer = null)
         {
+            var effectiveLocalizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
+
             RuleFor(x => x.Token).NotEmpty().MinimumLength(12).MaximumLength(256);
             RuleFor(x => x.DeviceId).MaximumLength(128);
             RuleFor(x => x.FirstName).MaximumLength(128);
@@ -59,7 +61,7 @@ namespace Darwin.Application.Businesses.Validators
 
             When(x => !string.IsNullOrWhiteSpace(x.Password), () =>
             {
-                RuleFor(x => x.Password!).MaximumLength(256).ApplyPasswordPolicy(localizer);
+                RuleFor(x => x.Password!).MaximumLength(256).ApplyPasswordPolicy(effectiveLocalizer);
             });
         }
     }

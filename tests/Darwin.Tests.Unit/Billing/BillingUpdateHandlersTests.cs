@@ -189,6 +189,32 @@ public sealed class BillingUpdateHandlersTests
     }
 
     [Fact]
+    public async Task UpdatePaymentDisputeReviewHandler_Should_ReturnRowVersionRequired_WhenRowVersionMissing()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            Status = PaymentStatus.Pending,
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        {
+            Id = paymentId,
+            RowVersion = []
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("RowVersionRequired");
+    }
+
+    [Fact]
     public async Task UpdatePaymentDisputeReviewHandler_Should_ReturnNotFound_WhenPaymentDoesNotExist()
     {
         await using var db = BillingUpdateTestDbContext.Create();
@@ -270,6 +296,38 @@ public sealed class BillingUpdateHandlersTests
     }
 
     [Fact]
+    public async Task UpdatePaymentDisputeReviewHandler_Should_NormalizeNote_NewlinesAndBrackets_WhenResolving()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            Status = PaymentStatus.Failed,
+            FailureReason = "gateway declined",
+            RowVersion = [11]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        {
+            Id = paymentId,
+            RowVersion = [11],
+            Action = UpdatePaymentDisputeReviewHandler.ResolveLostAction,
+            Note = "investigator [review]\r\nnew line\ranother line"
+        }, TestContext.Current.CancellationToken);
+
+        var updated = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        result.Succeeded.Should().BeTrue();
+        updated.FailureReason.Should().Contain("investigator (review) new line another line");
+        updated.FailureReason.Should().NotContain("\r");
+        updated.FailureReason.Should().NotContain("\n");
+    }
+
+    [Fact]
     public async Task UpdatePaymentDisputeReviewHandler_Should_ApplyResolveLostAndClearMarker()
     {
         await using var db = BillingUpdateTestDbContext.Create();
@@ -340,6 +398,156 @@ public sealed class BillingUpdateHandlersTests
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("PaymentDisputeReviewUnsupportedAction");
+    }
+
+    [Fact]
+    public async Task UpdatePaymentDisputeReviewHandler_Should_RejectWhitespaceAction()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            Status = PaymentStatus.Pending,
+            RowVersion = [15]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        {
+            Id = paymentId,
+            RowVersion = [15],
+            Action = "   "
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("PaymentDisputeReviewUnsupportedAction");
+    }
+
+    [Fact]
+    public async Task UpdatePaymentDisputeReviewHandler_Should_ApplyUnderReview_WithTrimmedActionAndNote()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            Status = PaymentStatus.Pending,
+            RowVersion = [12]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        {
+            Id = paymentId,
+            RowVersion = [12],
+            Action = $" {UpdatePaymentDisputeReviewHandler.UnderReviewAction}  ",
+            Note = "agent [note]\r\nline 2"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+
+        var updated = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        updated.Status.Should().Be(PaymentStatus.Pending);
+        var state = UpdatePaymentDisputeReviewHandler.ResolveDisputeReviewState(updated.FailureReason);
+        state.Should().Be("UnderReview");
+        updated.FailureReason.Should().Contain("agent (note) line 2");
+        UpdatePaymentDisputeReviewHandler.IsDisputeReviewResolved(updated.FailureReason).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UpdatePaymentDisputeReviewHandler_Should_ApplyEvidenceSubmitted_WithCaseInsensitiveAction()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            Status = PaymentStatus.Pending,
+            RowVersion = [13]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        {
+            Id = paymentId,
+            RowVersion = [13],
+            Action = "eViDeNcEsUbMiTtEd"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+
+        var updated = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        updated.Status.Should().Be(PaymentStatus.Pending);
+        UpdatePaymentDisputeReviewHandler.ResolveDisputeReviewState(updated.FailureReason).Should().Be("EvidenceSubmitted");
+    }
+
+    [Fact]
+    public async Task UpdatePaymentDisputeReviewHandler_Should_NotChangeStatus_WhenResolveLostOnRefunded()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            Status = PaymentStatus.Refunded,
+            RowVersion = [14],
+            FailureReason = "initial reason"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        {
+            Id = paymentId,
+            RowVersion = [14],
+            Action = UpdatePaymentDisputeReviewHandler.ResolveLostAction
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        var updated = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        updated.Status.Should().Be(PaymentStatus.Refunded);
+        UpdatePaymentDisputeReviewHandler.ResolveDisputeReviewState(updated.FailureReason).Should().Be("Lost");
+    }
+
+    [Fact]
+    public async Task UpdatePaymentDisputeReviewHandler_Should_ClearTrimmedFailureReason_WhenNoMarker()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            Status = PaymentStatus.Pending,
+            RowVersion = [16],
+            FailureReason = "  initial payment failed  "
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        {
+            Id = paymentId,
+            RowVersion = [16],
+            Action = UpdatePaymentDisputeReviewHandler.ClearAction
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        var updated = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        updated.FailureReason.Should().Be("initial payment failed");
     }
 
     private sealed class BillingUpdateTestDbContext : DbContext, IAppDbContext

@@ -21,10 +21,10 @@ namespace Darwin.Application.Businesses.Queries
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
 
-        public GetBusinessSupportSummaryHandler(IAppDbContext db, IClock clock)
+        public GetBusinessSupportSummaryHandler(IAppDbContext db, IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
         /// <summary>

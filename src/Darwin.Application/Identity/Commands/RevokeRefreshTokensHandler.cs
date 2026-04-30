@@ -1,6 +1,8 @@
 using Darwin.Application.Abstractions.Auth;
 using Darwin.Application;
 using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.Validators;
+using FluentValidation.Validators;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
@@ -22,12 +24,19 @@ namespace Darwin.Application.Identity.Commands
 
         public RevokeRefreshTokensHandler(
             IJwtTokenService jwt,
+            IStringLocalizer<ValidationResource>? localizer = null)
+            : this(jwt, new InlineValidator<RevokeRefreshRequestDto>(), localizer)
+        {
+        }
+
+        public RevokeRefreshTokensHandler(
+            IJwtTokenService jwt,
             IValidator<RevokeRefreshRequestDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null)
         {
             _jwt = jwt ?? throw new ArgumentNullException(nameof(jwt));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Result<int>> HandleAsync(RevokeRefreshRequestDto dto, CancellationToken ct = default)

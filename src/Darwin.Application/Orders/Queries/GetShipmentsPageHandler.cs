@@ -19,10 +19,10 @@ public sealed class GetShipmentsPageHandler
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
 
-    public GetShipmentsPageHandler(IAppDbContext db, IClock clock)
+    public GetShipmentsPageHandler(IAppDbContext db, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
     }
 
     public async Task<(List<ShipmentListItemDto> Items, int Total)> HandleAsync(
@@ -151,10 +151,10 @@ public sealed class GetShipmentOpsSummaryHandler
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
 
-    public GetShipmentOpsSummaryHandler(IAppDbContext db, IClock clock)
+    public GetShipmentOpsSummaryHandler(IAppDbContext db, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
     }
 
     public async Task<ShipmentOpsSummaryDto> HandleAsync(

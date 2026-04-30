@@ -1,6 +1,7 @@
-﻿using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
@@ -27,13 +28,21 @@ namespace Darwin.Application.Identity.Commands
         public RefreshTokenHandler(
             IAppDbContext db,
             IJwtTokenService jwt,
+            IStringLocalizer<ValidationResource>? localizer = null)
+            : this(db, jwt, new RefreshRequestValidator(), localizer)
+        {
+        }
+
+        public RefreshTokenHandler(
+            IAppDbContext db,
+            IJwtTokenService jwt,
             IValidator<RefreshRequestDto> validator,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null)
         {
             _db = db;
             _jwt = jwt;
             _validator = validator;
-            _localizer = localizer;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Result<AuthResultDto>> HandleAsync(RefreshRequestDto dto, CancellationToken ct = default)

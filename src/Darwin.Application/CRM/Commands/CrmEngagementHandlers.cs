@@ -18,11 +18,11 @@ namespace Darwin.Application.CRM.Commands
         private readonly IValidator<InteractionCreateDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateInteractionHandler(IAppDbContext db, IValidator<InteractionCreateDto> validator, IStringLocalizer<ValidationResource> localizer)
+        public CreateInteractionHandler(IAppDbContext db, IValidator<InteractionCreateDto> validator, IStringLocalizer<ValidationResource>? localizer = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Guid> HandleAsync(InteractionCreateDto dto, CancellationToken ct = default)
@@ -99,12 +99,12 @@ namespace Darwin.Application.CRM.Commands
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateConsentHandler(IAppDbContext db, IValidator<ConsentCreateDto> validator, IClock clock, IStringLocalizer<ValidationResource> localizer)
+        public CreateConsentHandler(IAppDbContext db, IValidator<ConsentCreateDto> validator, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Guid> HandleAsync(ConsentCreateDto dto, CancellationToken ct = default)
@@ -151,11 +151,11 @@ namespace Darwin.Application.CRM.Commands
         private readonly IValidator<CustomerSegmentEditDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public CreateCustomerSegmentHandler(IAppDbContext db, IValidator<CustomerSegmentEditDto> validator, IStringLocalizer<ValidationResource> localizer)
+        public CreateCustomerSegmentHandler(IAppDbContext db, IValidator<CustomerSegmentEditDto> validator, IStringLocalizer<ValidationResource>? localizer = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Guid> HandleAsync(CustomerSegmentEditDto dto, CancellationToken ct = default)
@@ -196,11 +196,11 @@ namespace Darwin.Application.CRM.Commands
         private readonly IValidator<CustomerSegmentEditDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public UpdateCustomerSegmentHandler(IAppDbContext db, IValidator<CustomerSegmentEditDto> validator, IStringLocalizer<ValidationResource> localizer)
+        public UpdateCustomerSegmentHandler(IAppDbContext db, IValidator<CustomerSegmentEditDto> validator, IStringLocalizer<ValidationResource>? localizer = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task HandleAsync(CustomerSegmentEditDto dto, CancellationToken ct = default)
@@ -256,11 +256,11 @@ namespace Darwin.Application.CRM.Commands
         private readonly IValidator<AssignCustomerSegmentDto> _validator;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public AssignCustomerSegmentHandler(IAppDbContext db, IValidator<AssignCustomerSegmentDto> validator, IStringLocalizer<ValidationResource> localizer)
+        public AssignCustomerSegmentHandler(IAppDbContext db, IValidator<AssignCustomerSegmentDto> validator, IStringLocalizer<ValidationResource>? localizer = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Guid> HandleAsync(AssignCustomerSegmentDto dto, CancellationToken ct = default)
@@ -317,10 +317,10 @@ namespace Darwin.Application.CRM.Commands
         private readonly IAppDbContext _db;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public RemoveCustomerSegmentMembershipHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+        public RemoveCustomerSegmentMembershipHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task HandleAsync(Guid membershipId, CancellationToken ct = default)
@@ -345,3 +345,4 @@ namespace Darwin.Application.CRM.Commands
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }
+

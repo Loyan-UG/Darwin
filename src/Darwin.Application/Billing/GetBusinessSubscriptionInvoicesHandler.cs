@@ -21,10 +21,10 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
 
-    public GetBusinessSubscriptionInvoicesPageHandler(IAppDbContext db, IClock clock)
+    public GetBusinessSubscriptionInvoicesPageHandler(IAppDbContext db, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
     }
 
     public async Task<GetBusinessSubscriptionInvoicesPageDto> HandleAsync(
@@ -151,10 +151,10 @@ public sealed class GetBusinessSubscriptionInvoiceOpsSummaryHandler
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
 
-    public GetBusinessSubscriptionInvoiceOpsSummaryHandler(IAppDbContext db, IClock clock)
+    public GetBusinessSubscriptionInvoiceOpsSummaryHandler(IAppDbContext db, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
     }
 
     public async Task<BusinessSubscriptionInvoiceOpsSummaryDto> HandleAsync(Guid businessId, CancellationToken ct = default)

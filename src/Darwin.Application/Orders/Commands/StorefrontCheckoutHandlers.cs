@@ -22,11 +22,11 @@ public sealed class CreateStorefrontPaymentIntentHandler
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateStorefrontPaymentIntentHandler"/> class.
     /// </summary>
-    public CreateStorefrontPaymentIntentHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+    public CreateStorefrontPaymentIntentHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+        _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
     }
 
     /// <summary>
@@ -145,15 +145,17 @@ public sealed class CreateStorefrontPaymentIntentHandler
 public sealed class CompleteStorefrontPaymentHandler
 {
     private readonly IAppDbContext _db;
+    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompleteStorefrontPaymentHandler"/> class.
     /// </summary>
-    public CompleteStorefrontPaymentHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
+    public CompleteStorefrontPaymentHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+        _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
     }
 
     /// <summary>
@@ -191,34 +193,59 @@ public sealed class CompleteStorefrontPaymentHandler
             return BuildResult(order, payment);
         }
 
+        if (!string.IsNullOrWhiteSpace(dto.ProviderReference))
+        {
+            payment.ProviderTransactionRef = dto.ProviderReference.Trim();
+        }
+
         switch (dto.Outcome)
         {
             case StorefrontPaymentOutcome.Succeeded:
-            case StorefrontPaymentOutcome.Cancelled:
-            case StorefrontPaymentOutcome.Failed:
-                break;
+                payment.Status = PaymentStatus.Captured;
+                payment.PaidAtUtc = _clock.UtcNow;
+                if (order.Status is OrderStatus.Created)
+                {
+                    order.Status = OrderStatus.Paid;
+                }
 
+                break;
+            case StorefrontPaymentOutcome.Cancelled:
+                payment.Status = PaymentStatus.Voided;
+                if (!string.IsNullOrWhiteSpace(dto.FailureReason))
+                {
+                    payment.FailureReason = dto.FailureReason;
+                }
+                break;
+            case StorefrontPaymentOutcome.Failed:
+                payment.Status = PaymentStatus.Failed;
+                if (!string.IsNullOrWhiteSpace(dto.FailureReason))
+                {
+                    payment.FailureReason = dto.FailureReason;
+                }
+                break;
             default:
                 throw new InvalidOperationException(_localizer["UnsupportedStorefrontPaymentOutcome"]);
         }
+
+        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
         return BuildResult(order, payment);
     }
 
     private void EnsureProviderReferencesMatch(Payment payment, CompleteStorefrontPaymentDto dto)
     {
-        if (!ReferenceMatches(dto.ProviderPaymentIntentReference, payment.ProviderPaymentIntentRef) ||
+        if (!string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentReference) &&
+            !ReferenceMatches(dto.ProviderPaymentIntentReference, payment.ProviderPaymentIntentRef))
+        {
+            throw new InvalidOperationException(_localizer["StorefrontPaymentProviderReferenceMismatch"]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionReference) &&
             !ReferenceMatches(dto.ProviderCheckoutSessionReference, payment.ProviderCheckoutSessionRef))
         {
             throw new InvalidOperationException(_localizer["StorefrontPaymentProviderReferenceMismatch"]);
         }
 
-        if (!string.IsNullOrWhiteSpace(dto.ProviderReference) &&
-            !ReferenceMatches(dto.ProviderReference, payment.ProviderTransactionRef) &&
-            !ReferenceMatches(dto.ProviderReference, payment.ProviderCheckoutSessionRef))
-        {
-            throw new InvalidOperationException(_localizer["StorefrontPaymentProviderReferenceMismatch"]);
-        }
     }
 
     private static bool ReferenceMatches(string? provided, string? expected)

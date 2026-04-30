@@ -19,10 +19,10 @@ public sealed class GetCurrentBusinessAccessStateHandler
     /// <summary>
     /// Initializes a new instance of the <see cref="GetCurrentBusinessAccessStateHandler"/> class.
     /// </summary>
-    public GetCurrentBusinessAccessStateHandler(IAppDbContext db, IClock clock)
+    public GetCurrentBusinessAccessStateHandler(IAppDbContext db, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
     }
 
     /// <summary>

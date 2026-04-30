@@ -26,11 +26,11 @@ public sealed class GetInactiveReminderCandidatesHandler
     private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
-    public GetInactiveReminderCandidatesHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+    public GetInactiveReminderCandidatesHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-        _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+        _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
     }
 
     /// <summary>
@@ -200,3 +200,4 @@ public sealed class GetInactiveReminderCandidatesHandler
         return null;
     }
 }
+

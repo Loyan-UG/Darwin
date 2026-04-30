@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;
@@ -22,13 +22,12 @@ namespace Darwin.Application.Businesses.Commands
         public UpsertBusinessReviewHandler(
             IAppDbContext db,
             ICurrentUserService currentUser,
-            IClock clock,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Result> HandleAsync(Guid businessId, UpsertBusinessReviewDto dto, CancellationToken ct = default)
@@ -64,3 +63,4 @@ namespace Darwin.Application.Businesses.Commands
         }
     }
 }
+

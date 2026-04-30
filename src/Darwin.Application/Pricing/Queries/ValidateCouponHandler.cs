@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
@@ -22,10 +22,10 @@ namespace Darwin.Application.Pricing.Queries
         private readonly IClock _clock;
         private readonly ValidateCouponInputValidator _validator = new();
 
-        public ValidateCouponHandler(IAppDbContext db, IClock clock)
+        public ValidateCouponHandler(IAppDbContext db, IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
         public async Task<ValidateCouponResultDto> HandleAsync(ValidateCouponInputDto input, CancellationToken ct = default)

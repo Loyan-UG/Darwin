@@ -27,12 +27,11 @@ namespace Darwin.Application.Businesses.Queries
 
         public GetBusinessInvitationPreviewHandler(
             IAppDbContext db,
-            IClock clock,
-            IStringLocalizer<ValidationResource> localizer)
+            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public async Task<Result<BusinessInvitationPreviewDto>> HandleAsync(string token, CancellationToken ct = default)
@@ -93,3 +92,4 @@ namespace Darwin.Application.Businesses.Queries
         }
     }
 }
+

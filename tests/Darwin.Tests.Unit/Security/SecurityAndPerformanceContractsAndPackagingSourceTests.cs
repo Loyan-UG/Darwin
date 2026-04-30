@@ -6453,15 +6453,18 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"IdentifierMustNotBeEmpty\"]);");
         profileSource.Should().Contain("if (request.RowVersion is null || request.RowVersion.Length == 0)");
         profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RowVersionRequiredForOptimisticConcurrency\"]);");
-        profileSource.Should().Contain("if (string.IsNullOrWhiteSpace(request.Locale))");
+        profileSource.Should().Contain("var normalizedLocale = NormalizeText(request.Locale);");
+        profileSource.Should().Contain("if (normalizedLocale is null)");
         profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LocaleRequired\"]);");
-        profileSource.Should().Contain("if (string.IsNullOrWhiteSpace(request.Timezone))");
+        profileSource.Should().Contain("var normalizedTimezone = NormalizeText(request.Timezone);");
+        profileSource.Should().Contain("if (normalizedTimezone is null)");
         profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"TimezoneRequired\"]);");
-        profileSource.Should().Contain("if (string.IsNullOrWhiteSpace(request.Currency))");
+        profileSource.Should().Contain("var normalizedCurrency = NormalizeText(request.Currency)?.ToUpperInvariant();");
+        profileSource.Should().Contain("if (normalizedCurrency is null)");
         profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"CurrencyRequired\"]);");
         profileSource.Should().Contain("var dto = new UserProfileEditDto");
         profileSource.Should().Contain("Id = request.Id,");
-        profileSource.Should().Contain("Email = request.Email ?? string.Empty,");
+        profileSource.Should().Contain("Email = NormalizeText(request.Email) ?? string.Empty,");
         profileSource.Should().Contain("RowVersion = request.RowVersion ?? Array.Empty<byte>()");
         profileSource.Should().Contain("var result = await _updateCurrentUserHandler.HandleAsync(dto, ct);");
         profileSource.Should().Contain("return NoContent();");
@@ -6472,7 +6475,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         profileSource.Should().Contain("new RequestPhoneVerificationDto { Channel = channel }");
         profileSource.Should().Contain("public async Task<IActionResult> ConfirmPhoneVerificationAsync([FromBody] ConfirmPhoneVerificationRequest? request, CancellationToken ct)");
         profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"VerificationCodeRequired\"]);");
-        profileSource.Should().Contain("new ConfirmPhoneVerificationDto { Code = request.Code }");
+        profileSource.Should().Contain("new ConfirmPhoneVerificationDto { Code = request.Code.Trim() }");
         profileSource.Should().Contain("public async Task<IActionResult> UpdatePreferencesAsync([FromBody] UpdateMemberPreferencesRequest? request, CancellationToken ct)");
         profileSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
         profileSource.Should().Contain("new UpdateMemberPreferencesDto");
@@ -8234,8 +8237,10 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         storefrontCheckoutHandlersSource.Should().Contain("ProviderCheckoutSessionRef = providerCheckoutSessionReference,");
         storefrontCheckoutHandlersSource.Should().Contain("ProviderPaymentIntentReference = existing.ProviderPaymentIntentRef,");
         storefrontCheckoutHandlersSource.Should().Contain("ProviderCheckoutSessionReference = existing.ProviderCheckoutSessionRef,");
-        storefrontCheckoutHandlersSource.Should().Contain("payment.ProviderPaymentIntentRef = dto.ProviderPaymentIntentReference.Trim();");
-        storefrontCheckoutHandlersSource.Should().Contain("payment.ProviderCheckoutSessionRef = dto.ProviderCheckoutSessionReference.Trim();");
+        storefrontCheckoutHandlersSource.Should().Contain("if (!string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentReference) &&");
+        storefrontCheckoutHandlersSource.Should().Contain("!ReferenceMatches(dto.ProviderPaymentIntentReference, payment.ProviderPaymentIntentRef)");
+        storefrontCheckoutHandlersSource.Should().Contain("if (!string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionReference) &&");
+        storefrontCheckoutHandlersSource.Should().Contain("!ReferenceMatches(dto.ProviderCheckoutSessionReference, payment.ProviderCheckoutSessionRef)");
 
         storefrontCheckoutQueriesSource.Should().Contain("ProviderPaymentIntentReference = payment.ProviderPaymentIntentRef,");
         storefrontCheckoutQueriesSource.Should().Contain("ProviderCheckoutSessionReference = payment.ProviderCheckoutSessionRef,");

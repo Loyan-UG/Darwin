@@ -42,6 +42,6 @@
         /// <summary>
         /// Returns a user-friendly "lat,lon" string (no altitude).
         /// </summary>
-        public override string ToString() => $"{Latitude},{Longitude}";
+        public override string ToString() => $"{Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)},{Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
     }
 }

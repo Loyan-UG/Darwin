@@ -13,6 +13,9 @@ namespace Darwin.Worker;
 public sealed class WebhookDeliveryBackgroundService : BackgroundService
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+    private const int MaxOutboundEventStringLength = 256;
+    private const int MaxOutboundEventPropertiesJsonLength = 8192;
+    private const int MaxOutboundEventJsonDepth = 16;
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -282,14 +285,158 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
                     Id = eventLog.Id,
                     Type = eventLog.Type,
                     OccurredAtUtc = eventLog.OccurredAtUtc,
-                    UserId = eventLog.UserId,
-                    AnonymousId = eventLog.AnonymousId,
-                    SessionId = eventLog.SessionId,
-                    PropertiesJson = eventLog.PropertiesJson,
-                    UtmSnapshotJson = eventLog.UtmSnapshotJson,
+                    UserId = null,
+                    AnonymousId = null,
+                    SessionId = null,
+                    PropertiesJson = BuildOutboundEventPropertiesJson(eventLog.PropertiesJson),
+                    UtmSnapshotJson = "{}",
                     IdempotencyKey = eventLog.IdempotencyKey
                 }
         };
+    }
+
+    private static string BuildOutboundEventPropertiesJson(string? propertiesJson)
+    {
+        if (string.IsNullOrWhiteSpace(propertiesJson))
+        {
+            return "{}";
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(propertiesJson);
+            using var memory = new MemoryStream();
+            using (var writer = new Utf8JsonWriter(memory))
+            {
+                WriteSanitizedJson(writer, document.RootElement, depth: 0, propertyName: null);
+            }
+
+            var sanitized = Encoding.UTF8.GetString(memory.ToArray());
+            return sanitized.Length <= MaxOutboundEventPropertiesJsonLength
+                ? sanitized
+                : "{\"truncated\":true}";
+        }
+        catch (JsonException)
+        {
+            return "{}";
+        }
+    }
+
+    private static void WriteSanitizedJson(Utf8JsonWriter writer, JsonElement element, int depth, string? propertyName)
+    {
+        if (depth >= MaxOutboundEventJsonDepth)
+        {
+            writer.WriteStringValue("[max-depth]");
+            return;
+        }
+
+        if (IsSensitiveJsonKey(propertyName))
+        {
+            writer.WriteStringValue("[redacted]");
+            return;
+        }
+
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.WriteStartObject();
+                foreach (var property in element.EnumerateObject())
+                {
+                    writer.WritePropertyName(property.Name);
+                    WriteSanitizedJson(writer, property.Value, depth + 1, property.Name);
+                }
+
+                writer.WriteEndObject();
+                break;
+            case JsonValueKind.Array:
+                writer.WriteStartArray();
+                foreach (var item in element.EnumerateArray())
+                {
+                    WriteSanitizedJson(writer, item, depth + 1, propertyName: null);
+                }
+
+                writer.WriteEndArray();
+                break;
+            case JsonValueKind.String:
+                writer.WriteStringValue(SanitizeOutboundString(propertyName, element.GetString()));
+                break;
+            case JsonValueKind.Number:
+                writer.WriteRawValue(element.GetRawText());
+                break;
+            case JsonValueKind.True:
+                writer.WriteBooleanValue(true);
+                break;
+            case JsonValueKind.False:
+                writer.WriteBooleanValue(false);
+                break;
+            default:
+                writer.WriteNullValue();
+                break;
+        }
+    }
+
+    private static bool IsSensitiveJsonKey(string? key)
+    {
+        return !string.IsNullOrWhiteSpace(key) &&
+               (key.Contains("secret", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("token", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("authorization", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("credential", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("password", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("signature", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("cookie", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("session", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("private_key", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("privatekey", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("access_key", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("accesskey", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("api_key", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("apikey", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? SanitizeOutboundString(string? key, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        var sanitized = value.Trim();
+        if (!string.IsNullOrWhiteSpace(key) &&
+            key.Contains("email", StringComparison.OrdinalIgnoreCase))
+        {
+            sanitized = MaskEmail(sanitized);
+        }
+        else if (!string.IsNullOrWhiteSpace(key) &&
+                 (key.Contains("phone", StringComparison.OrdinalIgnoreCase) ||
+                  key.Contains("mobile", StringComparison.OrdinalIgnoreCase)))
+        {
+            sanitized = MaskPhone(sanitized);
+        }
+
+        return sanitized.Length <= MaxOutboundEventStringLength
+            ? sanitized
+            : sanitized[..MaxOutboundEventStringLength];
+    }
+
+    private static string MaskEmail(string email)
+    {
+        var at = email.IndexOf('@', StringComparison.Ordinal);
+        if (at <= 0)
+        {
+            return "***";
+        }
+
+        var local = email[..at];
+        var domain = email[(at + 1)..];
+        var prefix = local.Length <= 1 ? local : local[..Math.Min(2, local.Length)];
+        return $"{prefix}***@{domain}";
+    }
+
+    private static string MaskPhone(string phone)
+    {
+        var visible = Math.Min(4, phone.Length);
+        return $"***{phone[^visible..]}";
     }
 
     private static string ComputePayloadHash(string payloadJson)

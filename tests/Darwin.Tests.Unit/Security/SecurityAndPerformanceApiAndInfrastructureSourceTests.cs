@@ -1662,5 +1662,156 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         contractsSource.Should().Contain("public string? ExceptionCode { get; set; }");
         contractsSource.Should().Contain("public string? ExceptionMessage { get; set; }");
     }
+
+    [Fact]
+    public void ProviderWebhookPayloadReader_Should_KeepMaxPayloadLimitStable()
+    {
+        var readerSource = ReadWebApiFile(Path.Combine("Services", "ProviderWebhookPayloadReader.cs"));
+
+        readerSource.Should().Contain("public const int MaxPayloadBytes = 256 * 1024;");
+        readerSource.Should().Contain("if (memory.Length + read > MaxPayloadBytes)");
+    }
+
+    [Fact]
+    public void StripeWebhookController_Should_KeepPayloadSizeGuardBeforeSignatureVerification()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "StripeWebhooksController.cs"));
+
+        controllerSource.Should().Contain("var payloadRead = await ProviderWebhookPayloadReader.ReadAsync(Request, ct).ConfigureAwait(false);");
+        controllerSource.Should().Contain("if (payloadRead.PayloadTooLarge)");
+        controllerSource.Should().Contain("return PayloadTooLargeProblem(_validationLocalizer[\"ProviderWebhookPayloadTooLarge\"]);");
+        controllerSource.IndexOf("var payloadRead = await ProviderWebhookPayloadReader.ReadAsync(Request, ct).ConfigureAwait(false);", StringComparison.Ordinal)
+            .Should().BeLessThan(controllerSource.IndexOf("var signatureHeader = Request.Headers[\"Stripe-Signature\"].ToString();", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void DhlWebhookController_Should_KeepPayloadSizeGuardBeforeSignatureAuthentication()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "DhlWebhooksController.cs"));
+
+        controllerSource.Should().Contain("var payloadRead = await ProviderWebhookPayloadReader.ReadAsync(Request, ct).ConfigureAwait(false);");
+        controllerSource.Should().Contain("if (payloadRead.PayloadTooLarge)");
+        controllerSource.Should().Contain("return PayloadTooLargeProblem(_validationLocalizer[\"ProviderWebhookPayloadTooLarge\"]);");
+        controllerSource.Should().Contain("var apiKeyHeader = Request.Headers[\"X-DHL-Key\"].ToString();");
+        controllerSource.IndexOf("var payloadRead = await ProviderWebhookPayloadReader.ReadAsync(Request, ct).ConfigureAwait(false);", StringComparison.Ordinal)
+            .Should().BeLessThan(controllerSource.IndexOf("var apiKeyHeader = Request.Headers[\"X-DHL-Key\"].ToString();", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void DependencyInjection_Should_RegisterProviderWebhookRateLimitPolicy()
+    {
+        var source = ReadWebApiFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+
+        source.Should().Contain("options.AddPolicy(\"provider-webhook\"");
+        source.Should().Contain("PermitLimit = 60");
+        source.Should().Contain("Window = TimeSpan.FromMinutes(1)");
+    }
+
+    [Fact]
+    public void ValidationResources_Should_KeepProviderWebhookPayloadTooLargeMessageLocalized()
+    {
+        var resourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.resx"));
+        var resourceGermanSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.de-DE.resx"));
+
+        resourceSource.Should().Contain("<data name=\"ProviderWebhookPayloadTooLarge\"");
+        resourceGermanSource.Should().Contain("<data name=\"ProviderWebhookPayloadTooLarge\"");
+        resourceSource.Should().Contain("<value>Provider webhook payload is too large.</value>");
+        resourceGermanSource.Should().Contain("<data name=\"ProviderWebhookPayloadTooLarge\"");
+    }
+
+    [Fact]
+    public void ProviderWebhookPayloadReader_Should_ResetRequestBodyForReuseAcrossPipeline()
+    {
+        var readerSource = ReadWebApiFile(Path.Combine("Services", "ProviderWebhookPayloadReader.cs"));
+
+        readerSource.Should().Contain("request.EnableBuffering();");
+        readerSource.IndexOf("request.EnableBuffering();", StringComparison.Ordinal)
+            .Should().BeLessThan(readerSource.IndexOf("request.Body.Position = 0;", StringComparison.Ordinal));
+        var lastResetIndex = readerSource.LastIndexOf("request.Body.Position = 0;", StringComparison.Ordinal);
+        lastResetIndex.Should().BeGreaterThan(readerSource.IndexOf("memory.Write(buffer, 0, read);", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void StripeWebhookController_Should_VerifySignatureAfterPayloadValidation()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "StripeWebhooksController.cs"));
+
+        var signatureIndex = controllerSource.IndexOf("var signatureHeader = Request.Headers[\"Stripe-Signature\"].ToString();", StringComparison.Ordinal);
+        signatureIndex.Should().BeGreaterThan(0);
+        signatureIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (payloadRead.PayloadTooLarge)", StringComparison.Ordinal));
+        signatureIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (string.IsNullOrWhiteSpace(rawPayload))", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void DhlWebhookController_Should_VerifyApiKeyAndSignatureAfterPayloadValidation()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "DhlWebhooksController.cs"));
+
+        var apiKeyIndex = controllerSource.IndexOf("var apiKeyHeader = Request.Headers[\"X-DHL-Key\"].ToString();", StringComparison.Ordinal);
+        apiKeyIndex.Should().BeGreaterThan(0);
+        apiKeyIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (payloadRead.PayloadTooLarge)", StringComparison.Ordinal));
+        apiKeyIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (string.IsNullOrWhiteSpace(rawPayload))", StringComparison.Ordinal));
+        controllerSource.IndexOf("var signatureHeader = Request.Headers[\"X-DHL-Signature\"].ToString();", StringComparison.Ordinal)
+            .Should().BeGreaterThan(apiKeyIndex);
+    }
+
+    [Fact]
+    public void BrevoWebhookController_Should_KeepWebhookCredentialAndAuthenticationGuards()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "BrevoWebhooksController.cs"));
+
+        controllerSource.Should().Contain("[Route(\"api/v1/public/notifications/brevo/webhooks\")]");
+        controllerSource.Should().Contain("[AllowAnonymous]");
+        controllerSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
+        controllerSource.Should().Contain("private bool HasWebhookCredentials()");
+        controllerSource.Should().Contain("if (!HasWebhookCredentials())");
+        controllerSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BrevoWebhookAuthenticationNotConfigured\"]);");
+        controllerSource.Should().Contain("private bool TryVerifyBasicAuth(string authorizationHeader)");
+        controllerSource.Should().Contain("if (!TryVerifyBasicAuth(Request.Headers.Authorization.ToString()))");
+        controllerSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BrevoWebhookAuthenticationInvalid\"]);");
+    }
+
+    [Fact]
+    public void BrevoWebhookController_Should_KeepPayloadSizeGuardBeforePayloadParsing()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "BrevoWebhooksController.cs"));
+
+        var payloadIndex = controllerSource.IndexOf("var payloadRead = await ProviderWebhookPayloadReader.ReadAsync(Request, ct).ConfigureAwait(false);", StringComparison.Ordinal);
+        var parseIndex = controllerSource.IndexOf("if (!TryParseEnvelope(rawPayload, out var eventName, out var messageId, out var eventTimestamp))", StringComparison.Ordinal);
+
+        payloadIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (!HasWebhookCredentials())", StringComparison.Ordinal));
+        payloadIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (!TryVerifyBasicAuth(Request.Headers.Authorization.ToString())", StringComparison.Ordinal));
+        parseIndex.Should().BeGreaterThan(payloadIndex);
+        parseIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (payloadRead.PayloadTooLarge)", StringComparison.Ordinal));
+        controllerSource.Should().Contain("if (payloadRead.PayloadTooLarge)");
+        controllerSource.Should().Contain("return PayloadTooLargeProblem(_validationLocalizer[\"ProviderWebhookPayloadTooLarge\"]);");
+    }
+
+    [Fact]
+    public void BrevoWebhookController_Should_TruncateCallbackTypeBeforeIdempotency()
+    {
+        var controllerSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "BrevoWebhooksController.cs"));
+
+        controllerSource.Should().Contain("private static string NormalizeCallbackType(string? value)");
+        controllerSource.Should().Contain("var normalized = value?.Trim().ToLowerInvariant() ?? string.Empty;");
+        controllerSource.Should().Contain("return normalized.Length <= 64 ? normalized : normalized[..64];");
+        controllerSource.Should().Contain("eventName = NormalizeCallbackType(ReadStringAny(root, \"event\", \"Event\"));");
+        controllerSource.Should().Contain("callbackType: eventName,");
+    }
+
+    [Fact]
+    public void ValidationResources_Should_KeepBrevoWebhookMessagesLocalized()
+    {
+        var resourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.resx"));
+        var resourceGermanSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.de-DE.resx"));
+
+        resourceSource.Should().Contain("<data name=\"BrevoWebhookAuthenticationNotConfigured\" ");
+        resourceSource.Should().Contain("<data name=\"BrevoWebhookAuthenticationInvalid\" ");
+        resourceSource.Should().Contain("<data name=\"BrevoWebhookPayloadInvalid\" ");
+        resourceGermanSource.Should().Contain("<data name=\"BrevoWebhookAuthenticationNotConfigured\" ");
+        resourceGermanSource.Should().Contain("<data name=\"BrevoWebhookAuthenticationInvalid\" ");
+        resourceGermanSource.Should().Contain("<data name=\"BrevoWebhookPayloadInvalid\" ");
+        resourceSource.Should().Contain("<value>Brevo webhook authentication is not configured.</value>");
+    }
 }
 

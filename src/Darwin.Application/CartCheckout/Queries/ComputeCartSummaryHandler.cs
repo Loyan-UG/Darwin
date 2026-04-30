@@ -1,4 +1,4 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Pricing;
@@ -35,11 +35,11 @@ namespace Darwin.Application.CartCheckout.Queries
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
 
-        public ComputeCartSummaryHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+        public ComputeCartSummaryHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
         {
             _db = db;
-            _clock = clock;
-            _localizer = localizer;
+            _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
+            _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
 
         public Task<CartSummaryDto> HandleAsync(Guid cartId, CancellationToken ct = default)
@@ -147,12 +147,7 @@ namespace Darwin.Application.CartCheckout.Queries
                         ValueLabel = v.Translations.Where(t => !t.IsDeleted && t.Culture == normalizedCulture).Select(t => t.Label).FirstOrDefault()
                             ?? v.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
                             ?? v.Label,
-                        OptionLabel = _db.Set<AddOnOption>()
-                            .Where(o => o.Id == v.AddOnOptionId && !o.IsDeleted)
-                            .Select(o => o.Translations.Where(t => !t.IsDeleted && t.Culture == normalizedCulture).Select(t => t.Label).FirstOrDefault()
-                                ?? o.Translations.Where(t => !t.IsDeleted && t.Culture == defaultCulture).Select(t => t.Label).FirstOrDefault()
-                                ?? o.Label)
-                            .FirstOrDefault() ?? string.Empty
+                        OptionLabel = string.Empty
                     })
                     .ToDictionaryAsync(v => v.ValueId, v => v, ct);
 
@@ -283,3 +278,4 @@ namespace Darwin.Application.CartCheckout.Queries
         }
     }
 }
+
