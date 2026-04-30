@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using Darwin.Application.Abstractions.Services;
+using Moq;
 using Darwin.WebApi.Services;
 using FluentAssertions;
 
@@ -12,7 +14,7 @@ public sealed class StripeWebhookSignatureVerifierTests
     public void TryVerify_Should_ReturnFalse_WhenSignatureHeaderIsMissing()
     {
         // Arrange
-        var verifier = new StripeWebhookSignatureVerifier();
+        var verifier = new StripeWebhookSignatureVerifier(CreateClock());
 
         // Act
         var isValid = verifier.TryVerify("{}", null, "secret", out var errorKey);
@@ -26,7 +28,7 @@ public sealed class StripeWebhookSignatureVerifierTests
     public void TryVerify_Should_ReturnFalse_WhenSecretIsMissing()
     {
         // Arrange
-        var verifier = new StripeWebhookSignatureVerifier();
+        var verifier = new StripeWebhookSignatureVerifier(CreateClock());
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var header = $"t={timestamp},v1=abcdef";
 
@@ -42,7 +44,7 @@ public sealed class StripeWebhookSignatureVerifierTests
     public void TryVerify_Should_ReturnFalse_WhenHeaderCannotBeParsed()
     {
         // Arrange
-        var verifier = new StripeWebhookSignatureVerifier();
+        var verifier = new StripeWebhookSignatureVerifier(CreateClock());
 
         // Act
         var isValid = verifier.TryVerify("{}", "v1=abcdef", "secret", out var errorKey);
@@ -59,7 +61,7 @@ public sealed class StripeWebhookSignatureVerifierTests
     public void TryVerify_Should_ReturnFalse_WhenPayloadIsMissing()
     {
         // Arrange
-        var verifier = new StripeWebhookSignatureVerifier();
+        var verifier = new StripeWebhookSignatureVerifier(CreateClock());
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var header = $"t={timestamp},v1=abcdef";
 
@@ -75,7 +77,7 @@ public sealed class StripeWebhookSignatureVerifierTests
     public void TryVerify_Should_ReturnFalse_WhenTimestampIsOutsideTolerance()
     {
         // Arrange
-        var verifier = new StripeWebhookSignatureVerifier();
+        var verifier = new StripeWebhookSignatureVerifier(CreateClock());
         var payload = "{\"orderId\":\"o-1\"}";
         const string secret = "whsec_123";
         var timestamp = DateTimeOffset.UtcNow.AddMinutes(-20).ToUnixTimeSeconds();
@@ -97,7 +99,7 @@ public sealed class StripeWebhookSignatureVerifierTests
     public void TryVerify_Should_ReturnFalse_WhenHeaderHasNoV1Signature()
     {
         // Arrange
-        var verifier = new StripeWebhookSignatureVerifier();
+        var verifier = new StripeWebhookSignatureVerifier(CreateClock());
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var header = $"t={timestamp}";
 
@@ -113,7 +115,7 @@ public sealed class StripeWebhookSignatureVerifierTests
     public void TryVerify_Should_ReturnFalse_WhenNoProvidedSignatureMatches()
     {
         // Arrange
-        var verifier = new StripeWebhookSignatureVerifier();
+        var verifier = new StripeWebhookSignatureVerifier(CreateClock());
         var payload = "{\"event\":\"payment_intent.succeeded\"}";
         const string secret = "whsec_123";
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -131,7 +133,7 @@ public sealed class StripeWebhookSignatureVerifierTests
     public void TryVerify_Should_ReturnTrue_WhenAnyProvidedSignatureMatches()
     {
         // Arrange
-        var verifier = new StripeWebhookSignatureVerifier();
+        var verifier = new StripeWebhookSignatureVerifier(CreateClock());
         var payload = "{\"event\":\"checkout.session.completed\"}";
         const string secret = "whsec_123";
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -151,5 +153,12 @@ public sealed class StripeWebhookSignatureVerifierTests
         var signedPayload = $"{timestamp.ToString(CultureInfo.InvariantCulture)}.{payload}";
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
         return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(signedPayload))).ToLowerInvariant();
+    }
+
+    private static IClock CreateClock()
+    {
+        var clock = new Mock<IClock>();
+        clock.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
+        return clock.Object;
     }
 }

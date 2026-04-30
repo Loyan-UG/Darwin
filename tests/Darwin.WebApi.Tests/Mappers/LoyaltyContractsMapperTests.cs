@@ -363,7 +363,7 @@ public sealed class LoyaltyContractsMapperTests
                     Id = Guid.NewGuid(),
                     BusinessId = Guid.NewGuid(),
                     BusinessName = null!,
-                    Status = LoyaltyAccountStatus.Inactive,
+                    Status = LoyaltyAccountStatus.Suspended,
                     PointsBalance = 0,
                     LifetimePoints = 700,
                     LastAccrualAtUtc = null
@@ -385,7 +385,7 @@ public sealed class LoyaltyContractsMapperTests
         contract.Accounts[0].LoyaltyAccountId.Should().Be(dto.Accounts[0].Id);
         contract.Accounts[0].Status.Should().Be(LoyaltyAccountStatus.Active.ToString());
         contract.Accounts[1].BusinessName.Should().BeEmpty();
-        contract.Accounts[1].Status.Should().Be(LoyaltyAccountStatus.Inactive.ToString());
+        contract.Accounts[1].Status.Should().Be(LoyaltyAccountStatus.Suspended.ToString());
     }
 
     /// <summary>

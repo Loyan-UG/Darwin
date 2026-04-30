@@ -51,7 +51,7 @@ public sealed class LoyaltyPresentationServiceTests
             db,
             new StubCurrentUserService(Guid.Empty),
             new TestValidationLocalizer());
-        var service = CreateService(handler, new MemoryCache(new MemoryCacheOptions()), Guid.Empty);
+        var service = CreateService(db, Guid.Empty, new MemoryCache(new MemoryCacheOptions()));
 
         var result = await service.GetAvailableRewardsForBusinessAsync(Guid.NewGuid());
 

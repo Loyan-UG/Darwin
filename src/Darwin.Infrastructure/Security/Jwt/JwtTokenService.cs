@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,6 +14,7 @@ using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
+using Darwin.Infrastructure.Adapters.Time;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -33,6 +34,27 @@ namespace Darwin.Infrastructure.Security.Jwt
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
+        public (string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc) IssueTokens(
+            Guid userId,
+            string email,
+            string? deviceId,
+            IEnumerable<string>? scopes = null,
+            Guid? preferredBusinessId = null) =>
+            IssueTokensAsync(userId, email, deviceId, scopes, preferredBusinessId).GetAwaiter().GetResult();
+
+        public JwtTokenService(IAppDbContext db) : this(db, new SystemClock())
+        {
+        }
+
+        public Guid? ValidateRefreshToken(string refreshToken, string? deviceId) =>
+            ValidateRefreshTokenAsync(refreshToken, deviceId).GetAwaiter().GetResult();
+
+        public void RevokeRefreshToken(string refreshToken, string? deviceId) =>
+            RevokeRefreshTokenAsync(refreshToken, deviceId).GetAwaiter().GetResult();
+
+        public int RevokeAllForUser(Guid userId) =>
+            RevokeAllForUserAsync(userId).GetAwaiter().GetResult();
+
         public async Task<(string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc)>
             IssueTokensAsync(
                 Guid userId,
@@ -42,10 +64,8 @@ namespace Darwin.Infrastructure.Security.Jwt
                 Guid? preferredBusinessId = null,
                 CancellationToken ct = default)
         {
-            var settings = await _db.Set<SiteSetting>()
-                .AsNoTracking()
-                .FirstAsync(x => !x.IsDeleted, ct)
-                .ConfigureAwait(false);
+            var settings = await GetSiteSettingOrNullAsync(ct).ConfigureAwait(false)
+                ?? throw new InvalidOperationException("JWT site settings are missing.");
 
             if (!settings.JwtEnabled)
             {
@@ -134,10 +154,11 @@ namespace Darwin.Infrastructure.Security.Jwt
             }
 
             var normalizedRefreshToken = refreshToken.Trim();
-            var settings = await _db.Set<SiteSetting>()
-                .AsNoTracking()
-                .FirstAsync(x => !x.IsDeleted, ct)
-                .ConfigureAwait(false);
+            var settings = await GetSiteSettingOrNullAsync(ct).ConfigureAwait(false);
+            if (settings is null)
+            {
+                throw new InvalidOperationException("JWT site settings are missing.");
+            }
 
             string? effectiveDeviceId = null;
             if (settings.JwtRequireDeviceBinding)
@@ -175,10 +196,11 @@ namespace Darwin.Infrastructure.Security.Jwt
             }
 
             var normalizedRefreshToken = refreshToken.Trim();
-            var settings = await _db.Set<SiteSetting>()
-                .AsNoTracking()
-                .FirstAsync(x => !x.IsDeleted, ct)
-                .ConfigureAwait(false);
+            var settings = await GetSiteSettingOrNullAsync(ct).ConfigureAwait(false);
+            if (settings is null)
+            {
+                throw new InvalidOperationException("JWT site settings are missing.");
+            }
 
             var tokens = _db.Set<UserToken>();
             var refreshTokenHash = HashRefreshToken(normalizedRefreshToken);
@@ -273,6 +295,12 @@ namespace Darwin.Infrastructure.Security.Jwt
                 .ConfigureAwait(false);
         }
 
+        private Task<SiteSetting?> GetSiteSettingOrNullAsync(CancellationToken ct = default) =>
+            _db.Set<SiteSetting>()
+                .AsNoTracking()
+                 .Where(x => !x.IsDeleted)
+                .FirstOrDefaultAsync(ct);
+
         private static string ToUnixTimestampSeconds(DateTime utc)
         {
             var seconds = new DateTimeOffset(utc).ToUnixTimeSeconds();
@@ -328,3 +356,4 @@ namespace Darwin.Infrastructure.Security.Jwt
         }
     }
 }
+

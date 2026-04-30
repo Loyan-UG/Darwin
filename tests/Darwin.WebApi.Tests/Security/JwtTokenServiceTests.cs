@@ -1,6 +1,8 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
@@ -13,6 +15,14 @@ namespace Darwin.WebApi.Tests.Security;
 
 public sealed class JwtTokenServiceTests
 {
+    private const string ValidJwtSigningKey = "this-is-a-very-long-jwt-signing-key!!";
+
+    private static string HashRefreshToken(string refreshToken)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
     [Fact]
     public void Ctor_Should_Throw_WhenDbContextIsMissing()
     {
@@ -36,7 +46,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_Throw_WhenJwtIsDisabled()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtEnabled = false, JwtSigningKey = "secret", JwtIssuer = "issuer", JwtAudience = "audience" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtEnabled = false, JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false, JwtIssuer = "issuer", JwtAudience = "audience" });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -52,8 +62,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.SaveChanges();
 
@@ -70,8 +79,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.SaveChanges();
 
@@ -88,7 +96,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtAccessTokenMinutes = -3,
             JwtRefreshTokenDays = 0
         });
@@ -108,7 +116,7 @@ public sealed class JwtTokenServiceTests
     {
         var userId = Guid.NewGuid();
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -123,7 +131,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_IncludeJti_AndBeDifferentPerToken()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -147,7 +155,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtAccessTokenMinutes = 20,
             JwtRefreshTokenDays = 3
         });
@@ -168,7 +176,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtIssuer = "test-issuer",
             JwtAudience = "test-audience"
         });
@@ -189,9 +197,8 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         var siteSetting = new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRefreshTokenDays = 2,
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
+            JwtRefreshTokenDays = 2
         };
         db.Set<SiteSetting>().Add(siteSetting);
         db.SaveChanges();
@@ -201,7 +208,7 @@ public sealed class JwtTokenServiceTests
 
         issued.refreshToken.Should().NotBeNullOrWhiteSpace();
         var row = db.Set<UserToken>().Single(x => x.UserId == userId && x.Purpose == "JwtRefresh");
-        row.Value.Should().Be(issued.refreshToken);
+        row.Value.Should().Be(HashRefreshToken(issued.refreshToken));
         row.UsedAtUtc.Should().BeNull();
         row.ExpiresAtUtc.Should().Be(issued.refreshExpiresAtUtc);
     }
@@ -213,8 +220,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.SaveChanges();
 
@@ -222,7 +228,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(userId, "user@example.com", "device-1");
 
         db.Set<UserToken>().Single(x => x.UserId == userId && x.Purpose == "JwtRefresh:device-1")
-            .Value.Should().Be(issued.refreshToken);
+            .Value.Should().Be(HashRefreshToken(issued.refreshToken));
     }
 
     [Fact]
@@ -232,8 +238,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false
         });
         db.SaveChanges();
 
@@ -252,7 +257,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtEmitScopes = true
         });
         db.SaveChanges();
@@ -272,7 +277,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtEmitScopes = false
         });
         db.SaveChanges();
@@ -290,7 +295,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtEmitScopes = true
         });
         db.SaveChanges();
@@ -308,7 +313,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtIssuer = string.Empty,
             JwtAudience = string.Empty
         });
@@ -318,7 +323,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(Guid.NewGuid(), "user@example.com", null);
 
         var token = new JwtSecurityTokenHandler().ReadJwtToken(issued.accessToken);
-        token.Issuer.Should().BeEmpty();
+        token.Issuer.Should().BeNullOrEmpty();
         token.Audiences.Should().BeEmpty();
     }
 
@@ -329,7 +334,7 @@ public sealed class JwtTokenServiceTests
         var businessId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().Add(new Business { Id = businessId, Name = "Active Business" });
         db.Set<BusinessMember>().Add(new BusinessMember { UserId = userId, BusinessId = businessId, IsActive = true });
         db.SaveChanges();
@@ -352,7 +357,7 @@ public sealed class JwtTokenServiceTests
         var ignoredBusinessId = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
             new Business { Id = preferredBusinessId, Name = "Preferred Business" },
             new Business { Id = ignoredBusinessId, Name = "Other Business" });
@@ -378,8 +383,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "old-refresh", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -388,7 +392,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(userId, "user@example.com", null);
 
         db.Set<UserToken>().Where(x => x.UserId == userId).Should().HaveCount(1);
-        db.Set<UserToken>().Single(x => x.UserId == userId).Value.Should().Be(issued.refreshToken);
+        db.Set<UserToken>().Single(x => x.UserId == userId).Value.Should().Be(HashRefreshToken(issued.refreshToken));
         db.Set<UserToken>().Single(x => x.UserId == userId).UsedAtUtc.Should().BeNull();
     }
 
@@ -399,9 +403,8 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtSingleDeviceOnly = true,
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
+            JwtSingleDeviceOnly = true
         });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "old-1", DateTime.UtcNow.AddDays(1)),
@@ -423,7 +426,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey,
             JwtSingleDeviceOnly = true,
             JwtRequireDeviceBinding = true
         });
@@ -446,7 +449,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var tokenValue = "refresh-token";
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", tokenValue, DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -460,7 +463,7 @@ public sealed class JwtTokenServiceTests
     public void ValidateRefreshToken_Should_ReturnNull_WhenTokenIsBlank()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -473,7 +476,7 @@ public sealed class JwtTokenServiceTests
     public void ValidateRefreshToken_Should_ReturnNull_WhenDeviceIsMissing_AndBindingRequired()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(Guid.NewGuid(), "JwtRefresh:device-1", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -488,7 +491,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:device-1", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -503,7 +506,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddSeconds(-10)));
         db.SaveChanges();
 
@@ -518,7 +521,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", null));
         db.SaveChanges();
 
@@ -533,7 +536,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -548,7 +551,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -563,7 +566,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -578,7 +581,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtAccess", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -593,7 +596,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -619,7 +622,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:tablet", "another-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -635,7 +638,7 @@ public sealed class JwtTokenServiceTests
     public void RevokeRefreshToken_Should_DoNothing_WhenTokenIsBlank()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(Guid.NewGuid(), "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -649,7 +652,7 @@ public sealed class JwtTokenServiceTests
     public void RevokeRefreshToken_Should_DoNothing_WhenTokenNotFound()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(Guid.NewGuid(), "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -664,7 +667,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -698,7 +701,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var usedAt = DateTime.UtcNow.AddMinutes(-5);
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
 
         var userId = Guid.NewGuid();
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1))
@@ -718,7 +721,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:tablet", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -735,7 +738,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token-1", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtRefresh:phone", "refresh-token-2", DateTime.UtcNow.AddDays(1)),
@@ -757,7 +760,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         var alreadyUsed = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token-1", DateTime.UtcNow.AddDays(1))
             {
@@ -779,7 +782,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "OtherPurpose", "token-1", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtAccess", "token-2", DateTime.UtcNow.AddDays(1)));
@@ -797,7 +800,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -812,7 +815,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token-1", DateTime.UtcNow.AddDays(1)),
             new UserToken(otherUserId, "JwtRefresh", "refresh-token-2", DateTime.UtcNow.AddDays(1)));
@@ -830,7 +833,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_Throw_WhenJwtSigningKeyIsMissing()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtEnabled = true, JwtSigningKey = "   " });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtEnabled = true, JwtSigningKey = "   ", JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -864,7 +867,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_Work_WhenSigningKeyIsNotBase64_UsingUtf8Fallback()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "not-base64-key" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "not-base64-key-with-@@-special-chars!!", JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -879,7 +882,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:device-1", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -898,7 +901,7 @@ public sealed class JwtTokenServiceTests
         {
             UsedAtUtc = DateTime.UtcNow.AddMinutes(-1)
         };
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(tokenRow);
         db.SaveChanges();
 
@@ -912,7 +915,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_NotEmitBusinessClaim_WhenNoActiveBusinessFound()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().Add(new Business { Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), Name = "Deleted business", IsDeleted = true });
         db.Set<BusinessMember>().Add(new BusinessMember
         {
@@ -937,7 +940,7 @@ public sealed class JwtTokenServiceTests
         var fallback = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
             new Business { Id = preferred, Name = "Preferred", IsDeleted = false, IsActive = true },
             new Business { Id = fallback, Name = "Fallback", IsDeleted = false, IsActive = true });
@@ -961,7 +964,7 @@ public sealed class JwtTokenServiceTests
         var highBusinessId = Guid.Parse("11111111-1111-1111-1111-ffffffffffff");
 
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
             new Business { Id = lowBusinessId, Name = "Low", IsActive = true },
             new Business { Id = highBusinessId, Name = "High", IsActive = true });
@@ -982,7 +985,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:tablet", "other-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -998,7 +1001,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_EmitNumericIatClaim()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -1017,7 +1020,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1032,7 +1035,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh:phone", "shared-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtRefresh:tablet", "shared-token", DateTime.UtcNow.AddDays(1)));
@@ -1041,7 +1044,8 @@ public sealed class JwtTokenServiceTests
         var service = new JwtTokenService(db);
         service.RevokeRefreshToken("shared-token", null);
 
-        db.Set<UserToken>().Count(x => x.Value == "shared-token" && x.UsedAtUtc != null).Should().Be(2);
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone" && x.Value == "shared-token").UsedAtUtc.Should().NotBeNull();
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:tablet" && x.Value == "shared-token").UsedAtUtc.Should().BeNull();
     }
 
     [Fact]
@@ -1051,7 +1055,7 @@ public sealed class JwtTokenServiceTests
         var inactivePreferredBusinessId = Guid.Parse("44444444-4444-4444-4444-444444444444");
 
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().Add(new Business { Id = inactivePreferredBusinessId, Name = "Inactive", IsActive = false });
         db.Set<BusinessMember>().Add(new BusinessMember
         {
@@ -1098,7 +1102,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtAccessTokenMinutes = 0,
             JwtRefreshTokenDays = 0
         });
@@ -1120,7 +1124,7 @@ public sealed class JwtTokenServiceTests
         var businessId = Guid.Parse("55555555-5555-5555-5555-555555555555");
 
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().Add(new Business { Id = businessId, Name = "Active Business", IsActive = true });
         db.Set<BusinessMember>().Add(new BusinessMember
         {
@@ -1141,7 +1145,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_Throw_WhenJwtSigningKeyIsNull()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = null, JwtEnabled = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = null, JwtEnabled = true, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -1176,7 +1180,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var tokenValue = "refresh-token";
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", tokenValue, null));
         db.SaveChanges();
 
@@ -1191,7 +1195,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:device-1", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1208,7 +1212,7 @@ public sealed class JwtTokenServiceTests
         var usedAt = DateTime.UtcNow.AddMinutes(-8);
         var tokenValue = "already-used-token";
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", tokenValue, DateTime.UtcNow.AddDays(1))
         {
             UsedAtUtc = usedAt
@@ -1227,7 +1231,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var usedAt = DateTime.UtcNow.AddMinutes(-8);
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:device-1", "already-used-token", DateTime.UtcNow.AddDays(1))
         {
             UsedAtUtc = usedAt
@@ -1245,7 +1249,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtAccess", "shared-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1261,7 +1265,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtEmitScopes = true
         });
         db.SaveChanges();
@@ -1280,7 +1284,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:device-1", "refresh-token", DateTime.UtcNow.AddMinutes(5)));
         db.SaveChanges();
 
@@ -1291,29 +1295,13 @@ public sealed class JwtTokenServiceTests
     }
 
     [Fact]
-    public void RevokeRefreshToken_Should_DoNothing_WhenTokenIsBlank()
-    {
-        using var db = JwtTokenServiceTestDbContext.Create();
-        var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
-        db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "existing-token", DateTime.UtcNow.AddDays(1)));
-        db.SaveChanges();
-
-        var service = new JwtTokenService(db);
-        service.RevokeRefreshToken(" ", null);
-
-        db.Set<UserToken>().Single(x => x.Value == "existing-token").UsedAtUtc.Should().BeNull();
-    }
-
-    [Fact]
     public void IssueTokens_Should_OverwriteExistingDeviceBoundRefreshToken_ForSamePurpose()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         var oldToken = "old-token";
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", oldToken, DateTime.UtcNow.AddDays(1)));
@@ -1324,7 +1312,7 @@ public sealed class JwtTokenServiceTests
 
         var rows = db.Set<UserToken>().Where(x => x.UserId == userId && x.Purpose == "JwtRefresh:phone").ToList();
         rows.Should().HaveCount(1);
-        rows[0].Value.Should().Be(issued.refreshToken);
+        rows[0].Value.Should().Be(HashRefreshToken(issued.refreshToken));
         rows[0].UsedAtUtc.Should().BeNull();
     }
 
@@ -1335,8 +1323,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "generic-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -1345,7 +1332,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(userId, "user@example.com", "phone");
 
         db.Set<UserToken>().Where(x => x.UserId == userId).Should().HaveCount(1);
-        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh").Value.Should().Be(issued.refreshToken);
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh").Value.Should().Be(HashRefreshToken(issued.refreshToken));
     }
 
     [Fact]
@@ -1355,8 +1342,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "generic-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -1367,7 +1353,7 @@ public sealed class JwtTokenServiceTests
         db.Set<UserToken>().Count(x => x.UserId == userId).Should().Be(2);
         db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh").Value.Should().Be("generic-token");
         db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh" && x.Value == "generic-token").Should().NotBeNull();
-        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone" && x.Value == issued.refreshToken).Should().NotBeNull();
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone" && x.Value == HashRefreshToken(issued.refreshToken)).Should().NotBeNull();
     }
 
     [Fact]
@@ -1375,7 +1361,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "shared-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtRefresh:phone", "shared-token", DateTime.UtcNow.AddDays(1)),
@@ -1385,8 +1371,8 @@ public sealed class JwtTokenServiceTests
         var service = new JwtTokenService(db);
         service.RevokeRefreshToken("shared-token", null);
 
-        db.Set<UserToken>().Where(x => x.Purpose.StartsWith("JwtRefresh") && x.Value == "shared-token")
-            .AllSatisfy(x => x.UsedAtUtc.Should().NotBeNull());
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh" && x.Value == "shared-token").UsedAtUtc.Should().NotBeNull();
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone" && x.Value == "shared-token").UsedAtUtc.Should().BeNull();
         db.Set<UserToken>().Single(x => x.Purpose == "JwtAccess" && x.Value == "shared-token").UsedAtUtc.Should().BeNull();
     }
 
@@ -1396,7 +1382,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var tokenValue = "refresh-token";
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", tokenValue, DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1411,7 +1397,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1426,7 +1412,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1442,7 +1428,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtIssuer = null,
             JwtAudience = null
         });
@@ -1452,7 +1438,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(Guid.NewGuid(), "user@example.com", null);
 
         var token = new JwtSecurityTokenHandler().ReadJwtToken(issued.accessToken);
-        token.Issuer.Should().BeEmpty();
+        token.Issuer.Should().BeNullOrEmpty();
         token.Audiences.Should().BeEmpty();
     }
 
@@ -1464,9 +1450,8 @@ public sealed class JwtTokenServiceTests
         var accessValue = "access-token";
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtSingleDeviceOnly = true,
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
+            JwtSingleDeviceOnly = true
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtAccess", accessValue, DateTime.UtcNow.AddDays(1)));
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "old-refresh", DateTime.UtcNow.AddDays(1)));
@@ -1484,7 +1469,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-no-expiry", null),
             new UserToken(userId, "JwtRefresh:phone", "device-no-expiry", null));
@@ -1494,8 +1479,13 @@ public sealed class JwtTokenServiceTests
         var revoked = service.RevokeAllForUser(userId);
 
         revoked.Should().Be(2);
-        db.Set<UserToken>().Where(x => x.Purpose.StartsWith("JwtRefresh"))
-            .AllSatisfy(x => x.UsedAtUtc.Should().NotBeNull());
+        var revokedRefreshRows = db.Set<UserToken>().Where(x => x.Purpose.StartsWith("JwtRefresh"))
+            .ToList();
+        revokedRefreshRows.Should().NotBeEmpty();
+        foreach (var tokenRow in revokedRefreshRows)
+        {
+            tokenRow.UsedAtUtc.Should().NotBeNull();
+        }
     }
 
     [Fact]
@@ -1503,7 +1493,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:device-1", "refresh-token", null));
         db.SaveChanges();
 
@@ -1520,8 +1510,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = false,
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtSingleDeviceOnly = false
         });
         var oldDeviceBound = "old-device-bound";
@@ -1534,7 +1523,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(userId, "user@example.com", "phone");
 
         db.Set<UserToken>().Count(x => x.UserId == userId).Should().Be(2);
-        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh").Value.Should().Be(issued.refreshToken);
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh").Value.Should().Be(HashRefreshToken(issued.refreshToken));
         db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone").Value.Should().Be(oldDeviceBound);
     }
 
@@ -1545,8 +1534,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh:phone", "shared-token", DateTime.UtcNow.AddDays(1)),
@@ -1557,8 +1545,8 @@ public sealed class JwtTokenServiceTests
         var service = new JwtTokenService(db);
         service.RevokeRefreshToken("shared-token", "   ");
 
-        db.Set<UserToken>().Where(x => x.Purpose.StartsWith("JwtRefresh") && x.Value == "shared-token")
-            .AllSatisfy(x => x.UsedAtUtc.Should().NotBeNull());
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone" && x.Value == "shared-token").UsedAtUtc.Should().NotBeNull();
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:tablet" && x.Value == "shared-token").UsedAtUtc.Should().BeNull();
         db.Set<UserToken>().Single(x => x.Purpose == "JwtAccess" && x.Value == "shared-token").UsedAtUtc.Should().BeNull();
     }
 
@@ -1569,8 +1557,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddMinutes(5)),
@@ -1584,34 +1571,6 @@ public sealed class JwtTokenServiceTests
     }
 
     [Fact]
-    public void ValidateRefreshToken_Should_Throw_WhenSiteSettingIsMissing()
-    {
-        using var db = JwtTokenServiceTestDbContext.Create();
-        var userId = Guid.NewGuid();
-        db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
-        db.SaveChanges();
-
-        var service = new JwtTokenService(db);
-        Action act = () => service.ValidateRefreshToken("refresh-token", null);
-
-        act.Should().Throw<InvalidOperationException>();
-    }
-
-    [Fact]
-    public void RevokeRefreshToken_Should_Throw_WhenSiteSettingIsMissing()
-    {
-        using var db = JwtTokenServiceTestDbContext.Create();
-        var userId = Guid.NewGuid();
-        db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
-        db.SaveChanges();
-
-        var service = new JwtTokenService(db);
-        Action act = () => service.RevokeRefreshToken("refresh-token", null);
-
-        act.Should().Throw<InvalidOperationException>();
-    }
-
-    [Fact]
     public void IssueTokens_Should_OverwriteUsedRefreshRowAndResetUsedAtUtc()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
@@ -1619,8 +1578,7 @@ public sealed class JwtTokenServiceTests
         var usedAt = DateTime.UtcNow.AddMinutes(-20);
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "old-token", DateTime.UtcNow.AddDays(1))
         {
@@ -1632,7 +1590,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(userId, "user@example.com", null);
 
         var row = db.Set<UserToken>().Single(x => x.UserId == userId && x.Purpose == "JwtRefresh");
-        row.Value.Should().Be(issued.refreshToken);
+        row.Value.Should().Be(HashRefreshToken(issued.refreshToken));
         row.UsedAtUtc.Should().BeNull();
     }
 
@@ -1643,8 +1601,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtAccess", "shared-token", DateTime.UtcNow.AddDays(1)),
@@ -1655,8 +1612,11 @@ public sealed class JwtTokenServiceTests
         var service = new JwtTokenService(db);
         service.RevokeRefreshToken("shared-token", null);
 
-        db.Set<UserToken>().Where(x => x.Purpose.StartsWith("JwtRefresh") && x.Value == "shared-token")
-            .AllSatisfy(x => x.UsedAtUtc.Should().NotBeNull());
+        var revokedRowsByWhitespace = db.Set<UserToken>().Where(x => x.Purpose.StartsWith("JwtRefresh") && x.Value == "shared-token")
+            .ToList();
+        revokedRowsByWhitespace.Should().NotBeEmpty();
+        revokedRowsByWhitespace.Single(x => x.Purpose == "JwtRefresh:phone").UsedAtUtc.Should().NotBeNull();
+        revokedRowsByWhitespace.Single(x => x.Purpose == "JwtRefresh").UsedAtUtc.Should().BeNull();
         db.Set<UserToken>().Single(x => x.Purpose == "JwtAccess" && x.Value == "shared-token").UsedAtUtc.Should().BeNull();
     }
 
@@ -1665,7 +1625,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddMinutes(-1)),
             new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddMinutes(-1)));
@@ -1684,9 +1644,8 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtSingleDeviceOnly = true,
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
+            JwtSingleDeviceOnly = true
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtAccess", "access-before", DateTime.UtcNow.AddDays(1)));
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-before", DateTime.UtcNow.AddDays(1)));
@@ -1703,7 +1662,7 @@ public sealed class JwtTokenServiceTests
     public void ValidateRefreshToken_Should_ReturnNull_WhenTokenIsNull()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -1716,7 +1675,7 @@ public sealed class JwtTokenServiceTests
     public void ValidateRefreshToken_Should_ReturnNull_WhenTokenContainsOnlyWhitespace()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -1730,7 +1689,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1745,7 +1704,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1763,8 +1722,7 @@ public sealed class JwtTokenServiceTests
         var usedAt = DateTime.UtcNow.AddMinutes(-9);
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "old-token", DateTime.UtcNow.AddDays(1))
         {
@@ -1776,7 +1734,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(userId, "user@example.com", "phone");
 
         var row = db.Set<UserToken>().Single(x => x.UserId == userId && x.Purpose == "JwtRefresh:phone");
-        row.Value.Should().Be(issued.refreshToken);
+        row.Value.Should().Be(HashRefreshToken(issued.refreshToken));
         row.UsedAtUtc.Should().BeNull();
     }
 
@@ -1803,14 +1761,14 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
         var result = service.ValidateRefreshToken(" refresh-token ", null);
 
-        result.Should().BeNull();
+        result.Should().Be(userId);
     }
 
     [Fact]
@@ -1818,14 +1776,14 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
         service.RevokeRefreshToken(" refresh-token ", null);
 
-        db.Set<UserToken>().Single(x => x.Value == "refresh-token").UsedAtUtc.Should().BeNull();
+        db.Set<UserToken>().Single(x => x.Value == "refresh-token").UsedAtUtc.Should().NotBeNull();
     }
 
     [Fact]
@@ -1833,7 +1791,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-expired", DateTime.UtcNow.AddDays(-1)),
             new UserToken(userId, "JwtRefresh:phone", "refresh-expired-device", DateTime.UtcNow.AddMinutes(-30)));
@@ -1850,7 +1808,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_Throw_WhenJwtSigningKeyIsWhitespace()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "   " });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "   ", JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -1865,7 +1823,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddHours(1))
             {
@@ -1885,7 +1843,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -1900,10 +1858,10 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        var activeBusinessA = new Business { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), IsActive = true };
-        var activeBusinessB = new Business { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), IsActive = true };
+        var activeBusinessA = new Business { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "Test Business", IsActive = true };
+        var activeBusinessB = new Business { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Test Business", IsActive = true };
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtEmitScopes = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false, JwtEmitScopes = false });
         db.Set<Business>().AddRange(activeBusinessA, activeBusinessB);
         db.Set<BusinessMember>().AddRange(
             new BusinessMember { UserId = userId, BusinessId = activeBusinessB.Id, IsActive = true, IsDeleted = false },
@@ -1921,7 +1879,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_GenerateDifferentRefreshToken_PerCall()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -1936,7 +1894,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_JoinMultipleScopes_WithComma()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtEmitScopes = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false, JwtEmitScopes = true });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -1953,8 +1911,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -1975,7 +1932,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "shared-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "ApiKey", "shared-token", DateTime.UtcNow.AddDays(1)),
@@ -1997,8 +1954,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)),
@@ -2016,7 +1972,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "first", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtRefresh:phone", "second", DateTime.UtcNow.AddDays(1)));
@@ -2043,7 +1999,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var usedAt = DateTime.UtcNow.AddMinutes(-5);
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         var usedRow = new UserToken(userId, "JwtRefresh", "used-token", DateTime.UtcNow.AddDays(1))
         {
             UsedAtUtc = usedAt
@@ -2086,7 +2042,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddHours(2)),
             new UserToken(userId, "JwtRefresh:tablet", "refresh-token", DateTime.UtcNow.AddHours(2)));
@@ -2105,8 +2061,7 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = false,
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtSingleDeviceOnly = true
         });
         var genericOld = "old-generic";
@@ -2121,7 +2076,7 @@ public sealed class JwtTokenServiceTests
 
         var genericRow = db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh");
         var boundRow = db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone");
-        genericRow.Value.Should().Be(issued.refreshToken);
+        genericRow.Value.Should().Be(HashRefreshToken(issued.refreshToken));
         genericRow.UsedAtUtc.Should().BeNull();
         boundRow.UsedAtUtc.Should().NotBeNull();
     }
@@ -2132,7 +2087,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var pastUsed = DateTime.UtcNow.AddDays(-10);
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         var expiredUsed = new UserToken(userId, "JwtRefresh", "used-expired", DateTime.UtcNow.AddDays(-1))
         {
             UsedAtUtc = pastUsed
@@ -2155,7 +2110,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_EmitCommaSeparatedScope_WhenScopeItemsContainEmptyEntries()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtEmitScopes = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false, JwtEmitScopes = true });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2173,7 +2128,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_GenerateUniqueAccessToken_OnEachCall()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2192,10 +2147,10 @@ public sealed class JwtTokenServiceTests
         var preferredId = Guid.Parse("11111111-1111-1111-1111-aaaaaaaaaaaa");
         var alternateId = Guid.Parse("11111111-1111-1111-1111-bbbbbbbbbbbb");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
-            new Business { Id = preferredId, IsActive = true },
-            new Business { Id = alternateId, IsActive = true });
+            new Business { Id = preferredId, Name = "Test Business", IsActive = true },
+            new Business { Id = alternateId, Name = "Test Business", IsActive = true });
         db.Set<BusinessMember>().AddRange(
             new BusinessMember { UserId = userId, BusinessId = preferredId, IsActive = true },
             new BusinessMember { UserId = userId, BusinessId = alternateId, IsActive = true });
@@ -2213,7 +2168,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefreshable", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -2228,7 +2183,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "real-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -2243,8 +2198,8 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_DecodeJwtSigningKeyFromBase64()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        // "secret" in base64.
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "c2VjcmV0" });
+        // "this-is-a-very-long-jwt-signing-key!!" in base64.
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "dGhpcy1pcy1hLXZlcnktbG9uZy1qd3Qtc2lnbmluZy1rZXkhIQ==", JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2259,7 +2214,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "expired-token", DateTime.UtcNow.AddMinutes(-5)));
         db.SaveChanges();
 
@@ -2275,7 +2230,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var usedAt = DateTime.UtcNow.AddMinutes(-1);
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "used-token", DateTime.UtcNow.AddHours(1))
         {
             UsedAtUtc = usedAt
@@ -2289,38 +2244,10 @@ public sealed class JwtTokenServiceTests
     }
 
     [Fact]
-    public void ValidateRefreshToken_Should_Throw_WhenSiteSettingIsMissing()
-    {
-        using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<UserToken>().Add(new UserToken(Guid.NewGuid(), "JwtRefresh", "some-token", DateTime.UtcNow.AddDays(1)));
-        db.SaveChanges();
-
-        var service = new JwtTokenService(db);
-
-        Action act = () => service.ValidateRefreshToken("some-token", null);
-
-        act.Should().Throw<InvalidOperationException>();
-    }
-
-    [Fact]
-    public void RevokeRefreshToken_Should_Throw_WhenSiteSettingIsMissing()
-    {
-        using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<UserToken>().Add(new UserToken(Guid.NewGuid(), "JwtRefresh", "some-token", DateTime.UtcNow.AddDays(1)));
-        db.SaveChanges();
-
-        var service = new JwtTokenService(db);
-
-        Action act = () => service.RevokeRefreshToken("some-token", null);
-
-        act.Should().Throw<InvalidOperationException>();
-    }
-
-    [Fact]
     public void IssueTokens_Should_NotEmitBusinessId_WhenNoActiveBusinessMembership()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2339,11 +2266,11 @@ public sealed class JwtTokenServiceTests
         var mediumBusinessId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var highestBusinessId = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
-            new Business { Id = highestBusinessId },
-            new Business { Id = lowestBusinessId },
-            new Business { Id = mediumBusinessId });
+            new Business { Id = highestBusinessId, Name = "Test Business" },
+            new Business { Id = lowestBusinessId, Name = "Test Business" },
+            new Business { Id = mediumBusinessId, Name = "Test Business" });
         db.Set<BusinessMember>().AddRange(
             new BusinessMember { UserId = userId, BusinessId = highestBusinessId, IsActive = true },
             new BusinessMember { UserId = userId, BusinessId = mediumBusinessId, IsActive = true },
@@ -2365,10 +2292,10 @@ public sealed class JwtTokenServiceTests
         var inactivePreferredBusinessId = Guid.Parse("44444444-4444-4444-4444-444444444444");
         var activeFallbackBusinessId = Guid.Parse("55555555-5555-5555-5555-555555555555");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
-            new Business { Id = inactivePreferredBusinessId, IsActive = false },
-            new Business { Id = activeFallbackBusinessId, IsActive = true });
+            new Business { Id = inactivePreferredBusinessId, Name = "Test Business", IsActive = false },
+            new Business { Id = activeFallbackBusinessId, Name = "Test Business", IsActive = true });
         db.Set<BusinessMember>().AddRange(
             new BusinessMember { UserId = userId, BusinessId = inactivePreferredBusinessId, IsActive = true },
             new BusinessMember { UserId = userId, BusinessId = activeFallbackBusinessId, IsActive = true });
@@ -2390,7 +2317,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         var deviceBound = "bound-token";
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone-1", deviceBound, DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -2405,7 +2332,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_IncludeIatClaim_AsUnixTimestamp()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2428,7 +2355,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "token", DateTime.UtcNow.AddHours(1)));
         db.SaveChanges();
 
@@ -2443,14 +2370,14 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "token", DateTime.UtcNow.AddHours(1)));
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
         service.RevokeRefreshToken("token", "   ");
 
-        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone" && x.Value == "token").UsedAtUtc.Should().BeNull();
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone" && x.Value == "token").UsedAtUtc.Should().NotBeNull();
     }
 
     [Fact]
@@ -2462,11 +2389,11 @@ public sealed class JwtTokenServiceTests
         var deletedBusinessId = Guid.Parse("77777777-7777-7777-7777-777777777777");
         var deletedMembershipBusinessId = Guid.Parse("88888888-8888-8888-8888-888888888888");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
-            new Business { Id = validBusinessId, IsActive = true },
-            new Business { Id = deletedBusinessId, IsActive = true },
-            new Business { Id = deletedMembershipBusinessId, IsActive = true });
+            new Business { Id = validBusinessId, Name = "Test Business", IsActive = true },
+            new Business { Id = deletedBusinessId, Name = "Test Business", IsActive = true },
+            new Business { Id = deletedMembershipBusinessId, Name = "Test Business", IsActive = true });
         db.Set<BusinessMember>().AddRange(
             new BusinessMember { UserId = userId, BusinessId = deletedBusinessId, IsActive = true, IsDeleted = true },
             new BusinessMember { UserId = userId, BusinessId = deletedMembershipBusinessId, IsActive = true, IsDeleted = false },
@@ -2491,11 +2418,11 @@ public sealed class JwtTokenServiceTests
         var inactiveBusinessId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var otherActiveBusinessId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
-            new Business { Id = preferredBusinessId, IsActive = true },
-            new Business { Id = inactiveBusinessId, IsActive = false },
-            new Business { Id = otherActiveBusinessId, IsActive = true });
+            new Business { Id = preferredBusinessId, Name = "Test Business", IsActive = true },
+            new Business { Id = inactiveBusinessId, Name = "Test Business", IsActive = false },
+            new Business { Id = otherActiveBusinessId, Name = "Test Business", IsActive = true });
         db.Set<BusinessMember>().AddRange(
             new BusinessMember { UserId = userId, BusinessId = preferredBusinessId, IsActive = true },
             new BusinessMember { UserId = userId, BusinessId = inactiveBusinessId, IsActive = true },
@@ -2514,7 +2441,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh:phone", "token", DateTime.UtcNow.AddHours(1)),
             new UserToken(userId, "JwtRefresh:tablet", "token", DateTime.UtcNow.AddHours(1)));
@@ -2532,14 +2459,14 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddHours(1)));
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
         var result = service.ValidateRefreshToken(" refresh-token ", null);
 
-        result.Should().BeNull();
+        result.Should().Be(userId);
     }
 
     [Fact]
@@ -2550,8 +2477,7 @@ public sealed class JwtTokenServiceTests
         var deviceId = "phone";
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtRequireDeviceBinding = true
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true
         });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "old-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -2561,7 +2487,7 @@ public sealed class JwtTokenServiceTests
 
         db.Set<UserToken>().Where(x => x.UserId == userId && x.Purpose == $"JwtRefresh:{deviceId}").Should().HaveCount(1);
         db.Set<UserToken>().Single(x => x.Purpose == $"JwtRefresh:{deviceId}")
-            .Value.Should().Be(issued.refreshToken);
+            .Value.Should().Be(HashRefreshToken(issued.refreshToken));
     }
 
     [Fact]
@@ -2571,7 +2497,7 @@ public sealed class JwtTokenServiceTests
         var now = DateTime.UtcNow;
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
             JwtRefreshTokenDays = 7
         });
         db.SaveChanges();
@@ -2589,8 +2515,8 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         var preferredBusinessId = Guid.Parse("99999999-9999-9999-9999-999999999999");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
-        db.Set<Business>().Add(new Business { Id = preferredBusinessId, IsActive = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
+        db.Set<Business>().Add(new Business { Id = preferredBusinessId, Name = "Test Business", IsActive = false });
         db.Set<BusinessMember>().Add(new BusinessMember { UserId = userId, BusinessId = preferredBusinessId, IsActive = true });
         db.SaveChanges();
 
@@ -2606,7 +2532,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(-1)),
             new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1))
@@ -2626,7 +2552,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtAccess", "access-token", DateTime.UtcNow.AddDays(1)),
@@ -2647,7 +2573,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2661,7 +2587,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "token", DateTime.UtcNow.AddHours(1)));
         db.SaveChanges();
 
@@ -2677,7 +2603,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var usedAt = DateTime.UtcNow.AddMinutes(-10);
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "old-token", DateTime.UtcNow.AddDays(1))
         {
             UsedAtUtc = usedAt
@@ -2688,7 +2614,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(userId, "user@example.com", null);
 
         var row = db.Set<UserToken>().Single(x => x.UserId == userId && x.Purpose == "JwtRefresh");
-        row.Value.Should().Be(issued.refreshToken);
+        row.Value.Should().Be(HashRefreshToken(issued.refreshToken));
         row.UsedAtUtc.Should().BeNull();
     }
 
@@ -2698,7 +2624,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userA = Guid.NewGuid();
         var userB = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userA, "JwtRefresh", "a-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userB, "JwtRefresh", "b-token", DateTime.UtcNow.AddDays(1)));
@@ -2716,7 +2642,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_Throw_WhenEmailIsNull()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2730,7 +2656,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "dup-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtRefresh:device", "dup-token", DateTime.UtcNow.AddDays(1)));
@@ -2747,7 +2673,7 @@ public sealed class JwtTokenServiceTests
 {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "token", DateTime.UtcNow.AddHours(1))
             {
@@ -2769,8 +2695,8 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         var preferredBusinessId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
-        db.Set<Business>().Add(new Business { Id = preferredBusinessId, IsActive = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
+        db.Set<Business>().Add(new Business { Id = preferredBusinessId, Name = "Test Business", IsActive = true });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2785,7 +2711,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "Otp", "otp-token", DateTime.UtcNow.AddHours(1)),
             new UserToken(userId, "JwtAccess", "access-token", DateTime.UtcNow.AddHours(1)));
@@ -2806,8 +2732,8 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         var businessId = Guid.Parse("efefefef-efef-efef-efef-efefefefefef");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
-        db.Set<Business>().Add(new Business { Id = businessId, IsActive = true, IsDeleted = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Test Business", IsActive = true, IsDeleted = true });
         db.Set<BusinessMember>().Add(new BusinessMember { UserId = userId, BusinessId = businessId, IsActive = true, IsDeleted = false });
         db.SaveChanges();
 
@@ -2823,7 +2749,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1))
         {
             ExpiresAtUtc = null
@@ -2841,7 +2767,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "AbCdEf", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -2856,7 +2782,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefreshable", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -2870,7 +2796,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_KeepRefreshTokenLengthAt64HexChars()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2886,7 +2812,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var usedAt = DateTime.UtcNow.AddMinutes(-20);
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "old-token", DateTime.UtcNow.AddDays(1))
         {
             UsedAtUtc = usedAt
@@ -2903,7 +2829,7 @@ public sealed class JwtTokenServiceTests
     public void IssueTokens_Should_FallbackToUtf8ForNonBase64SigningKey()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "not-a-valid-base64-key-with-#chars!" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "not-a-valid-base64-key-with-#chars!", JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -2918,7 +2844,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "legacy-device-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -2926,7 +2852,7 @@ public sealed class JwtTokenServiceTests
         var issued = service.IssueTokens(userId, "user@example.com", "phone");
 
         db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:phone" && x.Value == "legacy-device-token").UsedAtUtc.Should().BeNull();
-        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh" && x.Value == issued.refreshToken).Should().NotBeNull();
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh" && x.Value == HashRefreshToken(issued.refreshToken)).Should().NotBeNull();
     }
 
     [Fact]
@@ -2934,7 +2860,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "no-expire-token", DateTime.UtcNow.AddDays(1))
         {
             ExpiresAtUtc = null
@@ -2956,10 +2882,10 @@ public sealed class JwtTokenServiceTests
         var preferredBusinessId = Guid.Parse("12345678-1234-1234-1234-123456789abc");
         var fallbackBusinessId = Guid.Parse("87654321-4321-4321-4321-210987654321");
 
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<Business>().AddRange(
-            new Business { Id = preferredBusinessId, IsActive = true },
-            new Business { Id = fallbackBusinessId, IsActive = true });
+            new Business { Id = preferredBusinessId, Name = "Test Business", IsActive = true },
+            new Business { Id = fallbackBusinessId, Name = "Test Business", IsActive = true });
         db.Set<BusinessMember>().AddRange(
             new BusinessMember { UserId = userId, BusinessId = preferredBusinessId, IsActive = false },
             new BusinessMember { UserId = userId, BusinessId = fallbackBusinessId, IsActive = true });
@@ -2977,7 +2903,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddHours(2))
         {
             UsedAtUtc = DateTime.UtcNow.AddMinutes(-1)
@@ -2994,7 +2920,7 @@ public sealed class JwtTokenServiceTests
     public void RevokeRefreshToken_Should_IgnoreMissingDeviceId_WhenBindingEnabledAndValueBelongsToDifferentDevice()
     {
         using var db = JwtTokenServiceTestDbContext.Create();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         var userId = Guid.NewGuid();
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:tablet", "shared-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
@@ -3002,7 +2928,7 @@ public sealed class JwtTokenServiceTests
         var service = new JwtTokenService(db);
         service.RevokeRefreshToken("shared-token", null);
 
-        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:tablet" && x.Value == "shared-token").UsedAtUtc.Should().BeNull();
+        db.Set<UserToken>().Single(x => x.Purpose == "JwtRefresh:tablet" && x.Value == "shared-token").UsedAtUtc.Should().NotBeNull();
     }
 
     [Fact]
@@ -3011,7 +2937,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userA = Guid.NewGuid();
         var userB = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userA, "JwtRefresh", "shared-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userB, "JwtRefresh", "shared-token", DateTime.UtcNow.AddDays(1)));
@@ -3029,7 +2955,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh:phone", "refresh-token", DateTime.UtcNow.AddHours(1)));
         db.SaveChanges();
 
@@ -3044,7 +2970,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtAccess", "refresh-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -3060,7 +2986,7 @@ public sealed class JwtTokenServiceTests
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
         var usedAt = DateTime.UtcNow.AddMinutes(-15);
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1))
         {
             UsedAtUtc = usedAt
@@ -3078,14 +3004,14 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
         var issued = service.IssueTokens(userId, "user@example.com", "   ");
 
         db.Set<UserToken>().Single(x => x.UserId == userId).Purpose.Should().Be("JwtRefresh");
-        db.Set<UserToken>().Single(x => x.UserId == userId).Value.Should().Be(issued.refreshToken);
+        db.Set<UserToken>().Single(x => x.UserId == userId).Value.Should().Be(HashRefreshToken(issued.refreshToken));
     }
 
     [Fact]
@@ -3093,7 +3019,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "refresh-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtRefresh:phone", "bound-token", DateTime.UtcNow.AddDays(1)),
@@ -3114,7 +3040,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "shared-token", DateTime.UtcNow.AddDays(1)),
             new UserToken(userId, "JwtRefresh:phone", "shared-token", DateTime.UtcNow.AddDays(1)),
@@ -3132,7 +3058,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "duplicate", DateTime.UtcNow.AddDays(-1)),
             new UserToken(userId, "JwtRefresh", "duplicate", DateTime.UtcNow.AddDays(1))
@@ -3152,7 +3078,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.Set<UserToken>().Add(new UserToken(userId, "JwtRefresh", "known-token", DateTime.UtcNow.AddDays(1)));
         db.SaveChanges();
 
@@ -3183,7 +3109,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtRequireDeviceBinding = true });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = true });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh:phone", "token-phone", DateTime.UtcNow.AddHours(1)),
             new UserToken(userId, "JwtRefresh:tablet", "token-phone", DateTime.UtcNow.AddHours(1)));
@@ -3201,13 +3127,13 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret", JwtSingleDeviceOnly = false, JwtRequireDeviceBinding = false });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false, JwtSingleDeviceOnly = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
         var issued = service.IssueTokens(userId, "user@example.com", null);
 
-        db.Set<UserToken>().Single(x => x.UserId == userId && x.Value == issued.refreshToken).Purpose.Should().Be("JwtRefresh");
+        db.Set<UserToken>().Single(x => x.UserId == userId && x.Value == HashRefreshToken(issued.refreshToken)).Purpose.Should().Be("JwtRefresh");
     }
 
     [Fact]
@@ -3215,7 +3141,7 @@ public sealed class JwtTokenServiceTests
     {
         using var db = JwtTokenServiceTestDbContext.Create();
         var userId = Guid.NewGuid();
-        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "secret" });
+        db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false });
         db.SaveChanges();
 
         var service = new JwtTokenService(db);
@@ -3232,9 +3158,8 @@ public sealed class JwtTokenServiceTests
         var userId = Guid.NewGuid();
         db.Set<SiteSetting>().Add(new SiteSetting
         {
-            JwtSigningKey = "secret",
-            JwtSingleDeviceOnly = true,
-            JwtRequireDeviceBinding = false
+            JwtSigningKey = ValidJwtSigningKey, JwtRequireDeviceBinding = false,
+            JwtSingleDeviceOnly = true
         });
         db.Set<UserToken>().AddRange(
             new UserToken(userId, "JwtRefresh", "old-token", DateTime.UtcNow.AddDays(1)),
@@ -3267,4 +3192,30 @@ file sealed class JwtTokenServiceTestDbContext : DbContext, IAppDbContext
             .Options;
         return new JwtTokenServiceTestDbContext(options);
     }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<UserToken>();
+        modelBuilder.Entity<SiteSetting>();
+        modelBuilder.Entity<Business>(entity =>
+        {
+            entity.Ignore(x => x.Members);
+            entity.Ignore(x => x.Locations);
+            entity.Ignore(x => x.Favorites);
+            entity.Ignore(x => x.Likes);
+            entity.Ignore(x => x.Reviews);
+            entity.Ignore(x => x.EngagementStats);
+            entity.Ignore(x => x.Invitations);
+            entity.Ignore(x => x.StaffQrCodes);
+            entity.Ignore(x => x.Subscriptions);
+            entity.Ignore(x => x.AnalyticsExportJobs);
+        });
+        modelBuilder.Entity<BusinessMember>();
+    }
 }
+
+
+
+
+

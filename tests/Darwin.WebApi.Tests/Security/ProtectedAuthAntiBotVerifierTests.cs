@@ -1,4 +1,5 @@
 using System;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Abstractions.Security;
 using Darwin.WebApi.Security;
 using FluentAssertions;
@@ -159,11 +160,18 @@ public sealed class ProtectedAuthAntiBotVerifierTests
         var monitor = new Mock<IOptionsMonitor<AuthAntiBotOptions>>();
         monitor.SetupGet(x => x.CurrentValue).Returns(options);
 
-        return (new ProtectedAuthAntiBotVerifier(provider, monitor.Object), protector);
+        return (new ProtectedAuthAntiBotVerifier(provider, CreateClock(), monitor.Object), protector);
     }
 
     private static string CreateChallengeToken(DateTimeOffset issuedAtUtc, IDataProtector protector)
     {
         return protector.Protect($"{issuedAtUtc.UtcTicks}:nonce");
+    }
+
+    private static IClock CreateClock()
+    {
+        var clock = new Mock<IClock>();
+        clock.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
+        return clock.Object;
     }
 }

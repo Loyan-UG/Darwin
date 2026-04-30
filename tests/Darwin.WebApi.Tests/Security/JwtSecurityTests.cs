@@ -2,6 +2,8 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Darwin.Application;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Settings;
 using Darwin.WebApi.Security;
@@ -21,8 +23,12 @@ public sealed class JwtSigningParametersProviderTests
     [Fact]
     public void Ctor_Should_Throw_WhenScopeFactoryIsMissing()
     {
+        var clock = new Mock<IClock>();
+        clock.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
+
         Action act = () => new JwtSigningParametersProvider(
             null!,
+            clock.Object,
             new Mock<ILogger<JwtSigningParametersProvider>>().Object,
             new TestValidationLocalizer());
 
@@ -34,9 +40,12 @@ public sealed class JwtSigningParametersProviderTests
     {
         using var rootServices = JwtSecurityTestHarness.CreateServices();
         var scopeFactory = rootServices.GetRequiredService<IServiceScopeFactory>();
+        var clock = new Mock<IClock>();
+        clock.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
 
         Action act = () => new JwtSigningParametersProvider(
             scopeFactory,
+            clock.Object,
             null!,
             new TestValidationLocalizer());
 
@@ -48,9 +57,12 @@ public sealed class JwtSigningParametersProviderTests
     {
         using var rootServices = JwtSecurityTestHarness.CreateServices();
         var scopeFactory = rootServices.GetRequiredService<IServiceScopeFactory>();
+        var clock = new Mock<IClock>();
+        clock.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
 
         Action act = () => new JwtSigningParametersProvider(
             scopeFactory,
+            clock.Object,
             new Mock<ILogger<JwtSigningParametersProvider>>().Object,
             null!);
 
@@ -315,8 +327,16 @@ file static class JwtSecurityTestHarness
         scopeFactory = new CountingServiceScopeFactory(rootServices.GetRequiredService<IServiceScopeFactory>());
         return new JwtSigningParametersProvider(
             scopeFactory,
+            CreateFrozenClock(),
             new Mock<ILogger<JwtSigningParametersProvider>>().Object,
             new TestValidationLocalizer());
+    }
+
+    private static IClock CreateFrozenClock()
+    {
+        var clock = new Mock<IClock>();
+        clock.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
+        return clock.Object;
     }
 
     public static void UpdateSiteSetting(ServiceProvider rootServices, Action<SiteSetting> update)

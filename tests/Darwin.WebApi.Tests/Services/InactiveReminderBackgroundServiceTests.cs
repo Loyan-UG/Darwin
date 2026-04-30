@@ -39,7 +39,8 @@ public sealed class InactiveReminderBackgroundServiceTests
         var tokenSource = new CancellationTokenSource();
         await tokenSource.CancelAsync();
 
-        await service.ExecuteAsync(tokenSource.Token);
+        await service.StartAsync(tokenSource.Token);
+        await service.StopAsync(tokenSource.Token);
 
         scopeFactoryMock.Verify(sf => sf.CreateScope(), Times.Never);
     }

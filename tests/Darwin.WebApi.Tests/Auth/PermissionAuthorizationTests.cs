@@ -151,14 +151,14 @@ public sealed class PermissionAuthorizationTests
     }
 
     [Fact]
-    public void HandleAsync_Should_Throw_WhenContextIsNull()
+    public async Task HandleAsync_Should_Throw_WhenContextIsNull()
     {
         var permissionService = new Mock<IPermissionService>();
         var handler = new PermissionAuthorizationHandler(permissionService.Object);
 
         Func<Task> act = () => handler.HandleAsync(null!);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("context");
+        await act.Should().ThrowAsync<ArgumentNullException>().WithParameterName("context");
     }
 
     private static AuthorizationHandlerContext BuildContext(Guid userId, string permission)
