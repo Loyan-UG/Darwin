@@ -292,9 +292,14 @@ public sealed class MediaHandlerTests
         db.Set<MediaAsset>().Add(asset);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
-        await handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
+        var fakeRowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        asset.RowVersion = fakeRowVersion;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, fakeRowVersion, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
         var entity = db.Set<MediaAsset>().Single();
         entity.IsDeleted.Should().BeTrue("the handler must soft-delete the asset");
     }

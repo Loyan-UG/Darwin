@@ -5156,7 +5156,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
 
         source.Should().Contain("public interface IJwtTokenService");
         source.Should().Contain("Issues short-lived access tokens and opaque refresh tokens for a user.");
-        source.Should().Contain("IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null, Guid? preferredBusinessId = null);");
+        source.Should().Contain("IssueTokensAsync(");
         source.Should().Contain("Guid? ValidateRefreshToken(string refreshToken, string? deviceId);");
         source.Should().Contain("void RevokeRefreshToken(string refreshToken, string? deviceId);");
         source.Should().Contain("int RevokeAllForUser(Guid userId);");
@@ -5688,7 +5688,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         source.Should().Contain("private readonly IAppDbContext _db;");
         source.Should().Contain("public JwtTokenService(IAppDbContext db)");
         source.Should().Contain("_db = db ?? throw new ArgumentNullException(nameof(db));");
-        source.Should().Contain("IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null, Guid? preferredBusinessId = null)");
+        source.Should().Contain("IssueTokensAsync(");
         source.Should().Contain("var settings = _db.Set<SiteSetting>()");
         source.Should().Contain(".AsNoTracking()");
         source.Should().Contain(".First();");

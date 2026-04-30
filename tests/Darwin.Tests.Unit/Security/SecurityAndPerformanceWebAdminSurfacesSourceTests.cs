@@ -5627,7 +5627,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         source.Should().Contain("public async Task<IActionResult> Invoices(int page = 1, int pageSize = 20, string? q = null, InvoiceQueueFilter filter = InvoiceQueueFilter.All, CancellationToken ct = default)");
         source.Should().Contain("var (items, total) = await _getInvoicesPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);");
-        source.Should().Contain("OpsSummary = BuildInvoiceOpsSummary(invoiceItems),");
+        source.Should().Contain("OpsSummary = BuildInvoiceOpsSummary(invoiceItems, todayUtc),");
         source.Should().Contain("Playbooks = BuildInvoicePlaybooks(),");
         source.Should().Contain("Filter = filter,");
         source.Should().Contain("return RenderInvoicesWorkspace(new InvoicesListVm");
@@ -5843,7 +5843,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("public async Task<IActionResult> Opportunities(int page = 1, int pageSize = 20, string? q = null, OpportunityQueueFilter filter = OpportunityQueueFilter.All, CancellationToken ct = default)");
         source.Should().Contain("var (items, total) = await _getOpportunitiesPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);");
         source.Should().Contain("var opportunityItems = items.ToList();");
-        source.Should().Contain("OpsSummary = BuildOpportunityOpsSummary(opportunityItems),");
+        source.Should().Contain("OpsSummary = BuildOpportunityOpsSummary(opportunityItems, todayUtc),");
         source.Should().Contain("Playbooks = BuildOpportunityPlaybooks(),");
         source.Should().Contain("FilterItems = BuildOpportunityFilterItems(filter),");
         source.Should().Contain("Currency = settings.DefaultCurrency,");
@@ -5871,7 +5871,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("Title = \"CrmLeadQualifiedPlaybookTitle\"");
         source.Should().Contain("Title = \"CrmLeadUnassignedPlaybookTitle\"");
         source.Should().Contain("Title = \"CrmLeadUnconvertedPlaybookTitle\"");
-        source.Should().Contain("private static OpportunityOpsSummaryVm BuildOpportunityOpsSummary(IReadOnlyCollection<OpportunityListItemDto> items)");
+        source.Should().Contain("private static OpportunityOpsSummaryVm BuildOpportunityOpsSummary(IReadOnlyCollection<OpportunityListItemDto> items, DateTime todayUtc)");
         source.Should().Contain("var closingSoonThreshold = DateTime.UtcNow.Date.AddDays(14);");
         source.Should().Contain("ClosingSoonCount = items.Count(x => x.ExpectedCloseDateUtc.HasValue && x.ExpectedCloseDateUtc.Value.Date <= closingSoonThreshold),");
         source.Should().Contain("HighValueCount = items.Count(x => x.EstimatedValueMinor >= 100000),");
