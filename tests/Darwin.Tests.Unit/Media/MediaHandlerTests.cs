@@ -292,8 +292,8 @@ public sealed class MediaHandlerTests
         db.Set<MediaAsset>().Add(asset);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new SoftDeleteMediaAssetHandler(db);
-        await handler.HandleAsync(asset.Id, TestContext.Current.CancellationToken);
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        await handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
 
         var entity = db.Set<MediaAsset>().Single();
         entity.IsDeleted.Should().BeTrue("the handler must soft-delete the asset");
@@ -303,9 +303,9 @@ public sealed class MediaHandlerTests
     public async Task SoftDeleteMediaAsset_Should_Not_Throw_When_Asset_Not_Found()
     {
         await using var db = MediaTestDbContext.Create();
-        var handler = new SoftDeleteMediaAssetHandler(db);
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
 
-        var act = () => handler.HandleAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+        var act = () => handler.HandleAsync(Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
         await act.Should().NotThrowAsync("soft-deleting a missing asset is a no-op");
     }
@@ -318,9 +318,9 @@ public sealed class MediaHandlerTests
         db.Set<MediaAsset>().Add(asset);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new SoftDeleteMediaAssetHandler(db);
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
 
-        var act = () => handler.HandleAsync(asset.Id, TestContext.Current.CancellationToken);
+        var act = () => handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
 
         await act.Should().NotThrowAsync("handler silently no-ops when asset is already soft-deleted");
     }
@@ -335,7 +335,7 @@ public sealed class MediaHandlerTests
         await using var db = MediaTestDbContext.Create();
         var handler = new GetMediaAssetForEditHandler(db);
 
-        var result = await handler.HandleAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(Guid.NewGuid(), ct: TestContext.Current.CancellationToken);
 
         result.Should().BeNull("no asset exists with that id");
     }
@@ -349,7 +349,7 @@ public sealed class MediaHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new GetMediaAssetForEditHandler(db);
-        var result = await handler.HandleAsync(asset.Id, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(asset.Id, ct: TestContext.Current.CancellationToken);
 
         result.Should().BeNull("soft-deleted assets must not be returned for editing");
     }
@@ -376,7 +376,7 @@ public sealed class MediaHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new GetMediaAssetForEditHandler(db);
-        var result = await handler.HandleAsync(asset.Id, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(asset.Id, ct: TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(asset.Id);

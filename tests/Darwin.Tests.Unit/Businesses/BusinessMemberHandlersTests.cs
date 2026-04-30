@@ -189,7 +189,7 @@ public sealed class BusinessMemberHandlersTests
             RowVersion = [9, 9, 9] // wrong version
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>();
     }
 
     [Fact]

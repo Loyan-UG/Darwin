@@ -118,12 +118,15 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(_localizer["BusinessMismatchForRedemption"]);
             }
 
-            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
-            var currentVersion = redemption.RowVersion ?? Array.Empty<byte>();
-            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+            var rowVersion = dto.RowVersion;
+            if (rowVersion is { Length: > 0 })
             {
-                return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
-                    _localizer["RedemptionConcurrencyConflict"]);
+                var currentVersion = redemption.RowVersion ?? Array.Empty<byte>();
+                if (!currentVersion.SequenceEqual(rowVersion))
+                {
+                    return Result<ConfirmLoyaltyRewardRedemptionResultDto>.Fail(
+                        _localizer["RedemptionConcurrencyConflict"]);
+                }
             }
 
             if (redemption.Status == LoyaltyRedemptionStatus.Cancelled)

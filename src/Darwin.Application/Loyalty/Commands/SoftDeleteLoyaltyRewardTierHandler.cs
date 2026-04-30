@@ -42,10 +42,13 @@ namespace Darwin.Application.Loyalty.Commands
             if (entity.IsDeleted)
                 return Result.Ok();
 
-            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
-            var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
-            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
-                return Result.Fail(_localizer["LoyaltyRewardTierConcurrencyConflict"]);
+            var rowVersion = dto.RowVersion;
+            if (rowVersion is { Length: > 0 })
+            {
+                var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
+                if (!currentVersion.SequenceEqual(rowVersion))
+                    return Result.Fail(_localizer["LoyaltyRewardTierConcurrencyConflict"]);
+            }
 
             entity.IsDeleted = true;
             try

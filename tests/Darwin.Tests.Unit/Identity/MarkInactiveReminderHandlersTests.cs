@@ -90,6 +90,7 @@ public sealed class MarkInactiveReminderHandlersTests
     {
         await using var db = ReminderTestDbContext.Create();
         var userId = Guid.NewGuid();
+        db.Set<User>().Add(CreateActiveUser(userId));
         db.Set<UserEngagementSnapshot>().Add(new UserEngagementSnapshot
         {
             UserId = userId,
@@ -120,6 +121,7 @@ public sealed class MarkInactiveReminderHandlersTests
     {
         await using var db = ReminderTestDbContext.Create();
         var userId = Guid.NewGuid();
+        db.Set<User>().Add(CreateActiveUser(userId));
         db.Set<UserEngagementSnapshot>().Add(new UserEngagementSnapshot
         {
             UserId = userId,
@@ -152,6 +154,7 @@ public sealed class MarkInactiveReminderHandlersTests
     {
         await using var db = ReminderTestDbContext.Create();
         var userId = Guid.NewGuid();
+        db.Set<User>().Add(CreateActiveUser(userId));
         db.Set<UserEngagementSnapshot>().Add(new UserEngagementSnapshot
         {
             UserId = userId,
@@ -183,6 +186,7 @@ public sealed class MarkInactiveReminderHandlersTests
     {
         await using var db = ReminderTestDbContext.Create();
         var userId = Guid.NewGuid();
+        db.Set<User>().Add(CreateActiveUser(userId));
         db.Set<UserEngagementSnapshot>().Add(new UserEngagementSnapshot
         {
             UserId = userId,
@@ -253,6 +257,7 @@ public sealed class MarkInactiveReminderHandlersTests
         await using var db = ReminderTestDbContext.Create();
         var userId = Guid.NewGuid();
         var sentAt = new DateTime(2030, 3, 10, 7, 30, 0, DateTimeKind.Utc);
+        db.Set<User>().Add(CreateActiveUser(userId));
         db.Set<UserEngagementSnapshot>().Add(new UserEngagementSnapshot
         {
             UserId = userId,
@@ -285,6 +290,9 @@ public sealed class MarkInactiveReminderHandlersTests
 
     private static MarkInactiveReminderSentHandler CreateSentHandler(IAppDbContext db)
         => new(db, new FakeClock(FixedNow), new TestLocalizer());
+
+    private static User CreateActiveUser(Guid userId)
+        => new($"user-{userId}@test.com", "hash", "stamp") { Id = userId };
 
     private sealed class FakeClock : IClock
     {
@@ -327,6 +335,34 @@ public sealed class MarkInactiveReminderHandlersTests
                 builder.Property(x => x.UserId).IsRequired();
                 builder.Property(x => x.SnapshotJson).IsRequired();
                 builder.Ignore(x => x.User);
+            });
+
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Email).IsRequired();
+                builder.Property(x => x.NormalizedEmail).IsRequired();
+                builder.Property(x => x.UserName).IsRequired();
+                builder.Property(x => x.NormalizedUserName).IsRequired();
+                builder.Property(x => x.PasswordHash).IsRequired();
+                builder.Property(x => x.SecurityStamp).IsRequired();
+                builder.Property(x => x.Locale).IsRequired();
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.Timezone).IsRequired();
+                builder.Property(x => x.ChannelsOptInJson).IsRequired();
+                builder.Property(x => x.FirstTouchUtmJson).IsRequired();
+                builder.Property(x => x.LastTouchUtmJson).IsRequired();
+                builder.Property(x => x.ExternalIdsJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.UserRoles);
+                builder.Ignore(x => x.Logins);
+                builder.Ignore(x => x.Tokens);
+                builder.Ignore(x => x.TwoFactorSecrets);
+                builder.Ignore(x => x.Devices);
+                builder.Ignore(x => x.BusinessFavorites);
+                builder.Ignore(x => x.BusinessLikes);
+                builder.Ignore(x => x.BusinessReviews);
+                builder.Ignore(x => x.EngagementSnapshot);
             });
         }
     }

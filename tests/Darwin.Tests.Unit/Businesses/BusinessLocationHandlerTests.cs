@@ -193,7 +193,7 @@ public sealed class BusinessLocationHandlerTests
             RowVersion = new byte[] { 99, 88 } // stale
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException>();
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>();
     }
 
     [Fact]

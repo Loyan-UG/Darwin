@@ -435,7 +435,7 @@ public sealed class UserAddressHandlerTests
 
         var handler = new SetDefaultUserAddressHandler(db, new TestLocalizer());
 
-        var result = await handler.HandleAsync(userId, target.Id, asBilling: true, asShipping: false, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(userId, target.Id, asBilling: true, asShipping: false, ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
 
@@ -465,7 +465,7 @@ public sealed class UserAddressHandlerTests
 
         var handler = new SetDefaultUserAddressHandler(db, new TestLocalizer());
 
-        var result = await handler.HandleAsync(userId, address.Id, asBilling: true, asShipping: false, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(userId, address.Id, asBilling: true, asShipping: false, ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("AddressNotOwnedByUser");
@@ -477,7 +477,7 @@ public sealed class UserAddressHandlerTests
         await using var db = AddressTestDbContext.Create();
         var handler = new SetDefaultUserAddressHandler(db, new TestLocalizer());
 
-        var result = await handler.HandleAsync(Guid.NewGuid(), Guid.NewGuid(), asBilling: false, asShipping: false, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(Guid.NewGuid(), Guid.NewGuid(), asBilling: false, asShipping: false, ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("NothingToSet");
@@ -489,7 +489,7 @@ public sealed class UserAddressHandlerTests
         await using var db = AddressTestDbContext.Create();
         var handler = new SetDefaultUserAddressHandler(db, new TestLocalizer());
 
-        var result = await handler.HandleAsync(Guid.Empty, Guid.NewGuid(), asBilling: true, asShipping: false, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(Guid.Empty, Guid.NewGuid(), asBilling: true, asShipping: false, ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("UserIdRequired");
@@ -501,7 +501,7 @@ public sealed class UserAddressHandlerTests
         await using var db = AddressTestDbContext.Create();
         var handler = new SetDefaultUserAddressHandler(db, new TestLocalizer());
 
-        var result = await handler.HandleAsync(Guid.NewGuid(), Guid.Empty, asBilling: true, asShipping: false, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(Guid.NewGuid(), Guid.Empty, asBilling: true, asShipping: false, ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("AddressIdRequired");
