@@ -145,26 +145,23 @@ public sealed class CreateStorefrontPaymentIntentHandler
 public sealed class CompleteStorefrontPaymentHandler
 {
     private readonly IAppDbContext _db;
-    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompleteStorefrontPaymentHandler"/> class.
     /// </summary>
-    public CompleteStorefrontPaymentHandler(IAppDbContext db, IClock clock, IStringLocalizer<ValidationResource> localizer)
+    public CompleteStorefrontPaymentHandler(IAppDbContext db, IStringLocalizer<ValidationResource> localizer)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
     }
 
     /// <summary>
-    /// Applies the reported storefront payment outcome to the payment and order aggregates.
+    /// Validates a storefront payment return without finalizing provider-owned payment state.
     /// </summary>
     public async Task<CompleteStorefrontPaymentResultDto> HandleAsync(CompleteStorefrontPaymentDto dto, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(dto);
-        var nowUtc = _clock.UtcNow;
         if (dto.OrderId == Guid.Empty || dto.PaymentId == Guid.Empty)
         {
             throw new InvalidOperationException(_localizer["OrderIdAndPaymentIdAreRequired"]);
@@ -187,59 +184,53 @@ public sealed class CompleteStorefrontPaymentHandler
             throw new InvalidOperationException(_localizer["PaymentNotFoundForOrder"]);
         }
 
-        if (payment.Status is PaymentStatus.Captured or PaymentStatus.Completed or PaymentStatus.Refunded)
-        {
-            throw new InvalidOperationException(_localizer["PaymentIsAlreadyFinalized"]);
-        }
+        EnsureProviderReferencesMatch(payment, dto);
 
-        if (!string.IsNullOrWhiteSpace(dto.ProviderReference))
+        if (IsProviderFinalizedStatus(payment.Status))
         {
-            payment.ProviderTransactionRef = dto.ProviderReference.Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentReference))
-        {
-            payment.ProviderPaymentIntentRef = dto.ProviderPaymentIntentReference.Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(dto.ProviderCheckoutSessionReference))
-        {
-            payment.ProviderCheckoutSessionRef = dto.ProviderCheckoutSessionReference.Trim();
-        }
-        else if (IsStripeProvider(payment.Provider) && !string.IsNullOrWhiteSpace(dto.ProviderReference))
-        {
-            payment.ProviderCheckoutSessionRef = dto.ProviderReference.Trim();
+            return BuildResult(order, payment);
         }
 
         switch (dto.Outcome)
         {
             case StorefrontPaymentOutcome.Succeeded:
-                payment.Status = PaymentStatus.Captured;
-                payment.PaidAtUtc = nowUtc;
-                if (order.Status is OrderStatus.Created or OrderStatus.Confirmed)
-                {
-                    order.Status = OrderStatus.Paid;
-                }
-                payment.FailureReason = null;
-                break;
-
             case StorefrontPaymentOutcome.Cancelled:
-                payment.Status = PaymentStatus.Voided;
-                payment.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason) ? "Checkout was cancelled by the shopper." : dto.FailureReason.Trim();
-                break;
-
             case StorefrontPaymentOutcome.Failed:
-                payment.Status = PaymentStatus.Failed;
-                payment.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason) ? "Checkout failed at the payment provider." : dto.FailureReason.Trim();
                 break;
 
             default:
                 throw new InvalidOperationException(_localizer["UnsupportedStorefrontPaymentOutcome"]);
         }
 
-        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        return BuildResult(order, payment);
+    }
 
-        return new CompleteStorefrontPaymentResultDto
+    private void EnsureProviderReferencesMatch(Payment payment, CompleteStorefrontPaymentDto dto)
+    {
+        if (!ReferenceMatches(dto.ProviderPaymentIntentReference, payment.ProviderPaymentIntentRef) ||
+            !ReferenceMatches(dto.ProviderCheckoutSessionReference, payment.ProviderCheckoutSessionRef))
+        {
+            throw new InvalidOperationException(_localizer["StorefrontPaymentProviderReferenceMismatch"]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.ProviderReference) &&
+            !ReferenceMatches(dto.ProviderReference, payment.ProviderTransactionRef) &&
+            !ReferenceMatches(dto.ProviderReference, payment.ProviderCheckoutSessionRef))
+        {
+            throw new InvalidOperationException(_localizer["StorefrontPaymentProviderReferenceMismatch"]);
+        }
+    }
+
+    private static bool ReferenceMatches(string? provided, string? expected)
+        => string.IsNullOrWhiteSpace(provided) ||
+           (!string.IsNullOrWhiteSpace(expected) &&
+            string.Equals(provided.Trim(), expected.Trim(), StringComparison.Ordinal));
+
+    private static bool IsProviderFinalizedStatus(PaymentStatus status)
+        => status is PaymentStatus.Captured or PaymentStatus.Completed or PaymentStatus.Refunded or PaymentStatus.Voided;
+
+    private static CompleteStorefrontPaymentResultDto BuildResult(Order order, Payment payment)
+        => new()
         {
             OrderId = order.Id,
             PaymentId = payment.Id,
@@ -247,8 +238,4 @@ public sealed class CompleteStorefrontPaymentHandler
             PaymentStatus = payment.Status,
             PaidAtUtc = payment.PaidAtUtc
         };
-    }
-
-    private static bool IsStripeProvider(string provider)
-        => string.Equals(provider, "Stripe", StringComparison.OrdinalIgnoreCase);
 }

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Common;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
@@ -16,6 +17,16 @@ namespace Darwin.Application.Billing;
 /// </summary>
 public sealed class ProcessStripeWebhookHandler
 {
+    private const string EventLogTypePrefix = "StripeWebhook:";
+    private const int MaxEventLogTypeLength = 100;
+    private const int MaxEventLogIdempotencyKeyLength = 100;
+    private const int MaxProviderReferenceLength = 256;
+    private const int MaxProviderBillingReferenceLength = 128;
+    private const int MaxPaymentFailureReasonLength = 1000;
+    private const int MaxInvoiceFailureReasonLength = 2000;
+    private static readonly DateTime MinProviderTimestampUtc = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime MaxProviderTimestampUtc = new(2100, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
@@ -42,13 +53,13 @@ public sealed class ProcessStripeWebhookHandler
         using var document = parsedDocument!;
 
         var root = document.RootElement;
-        var eventId = GetString(root, "id");
+        var eventId = NormalizeEventId(GetString(root, "id"));
         if (string.IsNullOrWhiteSpace(eventId))
         {
             return Result<StripeWebhookProcessingResultDto>.Fail(_localizer["StripeWebhookEventIdRequired"]);
         }
 
-        var eventType = GetString(root, "type");
+        var eventType = NormalizeEventType(GetString(root, "type"));
         if (string.IsNullOrWhiteSpace(eventType))
         {
             return Result<StripeWebhookProcessingResultDto>.Fail(_localizer["StripeWebhookEventTypeRequired"]);
@@ -81,7 +92,7 @@ public sealed class ProcessStripeWebhookHandler
         {
             Type = BuildEventLogType(eventType),
             OccurredAtUtc = occurredAtUtc,
-            PropertiesJson = rawPayloadJson,
+            PropertiesJson = BuildEventLogPropertiesJson(root, stripeObject, eventId, eventType, occurredAtUtc),
             UtmSnapshotJson = "{}",
             IdempotencyKey = eventId
         });
@@ -151,8 +162,8 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var sessionId = GetString(stripeObject, "id");
-        var paymentIntentId = GetString(stripeObject, "payment_intent");
+        var sessionId = NormalizeProviderReference(GetString(stripeObject, "id"));
+        var paymentIntentId = NormalizeProviderReference(GetString(stripeObject, "payment_intent"));
         var paymentStatus = GetString(stripeObject, "payment_status");
         var payment = await FindPaymentAsync(paymentIntentId, sessionId, sessionId, ct).ConfigureAwait(false);
         if (payment is null)
@@ -176,8 +187,11 @@ public sealed class ProcessStripeWebhookHandler
         if (string.Equals(paymentStatus, "paid", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(paymentStatus, "no_payment_required", StringComparison.OrdinalIgnoreCase))
         {
-            ApplyCapturedPayment(payment, occurredAtUtc);
-            await PromoteOrderToPaidAsync(payment.OrderId, ct).ConfigureAwait(false);
+            EnsurePaymentAmountMatches(payment, GetInt64(stripeObject, "amount_total"), GetString(stripeObject, "currency"));
+            if (ApplyCapturedPayment(payment, occurredAtUtc))
+            {
+                await PromoteOrderToPaidAsync(payment.OrderId, ct).ConfigureAwait(false);
+            }
         }
     }
 
@@ -187,8 +201,8 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var paymentIntentId = GetString(stripeObject, "id");
-        var latestChargeId = GetString(stripeObject, "latest_charge");
+        var paymentIntentId = NormalizeProviderReference(GetString(stripeObject, "id"));
+        var latestChargeId = NormalizeProviderReference(GetString(stripeObject, "latest_charge"));
         var payment = await FindPaymentAsync(paymentIntentId, null, latestChargeId ?? paymentIntentId, ct).ConfigureAwait(false);
         if (payment is null)
         {
@@ -198,8 +212,11 @@ public sealed class ProcessStripeWebhookHandler
         result.MatchedPaymentId = payment.Id;
         payment.ProviderPaymentIntentRef ??= paymentIntentId;
         payment.ProviderTransactionRef ??= latestChargeId ?? paymentIntentId;
-        ApplyCapturedPayment(payment, occurredAtUtc);
-        await PromoteOrderToPaidAsync(payment.OrderId, ct).ConfigureAwait(false);
+        EnsurePaymentAmountMatches(payment, GetInt64(stripeObject, "amount_received") ?? GetInt64(stripeObject, "amount"), GetString(stripeObject, "currency"));
+        if (ApplyCapturedPayment(payment, occurredAtUtc))
+        {
+            await PromoteOrderToPaidAsync(payment.OrderId, ct).ConfigureAwait(false);
+        }
     }
 
     private async Task ApplyPaymentIntentFailedAsync(
@@ -207,8 +224,8 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var paymentIntentId = GetString(stripeObject, "id");
-        var latestChargeId = GetString(stripeObject, "latest_charge");
+        var paymentIntentId = NormalizeProviderReference(GetString(stripeObject, "id"));
+        var latestChargeId = NormalizeProviderReference(GetString(stripeObject, "latest_charge"));
         var payment = await FindPaymentAsync(paymentIntentId, null, latestChargeId ?? paymentIntentId, ct).ConfigureAwait(false);
         if (payment is null)
         {
@@ -216,11 +233,18 @@ public sealed class ProcessStripeWebhookHandler
         }
 
         result.MatchedPaymentId = payment.Id;
+        if (IsSettledPayment(payment))
+        {
+            return;
+        }
+
         payment.ProviderPaymentIntentRef ??= paymentIntentId;
         payment.ProviderTransactionRef ??= latestChargeId ?? paymentIntentId;
         payment.Status = PaymentStatus.Failed;
         payment.PaidAtUtc = null;
-        payment.FailureReason = GetString(stripeObject, "last_payment_error", "message") ?? _localizer["OperationFailed"];
+        payment.FailureReason = BuildProviderFailureReason(
+            GetString(stripeObject, "last_payment_error", "message"),
+            MaxPaymentFailureReasonLength);
     }
 
     private async Task ApplyPaymentIntentCanceledAsync(
@@ -228,8 +252,8 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var paymentIntentId = GetString(stripeObject, "id");
-        var latestChargeId = GetString(stripeObject, "latest_charge");
+        var paymentIntentId = NormalizeProviderReference(GetString(stripeObject, "id"));
+        var latestChargeId = NormalizeProviderReference(GetString(stripeObject, "latest_charge"));
         var payment = await FindPaymentAsync(paymentIntentId, null, latestChargeId ?? paymentIntentId, ct).ConfigureAwait(false);
         if (payment is null)
         {
@@ -237,11 +261,18 @@ public sealed class ProcessStripeWebhookHandler
         }
 
         result.MatchedPaymentId = payment.Id;
+        if (IsSettledPayment(payment))
+        {
+            return;
+        }
+
         payment.ProviderPaymentIntentRef ??= paymentIntentId;
         payment.ProviderTransactionRef ??= latestChargeId ?? paymentIntentId;
         payment.Status = PaymentStatus.Voided;
         payment.PaidAtUtc = null;
-        payment.FailureReason = GetString(stripeObject, "cancellation_reason") ?? _localizer["OperationFailed"];
+        payment.FailureReason = BuildProviderFailureReason(
+            GetString(stripeObject, "cancellation_reason"),
+            MaxPaymentFailureReasonLength);
     }
 
     private async Task ApplyChargeRefundedAsync(
@@ -250,8 +281,8 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var chargeId = GetString(stripeObject, "id");
-        var paymentIntentId = GetString(stripeObject, "payment_intent");
+        var chargeId = NormalizeProviderReference(GetString(stripeObject, "id"));
+        var paymentIntentId = NormalizeProviderReference(GetString(stripeObject, "payment_intent"));
         var amountRefunded = GetInt64(stripeObject, "amount_refunded");
         var payment = await FindPaymentAsync(paymentIntentId, null, chargeId, ct).ConfigureAwait(false);
         if (payment is null)
@@ -260,9 +291,14 @@ public sealed class ProcessStripeWebhookHandler
         }
 
         result.MatchedPaymentId = payment.Id;
+        EnsureRefundAmountMatches(payment, amountRefunded, GetString(stripeObject, "currency"));
         payment.ProviderPaymentIntentRef ??= paymentIntentId;
         payment.ProviderTransactionRef ??= chargeId ?? paymentIntentId;
-        payment.Status = PaymentStatus.Refunded;
+        if (!amountRefunded.HasValue || amountRefunded.Value >= payment.AmountMinor)
+        {
+            payment.Status = PaymentStatus.Refunded;
+        }
+
         payment.FailureReason = null;
 
         if (payment.OrderId.HasValue)
@@ -286,20 +322,26 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var invoiceId = GetString(stripeObject, "id");
-        var providerSubscriptionId = GetString(stripeObject, "subscription");
+        var invoiceId = NormalizeProviderBillingReference(GetString(stripeObject, "id"));
+        var providerSubscriptionId = NormalizeProviderBillingReference(GetString(stripeObject, "subscription"));
         var paidAtUtc = GetUnixDateTimeUtc(stripeObject, "status_transitions", "paid_at") ?? occurredAtUtc;
 
         var invoice = await FindSubscriptionInvoiceAsync(invoiceId, ct).ConfigureAwait(false);
+        var subscription = await FindBusinessSubscriptionAsync(providerSubscriptionId, ct).ConfigureAwait(false);
+        EnsureInvoiceMatchesSubscription(invoice, subscription);
+
         if (invoice is not null)
         {
             result.MatchedSubscriptionInvoiceId = invoice.Id;
+            EnsureSubscriptionInvoiceAmountMatches(
+                invoice,
+                GetInt64(stripeObject, "amount_paid") ?? GetInt64(stripeObject, "total"),
+                GetString(stripeObject, "currency"));
             invoice.Status = SubscriptionInvoiceStatus.Paid;
             invoice.PaidAtUtc ??= paidAtUtc;
             invoice.FailureReason = null;
         }
 
-        var subscription = await FindBusinessSubscriptionAsync(providerSubscriptionId, ct).ConfigureAwait(false);
         if (subscription is not null)
         {
             result.MatchedBusinessSubscriptionId = subscription.Id;
@@ -314,18 +356,26 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var invoiceId = GetString(stripeObject, "id");
-        var providerSubscriptionId = GetString(stripeObject, "subscription");
+        var invoiceId = NormalizeProviderBillingReference(GetString(stripeObject, "id"));
+        var providerSubscriptionId = NormalizeProviderBillingReference(GetString(stripeObject, "subscription"));
 
         var invoice = await FindSubscriptionInvoiceAsync(invoiceId, ct).ConfigureAwait(false);
+        var subscription = await FindBusinessSubscriptionAsync(providerSubscriptionId, ct).ConfigureAwait(false);
+        EnsureInvoiceMatchesSubscription(invoice, subscription);
+
         if (invoice is not null)
         {
             result.MatchedSubscriptionInvoiceId = invoice.Id;
+            EnsureSubscriptionInvoiceAmountMatches(
+                invoice,
+                GetInt64(stripeObject, "amount_due") ?? GetInt64(stripeObject, "total"),
+                GetString(stripeObject, "currency"));
             invoice.Status = SubscriptionInvoiceStatus.Open;
-            invoice.FailureReason = GetString(stripeObject, "last_finalization_error", "message") ?? _localizer["OperationFailed"];
+            invoice.FailureReason = BuildProviderFailureReason(
+                GetString(stripeObject, "last_finalization_error", "message"),
+                MaxInvoiceFailureReasonLength);
         }
 
-        var subscription = await FindBusinessSubscriptionAsync(providerSubscriptionId, ct).ConfigureAwait(false);
         if (subscription is not null)
         {
             result.MatchedBusinessSubscriptionId = subscription.Id;
@@ -338,7 +388,7 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var providerSubscriptionId = GetString(stripeObject, "id");
+        var providerSubscriptionId = NormalizeProviderBillingReference(GetString(stripeObject, "id"));
         var subscription = await FindBusinessSubscriptionAsync(providerSubscriptionId, ct).ConfigureAwait(false);
         if (subscription is null)
         {
@@ -346,10 +396,9 @@ public sealed class ProcessStripeWebhookHandler
         }
 
         result.MatchedBusinessSubscriptionId = subscription.Id;
-        subscription.ProviderCustomerId ??= GetString(stripeObject, "customer");
+        ApplyProviderCustomerId(subscription, NormalizeProviderBillingReference(GetString(stripeObject, "customer")));
         subscription.Status = MapSubscriptionStatus(GetString(stripeObject, "status"), subscription.Status);
-        subscription.CurrentPeriodStartUtc = GetUnixDateTimeUtc(stripeObject, "current_period_start") ?? subscription.CurrentPeriodStartUtc;
-        subscription.CurrentPeriodEndUtc = GetUnixDateTimeUtc(stripeObject, "current_period_end") ?? subscription.CurrentPeriodEndUtc;
+        ApplySubscriptionPeriod(stripeObject, subscription);
         subscription.TrialEndsAtUtc = GetUnixDateTimeUtc(stripeObject, "trial_end") ?? subscription.TrialEndsAtUtc;
         subscription.CancelAtPeriodEnd = GetBoolean(stripeObject, "cancel_at_period_end") ?? subscription.CancelAtPeriodEnd;
         subscription.CanceledAtUtc = GetUnixDateTimeUtc(stripeObject, "canceled_at") ?? subscription.CanceledAtUtc;
@@ -361,7 +410,7 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
-        var providerSubscriptionId = GetString(stripeObject, "id");
+        var providerSubscriptionId = NormalizeProviderBillingReference(GetString(stripeObject, "id"));
         var subscription = await FindBusinessSubscriptionAsync(providerSubscriptionId, ct).ConfigureAwait(false);
         if (subscription is null)
         {
@@ -382,10 +431,12 @@ public sealed class ProcessStripeWebhookHandler
     {
         if (!string.IsNullOrWhiteSpace(providerPaymentIntentRef))
         {
-            var payment = await _db.Set<Payment>()
-                .FirstOrDefaultAsync(x =>
+            var payment = await FindUniquePaymentAsync(
+                _db.Set<Payment>().Where(x =>
                     !x.IsDeleted &&
-                    (x.ProviderPaymentIntentRef == providerPaymentIntentRef || x.ProviderTransactionRef == providerPaymentIntentRef), ct)
+                    x.Provider == "Stripe" &&
+                    (x.ProviderPaymentIntentRef == providerPaymentIntentRef || x.ProviderTransactionRef == providerPaymentIntentRef)),
+                ct)
                 .ConfigureAwait(false);
 
             if (payment is not null)
@@ -396,10 +447,12 @@ public sealed class ProcessStripeWebhookHandler
 
         if (!string.IsNullOrWhiteSpace(providerCheckoutSessionRef))
         {
-            var payment = await _db.Set<Payment>()
-                .FirstOrDefaultAsync(x =>
+            var payment = await FindUniquePaymentAsync(
+                _db.Set<Payment>().Where(x =>
                     !x.IsDeleted &&
-                    (x.ProviderCheckoutSessionRef == providerCheckoutSessionRef || x.ProviderTransactionRef == providerCheckoutSessionRef), ct)
+                    x.Provider == "Stripe" &&
+                    (x.ProviderCheckoutSessionRef == providerCheckoutSessionRef || x.ProviderTransactionRef == providerCheckoutSessionRef)),
+                ct)
                 .ConfigureAwait(false);
 
             if (payment is not null)
@@ -413,9 +466,26 @@ public sealed class ProcessStripeWebhookHandler
             return null;
         }
 
-        return await _db.Set<Payment>()
-            .FirstOrDefaultAsync(x => !x.IsDeleted && x.ProviderTransactionRef == providerTransactionRef, ct)
+        return await FindUniquePaymentAsync(
+                _db.Set<Payment>().Where(x => !x.IsDeleted && x.Provider == "Stripe" && x.ProviderTransactionRef == providerTransactionRef),
+                ct)
             .ConfigureAwait(false);
+    }
+
+    private async Task<Payment?> FindUniquePaymentAsync(IQueryable<Payment> query, CancellationToken ct)
+    {
+        var matches = await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(2)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        if (matches.Count > 1)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPaymentReferenceAmbiguous"]);
+        }
+
+        return matches.Count == 0 ? null : matches[0];
     }
 
     private async Task<SubscriptionInvoice?> FindSubscriptionInvoiceAsync(string? providerInvoiceId, CancellationToken ct)
@@ -425,8 +495,10 @@ public sealed class ProcessStripeWebhookHandler
             return null;
         }
 
-        return await _db.Set<SubscriptionInvoice>()
-            .FirstOrDefaultAsync(x => !x.IsDeleted && x.ProviderInvoiceId == providerInvoiceId, ct)
+        return await FindUniqueSubscriptionInvoiceAsync(
+                _db.Set<SubscriptionInvoice>()
+                    .Where(x => !x.IsDeleted && x.Provider == "Stripe" && x.ProviderInvoiceId == providerInvoiceId),
+                ct)
             .ConfigureAwait(false);
     }
 
@@ -437,9 +509,43 @@ public sealed class ProcessStripeWebhookHandler
             return null;
         }
 
-        return await _db.Set<BusinessSubscription>()
-            .FirstOrDefaultAsync(x => !x.IsDeleted && x.ProviderSubscriptionId == providerSubscriptionId, ct)
+        return await FindUniqueBusinessSubscriptionAsync(
+                _db.Set<BusinessSubscription>()
+                    .Where(x => !x.IsDeleted && x.Provider == "Stripe" && x.ProviderSubscriptionId == providerSubscriptionId),
+                ct)
             .ConfigureAwait(false);
+    }
+
+    private async Task<SubscriptionInvoice?> FindUniqueSubscriptionInvoiceAsync(IQueryable<SubscriptionInvoice> query, CancellationToken ct)
+    {
+        var matches = await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(2)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        if (matches.Count > 1)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+        }
+
+        return matches.Count == 0 ? null : matches[0];
+    }
+
+    private async Task<BusinessSubscription?> FindUniqueBusinessSubscriptionAsync(IQueryable<BusinessSubscription> query, CancellationToken ct)
+    {
+        var matches = await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(2)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        if (matches.Count > 1)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+        }
+
+        return matches.Count == 0 ? null : matches[0];
     }
 
     private async Task PromoteOrderToPaidAsync(Guid? orderId, CancellationToken ct)
@@ -459,19 +565,216 @@ public sealed class ProcessStripeWebhookHandler
         }
     }
 
-    private static void ApplyCapturedPayment(Payment payment, DateTime occurredAtUtc)
+    private static bool ApplyCapturedPayment(Payment payment, DateTime occurredAtUtc)
     {
         if (payment.Status is PaymentStatus.Refunded or PaymentStatus.Voided)
         {
-            return;
+            return false;
         }
 
         payment.Status = PaymentStatus.Captured;
         payment.PaidAtUtc ??= occurredAtUtc;
         payment.FailureReason = null;
+        return true;
     }
 
-    private static string BuildEventLogType(string eventType) => $"StripeWebhook:{eventType}";
+    private static bool IsSettledPayment(Payment payment)
+        => payment.Status is PaymentStatus.Captured or PaymentStatus.Completed or PaymentStatus.Refunded;
+
+    private void EnsurePaymentAmountMatches(Payment payment, long? amountMinor, string? currency)
+    {
+        if (amountMinor.HasValue && amountMinor.Value != payment.AmountMinor)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPaymentAmountMismatch"]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(currency) &&
+            !string.Equals(currency.Trim(), payment.Currency, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPaymentAmountMismatch"]);
+        }
+    }
+
+    private void EnsureRefundAmountMatches(Payment payment, long? amountRefundedMinor, string? currency)
+    {
+        if (amountRefundedMinor.HasValue &&
+            (amountRefundedMinor.Value <= 0 || amountRefundedMinor.Value > payment.AmountMinor))
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPaymentAmountMismatch"]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(currency) &&
+            !string.Equals(currency.Trim(), payment.Currency, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPaymentAmountMismatch"]);
+        }
+    }
+
+    private void EnsureSubscriptionInvoiceAmountMatches(SubscriptionInvoice invoice, long? amountMinor, string? currency)
+    {
+        if (amountMinor.HasValue && amountMinor.Value != invoice.TotalMinor)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookInvoiceAmountMismatch"]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(currency) &&
+            !string.Equals(currency.Trim(), invoice.Currency, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookInvoiceAmountMismatch"]);
+        }
+    }
+
+    private void EnsureInvoiceMatchesSubscription(SubscriptionInvoice? invoice, BusinessSubscription? subscription)
+    {
+        if (invoice is null || subscription is null)
+        {
+            return;
+        }
+
+        if (invoice.BusinessSubscriptionId != subscription.Id ||
+            (subscription.BusinessId.HasValue && invoice.BusinessId != subscription.BusinessId.Value))
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+        }
+    }
+
+    private void ApplySubscriptionPeriod(JsonElement stripeObject, BusinessSubscription subscription)
+    {
+        var periodStartUtc = GetUnixDateTimeUtc(stripeObject, "current_period_start");
+        var periodEndUtc = GetUnixDateTimeUtc(stripeObject, "current_period_end");
+        if (periodStartUtc.HasValue && periodEndUtc.HasValue && periodStartUtc.Value > periodEndUtc.Value)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+        }
+
+        subscription.CurrentPeriodStartUtc = periodStartUtc ?? subscription.CurrentPeriodStartUtc;
+        subscription.CurrentPeriodEndUtc = periodEndUtc ?? subscription.CurrentPeriodEndUtc;
+    }
+
+    private void ApplyProviderCustomerId(BusinessSubscription subscription, string? providerCustomerId)
+    {
+        if (string.IsNullOrWhiteSpace(providerCustomerId))
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(subscription.ProviderCustomerId) &&
+            !string.Equals(subscription.ProviderCustomerId.Trim(), providerCustomerId, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+        }
+
+        subscription.ProviderCustomerId ??= providerCustomerId;
+    }
+
+    private string? NormalizeEventId(string? value)
+    {
+        var normalized = NormalizeNullable(value);
+        if (normalized is null)
+        {
+            return null;
+        }
+
+        return normalized.Length <= MaxEventLogIdempotencyKeyLength
+            ? normalized
+            : throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+    }
+
+    private string? NormalizeEventType(string? value)
+    {
+        var normalized = NormalizeNullable(value);
+        if (normalized is null)
+        {
+            return null;
+        }
+
+        return BuildEventLogType(normalized).Length <= MaxEventLogTypeLength
+            ? normalized
+            : throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+    }
+
+    private string? NormalizeProviderReference(string? value)
+    {
+        var normalized = NormalizeNullable(value);
+        if (normalized is null)
+        {
+            return null;
+        }
+
+        return normalized.Length <= MaxProviderReferenceLength
+            ? normalized
+            : throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+    }
+
+    private string? NormalizeProviderBillingReference(string? value)
+    {
+        var normalized = NormalizeNullable(value);
+        if (normalized is null)
+        {
+            return null;
+        }
+
+        return normalized.Length <= MaxProviderBillingReferenceLength
+            ? normalized
+            : throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+    }
+
+    private static string? NormalizeNullable(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string BuildEventLogPropertiesJson(
+        JsonElement root,
+        JsonElement stripeObject,
+        string eventId,
+        string eventType,
+        DateTime occurredAtUtc)
+    {
+        var properties = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["provider"] = "Stripe",
+            ["eventId"] = eventId,
+            ["eventType"] = eventType,
+            ["occurredAtUtc"] = occurredAtUtc.ToString("O"),
+            ["payloadCapturedInProviderCallbackInbox"] = "true"
+        };
+
+        AddIfNotBlank(properties, "created", GetString(root, "created"));
+        AddIfNotBlank(properties, "objectType", GetString(stripeObject, "object"));
+        AddIfNotBlank(properties, "objectId", GetString(stripeObject, "id"));
+        AddIfNotBlank(properties, "paymentIntent", GetString(stripeObject, "payment_intent"));
+        AddIfNotBlank(properties, "checkoutSession", GetString(stripeObject, "checkout_session"));
+        AddIfNotBlank(properties, "latestCharge", GetString(stripeObject, "latest_charge"));
+        AddIfNotBlank(properties, "invoice", GetString(stripeObject, "invoice"));
+        AddIfNotBlank(properties, "subscription", GetString(stripeObject, "subscription"));
+        AddIfNotBlank(properties, "customer", GetString(stripeObject, "customer"));
+        AddIfNotBlank(properties, "status", GetString(stripeObject, "status"));
+        AddIfNotBlank(properties, "paymentStatus", GetString(stripeObject, "payment_status"));
+        AddIfNotBlank(properties, "currency", GetString(stripeObject, "currency"));
+        AddIfNotBlank(properties, "amount", GetString(stripeObject, "amount"));
+        AddIfNotBlank(properties, "amountTotal", GetString(stripeObject, "amount_total"));
+        AddIfNotBlank(properties, "amountReceived", GetString(stripeObject, "amount_received"));
+        AddIfNotBlank(properties, "amountRefunded", GetString(stripeObject, "amount_refunded"));
+
+        return JsonSerializer.Serialize(properties);
+    }
+
+    private static void AddIfNotBlank(Dictionary<string, string> properties, string key, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            properties[key] = value.Trim();
+        }
+    }
+
+    private string BuildProviderFailureReason(string? providerReason, int maxLength)
+    {
+        var fallback = _localizer["OperationFailed"].Value;
+        var sanitized = OperatorDisplayTextSanitizer.SanitizeFailureText(providerReason);
+        var value = string.IsNullOrWhiteSpace(sanitized) ? fallback : sanitized.Trim();
+        return value.Length <= maxLength ? value : value[..maxLength];
+    }
+
+    private static string BuildEventLogType(string eventType) => $"{EventLogTypePrefix}{eventType}";
 
     private static SubscriptionStatus MapSubscriptionStatus(string? status, SubscriptionStatus fallback)
         => status?.Trim().ToLowerInvariant() switch
@@ -532,7 +835,7 @@ public sealed class ProcessStripeWebhookHandler
         return null;
     }
 
-    private static DateTime? GetUnixDateTimeUtc(JsonElement element, params string[] path)
+    private DateTime? GetUnixDateTimeUtc(JsonElement element, params string[] path)
     {
         var seconds = GetInt64(element, path);
         if (!seconds.HasValue)
@@ -540,7 +843,20 @@ public sealed class ProcessStripeWebhookHandler
             return null;
         }
 
-        return DateTimeOffset.FromUnixTimeSeconds(seconds.Value).UtcDateTime;
+        try
+        {
+            var value = DateTimeOffset.FromUnixTimeSeconds(seconds.Value).UtcDateTime;
+            if (value < MinProviderTimestampUtc || value > MaxProviderTimestampUtc)
+            {
+                throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+            }
+
+            return value;
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"], ex);
+        }
     }
 
     private static bool TryGetNested(JsonElement element, out JsonElement nested, params string[] path)

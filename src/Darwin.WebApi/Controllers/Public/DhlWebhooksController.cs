@@ -2,12 +2,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Darwin.Application;
-using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.Queries;
 using Darwin.Contracts.Shipping;
-using Darwin.Domain.Entities.Integration;
 using Darwin.WebApi.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
@@ -26,17 +23,18 @@ public sealed class DhlWebhooksController : ApiControllerBase
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
     private const int Sha256HexLength = 64;
+    private const int MaxCallbackTypeLength = 64;
 
-    private readonly IAppDbContext _db;
+    private readonly ProviderCallbackInboxWriter _inboxWriter;
     private readonly GetSiteSettingHandler _getSiteSettingHandler;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public DhlWebhooksController(
-        IAppDbContext db,
+        ProviderCallbackInboxWriter inboxWriter,
         GetSiteSettingHandler getSiteSettingHandler,
         IStringLocalizer<ValidationResource> validationLocalizer)
     {
-        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _inboxWriter = inboxWriter ?? throw new ArgumentNullException(nameof(inboxWriter));
         _getSiteSettingHandler = getSiteSettingHandler ?? throw new ArgumentNullException(nameof(getSiteSettingHandler));
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
@@ -100,13 +98,15 @@ public sealed class DhlWebhooksController : ApiControllerBase
 
         var providerShipmentReference = NormalizeText(request.ProviderShipmentReference);
         var carrierEventKey = NormalizeText(request.CarrierEventKey);
-        if (providerShipmentReference is null || carrierEventKey is null)
+        if (providerShipmentReference is null ||
+            carrierEventKey is null ||
+            carrierEventKey.Length > MaxCallbackTypeLength)
         {
             return BadRequestProblem(_validationLocalizer["DhlWebhookPayloadInvalid"]);
         }
 
         var idempotencyKey = BuildIdempotencyKey(request);
-        var existing = await AddInboxMessageIfNewAsync(
+        var existing = await _inboxWriter.AddIfNewAsync(
             provider: "DHL",
             callbackType: carrierEventKey,
             idempotencyKey,
@@ -118,51 +118,6 @@ public sealed class DhlWebhooksController : ApiControllerBase
             received = true,
             duplicate = existing
         });
-    }
-
-    private async Task<bool> AddInboxMessageIfNewAsync(
-        string provider,
-        string callbackType,
-        string idempotencyKey,
-        string rawPayload,
-        CancellationToken ct)
-    {
-        var existing = await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false);
-        if (existing)
-        {
-            return true;
-        }
-
-        _db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
-        {
-            Provider = provider,
-            CallbackType = callbackType,
-            IdempotencyKey = idempotencyKey,
-            PayloadJson = rawPayload,
-            Status = "Pending"
-        });
-
-        try
-        {
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
-            return false;
-        }
-        catch (DbUpdateException)
-        {
-            if (await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false))
-            {
-                return true;
-            }
-
-            throw;
-        }
-    }
-
-    private Task<bool> InboxMessageExistsAsync(string provider, string idempotencyKey, CancellationToken ct)
-    {
-        return _db.Set<ProviderCallbackInboxMessage>()
-            .AsNoTracking()
-            .AnyAsync(x => !x.IsDeleted && x.Provider == provider && x.IdempotencyKey == idempotencyKey, ct);
     }
 
     private static bool TryVerifySignature(string rawPayload, string signatureHeader, string secret)
@@ -211,12 +166,14 @@ public sealed class DhlWebhooksController : ApiControllerBase
 
     private static string BuildIdempotencyKey(DhlShipmentCallbackRequest request)
     {
-        return string.Concat(
+        var value = string.Concat(
             NormalizeText(request.ProviderShipmentReference) ?? string.Empty,
             "::",
             NormalizeText(request.CarrierEventKey) ?? string.Empty,
             "::",
             request.OccurredAtUtc.ToUniversalTime().ToString("O"));
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
+        return string.Concat("dhl::", hash);
     }
 
     private static string? NormalizeText(string? value)

@@ -329,8 +329,16 @@ namespace Darwin.Application.Businesses.Queries
         {
             return key.Contains("secret", StringComparison.OrdinalIgnoreCase) ||
                    key.Contains("token", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("authorization", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("credential", StringComparison.OrdinalIgnoreCase) ||
                    key.Contains("password", StringComparison.OrdinalIgnoreCase) ||
                    key.Contains("signature", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("cookie", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("session", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("private_key", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("privatekey", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("access_key", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains("accesskey", StringComparison.OrdinalIgnoreCase) ||
                    key.Contains("api_key", StringComparison.OrdinalIgnoreCase) ||
                    key.Contains("apikey", StringComparison.OrdinalIgnoreCase);
         }

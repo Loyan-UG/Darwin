@@ -72,6 +72,9 @@
   <data name="StorefrontPaymentProviderNotSupported" xml:space="preserve">
     <value>Es werden nur Stripe-Storefront-Zahlungen unterstuetzt.</value>
   </data>
+  <data name="StorefrontPaymentProviderReferenceMismatch" xml:space="preserve">
+    <value>Die Zahlungsanbieter-Referenz passt nicht zur ausstehenden Zahlung.</value>
+  </data>
   <data name="AppBootstrapQrTokenRefreshInvalid" xml:space="preserve">
     <value>MobileQrTokenRefreshSeconds muss eine positive Ganzzahl sein.</value>
   </data>
@@ -1363,6 +1366,15 @@
   </data>
   <data name="StripeWebhookProcessingFailed" xml:space="preserve">
     <value>Die Verarbeitung des Stripe-Webhooks ist fehlgeschlagen.</value>
+  </data>
+  <data name="StripeWebhookPaymentReferenceAmbiguous" xml:space="preserve">
+    <value>Die Stripe-Webhook-Zahlungsreferenz passt zu mehr als einer Zahlung.</value>
+  </data>
+  <data name="StripeWebhookPaymentAmountMismatch" xml:space="preserve">
+    <value>Betrag oder Waehrung der Stripe-Webhook-Zahlung passt nicht zur ausstehenden Zahlung.</value>
+  </data>
+  <data name="StripeWebhookInvoiceAmountMismatch" xml:space="preserve">
+    <value>Betrag oder Waehrung der Stripe-Webhook-Rechnung passt nicht zur Abonnementrechnung.</value>
   </data>
   <data name="WebhookDeliveryNotFound" xml:space="preserve">
     <value>Webhook-Zustellung nicht gefunden.</value>

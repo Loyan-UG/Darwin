@@ -3,15 +3,12 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Darwin.Application;
-using Darwin.Application.Abstractions.Persistence;
-using Darwin.Domain.Entities.Integration;
 using Darwin.Infrastructure.Notifications.Brevo;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 
@@ -25,16 +22,16 @@ namespace Darwin.WebApi.Controllers.Public;
 [Route("api/v1/public/notifications/brevo/webhooks")]
 public sealed class BrevoWebhooksController : ApiControllerBase
 {
-    private readonly IAppDbContext _db;
+    private readonly ProviderCallbackInboxWriter _inboxWriter;
     private readonly BrevoEmailOptions _options;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public BrevoWebhooksController(
-        IAppDbContext db,
+        ProviderCallbackInboxWriter inboxWriter,
         IOptions<BrevoEmailOptions> options,
         IStringLocalizer<ValidationResource> validationLocalizer)
     {
-        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _inboxWriter = inboxWriter ?? throw new ArgumentNullException(nameof(inboxWriter));
         _options = (options ?? throw new ArgumentNullException(nameof(options))).Value;
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
@@ -69,7 +66,7 @@ public sealed class BrevoWebhooksController : ApiControllerBase
         }
 
         var idempotencyKey = BuildIdempotencyKey(eventName, messageId, eventTimestamp);
-        var existing = await AddInboxMessageIfNewAsync(
+        var existing = await _inboxWriter.AddIfNewAsync(
             provider: "Brevo",
             callbackType: eventName,
             idempotencyKey,
@@ -81,51 +78,6 @@ public sealed class BrevoWebhooksController : ApiControllerBase
             received = true,
             duplicate = existing
         });
-    }
-
-    private async Task<bool> AddInboxMessageIfNewAsync(
-        string provider,
-        string callbackType,
-        string idempotencyKey,
-        string rawPayload,
-        CancellationToken ct)
-    {
-        var existing = await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false);
-        if (existing)
-        {
-            return true;
-        }
-
-        _db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
-        {
-            Provider = provider,
-            CallbackType = callbackType,
-            IdempotencyKey = idempotencyKey,
-            PayloadJson = rawPayload,
-            Status = "Pending"
-        });
-
-        try
-        {
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
-            return false;
-        }
-        catch (DbUpdateException)
-        {
-            if (await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false))
-            {
-                return true;
-            }
-
-            throw;
-        }
-    }
-
-    private Task<bool> InboxMessageExistsAsync(string provider, string idempotencyKey, CancellationToken ct)
-    {
-        return _db.Set<ProviderCallbackInboxMessage>()
-            .AsNoTracking()
-            .AnyAsync(x => !x.IsDeleted && x.Provider == provider && x.IdempotencyKey == idempotencyKey, ct);
     }
 
     private bool HasWebhookCredentials()

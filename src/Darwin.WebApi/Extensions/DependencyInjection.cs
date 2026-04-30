@@ -154,6 +154,7 @@ namespace Darwin.WebApi.Extensions
 
             services.AddSingleton<StorefrontCheckoutUrlBuilder>();
             services.TryAddSingleton<StripeWebhookSignatureVerifier>();
+            services.AddScoped<ProviderCallbackInboxWriter>();
 
             // Loyalty presentation helpers used by WebApi mapping/presentation layer.
             services.AddLoyaltyPresentationServices();
