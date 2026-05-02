@@ -25,6 +25,7 @@ public sealed class AccountDeletionViewModel : BaseViewModel
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
+    private CancellationTokenSource? _operationCancellation;
     private bool _confirmIrreversibleDeletion;
 
     /// <summary>
@@ -68,6 +69,16 @@ public sealed class AccountDeletionViewModel : BaseViewModel
     /// </summary>
     public AsyncCommand SubmitDeletionRequestCommand { get; }
 
+    /// <summary>
+    /// Cancels any in-flight deletion request when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
     private async Task SubmitDeletionRequestAsync()
     {
         if (IsBusy)
@@ -85,12 +96,14 @@ public sealed class AccountDeletionViewModel : BaseViewModel
         {
             IsBusy = true;
             ErrorMessage = null;
+            SubmitDeletionRequestCommand.RaiseCanExecuteChanged();
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             var result = await _profileService
-                .RequestAccountDeletionAsync(new RequestAccountDeletionRequest(true), CancellationToken.None)
+                .RequestAccountDeletionAsync(new RequestAccountDeletionRequest(true), operationCancellation.Token)
                 .ConfigureAwait(false);
 
             if (!result.Succeeded)
@@ -99,9 +112,13 @@ public sealed class AccountDeletionViewModel : BaseViewModel
                 return;
             }
 
-            await _authService.LogoutAsync(CancellationToken.None).ConfigureAwait(false);
+            await _authService.LogoutAsync(operationCancellation.Token).ConfigureAwait(false);
             _pushRegistrationCoordinator.ResetCachedRegistrationState();
             await _appRootNavigator.NavigateToLoginAsync().ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the deletion request page intentionally cancels stale deletion work.
         }
         catch (Exception ex)
         {
@@ -114,6 +131,42 @@ public sealed class AccountDeletionViewModel : BaseViewModel
                 IsBusy = false;
                 SubmitDeletionRequestCommand.RaiseCanExecuteChanged();
             });
+
+            EndCurrentOperation(operationCancellation);
         }
+    }
+
+    /// <summary>
+    /// Starts a cancellable deletion request and cancels any stale request still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active deletion request without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed deletion request when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
     }
 }

@@ -153,11 +153,11 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        await _gate.WaitAsync(cancellationToken);
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var storageKey = await ResolveStorageKeyAsync(cancellationToken).ConfigureAwait(false);
-            var entries = await LoadEntriesCoreAsync(storageKey, cancellationToken);
+            var entries = await LoadEntriesCoreAsync(storageKey, cancellationToken).ConfigureAwait(false);
             entries.Add(new BusinessActivityEntry
             {
                 OccurredAtUtc = _timeProvider.GetUtcNow().UtcDateTime,
@@ -172,7 +172,7 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
                 .OrderBy(x => x.OccurredAtUtc)
                 .ToList();
 
-            await SaveEntriesCoreAsync(storageKey, trimmed, cancellationToken);
+            await SaveEntriesCoreAsync(storageKey, trimmed, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -184,11 +184,11 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        await _gate.WaitAsync(cancellationToken);
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var storageKey = await ResolveStorageKeyAsync(cancellationToken).ConfigureAwait(false);
-            return await LoadEntriesCoreAsync(storageKey, cancellationToken);
+            return await LoadEntriesCoreAsync(storageKey, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -198,9 +198,9 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
 
     private async Task<List<BusinessActivityEntry>> LoadEntriesCoreAsync(string storageKey, CancellationToken cancellationToken)
     {
-        await EnsureLegacyPayloadMigratedAsync(storageKey, cancellationToken);
+        await EnsureLegacyPayloadMigratedAsync(storageKey, cancellationToken).ConfigureAwait(false);
 
-        var raw = await _keyValueStore.GetAsync(storageKey, cancellationToken);
+        var raw = await _keyValueStore.GetAsync(storageKey, cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(raw))
         {
             return new List<BusinessActivityEntry>();
@@ -214,6 +214,7 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         catch
         {
             // Corrupted local payload should not crash the app. We recover with an empty log.
+            await _keyValueStore.RemoveAsync(storageKey, cancellationToken).ConfigureAwait(false);
             return new List<BusinessActivityEntry>();
         }
     }
@@ -227,29 +228,31 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
     private async Task EnsureLegacyPayloadMigratedAsync(string storageKey, CancellationToken cancellationToken)
     {
         var migrationMarkerKey = $"{storageKey}:migrated";
-        var migrationMarker = await _keyValueStore.GetAsync(migrationMarkerKey, cancellationToken);
+        var migrationMarker = await _keyValueStore.GetAsync(migrationMarkerKey, cancellationToken).ConfigureAwait(false);
         if (string.Equals(migrationMarker, bool.TrueString, StringComparison.Ordinal))
         {
             return;
         }
 
-        var scopedPayloadExists = !string.IsNullOrWhiteSpace(await _keyValueStore.GetAsync(storageKey, cancellationToken));
+        var scopedPayloadExists = !string.IsNullOrWhiteSpace(await _keyValueStore.GetAsync(storageKey, cancellationToken).ConfigureAwait(false));
         var legacyPayload = Preferences.Default.Get(StorageKey, string.Empty);
         if (!scopedPayloadExists && !string.IsNullOrWhiteSpace(legacyPayload))
         {
-            await _keyValueStore.SetAsync(storageKey, legacyPayload, cancellationToken);
+            await _keyValueStore.SetAsync(storageKey, legacyPayload, cancellationToken).ConfigureAwait(false);
             Preferences.Default.Remove(StorageKey);
+            scopedPayloadExists = true;
         }
 
-        var legacyDbPayload = await _keyValueStore.GetAsync(StorageKey, cancellationToken);
+        var legacyDbPayload = await _keyValueStore.GetAsync(StorageKey, cancellationToken).ConfigureAwait(false);
         if (!scopedPayloadExists && !string.IsNullOrWhiteSpace(legacyDbPayload))
         {
-            await _keyValueStore.SetAsync(storageKey, legacyDbPayload, cancellationToken);
-            await _keyValueStore.RemoveAsync(StorageKey, cancellationToken);
+            await _keyValueStore.SetAsync(storageKey, legacyDbPayload, cancellationToken).ConfigureAwait(false);
+            scopedPayloadExists = true;
         }
 
-        await _keyValueStore.SetAsync(migrationMarkerKey, bool.TrueString, cancellationToken);
-        await _keyValueStore.RemoveAsync(LegacyMigrationFlagKey, cancellationToken);
+        await _keyValueStore.RemoveAsync(StorageKey, cancellationToken).ConfigureAwait(false);
+        await _keyValueStore.SetAsync(migrationMarkerKey, bool.TrueString, cancellationToken).ConfigureAwait(false);
+        await _keyValueStore.RemoveAsync(LegacyMigrationFlagKey, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<string> ResolveStorageKeyAsync(CancellationToken cancellationToken)

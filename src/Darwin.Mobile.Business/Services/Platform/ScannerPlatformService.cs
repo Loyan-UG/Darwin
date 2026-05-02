@@ -5,6 +5,7 @@ using Darwin.Mobile.Shared.Services.Permissions;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -106,6 +107,8 @@ public sealed class ScannerPlatformService : IScanner
 
     private static async Task<string?> LaunchScanPageWithFallbackAsync(CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         var scanPage = new QrScanPage();
         var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -117,9 +120,11 @@ public sealed class ScannerPlatformService : IScanner
         {
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
+                ct.ThrowIfCancellationRequested();
                 await Shell.Current!.Navigation.PushModalAsync(scanPage).ConfigureAwait(false);
             }).ConfigureAwait(false);
 
+            ct.ThrowIfCancellationRequested();
             string? result;
             using (ct.Register(() => tcs.TrySetCanceled(ct)))
             {
@@ -143,9 +148,11 @@ public sealed class ScannerPlatformService : IScanner
             {
                 try
                 {
-                    if (Shell.Current?.Navigation.ModalStack?.Count > 0)
+                    var navigation = Shell.Current?.Navigation;
+                    var modalStack = navigation?.ModalStack;
+                    if (modalStack?.LastOrDefault() == scanPage)
                     {
-                        await Shell.Current.Navigation.PopModalAsync().ConfigureAwait(false);
+                        await navigation!.PopModalAsync().ConfigureAwait(false);
                     }
                 }
                 catch
@@ -155,7 +162,7 @@ public sealed class ScannerPlatformService : IScanner
         }
     }
 
-    private static Task<string?> PromptForManualTokenAsync(CancellationToken ct)
+    private static async Task<string?> PromptForManualTokenAsync(CancellationToken ct)
     {
         var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -179,7 +186,11 @@ public sealed class ScannerPlatformService : IScanner
             }
         });
 
-        ct.Register(() => tcs.TrySetCanceled(ct));
-        return tcs.Task;
+        // Dispose the cancellation registration after the prompt completes so repeated scans do not retain delegates.
+        using var cancellationRegistration = ct.CanBeCanceled
+            ? ct.Register(() => tcs.TrySetCanceled(ct))
+            : default;
+
+        return await tcs.Task.ConfigureAwait(false);
     }
 }

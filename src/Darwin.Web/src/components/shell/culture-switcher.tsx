@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCultureDisplayName, getCultureShortCode } from "@/lib/culture";
 import {
   INFERRED_CULTURE_SEARCH_PARAM,
@@ -84,6 +84,10 @@ export function CultureSwitcher({
   supportedCultures,
   languageAlternates: serverLanguageAlternates,
 }: CultureSwitcherProps) {
+  const visibleCultures = useMemo(
+    () => Array.from(new Set(supportedCultures)).filter(Boolean),
+    [supportedCultures],
+  );
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [languageAlternates, setLanguageAlternates] = useState<
@@ -91,17 +95,25 @@ export function CultureSwitcher({
   >(() => toLanguageAlternateMap(serverLanguageAlternates));
 
   useEffect(() => {
-    setLanguageAlternates(
-      new Map([
-        ...toLanguageAlternateMap(serverLanguageAlternates),
-        ...readDocumentLanguageAlternates(supportedCultures),
-      ]),
-    );
-  }, [pathname, serverLanguageAlternates, supportedCultures]);
+    const frame = window.requestAnimationFrame(() => {
+      setLanguageAlternates(
+        new Map([
+          ...toLanguageAlternateMap(serverLanguageAlternates),
+          ...readDocumentLanguageAlternates(visibleCultures),
+        ]),
+      );
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname, serverLanguageAlternates, visibleCultures]);
+
+  if (visibleCultures.length < 2) {
+    return null;
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {supportedCultures.map((culture) => {
+      {visibleCultures.map((culture) => {
         const isActive = culture === currentCulture;
 
         return (

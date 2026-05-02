@@ -4,8 +4,7 @@ import { buildPublicSitemapEntries } from "@/features/storefront/server/localize
 import { createLocalizedDiscoveryLoader } from "@/lib/localized-discovery-loader";
 import { summarizePublicSitemapHealth } from "@/lib/route-health";
 import { publicSitemapObservationContext } from "@/lib/route-observation-context";
-import { getSupportedCultures } from "@/lib/request-culture";
-import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
+import { getSupportedCultures, getSupportedCulturesAsync } from "@/lib/request-culture";
 
 export const getPublicSitemapContext = createLocalizedDiscoveryLoader({
   kind: "sitemap",
@@ -15,7 +14,7 @@ export const getPublicSitemapContext = createLocalizedDiscoveryLoader({
   getContext: () => publicSitemapObservationContext(getSupportedCultures()),
   getSuccessContext: summarizePublicSitemapHealth,
   load: async () => {
-    const { supportedCultures } = getSiteRuntimeConfig();
+    const supportedCultures = await getSupportedCulturesAsync();
     const { cmsSitemapEntries, productSitemapEntries } =
       await getLocalizedPublicDiscoveryInventory();
 

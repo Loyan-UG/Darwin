@@ -16,7 +16,7 @@ import {
   localizeHref,
 } from "@/lib/locale-routing";
 import { buildCatalogProductPath } from "@/lib/entity-paths";
-import { getRequestCulture, getSupportedCultures } from "@/lib/request-culture";
+import { getRequestCulture, getSupportedCulturesAsync } from "@/lib/request-culture";
 
 type ProductSearchParams = {
   category?: string;
@@ -114,7 +114,7 @@ export default async function ProductDetailRoute({
   const product = productResult.data;
 
   if (!product && productResult.status === "not-found") {
-    for (const alternateCulture of getSupportedCultures()) {
+    for (const alternateCulture of await getSupportedCulturesAsync()) {
       if (alternateCulture === culture) {
         continue;
       }

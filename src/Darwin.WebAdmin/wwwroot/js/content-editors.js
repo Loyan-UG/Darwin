@@ -29,6 +29,11 @@
 
     function initEditors(root, selector, options) {
         const scope = root || document;
+        const editors = scope.querySelectorAll?.(selector) || [];
+        if (editors.length === 0) {
+            return;
+        }
+
         if (!window.Quill) {
             if (options.notLoadedMessage) {
                 console.error(options.notLoadedMessage);
@@ -36,7 +41,7 @@
             return;
         }
 
-        scope.querySelectorAll(selector).forEach(function (el) {
+        editors.forEach(function (el) {
             if (el.dataset.quillInitialized === 'true') {
                 return;
             }
@@ -61,10 +66,19 @@
         });
     }
 
+    function resolveConfigRoot(scope, id) {
+        if (scope?.nodeType === Node.ELEMENT_NODE && scope.id === id) {
+            return scope;
+        }
+
+        return scope?.querySelector?.(`#${id}`) || document.getElementById(id);
+    }
+
     function pageToolbar(root) {
-        const uploadUrl = root.dataset.pageImageUploadUrl || '';
-        const uploadFailedMessage = root.dataset.pageImageUploadFailed || '';
-        const uploadFailedError = root.dataset.pageEditorUploadFailedError || 'Upload failed';
+        const dataset = root?.dataset || {};
+        const uploadUrl = dataset.pageImageUploadUrl || '';
+        const uploadFailedMessage = dataset.pageImageUploadFailed || '';
+        const uploadFailedError = dataset.pageEditorUploadFailedError || 'Upload failed';
 
         return {
             container: toolbar,
@@ -112,10 +126,11 @@
 
     window.darwinAdmin.initPageEditors = function (root) {
         const scope = root || document;
-        const configRoot = scope.querySelector?.('#page-editor-shell') || document.getElementById('page-editor-shell') || scope;
+        const configRoot = resolveConfigRoot(scope, 'page-editor-shell');
+        const dataset = configRoot?.dataset || {};
         initEditors(scope, '[data-page-quill-editor="true"]', {
-            placeholder: configRoot.dataset.pageEditorPlaceholder || '',
-            notLoadedMessage: configRoot.dataset.pageEditorQuillNotLoaded || '',
+            placeholder: dataset.pageEditorPlaceholder || '',
+            notLoadedMessage: dataset.pageEditorQuillNotLoaded || '',
             toolbar: pageToolbar(configRoot),
             submitDataKey: 'pageQuillSubmitBound'
         });
@@ -123,9 +138,10 @@
 
     window.darwinAdmin.initProductEditors = function (root) {
         const scope = root || document;
-        const configRoot = scope.querySelector?.('#product-editor-shell') || document.getElementById('product-editor-shell') || scope;
+        const configRoot = resolveConfigRoot(scope, 'product-editor-shell');
+        const dataset = configRoot?.dataset || {};
         initEditors(scope, '[data-quill-product-editor="true"]', {
-            placeholder: configRoot.dataset.productDescriptionPlaceholder || '',
+            placeholder: dataset.productDescriptionPlaceholder || '',
             toolbar: toolbar,
             submitDataKey: 'quillSubmitBound'
         });

@@ -1,28 +1,44 @@
 @model Darwin.WebAdmin.ViewModels.Billing.ExpenseEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <label asp-for="BusinessId" class="form-label"></label>
-        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("ExpenseClassificationSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="BusinessId" class="form-label"></label>
+            <field-help title="@T.T("Business")" content="@T.T("ExpenseBusinessHelp")" placement="right"></field-help>
+            <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="SupplierId" class="form-label"></label>
+            <field-help title="@T.T("Supplier")" content="@T.T("ExpenseSupplierHelp")" placement="right"></field-help>
+            <select asp-for="SupplierId" asp-items="Model.SupplierOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="ExpenseDateUtc" class="form-label"></label>
+            <field-help title="@T.T("ExpenseDate")" content="@T.T("ExpenseDateHelp")" placement="right"></field-help>
+            <input asp-for="ExpenseDateUtc" type="date" class="form-control" />
+        </div>
     </div>
-    <div class="col-md-4">
-        <label asp-for="SupplierId" class="form-label"></label>
-        <select asp-for="SupplierId" asp-items="Model.SupplierOptions" class="form-select"></select>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("ExpenseAmountNotesSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="Category" class="form-label"></label>
+            <field-help title="@T.T("Category")" content="@T.T("ExpenseCategoryHelp")" placement="right"></field-help>
+            <input asp-for="Category" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="AmountMinor" class="form-label"></label>
+            <field-help title="@T.T("AmountMinor")" content="@T.T("ExpenseAmountMinorHelp")" placement="right"></field-help>
+            <input asp-for="AmountMinor" class="form-control" />
+        </div>
+        <div class="col-12">
+            <label asp-for="Description" class="form-label"></label>
+            <field-help title="@T.T("Description")" content="@T.T("ExpenseDescriptionHelp")" placement="right"></field-help>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        </div>
     </div>
-    <div class="col-md-4">
-        <label asp-for="ExpenseDateUtc" class="form-label"></label>
-        <input asp-for="ExpenseDateUtc" type="date" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Category" class="form-label"></label>
-        <input asp-for="Category" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="AmountMinor" class="form-label"></label>
-        <input asp-for="AmountMinor" class="form-control" />
-    </div>
-    <div class="col-12">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-    </div>
-</div>
+</section>

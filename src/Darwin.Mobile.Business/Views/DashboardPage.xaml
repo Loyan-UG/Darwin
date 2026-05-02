@@ -3,25 +3,50 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
              xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+             xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:segmented="clr-namespace:Syncfusion.Maui.Toolkit.SegmentedControl;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:charts="clr-namespace:Syncfusion.Maui.Toolkit.Charts;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:cards="clr-namespace:Syncfusion.Maui.Toolkit.Cards;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:shimmer="clr-namespace:Syncfusion.Maui.Toolkit.Shimmer;assembly=Syncfusion.Maui.Toolkit"
              x:Class="Darwin.Mobile.Business.Views.DashboardPage"
              x:DataType="vm:DashboardViewModel"
              Title="{x:Static res:AppResources.DashboardTitle}">
 
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+        <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                       IsRefreshing="{Binding IsBusy}"
+                                       ProgressColor="{StaticResource BrandGold500}"
+                                       ProgressBackground="{StaticResource Neutral0}">
+            <pullToRefresh:SfPullToRefresh.PullableContent>
+                <ScrollView>
+                    <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="{x:Static res:AppResources.DashboardTitle}" Style="{StaticResource TitleLabelStyle}" />
                         <Label Text="{x:Static res:AppResources.DashboardSubtitle}" Style="{StaticResource BodyLabelStyle}" />
                         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                            <Border Grid.Column="0" Style="{StaticResource FormFieldBorderStyle}">
-                                <Picker ItemsSource="{Binding LookbackDayOptions}" SelectedItem="{Binding LookbackDays}" TextColor="{StaticResource BrushOnSurface}" />
-                            </Border>
-                            <Button Grid.Column="1" Text="{x:Static res:AppResources.DashboardRefreshButton}" Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryButtonStyle}" />
-                            <Button Grid.Column="2" Text="{x:Static res:AppResources.DashboardExportCsvButton}" Command="{Binding ExportCsvCommand}" Style="{StaticResource OutlinedButtonStyle}" />
+                            <segmented:SfSegmentedControl Grid.Column="0"
+                                                          ItemsSource="{Binding LookbackDayLabels}"
+                                                          SelectedIndex="{Binding SelectedLookbackIndex, Mode=TwoWay}"
+                                                          SegmentHeight="44"
+                                                          VisibleSegmentsCount="4"
+                                                          CornerRadius="8"
+                                                          SegmentCornerRadius="8"
+                                                          SegmentBackground="{StaticResource BrushSurface}"
+                                                          SelectedSegmentTextColor="{StaticResource Neutral0}"
+                                                          Stroke="{StaticResource BrandGold50}"
+                                                          StrokeThickness="1">
+                                <segmented:SfSegmentedControl.SelectionIndicatorSettings>
+                                    <segmented:SelectionIndicatorSettings Background="{StaticResource BrushPrimary}"
+                                                                         TextColor="{StaticResource Neutral0}"
+                                                                         Stroke="{StaticResource BrandGold500}" />
+                                </segmented:SfSegmentedControl.SelectionIndicatorSettings>
+                            </segmented:SfSegmentedControl>
+                            <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.DashboardRefreshButton}" Command="{Binding RefreshCommand}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" />
+                            <buttons:SfButton Grid.Column="2" Text="{x:Static res:AppResources.DashboardExportCsvButton}" Command="{Binding ExportCsvCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
                         </Grid>
-                        <Button Text="{x:Static res:AppResources.DashboardExportPdfButton}" Command="{Binding ExportPdfCommand}" Style="{StaticResource OutlinedButtonStyle}" />
+                        <buttons:SfButton Text="{x:Static res:AppResources.DashboardExportPdfButton}" Command="{Binding ExportPdfCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -29,45 +54,84 @@
                       ColumnSpacing="10"
                       RowDefinitions="Auto,Auto,Auto"
                       RowSpacing="10">
-                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
-                        <VerticalStackLayout Spacing="4">
+                    <cards:SfCardView Grid.Row="0" Grid.Column="0"
+                                      CardViewBackground="{StaticResource BrushSurfaceMuted}"
+                                      BorderColor="{StaticResource BrandGold50}"
+                                      BorderWidth="1"
+                                      CornerRadius="8">
+                        <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardSessionsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding TotalSessions}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
-                        <VerticalStackLayout Spacing="4">
+                    </cards:SfCardView>
+                    <cards:SfCardView Grid.Row="0" Grid.Column="1"
+                                      CardViewBackground="{StaticResource BrushSurfaceMuted}"
+                                      BorderColor="{StaticResource BrandGold50}"
+                                      BorderWidth="1"
+                                      CornerRadius="8">
+                        <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardAccrualsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding AccrualCount}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
-                        <VerticalStackLayout Spacing="4">
+                    </cards:SfCardView>
+                    <cards:SfCardView Grid.Row="1" Grid.Column="0"
+                                      CardViewBackground="{StaticResource BrushSurfaceMuted}"
+                                      BorderColor="{StaticResource BrandGold50}"
+                                      BorderWidth="1"
+                                      CornerRadius="8">
+                        <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardRedemptionsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding RedemptionCount}" Style="{StaticResource MetricValueLabelStyle}" />
                         </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
-                        <VerticalStackLayout Spacing="4">
+                    </cards:SfCardView>
+                    <cards:SfCardView Grid.Row="1" Grid.Column="1"
+                                      CardViewBackground="{StaticResource BrushSurfaceMuted}"
+                                      BorderColor="{StaticResource BrandGold50}"
+                                      BorderWidth="1"
+                                      CornerRadius="8">
+                        <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardAccruedPointsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding TotalAccruedPoints, StringFormat='{x:Static res:AppResources.DashboardAccruedPointsFormat}'}" Style="{StaticResource BodyLabelStyle}" />
                             <Label Text="{x:Static res:AppResources.DashboardRedeemedPointsTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding TotalRedeemedPoints, StringFormat='{x:Static res:AppResources.DashboardRedeemedPointsFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                         </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
-                        <VerticalStackLayout Spacing="4">
+                    </cards:SfCardView>
+                    <cards:SfCardView Grid.Row="2" Grid.Column="0"
+                                      CardViewBackground="{StaticResource BrushSurfaceMuted}"
+                                      BorderColor="{StaticResource BrandGold50}"
+                                      BorderWidth="1"
+                                      CornerRadius="8">
+                        <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardSubscriptionIssuesTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding SubscriptionStatusRefreshFailures, StringFormat='{x:Static res:AppResources.DashboardSubscriptionRefreshFailuresFormat}'}" Style="{StaticResource BodyLabelStyle}" />
                         </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}">
-                        <VerticalStackLayout Spacing="4">
+                    </cards:SfCardView>
+                    <cards:SfCardView Grid.Row="2" Grid.Column="1"
+                                      CardViewBackground="{StaticResource BrushSurfaceMuted}"
+                                      BorderColor="{StaticResource BrandGold50}"
+                                      BorderWidth="1"
+                                      CornerRadius="8">
+                        <VerticalStackLayout Padding="14,12" Spacing="4">
                             <Label Text="{x:Static res:AppResources.DashboardCampaignTargetingTitle}" Style="{StaticResource CaptionLabelStyle}" />
                             <Label Text="{Binding CampaignTargetingFixMetricsSummary}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                         </VerticalStackLayout>
-                    </Border>
+                    </cards:SfCardView>
                 </Grid>
+
+                <Border Style="{StaticResource CardBorderStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.DashboardActivityMixTitle}"
+                               Style="{StaticResource SectionHeadingLabelStyle}" />
+                        <charts:SfCircularChart HeightRequest="220">
+                            <charts:SfCircularChart.Series>
+                                <charts:DoughnutSeries ItemsSource="{Binding ActivityMix}"
+                                                       XBindingPath="Label"
+                                                       YBindingPath="Value"
+                                                       ShowDataLabels="True" />
+                            </charts:SfCircularChart.Series>
+                        </charts:SfCircularChart>
+                    </VerticalStackLayout>
+                </Border>
 
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="8">
@@ -77,18 +141,20 @@
                                 <Label Text="{x:Static res:AppResources.DashboardTopCustomersEmpty}" Style="{StaticResource BodyLabelStyle}" />
                             </VerticalStackLayout>
                         </Border>
-                        <CollectionView ItemsSource="{Binding TopCustomers}" IsVisible="{Binding HasTopCustomers}" SelectionMode="None">
-                            <CollectionView.ItemTemplate>
+                        <VerticalStackLayout Spacing="8"
+                                             IsVisible="{Binding HasTopCustomers}"
+                                             BindableLayout.ItemsSource="{Binding TopCustomers}">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:BusinessTopCustomerItem">
-                                    <Border Style="{StaticResource MutedCardBorderStyle}" Margin="0,0,0,8">
+                                    <Border Style="{StaticResource MutedCardBorderStyle}">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                             <Label Text="{Binding CustomerDisplayName}" Style="{StaticResource BodyLabelStyle}" />
                                             <Label Grid.Column="1" Text="{Binding InteractionsCount, StringFormat='{x:Static res:AppResources.DashboardInteractionsCountFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 
@@ -100,10 +166,12 @@
                                 <Label Text="{x:Static res:AppResources.DashboardRecentActivityEmpty}" Style="{StaticResource BodyLabelStyle}" />
                             </VerticalStackLayout>
                         </Border>
-                        <CollectionView ItemsSource="{Binding RecentActivities}" IsVisible="{Binding HasRecentActivities}" SelectionMode="None">
-                            <CollectionView.ItemTemplate>
+                        <VerticalStackLayout Spacing="8"
+                                             IsVisible="{Binding HasRecentActivities}"
+                                             BindableLayout.ItemsSource="{Binding RecentActivities}">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:BusinessActivityFeedItem">
-                                    <Border Style="{StaticResource MutedCardBorderStyle}" Margin="0,0,0,8">
+                                    <Border Style="{StaticResource MutedCardBorderStyle}">
                                         <VerticalStackLayout Spacing="4">
                                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                                 <Label Text="{Binding ActivityKind}" Style="{StaticResource BodyLabelStyle}" />
@@ -114,26 +182,27 @@
                                         </VerticalStackLayout>
                                     </Border>
                                 </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 
                 <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
                 <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrushPrimary}" />
-            </VerticalStackLayout>
-        </ScrollView>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </pullToRefresh:SfPullToRefresh.PullableContent>
+        </pullToRefresh:SfPullToRefresh>
 
-        <Grid BackgroundColor="#40FFFFFF" IsVisible="{Binding IsBusy}" InputTransparent="False">
+        <Grid BackgroundColor="{StaticResource BrushBusyOverlay}" IsVisible="{Binding IsBusy}" InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" WidthRequest="300" Spacing="14">
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="12">
-                        <Border Style="{StaticResource SkeletonBlockBorderStyle}" HeightRequest="18" WidthRequest="140" HorizontalOptions="Center" />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Border Grid.Column="0" Style="{StaticResource SkeletonBlockBorderStyle}" HeightRequest="56" />
-                            <Border Grid.Column="1" Style="{StaticResource SkeletonBlockBorderStyle}" HeightRequest="56" />
-                        </Grid>
-                        <Border Style="{StaticResource SkeletonBlockBorderStyle}" HeightRequest="14" />
+                        <shimmer:SfShimmer IsActive="{Binding IsBusy}"
+                                           Type="Article"
+                                           Fill="{StaticResource BrandGold50}"
+                                           WaveColor="{StaticResource Neutral0}"
+                                           HeightRequest="120" />
                     </VerticalStackLayout>
                 </Border>
                 <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrushPrimary}" />

@@ -514,6 +514,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             }
 
             vm.Cultures = orderedCultures;
+            vm.MultilingualEnabled = orderedCultures.Length > 1;
+            vm.Translations = vm.Translations
+                .Where(t => orderedCultures.Any(c => string.Equals(c, t.Culture, StringComparison.OrdinalIgnoreCase)))
+                .GroupBy(t => t.Culture, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToList();
 
             foreach (var culture in orderedCultures)
             {

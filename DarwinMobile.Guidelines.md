@@ -4,7 +4,7 @@
 >
 > Status: Light theme (v1) — Dark theme planned (same token system, different values).
 >
-> Language: App UI in **German** for Phase 1. English is added later. Code comments remain **English**.
+> Language: App UI is resource-based and must support **English** and **German** in both mobile apps. Code comments remain **English**.
 
 
 ## Table of Contents
@@ -13,7 +13,7 @@
 - [2. UX Principles (Non-Negotiable)](#2-ux-principles-non-negotiable)
 - [3. Brand and Visual Tone (Gold Logo Alignment)](#3-brand-and-visual-tone-gold-logo-alignment)
 - [4. Theming Strategy (Light now, Dark later)](#4-theming-strategy-light-now-dark-later)
-- [5. Localization Strategy (German first)](#5-localization-strategy-german-first)
+- [5. Localization Strategy (English and German First)](#5-localization-strategy-english-and-german-first)
 - [6. Phase-Aware UI (All phases visible, limited behavior)](#6-phase-aware-ui-all-phases-visible-limited-behavior)
 - [7. Document Structure (Next Sections)](#7-document-structure-next-sections)
 - [8. Color System & Design Tokens (Gold-First, Light Theme v1)](#8-color-system--design-tokens-gold-first-light-theme-v1)
@@ -56,7 +56,7 @@
 
 ### 2.1 Clarity over cleverness
 - Primary actions must be obvious (one primary CTA per screen where possible).
-- Use plain German labels. Avoid ambiguous icons without text.
+- Use plain localized labels. Avoid ambiguous icons without text.
 
 ### 2.2 Fast path for primary flows
 - Consumer primary flow: **Login → QR → Reward confirmation feedback**
@@ -120,11 +120,12 @@ Never reference raw hex values directly in UI code except in the token definitio
 
 ---
 
-## 5. Localization Strategy (German first)
+## 5. Localization Strategy (English and German First)
 
 ### 5.1 UI language rules
-- All user-facing strings must be localizable from day one (even if only German exists now).
-- Do not embed German strings directly inside UI components where avoidable; use resource keys.
+- All user-facing strings must be localizable from day one and must exist in both the English and German resource files.
+- Do not embed user-facing strings directly inside UI components where avoidable; use resource keys.
+- Every change to `Strings.resx` must be mirrored in `Strings.de.resx`, and generated resource accessors must stay synchronized.
 
 ### 5.2 Text expansion readiness
 - Layouts must survive longer English strings later.
@@ -187,6 +188,7 @@ Mobile should continue to feel user-owned and locale-aware, not merely tied to a
 These are the *only* places where hex values are allowed.
 
 **Brand (Gold)**
+- `Base.BrandGold.50`   = `#FFF8E7` (soft gold surface and border tint)
 - `Base.BrandGold.500`  = `#F4B223` (main accent, focus border, primary link, primary button gradient start)
 - `Base.BrandGold.600`  = `#E09F1A` (pressed/active)
 - `Base.BrandGold.300`  = `#FFD24C` (subtle highlight, primary button gradient end)
@@ -226,6 +228,7 @@ These are used everywhere in UI.
 **Surfaces**
 - `Color.Surface.Background`   -> `Base.Neutral.50`
 - `Color.Surface.Default`      -> `Base.Neutral.0`
+- `Color.Surface.Muted`        -> `Base.Neutral.100`
 - `Color.Surface.Elevated`     -> `Base.Neutral.0` (with shadow/elevation)
 - `Color.Surface.Disabled`     -> `Base.Neutral.100`
 
@@ -440,15 +443,16 @@ We will keep the same component set but allow different density presets:
 
 #### 9.7.1 Radius tokens
 - `Radius.8`  (small)
-- `Radius.12` (default)
+- `Radius.10` (optional Business operational card radius)
+- `Radius.12` (legacy/default only when an existing screen explicitly needs more softness)
 - `Radius.16` (large, hero cards)
 - `Radius.Pill` (chips)
 
 Rules:
-- Default cards: `Radius.12`
+- Current mobile default cards: `Radius.8` in Consumer and `Radius.10` or lower in Business, unless a page has a specific approved reason to be softer.
 - Consumer buttons and inputs: `Radius.8`
 - Primary buttons must not use pill styling in Consumer unless explicitly approved later
-- Chips/badges: `Radius.Pill`
+- Chips/badges: restrained radius, normally `Radius.8`; avoid pill-shaped controls unless explicitly approved later.
 
 ---
 
@@ -510,7 +514,7 @@ Rules:
 - Focused (keyboard/TV/tablet accessibility)
 
 ### 10.2.3 Label rules
-- German labels, short verbs.
+- Localized labels, short verbs.
 - Avoid ALL CAPS.
 - Prefer 1–2 words; if longer, allow wrapping rather than truncation.
 
@@ -801,7 +805,7 @@ Recommended:
 ## 11.6 Navigation Item Design Rules
 
 ### 11.6.1 Labels
-- German labels only.
+- Resource-based localized labels only.
 - Keep labels short (1 word preferred).
 - Avoid abbreviations unless common (e.g., "QR").
 
@@ -1531,7 +1535,7 @@ Use when connectivity is missing.
 > Goal: Implement the UI foundation in .NET MAUI in a way that:
 > - Light theme ships first
 > - Dark theme can be added later by swapping token values
-> - Localization (German now, English later) can be added without refactoring UI
+> - Localization supports English and German without UI refactoring
 > - Navigation skeleton for all phases exists without creating technical debt
 
 ---
@@ -1668,15 +1672,16 @@ Use the Coming Soon sheet from Phase 1.
 
 ---
 
-## 15.6 Localization (German now, English later)
+## 15.6 Localization (English and German)
 
 ### 15.6.1 Resource-based strings
 - All user-facing strings must be loaded from resources:
-  - `Strings.de.resx` now
-  - `Strings.en.resx` later
+  - `Strings.resx` for the default English copy
+  - `Strings.de.resx` for German copy
 
 Rules:
-- No hard-coded German strings in XAML/pages where possible.
+- No hard-coded user-facing strings in XAML/pages where possible.
+- Resource additions must be made in both English and German files in the same change.
 - Avoid concatenated sentences; use format strings with placeholders.
 
 ### 15.6.2 Layout resilience
@@ -1718,7 +1723,7 @@ Rules:
 - Phase 1 navigation restrictions enforced
 - Coming Soon pattern consistent
 - Screens follow blueprint structure
-- German resources applied for all strings
+- English and German resources applied for all strings
 - Accessibility checklist passes baseline
 
 ---
@@ -1735,7 +1740,7 @@ Rules:
 ### 16.1.1 Shared (Both Apps)
 - [ ] Semantic token system applied everywhere (no hard-coded colors)
 - [ ] Light theme stable (Theme.Light)
-- [ ] All user-facing strings in German resources
+- [ ] All user-facing strings in English and German resources
 - [ ] Global components available:
   - [ ] LoadingState
   - [ ] EmptyState

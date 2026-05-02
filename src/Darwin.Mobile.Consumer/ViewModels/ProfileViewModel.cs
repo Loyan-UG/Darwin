@@ -33,6 +33,9 @@ public sealed class ProfileViewModel : BaseViewModel
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
     private readonly IConsumerPushTokenProvider _pushTokenProvider;
     private readonly IConsumerNotificationPermissionService _notificationPermissionService;
+    private readonly TimeProvider _timeProvider;
+    private CancellationTokenSource? _operationCancellation;
+    private CancellationTokenSource? _pushOperationCancellation;
 
     private Guid _profileId;
     private byte[]? _rowVersion;
@@ -47,6 +50,7 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _currency = ProfileContractDefaults.DefaultCurrency;
     private bool _phoneNumberConfirmed;
     private PhoneVerificationChannelOption _selectedPhoneVerificationChannel;
+    private int _selectedPhoneVerificationChannelIndex;
     private string _phoneVerificationCode = string.Empty;
 
     private string? _successMessage;
@@ -56,6 +60,7 @@ public sealed class ProfileViewModel : BaseViewModel
     private bool _isPushSyncBusy;
     private string _pushPermissionStateText = AppResources.ProfilePushPermissionUnknown;
     private string _pushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
+    private bool _isOpeningNotificationSettings;
     private int _addressCount;
     private string? _defaultBillingAddressSummary;
     private string? _defaultShippingAddressSummary;
@@ -68,12 +73,14 @@ public sealed class ProfileViewModel : BaseViewModel
         IProfileService profileService,
         IConsumerPushRegistrationCoordinator pushRegistrationCoordinator,
         IConsumerPushTokenProvider pushTokenProvider,
-        IConsumerNotificationPermissionService notificationPermissionService)
+        IConsumerNotificationPermissionService notificationPermissionService,
+        TimeProvider timeProvider)
     {
         _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
         _pushTokenProvider = pushTokenProvider ?? throw new ArgumentNullException(nameof(pushTokenProvider));
         _notificationPermissionService = notificationPermissionService ?? throw new ArgumentNullException(nameof(notificationPermissionService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         PhoneVerificationChannelOptions =
         [
             new PhoneVerificationChannelOption
@@ -88,13 +95,16 @@ public sealed class ProfileViewModel : BaseViewModel
             }
         ];
         _selectedPhoneVerificationChannel = PhoneVerificationChannelOptions[0];
+        PhoneVerificationChannelLabels = PhoneVerificationChannelOptions
+            .Select(static option => option.DisplayName)
+            .ToArray();
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
         RequestPhoneVerificationCommand = new AsyncCommand(RequestPhoneVerificationAsync, CanRunPhoneVerificationAction);
         ConfirmPhoneVerificationCommand = new AsyncCommand(ConfirmPhoneVerificationAsync, CanRunPhoneVerificationAction);
         SyncPushRegistrationCommand = new AsyncCommand(SyncPushRegistrationAsync, () => !IsPushSyncBusy);
-        OpenNotificationSettingsCommand = new AsyncCommand(OpenNotificationSettingsAsync);
+        OpenNotificationSettingsCommand = new AsyncCommand(OpenNotificationSettingsAsync, () => !_isOpeningNotificationSettings);
     }
 
     public AsyncCommand RefreshCommand { get; }
@@ -162,10 +172,45 @@ public sealed class ProfileViewModel : BaseViewModel
 
     public IReadOnlyList<PhoneVerificationChannelOption> PhoneVerificationChannelOptions { get; }
 
+    /// <summary>
+    /// Gets the localized labels used by the phone-verification channel segmented control.
+    /// </summary>
+    public IReadOnlyList<string> PhoneVerificationChannelLabels { get; }
+
     public PhoneVerificationChannelOption SelectedPhoneVerificationChannel
     {
         get => _selectedPhoneVerificationChannel;
-        set => SetProperty(ref _selectedPhoneVerificationChannel, value);
+        set
+        {
+            if (!SetProperty(ref _selectedPhoneVerificationChannel, value))
+            {
+                return;
+            }
+
+            SyncSelectedPhoneVerificationChannelIndex(value);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the selected phone-verification channel index for segmented control binding.
+    /// </summary>
+    public int SelectedPhoneVerificationChannelIndex
+    {
+        get => _selectedPhoneVerificationChannelIndex;
+        set
+        {
+            if (!SetProperty(ref _selectedPhoneVerificationChannelIndex, value))
+            {
+                return;
+            }
+
+            if ((uint)value >= (uint)PhoneVerificationChannelOptions.Count)
+            {
+                return;
+            }
+
+            SelectedPhoneVerificationChannel = PhoneVerificationChannelOptions[value];
+        }
     }
 
     public string PhoneVerificationCode
@@ -376,6 +421,19 @@ public sealed class ProfileViewModel : BaseViewModel
         _isLoaded = true;
     }
 
+    /// <summary>
+    /// Cancels any in-flight profile or push operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        CancelCurrentPushOperation();
+        EndProfileBusyState();
+        RunOnMain(() => IsPushSyncBusy = false);
+        return Task.CompletedTask;
+    }
+
     private async Task RefreshAsync()
     {
         if (IsBusy)
@@ -390,32 +448,14 @@ public sealed class ProfileViewModel : BaseViewModel
             SuccessMessage = null;
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
-            var profile = await _profileService.GetMeAsync(CancellationToken.None);
-            if (profile is null)
-            {
-                RunOnMain(() => ErrorMessage = AppResources.ProfileLoadFailed);
-                return;
-            }
-
-            RunOnMain(() =>
-            {
-                _profileId = profile.Id;
-                _rowVersion = profile.RowVersion;
-
-                Email = profile.Email ?? string.Empty;
-                FirstName = profile.FirstName ?? string.Empty;
-                LastName = profile.LastName ?? string.Empty;
-                PhoneE164 = profile.PhoneE164 ?? string.Empty;
-                PhoneNumberConfirmed = profile.PhoneNumberConfirmed;
-                Locale = string.IsNullOrWhiteSpace(profile.Locale) ? ProfileContractDefaults.DefaultLocale : profile.Locale;
-                Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? ProfileContractDefaults.DefaultTimezone : profile.Timezone;
-                Currency = string.IsNullOrWhiteSpace(profile.Currency) ? ProfileContractDefaults.DefaultCurrency : profile.Currency;
-            });
-
-            await LoadAddressBookSummaryAsync().ConfigureAwait(false);
-            await LoadLinkedCustomerContextAsync().ConfigureAwait(false);
+            await LoadProfileSnapshotAsync(operationCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from profile intentionally cancels stale profile loads.
         }
         catch (Exception ex)
         {
@@ -431,14 +471,48 @@ public sealed class ProfileViewModel : BaseViewModel
                 RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
                 ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
             });
+            EndCurrentOperation(operationCancellation);
         }
     }
 
-    private async Task LoadAddressBookSummaryAsync()
+    /// <summary>
+    /// Loads profile identity, row version, address summary, and CRM context without checking the outer busy state.
+    /// This is used both by normal refresh and post-save reload so optimistic concurrency metadata is always current.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token used by all profile-related service calls.</param>
+    private async Task LoadProfileSnapshotAsync(CancellationToken cancellationToken)
+    {
+        var profile = await _profileService.GetMeAsync(cancellationToken).ConfigureAwait(false);
+        if (profile is null)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.ProfileLoadFailed);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            _profileId = profile.Id;
+            _rowVersion = profile.RowVersion?.ToArray() ?? Array.Empty<byte>();
+
+            Email = profile.Email ?? string.Empty;
+            FirstName = profile.FirstName ?? string.Empty;
+            LastName = profile.LastName ?? string.Empty;
+            PhoneE164 = profile.PhoneE164 ?? string.Empty;
+            PhoneNumberConfirmed = profile.PhoneNumberConfirmed;
+            Locale = string.IsNullOrWhiteSpace(profile.Locale) ? ProfileContractDefaults.DefaultLocale : profile.Locale;
+            Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? ProfileContractDefaults.DefaultTimezone : profile.Timezone;
+            Currency = string.IsNullOrWhiteSpace(profile.Currency) ? ProfileContractDefaults.DefaultCurrency : profile.Currency;
+        });
+
+        await LoadAddressBookSummaryAsync(cancellationToken).ConfigureAwait(false);
+        await LoadLinkedCustomerContextAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task LoadAddressBookSummaryAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var addresses = await _profileService.GetAddressesAsync(CancellationToken.None).ConfigureAwait(false);
+            var addresses = await _profileService.GetAddressesAsync(cancellationToken).ConfigureAwait(false);
             var defaultBilling = addresses.FirstOrDefault(x => x.IsDefaultBilling);
             var defaultShipping = addresses.FirstOrDefault(x => x.IsDefaultShipping);
 
@@ -460,11 +534,11 @@ public sealed class ProfileViewModel : BaseViewModel
         }
     }
 
-    private async Task LoadLinkedCustomerContextAsync()
+    private async Task LoadLinkedCustomerContextAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var context = await _profileService.GetLinkedCustomerContextAsync(CancellationToken.None).ConfigureAwait(false);
+            var context = await _profileService.GetLinkedCustomerContextAsync(cancellationToken).ConfigureAwait(false);
             if (context is null)
             {
                 ClearLinkedCustomerContext();
@@ -529,6 +603,7 @@ public sealed class ProfileViewModel : BaseViewModel
             SuccessMessage = null;
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             if (!ValidateProfileFields())
@@ -550,7 +625,7 @@ public sealed class ProfileViewModel : BaseViewModel
                 RowVersion = _rowVersion
             };
 
-            var updateResult = await _profileService.UpdateMeAsync(request, CancellationToken.None);
+            var updateResult = await _profileService.UpdateMeAsync(request, operationCancellation.Token);
             if (!updateResult.Succeeded)
             {
                 var failureMessage = ResolveProfileSaveFailureMessage(updateResult.Error);
@@ -560,9 +635,12 @@ public sealed class ProfileViewModel : BaseViewModel
 
             RunOnMain(() => SuccessMessage = AppResources.ProfileSaveSuccess);
 
-            _isLoaded = false;
-            await RefreshAsync();
+            await LoadProfileSnapshotAsync(operationCancellation.Token).ConfigureAwait(false);
             _isLoaded = true;
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from profile intentionally cancels stale profile saves.
         }
         catch (Exception ex)
         {
@@ -578,6 +656,7 @@ public sealed class ProfileViewModel : BaseViewModel
                 RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
                 ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
             });
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -601,11 +680,12 @@ public sealed class ProfileViewModel : BaseViewModel
             PhoneVerificationStatusMessage = null;
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             var result = await _profileService.RequestPhoneVerificationAsync(
                 new RequestPhoneVerificationRequest { Channel = SelectedPhoneVerificationChannel.Value },
-                CancellationToken.None).ConfigureAwait(false);
+                operationCancellation.Token).ConfigureAwait(false);
 
             RunOnMain(() =>
             {
@@ -613,6 +693,10 @@ public sealed class ProfileViewModel : BaseViewModel
                     ? string.Format(AppResources.ProfilePhoneVerificationCodeRequested, SelectedPhoneVerificationChannel.DisplayName)
                     : AppResources.ProfilePhoneVerificationRequestFailed;
             });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from profile intentionally cancels stale phone verification requests.
         }
         catch (Exception ex)
         {
@@ -628,6 +712,7 @@ public sealed class ProfileViewModel : BaseViewModel
                 RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
                 ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
             });
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -651,11 +736,12 @@ public sealed class ProfileViewModel : BaseViewModel
             PhoneVerificationStatusMessage = null;
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             var result = await _profileService.ConfirmPhoneVerificationAsync(
                 new ConfirmPhoneVerificationRequest { Code = PhoneVerificationCode.Trim() },
-                CancellationToken.None).ConfigureAwait(false);
+                operationCancellation.Token).ConfigureAwait(false);
 
             if (!result.Succeeded)
             {
@@ -669,9 +755,12 @@ public sealed class ProfileViewModel : BaseViewModel
                 PhoneVerificationStatusMessage = AppResources.ProfilePhoneVerificationConfirmSuccess;
             });
 
-            _isLoaded = false;
-            await RefreshAsync().ConfigureAwait(false);
+            await LoadProfileSnapshotAsync(operationCancellation.Token).ConfigureAwait(false);
             _isLoaded = true;
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from profile intentionally cancels stale phone verification confirmations.
         }
         catch (Exception ex)
         {
@@ -687,6 +776,7 @@ public sealed class ProfileViewModel : BaseViewModel
                 RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
                 ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
             });
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -699,10 +789,11 @@ public sealed class ProfileViewModel : BaseViewModel
 
         RunOnMain(() => IsPushSyncBusy = true);
 
+        var pushOperationCancellation = BeginCurrentPushOperation();
         try
         {
             var permissionResult = await _notificationPermissionService
-                .EnsurePermissionAsync(CancellationToken.None)
+                .EnsurePermissionAsync(pushOperationCancellation.Token)
                 .ConfigureAwait(false);
 
             if (!permissionResult.Succeeded)
@@ -723,7 +814,7 @@ public sealed class ProfileViewModel : BaseViewModel
             }
 
             var result = await _pushRegistrationCoordinator
-                .TryRegisterCurrentDeviceAsync(CancellationToken.None)
+                .TryRegisterCurrentDeviceAsync(pushOperationCancellation.Token)
                 .ConfigureAwait(false);
 
             RunOnMain(() =>
@@ -734,8 +825,12 @@ public sealed class ProfileViewModel : BaseViewModel
 
                 LastPushSyncAtText = string.Format(
                     AppResources.ProfilePushRegistrationLastSyncFormat,
-                    DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm"));
+                    _timeProvider.GetLocalNow().ToString("yyyy-MM-dd HH:mm"));
             });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from profile intentionally cancels stale push sync work.
         }
         catch (Exception ex)
         {
@@ -744,20 +839,32 @@ public sealed class ProfileViewModel : BaseViewModel
                 PushRegistrationStatus = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfilePushRegistrationStatusFailed);
                 LastPushSyncAtText = string.Format(
                     AppResources.ProfilePushRegistrationLastSyncFormat,
-                    DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm"));
+                    _timeProvider.GetLocalNow().ToString("yyyy-MM-dd HH:mm"));
             });
         }
         finally
         {
-            await RefreshPushRuntimeStateAsync();
+            if (!pushOperationCancellation.IsCancellationRequested)
+            {
+                await RefreshPushRuntimeStateAsync(pushOperationCancellation.Token);
+            }
+
             RunOnMain(() => IsPushSyncBusy = false);
+            EndCurrentPushOperation(pushOperationCancellation);
         }
     }
-    private async Task RefreshPushRuntimeStateAsync()
+
+    /// <summary>
+    /// Refreshes local push runtime diagnostics outside a user operation scope.
+    /// This is used by appearance refreshes where the UI should report current device state independently from edits.
+    /// </summary>
+    private Task RefreshPushRuntimeStateAsync() => RefreshPushRuntimeStateAsync(CancellationToken.None);
+
+    private async Task RefreshPushRuntimeStateAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var runtimeStateResult = await _pushTokenProvider.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+            var runtimeStateResult = await _pushTokenProvider.GetCurrentAsync(cancellationToken).ConfigureAwait(false);
 
             if (!runtimeStateResult.Succeeded || runtimeStateResult.Value is null)
             {
@@ -794,6 +901,17 @@ public sealed class ProfileViewModel : BaseViewModel
 
     private Task OpenNotificationSettingsAsync()
     {
+        if (_isOpeningNotificationSettings)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            _isOpeningNotificationSettings = true;
+            OpenNotificationSettingsCommand.RaiseCanExecuteChanged();
+        });
+
         RunOnMain(() =>
         {
             try
@@ -804,9 +922,97 @@ public sealed class ProfileViewModel : BaseViewModel
             {
                 PushRegistrationStatus = AppResources.ProfilePushOpenSettingsFailed;
             }
+            finally
+            {
+                _isOpeningNotificationSettings = false;
+                OpenNotificationSettingsCommand.RaiseCanExecuteChanged();
+            }
         });
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Starts a cancellable profile operation and cancels any stale profile operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active profile operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed profile operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
+    }
+
+    /// <summary>
+    /// Starts a cancellable push operation and cancels any stale push operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentPushOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _pushOperationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active push operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentPushOperation()
+    {
+        var current = Interlocked.Exchange(ref _pushOperationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed push operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="pushOperationCancellation">Completed push operation token source.</param>
+    private void EndCurrentPushOperation(CancellationTokenSource pushOperationCancellation)
+    {
+        if (ReferenceEquals(_pushOperationCancellation, pushOperationCancellation))
+        {
+            _pushOperationCancellation = null;
+        }
+
+        pushOperationCancellation.Dispose();
+    }
+
+    /// <summary>
+    /// Clears profile busy state and refreshes profile command availability.
+    /// </summary>
+    private void EndProfileBusyState()
+    {
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            SaveProfileCommand.RaiseCanExecuteChanged();
+            RefreshCommand.RaiseCanExecuteChanged();
+            RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
+            ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
+        });
     }
 
     private bool ValidateProfileFields()
@@ -821,6 +1027,30 @@ public sealed class ProfileViewModel : BaseViewModel
     private bool CanRunPhoneVerificationAction()
     {
         return !IsBusy && !PhoneNumberConfirmed;
+    }
+
+    /// <summary>
+    /// Keeps the segmented control index synchronized when the selected channel changes programmatically.
+    /// </summary>
+    /// <param name="channel">The selected verification channel.</param>
+    private void SyncSelectedPhoneVerificationChannelIndex(PhoneVerificationChannelOption channel)
+    {
+        var index = -1;
+        for (var i = 0; i < PhoneVerificationChannelOptions.Count; i++)
+        {
+            if (ReferenceEquals(PhoneVerificationChannelOptions[i], channel) ||
+                string.Equals(PhoneVerificationChannelOptions[i].Value, channel.Value, StringComparison.Ordinal))
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index >= 0 && _selectedPhoneVerificationChannelIndex != index)
+        {
+            _selectedPhoneVerificationChannelIndex = index;
+            OnPropertyChanged(nameof(SelectedPhoneVerificationChannelIndex));
+        }
     }
 
     private static string? Normalize(string? value)

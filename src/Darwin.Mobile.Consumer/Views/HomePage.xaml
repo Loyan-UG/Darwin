@@ -2,6 +2,7 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     x:Class="Darwin.Mobile.Consumer.Views.HomePage"
@@ -10,8 +11,8 @@
 
     <VerticalStackLayout Spacing="20" Padding="24">
         <Label Text="{Binding Greeting}" Style="{StaticResource TitleLabelStyle}" />
-        <Button Text="{x:Static res:AppResources.StartButton}"
-                Style="{StaticResource PrimaryButtonStyle}"
-                Command="{Binding StartCommand}" />
+        <buttons:SfButton Text="{x:Static res:AppResources.StartButton}"
+                          Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                          Command="{Binding StartCommand}" />
     </VerticalStackLayout>
 </ContentPage>

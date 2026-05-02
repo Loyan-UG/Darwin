@@ -17,7 +17,7 @@
                IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
 
         <Label Grid.Row="1"
-               Text="{Binding QrToken}"
+               Text="{Binding QrTokenDisplay}"
                FontSize="12"
                Opacity="0.6"
                HorizontalOptions="Center"

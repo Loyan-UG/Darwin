@@ -1,6 +1,8 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     x:Class="Darwin.Mobile.Business.Views.AcceptInvitationPage"
@@ -12,21 +14,19 @@
             <Label Text="{x:Static res:AppResources.InvitationAcceptanceTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
-            <Label Text="{x:Static res:AppResources.InvitationTokenLabel}"
-                   Style="{StaticResource FormLabelStyle}" />
-
-            <Border Style="{StaticResource FormFieldBorderStyle}">
+            <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.InvitationTokenLabel}"
+                                           Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                 <Entry Placeholder="{x:Static res:AppResources.InvitationTokenPlaceholder}"
                        Text="{Binding InvitationToken}"
                        Style="{StaticResource FormEntryStyle}"
                        AutomationId="InvitationTokenEntry" />
-            </Border>
+            </inputLayout:SfTextInputLayout>
 
-            <Button Text="{x:Static res:AppResources.InvitationPreviewButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding PreviewInvitationCommand}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                    AutomationId="PreviewInvitationButton" />
+            <buttons:SfButton Text="{x:Static res:AppResources.InvitationPreviewButton}"
+                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              Command="{Binding PreviewInvitationCommand}"
+                              IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                              AutomationId="PreviewInvitationButton" />
 
             <ActivityIndicator IsRunning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}" />
@@ -92,43 +92,49 @@
 
             <VerticalStackLayout Spacing="12"
                                  IsVisible="{Binding RequiresAccountDetails}">
-                <Border Style="{StaticResource FormFieldBorderStyle}">
+                <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.FirstNameLabel}"
+                                               Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                     <Entry Placeholder="{x:Static res:AppResources.FirstNameLabel}"
                            Text="{Binding FirstName}"
                            Style="{StaticResource FormEntryStyle}"
                            AutomationId="InvitationFirstNameEntry" />
-                </Border>
+                </inputLayout:SfTextInputLayout>
 
-                <Border Style="{StaticResource FormFieldBorderStyle}">
+                <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.LastNameLabel}"
+                                               Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                     <Entry Placeholder="{x:Static res:AppResources.LastNameLabel}"
                            Text="{Binding LastName}"
                            Style="{StaticResource FormEntryStyle}"
                            AutomationId="InvitationLastNameEntry" />
-                </Border>
+                </inputLayout:SfTextInputLayout>
 
-                <Border Style="{StaticResource FormFieldBorderStyle}">
+                <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.InvitationPasswordLabel}"
+                                               Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}"
+                                               EnablePasswordVisibilityToggle="True">
                     <Entry Placeholder="{x:Static res:AppResources.InvitationPasswordLabel}"
                            IsPassword="True"
                            Text="{Binding Password}"
                            Style="{StaticResource FormEntryStyle}"
                            AutomationId="InvitationPasswordEntry" />
-                </Border>
+                </inputLayout:SfTextInputLayout>
 
-                <Border Style="{StaticResource FormFieldBorderStyle}">
+                <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.InvitationConfirmPasswordLabel}"
+                                               Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}"
+                                               EnablePasswordVisibilityToggle="True">
                     <Entry Placeholder="{x:Static res:AppResources.InvitationConfirmPasswordLabel}"
                            IsPassword="True"
                            Text="{Binding ConfirmPassword}"
                            Style="{StaticResource FormEntryStyle}"
                            AutomationId="InvitationConfirmPasswordEntry" />
-                </Border>
+                </inputLayout:SfTextInputLayout>
             </VerticalStackLayout>
 
-            <Button Text="{x:Static res:AppResources.InvitationAcceptButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding AcceptInvitationCommand}"
-                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                    IsVisible="{Binding HasPreview}"
-                    AutomationId="AcceptInvitationButton" />
+            <buttons:SfButton Text="{x:Static res:AppResources.InvitationAcceptButton}"
+                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              Command="{Binding AcceptInvitationCommand}"
+                              IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                              IsVisible="{Binding HasPreview}"
+                              AutomationId="AcceptInvitationButton" />
 
             <Label Text="{Binding ErrorMessage}"
                    Style="{StaticResource ErrorLabelStyle}"

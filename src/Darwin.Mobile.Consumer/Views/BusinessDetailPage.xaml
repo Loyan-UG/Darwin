@@ -2,6 +2,8 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:numericUpDown="clr-namespace:Syncfusion.Maui.Toolkit.NumericUpDown;assembly=Syncfusion.Maui.Toolkit"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:contracts="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
@@ -18,7 +20,7 @@
                            Aspect="AspectFill"
                            IsVisible="{Binding Business.PrimaryImageUrl, Converter={StaticResource NullCheckConverter}}" />
 
-                    <Grid BackgroundColor="#E6FFF8E7"
+                    <Grid BackgroundColor="{StaticResource BrushImagePlaceholderOverlay}"
                           Padding="16"
                           VerticalOptions="End">
                         <VerticalStackLayout Spacing="6">
@@ -29,6 +31,8 @@
                                    LineBreakMode="WordWrap" />
                             <Label Text="{Binding Business.ShortDescription}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"
+                                   LineBreakMode="WordWrap"
+                                   MaxLines="3"
                                    IsVisible="{Binding Business.ShortDescription, Converter={StaticResource NullCheckConverter}}" />
                         </VerticalStackLayout>
                     </Grid>
@@ -46,15 +50,15 @@
                            IsVisible="{Binding Business.LoyaltyProgramPublic, Converter={StaticResource NullCheckConverter}}" />
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Button Grid.Column="0"
-                                Text="{x:Static res:AppResources.JoinProgramButton}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Command="{Binding JoinCommand}"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
-                        <Button Grid.Column="1"
-                                Text="{x:Static res:AppResources.BusinessSaveReviewButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Command="{Binding SaveReviewCommand}" />
+                        <buttons:SfButton Grid.Column="0"
+                                          Text="{x:Static res:AppResources.JoinProgramButton}"
+                                          Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                          Command="{Binding JoinCommand}"
+                                          IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
+                        <buttons:SfButton Grid.Column="1"
+                                          Text="{x:Static res:AppResources.BusinessSaveReviewButton}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                          Command="{Binding SaveReviewCommand}" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -90,14 +94,14 @@
             </Grid>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                <Button Grid.Column="0"
-                        Text="{x:Static res:AppResources.BusinessLikeButton}"
-                        Style="{StaticResource OutlinedButtonStyle}"
-                        Command="{Binding ToggleLikeCommand}" />
-                <Button Grid.Column="1"
-                        Text="{x:Static res:AppResources.BusinessFavoriteButton}"
-                        Style="{StaticResource OutlinedButtonStyle}"
-                        Command="{Binding ToggleFavoriteCommand}" />
+                <buttons:SfButton Grid.Column="0"
+                                  Text="{x:Static res:AppResources.BusinessLikeButton}"
+                                  Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                  Command="{Binding ToggleLikeCommand}" />
+                <buttons:SfButton Grid.Column="1"
+                                  Text="{x:Static res:AppResources.BusinessFavoriteButton}"
+                                  Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                  Command="{Binding ToggleFavoriteCommand}" />
             </Grid>
 
             <Border Style="{StaticResource CardBorderStyle}">
@@ -106,10 +110,12 @@
                            Style="{StaticResource SectionHeadingLabelStyle}" />
                     <Label Text="{Binding MyRatingText}"
                            Style="{StaticResource BodyLabelStyle}" />
-                    <Stepper Minimum="1"
-                             Maximum="5"
-                             Increment="1"
-                             Value="{Binding MyRating}" />
+                    <numericUpDown:SfNumericUpDown Minimum="1"
+                                                   Maximum="5"
+                                                   SmallChange="1"
+                                                   MaximumNumberDecimalDigits="0"
+                                                   Value="{Binding MyRating, Mode=TwoWay}"
+                                                   UpDownButtonColor="{StaticResource BrandGold500}" />
                     <Border Style="{StaticResource FormFieldBorderStyle}" Padding="14,10">
                         <Editor Text="{Binding MyReviewComment}"
                                 Placeholder="{x:Static res:AppResources.BusinessMyReviewCommentPlaceholder}"
@@ -131,12 +137,16 @@
                            IsVisible="{Binding Business.City, Converter={StaticResource NullCheckConverter}}" />
                     <Label Text="{Binding Business.WebsiteUrl, StringFormat={x:Static res:AppResources.BusinessWebsiteFormat}}"
                            Style="{StaticResource BodyLabelStyle}"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
                            IsVisible="{Binding Business.WebsiteUrl, Converter={StaticResource NullCheckConverter}}" />
                     <Label Text="{Binding Business.ContactPhoneE164, StringFormat={x:Static res:AppResources.BusinessPhoneFormat}}"
                            Style="{StaticResource BodyLabelStyle}"
                            IsVisible="{Binding Business.ContactPhoneE164, Converter={StaticResource NullCheckConverter}}" />
                     <Label Text="{Binding Business.ContactEmail, StringFormat={x:Static res:AppResources.BusinessEmailFormat}}"
                            Style="{StaticResource BodyLabelStyle}"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
                            IsVisible="{Binding Business.ContactEmail, Converter={StaticResource NullCheckConverter}}" />
                 </VerticalStackLayout>
             </Border>
@@ -161,6 +171,8 @@
                                                IsVisible="{Binding RewardValue, Converter={StaticResource NullCheckConverter}}" />
                                         <Label Text="{Binding Description}"
                                                Style="{StaticResource SecondaryBodyLabelStyle}"
+                                               LineBreakMode="WordWrap"
+                                               MaxLines="3"
                                                IsVisible="{Binding Description, Converter={StaticResource NullCheckConverter}}" />
                                         <Label Text="{Binding AllowSelfRedemption, Converter={StaticResource LocalizedBooleanConverter}, StringFormat={x:Static res:AppResources.BusinessSelfRedemptionFormat}}"
                                                Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -177,20 +189,21 @@
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static res:AppResources.BusinessRecentReviewsTitle}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
-                    <CollectionView ItemsSource="{Binding Reviews}" SelectionMode="None">
-                        <CollectionView.ItemTemplate>
+                    <VerticalStackLayout Spacing="10"
+                                         BindableLayout.ItemsSource="{Binding Reviews}">
+                        <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="biz:BusinessReviewItem">
-                                <Border Style="{StaticResource MutedCardBorderStyle}" Margin="0,0,0,10">
+                                <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding AuthorName}" Style="{StaticResource BodyLabelStyle}" />
+                                        <Label Text="{Binding AuthorName}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="TailTruncation" MaxLines="1" />
                                         <Label Text="{Binding Rating, StringFormat={x:Static res:AppResources.BusinessReviewRatingFormat}}" Style="{StaticResource SecondaryBodyLabelStyle}" />
-                                        <Label Text="{Binding Comment}" Style="{StaticResource BodyLabelStyle}" IsVisible="{Binding Comment, Converter={StaticResource NullCheckConverter}}" />
+                                        <Label Text="{Binding Comment}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="WordWrap" MaxLines="4" IsVisible="{Binding Comment, Converter={StaticResource NullCheckConverter}}" />
                                         <Label Text="{Binding CreatedAtUtc, StringFormat='{0:yyyy-MM-dd HH:mm}'}" Style="{StaticResource CaptionLabelStyle}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
 

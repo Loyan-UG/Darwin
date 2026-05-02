@@ -56,7 +56,10 @@ function sanitizeFallback(fallback: string) {
   return trimmed.startsWith("/") && !trimmed.startsWith("//") ? trimmed : "/";
 }
 
-export function stripCulturePrefix(pathname: string) {
+export function stripCulturePrefix(
+  pathname: string,
+  supportedCultures = getSiteRuntimeConfig().supportedCultures,
+) {
   const normalizedPath = normalizePathname(pathname);
   if (normalizedPath === "/") {
     return {
@@ -65,11 +68,10 @@ export function stripCulturePrefix(pathname: string) {
     };
   }
 
-  const runtimeConfig = getSiteRuntimeConfig();
   const segments = normalizedPath.split("/");
   const possibleCulture = segments[1];
 
-  if (!runtimeConfig.supportedCultures.includes(possibleCulture)) {
+  if (!supportedCultures.includes(possibleCulture)) {
     return {
       culture: null,
       pathname: normalizedPath,
@@ -102,6 +104,7 @@ export function isPublicLocalizedPath(pathname: string) {
 }
 
 export function buildLocalizedPath(pathname: string, culture: string) {
+  void culture;
   const normalizedPath = stripCulturePrefix(pathname).pathname;
 
   if (!isPublicLocalizedPath(normalizedPath)) {

@@ -1,9 +1,9 @@
 using System;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
@@ -16,6 +16,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class MemberCustomerContextViewModel : BaseViewModel
 {
     private readonly IProfileService _profileService;
+    private CancellationTokenSource? _refreshCancellation;
     private bool _isLoaded;
     private string _displayName = string.Empty;
     private string _emailText = string.Empty;
@@ -139,17 +140,17 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
     /// <summary>
     /// Gets the current segment list.
     /// </summary>
-    public ObservableCollection<MemberCustomerSegmentItemViewModel> Segments { get; } = new();
+    public RangeObservableCollection<MemberCustomerSegmentItemViewModel> Segments { get; } = new();
 
     /// <summary>
     /// Gets the current consent history.
     /// </summary>
-    public ObservableCollection<MemberCustomerConsentItemViewModel> Consents { get; } = new();
+    public RangeObservableCollection<MemberCustomerConsentItemViewModel> Consents { get; } = new();
 
     /// <summary>
     /// Gets the recent interaction list.
     /// </summary>
-    public ObservableCollection<MemberCustomerInteractionItemViewModel> RecentInteractions { get; } = new();
+    public RangeObservableCollection<MemberCustomerInteractionItemViewModel> RecentInteractions { get; } = new();
 
     /// <summary>
     /// Gets a value indicating whether linked customer context is available.
@@ -203,6 +204,22 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
         _isLoaded = true;
     }
 
+    /// <summary>
+    /// Cancels any in-flight CRM context refresh when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentRefresh();
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            RefreshCommand.RaiseCanExecuteChanged();
+        });
+
+        return Task.CompletedTask;
+    }
+
     private async Task RefreshAsync()
     {
         if (IsBusy)
@@ -216,14 +233,52 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
             ErrorMessage = null;
         });
 
+        var refreshCancellation = BeginCurrentRefresh();
         try
         {
-            var context = await _profileService.GetLinkedCustomerContextAsync(CancellationToken.None).ConfigureAwait(false);
+            var context = await _profileService.GetLinkedCustomerContextAsync(refreshCancellation.Token).ConfigureAwait(false);
             if (context is null)
             {
-                ClearContext();
+                RunOnMain(ClearContext);
                 return;
             }
+
+            var segments = context.Segments
+                .Select(static segment => new MemberCustomerSegmentItemViewModel
+                {
+                    Name = segment.Name,
+                    Description = segment.Description
+                })
+                .ToList();
+            var consents = context.Consents
+                .OrderByDescending(static item => item.GrantedAtUtc)
+                .Select(static consent => new MemberCustomerConsentItemViewModel
+                {
+                    Type = LocalizeConsentType(consent.Type),
+                    StatusText = consent.Granted
+                        ? AppResources.MemberCustomerContextConsentStatusGranted
+                        : AppResources.MemberCustomerContextConsentStatusRevoked,
+                    GrantedAtText = string.Format(AppResources.MemberCustomerContextConsentGrantedAtFormat, consent.GrantedAtUtc.ToLocalTime()),
+                    RevokedAtText = consent.RevokedAtUtc.HasValue
+                        ? string.Format(AppResources.MemberCustomerContextConsentRevokedAtFormat, consent.RevokedAtUtc.Value.ToLocalTime())
+                        : null
+                })
+                .ToList();
+            var interactions = context.RecentInteractions
+                .OrderByDescending(static item => item.CreatedAtUtc)
+                .Select(static interaction => new MemberCustomerInteractionItemViewModel
+                {
+                    TypeChannelText = string.Format(
+                        AppResources.MemberCustomerContextInteractionTypeChannelFormat,
+                        LocalizeInteractionType(interaction.Type),
+                        LocalizeInteractionChannel(interaction.Channel)),
+                    SubjectText = string.IsNullOrWhiteSpace(interaction.Subject)
+                        ? null
+                        : string.Format(AppResources.MemberCustomerContextInteractionSubjectFormat, interaction.Subject),
+                    PreviewText = interaction.ContentPreview,
+                    CreatedAtText = string.Format(AppResources.MemberCustomerContextInteractionCreatedAtFormat, interaction.CreatedAtUtc.ToLocalTime())
+                })
+                .ToList();
 
             RunOnMain(() =>
             {
@@ -244,54 +299,20 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
                     ? string.Format(AppResources.MemberCustomerContextLastInteractionFormat, context.LastInteractionAtUtc.Value.ToLocalTime())
                     : null;
 
-                Segments.Clear();
-                foreach (var segment in context.Segments)
-                {
-                    Segments.Add(new MemberCustomerSegmentItemViewModel
-                    {
-                        Name = segment.Name,
-                        Description = segment.Description
-                    });
-                }
-
-                Consents.Clear();
-                foreach (var consent in context.Consents.OrderByDescending(static item => item.GrantedAtUtc))
-                {
-                    Consents.Add(new MemberCustomerConsentItemViewModel
-                    {
-                        Type = LocalizeConsentType(consent.Type),
-                        StatusText = consent.Granted
-                            ? AppResources.MemberCustomerContextConsentStatusGranted
-                            : AppResources.MemberCustomerContextConsentStatusRevoked,
-                        GrantedAtText = string.Format(AppResources.MemberCustomerContextConsentGrantedAtFormat, consent.GrantedAtUtc.ToLocalTime()),
-                        RevokedAtText = consent.RevokedAtUtc.HasValue
-                            ? string.Format(AppResources.MemberCustomerContextConsentRevokedAtFormat, consent.RevokedAtUtc.Value.ToLocalTime())
-                            : null
-                    });
-                }
-
-                RecentInteractions.Clear();
-                foreach (var interaction in context.RecentInteractions.OrderByDescending(static item => item.CreatedAtUtc))
-                {
-                    RecentInteractions.Add(new MemberCustomerInteractionItemViewModel
-                    {
-                        TypeChannelText = string.Format(
-                            AppResources.MemberCustomerContextInteractionTypeChannelFormat,
-                            LocalizeInteractionType(interaction.Type),
-                            LocalizeInteractionChannel(interaction.Channel)),
-                        SubjectText = string.IsNullOrWhiteSpace(interaction.Subject)
-                            ? null
-                            : string.Format(AppResources.MemberCustomerContextInteractionSubjectFormat, interaction.Subject),
-                        PreviewText = interaction.ContentPreview,
-                        CreatedAtText = string.Format(AppResources.MemberCustomerContextInteractionCreatedAtFormat, interaction.CreatedAtUtc.ToLocalTime())
-                    });
-                }
+                // CRM context is rendered through BindableLayout sections, so batch updates avoid repeated layout passes.
+                Segments.ReplaceRange(segments);
+                Consents.ReplaceRange(consents);
+                RecentInteractions.ReplaceRange(interactions);
 
                 OnPropertyChanged(nameof(HasContext));
                 OnPropertyChanged(nameof(HasSegments));
                 OnPropertyChanged(nameof(HasConsents));
                 OnPropertyChanged(nameof(HasRecentInteractions));
             });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the customer-context screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
@@ -308,7 +329,43 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
                 IsBusy = false;
                 RefreshCommand.RaiseCanExecuteChanged();
             });
+
+            EndCurrentRefresh(refreshCancellation);
         }
+    }
+
+    /// <summary>
+    /// Starts a cancellable CRM-context refresh and cancels any stale refresh still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentRefresh()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _refreshCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active CRM-context refresh without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentRefresh()
+    {
+        var current = Interlocked.Exchange(ref _refreshCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed CRM-context refresh when it still owns the active refresh slot.
+    /// </summary>
+    /// <param name="refreshCancellation">Completed refresh token source.</param>
+    private void EndCurrentRefresh(CancellationTokenSource refreshCancellation)
+    {
+        if (ReferenceEquals(_refreshCancellation, refreshCancellation))
+        {
+            _refreshCancellation = null;
+        }
+
+        refreshCancellation.Dispose();
     }
 
     private void ClearContext()
@@ -321,9 +378,9 @@ public sealed class MemberCustomerContextViewModel : BaseViewModel
         CreatedAtText = string.Empty;
         InteractionCountText = string.Empty;
         LastInteractionText = null;
-        Segments.Clear();
-        Consents.Clear();
-        RecentInteractions.Clear();
+        Segments.ClearRange();
+        Consents.ClearRange();
+        RecentInteractions.ClearRange();
         OnPropertyChanged(nameof(HasContext));
         OnPropertyChanged(nameof(HasSegments));
         OnPropertyChanged(nameof(HasConsents));

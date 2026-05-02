@@ -13,7 +13,7 @@ import {
   localizeHref,
 } from "@/lib/locale-routing";
 import { buildCmsPagePath } from "@/lib/entity-paths";
-import { getRequestCulture, getSupportedCultures } from "@/lib/request-culture";
+import { getRequestCulture, getSupportedCulturesAsync } from "@/lib/request-culture";
 
 type CmsSearchParams = {
   visibleQuery?: string;
@@ -89,7 +89,7 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
   const page = pageResult.data;
 
   if (!page && pageResult.status === "not-found") {
-    for (const alternateCulture of getSupportedCultures()) {
+    for (const alternateCulture of await getSupportedCulturesAsync()) {
       if (alternateCulture === culture) {
         continue;
       }

@@ -5,13 +5,21 @@
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:contracts="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:chips="clr-namespace:Syncfusion.Maui.Toolkit.Chips;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
     x:Class="Darwin.Mobile.Consumer.Views.RewardsPage"
     x:DataType="vm:RewardsViewModel"
     Title="{x:Static res:AppResources.RewardsTitle}">
 
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout Padding="20,16,20,22" Spacing="14">
+        <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                       IsRefreshing="{Binding IsBusy}"
+                                       ProgressColor="{StaticResource BrandGold500}"
+                                       ProgressBackground="{StaticResource Neutral0}">
+            <pullToRefresh:SfPullToRefresh.PullableContent>
+                <ScrollView>
+                    <VerticalStackLayout Padding="20,16,20,22" Spacing="14">
 
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="8">
@@ -58,9 +66,9 @@
                         <Label Text="{Binding TopBusinessByPoints, StringFormat='{x:Static res:AppResources.RewardsOverviewTopBusinessFormat}'}"
                                Style="{StaticResource BodyLabelStyle}" />
 
-                        <Button Text="{x:Static res:AppResources.RewardsOpenSelectedBusinessQrButton}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Command="{Binding OpenSelectedBusinessQrCommand}" />
+                        <buttons:SfButton Text="{x:Static res:AppResources.RewardsOpenSelectedBusinessQrButton}"
+                                          Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                          Command="{Binding OpenSelectedBusinessQrCommand}" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -80,17 +88,24 @@
                             <Label Text="{x:Static res:AppResources.RewardsBusinessPickerLabel}"
                                    Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                            <Picker ItemsSource="{Binding Accounts}"
-                                    SelectedItem="{Binding SelectedAccount}"
-                                    ItemDisplayBinding="{Binding BusinessName}" />
+                            <chips:SfChipGroup ItemsSource="{Binding Accounts}"
+                                               DisplayMemberPath="BusinessName"
+                                               SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
+                                               ChipType="Choice"
+                                               ChoiceMode="Single"
+                                               ChipCornerRadius="8"
+                                               ChipBackground="{StaticResource BrushSurface}"
+                                               ChipStroke="{StaticResource BrandGold50}"
+                                               ChipStrokeThickness="1"
+                                               ChipTextColor="{StaticResource Neutral900}"
+                                               ChipTextSize="13"
+                                               SelectedChipBackground="{StaticResource BrushPrimary}"
+                                               SelectedChipTextColor="{StaticResource Neutral0}"
+                                               SelectionIndicatorColor="{StaticResource BrandGold500}" />
 
-                            <CollectionView ItemsSource="{Binding Accounts}"
-                                            HeightRequest="176"
-                                            SelectionMode="None">
-                                <CollectionView.ItemsLayout>
-                                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
-                                </CollectionView.ItemsLayout>
-                                <CollectionView.ItemTemplate>
+                            <VerticalStackLayout Spacing="10"
+                                                 BindableLayout.ItemsSource="{Binding Accounts}">
+                                <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="contracts:LoyaltyAccountSummary">
                                         <Border Style="{StaticResource MutedCardBorderStyle}" Margin="0,0,0,2">
                                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
@@ -106,15 +121,21 @@
                                                 <Border Grid.Column="1"
                                                         Style="{StaticResource CardBorderStyle}"
                                                         Padding="10,8">
-                                                    <Label Text="{Binding PointsBalance}"
-                                                           FontAttributes="Bold"
-                                                           TextColor="{StaticResource BrushPrimaryPressed}" />
+                                                    <VerticalStackLayout Spacing="2">
+                                                        <Label Text="{x:Static res:AppResources.PointsLabel}"
+                                                               Style="{StaticResource CaptionLabelStyle}"
+                                                               HorizontalTextAlignment="Center" />
+                                                        <Label Text="{Binding PointsBalance}"
+                                                               FontAttributes="Bold"
+                                                               TextColor="{StaticResource BrushPrimaryPressed}"
+                                                               HorizontalTextAlignment="Center" />
+                                                    </VerticalStackLayout>
                                                 </Border>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
                     </Border>
 
@@ -177,12 +198,9 @@
                         <Label Text="{x:Static res:AppResources.RewardsAvailableRewardsLabel}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                        <CollectionView ItemsSource="{Binding AvailableRewards}"
-                                        SelectionMode="None">
-                            <CollectionView.ItemsLayout>
-                                <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
-                            </CollectionView.ItemsLayout>
-                            <CollectionView.ItemTemplate>
+                        <VerticalStackLayout Spacing="12"
+                                             BindableLayout.ItemsSource="{Binding AvailableRewards}">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="contracts:LoyaltyRewardSummary">
                                     <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
@@ -199,15 +217,21 @@
                                             <Border Grid.Column="1"
                                                     Style="{StaticResource MutedCardBorderStyle}"
                                                     Padding="10,8">
-                                                <Label Text="{Binding RequiredPoints}"
-                                                       FontAttributes="Bold"
-                                                       TextColor="{StaticResource BrushPrimaryPressed}" />
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label Text="{x:Static res:AppResources.RewardsRequiredPointsBadgeLabel}"
+                                                           Style="{StaticResource CaptionLabelStyle}"
+                                                           HorizontalTextAlignment="Center" />
+                                                    <Label Text="{Binding RequiredPoints}"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{StaticResource BrushPrimaryPressed}"
+                                                           HorizontalTextAlignment="Center" />
+                                                </VerticalStackLayout>
                                             </Border>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="10">
@@ -224,12 +248,9 @@
                             </VerticalStackLayout>
                         </Border>
 
-                        <CollectionView ItemsSource="{Binding RewardHistory}"
-                                        SelectionMode="None">
-                            <CollectionView.ItemsLayout>
-                                <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
-                            </CollectionView.ItemsLayout>
-                            <CollectionView.ItemTemplate>
+                        <VerticalStackLayout Spacing="12"
+                                             BindableLayout.ItemsSource="{Binding RewardHistory}">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="contracts:PointsTransaction">
                                     <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
                                         <Grid ColumnDefinitions="Auto,*,Auto"
@@ -251,26 +272,36 @@
                                                    TextColor="{StaticResource BrushOnSurface}"
                                                    LineBreakMode="WordWrap" />
 
-                                            <Label Grid.Column="2"
-                                                   Text="{Binding Delta, StringFormat='{0:+#;-#;0}'}"
-                                                   FontAttributes="Bold"
-                                                   TextColor="{StaticResource BrushOnSurface}" />
+                                            <VerticalStackLayout Grid.Column="2"
+                                                                 Grid.RowSpan="2"
+                                                                 Spacing="2"
+                                                                 HorizontalOptions="End"
+                                                                 WidthRequest="82">
+                                                <Label Text="{x:Static res:AppResources.RewardsHistoryDeltaLabel}"
+                                                       Style="{StaticResource CaptionLabelStyle}"
+                                                       HorizontalTextAlignment="End" />
+                                                <Label Text="{Binding Delta, StringFormat='{0:+#;-#;0}'}"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrushOnSurface}"
+                                                       HorizontalTextAlignment="End" />
+                                                <Label Text="{Binding Reference}"
+                                                       Style="{StaticResource SecondaryBodyLabelStyle}"
+                                                       HorizontalTextAlignment="End"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="1"
+                                                       IsVisible="{Binding Reference, Converter={StaticResource NullCheckConverter}}" />
+                                            </VerticalStackLayout>
 
                                             <Label Grid.Column="1"
                                                    Grid.Row="1"
                                                    Text="{Binding OccurredAtUtc, StringFormat='{0:yyyy-MM-dd HH:mm}'}"
                                                    Style="{StaticResource SecondaryBodyLabelStyle}" />
 
-                                            <Label Grid.Column="2"
-                                                   Grid.Row="1"
-                                                   Text="{Binding Reference}"
-                                                   Style="{StaticResource SecondaryBodyLabelStyle}"
-                                                   HorizontalTextAlignment="End" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </VerticalStackLayout>
 
@@ -280,10 +311,12 @@
                            TextColor="{StaticResource Danger500}"
                            FontSize="14" />
                 </Border>
-            </VerticalStackLayout>
-        </ScrollView>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </pullToRefresh:SfPullToRefresh.PullableContent>
+        </pullToRefresh:SfPullToRefresh>
 
-        <Grid BackgroundColor="#40FFFFFF"
+        <Grid BackgroundColor="{StaticResource BrushBusyOverlay}"
               IsVisible="{Binding IsBusy}"
               InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center"

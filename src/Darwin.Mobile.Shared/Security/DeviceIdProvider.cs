@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.Maui.Storage; // SecureStorage / Preferences
+using Microsoft.Maui.Storage;
 
 namespace Darwin.Mobile.Shared.Security
 {
@@ -17,24 +17,25 @@ namespace Darwin.Mobile.Shared.Security
 
         public async Task<string> GetDeviceIdAsync()
         {
-            // Return cached if available
             if (!string.IsNullOrWhiteSpace(_cached))
+            {
                 return _cached;
+            }
 
-            // Try SecureStorage first (preferred for secrets)
             try
             {
                 var existing = await SecureStorage.GetAsync(Key).ConfigureAwait(false);
-                if (!string.IsNullOrWhiteSpace(existing))
+                if (IsValidDeviceId(existing))
                 {
-                    _cached = existing;
+                    _cached = existing!;
                     return _cached;
                 }
 
-                // Generate new compact GUID and persist
-                var id = Guid.NewGuid().ToString("N");
+                // If an older app run had to fall back to Preferences, migrate that stable id
+                // back into SecureStorage instead of changing the device binding identity.
+                var fallbackId = ReadPreferenceDeviceId();
+                var id = IsValidDeviceId(fallbackId) ? fallbackId! : CreateDeviceId();
 
-                // Persist using SecureStorage; may throw on some platforms/permissions.
                 await SecureStorage.SetAsync(Key, id).ConfigureAwait(false);
                 _cached = id;
                 return _cached;
@@ -45,14 +46,14 @@ namespace Darwin.Mobile.Shared.Security
                 // fall back to Preferences which is less secure but persistent.
                 try
                 {
-                    var pref = Preferences.Get(Key, null);
-                    if (!string.IsNullOrWhiteSpace(pref))
+                    var pref = ReadPreferenceDeviceId();
+                    if (IsValidDeviceId(pref))
                     {
-                        _cached = pref;
+                        _cached = pref!;
                         return _cached;
                     }
 
-                    var id = Guid.NewGuid().ToString("N");
+                    var id = CreateDeviceId();
                     Preferences.Set(Key, id);
                     _cached = id;
                     return _cached;
@@ -60,10 +61,56 @@ namespace Darwin.Mobile.Shared.Security
                 catch
                 {
                     // Last resort: keep an in-memory id (non-persistent). Good enough for tests.
-                    _cached = Guid.NewGuid().ToString("N");
+                    _cached = CreateDeviceId();
                     return _cached;
                 }
             }
+        }
+
+        /// <summary>
+        /// Reads the fallback device id without letting platform preference errors escape auth startup.
+        /// </summary>
+        private static string? ReadPreferenceDeviceId()
+        {
+            try
+            {
+                return Preferences.Get(Key, null);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Creates a compact, non-guessable local device identifier for refresh-token device binding.
+        /// </summary>
+        private static string CreateDeviceId() => Guid.NewGuid().ToString("N");
+
+        /// <summary>
+        /// Validates persisted device ids so corrupted platform storage does not poison future auth requests.
+        /// </summary>
+        private static bool IsValidDeviceId(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length != 32)
+            {
+                return false;
+            }
+
+            foreach (var ch in value)
+            {
+                var isHex =
+                    ch >= '0' && ch <= '9' ||
+                    ch >= 'a' && ch <= 'f' ||
+                    ch >= 'A' && ch <= 'F';
+
+                if (!isHex)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

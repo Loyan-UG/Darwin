@@ -45,10 +45,17 @@ public sealed class QrViewModel : BaseViewModel
     /// </summary>
     private static readonly TimeSpan MinimumAutoRotationInterval = TimeSpan.FromMinutes(5);
 
+    /// <summary>
+    /// Upper bound for best-effort promotion analytics fired from the QR screen.
+    /// The QR flow must stay responsive even when analytics cannot be delivered quickly.
+    /// </summary>
+    private static readonly TimeSpan PromotionTrackingTimeout = TimeSpan.FromSeconds(5);
+
     private readonly ILoyaltyService _loyaltyService;
     private readonly TimeProvider _timeProvider;
 
     private string _qrToken = string.Empty;
+    private string _qrTokenDisplay = string.Empty;
     private ImageSource? _qrImage;
     private DateTimeOffset? _expiresAtUtc;
     private LoyaltyScanMode _mode = LoyaltyScanMode.Accrual;
@@ -60,13 +67,14 @@ public sealed class QrViewModel : BaseViewModel
 
     private DateTimeOffset? _lastSuccessfulSessionRefreshUtc;
     private CancellationTokenSource? _rotationLoopCts;
+    private CancellationTokenSource? _sessionRequestCts;
 
     public QrViewModel(ILoyaltyService loyaltyService, TimeProvider timeProvider)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
-        RefreshAccrualSessionCommand = new AsyncCommand(RefreshAccrualSessionAsync);
-        RefreshRedemptionSessionCommand = new AsyncCommand(RefreshRedemptionSessionAsync);
+        RefreshAccrualSessionCommand = new AsyncCommand(RefreshAccrualSessionAsync, () => !IsBusy);
+        RefreshRedemptionSessionCommand = new AsyncCommand(RefreshRedemptionSessionAsync, () => !IsBusy);
     }
 
     /// <summary>
@@ -79,9 +87,19 @@ public sealed class QrViewModel : BaseViewModel
         {
             if (SetProperty(ref _qrToken, value))
             {
+                QrTokenDisplay = ToSafeTokenDisplay(value);
                 GenerateQrImage();
             }
         }
+    }
+
+    /// <summary>
+    /// Gets a redacted QR token fingerprint that is safe to show on screen.
+    /// </summary>
+    public string QrTokenDisplay
+    {
+        get => _qrTokenDisplay;
+        private set => SetProperty(ref _qrTokenDisplay, value);
     }
 
     public ImageSource? QrImage
@@ -196,6 +214,7 @@ public sealed class QrViewModel : BaseViewModel
     public override Task OnDisappearingAsync()
     {
         StopRotationLoop();
+        CancelInFlightSessionRequest();
         return Task.CompletedTask;
     }
 
@@ -230,7 +249,10 @@ public sealed class QrViewModel : BaseViewModel
         {
             IsBusy = true;
             ErrorMessage = null;
+            RaiseSessionCommandStates();
         });
+
+        var requestCts = StartSessionRequest();
 
         try
         {
@@ -238,14 +260,33 @@ public sealed class QrViewModel : BaseViewModel
                 _businessId,
                 mode,
                 selectedRewardIds: null,
-                CancellationToken.None);
+                requestCts.Token).ConfigureAwait(false);
 
             RunOnMain(() => ApplySessionResult(result));
         }
+        catch (OperationCanceledException)
+        {
+            // Session preparation is cancelled when the page disappears or a newer request supersedes it.
+        }
         finally
         {
-            RunOnMain(() => IsBusy = false);
+            CompleteSessionRequest(requestCts);
+
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseSessionCommandStates();
+            });
         }
+    }
+
+    /// <summary>
+    /// Keeps manual QR refresh actions disabled while a scan session request is in flight.
+    /// </summary>
+    private void RaiseSessionCommandStates()
+    {
+        RefreshAccrualSessionCommand.RaiseCanExecuteChanged();
+        RefreshRedemptionSessionCommand.RaiseCanExecuteChanged();
     }
 
     private void ApplySessionResult(Result<ScanSessionClientModel> result)
@@ -286,6 +327,7 @@ public sealed class QrViewModel : BaseViewModel
                 return;
             }
 
+            using var trackingCancellation = CreatePromotionTrackingCancellation();
             await _loyaltyService.TrackPromotionInteractionAsync(new TrackPromotionInteractionRequest
             {
                 BusinessId = _businessId,
@@ -294,12 +336,22 @@ public sealed class QrViewModel : BaseViewModel
                 CtaKind = "OpenRedemptionQr",
                 EventType = PromotionInteractionEventType.Claim,
                 OccurredAtUtc = _timeProvider.GetUtcNow().UtcDateTime
-            }, CancellationToken.None).ConfigureAwait(false);
+            }, trackingCancellation.Token).ConfigureAwait(false);
         }
         catch
         {
             // Intentionally ignore tracking failures to keep QR flow uninterrupted.
         }
+    }
+
+    /// <summary>
+    /// Creates a bounded token for non-critical QR analytics calls.
+    /// This prevents telemetry from surviving longer than the user-facing operation deserves.
+    /// </summary>
+    /// <returns>A cancellation token that expires after the promotion tracking timeout.</returns>
+    private static CancellationTokenSource CreatePromotionTrackingCancellation()
+    {
+        return new CancellationTokenSource(PromotionTrackingTimeout);
     }
 
     private void GenerateQrImage()
@@ -308,19 +360,19 @@ public sealed class QrViewModel : BaseViewModel
         {
             if (string.IsNullOrWhiteSpace(_qrToken))
             {
-                QrImage = null;
+                RunOnMain(() => QrImage = null);
                 return;
             }
 
-            var generator = new QRCodeGenerator();
-            var data = generator.CreateQrCode(_qrToken, QRCodeGenerator.ECCLevel.Q);
+            using var generator = new QRCodeGenerator();
+            using var data = generator.CreateQrCode(_qrToken, QRCodeGenerator.ECCLevel.Q);
             var png = new PngByteQRCode(data);
             var bytes = png.GetGraphic(20);
-            QrImage = ImageSource.FromStream(() => new MemoryStream(bytes));
+            RunOnMain(() => QrImage = ImageSource.FromStream(() => new MemoryStream(bytes)));
         }
         catch
         {
-            QrImage = null;
+            RunOnMain(() => QrImage = null);
         }
     }
 
@@ -345,6 +397,41 @@ public sealed class QrViewModel : BaseViewModel
         _rotationLoopCts.Cancel();
         _rotationLoopCts.Dispose();
         _rotationLoopCts = null;
+    }
+
+    /// <summary>
+    /// Creates a cancellable scope for the current scan-session request and cancels any older in-flight request.
+    /// </summary>
+    /// <returns>The request cancellation source owned by the current operation.</returns>
+    private CancellationTokenSource StartSessionRequest()
+    {
+        var requestCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _sessionRequestCts, requestCts);
+        previous?.Cancel();
+        return requestCts;
+    }
+
+    /// <summary>
+    /// Disposes the completed request source only if it is still the active request source.
+    /// </summary>
+    /// <param name="requestCts">Request cancellation source created for the completed operation.</param>
+    private void CompleteSessionRequest(CancellationTokenSource requestCts)
+    {
+        if (ReferenceEquals(_sessionRequestCts, requestCts))
+        {
+            _sessionRequestCts = null;
+        }
+
+        requestCts.Dispose();
+    }
+
+    /// <summary>
+    /// Cancels any scan-session request that should no longer update this view model.
+    /// </summary>
+    private void CancelInFlightSessionRequest()
+    {
+        var requestCts = Interlocked.Exchange(ref _sessionRequestCts, null);
+        requestCts?.Cancel();
     }
 
     private async Task RunRotationLoopAsync(CancellationToken ct)
@@ -426,5 +513,26 @@ public sealed class QrViewModel : BaseViewModel
         GuidanceMessage = _businessId == Guid.Empty
             ? AppResources.QrDiscoverGuidanceMessage
             : AppResources.QrRefreshGuidanceMessage;
+    }
+
+    /// <summary>
+    /// Redacts the scan-session token before showing it in the UI while keeping a useful support fingerprint.
+    /// </summary>
+    /// <param name="token">Raw scan-session token.</param>
+    /// <returns>A shortened token fingerprint safe for on-screen display.</returns>
+    private static string ToSafeTokenDisplay(string token)
+    {
+        var normalized = string.IsNullOrWhiteSpace(token) ? string.Empty : token.Trim();
+        if (normalized.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        if (normalized.Length <= 12)
+        {
+            return "••••";
+        }
+
+        return $"{normalized[..6]}…{normalized[^6..]}";
     }
 }

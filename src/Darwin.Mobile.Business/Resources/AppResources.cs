@@ -80,6 +80,7 @@ public static class AppResources
     public static string InvalidCredentials => ResourceManager.GetString(nameof(InvalidCredentials), Culture) ?? "Invalid email or password.";
     public static string LoginEmailConfirmationRequired => ResourceManager.GetString(nameof(LoginEmailConfirmationRequired), Culture) ?? "Please confirm your email address before signing in.";
     public static string LoginAccountLocked => ResourceManager.GetString(nameof(LoginAccountLocked), Culture) ?? "Your account is currently locked. Please contact support.";
+    public static string SessionExpiredReLogin => ResourceManager.GetString(nameof(SessionExpiredReLogin), Culture) ?? "Your session has expired. Please sign in again.";
     public static string RequestActivationEmailButton => ResourceManager.GetString(nameof(RequestActivationEmailButton), Culture) ?? "Send activation email";
     public static string ActivationEmailSent => ResourceManager.GetString(nameof(ActivationEmailSent), Culture) ?? "Confirmation email sent. Please check your inbox.";
     public static string ActivationEmailRequestFailed => ResourceManager.GetString(nameof(ActivationEmailRequestFailed), Culture) ?? "Unable to send a confirmation email right now. Please try again.";
@@ -247,6 +248,8 @@ public static class AppResources
     public static string DashboardTopCustomersTitle => ResourceManager.GetString(nameof(DashboardTopCustomersTitle), Culture) ?? "Top customers";
     public static string DashboardTopCustomersEmpty => ResourceManager.GetString(nameof(DashboardTopCustomersEmpty), Culture) ?? "No customer interactions were recorded in the selected window.";
     public static string DashboardRecentActivityTitle => ResourceManager.GetString(nameof(DashboardRecentActivityTitle), Culture) ?? "Recent activity";
+    public static string DashboardActivityMixTitle => ResourceManager.GetString(nameof(DashboardActivityMixTitle), Culture) ?? "Activity mix";
+    public static string DashboardLookbackDaysShortFormat => ResourceManager.GetString(nameof(DashboardLookbackDaysShortFormat), Culture) ?? "{0}d";
     public static string DashboardRecentActivityEmpty => ResourceManager.GetString(nameof(DashboardRecentActivityEmpty), Culture) ?? "No recent activity was recorded yet.";
     public static string DashboardCampaignTargetingFixMetricsFormat => ResourceManager.GetString(nameof(DashboardCampaignTargetingFixMetricsFormat), Culture) ?? "Campaign quick-fix — applied: {0} · no-change: {1} · resets: {2}";
     public static string DashboardSessionsFormat => ResourceManager.GetString(nameof(DashboardSessionsFormat), Culture) ?? "Sessions: {0}";

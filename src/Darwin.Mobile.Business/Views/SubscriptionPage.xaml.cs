@@ -21,6 +21,31 @@ public partial class SubscriptionPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.OnAppearingAsync();
+
+        try
+        {
+            await _viewModel.OnAppearingAsync();
+        }
+        catch
+        {
+            // Appearing is an async-void MAUI lifecycle hook. Subscription load failures stay inside ViewModel feedback.
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from subscription.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 }

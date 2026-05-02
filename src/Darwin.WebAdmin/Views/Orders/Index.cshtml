@@ -46,8 +46,13 @@
 
 <partial name="~/Views/Shared/_Alerts.cshtml" />
 
-<div class="card border-0 shadow-sm mb-3">
-    <div class="card-body">
+<details class="admin-playbook mb-3">
+    <summary>
+        @T.T("OrdersTitle")
+        <span class="badge @OrderQueueOpsHealthBadgeClass(orderQueueAttentionCount == 0) ms-2">@OrderQueueOpsHealthBadgeText(orderQueueAttentionCount == 0)</span>
+        <span class="badge @OrderQueueOpsHealthBadgeClass(Model.Items.Count > 0) ms-1">@T.T("OpenQueue")</span>
+    </summary>
+    <div class="admin-playbook-body">
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
             <div>
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
@@ -163,7 +168,7 @@
             </div>
         </div>
     </div>
-</div>
+</details>
 
 <form asp-action="Index" method="get" class="d-flex gap-2 mb-3"
           hx-get="@GlobalOrdersIndexUrl()"

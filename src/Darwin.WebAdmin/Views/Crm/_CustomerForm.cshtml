@@ -6,61 +6,77 @@
     var customerTaxProfileTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.CustomerTaxProfileType>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
 }
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <label asp-for="UserId" class="form-label"></label>
-        <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
-        <div class="form-text">@T.T("LinkedUserOwnershipNote")</div>
-    </div>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("CrmCustomerIdentitySection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="UserId" class="form-label"></label>
+            <field-help title="@T.T("User")" content="@T.T("CrmCustomerLinkedUserHelp")" placement="right"></field-help>
+            <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
+        </div>
 
-    <div class="col-md-6">
-        <label asp-for="CompanyName" class="form-label"></label>
-        <input asp-for="CompanyName" class="form-control" />
-        <span asp-validation-for="CompanyName" class="text-danger"></span>
-    </div>
+        <div class="col-md-6">
+            <label asp-for="CompanyName" class="form-label"></label>
+            <field-help title="@T.T("CompanyName")" content="@T.T("CrmCustomerCompanyNameHelp")" placement="right"></field-help>
+            <input asp-for="CompanyName" class="form-control" />
+            <span asp-validation-for="CompanyName" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-3">
-        <label asp-for="TaxProfileType" class="form-label"></label>
-        <select asp-for="TaxProfileType" asp-items="customerTaxProfileTypeOptions" class="form-select"></select>
-        <span asp-validation-for="TaxProfileType" class="text-danger"></span>
-    </div>
+        <div class="col-md-6">
+            <label asp-for="FirstName" class="form-label"></label>
+            <field-help title="@T.T("FirstName")" content="@T.T("CrmCustomerFirstNameHelp")" placement="right"></field-help>
+            <input asp-for="FirstName" class="form-control" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-3">
-        <label asp-for="VatId" class="form-label"></label>
-        <input asp-for="VatId" class="form-control" />
-        <span asp-validation-for="VatId" class="text-danger"></span>
+        <div class="col-md-6">
+            <label asp-for="LastName" class="form-label"></label>
+            <field-help title="@T.T("LastName")" content="@T.T("CrmCustomerLastNameHelp")" placement="right"></field-help>
+            <input asp-for="LastName" class="form-control" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
     </div>
+</section>
 
-    <div class="col-md-6">
-        <label asp-for="FirstName" class="form-label"></label>
-        <input asp-for="FirstName" class="form-control" />
-        <span asp-validation-for="FirstName" class="text-danger"></span>
-    </div>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("CrmCustomerTaxContactSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label asp-for="TaxProfileType" class="form-label"></label>
+            <field-help title="@T.T("TaxProfile")" content="@T.T("CrmCustomerTaxProfileHelp")" placement="right"></field-help>
+            <select asp-for="TaxProfileType" asp-items="customerTaxProfileTypeOptions" class="form-select"></select>
+            <span asp-validation-for="TaxProfileType" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-6">
-        <label asp-for="LastName" class="form-label"></label>
-        <input asp-for="LastName" class="form-control" />
-        <span asp-validation-for="LastName" class="text-danger"></span>
-    </div>
+        <div class="col-md-3">
+            <label asp-for="VatId" class="form-label"></label>
+            <field-help title="@T.T("CustomerVatId")" content="@T.T("CrmCustomerVatIdHelp")" placement="right"></field-help>
+            <input asp-for="VatId" class="form-control" />
+            <span asp-validation-for="VatId" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-6">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
+        <div class="col-md-3">
+            <label asp-for="Email" class="form-label"></label>
+            <field-help title="@T.T("Email")" content="@T.T("CrmCustomerEmailHelp")" placement="right"></field-help>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-6">
-        <label asp-for="Phone" class="form-label"></label>
-        <input asp-for="Phone" class="form-control" />
-        <span asp-validation-for="Phone" class="text-danger"></span>
-    </div>
+        <div class="col-md-3">
+            <label asp-for="Phone" class="form-label"></label>
+            <field-help title="@T.T("Phone")" content="@T.T("CrmCustomerPhoneHelp")" placement="right"></field-help>
+            <input asp-for="Phone" class="form-control" />
+            <span asp-validation-for="Phone" class="text-danger"></span>
+        </div>
 
-    <div class="col-12">
-        <label asp-for="Notes" class="form-label"></label>
-        <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
-        <span asp-validation-for="Notes" class="text-danger"></span>
+        <div class="col-12">
+            <label asp-for="Notes" class="form-label"></label>
+            <field-help title="@T.T("Notes")" content="@T.T("CrmCustomerNotesHelp")" placement="right"></field-help>
+            <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
     </div>
-</div>
+</section>
 
 @if (!string.IsNullOrWhiteSpace(Model.EffectiveEmail) || !string.IsNullOrWhiteSpace(Model.EffectiveFirstName))
 {
@@ -78,7 +94,7 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mt-4">
-    <h3 class="mb-0">@T.T("CrmAddresses")</h3>
+    <h3 class="mb-0">@T.T("CrmAddresses") <field-help title="@T.T("CrmAddresses")" content="@T.T("CrmCustomerAddressesHelp")" placement="right"></field-help></h3>
     <button type="button"
             class="btn btn-outline-secondary btn-sm"
             id="addCustomerAddress"

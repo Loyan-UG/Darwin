@@ -41,6 +41,9 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "SiteSettingSupportedCulturesCsv"), Required]
         public string SupportedCulturesCsv { get; set; } = AdminCultureCatalog.SupportedCulturesCsvDefault;
 
+        [Display(Name = "SiteSettingMultilingualEnabled")]
+        public bool MultilingualEnabled { get; set; } = true;
+
         [Display(Name = "SiteSettingDefaultCountry"), MaxLength(2)]
         public string? DefaultCountry { get; set; } = SiteSettingDto.DefaultCountryDefault;
 

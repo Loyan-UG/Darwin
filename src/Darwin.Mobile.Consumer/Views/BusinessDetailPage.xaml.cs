@@ -35,17 +35,71 @@ public partial class BusinessDetailPage : ContentPage, IQueryAttributable
     /// <param name="query">Dictionary of query parameters.</param>
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (query.TryGetValue("businessId", out var value) &&
-            value is string idString &&
-            Guid.TryParse(idString, out var id))
+        if (!query.TryGetValue("businessId", out var value))
         {
-            _viewModel.SetBusiness(id);
+            return;
+        }
+
+        if (value is Guid businessId && businessId != Guid.Empty)
+        {
+            _viewModel.SetBusiness(businessId);
+            return;
+        }
+
+        var idString = value as string ?? value?.ToString();
+        if (!string.IsNullOrWhiteSpace(idString) &&
+            Guid.TryParse(SafeUnescape(idString), out var parsedBusinessId) &&
+            parsedBusinessId != Guid.Empty)
+        {
+            _viewModel.SetBusiness(parsedBusinessId);
+        }
+    }
+
+    /// <summary>
+    /// Decodes route values defensively so malformed navigation input cannot crash business details.
+    /// </summary>
+    /// <param name="raw">Raw route value supplied by Shell.</param>
+    /// <returns>Decoded and trimmed value, or the trimmed raw value when decoding is not possible.</returns>
+    private static string SafeUnescape(string raw)
+    {
+        try
+        {
+            return Uri.UnescapeDataString(raw).Trim();
+        }
+        catch (UriFormatException)
+        {
+            return raw.Trim();
         }
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.OnAppearingAsync();
+
+        try
+        {
+            await _viewModel.OnAppearingAsync();
+        }
+        catch
+        {
+            // Appearing is an async-void MAUI lifecycle hook. Detail load failures stay inside ViewModel feedback.
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from business detail.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 }

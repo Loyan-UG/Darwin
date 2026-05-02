@@ -2,14 +2,22 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.ProfilePage"
     x:DataType="vm:ProfileViewModel"
     Title="{x:Static res:AppResources.ProfileTitle}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="14">
+    <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                   IsRefreshing="{Binding IsBusy}"
+                                   ProgressColor="{StaticResource BrandGold500}"
+                                   ProgressBackground="{StaticResource Neutral0}">
+        <pullToRefresh:SfPullToRefresh.PullableContent>
+            <ScrollView>
+                <VerticalStackLayout Padding="24" Spacing="14">
             <Label Text="{x:Static res:AppResources.ProfileTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
@@ -17,40 +25,40 @@
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.ProfileSectionTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                    <Label Text="{x:Static res:AppResources.EmailLabel}" Style="{StaticResource FormLabelStyle}" />
-                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.EmailLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                         <Entry Text="{Binding Email}" IsReadOnly="True" Style="{StaticResource FormEntryStyle}" />
-                    </Border>
+                    </inputLayout:SfTextInputLayout>
 
-                    <Label Text="{x:Static res:AppResources.FirstNameLabel}" Style="{StaticResource FormLabelStyle}" />
-                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.FirstNameLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                         <Entry Text="{Binding FirstName}" Style="{StaticResource FormEntryStyle}" />
-                    </Border>
+                    </inputLayout:SfTextInputLayout>
 
-                    <Label Text="{x:Static res:AppResources.LastNameLabel}" Style="{StaticResource FormLabelStyle}" />
-                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.LastNameLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                         <Entry Text="{Binding LastName}" Style="{StaticResource FormEntryStyle}" />
-                    </Border>
+                    </inputLayout:SfTextInputLayout>
 
-                    <Label Text="{x:Static res:AppResources.PhoneLabel}" Style="{StaticResource FormLabelStyle}" />
-                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.PhoneLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                         <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" Placeholder="{x:Static res:AppResources.ProfilePhonePlaceholder}" Style="{StaticResource FormEntryStyle}" />
-                    </Border>
+                    </inputLayout:SfTextInputLayout>
 
-                    <Label Text="{x:Static res:AppResources.LocaleLabel}" Style="{StaticResource FormLabelStyle}" />
-                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.LocaleLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                         <Entry Text="{Binding Locale}" Placeholder="{x:Static res:AppResources.ProfileLocalePlaceholder}" Style="{StaticResource FormEntryStyle}" />
-                    </Border>
+                    </inputLayout:SfTextInputLayout>
 
-                    <Label Text="{x:Static res:AppResources.TimezoneLabel}" Style="{StaticResource FormLabelStyle}" />
-                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.TimezoneLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                         <Entry Text="{Binding Timezone}" Placeholder="{x:Static res:AppResources.ProfileTimezonePlaceholder}" Style="{StaticResource FormEntryStyle}" />
-                    </Border>
+                    </inputLayout:SfTextInputLayout>
 
-                    <Label Text="{x:Static res:AppResources.CurrencyLabel}" Style="{StaticResource FormLabelStyle}" />
-                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.CurrencyLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                         <Entry Text="{Binding Currency}" Placeholder="{x:Static res:AppResources.ProfileCurrencyPlaceholder}" Style="{StaticResource FormEntryStyle}" />
-                    </Border>
+                    </inputLayout:SfTextInputLayout>
 
                     <!-- Keep feedback directly above primary action for better visibility while keyboard is open. -->
                     <Label Text="{Binding SuccessMessage}"
@@ -61,19 +69,21 @@
                            Style="{StaticResource ErrorLabelStyle}"
                            IsVisible="{Binding HasError}" />
 
-                    <Button Text="{x:Static res:AppResources.SaveProfileButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding SaveCommand}" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.SaveProfileButton}"
+                                      Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                      Command="{Binding SaveCommand}" />
 
-                    <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Clicked="OnAccountDeletionClicked" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
+                                      Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                      Clicked="OnAccountDeletionClicked" />
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}"
                                        Color="{StaticResource BrandGold500}" />
                 </VerticalStackLayout>
             </Border>
-        </VerticalStackLayout>
-    </ScrollView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </pullToRefresh:SfPullToRefresh.PullableContent>
+    </pullToRefresh:SfPullToRefresh>
 </ContentPage>

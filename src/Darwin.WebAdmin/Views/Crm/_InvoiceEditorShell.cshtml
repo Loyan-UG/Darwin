@@ -677,10 +677,12 @@
                     <input type="hidden" name="Currency" value="@Model.Currency" />
                     <div class="col-md-4">
                         <label class="form-label" for="invoice-refund-amount">@T.T("RefundAmountMinor")</label>
+                        <field-help title="@T.T("RefundAmountMinor")" content="@T.T("CrmInvoiceRefundAmountMinorHelp")" placement="right"></field-help>
                         <input id="invoice-refund-amount" name="AmountMinor" value="@(Model.Refund.AmountMinor > 0 ? Model.Refund.AmountMinor : Model.SettledAmountMinor)" class="form-control" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="invoice-refund-reason">@T.T("Reason")</label>
+                        <field-help title="@T.T("Reason")" content="@T.T("CrmInvoiceRefundReasonHelp")" placement="right"></field-help>
                         <input id="invoice-refund-reason" name="Reason" value="@Model.Refund.Reason" class="form-control" />
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
@@ -700,56 +702,81 @@
         <input type="hidden" asp-for="Id" />
         <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
 
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label asp-for="BusinessId" class="form-label"></label>
-                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select" disabled="@(Model.IsFinancialContentLocked ? "disabled" : null)"></select>
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("CrmInvoicePartiesLinksSection")</h2>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="BusinessId" class="form-label"></label>
+                    <field-help title="@T.T("Business")" content="@T.T("CrmInvoiceBusinessHelp")" placement="right"></field-help>
+                    <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select" disabled="@(Model.IsFinancialContentLocked ? "disabled" : null)"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="CustomerId" class="form-label"></label>
+                    <field-help title="@T.T("Customer")" content="@T.T("CrmInvoiceCustomerHelp")" placement="right"></field-help>
+                    <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select" disabled="@(Model.IsFinancialContentLocked ? "disabled" : null)"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PaymentId" class="form-label"></label>
+                    <field-help title="@T.T("Payment")" content="@T.T("CrmInvoicePaymentHelp")" placement="right"></field-help>
+                    <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select" disabled="@(Model.IsFinancialContentLocked ? "disabled" : null)"></select>
+                    @if (!string.IsNullOrWhiteSpace(Model.PaymentSummary))
+                    {
+                        <div class="form-text">@T.T("Current"): @Model.PaymentSummary</div>
+                    }
+                </div>
             </div>
-            <div class="col-md-4">
-                <label asp-for="CustomerId" class="form-label"></label>
-                <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select" disabled="@(Model.IsFinancialContentLocked ? "disabled" : null)"></select>
+        </section>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("CrmInvoiceStatusDatesSection")</h2>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label asp-for="Status" class="form-label"></label>
+                    <field-help title="@T.T("Status")" content="@T.T("CrmInvoiceStatusHelp")" placement="right"></field-help>
+                    <select asp-for="Status" asp-items="invoiceStatusOptions" class="form-select" disabled="@(Model.IsFinancialContentLocked ? "disabled" : null)"></select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Currency" class="form-label"></label>
+                    <field-help title="@T.T("Currency")" content="@T.T("CrmInvoiceCurrencyHelp")" placement="right"></field-help>
+                    <input asp-for="Currency" class="form-control" readonly="@Model.IsFinancialContentLocked" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="DueDateUtc" class="form-label"></label>
+                    <field-help title="@T.T("DueDateUtc")" content="@T.T("CrmInvoiceDueDateUtcHelp")" placement="right"></field-help>
+                    <input asp-for="DueDateUtc" type="datetime-local" class="form-control" readonly="@Model.IsFinancialContentLocked" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="PaidAtUtc" class="form-label"></label>
+                    <field-help title="@T.T("PaidAtUtc")" content="@T.T("CrmInvoicePaidAtUtcHelp")" placement="right"></field-help>
+                    <input asp-for="PaidAtUtc" type="datetime-local" class="form-control" readonly="@Model.IsFinancialContentLocked" />
+                </div>
             </div>
-            <div class="col-md-4">
-                <label asp-for="PaymentId" class="form-label"></label>
-                <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select" disabled="@(Model.IsFinancialContentLocked ? "disabled" : null)"></select>
-                @if (!string.IsNullOrWhiteSpace(Model.PaymentSummary))
-                {
-                    <div class="form-text">@T.T("Current"): @Model.PaymentSummary</div>
-                }
+        </section>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("CrmInvoiceTotalsSection")</h2>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="TotalNetMinor" class="form-label"></label>
+                    <field-help title="@T.T("TotalNetMinor")" content="@T.T("CrmInvoiceTotalNetMinorHelp")" placement="right"></field-help>
+                    <input asp-for="TotalNetMinor" class="form-control" readonly="@Model.IsFinancialContentLocked" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="TotalTaxMinor" class="form-label"></label>
+                    <field-help title="@T.T("TotalTaxMinor")" content="@T.T("CrmInvoiceTotalTaxMinorHelp")" placement="right"></field-help>
+                    <input asp-for="TotalTaxMinor" class="form-control" readonly="@Model.IsFinancialContentLocked" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="TotalGrossMinor" class="form-label"></label>
+                    <field-help title="@T.T("TotalGrossMinor")" content="@T.T("CrmInvoiceTotalGrossMinorHelp")" placement="right"></field-help>
+                    <input asp-for="TotalGrossMinor" class="form-control" readonly="@Model.IsFinancialContentLocked" />
+                </div>
             </div>
-            <div class="col-md-3">
-                <label asp-for="Status" class="form-label"></label>
-                <select asp-for="Status" asp-items="invoiceStatusOptions" class="form-select" disabled="@(Model.IsFinancialContentLocked ? "disabled" : null)"></select>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="Currency" class="form-label"></label>
-                <input asp-for="Currency" class="form-control" readonly="@Model.IsFinancialContentLocked" />
-            </div>
-            <div class="col-md-3">
-                <label asp-for="DueDateUtc" class="form-label"></label>
-                <input asp-for="DueDateUtc" type="datetime-local" class="form-control" readonly="@Model.IsFinancialContentLocked" />
-            </div>
-            <div class="col-md-3">
-                <label asp-for="PaidAtUtc" class="form-label"></label>
-                <input asp-for="PaidAtUtc" type="datetime-local" class="form-control" readonly="@Model.IsFinancialContentLocked" />
-            </div>
-            <div class="col-md-4">
-                <label asp-for="TotalNetMinor" class="form-label"></label>
-                <input asp-for="TotalNetMinor" class="form-control" readonly="@Model.IsFinancialContentLocked" />
-            </div>
-            <div class="col-md-4">
-                <label asp-for="TotalTaxMinor" class="form-label"></label>
-                <input asp-for="TotalTaxMinor" class="form-control" readonly="@Model.IsFinancialContentLocked" />
-            </div>
-            <div class="col-md-4">
-                <label asp-for="TotalGrossMinor" class="form-label"></label>
-                <input asp-for="TotalGrossMinor" class="form-control" readonly="@Model.IsFinancialContentLocked" />
-            </div>
-        </div>
+        </section>
 
         <div class="mt-4">
             <button type="submit" class="btn btn-primary" @(Model.IsFinancialContentLocked ? "disabled" : null)>@T.T("Save")</button>
-    <a asp-action="Invoices" hx-get="@GlobalInvoicesUrl()" hx-target="#crm-invoice-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
+            <a asp-action="Invoices" hx-get="@GlobalInvoicesUrl()" hx-target="#crm-invoice-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
         </div>
     </form>
 </div>

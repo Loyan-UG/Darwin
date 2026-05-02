@@ -617,50 +617,24 @@
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("BusinessesRequiringEmailSetup")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.BusinessesRequiringEmailSetupCount</div>
-            <div class="small text-muted mt-2">@T.T("BusinessesRequiringEmailSetupNote")</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("MissingSupportEmail")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.MissingSupportEmailCount</div>
-            <div class="small text-muted mt-2">@T.T("MissingSupportEmailNote")</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("MissingSenderIdentity")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.MissingSenderIdentityCount</div>
-            <div class="small text-muted mt-2">@T.T("MissingSenderIdentityNote")</div>
-        </div>
-    </div>
+<div class="admin-kpi-row mb-4">
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("BusinessesRequiringEmailSetup") <field-help title="@T.T("BusinessesRequiringEmailSetup")" content="@T.T("BusinessesRequiringEmailSetupNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.Summary.BusinessesRequiringEmailSetupCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MissingSupportEmail") <field-help title="@T.T("MissingSupportEmail")" content="@T.T("MissingSupportEmailNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.Summary.MissingSupportEmailCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MissingSenderIdentity") <field-help title="@T.T("MissingSenderIdentity")" content="@T.T("MissingSenderIdentityNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.Summary.MissingSenderIdentityCount</div></div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("ChannelAttempts24h")</div>
+<div class="admin-kpi-row mb-4">
+    <div class="admin-kpi-item">
+            <div class="text-muted small">@T.T("ChannelAttempts24h") <field-help title="@T.T("ChannelAttempts24h")" content="@T.T("ChannelAttempts24hNote")" placement="right"></field-help></div>
             <div class="fs-4 fw-semibold">@Model.ChannelAuditSummary.Recent24HourCount</div>
-            <div class="small text-muted mt-2">@T.T("ChannelAttempts24hNote")</div>
-        </div>
     </div>
-    <div class="col-md-3">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("SmsWhatsAppMix")</div>
+    <div class="admin-kpi-item">
+            <div class="text-muted small">@T.T("SmsWhatsAppMix") <field-help title="@T.T("SmsWhatsAppMix")" content="@T.T("SmsWhatsAppMixNote")" placement="right"></field-help></div>
             <div class="fw-semibold mt-1">@Model.ChannelAuditSummary.SmsCount / @Model.ChannelAuditSummary.WhatsAppCount</div>
-            <div class="small text-muted mt-2">@T.T("SmsWhatsAppMixNote")</div>
-        </div>
     </div>
-    <div class="col-md-3">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("PhoneVerification")</div>
+    <div class="admin-kpi-item">
+            <div class="text-muted small">@T.T("PhoneVerification") <field-help title="@T.T("PhoneVerification")" content="@T.T("PhoneVerificationActivityNote")" placement="right"></field-help></div>
             <div class="fs-4 fw-semibold">@Model.ChannelAuditSummary.PhoneVerificationCount</div>
-            <div class="small text-muted mt-2">@T.T("PhoneVerificationActivityNote")</div>
             <div class="d-flex gap-2 flex-wrap mt-3">
                 <a asp-action="ChannelAudits"
                    asp-route-phoneVerificationOnly="true"
@@ -685,14 +659,10 @@
                    hx-swap="outerHTML"
                    hx-push-url="true">@T.T("UsersFilterMobileLinked")</a>
             </div>
-        </div>
     </div>
-    <div class="col-md-3">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("ChannelFailures")</div>
+    <div class="admin-kpi-item">
+            <div class="text-muted small">@T.T("ChannelFailures") <field-help title="@T.T("ChannelFailures")" content="@T.T("ChannelFailuresNote")" placement="right"></field-help></div>
             <div class="fs-4 fw-semibold">@Model.ChannelAuditSummary.FailedCount</div>
-            <div class="small text-muted mt-2">@T.T("ChannelFailuresNote")</div>
-        </div>
     </div>
 </div>
 
@@ -886,28 +856,10 @@
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommunicationRetriedDeliveryChainsLabel")</div>
-            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.PriorAttemptCount > 0)</div>
-            <div class="small text-muted mt-2">@T.T("CommunicationRetriedDeliveryChainsNote")</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommunicationPriorSuccessContextLabel")</div>
-            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.LastSuccessfulAttemptAtUtc.HasValue)</div>
-            <div class="small text-muted mt-2">@T.T("CommunicationPriorSuccessContextNote")</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("CommunicationRepeatedFailureChainsLabel")</div>
-            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.PriorFailureCount > 0 && x.NeedsOperatorFollowUp)</div>
-            <div class="small text-muted mt-2">@T.T("CommunicationRepeatedFailureChainsNote")</div>
-        </div>
-    </div>
+<div class="admin-kpi-row mb-4">
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("CommunicationRetriedDeliveryChainsLabel") <field-help title="@T.T("CommunicationRetriedDeliveryChainsLabel")" content="@T.T("CommunicationRetriedDeliveryChainsNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.PriorAttemptCount > 0)</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("CommunicationPriorSuccessContextLabel") <field-help title="@T.T("CommunicationPriorSuccessContextLabel")" content="@T.T("CommunicationPriorSuccessContextNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.LastSuccessfulAttemptAtUtc.HasValue)</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("CommunicationRepeatedFailureChainsLabel") <field-help title="@T.T("CommunicationRepeatedFailureChainsLabel")" content="@T.T("CommunicationRepeatedFailureChainsNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.PriorFailureCount > 0 && x.NeedsOperatorFollowUp)</div></div>
 </div>
 
 <div class="small text-muted mb-3">
@@ -1321,28 +1273,10 @@
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("BusinessCommunicationFollowUpBacklogLabel")</div>
-            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</div>
-            <div class="small text-muted mt-2">@T.T("BusinessCommunicationFollowUpBacklogNote")</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("BusinessCommunicationHighSeverityRowsLabel")</div>
-            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "High", StringComparison.OrdinalIgnoreCase))</div>
-            <div class="small text-muted mt-2">@T.T("BusinessCommunicationHighSeverityRowsNote")</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("BusinessCommunicationSlowDeliveriesLabel")</div>
-            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "Slow", StringComparison.OrdinalIgnoreCase))</div>
-            <div class="small text-muted mt-2">@T.T("BusinessCommunicationSlowDeliveriesNote")</div>
-        </div>
-    </div>
+<div class="admin-kpi-row mb-4">
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("BusinessCommunicationFollowUpBacklogLabel") <field-help title="@T.T("BusinessCommunicationFollowUpBacklogLabel")" content="@T.T("BusinessCommunicationFollowUpBacklogNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("BusinessCommunicationHighSeverityRowsLabel") <field-help title="@T.T("BusinessCommunicationHighSeverityRowsLabel")" content="@T.T("BusinessCommunicationHighSeverityRowsNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "High", StringComparison.OrdinalIgnoreCase))</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("BusinessCommunicationSlowDeliveriesLabel") <field-help title="@T.T("BusinessCommunicationSlowDeliveriesLabel")" content="@T.T("BusinessCommunicationSlowDeliveriesNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "Slow", StringComparison.OrdinalIgnoreCase))</div></div>
 </div>
 
 <form method="get" class="row g-2 mb-3"
@@ -1350,13 +1284,19 @@
       hx-target="#business-communications-workspace-shell"
       hx-swap="outerHTML">
     <div class="col-md-4">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessCommunicationSearchPlaceholder")" />
+        <label class="form-label" for="businessCommunicationQuery">@T.T("Search")</label>
+        <field-help title="@T.T("Search")" content="@T.T("BusinessCommunicationSearchHelp")" placement="right"></field-help>
+        <input id="businessCommunicationQuery" type="text" name="query" value="@Model.Query" class="form-control" placeholder="@T.T("BusinessCommunicationSearchPlaceholder")" />
     </div>
     <div class="col-md-3">
-        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <label class="form-label" for="businessCommunicationFilter">@T.T("Filter")</label>
+        <field-help title="@T.T("Filter")" content="@T.T("BusinessCommunicationFilterHelp")" placement="right"></field-help>
+        <select id="businessCommunicationFilter" name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-auto">
-        <select name="pageSize" class="form-select">
+        <label class="form-label" for="businessCommunicationPageSize">@T.T("PageSize")</label>
+        <field-help title="@T.T("PageSize")" content="@T.T("BusinessCommunicationPageSizeHelp")" placement="right"></field-help>
+        <select id="businessCommunicationPageSize" name="pageSize" class="form-select">
             @foreach (var item in Model.PageSizeItems)
             {
                 <option value="@item.Value" selected="@item.Selected">@item.Text</option>
@@ -1367,6 +1307,7 @@
         <div class="form-check mt-2">
             <input type="checkbox" name="setupOnly" value="true" class="form-check-input" id="setupOnly" checked="@(Model.SetupOnly ? "checked" : null)" />
             <label class="form-check-label" for="setupOnly">@T.T("BusinessCommunicationNeedsSetupOnlyLabel")</label>
+            <field-help title="@T.T("BusinessCommunicationNeedsSetupOnlyLabel")" content="@T.T("BusinessCommunicationSetupOnlyHelp")" placement="right"></field-help>
         </div>
     </div>
     <div class="col-auto">

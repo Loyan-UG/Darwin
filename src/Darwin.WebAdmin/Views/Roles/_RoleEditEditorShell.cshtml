@@ -26,28 +26,32 @@
 
         <div class="card mb-3">
             <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">@T.T("Key")</label>
-                    <input class="form-control" value="@Model.Key" readonly />
-                    <small class="text-muted">@T.T("ImmutableKeyHelp")</small>
-                </div>
+                <section class="admin-form-section">
+                    <h2 class="admin-form-section-title">@T.T("RoleIdentitySection")</h2>
+                    <div class="mb-3">
+                        <label class="form-label">@T.T("Key")</label>
+                        <field-help title="@T.T("Key")" content="@T.T("ImmutableKeyHelp")" placement="right"></field-help>
+                        <input class="form-control" value="@Model.Key" readonly />
+                    </div>
 
-                <div class="mb-3">
-                    <label asp-for="DisplayName" class="form-label"></label>
-                    <field-help title="@T.T("DisplayName")" content="@T.T("AdminDisplayNameHelp")" placement="right"></field-help>
-                    <input asp-for="DisplayName" class="form-control" />
-                    <span asp-validation-for="DisplayName" class="text-danger"></span>
-                </div>
+                    <div class="mb-3">
+                        <label asp-for="DisplayName" class="form-label"></label>
+                        <field-help title="@T.T("DisplayName")" content="@T.T("AdminDisplayNameHelp")" placement="right"></field-help>
+                        <input asp-for="DisplayName" class="form-control" />
+                        <span asp-validation-for="DisplayName" class="text-danger"></span>
+                    </div>
 
-                <div class="mb-3">
-                    <label asp-for="Description" class="form-label"></label>
-                    <field-help title="@T.T("Description")" content="@T.T("RoleDescriptionHelp")" placement="right"></field-help>
-                    <textarea asp-for="Description" rows="3" class="form-control"></textarea>
-                    <span asp-validation-for="Description" class="text-danger"></span>
-                </div>
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <field-help title="@T.T("Description")" content="@T.T("RoleDescriptionHelp")" placement="right"></field-help>
+                        <textarea asp-for="Description" rows="3" class="form-control"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </section>
 
-                <div class="mb-3">
+                <section class="admin-form-section">
                     <label class="form-label">@T.T("SystemRole")</label>
+                    <field-help title="@T.T("SystemRole")" content="@T.T("SystemRoleHelp")" placement="right"></field-help>
                     @if (Model.IsSystem)
                     {
                         <span class="badge bg-secondary"><i class="fa fa-lock"></i> @T.T("System")</span>
@@ -56,7 +60,7 @@
                     {
                         <span class="text-muted">@T.T("No")</span>
                     }
-                </div>
+                </section>
             </div>
         </div>
 

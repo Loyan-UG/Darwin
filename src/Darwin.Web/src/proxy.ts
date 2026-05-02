@@ -8,33 +8,105 @@ import {
   REQUEST_PATHNAME_HEADER,
   stripCulturePrefix,
 } from "@/lib/locale-routing";
+import {
+  getFallbackPublicSiteRuntimeConfig,
+  isPublicSiteRuntimeConfig,
+  normalizePublicSiteRuntimeConfig,
+  type PublicSiteRuntimeConfig,
+} from "@/lib/public-site-runtime-config-shared";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 
-export function proxy(request: NextRequest) {
+const PUBLIC_RUNTIME_CONFIG_CACHE_MS = 60_000;
+const PUBLIC_RUNTIME_CONFIG_PATH = "/api/v1/public/site/runtime-config";
+
+let cachedPublicRuntimeConfig:
+  | {
+      expiresAt: number;
+      value: PublicSiteRuntimeConfig;
+    }
+  | undefined;
+let pendingPublicRuntimeConfig:
+  | Promise<PublicSiteRuntimeConfig>
+  | undefined;
+
+function buildPublicRuntimeConfigUrl() {
   const runtimeConfig = getSiteRuntimeConfig();
+  return new URL(PUBLIC_RUNTIME_CONFIG_PATH, `${runtimeConfig.webApiBaseUrl}/`)
+    .toString();
+}
+
+async function fetchPublicRuntimeConfig() {
+  try {
+    const response = await fetch(buildPublicRuntimeConfigUrl(), {
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return getFallbackPublicSiteRuntimeConfig();
+    }
+
+    const payload: unknown = await response.json();
+    return isPublicSiteRuntimeConfig(payload)
+      ? normalizePublicSiteRuntimeConfig(payload)
+      : getFallbackPublicSiteRuntimeConfig();
+  } catch {
+    return getFallbackPublicSiteRuntimeConfig();
+  }
+}
+
+async function getProxyPublicRuntimeConfig() {
+  const now = Date.now();
+  if (cachedPublicRuntimeConfig && cachedPublicRuntimeConfig.expiresAt > now) {
+    return cachedPublicRuntimeConfig.value;
+  }
+
+  pendingPublicRuntimeConfig ??= fetchPublicRuntimeConfig().finally(() => {
+    pendingPublicRuntimeConfig = undefined;
+  });
+
+  const value = await pendingPublicRuntimeConfig;
+  cachedPublicRuntimeConfig = {
+    expiresAt: now + PUBLIC_RUNTIME_CONFIG_CACHE_MS,
+    value,
+  };
+
+  return value;
+}
+
+export async function proxy(request: NextRequest) {
+  const runtimeConfig = getSiteRuntimeConfig();
+  const publicRuntimeConfig = await getProxyPublicRuntimeConfig();
+  const supportedCultures = publicRuntimeConfig.supportedCultures;
+  const defaultCulture = publicRuntimeConfig.defaultCulture;
   const searchParamCulture = request.nextUrl.searchParams.get("culture");
   const cookieCulture = request.cookies.get(runtimeConfig.cultureCookieName)?.value;
-  const pathnameContext = stripCulturePrefix(request.nextUrl.pathname);
+  const pathnameContext = stripCulturePrefix(
+    request.nextUrl.pathname,
+    supportedCultures,
+  );
   const hasCulturePrefix = Boolean(pathnameContext.culture);
   const pathCulture =
     pathnameContext.culture &&
-    runtimeConfig.supportedCultures.includes(pathnameContext.culture)
+    supportedCultures.includes(pathnameContext.culture)
       ? pathnameContext.culture
       : null;
   const validSearchCulture =
     searchParamCulture &&
-    runtimeConfig.supportedCultures.includes(searchParamCulture)
+    supportedCultures.includes(searchParamCulture)
       ? searchParamCulture
       : null;
   const validCookieCulture =
-    cookieCulture && runtimeConfig.supportedCultures.includes(cookieCulture)
+    cookieCulture && supportedCultures.includes(cookieCulture)
       ? cookieCulture
       : null;
   const effectiveCulture =
     validSearchCulture ??
     pathCulture ??
     validCookieCulture ??
-    runtimeConfig.defaultCulture;
+    defaultCulture;
   const isInferredCultureRequest =
     validSearchCulture &&
     request.nextUrl.searchParams.get(INFERRED_CULTURE_SEARCH_PARAM) === "1";
@@ -57,7 +129,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (hasCulturePrefix) {
-    const prefixedCulture = pathCulture ?? runtimeConfig.defaultCulture;
+    const prefixedCulture = pathCulture ?? defaultCulture;
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = pathnameContext.pathname;
 

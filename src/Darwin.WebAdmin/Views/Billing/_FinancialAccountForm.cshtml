@@ -2,22 +2,29 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{ var accountTypeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.AccountType>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) }); }
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <label asp-for="BusinessId" class="form-label"></label>
-        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("FinancialAccountIdentitySection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="BusinessId" class="form-label"></label>
+            <field-help title="@T.T("Business")" content="@T.T("FinancialAccountBusinessHelp")" placement="right"></field-help>
+            <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Code" class="form-label"></label>
+            <field-help title="@T.T("Code")" content="@T.T("FinancialAccountCodeHelp")" placement="right"></field-help>
+            <input asp-for="Code" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Type" class="form-label"></label>
+            <field-help title="@T.T("Type")" content="@T.T("FinancialAccountTypeHelp")" placement="right"></field-help>
+            <select asp-for="Type" asp-items="accountTypeOptions" class="form-select"></select>
+        </div>
+        <div class="col-12">
+            <label asp-for="Name" class="form-label"></label>
+            <field-help title="@T.T("Name")" content="@T.T("FinancialAccountNameHelp")" placement="right"></field-help>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
     </div>
-    <div class="col-md-4">
-        <label asp-for="Code" class="form-label"></label>
-        <input asp-for="Code" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Type" class="form-label"></label>
-        <select asp-for="Type" asp-items="accountTypeOptions" class="form-select"></select>
-    </div>
-    <div class="col-12">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
-    </div>
-</div>
+</section>

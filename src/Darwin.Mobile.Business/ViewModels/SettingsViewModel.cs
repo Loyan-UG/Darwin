@@ -57,20 +57,35 @@ public sealed class SettingsViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            RaiseCommandStates();
+        });
         try
         {
             await _navigationService.GoToAsync(route);
         }
         finally
         {
-            IsBusy = false;
-            OpenProfileCommand.RaiseCanExecuteChanged();
-            OpenChangePasswordCommand.RaiseCanExecuteChanged();
-            OpenStaffAccessBadgeCommand.RaiseCanExecuteChanged();
-            OpenSubscriptionCommand.RaiseCanExecuteChanged();
-            OpenLegalHubCommand.RaiseCanExecuteChanged();
-            OpenAccountDeletionCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
         }
+    }
+
+    /// <summary>
+    /// Updates every settings navigation command so only one route transition runs at a time.
+    /// </summary>
+    private void RaiseCommandStates()
+    {
+        OpenProfileCommand.RaiseCanExecuteChanged();
+        OpenChangePasswordCommand.RaiseCanExecuteChanged();
+        OpenStaffAccessBadgeCommand.RaiseCanExecuteChanged();
+        OpenSubscriptionCommand.RaiseCanExecuteChanged();
+        OpenLegalHubCommand.RaiseCanExecuteChanged();
+        OpenAccountDeletionCommand.RaiseCanExecuteChanged();
     }
 }

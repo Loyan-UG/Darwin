@@ -2,38 +2,52 @@
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{ var opportunityStageOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.OpportunityStage>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) }); }
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <label asp-for="CustomerId" class="form-label"></label>
-        <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("CrmOpportunityOwnershipSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="CustomerId" class="form-label"></label>
+            <field-help title="@T.T("Customer")" content="@T.T("CrmOpportunityCustomerHelp")" placement="right"></field-help>
+            <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="AssignedToUserId" class="form-label"></label>
+            <field-help title="@T.T("AssignedTo")" content="@T.T("CrmOpportunityAssignedToHelp")" placement="right"></field-help>
+            <select asp-for="AssignedToUserId" asp-items="Model.UserOptions" class="form-select"></select>
+        </div>
     </div>
-    <div class="col-md-6">
-        <label asp-for="AssignedToUserId" class="form-label"></label>
-        <select asp-for="AssignedToUserId" asp-items="Model.UserOptions" class="form-select"></select>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("CrmOpportunityForecastSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Title" class="form-label"></label>
+            <field-help title="@T.T("Title")" content="@T.T("CrmOpportunityTitleHelp")" placement="right"></field-help>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Stage" class="form-label"></label>
+            <field-help title="@T.T("Stage")" content="@T.T("CrmOpportunityStageHelp")" placement="right"></field-help>
+            <select asp-for="Stage" asp-items="opportunityStageOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="ExpectedCloseDateUtc" class="form-label"></label>
+            <field-help title="@T.T("ExpectedCloseDate")" content="@T.T("CrmOpportunityExpectedCloseDateHelp")" placement="right"></field-help>
+            <input asp-for="ExpectedCloseDateUtc" class="form-control" type="date" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="EstimatedValueMinor" class="form-label"></label>
+            <field-help title="@T.T("EstimatedValueMinor")" content="@T.T("CrmOpportunityEstimatedValueMinorHelp")" placement="right"></field-help>
+            <input asp-for="EstimatedValueMinor" class="form-control" />
+            <span asp-validation-for="EstimatedValueMinor" class="text-danger"></span>
+        </div>
     </div>
-    <div class="col-md-6">
-        <label asp-for="Title" class="form-label"></label>
-        <input asp-for="Title" class="form-control" />
-        <span asp-validation-for="Title" class="text-danger"></span>
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Stage" class="form-label"></label>
-        <select asp-for="Stage" asp-items="opportunityStageOptions" class="form-select"></select>
-    </div>
-    <div class="col-md-3">
-        <label asp-for="ExpectedCloseDateUtc" class="form-label"></label>
-        <input asp-for="ExpectedCloseDateUtc" class="form-control" type="date" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="EstimatedValueMinor" class="form-label"></label>
-        <input asp-for="EstimatedValueMinor" class="form-control" />
-        <div class="form-text">@T.T("MinorUnitsExample")</div>
-        <span asp-validation-for="EstimatedValueMinor" class="text-danger"></span>
-    </div>
-</div>
+</section>
 
 <div class="d-flex justify-content-between align-items-center mt-4">
-    <h3 class="mb-0">@T.T("OpportunityItems")</h3>
+    <h3 class="mb-0">@T.T("OpportunityItems") <field-help title="@T.T("OpportunityItems")" content="@T.T("CrmOpportunityItemsHelp")" placement="right"></field-help></h3>
     <button type="button"
             class="btn btn-outline-secondary btn-sm"
             id="addOpportunityLine"
@@ -54,14 +68,17 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="Items[i].ProductVariantId" class="form-label"></label>
+                    <field-help title="@T.T("ProductVariant")" content="@T.T("CrmOpportunityProductVariantHelp")" placement="right"></field-help>
                     <select asp-for="Items[i].ProductVariantId" asp-items="Model.VariantOptions" class="form-select"></select>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="Items[i].Quantity" class="form-label"></label>
+                    <field-help title="@T.T("Quantity")" content="@T.T("CrmOpportunityQuantityHelp")" placement="right"></field-help>
                     <input asp-for="Items[i].Quantity" class="form-control" />
                 </div>
                 <div class="col-md-3">
                     <label asp-for="Items[i].UnitPriceMinor" class="form-label"></label>
+                    <field-help title="@T.T("UnitPriceMinor")" content="@T.T("CrmOpportunityUnitPriceMinorHelp")" placement="right"></field-help>
                     <input asp-for="Items[i].UnitPriceMinor" class="form-control" />
                 </div>
             </div>
@@ -79,6 +96,7 @@
         <div class="row g-3">
             <div class="col-md-6">
                 <label class="form-label">@T.T("ProductVariant")</label>
+                <field-help title="@T.T("ProductVariant")" content="@T.T("CrmOpportunityProductVariantHelp")" placement="right"></field-help>
                 <select class="form-select" name="Items[__index__].ProductVariantId">
                     @foreach (var option in Model.VariantOptions)
                     {
@@ -86,8 +104,8 @@
                     }
                 </select>
             </div>
-            <div class="col-md-3"><label class="form-label">@T.T("Quantity")</label><input class="form-control" name="Items[__index__].Quantity" value="1" /></div>
-            <div class="col-md-3"><label class="form-label">@T.T("UnitPriceMinor")</label><input class="form-control" name="Items[__index__].UnitPriceMinor" value="0" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("Quantity")</label><field-help title="@T.T("Quantity")" content="@T.T("CrmOpportunityQuantityHelp")" placement="right"></field-help><input class="form-control" name="Items[__index__].Quantity" value="1" /></div>
+            <div class="col-md-3"><label class="form-label">@T.T("UnitPriceMinor")</label><field-help title="@T.T("UnitPriceMinor")" content="@T.T("CrmOpportunityUnitPriceMinorHelp")" placement="right"></field-help><input class="form-control" name="Items[__index__].UnitPriceMinor" value="0" /></div>
         </div>
         <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line" data-dynamic-lines-remove data-dynamic-lines-row=".line-row">@T.T("Remove")</button></div>
     </div></div>

@@ -1,8 +1,8 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Constants;
 using Darwin.Mobile.Business.ViewModels;
-using Microsoft.Maui.ApplicationModel;
 
 namespace Darwin.Mobile.Business.Views;
 
@@ -12,6 +12,7 @@ namespace Darwin.Mobile.Business.Views;
 public partial class ProfilePage : ContentPage
 {
     private readonly ProfileViewModel _viewModel;
+    private int _navigationInProgress;
 
     public ProfilePage(ProfileViewModel viewModel)
     {
@@ -23,7 +24,32 @@ public partial class ProfilePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.OnAppearingAsync();
+
+        try
+        {
+            await _viewModel.OnAppearingAsync();
+        }
+        catch
+        {
+            // Appearing is an async-void MAUI lifecycle hook. Profile load failures stay inside ViewModel feedback.
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from profile.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 
     /// <summary>
@@ -31,12 +57,17 @@ public partial class ProfilePage : ContentPage
     /// </summary>
     private async void OnAccountDeletionClicked(object? sender, EventArgs e)
     {
-        await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.SettingsAccountDeletion));
+        await NavigateSafelyAsync(Routes.SettingsAccountDeletion);
     }
 
-    private static async Task NavigateSafelyAsync(string route)
+    private async Task NavigateSafelyAsync(string route)
     {
         if (Shell.Current is null || string.IsNullOrWhiteSpace(route))
+        {
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
         {
             return;
         }
@@ -48,6 +79,10 @@ public partial class ProfilePage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Business profile navigation to '{route}' failed: {ex}");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _navigationInProgress, 0);
         }
     }
 }

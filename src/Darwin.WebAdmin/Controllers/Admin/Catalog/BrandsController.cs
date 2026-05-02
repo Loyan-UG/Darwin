@@ -296,6 +296,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private async Task EnsureTranslationsAsync(BrandEditVm vm, CancellationToken ct)
         {
             var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            vm.MultilingualEnabled = CountCultures(settings.SupportedCulturesCsv) > 1;
             var orderedCultures = cultures
                 .Prepend(defaultCulture)
                 .Where(static x => !string.IsNullOrWhiteSpace(x))
@@ -305,6 +307,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (orderedCultures.Length == 0)
             {
                 orderedCultures = [defaultCulture];
+            }
+
+            if (!vm.MultilingualEnabled)
+            {
+                orderedCultures = [defaultCulture];
+                vm.Translations.RemoveAll(x => !string.Equals(x.Culture, defaultCulture, StringComparison.OrdinalIgnoreCase));
             }
 
             foreach (var culture in orderedCultures)
@@ -324,6 +332,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     !string.IsNullOrWhiteSpace(t.Name))
                 .ToList();
         }
+
+        private static int CountCultures(string? supportedCulturesCsv)
+            => (supportedCulturesCsv ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
 
         private OperationalPlaybookVm[] BuildBrandPlaybooks()
         {

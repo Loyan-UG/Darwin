@@ -513,8 +513,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"RewardTypeInvalidAllowedValues\"])");
         loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"RewardTierIdCannotBeEmpty\"])");
         loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"LoyaltyProgramNotFound\"])");
-        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierCreateFailed\"], ex.Message)");
-        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierUpdateFailed\"], ex.Message)");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierCreateFailed\"])");
+        loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierUpdateFailed\"])");
         loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"ScanSessionTokenRequired\"])");
         loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"ScanSessionTokenTooLong\"])");
         loyaltySource.Should().Contain("BadRequestProblem(_validationLocalizer[\"PointsPositiveInteger\"])");
@@ -632,7 +632,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         accountSource.Should().Contain("[HttpPost(\"/account/webauthn/finish-login\")]");
         accountSource.Should().Contain("public async Task<IActionResult> WebAuthnFinishLogin(");
         accountSource.Should().Contain("[HttpGet(\"/account/register\")]");
-        accountSource.Should().Contain("public IActionResult Register(string? returnUrl = null)");
+        accountSource.Should().Contain("public async Task<IActionResult> Register(string? returnUrl = null, CancellationToken ct = default)");
         accountSource.Should().Contain("[HttpPost(\"/account/register\")]");
         accountSource.Should().Contain("public async Task<IActionResult> RegisterPost(");
         accountSource.Should().Contain("[Authorize]");
@@ -679,7 +679,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().NotContain("res.Error");
         source.Should().NotContain("result.Error!");
         source.Should().Contain("return Json(new { redirect = dest });");
-        source.Should().Contain("var siteSettings = _siteSettingCache.GetAsync().GetAwaiter().GetResult();");
+        source.Should().Contain("var siteSettings = await _siteSettingCache.GetAsync(ct);");
         source.Should().Contain("ViewData[\"DefaultCurrency\"] = siteSettings.DefaultCurrency;");
         source.Should().Contain("ViewData[\"DefaultLocale\"] = siteSettings.DefaultCulture;");
         source.Should().Contain("ViewData[\"DefaultTimeZone\"] = siteSettings.TimeZone ?? string.Empty;");
@@ -737,7 +737,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         dependencyInjectionSource.Should().Contain("options.Cookie.Name = \"Darwin.Auth\";");
         dependencyInjectionSource.Should().Contain("options.Cookie.HttpOnly = true;");
         dependencyInjectionSource.Should().Contain("options.Cookie.SameSite = SameSiteMode.Lax;");
-        dependencyInjectionSource.Should().Contain("options.Cookie.SecurePolicy = CookieSecurePolicy.Always;");
+        dependencyInjectionSource.Should().Contain("var cookieSecurePolicy = ResolveCookieSecurePolicy(config);");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SecurePolicy = cookieSecurePolicy;");
         dependencyInjectionSource.Should().Contain("options.ExpireTimeSpan = TimeSpan.FromDays(30);");
         dependencyInjectionSource.Should().Contain(".AddControllersWithViews(options =>");
         dependencyInjectionSource.Should().Contain("options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;");
@@ -755,7 +756,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
 
 
     [Fact]
-    public void InfrastructureSeeds_Should_KeepUsing_SharedDomainDefaults_For_LocalizationAndCurrency()
+    public void InfrastructureSeeds_Should_KeepUsing_DomainDefaults_For_LocalizationAndCurrency()
     {
         var identitySeedSource = ReadInfrastructureFile(Path.Combine("Persistence", "Seed", "Sections", "IdentitySeedSection.cs"));
         var businessesSeedSource = ReadInfrastructureFile(Path.Combine("Persistence", "Seed", "Sections", "BusinessesSeedSection.cs"));
@@ -802,7 +803,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         catalogSeedSource.Should().Contain("Culture = DomainDefaults.DefaultCulture");
         catalogSeedSource.Should().Contain("Money.FromMajor(it.Price, DomainDefaults.DefaultCurrency)");
         catalogSeedSource.Should().Contain("Currency = DomainDefaults.DefaultCurrency");
-        catalogSeedSource.Should().Contain("PriceDeltaMinor = Money.FromMajor(0m, DomainDefaults.DefaultCurrency).AmountMinor");
+        catalogSeedSource.Should().Contain("PriceDeltaMinor = Money.FromMajor(priceDeltaMajor, DomainDefaults.DefaultCurrency).AmountMinor");
 
         cmsSeedSource.Should().Contain("using Darwin.Domain.Common;");
         cmsSeedSource.Should().Contain("Culture = DomainDefaults.DefaultCulture");
@@ -891,7 +892,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         mediaSource.Should().Contain("public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)");
 
         shippingMethodsSource.Should().Contain("public async Task<IActionResult> Index(");
-        shippingMethodsSource.Should().Contain("public IActionResult Create()");
+        shippingMethodsSource.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct = default)");
         shippingMethodsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
     }
 
@@ -980,7 +981,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         mobileOpsSource.Should().Contain("public async Task<IActionResult> Index(");
 
         addOnGroupsSource.Should().Contain("public async Task<IActionResult> Index(");
-        addOnGroupsSource.Should().Contain("public IActionResult Create()");
+        addOnGroupsSource.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct = default)");
         addOnGroupsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
         addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToProducts(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)");
         addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToCategories(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)");
@@ -988,7 +989,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         addOnGroupsSource.Should().Contain("public async Task<IActionResult> AttachToVariants(");
 
         brandsSource.Should().Contain("public async Task<IActionResult> Index(int page = 1, int pageSize = 20,");
-        brandsSource.Should().Contain("public IActionResult Create() => RenderBrandEditor(new BrandEditVm");
+        brandsSource.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct = default)");
         brandsSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
     }
 
@@ -1542,14 +1543,14 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         controllerSource.Should().Contain("[AllowAnonymous]");
         controllerSource.Should().Contain("[Route(\"api/v1/public/billing/stripe/webhooks\")]");
         controllerSource.Should().Contain("[HttpPost(\"/api/v1/billing/stripe/webhooks\")]");
-        controllerSource.Should().Contain("private readonly IAppDbContext _db;");
+        controllerSource.Should().Contain("private readonly ProviderCallbackInboxWriter _inboxWriter;");
         controllerSource.Should().Contain("private readonly GetSiteSettingHandler _getSiteSettingHandler;");
         controllerSource.Should().Contain("private readonly StripeWebhookSignatureVerifier _signatureVerifier;");
         controllerSource.Should().Contain("Request.EnableBuffering();");
         controllerSource.Should().Contain("var signatureHeader = Request.Headers[\"Stripe-Signature\"].ToString();");
         controllerSource.Should().Contain("siteSetting.StripeWebhookSecret");
         controllerSource.Should().Contain("_signatureVerifier.TryVerify(rawPayload, signatureHeader, siteSetting.StripeWebhookSecret, out var errorKey)");
-        controllerSource.Should().Contain("_db.Set<ProviderCallbackInboxMessage>()");
+        controllerSource.Should().Contain("var existing = await _inboxWriter.AddIfNewAsync(");
         controllerSource.Should().Contain("Provider = \"Stripe\",");
         controllerSource.Should().Contain("IdempotencyKey = eventId,");
         controllerSource.Should().Contain("PayloadJson = rawPayload,");
@@ -1590,14 +1591,14 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         controllerSource.Should().Contain("[AllowAnonymous]");
         controllerSource.Should().Contain("[Route(\"api/v1/public/shipping/dhl/webhooks\")]");
         controllerSource.Should().Contain("[HttpPost(\"/api/v1/shipping/dhl/webhooks\")]");
-        controllerSource.Should().Contain("private readonly IAppDbContext _db;");
+        controllerSource.Should().Contain("private readonly ProviderCallbackInboxWriter _inboxWriter;");
         controllerSource.Should().Contain("private readonly GetSiteSettingHandler _getSiteSettingHandler;");
         controllerSource.Should().Contain("Request.EnableBuffering();");
         controllerSource.Should().Contain("var apiKeyHeader = Request.Headers[\"X-DHL-Key\"].ToString();");
         controllerSource.Should().Contain("var signatureHeader = Request.Headers[\"X-DHL-Signature\"].ToString();");
         controllerSource.Should().Contain("TryVerifySignature(rawPayload, signatureHeader, siteSetting.DhlApiSecret)");
         controllerSource.Should().Contain("var idempotencyKey = BuildIdempotencyKey(request);");
-        controllerSource.Should().Contain("_db.Set<ProviderCallbackInboxMessage>()");
+        controllerSource.Should().Contain("var existing = await _inboxWriter.AddIfNewAsync(");
         controllerSource.Should().Contain("Provider = \"DHL\",");
         controllerSource.Should().Contain("IdempotencyKey = idempotencyKey,");
         controllerSource.Should().Contain("PayloadJson = rawPayload,");

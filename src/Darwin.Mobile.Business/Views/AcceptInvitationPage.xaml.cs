@@ -11,13 +11,16 @@ namespace Darwin.Mobile.Business.Views;
 /// </summary>
 public partial class AcceptInvitationPage : ContentPage, IQueryAttributable
 {
+    private readonly AcceptInvitationViewModel _viewModel;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="AcceptInvitationPage"/> class.
     /// </summary>
     public AcceptInvitationPage(AcceptInvitationViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = viewModel;
+        _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        BindingContext = _viewModel;
 
         Shell.SetFlyoutBehavior(this, FlyoutBehavior.Disabled);
     }
@@ -48,7 +51,32 @@ public partial class AcceptInvitationPage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await ((AcceptInvitationViewModel)BindingContext).OnAppearingAsync();
+
+        try
+        {
+            await _viewModel.OnAppearingAsync();
+        }
+        catch
+        {
+            // Appearing is an async-void MAUI lifecycle hook. Invitation preview failures stay inside ViewModel feedback.
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from invitation acceptance.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 
     private static string? ReadQueryValue(IDictionary<string, object> query, string key)
@@ -69,6 +97,23 @@ public partial class AcceptInvitationPage : ContentPage, IQueryAttributable
             return null;
         }
 
-        return Uri.UnescapeDataString(raw).Trim();
+        return SafeUnescape(raw);
+    }
+
+    /// <summary>
+    /// Decodes query values defensively so malformed invitation links cannot crash onboarding.
+    /// </summary>
+    /// <param name="raw">Raw query value supplied by Shell or an app link.</param>
+    /// <returns>Decoded and trimmed value, or the trimmed raw value when decoding is not possible.</returns>
+    private static string SafeUnescape(string raw)
+    {
+        try
+        {
+            return Uri.UnescapeDataString(raw).Trim();
+        }
+        catch (UriFormatException)
+        {
+            return raw.Trim();
+        }
     }
 }

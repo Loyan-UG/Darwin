@@ -11,10 +11,8 @@
 <div id="permissions-workspace-shell">
     <h1 class="mb-3"><i class="fa fa-key"></i> @T.T("Permissions")</h1>
 
-    <div class="row g-3 mb-3">
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
+    <div class="admin-kpi-row mb-3">
+        <div class="admin-kpi-item">
                     <div class="text-muted small">@T.T("Total")</div>
                     <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
                     <div class="mt-2">
@@ -26,12 +24,8 @@
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("Open")</a>
                     </div>
-                </div>
-            </div>
         </div>
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
+        <div class="admin-kpi-item">
                     <div class="text-muted small">@T.T("System")</div>
                     <div class="fs-4 fw-semibold">@Model.Summary.SystemCount</div>
                     <div class="mt-2">
@@ -43,12 +37,8 @@
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("IdentityFilterSystem")</a>
                     </div>
-                </div>
-            </div>
         </div>
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
+        <div class="admin-kpi-item">
                     <div class="text-muted small">@T.T("Custom")</div>
                     <div class="fs-4 fw-semibold">@Model.Summary.CustomCount</div>
                     <div class="mt-2 d-flex gap-2 flex-wrap">
@@ -65,12 +55,8 @@
                            hx-target="#permissions-workspace-shell"
                            hx-swap="outerHTML">@T.T("NewPermission")</a>
                     </div>
-                </div>
-            </div>
         </div>
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
+        <div class="admin-kpi-item">
                     <div class="text-muted small">@T.T("DelegatedSupport")</div>
                     <div class="fs-4 fw-semibold">@Model.Summary.DelegatedSupportCount</div>
                     <div class="mt-2">
@@ -82,14 +68,12 @@
                            hx-swap="outerHTML"
                            hx-push-url="true">@T.T("IdentityFilterDelegatedSupport")</a>
                     </div>
-                </div>
-            </div>
         </div>
     </div>
 
-    <div class="card mb-3 border-info-subtle">
-        <div class="card-body">
-            <h2 class="h6 mb-2">@T.T("PermissionOpsPlaybook")</h2>
+    <details class="admin-playbook mb-3">
+        <summary>@T.T("PermissionOpsPlaybook")</summary>
+        <div class="admin-playbook-body">
             <div class="d-flex flex-column gap-2">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                     <span>@T.T("PermissionOpsPlaybookSystem")</span>
@@ -130,7 +114,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </details>
 
     <div class="card mb-3">
         <div class="card-body">

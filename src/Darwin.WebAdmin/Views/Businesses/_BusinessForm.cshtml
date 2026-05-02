@@ -28,59 +28,89 @@
 <input type="hidden" asp-for="CustomerMarketingEmailsEnabled" />
 <input type="hidden" asp-for="OperationalAlertEmailsEnabled" />
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <label asp-for="Name" class="form-label">@T.T("BusinessFormBusinessName")</label>
-        <input asp-for="Name" class="form-control" />
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("BusinessIdentitySection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Name" class="form-label">@T.T("BusinessFormBusinessName")</label>
+            <field-help title="@T.T("BusinessFormBusinessName")" content="@T.T("BusinessFormBusinessNameHelp")" placement="right"></field-help>
+            <input asp-for="Name" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="LegalName" class="form-label">@T.T("BusinessFormLegalName")</label>
+            <field-help title="@T.T("BusinessFormLegalName")" content="@T.T("BusinessFormLegalNameHelp")" placement="right"></field-help>
+            <input asp-for="LegalName" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Category" class="form-label">@T.T("BusinessFormCategory")</label>
+            <field-help title="@T.T("BusinessFormCategory")" content="@T.T("BusinessFormCategoryHelp")" placement="right"></field-help>
+            <select asp-for="Category" asp-items="Model.CategoryOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="TaxId" class="form-label">@T.T("BusinessFormTaxId")</label>
+            <field-help title="@T.T("BusinessFormTaxId")" content="@T.T("BusinessFormTaxIdHelp")" placement="right"></field-help>
+            <input asp-for="TaxId" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="WebsiteUrl" class="form-label">@T.T("BusinessFormWebsite")</label>
+            <field-help title="@T.T("BusinessFormWebsite")" content="@T.T("BusinessFormWebsiteHelp")" placement="right"></field-help>
+            <input asp-for="WebsiteUrl" class="form-control" />
+        </div>
+        <div class="col-12">
+            <label asp-for="ShortDescription" class="form-label">@T.T("BusinessFormShortDescription")</label>
+            <field-help title="@T.T("BusinessFormShortDescription")" content="@T.T("BusinessFormShortDescriptionHelp")" placement="right"></field-help>
+            <textarea asp-for="ShortDescription" class="form-control" rows="4"></textarea>
+        </div>
     </div>
-    <div class="col-md-6">
-        <label asp-for="LegalName" class="form-label">@T.T("BusinessFormLegalName")</label>
-        <input asp-for="LegalName" class="form-control" />
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("BusinessDefaultsSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="DefaultCurrency" class="form-label">@T.T("BusinessFormDefaultCurrency")</label>
+            <field-help title="@T.T("BusinessFormDefaultCurrency")" content="@T.T("BusinessFormDefaultCurrencyHelp")" placement="right"></field-help>
+            <setting-select asp-for="DefaultCurrency" setting="SupportedCurrenciesCsv"></setting-select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="DefaultCulture" class="form-label">@T.T("BusinessFormDefaultCulture")</label>
+            <field-help title="@T.T("BusinessFormDefaultCulture")" content="@T.T("BusinessFormDefaultCultureHelp")" placement="right"></field-help>
+            <setting-select asp-for="DefaultCulture" setting="SupportedCulturesCsv"></setting-select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="DefaultTimeZoneId" class="form-label">@T.T("DefaultTimeZone")</label>
+            <field-help title="@T.T("DefaultTimeZone")" content="@T.T("DefaultTimeZoneHelp")" placement="right"></field-help>
+            <setting-select asp-for="DefaultTimeZoneId" setting="SupportedTimezonesCsv"></setting-select>
+        </div>
     </div>
-    <div class="col-md-4">
-        <label asp-for="Category" class="form-label">@T.T("BusinessFormCategory")</label>
-        <select asp-for="Category" asp-items="Model.CategoryOptions" class="form-select"></select>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("BusinessContactSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="ContactEmail" class="form-label">@T.T("BusinessFormContactEmail")</label>
+            <field-help title="@T.T("BusinessFormContactEmail")" content="@T.T("BusinessFormContactEmailHelp")" placement="right"></field-help>
+            <input asp-for="ContactEmail" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="ContactPhoneE164" class="form-label">@T.T("BusinessFormContactPhone")</label>
+            <field-help title="@T.T("BusinessFormContactPhone")" content="@T.T("BusinessFormContactPhoneHelp")" placement="right"></field-help>
+            <input asp-for="ContactPhoneE164" class="form-control" />
+        </div>
     </div>
-    <div class="col-md-4">
-        <label asp-for="DefaultCurrency" class="form-label">@T.T("BusinessFormDefaultCurrency")</label>
-        <setting-select asp-for="DefaultCurrency" setting="SupportedCurrenciesCsv"></setting-select>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="DefaultCulture" class="form-label">@T.T("BusinessFormDefaultCulture")</label>
-        <setting-select asp-for="DefaultCulture" setting="SupportedCulturesCsv"></setting-select>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="DefaultTimeZoneId" class="form-label">@T.T("DefaultTimeZone")</label>
-        <setting-select asp-for="DefaultTimeZoneId" setting="SupportedTimezonesCsv"></setting-select>
-        <div class="form-text">@T.T("DefaultTimeZoneHelp")</div>
-    </div>
-    <div class="col-md-6">
-        <label asp-for="TaxId" class="form-label">@T.T("BusinessFormTaxId")</label>
-        <input asp-for="TaxId" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="WebsiteUrl" class="form-label">@T.T("BusinessFormWebsite")</label>
-        <input asp-for="WebsiteUrl" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="ContactEmail" class="form-label">@T.T("BusinessFormContactEmail")</label>
-        <input asp-for="ContactEmail" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="ContactPhoneE164" class="form-label">@T.T("BusinessFormContactPhone")</label>
-        <input asp-for="ContactPhoneE164" class="form-control" />
-    </div>
-    <div class="col-12">
-        <label asp-for="ShortDescription" class="form-label">@T.T("BusinessFormShortDescription")</label>
-        <textarea asp-for="ShortDescription" class="form-control" rows="4"></textarea>
-    </div>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("BusinessOwnershipStatusSection")</h2>
+    <div class="row g-3">
     @if (isCreate)
     {
         <div class="col-md-6">
             <label asp-for="OwnerUserId" class="form-label">@T.T("BusinessFormInitialOwner")</label>
+            <field-help title="@T.T("BusinessFormInitialOwner")" content="@T.T("BusinessFormInitialOwnerHelp")" placement="right"></field-help>
             <select asp-for="OwnerUserId" asp-items="Model.OwnerUserOptions" class="form-select"></select>
             <div class="form-text">
-                <div>@T.T("BusinessFormInitialOwnerHelp")</div>
                 <div class="d-flex gap-2 flex-wrap mt-2">
                     <a asp-controller="Users"
                        asp-action="Index"
@@ -108,9 +138,9 @@
         </div>
         <div class="col-md-6">
             <label asp-for="OwnerInviteEmail" class="form-label">@T.T("BusinessFormInitialOwnerInviteEmail")</label>
+            <field-help title="@T.T("BusinessFormInitialOwnerInviteEmail")" content="@T.T("BusinessFormInitialOwnerInviteEmailHelp")" placement="right"></field-help>
             <input asp-for="OwnerInviteEmail" class="form-control" type="email" />
             <div class="form-text">
-                <div>@T.T("BusinessFormInitialOwnerInviteEmailHelp")</div>
                 <div class="d-flex gap-2 flex-wrap mt-2">
                     <a asp-action="SupportQueue"
                        asp-route-businessId="@Model.Id"
@@ -134,6 +164,7 @@
         <div class="form-check">
             <input asp-for="IsActive" class="form-check-input" disabled="@(!canToggleActive)" />
             <label asp-for="IsActive" class="form-check-label">@T.T("BusinessFormBusinessIsActive")</label>
+            <field-help title="@T.T("BusinessFormBusinessIsActive")" content="@T.T("BusinessFormActiveHelp")" placement="right"></field-help>
         </div>
         @if (!canToggleActive)
         {
@@ -158,7 +189,8 @@
             </div>
         }
     </div>
-</div>
+    </div>
+</section>
 
 <div class="d-flex gap-2 mt-4">
     <button type="submit" class="btn btn-primary">

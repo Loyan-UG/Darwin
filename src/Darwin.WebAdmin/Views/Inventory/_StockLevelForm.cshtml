@@ -1,17 +1,49 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockLevelEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <label asp-for="WarehouseId" class="form-label"></label>
-        <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("InventoryStockLevelIdentitySection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="WarehouseId" class="form-label"></label>
+            <field-help title="@T.T("Warehouse")" content="@T.T("InventoryStockLevelWarehouseHelp")" placement="right"></field-help>
+            <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="ProductVariantId" class="form-label"></label>
+            <field-help title="@T.T("ProductVariant")" content="@T.T("InventoryStockLevelProductVariantHelp")" placement="right"></field-help>
+            <select asp-for="ProductVariantId" asp-items="Model.VariantOptions" class="form-select"></select>
+        </div>
     </div>
-    <div class="col-md-6">
-        <label asp-for="ProductVariantId" class="form-label"></label>
-        <select asp-for="ProductVariantId" asp-items="Model.VariantOptions" class="form-select"></select>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("InventoryStockLevelQuantitiesSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label asp-for="AvailableQuantity" class="form-label"></label>
+            <field-help title="@T.T("AvailableQuantity")" content="@T.T("InventoryStockLevelAvailableQuantityHelp")" placement="right"></field-help>
+            <input asp-for="AvailableQuantity" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="ReservedQuantity" class="form-label"></label>
+            <field-help title="@T.T("ReservedQuantity")" content="@T.T("InventoryStockLevelReservedQuantityHelp")" placement="right"></field-help>
+            <input asp-for="ReservedQuantity" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="ReorderPoint" class="form-label"></label>
+            <field-help title="@T.T("ReorderPoint")" content="@T.T("InventoryStockLevelReorderPointHelp")" placement="right"></field-help>
+            <input asp-for="ReorderPoint" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="ReorderQuantity" class="form-label"></label>
+            <field-help title="@T.T("ReorderQuantity")" content="@T.T("InventoryStockLevelReorderQuantityHelp")" placement="right"></field-help>
+            <input asp-for="ReorderQuantity" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="InTransitQuantity" class="form-label"></label>
+            <field-help title="@T.T("InTransitQuantity")" content="@T.T("InventoryStockLevelInTransitQuantityHelp")" placement="right"></field-help>
+            <input asp-for="InTransitQuantity" class="form-control" />
+        </div>
     </div>
-    <div class="col-md-3"><label asp-for="AvailableQuantity" class="form-label"></label><input asp-for="AvailableQuantity" class="form-control" /></div>
-    <div class="col-md-3"><label asp-for="ReservedQuantity" class="form-label"></label><input asp-for="ReservedQuantity" class="form-control" /></div>
-    <div class="col-md-2"><label asp-for="ReorderPoint" class="form-label"></label><input asp-for="ReorderPoint" class="form-control" /></div>
-    <div class="col-md-2"><label asp-for="ReorderQuantity" class="form-label"></label><input asp-for="ReorderQuantity" class="form-control" /></div>
-    <div class="col-md-2"><label asp-for="InTransitQuantity" class="form-label"></label><input asp-for="InTransitQuantity" class="form-control" /></div>
-</div>
+</section>

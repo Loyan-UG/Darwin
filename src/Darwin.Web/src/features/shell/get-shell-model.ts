@@ -14,6 +14,7 @@ import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { localizeHref, sanitizeAppPath, stripCulturePrefix } from "@/lib/locale-routing";
 import { summarizeShellModelHealth } from "@/lib/route-health";
 import { shellObservationContext } from "@/lib/route-observation-context";
+import { getPublicSiteRuntimeConfig } from "@/lib/public-site-runtime-config";
 import { getSiteRuntimeConfig } from "@/lib/site-runtime-config";
 import { toSafeHttpUrl } from "@/lib/webapi-url";
 import { resolveTheme } from "@/themes/registry";
@@ -135,6 +136,7 @@ export const getShellModel = createCachedObservedLoader({
   getSuccessContext: summarizeShellModelHealth,
   load: async (culture: string): Promise<ShellModel> => {
     const runtimeConfig = getSiteRuntimeConfig();
+    const publicRuntimeConfig = await getPublicSiteRuntimeConfig();
     const activeTheme = resolveTheme(runtimeConfig.theme);
     const [menuResult, footerResult] = await Promise.all([
       getShellContext(culture, runtimeConfig.mainMenuName),
@@ -177,7 +179,7 @@ export const getShellModel = createCachedObservedLoader({
     return {
       activeThemeName: activeTheme.displayName,
       culture,
-      supportedCultures: runtimeConfig.supportedCultures,
+      supportedCultures: publicRuntimeConfig.supportedCultures,
       menuSource: menu.menuSource,
       menuStatus: menu.menuStatus,
       menuMessage: menu.menuMessage,

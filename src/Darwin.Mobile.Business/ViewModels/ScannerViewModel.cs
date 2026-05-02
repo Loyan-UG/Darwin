@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,13 +30,16 @@ public sealed class ScannerViewModel : BaseViewModel
     private readonly IBusinessAccessService _businessAccessService;
 
     private string _lastScannedToken = string.Empty;
+    private string _lastScannedTokenDisplay = string.Empty;
     private bool _hasRedemptionPermission = true;
     private bool _hasAccrualPermission = true;
     private bool _isOperationsAllowed = true;
-    private string _operatorRole = "—";
+    private string _operatorRole = "-";
 
     private string? _successMessage;
     private string? _warningMessage;
+    private CancellationTokenSource? _scanCts;
+    private CancellationTokenSource? _refreshCts;
 
     /// <summary>
     /// Requests page to reveal feedback area when an error/warning/success is set.
@@ -146,9 +149,19 @@ public sealed class ScannerViewModel : BaseViewModel
         {
             if (SetProperty(ref _lastScannedToken, value))
             {
+                LastScannedTokenDisplay = ToSafeTokenDisplay(value);
                 OnPropertyChanged(nameof(HasLastScannedToken));
             }
         }
+    }
+
+    /// <summary>
+    /// Gets a safe, shortened representation of the last scanned token for UI display.
+    /// </summary>
+    public string LastScannedTokenDisplay
+    {
+        get => _lastScannedTokenDisplay;
+        private set => SetProperty(ref _lastScannedTokenDisplay, value);
     }
 
     /// <summary>
@@ -204,9 +217,29 @@ public sealed class ScannerViewModel : BaseViewModel
 
     public override async Task OnAppearingAsync()
     {
-        var authorizationTask = RefreshAuthorizationAsync();
-        var accessStateTask = EnsureOperationsAllowedAsync();
-        await Task.WhenAll(authorizationTask, accessStateTask).ConfigureAwait(false);
+        var refreshCts = StartRefreshScope();
+
+        try
+        {
+            var authorizationTask = RefreshAuthorizationAsync(refreshCts.Token);
+            var accessStateTask = EnsureOperationsAllowedAsync(refreshCts.Token);
+            await Task.WhenAll(authorizationTask, accessStateTask).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Scanner readiness refresh is cancelled when the page leaves the foreground.
+        }
+        finally
+        {
+            CompleteRefreshScope(refreshCts);
+        }
+    }
+
+    public override Task OnDisappearingAsync()
+    {
+        CancelActiveRefresh();
+        CancelActiveScan();
+        return Task.CompletedTask;
     }
 
     private async Task ScanAsync()
@@ -216,40 +249,56 @@ public sealed class ScannerViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        RaiseScannerStateChanged();
-        ClearFeedback();
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            RaiseScannerStateChanged();
+            ClearFeedback();
+        });
+
+        var scanCts = StartScanScope();
 
         try
         {
-            if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+            if (!await EnsureOperationsAllowedAsync(scanCts.Token).ConfigureAwait(false))
             {
                 return;
             }
 
-            var token = await _scanner.ScanAsync(CancellationToken.None);
+            var token = await _scanner.ScanAsync(scanCts.Token);
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                LastScannedToken = string.Empty;
-                SetWarning(AppResources.NoQrDetected);
+                RunOnMain(() =>
+                {
+                    LastScannedToken = string.Empty;
+                    SetWarning(AppResources.NoQrDetected);
+                });
                 return;
             }
 
-            LastScannedToken = token;
+            RunOnMain(() => LastScannedToken = token);
 
             var parameters = new Dictionary<string, object?>
             {
                 ["token"] = token
             };
 
-            SetSuccess(AppResources.ScannerScanSuccessMessage);
+            RunOnMain(() => SetSuccess(AppResources.ScannerScanSuccessMessage));
             await _navigationService.GoToAsync(Routes.Session, parameters);
+        }
+        catch (OperationCanceledException)
+        {
+            // Scanning is cancelled when the page disappears or a newer scan supersedes the active one.
         }
         finally
         {
-            IsBusy = false;
-            RaiseScannerStateChanged();
+            CompleteScanScope(scanCts);
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseScannerStateChanged();
+            });
         }
     }
 
@@ -258,53 +307,68 @@ public sealed class ScannerViewModel : BaseViewModel
     /// </summary>
     private void ClearFeedback()
     {
-        SuccessMessage = null;
-        WarningMessage = null;
-        ErrorMessage = null;
+        RunOnMain(() =>
+        {
+            SuccessMessage = null;
+            WarningMessage = null;
+            ErrorMessage = null;
+        });
     }
 
     private void SetSuccess(string message)
     {
-        SuccessMessage = message;
-        WarningMessage = null;
-        ErrorMessage = null;
-        FeedbackVisibilityRequested?.Invoke();
+        RunOnMain(() =>
+        {
+            SuccessMessage = message;
+            WarningMessage = null;
+            ErrorMessage = null;
+            FeedbackVisibilityRequested?.Invoke();
+        });
     }
 
     private void SetWarning(string message)
     {
-        SuccessMessage = null;
-        WarningMessage = message;
-        ErrorMessage = null;
-        FeedbackVisibilityRequested?.Invoke();
+        RunOnMain(() =>
+        {
+            SuccessMessage = null;
+            WarningMessage = message;
+            ErrorMessage = null;
+            FeedbackVisibilityRequested?.Invoke();
+        });
     }
 
-    private async Task RefreshAuthorizationAsync()
+    private async Task RefreshAuthorizationAsync(CancellationToken ct)
     {
-        var snapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+        var snapshot = await _authorizationService.GetSnapshotAsync(ct).ConfigureAwait(false);
 
         if (!snapshot.Succeeded || snapshot.Value is null)
         {
-            OperatorRole = "—";
-            HasAccrualPermission = false;
-            HasRedemptionPermission = false;
-            SetWarning(AppResources.BusinessPermissionsUnavailableWarning);
+            RunOnMain(() =>
+            {
+                OperatorRole = "-";
+                HasAccrualPermission = false;
+                HasRedemptionPermission = false;
+                SetWarning(AppResources.BusinessPermissionsUnavailableWarning);
+            });
             return;
         }
 
-        OperatorRole = snapshot.Value.RoleDisplayName;
-        HasAccrualPermission = snapshot.Value.CanConfirmAccrual;
-        HasRedemptionPermission = snapshot.Value.CanConfirmRedemption;
-
-        if (!HasAnyProcessingPermission)
+        var hasAnyProcessingPermission = snapshot.Value.CanConfirmAccrual || snapshot.Value.CanConfirmRedemption;
+        RunOnMain(() =>
         {
-            SetWarning(AppResources.BusinessNoScannerPermissionWarning);
-        }
+            OperatorRole = snapshot.Value.RoleDisplayName;
+            HasAccrualPermission = snapshot.Value.CanConfirmAccrual;
+            HasRedemptionPermission = snapshot.Value.CanConfirmRedemption;
+            if (!hasAnyProcessingPermission)
+            {
+                SetWarning(AppResources.BusinessNoScannerPermissionWarning);
+            }
+        });
     }
 
-    private async Task<bool> EnsureOperationsAllowedAsync()
+    private async Task<bool> EnsureOperationsAllowedAsync(CancellationToken ct)
     {
-        var result = await _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None).ConfigureAwait(false);
+        var result = await _businessAccessService.GetCurrentAccessStateAsync(ct).ConfigureAwait(false);
         if (!result.Succeeded || result.Value is null)
         {
             _isOperationsAllowed = false;
@@ -339,4 +403,92 @@ public sealed class ScannerViewModel : BaseViewModel
         OnPropertyChanged(nameof(ScannerReadinessMessage));
         ScanCommand.RaiseCanExecuteChanged();
     }
+
+    /// <summary>
+    /// Starts a cancellable readiness refresh and cancels any stale refresh still in-flight.
+    /// </summary>
+    /// <returns>The refresh cancellation source owned by the current appearing cycle.</returns>
+    private CancellationTokenSource StartRefreshScope()
+    {
+        var refreshCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _refreshCts, refreshCts);
+        previous?.Cancel();
+        return refreshCts;
+    }
+
+    /// <summary>
+    /// Releases a completed readiness refresh when it still owns the active refresh slot.
+    /// </summary>
+    /// <param name="refreshCts">Refresh cancellation source to complete.</param>
+    private void CompleteRefreshScope(CancellationTokenSource refreshCts)
+    {
+        if (ReferenceEquals(_refreshCts, refreshCts))
+        {
+            _refreshCts = null;
+        }
+
+        refreshCts.Dispose();
+    }
+
+    /// <summary>
+    /// Cancels the active readiness refresh without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelActiveRefresh()
+    {
+        var refreshCts = Interlocked.Exchange(ref _refreshCts, null);
+        refreshCts?.Cancel();
+    }
+
+    /// <summary>
+    /// Starts a cancellable scan scope and cancels any previous scope defensively.
+    /// </summary>
+    /// <returns>The active scan cancellation source.</returns>
+    private CancellationTokenSource StartScanScope()
+    {
+        var scanCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _scanCts, scanCts);
+        previous?.Cancel();
+        return scanCts;
+    }
+
+    /// <summary>
+    /// Clears the completed scan scope after the scan operation finishes.
+    /// </summary>
+    /// <param name="scanCts">Scan cancellation source to complete.</param>
+    private void CompleteScanScope(CancellationTokenSource scanCts)
+    {
+        if (ReferenceEquals(_scanCts, scanCts))
+        {
+            _scanCts = null;
+        }
+
+        scanCts.Dispose();
+    }
+
+    /// <summary>
+    /// Cancels scanner work that should no longer update or navigate from this page.
+    /// The source is completed by the owning operation to avoid disposing a token while it is still observed.
+    /// </summary>
+    private void CancelActiveScan()
+    {
+        var scanCts = Interlocked.Exchange(ref _scanCts, null);
+        scanCts?.Cancel();
+    }
+
+    /// <summary>
+    /// Redacts the scanned token before showing it in the UI to avoid exposing reusable session secrets.
+    /// </summary>
+    /// <param name="token">Raw scanned session token.</param>
+    /// <returns>A shortened token fingerprint safe for on-screen feedback.</returns>
+    private static string ToSafeTokenDisplay(string token)
+    {
+        var normalized = string.IsNullOrWhiteSpace(token) ? string.Empty : token.Trim();
+        if (normalized.Length <= 12)
+        {
+            return normalized.Length == 0 ? string.Empty : "****";
+        }
+
+        return $"{normalized[..6]}...{normalized[^6..]}";
+    }
 }
+

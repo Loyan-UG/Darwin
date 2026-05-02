@@ -41,11 +41,11 @@
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Brands")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.TotalCount</div><div class="small text-muted mt-2">@T.T("BrandsOpsTotalNote")</div></div></div>
-    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("Unpublished")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.UnpublishedCount</div><div class="small text-muted mt-2">@T.T("BrandsOpsUnpublishedNote")</div></div></div>
-    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("MissingSlug")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.MissingSlugCount</div><div class="small text-muted mt-2">@T.T("BrandsOpsMissingSlugNote")</div></div></div>
-    <div class="col-md-6 col-xl-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("MissingLogo")</div><div class="display-6 fw-semibold mt-1">@Model.Summary.MissingLogoCount</div><div class="small text-muted mt-2">@T.T("BrandsOpsMissingLogoNote")</div></div></div>
+<div class="admin-kpi-row mb-4">
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("Brands") <field-help title="@T.T("Brands")" content="@T.T("BrandsOpsTotalNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold mt-1">@Model.Summary.TotalCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("Unpublished") <field-help title="@T.T("Unpublished")" content="@T.T("BrandsOpsUnpublishedNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold mt-1">@Model.Summary.UnpublishedCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MissingSlug") <field-help title="@T.T("MissingSlug")" content="@T.T("BrandsOpsMissingSlugNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold mt-1">@Model.Summary.MissingSlugCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MissingLogo") <field-help title="@T.T("MissingLogo")" content="@T.T("BrandsOpsMissingLogoNote")" placement="right"></field-help></div><div class="fs-4 fw-semibold mt-1">@Model.Summary.MissingLogoCount</div></div>
 </div>
 
 <div class="row g-3 mb-4">
@@ -62,8 +62,9 @@
         </div>
     </div>
     <div class="col-lg-4">
-        <div class="border rounded p-3 h-100">
-            <h2 class="h6 mb-3">@T.T("BrandOperationsPlaybooks")</h2>
+        <details class="admin-playbook h-100">
+            <summary>@T.T("BrandOperationsPlaybooks")</summary>
+            <div class="admin-playbook-body">
             <div class="d-grid gap-3">
                 @foreach (var playbook in Model.Playbooks)
                 {
@@ -74,7 +75,8 @@
                     </div>
                 }
             </div>
-        </div>
+            </div>
+        </details>
     </div>
 </div>
 

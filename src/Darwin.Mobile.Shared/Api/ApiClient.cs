@@ -40,6 +40,7 @@ namespace Darwin.Mobile.Shared.Api
         public const string NoContentResultMessage = "Server returned no content.";
         private const int MaxErrorMessageLength = 512;
         private const int MaxPlainTextErrorBytes = 4096;
+        private const string NetworkFailureMessage = "Network error while contacting the server.";
 
         private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
         {
@@ -101,9 +102,9 @@ namespace Darwin.Mobile.Shared.Api
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<TResponse>.Fail($"Network error: {ex.Message}");
+                return Result<TResponse>.Fail(NetworkFailureMessage);
             }
         }
 
@@ -146,9 +147,9 @@ namespace Darwin.Mobile.Shared.Api
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<string>.Fail($"Network error: {ex.Message}");
+                return Result<string>.Fail(NetworkFailureMessage);
             }
         }
 
@@ -179,9 +180,9 @@ namespace Darwin.Mobile.Shared.Api
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<TResponse>.Fail($"Network error: {ex.Message}");
+                return Result<TResponse>.Fail(NetworkFailureMessage);
             }
         }
 
@@ -261,9 +262,9 @@ namespace Darwin.Mobile.Shared.Api
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result<TResponse>.Fail($"Network error: {ex.Message}");
+                return Result<TResponse>.Fail(NetworkFailureMessage);
             }
         }
 
@@ -309,9 +310,9 @@ namespace Darwin.Mobile.Shared.Api
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result.Fail($"Network error: {ex.Message}");
+                return Result.Fail(NetworkFailureMessage);
             }
         }
 
@@ -350,9 +351,9 @@ namespace Darwin.Mobile.Shared.Api
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Result.Fail($"Network error: {ex.Message}");
+                return Result.Fail(NetworkFailureMessage);
             }
         }
 
@@ -603,3 +604,4 @@ namespace Darwin.Mobile.Shared.Api
         }
     }
 }
+

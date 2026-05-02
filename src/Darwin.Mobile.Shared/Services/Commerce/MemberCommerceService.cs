@@ -1,11 +1,15 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Invoices;
 using Darwin.Contracts.Orders;
 using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Caching;
 using Darwin.Mobile.Shared.Common;
+using Darwin.Mobile.Shared.Security;
 using Darwin.Shared.Results;
 
 namespace Darwin.Mobile.Shared.Services.Commerce
@@ -15,14 +19,21 @@ namespace Darwin.Mobile.Shared.Services.Commerce
     /// </summary>
     public sealed class MemberCommerceService : IMemberCommerceService
     {
+        private static readonly TimeSpan HistoryCacheTtl = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan HistoryFallbackMaxAge = TimeSpan.FromMinutes(5);
+
         private readonly IApiClient _apiClient;
+        private readonly IMobileCacheService _cache;
+        private readonly ITokenStore _tokenStore;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MemberCommerceService"/> class.
         /// </summary>
-        public MemberCommerceService(IApiClient apiClient)
+        public MemberCommerceService(IApiClient apiClient, IMobileCacheService cache, ITokenStore tokenStore)
         {
             _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
         }
 
         /// <inheritdoc />
@@ -39,7 +50,11 @@ namespace Darwin.Mobile.Shared.Services.Commerce
             }
 
             var route = $"{ApiRoutes.Orders.GetMyOrders}?page={page}&pageSize={pageSize}";
-            return await ExecuteGetAsync<PagedResponse<MemberOrderSummary>>(route, "order history", ct).ConfigureAwait(false);
+            return await ExecuteCachedGetAsync<PagedResponse<MemberOrderSummary>>(
+                route,
+                await GetScopedCacheKeyAsync($"commerce.orders:{page}:{pageSize}").ConfigureAwait(false),
+                "order history",
+                ct).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -101,7 +116,11 @@ namespace Darwin.Mobile.Shared.Services.Commerce
             }
 
             var route = $"{ApiRoutes.Invoices.GetMyInvoices}?page={page}&pageSize={pageSize}";
-            return await ExecuteGetAsync<PagedResponse<MemberInvoiceSummary>>(route, "invoice history", ct).ConfigureAwait(false);
+            return await ExecuteCachedGetAsync<PagedResponse<MemberInvoiceSummary>>(
+                route,
+                await GetScopedCacheKeyAsync($"commerce.invoices:{page}:{pageSize}").ConfigureAwait(false),
+                "invoice history",
+                ct).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -171,6 +190,31 @@ namespace Darwin.Mobile.Shared.Services.Commerce
             }
         }
 
+        private async Task<Result<TResponse>> ExecuteCachedGetAsync<TResponse>(
+            string route,
+            string cacheKey,
+            string operation,
+            CancellationToken ct)
+        {
+            var cached = await _cache.GetFreshAsync<TResponse>(cacheKey, ct).ConfigureAwait(false);
+            if (cached is not null)
+            {
+                return Result<TResponse>.Ok(cached);
+            }
+
+            var response = await ExecuteGetAsync<TResponse>(route, operation, ct).ConfigureAwait(false);
+            if (response.Succeeded && response.Value is not null)
+            {
+                await _cache.SetAsync(cacheKey, response.Value, HistoryCacheTtl, ct).ConfigureAwait(false);
+                return response;
+            }
+
+            var fallback = await _cache.GetUsableAsync<TResponse>(cacheKey, HistoryFallbackMaxAge, ct).ConfigureAwait(false);
+            return fallback is not null
+                ? Result<TResponse>.Ok(fallback)
+                : response;
+        }
+
         private async Task<Result<TResponse>> ExecutePostAsync<TRequest, TResponse>(
             string route,
             TRequest request,
@@ -217,6 +261,30 @@ namespace Darwin.Mobile.Shared.Services.Commerce
             {
                 return Result<string>.Fail(MobileErrorMessages.NetworkFailure($"retrieving {operation}"));
             }
+        }
+
+        private async Task<string> GetScopedCacheKeyAsync(string suffix)
+        {
+            var (accessToken, _) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
+            var subject = JwtClaimReader.GetSubject(accessToken);
+            return string.IsNullOrWhiteSpace(subject)
+                ? $"{suffix}:{BuildFallbackScope(accessToken)}"
+                : $"{suffix}:{subject}";
+        }
+
+        /// <summary>
+        /// Builds a non-readable cache scope when the JWT subject cannot be parsed.
+        /// This prevents member commerce history from falling back to a shared unscoped key.
+        /// </summary>
+        private static string BuildFallbackScope(string? accessToken)
+        {
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                return "anonymous";
+            }
+
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(accessToken.Trim()));
+            return Convert.ToHexString(hash).ToLowerInvariant();
         }
     }
 }

@@ -277,6 +277,12 @@
   <data name="RewardsRedeemableRewardsCountFormat" xml:space="preserve">
     <value>Derzeit einlösbare Prämien: {0}</value>
   </data>
+  <data name="RewardsRequiredPointsBadgeLabel" xml:space="preserve">
+    <value>Kosten</value>
+  </data>
+  <data name="RewardsHistoryDeltaLabel" xml:space="preserve">
+    <value>Änderung</value>
+  </data>
   <data name="RewardsNextRewardNameFormat" xml:space="preserve">
     <value>Nächste Prämie: {0}</value>
   </data>
@@ -1515,6 +1521,9 @@
   </data>
   <data name="QrDiscoverGuidanceMessage" xml:space="preserve">
     <value>Um einen QR-Code zu erzeugen, gehen Sie zuerst zu Entdecken, öffnen Sie ein Unternehmen und treten Sie dessen Treueprogramm bei.</value>
+  </data>
+  <data name="QrEmptyStateMessage" xml:space="preserve">
+    <value>Ihr QR-Code wird hier angezeigt, sobald ein Unternehmen ausgewÃ¤hlt und eine Sitzung erstellt wurde.</value>
   </data>
   <data name="QrRefreshGuidanceMessage" xml:space="preserve">
     <value>Punkte sammeln erzeugt einen QR-Code zum Sammeln von Punkten. Einlösen erzeugt einen QR-Code zum Einlösen von Punkten oder Prämien.</value>

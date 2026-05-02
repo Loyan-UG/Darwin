@@ -22,45 +22,63 @@
               method="post"
               hx-post="@Url.Action("AddPayment", "Orders")"
               hx-target="#order-payment-shell"
-              hx-swap="outerHTML"
-              class="row g-3">
+              hx-swap="outerHTML">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="OrderId" />
-            <div class="col-md-4">
-                <label asp-for="Provider" class="form-label"></label>
-                <input asp-for="Provider" class="form-control" />
-                <span asp-validation-for="Provider" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="ProviderReference" class="form-label"></label>
-                <input asp-for="ProviderReference" class="form-control" />
-                <span asp-validation-for="ProviderReference" class="text-danger"></span>
-            </div>
-            <div class="col-md-2">
-                <label asp-for="AmountMinor" class="form-label"></label>
-                <input asp-for="AmountMinor" class="form-control" />
-                <span asp-validation-for="AmountMinor" class="text-danger"></span>
-            </div>
-            <div class="col-md-2">
-                <label asp-for="Currency" class="form-label"></label>
-                <input asp-for="Currency" class="form-control" />
-                <span asp-validation-for="Currency" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="Status" class="form-label"></label>
-                <select asp-for="Status" class="form-select">
-                    <option value="Captured">@T.T("Captured")</option>
-                    <option value="Authorized">@T.T("Authorized")</option>
-                    <option value="Failed">@T.T("Failed")</option>
-                </select>
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="col-md-8">
-                <label asp-for="FailureReason" class="form-label"></label>
-                <input asp-for="FailureReason" class="form-control" />
-                <span asp-validation-for="FailureReason" class="text-danger"></span>
-            </div>
-            <div class="col-12">
+
+            <section class="admin-form-section">
+                <h2 class="admin-form-section-title">@T.T("OrderPaymentProviderSection")</h2>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Provider" class="form-label"></label>
+                        <field-help title="@T.T("Provider")" content="@T.T("OrderPaymentProviderHelp")" placement="right"></field-help>
+                        <input asp-for="Provider" class="form-control" />
+                        <span asp-validation-for="Provider" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="ProviderReference" class="form-label"></label>
+                        <field-help title="@T.T("ProviderReference")" content="@T.T("OrderPaymentProviderReferenceHelp")" placement="right"></field-help>
+                        <input asp-for="ProviderReference" class="form-control" />
+                        <span asp-validation-for="ProviderReference" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Status" class="form-label"></label>
+                        <field-help title="@T.T("Status")" content="@T.T("OrderPaymentStatusHelp")" placement="right"></field-help>
+                        <select asp-for="Status" class="form-select">
+                            <option value="Captured">@T.T("Captured")</option>
+                            <option value="Authorized">@T.T("Authorized")</option>
+                            <option value="Failed">@T.T("Failed")</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="admin-form-section">
+                <h2 class="admin-form-section-title">@T.T("OrderPaymentAmountSection")</h2>
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label asp-for="AmountMinor" class="form-label"></label>
+                        <field-help title="@T.T("AmountMinor")" content="@T.T("OrderPaymentAmountMinorHelp")" placement="right"></field-help>
+                        <input asp-for="AmountMinor" class="form-control" />
+                        <span asp-validation-for="AmountMinor" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-2">
+                        <label asp-for="Currency" class="form-label"></label>
+                        <field-help title="@T.T("Currency")" content="@T.T("OrderPaymentCurrencyHelp")" placement="right"></field-help>
+                        <input asp-for="Currency" class="form-control" />
+                        <span asp-validation-for="Currency" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label asp-for="FailureReason" class="form-label"></label>
+                        <field-help title="@T.T("FailureReason")" content="@T.T("OrderPaymentFailureReasonHelp")" placement="right"></field-help>
+                        <input asp-for="FailureReason" class="form-control" />
+                        <span asp-validation-for="FailureReason" class="text-danger"></span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="d-flex gap-2">
                 <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@OrderDetailsUrl(Model.OrderId)" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">
                     <i class="fa fa-arrow-left"></i> @T.T("Back")
                 </a>

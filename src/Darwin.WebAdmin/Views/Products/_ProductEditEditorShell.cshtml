@@ -19,30 +19,6 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <div class="text-muted small">@T.T("Translations")</div>
-                <div class="fw-semibold mt-1">@Model.Translations.Count</div>
-                <div class="small text-muted mt-2">@T.T("ProductEditorTranslationsNote")</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <div class="text-muted small">@T.T("Variants")</div>
-                <div class="fw-semibold mt-1">@Model.Variants.Count</div>
-                <div class="small text-muted mt-2">@T.T("ProductEditorVariantsNote")</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <div class="text-muted small">@T.T("CatalogReadiness")</div>
-                <div class="fw-semibold mt-1">@T.T(Model.Variants.Count > 1 ? "VariantRich" : "SingleVariant")</div>
-                <div class="small text-muted mt-2">@T.T("ProductEditorReadinessNote")</div>
-            </div>
-        </div>
-    </div>
-
     <form asp-action="Edit"
           method="post"
           hx-post="@Url.Action("Edit", "Products")"

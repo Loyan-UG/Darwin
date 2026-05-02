@@ -1,7 +1,7 @@
 using System;
+using System.Threading;
 using Darwin.Mobile.Consumer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
-
 
 namespace Darwin.Mobile.Consumer.Views;
 
@@ -11,16 +11,36 @@ namespace Darwin.Mobile.Consumer.Views;
 public partial class ForgotPasswordPage : ContentPage
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly ForgotPasswordViewModel _viewModel;
+    private int _navigationInProgress;
 
     public ForgotPasswordPage(ForgotPasswordViewModel viewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
 
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
 
         // Injected view model keeps this page lean and consistent with DI-first architecture.
-        BindingContext = viewModel;
+        BindingContext = _viewModel;
         NavigationPage.SetHasNavigationBar(this, false);
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from password recovery.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 
     /// <summary>
@@ -28,6 +48,11 @@ public partial class ForgotPasswordPage : ContentPage
     /// </summary>
     private async void OnGoToResetPasswordClicked(object? sender, EventArgs e)
     {
+        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
+        {
+            return;
+        }
+
         try
         {
             var page = _serviceProvider.GetService<ResetPasswordPage>()
@@ -44,6 +69,10 @@ public partial class ForgotPasswordPage : ContentPage
         catch
         {
             // Intentionally suppressed to avoid hard crash on edge navigation failure.
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _navigationInProgress, 0);
         }
     }
 }

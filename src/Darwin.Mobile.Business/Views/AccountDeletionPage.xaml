@@ -2,6 +2,7 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.AccountDeletionPage"
@@ -29,9 +30,9 @@
                            Style="{StaticResource ErrorLabelStyle}"
                            IsVisible="{Binding HasError}" />
 
-                    <Button Text="{x:Static res:AppResources.AccountDeletionContinueButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding ContinueCommand}" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.AccountDeletionContinueButton}"
+                                      Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                      Command="{Binding ContinueCommand}" />
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}"

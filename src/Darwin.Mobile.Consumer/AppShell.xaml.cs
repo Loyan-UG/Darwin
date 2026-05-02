@@ -14,6 +14,8 @@ namespace Darwin.Mobile.Consumer;
 /// </summary>
 public partial class AppShell : Shell
 {
+    private static readonly TimeSpan LogoutTimeout = TimeSpan.FromSeconds(10);
+
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
@@ -40,13 +42,23 @@ public partial class AppShell : Shell
     {
         try
         {
-            await _authService.LogoutAsync(CancellationToken.None);
+            using var timeout = new CancellationTokenSource(LogoutTimeout);
+            // Logout is user-initiated and must clear the local session even when the current page is closing.
+            await _authService.LogoutAsync(timeout.Token);
         }
         finally
         {
             _pushRegistrationCoordinator.ResetCachedRegistrationState();
-            // Always reset to the login flow even if remote logout fails.
-            await _appRootNavigator.NavigateToLoginAsync();
+
+            try
+            {
+                // Always reset to the login flow even if remote logout fails.
+                await _appRootNavigator.NavigateToLoginAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Consumer logout navigation failed: {ex}");
+            }
         }
     }
 }

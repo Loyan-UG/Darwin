@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     x:Class="Darwin.Mobile.Consumer.Views.QrPage"
     x:DataType="vm:QrViewModel"
     Title="{x:Static res:AppResources.QrTitle}">
@@ -36,6 +37,18 @@
                                WidthRequest="220"
                                HorizontalOptions="Center"
                                IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
+                        <Label Text="{x:Static res:AppResources.QrEmptyStateMessage}"
+                               Style="{StaticResource SecondaryBodyLabelStyle}"
+                               HorizontalTextAlignment="Center"
+                               IsVisible="False">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label"
+                                             Binding="{Binding QrImage}"
+                                             Value="{x:Null}">
+                                    <Setter Property="IsVisible" Value="True" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
                     </Border>
 
                     <Label Text="{Binding ExpiresAtUtc, StringFormat='{x:Static res:AppResources.QrExpiresAtFormat}'}"
@@ -51,19 +64,19 @@
                         <VerticalStackLayout Grid.Column="0" Spacing="8">
                             <Label Text="{x:Static res:AppResources.QrAccrualHelpText}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}" />
-                            <Button Text="{x:Static res:AppResources.RefreshAccrualButton}"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    Command="{Binding RefreshAccrualSessionCommand}"
-                                    IsEnabled="{Binding HasBusinessContext}" />
+                            <buttons:SfButton Text="{x:Static res:AppResources.RefreshAccrualButton}"
+                                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                              Command="{Binding RefreshAccrualSessionCommand}"
+                                              IsEnabled="{Binding HasBusinessContext}" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Grid.Column="1" Spacing="8">
                             <Label Text="{x:Static res:AppResources.QrRedemptionHelpText}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}" />
-                            <Button Text="{x:Static res:AppResources.RefreshRedemptionButton}"
-                                    Style="{StaticResource OutlinedButtonStyle}"
-                                    Command="{Binding RefreshRedemptionSessionCommand}"
-                                    IsEnabled="{Binding HasBusinessContext}" />
+                            <buttons:SfButton Text="{x:Static res:AppResources.RefreshRedemptionButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Command="{Binding RefreshRedemptionSessionCommand}"
+                                              IsEnabled="{Binding HasBusinessContext}" />
                         </VerticalStackLayout>
                     </Grid>
                 </VerticalStackLayout>

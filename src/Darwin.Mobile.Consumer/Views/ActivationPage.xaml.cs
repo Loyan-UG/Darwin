@@ -10,11 +10,31 @@ namespace Darwin.Mobile.Consumer.Views;
 /// </summary>
 public partial class ActivationPage : ContentPage, IQueryAttributable
 {
+    private readonly ActivationViewModel _viewModel;
+
     public ActivationPage(ActivationViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        BindingContext = _viewModel;
         NavigationPage.SetHasNavigationBar(this, false);
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from activation.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -51,6 +71,23 @@ public partial class ActivationPage : ContentPage, IQueryAttributable
             return null;
         }
 
-        return Uri.UnescapeDataString(raw).Trim();
+        return SafeUnescape(raw);
+    }
+
+    /// <summary>
+    /// Decodes query values defensively so malformed external links cannot crash the activation page.
+    /// </summary>
+    /// <param name="raw">Raw query value supplied by Shell or an app link.</param>
+    /// <returns>Decoded and trimmed value, or the trimmed raw value when decoding is not possible.</returns>
+    private static string SafeUnescape(string raw)
+    {
+        try
+        {
+            return Uri.UnescapeDataString(raw).Trim();
+        }
+        catch (UriFormatException)
+        {
+            return raw.Trim();
+        }
     }
 }

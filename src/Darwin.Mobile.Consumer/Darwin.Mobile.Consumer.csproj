@@ -118,6 +118,7 @@
 		<PackageReference Include="Microsoft.Maui.Controls.Maps" Version="10.0.51" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.6" />
 		<PackageReference Include="QRCoder" Version="1.8.0" />
+		<PackageReference Include="Syncfusion.Maui.Toolkit" Version="1.0.9" />
 		<PackageReference Include="UraniumUI" Version="2.15.0" />
 		<PackageReference Include="UraniumUI.Icons.FontAwesome" Version="2.15.0" />
 		<PackageReference Include="UraniumUI.Icons.MaterialIcons" Version="2.15.0" />

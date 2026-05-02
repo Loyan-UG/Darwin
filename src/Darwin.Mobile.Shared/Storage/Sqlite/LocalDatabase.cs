@@ -34,7 +34,7 @@ public sealed class LocalDatabase
         return true;
     }
 
-    private static Task<SQLiteAsyncConnection> CreateConnectionAsync()
+    private static async Task<SQLiteAsyncConnection> CreateConnectionAsync()
     {
         var appDataDirectory = FileSystem.AppDataDirectory;
         Directory.CreateDirectory(appDataDirectory);
@@ -45,6 +45,12 @@ public sealed class LocalDatabase
             SQLiteOpenFlags.Create |
             SQLiteOpenFlags.FullMutex;
 
-        return Task.FromResult(new SQLiteAsyncConnection(databasePath, flags));
+        var connection = new SQLiteAsyncConnection(databasePath, flags);
+
+        // WAL improves mobile cache/outbox responsiveness by reducing reader/writer contention.
+        await connection.EnableWriteAheadLoggingAsync().ConfigureAwait(false);
+        await connection.ExecuteAsync("PRAGMA foreign_keys = ON;").ConfigureAwait(false);
+
+        return connection;
     }
 }

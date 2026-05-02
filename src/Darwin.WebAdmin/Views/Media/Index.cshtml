@@ -53,54 +53,19 @@
        hx-get="@MediaIndexUrl()" hx-target="#media-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("ClearQueueFilters")</a>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Total")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("MediaMissingAlt")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.MissingAltCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("MediaMissingTitle")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.MissingTitleCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("MediaEditorAssets")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.EditorAssetCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("MediaLibraryAssets")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.LibraryAssetCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("MediaUsedInProducts")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.ProductReferencedCount</div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("MediaUnusedAssets")</div>
-            <div class="fs-4 fw-semibold">@Model.Summary.UnusedCount</div>
-        </div>
-    </div>
+<div class="admin-kpi-row mb-3">
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("Total")</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MediaMissingAlt")</div><div class="fs-4 fw-semibold">@Model.Summary.MissingAltCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MediaMissingTitle")</div><div class="fs-4 fw-semibold">@Model.Summary.MissingTitleCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MediaEditorAssets")</div><div class="fs-4 fw-semibold">@Model.Summary.EditorAssetCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MediaLibraryAssets")</div><div class="fs-4 fw-semibold">@Model.Summary.LibraryAssetCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MediaUsedInProducts")</div><div class="fs-4 fw-semibold">@Model.Summary.ProductReferencedCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("MediaUnusedAssets")</div><div class="fs-4 fw-semibold">@Model.Summary.UnusedCount</div></div>
 </div>
 
-<div class="card mb-3">
-    <div class="card-header">@T.T("MediaOpsPlaybooksTitle")</div>
-    <div class="card-body">
+<details class="admin-playbook mb-3">
+    <summary>@T.T("MediaOpsPlaybooksTitle")</summary>
+    <div class="admin-playbook-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
@@ -123,7 +88,7 @@
             </table>
         </div>
     </div>
-</div>
+</details>
 
 <form asp-action="Index"
       method="get"

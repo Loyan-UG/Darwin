@@ -33,10 +33,14 @@ public sealed class SessionViewModel : BaseViewModel
     private bool _hasRedemptionPermission = true;
     private bool _isOperationsAllowed = true;
     private int _pointsToAccrue = 1;
-    private string _operatorRole = "—";
+    private string _operatorRole = "-";
+    private string _loadedSessionToken = string.Empty;
 
     private string? _successMessage;
     private string? _warningMessage;
+    private CancellationTokenSource? _operationCts;
+    private CancellationTokenSource? _readinessCts;
+    private static readonly TimeSpan ActivityTrackingTimeout = TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// Requests page to reveal feedback area when an error/warning/success is set.
@@ -59,7 +63,7 @@ public sealed class SessionViewModel : BaseViewModel
         _businessAuthorizationService = businessAuthorizationService ?? throw new ArgumentNullException(nameof(businessAuthorizationService));
         _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
 
-        LoadSessionCommand = new AsyncCommand(LoadSessionAsync);
+        LoadSessionCommand = new AsyncCommand(LoadSessionAsync, () => !IsBusy);
         ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanExecuteAccrual && !IsBusy);
         ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanExecuteRedemption && !IsBusy);
     }
@@ -70,7 +74,14 @@ public sealed class SessionViewModel : BaseViewModel
     public string SessionToken
     {
         get => _sessionToken;
-        set => SetProperty(ref _sessionToken, value);
+        set
+        {
+            var normalized = value?.Trim() ?? string.Empty;
+            if (SetProperty(ref _sessionToken, normalized) && !string.Equals(_loadedSessionToken, normalized, StringComparison.Ordinal))
+            {
+                ResetLoadedSessionState();
+            }
+        }
     }
 
     /// <summary>
@@ -240,8 +251,28 @@ public sealed class SessionViewModel : BaseViewModel
 
     public override async Task OnAppearingAsync()
     {
-        await RefreshAuthorizationAsync().ConfigureAwait(false);
-        await EnsureOperationsAllowedAsync().ConfigureAwait(false);
+        var readinessCts = StartReadinessScope();
+
+        try
+        {
+            await RefreshAuthorizationAsync(readinessCts.Token).ConfigureAwait(false);
+            await EnsureOperationsAllowedAsync(readinessCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Session readiness refresh is cancelled when the page leaves the foreground.
+        }
+        finally
+        {
+            CompleteReadinessScope(readinessCts);
+        }
+    }
+
+    public override Task OnDisappearingAsync()
+    {
+        CancelActiveReadiness();
+        CancelActiveOperation();
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -252,7 +283,13 @@ public sealed class SessionViewModel : BaseViewModel
     {
         ClearFeedback();
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(_loadedSessionToken) &&
+            string.Equals(_loadedSessionToken, SessionToken, StringComparison.Ordinal))
         {
             return;
         }
@@ -263,15 +300,24 @@ public sealed class SessionViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ConfirmAccrualCommand.RaiseCanExecuteChanged();
-        ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+        var operationCts = StartOperationScope();
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(operationCts.Token).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                IsBusy = true;
+                RaiseCommandStates();
+            });
+
             // IMPORTANT: keep default await context in view-model methods because we update
             // UI-bound properties right after awaits (Android requires main-thread UI access).
-            var result = await _loyaltyService.ProcessScanSessionForBusinessAsync(SessionToken, CancellationToken.None);
+            var result = await _loyaltyService.ProcessScanSessionForBusinessAsync(SessionToken, operationCts.Token);
             if (!result.Succeeded || result.Value is null)
             {
                 SetError(result.Error ?? AppResources.SessionLoadFailed);
@@ -279,19 +325,30 @@ public sealed class SessionViewModel : BaseViewModel
             }
 
             var model = result.Value;
-            CustomerName = model.CustomerDisplayName;
-            PointsBalance = model.AccountSummary.PointsBalance;
-            CanConfirmAccrual = model.CanConfirmAccrual;
-            CanConfirmRedemption = model.CanConfirmRedemption;
-
-            SetSuccess(AppResources.SessionLoadSuccess);
-            await _activityTracker.RecordSessionLoadedAsync(CustomerName, CancellationToken.None).ConfigureAwait(false);
+            var customerName = model.CustomerDisplayName;
+            RunOnMain(() =>
+            {
+                CustomerName = customerName;
+                PointsBalance = model.AccountSummary.PointsBalance;
+                CanConfirmAccrual = model.CanConfirmAccrual;
+                CanConfirmRedemption = model.CanConfirmRedemption;
+                _loadedSessionToken = SessionToken;
+                SetSuccess(AppResources.SessionLoadSuccess);
+            });
+            await RecordSessionLoadedBestEffortAsync(customerName).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Session loading is cancelled when the page disappears or a newer operation supersedes it.
         }
         finally
         {
-            IsBusy = false;
-            ConfirmAccrualCommand.RaiseCanExecuteChanged();
-            ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+            CompleteOperationScope(operationCts);
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
         }
     }
 
@@ -301,16 +358,16 @@ public sealed class SessionViewModel : BaseViewModel
     /// <returns>A task representing the asynchronous operation.</returns>
     private async Task ConfirmAccrualAsync()
     {
+        if (IsBusy)
+        {
+            return;
+        }
+
         ClearFeedback();
 
         if (!CanConfirmAccrual)
         {
             SetWarning(AppResources.AccrualNotAllowed);
-            return;
-        }
-
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
             return;
         }
 
@@ -326,13 +383,22 @@ public sealed class SessionViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ConfirmAccrualCommand.RaiseCanExecuteChanged();
-        ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+        var operationCts = StartOperationScope();
 
         try
         {
-            var result = await _loyaltyService.ConfirmAccrualAsync(SessionToken, PointsToAccrue, CancellationToken.None);
+            if (!await EnsureOperationsAllowedAsync(operationCts.Token).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                IsBusy = true;
+                RaiseCommandStates();
+            });
+
+            var result = await _loyaltyService.ConfirmAccrualAsync(SessionToken, PointsToAccrue, operationCts.Token);
             if (!result.Succeeded || result.Value is null)
             {
                 SetError(result.Error ?? AppResources.FailedToConfirmAccrual);
@@ -340,18 +406,27 @@ public sealed class SessionViewModel : BaseViewModel
             }
 
             // Update points balance and disable further accrual/redemption on this session.
-            PointsBalance = result.Value.PointsBalance;
-            CanConfirmAccrual = false;
-            CanConfirmRedemption = false;
-
-            SetSuccess(AppResources.AccrualConfirmedSuccess);
-            await _activityTracker.RecordAccrualConfirmedAsync(CustomerName, PointsToAccrue, CancellationToken.None).ConfigureAwait(false);
+            RunOnMain(() =>
+            {
+                PointsBalance = result.Value.PointsBalance;
+                CanConfirmAccrual = false;
+                CanConfirmRedemption = false;
+                SetSuccess(AppResources.AccrualConfirmedSuccess);
+            });
+            await RecordAccrualConfirmedBestEffortAsync(CustomerName, PointsToAccrue).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Confirmation was cancelled because the page left the foreground.
         }
         finally
         {
-            IsBusy = false;
-            ConfirmAccrualCommand.RaiseCanExecuteChanged();
-            ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+            CompleteOperationScope(operationCts);
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
         }
     }
 
@@ -361,16 +436,16 @@ public sealed class SessionViewModel : BaseViewModel
     /// <returns>A task representing the asynchronous operation.</returns>
     private async Task ConfirmRedemptionAsync()
     {
+        if (IsBusy)
+        {
+            return;
+        }
+
         ClearFeedback();
 
         if (!CanConfirmRedemption)
         {
             SetWarning(AppResources.RedemptionNotAllowed);
-            return;
-        }
-
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
             return;
         }
 
@@ -380,13 +455,22 @@ public sealed class SessionViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ConfirmAccrualCommand.RaiseCanExecuteChanged();
-        ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+        var operationCts = StartOperationScope();
 
         try
         {
-            var result = await _loyaltyService.ConfirmRedemptionAsync(SessionToken, CancellationToken.None);
+            if (!await EnsureOperationsAllowedAsync(operationCts.Token).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                IsBusy = true;
+                RaiseCommandStates();
+            });
+
+            var result = await _loyaltyService.ConfirmRedemptionAsync(SessionToken, operationCts.Token);
             if (!result.Succeeded || result.Value is null)
             {
                 SetError(result.Error ?? AppResources.FailedToConfirmRedemption);
@@ -394,20 +478,40 @@ public sealed class SessionViewModel : BaseViewModel
             }
 
             var previousBalance = PointsBalance;
-            PointsBalance = result.Value.PointsBalance;
-            CanConfirmAccrual = false;
-            CanConfirmRedemption = false;
-
-            SetSuccess(AppResources.RedemptionConfirmedSuccess);
-            var redeemedPoints = Math.Max(0, previousBalance - PointsBalance);
-            await _activityTracker.RecordRedemptionConfirmedAsync(CustomerName, redeemedPoints, CancellationToken.None).ConfigureAwait(false);
+            var newPointsBalance = result.Value.PointsBalance;
+            RunOnMain(() =>
+            {
+                PointsBalance = newPointsBalance;
+                CanConfirmAccrual = false;
+                CanConfirmRedemption = false;
+                SetSuccess(AppResources.RedemptionConfirmedSuccess);
+            });
+            var redeemedPoints = Math.Max(0, previousBalance - newPointsBalance);
+            await RecordRedemptionConfirmedBestEffortAsync(CustomerName, redeemedPoints).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Confirmation was cancelled because the page left the foreground.
         }
         finally
         {
-            IsBusy = false;
-            ConfirmAccrualCommand.RaiseCanExecuteChanged();
-            ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+            CompleteOperationScope(operationCts);
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
         }
+    }
+
+    /// <summary>
+    /// Refreshes session command availability after busy-state and permission changes.
+    /// </summary>
+    private void RaiseCommandStates()
+    {
+        LoadSessionCommand.RaiseCanExecuteChanged();
+        ConfirmAccrualCommand.RaiseCanExecuteChanged();
+        ConfirmRedemptionCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -415,55 +519,73 @@ public sealed class SessionViewModel : BaseViewModel
     /// </summary>
     private void ClearFeedback()
     {
-        SuccessMessage = null;
-        WarningMessage = null;
-        ErrorMessage = null;
+        RunOnMain(() =>
+        {
+            SuccessMessage = null;
+            WarningMessage = null;
+            ErrorMessage = null;
+        });
     }
 
     private void SetSuccess(string message)
     {
-        SuccessMessage = message;
-        WarningMessage = null;
-        ErrorMessage = null;
-        FeedbackVisibilityRequested?.Invoke();
+        RunOnMain(() =>
+        {
+            SuccessMessage = message;
+            WarningMessage = null;
+            ErrorMessage = null;
+            FeedbackVisibilityRequested?.Invoke();
+        });
     }
 
     private void SetWarning(string message)
     {
-        SuccessMessage = null;
-        WarningMessage = message;
-        ErrorMessage = null;
-        FeedbackVisibilityRequested?.Invoke();
+        RunOnMain(() =>
+        {
+            SuccessMessage = null;
+            WarningMessage = message;
+            ErrorMessage = null;
+            FeedbackVisibilityRequested?.Invoke();
+        });
     }
 
     private void SetError(string message)
     {
-        SuccessMessage = null;
-        WarningMessage = null;
-        ErrorMessage = message;
-        FeedbackVisibilityRequested?.Invoke();
+        RunOnMain(() =>
+        {
+            SuccessMessage = null;
+            WarningMessage = null;
+            ErrorMessage = message;
+            FeedbackVisibilityRequested?.Invoke();
+        });
     }
 
-    private async Task RefreshAuthorizationAsync()
+    private async Task RefreshAuthorizationAsync(CancellationToken ct)
     {
-        var authSnapshot = await _businessAuthorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+        var authSnapshot = await _businessAuthorizationService.GetSnapshotAsync(ct).ConfigureAwait(false);
 
         if (!authSnapshot.Succeeded || authSnapshot.Value is null)
         {
-            OperatorRole = "—";
-            HasAccrualPermission = false;
-            HasRedemptionPermission = false;
+            RunOnMain(() =>
+            {
+                OperatorRole = "-";
+                HasAccrualPermission = false;
+                HasRedemptionPermission = false;
+            });
             return;
         }
 
-        OperatorRole = authSnapshot.Value.RoleDisplayName;
-        HasAccrualPermission = authSnapshot.Value.CanConfirmAccrual;
-        HasRedemptionPermission = authSnapshot.Value.CanConfirmRedemption;
+        RunOnMain(() =>
+        {
+            OperatorRole = authSnapshot.Value.RoleDisplayName;
+            HasAccrualPermission = authSnapshot.Value.CanConfirmAccrual;
+            HasRedemptionPermission = authSnapshot.Value.CanConfirmRedemption;
+        });
     }
 
-    private async Task<bool> EnsureOperationsAllowedAsync()
+    private async Task<bool> EnsureOperationsAllowedAsync(CancellationToken ct)
     {
-        var result = await _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None).ConfigureAwait(false);
+        var result = await _businessAccessService.GetCurrentAccessStateAsync(ct).ConfigureAwait(false);
         if (!result.Succeeded || result.Value is null)
         {
             _isOperationsAllowed = false;
@@ -495,5 +617,141 @@ public sealed class SessionViewModel : BaseViewModel
 
         RunOnMain(() => SetWarning(BusinessAccessStateUiMapper.GetOperationalStatusMessage(result.Value)));
         return false;
+    }
+
+    /// <summary>
+    /// Records local dashboard activity without allowing SQLite or storage latency to block the scan session UX.
+    /// </summary>
+    /// <param name="customerName">Customer display name resolved from the processed scan session.</param>
+    private async Task RecordSessionLoadedBestEffortAsync(string? customerName)
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(ActivityTrackingTimeout);
+            await _activityTracker.RecordSessionLoadedAsync(customerName, timeout.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Local reporting is best-effort and must not interrupt the operator after the session was loaded.
+        }
+    }
+
+    /// <summary>
+    /// Records accrual confirmation activity without making local reporting part of the confirmation critical path.
+    /// </summary>
+    /// <param name="customerName">Customer display name shown in the current session.</param>
+    /// <param name="pointsAccrued">Confirmed points delta.</param>
+    private async Task RecordAccrualConfirmedBestEffortAsync(string? customerName, int pointsAccrued)
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(ActivityTrackingTimeout);
+            await _activityTracker.RecordAccrualConfirmedAsync(customerName, pointsAccrued, timeout.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Local reporting is best-effort and must not interrupt the operator after accrual was confirmed.
+        }
+    }
+
+    /// <summary>
+    /// Records redemption confirmation activity without making local reporting part of the confirmation critical path.
+    /// </summary>
+    /// <param name="customerName">Customer display name shown in the current session.</param>
+    /// <param name="pointsRedeemed">Confirmed redemption delta.</param>
+    private async Task RecordRedemptionConfirmedBestEffortAsync(string? customerName, int pointsRedeemed)
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(ActivityTrackingTimeout);
+            await _activityTracker.RecordRedemptionConfirmedAsync(customerName, pointsRedeemed, timeout.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Local reporting is best-effort and must not interrupt the operator after redemption was confirmed.
+        }
+    }
+
+    /// <summary>
+    /// Resets session-specific UI state when navigation assigns a different scan token.
+    /// </summary>
+    private void ResetLoadedSessionState()
+    {
+        _loadedSessionToken = string.Empty;
+        CustomerName = null;
+        PointsBalance = 0;
+        CanConfirmAccrual = false;
+        CanConfirmRedemption = false;
+        ClearFeedback();
+    }
+
+    /// <summary>
+    /// Starts a cancellable session readiness refresh and cancels any stale refresh still in-flight.
+    /// </summary>
+    /// <returns>The cancellation source owned by the current readiness refresh.</returns>
+    private CancellationTokenSource StartReadinessScope()
+    {
+        var readinessCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _readinessCts, readinessCts);
+        previous?.Cancel();
+        return readinessCts;
+    }
+
+    /// <summary>
+    /// Releases a completed readiness refresh when it still owns the active refresh slot.
+    /// </summary>
+    /// <param name="readinessCts">Readiness cancellation source to complete.</param>
+    private void CompleteReadinessScope(CancellationTokenSource readinessCts)
+    {
+        if (ReferenceEquals(_readinessCts, readinessCts))
+        {
+            _readinessCts = null;
+        }
+
+        readinessCts.Dispose();
+    }
+
+    /// <summary>
+    /// Cancels the active readiness refresh without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelActiveReadiness()
+    {
+        var readinessCts = Interlocked.Exchange(ref _readinessCts, null);
+        readinessCts?.Cancel();
+    }
+
+    /// <summary>
+    /// Starts a cancellable session operation and cancels any older operation defensively.
+    /// </summary>
+    /// <returns>The cancellation source owned by the current operation.</returns>
+    private CancellationTokenSource StartOperationScope()
+    {
+        var operationCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCts, operationCts);
+        previous?.Cancel();
+        return operationCts;
+    }
+
+    /// <summary>
+    /// Disposes the active operation scope once the owning operation finishes.
+    /// </summary>
+    /// <param name="operationCts">Operation cancellation source to complete.</param>
+    private void CompleteOperationScope(CancellationTokenSource operationCts)
+    {
+        if (ReferenceEquals(_operationCts, operationCts))
+        {
+            _operationCts = null;
+        }
+
+        operationCts.Dispose();
+    }
+
+    /// <summary>
+    /// Cancels any in-flight session operation that should no longer update the view model.
+    /// </summary>
+    private void CancelActiveOperation()
+    {
+        var operationCts = Interlocked.Exchange(ref _operationCts, null);
+        operationCts?.Cancel();
     }
 }

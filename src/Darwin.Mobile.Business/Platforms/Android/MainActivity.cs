@@ -20,16 +20,19 @@ namespace Darwin.Mobile.Business;
                            ConfigChanges.Density)]
 public sealed class MainActivity : MauiAppCompatActivity
 {
+    private const string AndroidStatusBarColor = "#F4B223";
+    private const string AndroidNavigationBarColor = "#FFF8E7";
+
     /// <summary>
-    /// Applies brand-consistent Android system bar colors so no default purple chrome remains.
+    /// Applies brand-consistent Android system bar colors so no legacy template chrome remains.
     /// </summary>
     /// <param name="savedInstanceState">Saved Android activity state.</param>
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
 
-        var brandStatusColor = Android.Graphics.Color.ParseColor("#F4B223");
-        var brandNavigationColor = Android.Graphics.Color.ParseColor("#FFF8E7");
+        var brandStatusColor = Android.Graphics.Color.ParseColor(AndroidStatusBarColor);
+        var brandNavigationColor = Android.Graphics.Color.ParseColor(AndroidNavigationBarColor);
 
         Window?.SetStatusBarColor(brandStatusColor);
         Window?.SetNavigationBarColor(brandNavigationColor);

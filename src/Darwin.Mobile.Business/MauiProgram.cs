@@ -3,6 +3,7 @@ using Darwin.Mobile.Business.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
 using Microsoft.Maui.Hosting;
+using Syncfusion.Maui.Toolkit.Hosting;
 using UraniumUI;
 using UraniumUI.Icons.FontAwesome;
 using UraniumUI.Icons.MaterialIcons;
@@ -10,7 +11,6 @@ using ZXing.Net.Maui;
 using ZXing.Net.Maui.Controls;
 #if ANDROID
 using Android.Content.Res;
-using Android.Graphics;
 #endif
 
 namespace Darwin.Mobile.Business;
@@ -29,6 +29,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
 
         builder
+            .ConfigureSyncfusionToolkit()
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
             .UseUraniumUI()

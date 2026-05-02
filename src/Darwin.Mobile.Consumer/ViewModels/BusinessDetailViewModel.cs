@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,6 +8,7 @@ using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Services.Caching;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -27,6 +27,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
+    private CancellationTokenSource? _operationCancellation;
 
     private BusinessDetail? _business;
     private bool _isLikedByMe;
@@ -52,7 +53,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
-        Reviews = new ObservableCollection<BusinessReviewItem>();
+        Reviews = new RangeObservableCollection<BusinessReviewItem>();
 
         JoinCommand = new AsyncRelayCommand(JoinAsync, () => !IsBusy && BusinessId != Guid.Empty);
         ToggleLikeCommand = new AsyncRelayCommand(ToggleLikeAsync, () => !IsBusy && BusinessId != Guid.Empty);
@@ -77,7 +78,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     /// <summary>
     /// Recent public reviews (up to 5 records) returned by engagement endpoint.
     /// </summary>
-    public ObservableCollection<BusinessReviewItem> Reviews { get; }
+    public RangeObservableCollection<BusinessReviewItem> Reviews { get; }
 
     public bool IsLikedByMe
     {
@@ -214,31 +215,47 @@ public sealed class BusinessDetailViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        RaiseCanExecute();
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
-            Business = await _businessService.GetAsync(BusinessId, CancellationToken.None);
+            var cancellationToken = operationCancellation.Token;
+            var business = await _businessService.GetAsync(BusinessId, cancellationToken);
 
-            if (Business == null)
+            if (business == null)
             {
-                ErrorMessage = Resources.AppResources.BusinessDetailsNotFound;
+                RunOnMain(() => ErrorMessage = Resources.AppResources.BusinessDetailsNotFound);
                 return;
             }
 
-            await LoadEngagementAsync();
+            RunOnMain(() => Business = business);
+            await LoadEngagementAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the business detail page intentionally cancels stale loads.
         }
         catch (Exception)
         {
-            ErrorMessage = Resources.AppResources.BusinessDetailsLoadFailed;
+            RunOnMain(() => ErrorMessage = Resources.AppResources.BusinessDetailsLoadFailed);
         }
         finally
         {
-            IsBusy = false;
-            RaiseCanExecute();
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
         }
+    }
+
+    /// <summary>
+    /// Cancels any in-flight detail or engagement operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        EndBusyState();
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -253,13 +270,13 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     /// Loads business engagement snapshot for the current member:
     /// like/favorite state, counters, my review, and recent reviews.
     /// </summary>
-    private async Task LoadEngagementAsync()
+    private async Task LoadEngagementAsync(CancellationToken cancellationToken)
     {
-        var result = await _businessService.GetMyEngagementAsync(BusinessId, CancellationToken.None);
+        var result = await _businessService.GetMyEngagementAsync(BusinessId, cancellationToken);
 
         if (!result.Succeeded || result.Value is null)
         {
-            ErrorMessage = result.Error ?? Resources.AppResources.BusinessEngagementLoadFailed;
+            RunOnMain(() => ErrorMessage = result.Error ?? Resources.AppResources.BusinessEngagementLoadFailed);
             return;
         }
 
@@ -274,12 +291,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
             RatingCount = dto.RatingCount;
             RatingAverage = dto.RatingAverage;
 
-            Reviews.Clear();
-            foreach (var review in dto.RecentReviews)
-            {
-                Reviews.Add(review);
-            }
-
+            Reviews.ReplaceRange(dto.RecentReviews);
             OnPropertyChanged(nameof(HasReviews));
 
             if (dto.MyReview is not null)
@@ -300,16 +312,15 @@ public sealed class BusinessDetailViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        RaiseCanExecute();
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
-            var result = await _businessService.ToggleLikeAsync(BusinessId, CancellationToken.None);
+            var result = await _businessService.ToggleLikeAsync(BusinessId, operationCancellation.Token);
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? Resources.AppResources.BusinessLikeToggleFailed;
+                RunOnMain(() => ErrorMessage = result.Error ?? Resources.AppResources.BusinessLikeToggleFailed);
                 return;
             }
 
@@ -319,10 +330,14 @@ public sealed class BusinessDetailViewModel : BaseViewModel
                 LikeCount = result.Value.TotalCount;
             });
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the business detail page intentionally cancels stale like updates.
+        }
         finally
         {
-            IsBusy = false;
-            RaiseCanExecute();
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -336,16 +351,15 @@ public sealed class BusinessDetailViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        RaiseCanExecute();
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
-            var result = await _businessService.ToggleFavoriteAsync(BusinessId, CancellationToken.None);
+            var result = await _businessService.ToggleFavoriteAsync(BusinessId, operationCancellation.Token);
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? Resources.AppResources.BusinessFavoriteToggleFailed;
+                RunOnMain(() => ErrorMessage = result.Error ?? Resources.AppResources.BusinessFavoriteToggleFailed);
                 return;
             }
 
@@ -355,10 +369,14 @@ public sealed class BusinessDetailViewModel : BaseViewModel
                 FavoriteCount = result.Value.TotalCount;
             });
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the business detail page intentionally cancels stale favorite updates.
+        }
         finally
         {
-            IsBusy = false;
-            RaiseCanExecute();
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -373,9 +391,8 @@ public sealed class BusinessDetailViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        RaiseCanExecute();
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
@@ -385,19 +402,23 @@ public sealed class BusinessDetailViewModel : BaseViewModel
                 Comment = string.IsNullOrWhiteSpace(MyReviewComment) ? null : MyReviewComment.Trim()
             };
 
-            var result = await _businessService.UpsertMyReviewAsync(BusinessId, request, CancellationToken.None);
+            var result = await _businessService.UpsertMyReviewAsync(BusinessId, request, operationCancellation.Token);
             if (!result.Succeeded)
             {
-                ErrorMessage = result.Error ?? Resources.AppResources.BusinessReviewSaveFailed;
+                RunOnMain(() => ErrorMessage = result.Error ?? Resources.AppResources.BusinessReviewSaveFailed);
                 return;
             }
 
-            await LoadEngagementAsync();
+            await LoadEngagementAsync(operationCancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the business detail page intentionally cancels stale review updates.
         }
         finally
         {
-            IsBusy = false;
-            RaiseCanExecute();
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -412,31 +433,31 @@ public sealed class BusinessDetailViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        RaiseCanExecute();
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
-            var joinResult = await _loyaltyService.JoinLoyaltyAsync(BusinessId, null, CancellationToken.None);
+            var cancellationToken = operationCancellation.Token;
+            var joinResult = await _loyaltyService.JoinLoyaltyAsync(BusinessId, null, cancellationToken);
 
             if (!joinResult.Succeeded || joinResult.Value == null)
             {
-                ErrorMessage = joinResult.Error ?? Resources.AppResources.BusinessJoinFailed;
+                RunOnMain(() => ErrorMessage = joinResult.Error ?? Resources.AppResources.BusinessJoinFailed);
                 return;
             }
 
-            await _loyaltySnapshotCache.InvalidateAsync(CancellationToken.None);
+            await _loyaltySnapshotCache.InvalidateAsync(cancellationToken);
 
             var sessionResult = await _loyaltyService.PrepareScanSessionAsync(
                 BusinessId,
                 LoyaltyScanMode.Accrual,
                 selectedRewardIds: null,
-                CancellationToken.None);
+                cancellationToken);
 
             if (!sessionResult.Succeeded || sessionResult.Value == null)
             {
-                ErrorMessage = sessionResult.Error ?? Resources.AppResources.BusinessScanSessionPrepareFailed;
+                RunOnMain(() => ErrorMessage = sessionResult.Error ?? Resources.AppResources.BusinessScanSessionPrepareFailed);
                 return;
             }
 
@@ -449,11 +470,74 @@ public sealed class BusinessDetailViewModel : BaseViewModel
 
             await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the business detail page intentionally cancels stale join operations.
+        }
         finally
+        {
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
+        }
+    }
+
+    /// <summary>
+    /// Starts a cancellable business-detail operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active business-detail operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed business-detail operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
+    }
+
+    /// <summary>
+    /// Applies busy state and command disabling for the current user operation.
+    /// </summary>
+    private void BeginBusyState()
+    {
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseCanExecute();
+        });
+    }
+
+    /// <summary>
+    /// Clears busy state and re-enables commands after the current user operation.
+    /// </summary>
+    private void EndBusyState()
+    {
+        RunOnMain(() =>
         {
             IsBusy = false;
             RaiseCanExecute();
-        }
+        });
     }
 
     /// <summary>

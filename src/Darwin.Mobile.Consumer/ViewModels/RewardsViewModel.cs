@@ -8,6 +8,7 @@ using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Caching;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -38,9 +39,13 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// </remarks>
 public sealed class RewardsViewModel : BaseViewModel
 {
+    private const int MaxDisplayedAvailableRewards = 30;
+    private const int MaxDisplayedRewardHistoryItems = 40;
+
     private readonly ILoyaltyService _loyaltyService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
+    private CancellationTokenSource? _operationCancellation;
 
     private Guid _businessId;
     private bool _loaded;
@@ -66,11 +71,11 @@ public sealed class RewardsViewModel : BaseViewModel
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
-        AvailableRewards = new ObservableCollection<LoyaltyRewardSummary>();
-        RewardHistory = new ObservableCollection<PointsTransaction>();
-        Accounts = new ObservableCollection<LoyaltyAccountSummary>();
+        AvailableRewards = new RangeObservableCollection<LoyaltyRewardSummary>();
+        RewardHistory = new RangeObservableCollection<PointsTransaction>();
+        Accounts = new RangeObservableCollection<LoyaltyAccountSummary>();
 
-        RefreshCommand = new AsyncCommand(RefreshAsync);
+        RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         OpenSelectedBusinessQrCommand = new AsyncCommand(OpenSelectedBusinessQrAsync, () => CanOpenSelectedBusinessQr);
     }
 
@@ -222,22 +227,22 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Gets all loyalty accounts that belong to the currently logged-in consumer.
     /// Each entry corresponds to one business membership.
     /// </summary>
-    public ObservableCollection<LoyaltyAccountSummary> Accounts { get; }
+    public RangeObservableCollection<LoyaltyAccountSummary> Accounts { get; }
 
     /// <summary>
     /// Gets history entries for the currently selected business account.
     /// </summary>
-    public ObservableCollection<PointsTransaction> RewardHistory { get; }
+    public RangeObservableCollection<PointsTransaction> RewardHistory { get; }
 
     /// <summary>
     /// Gets currently available rewards for the selected business account.
     /// </summary>
-    public ObservableCollection<LoyaltyRewardSummary> AvailableRewards { get; }
+    public RangeObservableCollection<LoyaltyRewardSummary> AvailableRewards { get; }
 
     /// <summary>
     /// Backwards-compatibility alias retained for older bindings.
     /// </summary>
-    public ObservableCollection<LoyaltyRewardSummary> Rewards => AvailableRewards;
+    public RangeObservableCollection<LoyaltyRewardSummary> Rewards => AvailableRewards;
 
     /// <summary>
     /// Manual refresh command used by pull-to-refresh or button-based refresh.
@@ -376,6 +381,17 @@ public sealed class RewardsViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Cancels any in-flight rewards load or navigation operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        EndBusyState();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
     /// Full refresh pipeline:
     /// - load joined accounts
     /// - choose active account
@@ -388,17 +404,17 @@ public sealed class RewardsViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        RaiseOverviewChanged();
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
-            var overviewResult = await _loyaltySnapshotCache.GetMyOverviewAsync(CancellationToken.None);
+            var cancellationToken = operationCancellation.Token;
+            var overviewResult = await _loyaltySnapshotCache.GetMyOverviewAsync(cancellationToken);
 
             if (!overviewResult.Succeeded || overviewResult.Value is null)
             {
-                ErrorMessage = Resources.AppResources.RewardsLoadAccountsFailed;
+                RunOnMain(() => ErrorMessage = Resources.AppResources.RewardsLoadAccountsFailed);
                 return;
             }
 
@@ -410,12 +426,7 @@ public sealed class RewardsViewModel : BaseViewModel
             // The accounts list is UI-bound; always update it on the main thread.
             RunOnMain(() =>
             {
-                Accounts.Clear();
-                foreach (var account in orderedAccounts)
-                {
-                    Accounts.Add(account);
-                }
-
+                Accounts.ReplaceRange(orderedAccounts);
                 RaiseOverviewChanged();
             });
 
@@ -425,12 +436,12 @@ public sealed class RewardsViewModel : BaseViewModel
                 RunOnMain(() =>
                 {
                     PointsBalance = 0;
-                    AvailableRewards.Clear();
-                    RewardHistory.Clear();
+                    AvailableRewards.ClearRange();
+                    RewardHistory.ClearRange();
                     OnPropertyChanged(nameof(HasHistory));
                 });
 
-                ErrorMessage = Resources.AppResources.RewardsNoAccountsFound;
+                RunOnMain(() => ErrorMessage = Resources.AppResources.RewardsNoAccountsFound);
                 return;
             }
 
@@ -449,12 +460,16 @@ public sealed class RewardsViewModel : BaseViewModel
                 _suppressSelectedAccountRefresh = false;
             });
 
-            await LoadSelectedBusinessDataAsync(BusinessId);
+            await LoadSelectedBusinessDataAsync(BusinessId, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from rewards intentionally cancels stale reward loads.
         }
         finally
         {
-            IsBusy = false;
-            RaiseOverviewChanged();
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -474,7 +489,7 @@ public sealed class RewardsViewModel : BaseViewModel
         }
         catch
         {
-            ErrorMessage = Resources.AppResources.RewardsLoadAccountSummaryFailed;
+            RunOnMain(() => ErrorMessage = Resources.AppResources.RewardsLoadAccountSummaryFailed);
         }
     }
 
@@ -488,18 +503,21 @@ public sealed class RewardsViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        RaiseOverviewChanged();
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
-            await LoadSelectedBusinessDataAsync(BusinessId);
+            await LoadSelectedBusinessDataAsync(BusinessId, operationCancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Selection changes intentionally cancel stale reward loads.
         }
         finally
         {
-            IsBusy = false;
-            RaiseOverviewChanged();
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -507,13 +525,13 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Loads all data required for a single business-scoped rewards view.
     /// </summary>
     /// <param name="businessId">Business identifier that owns the selected loyalty account.</param>
-    private async Task LoadSelectedBusinessDataAsync(Guid businessId)
+    private async Task LoadSelectedBusinessDataAsync(Guid businessId, CancellationToken cancellationToken)
     {
-        var dashboardResult = await _loyaltyService.GetBusinessDashboardAsync(businessId, CancellationToken.None);
+        var dashboardResult = await _loyaltyService.GetBusinessDashboardAsync(businessId, cancellationToken);
 
         if (!dashboardResult.Succeeded || dashboardResult.Value is null)
         {
-            ErrorMessage = Resources.AppResources.RewardsLoadAccountSummaryFailed;
+            RunOnMain(() => ErrorMessage = Resources.AppResources.RewardsLoadAccountSummaryFailed);
             ClearRewardInsights();
             return;
         }
@@ -537,49 +555,44 @@ public sealed class RewardsViewModel : BaseViewModel
 
         UpdateSelectedAccountFromDashboard(dashboard.Account);
 
-        var rewardsResult = await _loyaltyService.GetAvailableRewardsAsync(businessId, CancellationToken.None);
-
-        RunOnMain(AvailableRewards.Clear);
+        var rewardsResult = await _loyaltyService.GetAvailableRewardsAsync(businessId, cancellationToken);
 
         if (rewardsResult?.Value != null)
         {
-            var orderedRewards = rewardsResult.Value.OrderBy(r => r.RequiredPoints).ToList();
+            var orderedRewards = rewardsResult.Value
+                .OrderBy(r => r.RequiredPoints)
+                .Take(MaxDisplayedAvailableRewards)
+                .ToList();
 
-            RunOnMain(() =>
-            {
-                foreach (var reward in orderedRewards)
-                {
-                    AvailableRewards.Add(reward);
-                }
-            });
+            RunOnMain(() => AvailableRewards.ReplaceRange(orderedRewards));
         }
         else
         {
-            ErrorMessage = Resources.AppResources.RewardsLoadRewardsFailed;
+            RunOnMain(AvailableRewards.ClearRange);
+            RunOnMain(() => ErrorMessage = Resources.AppResources.RewardsLoadRewardsFailed);
         }
-
-        RunOnMain(RewardHistory.Clear);
 
         if (dashboard.RecentTransactions is not null)
         {
             var orderedHistory = dashboard.RecentTransactions
                 .OrderByDescending(h => h.OccurredAtUtc)
+                .Take(MaxDisplayedRewardHistoryItems)
                 .ToList();
 
             RunOnMain(() =>
             {
-                foreach (var transaction in orderedHistory)
-                {
-                    RewardHistory.Add(transaction);
-                }
-
+                RewardHistory.ReplaceRange(orderedHistory);
                 OnPropertyChanged(nameof(HasHistory));
             });
         }
         else
         {
-            ErrorMessage = Resources.AppResources.RewardsLoadHistoryFailed;
-            RunOnMain(() => OnPropertyChanged(nameof(HasHistory)));
+            RunOnMain(() =>
+            {
+                ErrorMessage = Resources.AppResources.RewardsLoadHistoryFailed;
+                RewardHistory.ClearRange();
+                OnPropertyChanged(nameof(HasHistory));
+            });
         }
     }
 
@@ -634,17 +647,91 @@ public sealed class RewardsViewModel : BaseViewModel
     /// </summary>
     private async Task OpenSelectedBusinessQrAsync()
     {
-        if (!CanOpenSelectedBusinessQr || SelectedAccount is null)
+        if (!CanOpenSelectedBusinessQr || SelectedAccount is null || IsBusy)
         {
             return;
         }
 
-        IDictionary<string, object?> parameters = new Dictionary<string, object?>
-        {
-            ["businessId"] = SelectedAccount.BusinessId
-        };
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
-        await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
+        try
+        {
+            IDictionary<string, object?> parameters = new Dictionary<string, object?>
+            {
+                ["businessId"] = SelectedAccount.BusinessId
+            };
+
+            await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from rewards intentionally cancels stale QR navigation work.
+        }
+        finally
+        {
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
+        }
+    }
+
+    /// <summary>
+    /// Starts a cancellable rewards operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active rewards operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed rewards operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
+    }
+
+    /// <summary>
+    /// Applies busy state and disables rewards actions for the current operation.
+    /// </summary>
+    private void BeginBusyState()
+    {
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseOverviewChanged();
+        });
+    }
+
+    /// <summary>
+    /// Clears busy state and re-enables rewards actions after the current operation.
+    /// </summary>
+    private void EndBusyState()
+    {
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            RaiseOverviewChanged();
+        });
     }
 
     /// <summary>
@@ -657,6 +744,7 @@ public sealed class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(TotalPointsAcrossBusinesses));
         OnPropertyChanged(nameof(TopBusinessByPoints));
         OnPropertyChanged(nameof(CanOpenSelectedBusinessQr));
+        RefreshCommand.RaiseCanExecuteChanged();
         OpenSelectedBusinessQrCommand.RaiseCanExecuteChanged();
     }
 }

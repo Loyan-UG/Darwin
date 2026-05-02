@@ -14,6 +14,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class ActivationViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+    private CancellationTokenSource? _operationCancellation;
     private string _email = string.Empty;
     private string _token = string.Empty;
     private string? _successMessage;
@@ -55,6 +56,16 @@ public sealed class ActivationViewModel : BaseViewModel
 
     public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
 
+    /// <summary>
+    /// Cancels any in-flight activation operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
     public void ApplyPrefill(string? email, string? token = null)
     {
         if (string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(email))
@@ -75,36 +86,48 @@ public sealed class ActivationViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        SuccessMessage = null;
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            SuccessMessage = null;
+            RaiseCommandStates();
+        });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             if (string.IsNullOrWhiteSpace(Email))
             {
-                ErrorMessage = AppResources.EmailRequired;
+                RunOnMain(() => ErrorMessage = AppResources.EmailRequired);
                 return;
             }
 
-            var requested = await _authService.RequestEmailConfirmationAsync(Email.Trim(), CancellationToken.None);
+            var requested = await _authService.RequestEmailConfirmationAsync(Email.Trim(), operationCancellation.Token);
             if (!requested)
             {
-                ErrorMessage = AppResources.ActivationEmailRequestFailed;
+                RunOnMain(() => ErrorMessage = AppResources.ActivationEmailRequestFailed);
                 return;
             }
 
-            SuccessMessage = AppResources.ActivationEmailSent;
+            RunOnMain(() => SuccessMessage = AppResources.ActivationEmailSent);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the activation screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
-            ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ActivationEmailRequestFailed);
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ActivationEmailRequestFailed));
         }
         finally
         {
-            IsBusy = false;
-            RequestActivationEmailCommand.RaiseCanExecuteChanged();
-            ConfirmEmailCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -115,37 +138,95 @@ public sealed class ActivationViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        SuccessMessage = null;
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            SuccessMessage = null;
+            RaiseCommandStates();
+        });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Token))
             {
-                ErrorMessage = AppResources.ActivationEmailTokenRequired;
+                RunOnMain(() => ErrorMessage = AppResources.ActivationEmailTokenRequired);
                 return;
             }
 
-            var confirmed = await _authService.ConfirmEmailAsync(Email.Trim(), Token.Trim(), CancellationToken.None);
+            var confirmed = await _authService.ConfirmEmailAsync(Email.Trim(), Token.Trim(), operationCancellation.Token);
             if (!confirmed)
             {
-                ErrorMessage = AppResources.ActivationConfirmFailed;
+                RunOnMain(() => ErrorMessage = AppResources.ActivationConfirmFailed);
                 return;
             }
 
-            SuccessMessage = AppResources.ActivationConfirmSuccess;
-            Token = string.Empty;
+            RunOnMain(() =>
+            {
+                SuccessMessage = AppResources.ActivationConfirmSuccess;
+                Token = string.Empty;
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the activation screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
-            ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ActivationConfirmFailed);
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ActivationConfirmFailed));
         }
         finally
         {
-            IsBusy = false;
-            RequestActivationEmailCommand.RaiseCanExecuteChanged();
-            ConfirmEmailCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
+            EndCurrentOperation(operationCancellation);
         }
+    }
+
+    /// <summary>
+    /// Starts a cancellable activation operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active activation operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed activation operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
+    }
+
+    /// <summary>
+    /// Updates both activation commands whenever the busy state changes so repeated taps cannot submit duplicate requests.
+    /// </summary>
+    private void RaiseCommandStates()
+    {
+        RequestActivationEmailCommand.RaiseCanExecuteChanged();
+        ConfirmEmailCommand.RaiseCanExecuteChanged();
     }
 }

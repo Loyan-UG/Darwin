@@ -4,6 +4,8 @@ using Darwin.Mobile.Shared.Caching;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Shared.Results;
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -152,7 +154,7 @@ public sealed class ProfileService : IProfileService
         var result = await _api.PutNoContentAsync(ApiRoutes.Profile.UpdatePreferences, preferences, ct).ConfigureAwait(false);
         if (result.Succeeded)
         {
-            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.preferences", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+            await RemovePreferencesCacheAsync(ct).ConfigureAwait(false);
         }
 
         return result;
@@ -168,7 +170,7 @@ public sealed class ProfileService : IProfileService
         var result = await _api.PostResultAsync<CreateMemberAddressRequest, MemberAddress>(ApiRoutes.Profile.CreateAddress, request, ct).ConfigureAwait(false);
         if (result.Succeeded)
         {
-            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+            await RemoveAddressReadCachesAsync(ct).ConfigureAwait(false);
         }
 
         return result;
@@ -185,7 +187,7 @@ public sealed class ProfileService : IProfileService
         var result = await _api.PutResultAsync<UpdateMemberAddressRequest, MemberAddress>(ApiRoutes.Profile.UpdateAddress(addressId), request, ct).ConfigureAwait(false);
         if (result.Succeeded)
         {
-            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+            await RemoveAddressReadCachesAsync(ct).ConfigureAwait(false);
         }
 
         return result;
@@ -202,7 +204,7 @@ public sealed class ProfileService : IProfileService
         var result = await _api.PostNoContentAsync(ApiRoutes.Profile.DeleteAddress(addressId), request, ct).ConfigureAwait(false);
         if (result.Succeeded)
         {
-            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+            await RemoveAddressReadCachesAsync(ct).ConfigureAwait(false);
         }
 
         return result;
@@ -219,7 +221,7 @@ public sealed class ProfileService : IProfileService
         var result = await _api.PostResultAsync<SetMemberDefaultAddressRequest, MemberAddress>(ApiRoutes.Profile.SetDefaultAddress(addressId), request, ct).ConfigureAwait(false);
         if (result.Succeeded)
         {
-            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+            await RemoveAddressReadCachesAsync(ct).ConfigureAwait(false);
         }
 
         return result;
@@ -286,12 +288,45 @@ public sealed class ProfileService : IProfileService
         await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.customer-context", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Removes address and profile-summary caches after address-book writes so profile cards cannot show stale defaults.
+    /// </summary>
+    private async Task RemoveAddressReadCachesAsync(CancellationToken ct)
+    {
+        await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        await RemoveProfileReadCachesAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Removes preference and linked customer context caches after preference writes.
+    /// </summary>
+    private async Task RemovePreferencesCacheAsync(CancellationToken ct)
+    {
+        await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.preferences", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.customer-context", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+    }
+
     private async Task<string> GetScopedCacheKeyAsync(string suffix, CancellationToken ct)
     {
         var (accessToken, _) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
         var subject = JwtClaimReader.GetSubject(accessToken);
         return string.IsNullOrWhiteSpace(subject)
-            ? suffix
+            ? $"{suffix}:{BuildFallbackScope(accessToken)}"
             : $"{suffix}:{subject}";
+    }
+
+    /// <summary>
+    /// Builds a non-readable cache scope when the JWT subject cannot be parsed.
+    /// This prevents authenticated profile cache entries from falling back to a shared unscoped key.
+    /// </summary>
+    private static string BuildFallbackScope(string? accessToken)
+    {
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            return "anonymous";
+        }
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(accessToken.Trim()));
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

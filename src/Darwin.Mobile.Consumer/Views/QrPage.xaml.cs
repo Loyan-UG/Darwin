@@ -1,6 +1,8 @@
 using Darwin.Mobile.Consumer.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Consumer.Views;
@@ -16,6 +18,7 @@ namespace Darwin.Mobile.Consumer.Views;
 public partial class QrPage : IQueryAttributable
 {
     private readonly QrViewModel _viewModel;
+    private int _appearanceRefreshInProgress;
 
     public QrPage(QrViewModel viewModel)
     {
@@ -46,7 +49,7 @@ public partial class QrPage : IQueryAttributable
             var businessName = rawBusinessName as string;
             if (!string.IsNullOrWhiteSpace(businessName))
             {
-                _viewModel.SetBusinessDisplayName(Uri.UnescapeDataString(businessName));
+                _viewModel.SetBusinessDisplayName(SafeUnescape(businessName));
             }
         }
 
@@ -67,18 +70,69 @@ public partial class QrPage : IQueryAttributable
 
         // Trigger immediate first-load session creation after navigation parameters are applied.
         // This prevents a blank QR state when navigation timing causes OnAppearing to run earlier.
-        _ = _viewModel.OnAppearingAsync();
+        _ = RunAppearingSafelyAsync();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.OnAppearingAsync();
+        await RunAppearingSafelyAsync();
     }
 
     protected override async void OnDisappearing()
     {
-        base.OnDisappearing();
-        await _viewModel.OnDisappearingAsync();
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from the QR page.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
+    }
+
+    /// <summary>
+    /// Runs QR session refresh without allowing async-void lifecycle dispatch to surface unexpected exceptions.
+    /// </summary>
+    private async Task RunAppearingSafelyAsync()
+    {
+        if (Interlocked.Exchange(ref _appearanceRefreshInProgress, 1) == 1)
+        {
+            return;
+        }
+
+        try
+        {
+            await _viewModel.OnAppearingAsync();
+        }
+        catch
+        {
+            // QR refresh failures are surfaced by the ViewModel state and should not crash navigation.
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _appearanceRefreshInProgress, 0);
+        }
+    }
+
+    /// <summary>
+    /// Decodes route values defensively so malformed navigation input cannot crash QR context setup.
+    /// </summary>
+    /// <param name="raw">Raw route value supplied by Shell.</param>
+    /// <returns>Decoded and trimmed value, or the trimmed raw value when decoding is not possible.</returns>
+    private static string SafeUnescape(string raw)
+    {
+        try
+        {
+            return Uri.UnescapeDataString(raw).Trim();
+        }
+        catch (UriFormatException)
+        {
+            return raw.Trim();
+        }
     }
 }

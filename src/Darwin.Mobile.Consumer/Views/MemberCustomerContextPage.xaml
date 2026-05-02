@@ -2,19 +2,26 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     x:Class="Darwin.Mobile.Consumer.Views.MemberCustomerContextPage"
     x:DataType="vm:MemberCustomerContextViewModel"
     Title="{x:Static res:AppResources.MemberCustomerContextTitle}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+    <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                   IsRefreshing="{Binding IsBusy}"
+                                   ProgressColor="{StaticResource BrandGold500}"
+                                   ProgressBackground="{StaticResource Neutral0}">
+        <pullToRefresh:SfPullToRefresh.PullableContent>
+            <ScrollView>
+                <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.MemberCustomerContextTitle}" Style="{StaticResource TitleLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.MemberCustomerContextSubtitle}" Style="{StaticResource SecondaryBodyLabelStyle}" />
-                    <Button Text="{x:Static res:AppResources.MemberCustomerContextRefreshButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.MemberCustomerContextRefreshButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
                     <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
                 </VerticalStackLayout>
             </Border>
@@ -97,6 +104,8 @@
             </Border>
 
             <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
-        </VerticalStackLayout>
-    </ScrollView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </pullToRefresh:SfPullToRefresh.PullableContent>
+    </pullToRefresh:SfPullToRefresh>
 </ContentPage>

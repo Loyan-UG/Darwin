@@ -27,6 +27,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private readonly ApiOptions _apiOptions;
     private readonly ILoyaltyService _loyaltyService;
     private readonly IBusinessActivityTracker _activityTracker;
+    private CancellationTokenSource? _operationCancellation;
 
     private bool _hasSubscriptionStatus;
     private string _subscriptionSummaryText = string.Empty;
@@ -139,6 +140,22 @@ public sealed class SubscriptionViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Cancels any in-flight subscription status operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            RaiseCommandStates();
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
     /// Loads the server-backed subscription snapshot so operators can confirm the current
     /// plan, provider, price, and renewal window without leaving the app.
     /// </summary>
@@ -156,15 +173,17 @@ public sealed class SubscriptionViewModel : BaseViewModel
             RaiseCommandStates();
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
+            var cancellationToken = operationCancellation.Token;
             var result = await _loyaltyService
-                .GetCurrentBusinessSubscriptionStatusAsync(CancellationToken.None)
+                .GetCurrentBusinessSubscriptionStatusAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (!result.Succeeded || result.Value is null)
             {
-                await TrackSubscriptionStatusRefreshAsync(succeeded: false).ConfigureAwait(false);
+                await TrackSubscriptionStatusRefreshAsync(succeeded: false, cancellationToken).ConfigureAwait(false);
 
                 RunOnMain(() =>
                 {
@@ -177,8 +196,12 @@ public sealed class SubscriptionViewModel : BaseViewModel
                 return;
             }
 
-            await TrackSubscriptionStatusRefreshAsync(succeeded: true).ConfigureAwait(false);
+            await TrackSubscriptionStatusRefreshAsync(succeeded: true, cancellationToken).ConfigureAwait(false);
             RunOnMain(() => ApplySubscriptionStatus(result.Value));
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the subscription page intentionally cancels stale refresh work.
         }
         finally
         {
@@ -187,6 +210,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
                 IsBusy = false;
                 RaiseCommandStates();
             });
+
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -350,11 +375,11 @@ public sealed class SubscriptionViewModel : BaseViewModel
         OpenManagementWebsiteCommand.RaiseCanExecuteChanged();
     }
 
-    private async Task TrackSubscriptionStatusRefreshAsync(bool succeeded)
+    private async Task TrackSubscriptionStatusRefreshAsync(bool succeeded, CancellationToken cancellationToken)
     {
         try
         {
-            await _activityTracker.RecordSubscriptionStatusRefreshAsync(succeeded, CancellationToken.None).ConfigureAwait(false);
+            await _activityTracker.RecordSubscriptionStatusRefreshAsync(succeeded, cancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -370,4 +395,38 @@ public sealed class SubscriptionViewModel : BaseViewModel
     }
 
     private sealed record WebsiteValidationResult(Uri? WebsiteUri, string Details);
+
+    /// <summary>
+    /// Starts a cancellable subscription operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the current subscription operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed subscription operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
+    }
 }

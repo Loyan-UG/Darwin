@@ -19,54 +19,74 @@
 
         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label asp-for="Code" class="form-label"></label>
-                <input asp-for="Code" class="form-control" />
-                <span asp-validation-for="Code" class="text-danger small"></span>
-            </div>
-            <div class="col-md-5">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger small"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="Currency" class="form-label"></label>
-                <input asp-for="Currency" class="form-control text-uppercase" />
-                <span asp-validation-for="Currency" class="text-danger small"></span>
-            </div>
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("BillingPlanIdentitySection")</h2>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Code" class="form-label"></label>
+                    <field-help title="@T.T("Code")" content="@T.T("BillingPlanCodeHelp")" placement="right"></field-help>
+                    <input asp-for="Code" class="form-control" />
+                    <span asp-validation-for="Code" class="text-danger small"></span>
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="Name" class="form-label"></label>
+                    <field-help title="@T.T("Name")" content="@T.T("BillingPlanNameHelp")" placement="right"></field-help>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Currency" class="form-label"></label>
+                    <field-help title="@T.T("Currency")" content="@T.T("BillingPlanCurrencyHelp")" placement="right"></field-help>
+                    <input asp-for="Currency" class="form-control text-uppercase" />
+                    <span asp-validation-for="Currency" class="text-danger small"></span>
+                </div>
 
-            <div class="col-12">
-                <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" rows="3" class="form-control"></textarea>
-                <span asp-validation-for="Description" class="text-danger small"></span>
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label"></label>
+                    <field-help title="@T.T("Description")" content="@T.T("BillingPlanDescriptionHelp")" placement="right"></field-help>
+                    <textarea asp-for="Description" rows="3" class="form-control"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
             </div>
+        </section>
 
-            <div class="col-md-3">
-                <label asp-for="PriceMinor" class="form-label"></label>
-                <input asp-for="PriceMinor" class="form-control" />
-                <span asp-validation-for="PriceMinor" class="text-danger small"></span>
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("BillingPlanPricingCadenceSection")</h2>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label asp-for="PriceMinor" class="form-label"></label>
+                    <field-help title="@T.T("PriceMinor")" content="@T.T("BillingPlanPriceMinorHelp")" placement="right"></field-help>
+                    <input asp-for="PriceMinor" class="form-control" />
+                    <span asp-validation-for="PriceMinor" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Interval" class="form-label"></label>
+                    <field-help title="@T.T("Interval")" content="@T.T("BillingPlanIntervalHelp")" placement="right"></field-help>
+                    <select asp-for="Interval" asp-items="Model.IntervalItems" class="form-select"></select>
+                    <span asp-validation-for="Interval" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="IntervalCount" class="form-label"></label>
+                    <field-help title="@T.T("IntervalCount")" content="@T.T("BillingPlanIntervalCountHelp")" placement="right"></field-help>
+                    <input asp-for="IntervalCount" class="form-control" />
+                    <span asp-validation-for="IntervalCount" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="TrialDays" class="form-label"></label>
+                    <field-help title="@T.T("TrialDays")" content="@T.T("BillingPlanTrialDaysHelp")" placement="right"></field-help>
+                    <input asp-for="TrialDays" class="form-control" />
+                    <span asp-validation-for="TrialDays" class="text-danger small"></span>
+                </div>
             </div>
-            <div class="col-md-3">
-                <label asp-for="Interval" class="form-label"></label>
-                <select asp-for="Interval" asp-items="Model.IntervalItems" class="form-select"></select>
-                <span asp-validation-for="Interval" class="text-danger small"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="IntervalCount" class="form-label"></label>
-                <input asp-for="IntervalCount" class="form-control" />
-                <span asp-validation-for="IntervalCount" class="text-danger small"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="TrialDays" class="form-label"></label>
-                <input asp-for="TrialDays" class="form-control" />
-                <span asp-validation-for="TrialDays" class="text-danger small"></span>
-            </div>
+        </section>
 
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("BillingPlanMetadataSection")</h2>
+            <div class="row g-3">
             <div class="col-12">
                 <label asp-for="FeaturesJson" class="form-label"></label>
+                <field-help title="@T.T("FeaturesJson")" content="@T.T("BillingPlanFormFeaturesHelp")" placement="right"></field-help>
                 <textarea asp-for="FeaturesJson" rows="6" class="form-control font-monospace"></textarea>
-                <div class="form-text">@T.T("BillingPlanFormFeaturesHelp")</div>
                 <span asp-validation-for="FeaturesJson" class="text-danger small"></span>
             </div>
 
@@ -74,9 +94,11 @@
                 <div class="form-check">
                     <input asp-for="IsActive" class="form-check-input" />
                     <label asp-for="IsActive" class="form-check-label"></label>
+                    <field-help title="@T.T("Active")" content="@T.T("BillingPlanActiveHelp")" placement="right"></field-help>
                 </div>
             </div>
-        </div>
+            </div>
+        </section>
     </div>
     <div class="card-footer d-flex gap-2">
         <button type="submit" class="btn btn-primary">

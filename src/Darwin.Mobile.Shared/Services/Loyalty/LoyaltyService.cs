@@ -21,7 +21,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
     /// Contract-first: consumes Darwin.WebApi endpoints using Darwin.Contracts.
     /// 
     /// Rationale / Pitfalls:
-    /// - ApiClient returns Result<T></T> instead of throwing on normal HTTP errors.
+    /// - ApiClient returns <see cref="Result{TValue}"/> instead of throwing on normal HTTP errors.
     /// - We must honor cancellation (OperationCanceledException) and not swallow it.
     /// - Use conservative exception handling to avoid crashing UI on unexpected parse errors.
     /// </summary>
@@ -169,14 +169,15 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             string qrToken,
             CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(qrToken))
+            var normalizedToken = qrToken?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedToken))
             {
                 return Result<BusinessScanSessionClientModel>.Fail("QR token is required.");
             }
 
             var request = new ProcessScanSessionForBusinessRequest
             {
-                ScanSessionToken = qrToken
+                ScanSessionToken = normalizedToken
             };
 
             try
@@ -197,7 +198,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 var model = new BusinessScanSessionClientModel
                 {
-                    Token = qrToken,
+                    Token = normalizedToken,
                     Mode = payload.Mode,
                     BusinessId = payload.BusinessId,
                     BusinessLocationId = payload.BusinessLocationId,
@@ -226,7 +227,8 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             int points,
             CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(sessionToken))
+            var normalizedToken = sessionToken?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedToken))
             {
                 return Result<LoyaltyAccountSummary>.Fail("Session token is required.");
             }
@@ -238,7 +240,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
             var request = new ConfirmAccrualRequest
             {
-                ScanSessionToken = sessionToken,
+                ScanSessionToken = normalizedToken,
                 Points = points,
                 Note = null
             };
@@ -292,10 +294,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         /// <inheritdoc />
         public async Task<Result<LoyaltyAccountSummary>> ConfirmRedemptionAsync(string sessionToken, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(sessionToken))
+            var normalizedToken = sessionToken?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedToken))
                 return Result<LoyaltyAccountSummary>.Fail("Session token is required.");
 
-            var request = new ConfirmRedemptionRequest { ScanSessionToken = sessionToken };
+            var request = new ConfirmRedemptionRequest { ScanSessionToken = normalizedToken };
 
             try
             {

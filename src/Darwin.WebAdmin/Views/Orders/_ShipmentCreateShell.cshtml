@@ -20,47 +20,63 @@
               method="post"
               hx-post="@Url.Action("AddShipment", "Orders")"
               hx-target="#order-shipment-shell"
-              hx-swap="outerHTML"
-              class="row g-3">
+              hx-swap="outerHTML">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="OrderId" />
-            <div class="col-md-4">
-                <label asp-for="Carrier" class="form-label"></label>
-                <input asp-for="Carrier" class="form-control" />
-                <span asp-validation-for="Carrier" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="Service" class="form-label"></label>
-                <input asp-for="Service" class="form-control" />
-                <span asp-validation-for="Service" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="TrackingNumber" class="form-label"></label>
-                <input asp-for="TrackingNumber" class="form-control" />
-                <span asp-validation-for="TrackingNumber" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="ProviderShipmentReference" class="form-label">@T.T("ProviderShipmentReference")</label>
-                <input asp-for="ProviderShipmentReference" class="form-control" />
-                <span asp-validation-for="ProviderShipmentReference" class="text-danger"></span>
-            </div>
-            <div class="col-md-5">
-                <label asp-for="LabelUrl" class="form-label">@T.T("CarrierLabelUrl")</label>
-                <input asp-for="LabelUrl" class="form-control" />
-                <span asp-validation-for="LabelUrl" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="LastCarrierEventKey" class="form-label">@T.T("LastCarrierEventKey")</label>
-                <input asp-for="LastCarrierEventKey" class="form-control" />
-                <span asp-validation-for="LastCarrierEventKey" class="text-danger"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="TotalWeight" class="form-label"></label>
-                <input asp-for="TotalWeight" class="form-control" />
-                <span asp-validation-for="TotalWeight" class="text-danger"></span>
-            </div>
-            <div class="col-12">
-                <h5>@T.T("ShipmentLines")</h5>
+
+            <section class="admin-form-section">
+                <h2 class="admin-form-section-title">@T.T("OrderShipmentCarrierSection")</h2>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Carrier" class="form-label"></label>
+                        <field-help title="@T.T("Carrier")" content="@T.T("OrderShipmentCarrierHelp")" placement="right"></field-help>
+                        <input asp-for="Carrier" class="form-control" />
+                        <span asp-validation-for="Carrier" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Service" class="form-label"></label>
+                        <field-help title="@T.T("Service")" content="@T.T("OrderShipmentServiceHelp")" placement="right"></field-help>
+                        <input asp-for="Service" class="form-control" />
+                        <span asp-validation-for="Service" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="TrackingNumber" class="form-label"></label>
+                        <field-help title="@T.T("TrackingNumber")" content="@T.T("OrderShipmentTrackingNumberHelp")" placement="right"></field-help>
+                        <input asp-for="TrackingNumber" class="form-control" />
+                        <span asp-validation-for="TrackingNumber" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="ProviderShipmentReference" class="form-label">@T.T("ProviderShipmentReference")</label>
+                        <field-help title="@T.T("ProviderShipmentReference")" content="@T.T("OrderShipmentProviderReferenceHelp")" placement="right"></field-help>
+                        <input asp-for="ProviderShipmentReference" class="form-control" />
+                        <span asp-validation-for="ProviderShipmentReference" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="LabelUrl" class="form-label">@T.T("CarrierLabelUrl")</label>
+                        <field-help title="@T.T("CarrierLabelUrl")" content="@T.T("OrderShipmentLabelUrlHelp")" placement="right"></field-help>
+                        <input asp-for="LabelUrl" class="form-control" />
+                        <span asp-validation-for="LabelUrl" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="LastCarrierEventKey" class="form-label">@T.T("LastCarrierEventKey")</label>
+                        <field-help title="@T.T("LastCarrierEventKey")" content="@T.T("OrderShipmentLastCarrierEventKeyHelp")" placement="right"></field-help>
+                        <input asp-for="LastCarrierEventKey" class="form-control" />
+                        <span asp-validation-for="LastCarrierEventKey" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="TotalWeight" class="form-label"></label>
+                        <field-help title="@T.T("TotalWeight")" content="@T.T("OrderShipmentTotalWeightHelp")" placement="right"></field-help>
+                        <input asp-for="TotalWeight" class="form-control" />
+                        <span asp-validation-for="TotalWeight" class="text-danger"></span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="admin-form-section">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <h5 class="mb-0">@T.T("ShipmentLines")</h5>
+                    <field-help title="@T.T("ShipmentLines")" content="@T.T("OrderShipmentLinesHelp")" placement="right"></field-help>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-striped">
                         <thead>
@@ -79,6 +95,7 @@
                                         <input type="hidden" asp-for="Lines[i].Label" />
                                     </td>
                                     <td class="text-end admin-w-180">
+                                        <field-help title="@T.T("Quantity")" content="@T.T("OrderShipmentLineQuantityHelp")" placement="left"></field-help>
                                         <input asp-for="Lines[i].Quantity" class="form-control text-end" />
                                         <span asp-validation-for="Lines[i].Quantity" class="text-danger"></span>
                                     </td>
@@ -87,8 +104,9 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-            <div class="col-12">
+            </section>
+
+            <div class="d-flex gap-2">
                 <a asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@OrderDetailsUrl(Model.OrderId)" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
                 <button type="submit" class="btn btn-primary">@T.T("Save")</button>
             </div>

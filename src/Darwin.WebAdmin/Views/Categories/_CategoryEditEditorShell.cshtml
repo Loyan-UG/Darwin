@@ -1,6 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.Catalog.CategoryEditVm
 @{
     ViewData["Title"] = T.T("EditCategory");
+    var cultures = Model.Cultures ?? Array.Empty<string>();
+    var singleCulture = cultures.FirstOrDefault() ?? string.Empty;
     string CategoriesIndexUrl() => Url.Action("Index", "Categories") ?? string.Empty;
 }
 
@@ -27,62 +29,86 @@
             <div class="card-body">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">@T.T("ParentCategory")</label>
-                        <select asp-for="ParentId" class="form-select" asp-items="Model.ParentCategoryOptions">
-                            <option value="">@T.T("NoParentOption")</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("SortOrder")</label>
-                        <input asp-for="SortOrder" class="form-control" />
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <div class="form-check">
-                            <input asp-for="IsActive" class="form-check-input" type="checkbox" />
-                            <label class="form-check-label" for="IsActive">@T.T("Active")</label>
+                <section class="admin-form-section">
+                    <h2 class="admin-form-section-title">@T.T("CategoryHierarchyPublishing")</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">@T.T("ParentCategory")</label>
+                            <field-help title="@T.T("ParentCategory")" content="@T.T("CategoryParentHelp")" placement="right"></field-help>
+                            <select asp-for="ParentId" class="form-select" asp-items="Model.ParentCategoryOptions">
+                                <option value="">@T.T("NoParentOption")</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("SortOrder")</label>
+                            <field-help title="@T.T("SortOrder")" content="@T.T("CategorySortOrderHelp")" placement="right"></field-help>
+                            <input asp-for="SortOrder" class="form-control" />
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                <label class="form-check-label" for="IsActive">@T.T("Active")</label>
+                                <field-help title="@T.T("Active")" content="@T.T("CategoryActiveHelp")" placement="right"></field-help>
+                            </div>
                         </div>
                     </div>
+                </section>
+
+                <section class="admin-form-section">
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                    <h2 class="admin-form-section-title mb-0">@T.T(Model.MultilingualEnabled ? "Translations" : "DefaultLanguageContent")</h2>
+                    <span class="badge text-bg-light border">
+                        @(Model.MultilingualEnabled ? T.T("MultilingualContentMode") : T.T("SingleLanguageContentMode"))
+                    </span>
                 </div>
-
-                <hr />
-
-                <h5 class="mt-2">@T.T("Translations")</h5>
                 @for (int i = 0; i < Model.Translations.Count; i++)
                 {
                     <div class="border rounded p-3 mb-3">
+                        @if (!Model.MultilingualEnabled)
+                        {
+                            <input type="hidden" asp-for="Translations[@i].Culture" value="@singleCulture" />
+                        }
                         <div class="row g-3">
-                            <div class="col-md-2">
-                                <label class="form-label">@T.T("Culture")</label>
-                                <input asp-for="Translations[@i].Culture" class="form-control" />
-                                <span asp-validation-for="Translations[@i].Culture" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-5">
+                            @if (Model.MultilingualEnabled)
+                            {
+                                <div class="col-md-2">
+                                    <label class="form-label">@T.T("Culture")</label>
+                                    <field-help title="@T.T("Culture")" content="@T.T("CategoryCultureHelp")" placement="right"></field-help>
+                                    <input asp-for="Translations[@i].Culture" class="form-control" />
+                                    <span asp-validation-for="Translations[@i].Culture" class="text-danger"></span>
+                                </div>
+                            }
+                            <div class="@(Model.MultilingualEnabled ? "col-md-5" : "col-md-6")">
                                 <label class="form-label">@T.T("Name")</label>
+                                <field-help title="@T.T("Name")" content="@T.T("CategoryNameHelp")" placement="right"></field-help>
                                 <input asp-for="Translations[@i].Name" class="form-control" />
                                 <span asp-validation-for="Translations[@i].Name" class="text-danger"></span>
                             </div>
-                            <div class="col-md-5">
+                            <div class="@(Model.MultilingualEnabled ? "col-md-5" : "col-md-6")">
                                 <label class="form-label">@T.T("Slug")</label>
+                                <field-help title="@T.T("Slug")" content="@T.T("CategorySlugHelp")" placement="right"></field-help>
                                 <input asp-for="Translations[@i].Slug" class="form-control" />
                                 <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">@T.T("Description")</label>
+                                <field-help title="@T.T("Description")" content="@T.T("CategoryDescriptionHelp")" placement="right"></field-help>
                                 <textarea asp-for="Translations[@i].Description" class="form-control" rows="3"></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">@T.T("MetaTitle")</label>
+                                <field-help title="@T.T("MetaTitle")" content="@T.T("CategoryMetaTitleHelp")" placement="right"></field-help>
                                 <input asp-for="Translations[@i].MetaTitle" class="form-control" />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">@T.T("MetaDescription")</label>
+                                <field-help title="@T.T("MetaDescription")" content="@T.T("CategoryMetaDescriptionHelp")" placement="right"></field-help>
                                 <input asp-for="Translations[@i].MetaDescription" class="form-control" />
                             </div>
                         </div>
                     </div>
                 }
+                </section>
             </div>
             <div class="card-footer text-end">
                 <a asp-action="Index" class="btn btn-secondary" hx-get="@CategoriesIndexUrl()" hx-target="#categories-workspace-shell" hx-swap="outerHTML" hx-push-url="true">@T.T("Back")</a>

@@ -26,7 +26,13 @@ public sealed class SqliteLocalDbMigrator : ILocalDbMigrator
         ct.ThrowIfCancellationRequested();
 
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
+
+        // SQLite-net schema helpers do not accept cancellation tokens, so cancellation is checked
+        // between each bounded schema step to keep startup restore responsive on slow devices.
+        ct.ThrowIfCancellationRequested();
         await connection.CreateTableAsync<KeyValueRecord>().ConfigureAwait(false);
+
+        ct.ThrowIfCancellationRequested();
         await connection.CreateTableAsync<OutboxMessageRecord>().ConfigureAwait(false);
     }
 

@@ -1,8 +1,8 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.ViewModels;
-using Microsoft.Maui.ApplicationModel;
 
 namespace Darwin.Mobile.Consumer.Views;
 
@@ -13,6 +13,7 @@ namespace Darwin.Mobile.Consumer.Views;
 public partial class ProfilePage : ContentPage
 {
     private readonly ProfileViewModel _viewModel;
+    private int _navigationInProgress;
 
     public ProfilePage(ProfileViewModel viewModel)
     {
@@ -24,7 +25,32 @@ public partial class ProfilePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.OnAppearingAsync();
+
+        try
+        {
+            await _viewModel.OnAppearingAsync();
+        }
+        catch
+        {
+            // Appearing is an async-void MAUI lifecycle hook. Profile load failures stay inside ViewModel feedback.
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from profile.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 
     /// <summary>
@@ -32,7 +58,7 @@ public partial class ProfilePage : ContentPage
     /// </summary>
     private async void OnAccountDeletionClicked(object? sender, EventArgs e)
     {
-        await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.AccountDeletion));
+        await NavigateSafelyAsync(Routes.AccountDeletion);
     }
 
     /// <summary>
@@ -40,7 +66,7 @@ public partial class ProfilePage : ContentPage
     /// </summary>
     private async void OnManageAddressesClicked(object? sender, EventArgs e)
     {
-        await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.MemberAddresses));
+        await NavigateSafelyAsync(Routes.MemberAddresses);
     }
 
     /// <summary>
@@ -48,7 +74,7 @@ public partial class ProfilePage : ContentPage
     /// </summary>
     private async void OnManagePreferencesClicked(object? sender, EventArgs e)
     {
-        await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.MemberPreferences));
+        await NavigateSafelyAsync(Routes.MemberPreferences);
     }
 
     /// <summary>
@@ -56,12 +82,17 @@ public partial class ProfilePage : ContentPage
     /// </summary>
     private async void OnViewCustomerContextClicked(object? sender, EventArgs e)
     {
-        await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.MemberCustomerContext));
+        await NavigateSafelyAsync(Routes.MemberCustomerContext);
     }
 
-    private static async Task NavigateSafelyAsync(string route)
+    private async Task NavigateSafelyAsync(string route)
     {
         if (Shell.Current is null || string.IsNullOrWhiteSpace(route))
+        {
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
         {
             return;
         }
@@ -73,6 +104,10 @@ public partial class ProfilePage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Profile navigation to '{route}' failed: {ex}");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _navigationInProgress, 0);
         }
     }
 }

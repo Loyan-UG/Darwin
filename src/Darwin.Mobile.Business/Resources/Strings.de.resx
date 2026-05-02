@@ -112,6 +112,9 @@
   <data name="LoginAccountLocked" xml:space="preserve">
     <value>Ihr Konto ist derzeit gesperrt. Bitte kontaktieren Sie den Support.</value>
   </data>
+  <data name="SessionExpiredReLogin" xml:space="preserve">
+    <value>Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.</value>
+  </data>
   <data name="RequestActivationEmailButton" xml:space="preserve">
     <value>Aktivierungs-E-Mail senden</value>
   </data>
@@ -648,6 +651,12 @@
   </data>
   <data name="DashboardRecentActivityEmpty" xml:space="preserve">
     <value>Es wurde noch keine Aktivität aufgezeichnet.</value>
+  </data>
+  <data name="DashboardActivityMixTitle" xml:space="preserve">
+    <value>AktivitÃ¤tsmix</value>
+  </data>
+  <data name="DashboardLookbackDaysShortFormat" xml:space="preserve">
+    <value>{0} T.</value>
   </data>
   <data name="BusinessPermissionDeniedRewardEdit" xml:space="preserve">
     <value>Ihr Konto hat keine Berechtigung, Prämienstufen zu bearbeiten.</value>

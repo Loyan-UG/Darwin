@@ -12,24 +12,31 @@
     <div class="card-body">
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <label class="form-label">@T.T("Warehouse")</label>
-                <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select" disabled></select>
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("InventoryStockSnapshotSection")</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">@T.T("Warehouse")</label>
+                    <field-help title="@T.T("Warehouse")" content="@T.T("InventoryActionWarehouseHelp")" placement="right"></field-help>
+                    <select asp-for="WarehouseId" asp-items="Model.WarehouseOptions" class="form-select" disabled></select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">@T.T("InventoryVariantLabel")</label>
+                    <field-help title="@T.T("InventoryVariantLabel")" content="@T.T("InventoryActionVariantHelp")" placement="right"></field-help>
+                    <select asp-for="ProductVariantId" asp-items="Model.VariantOptions" class="form-select" disabled></select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("InventoryAvailableLabel")</label>
+                    <field-help title="@T.T("InventoryAvailableLabel")" content="@T.T("InventoryActionAvailableHelp")" placement="right"></field-help>
+                    <input value="@Model.AvailableQuantity" class="form-control" disabled />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("Reserved")</label>
+                    <field-help title="@T.T("Reserved")" content="@T.T("InventoryActionReservedHelp")" placement="right"></field-help>
+                    <input value="@Model.ReservedQuantity" class="form-control" disabled />
+                </div>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">@T.T("InventoryVariantLabel")</label>
-                <select asp-for="ProductVariantId" asp-items="Model.VariantOptions" class="form-select" disabled></select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">@T.T("InventoryAvailableLabel")</label>
-                <input value="@Model.AvailableQuantity" class="form-control" disabled />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">@T.T("Reserved")</label>
-                <input value="@Model.ReservedQuantity" class="form-control" disabled />
-            </div>
-        </div>
+        </section>
 
         <form asp-action="ReturnReceipt" method="post"
               hx-post="@Url.Action("ReturnReceipt", "Inventory")"
@@ -43,24 +50,29 @@
             <input asp-for="AvailableQuantity" type="hidden" />
             <input asp-for="ReservedQuantity" type="hidden" />
 
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label asp-for="Quantity" class="form-label"></label>
-                    <input asp-for="Quantity" class="form-control" />
-                    <span asp-validation-for="Quantity" class="text-danger"></span>
+            <section class="admin-form-section">
+                <h2 class="admin-form-section-title">@T.T("InventoryReturnReceiptSection")</h2>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Quantity" class="form-label"></label>
+                        <field-help title="@T.T("Quantity")" content="@T.T("InventoryReturnQuantityHelp")" placement="right"></field-help>
+                        <input asp-for="Quantity" class="form-control" />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Reason" class="form-label"></label>
+                        <field-help title="@T.T("Reason")" content="@T.T("InventoryActionReasonHelp")" placement="right"></field-help>
+                        <input asp-for="Reason" class="form-control" />
+                        <span asp-validation-for="Reason" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="ReferenceId" class="form-label"></label>
+                        <field-help title="@T.T("ReferenceId")" content="@T.T("InventoryReturnReferenceHelp")" placement="right"></field-help>
+                        <input asp-for="ReferenceId" class="form-control" />
+                        <span asp-validation-for="ReferenceId" class="text-danger"></span>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <label asp-for="Reason" class="form-label"></label>
-                    <input asp-for="Reason" class="form-control" />
-                    <span asp-validation-for="Reason" class="text-danger"></span>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="ReferenceId" class="form-label"></label>
-                    <input asp-for="ReferenceId" class="form-control" />
-                    <div class="form-text">@T.T("InventoryReturnReferenceHelp")</div>
-                    <span asp-validation-for="ReferenceId" class="text-danger"></span>
-                </div>
-            </div>
+            </section>
 
             <div class="mt-4 d-flex gap-2">
                 <button type="submit" class="btn btn-dark">@T.T("InventoryProcessReturn")</button>

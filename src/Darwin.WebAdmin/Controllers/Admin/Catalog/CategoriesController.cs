@@ -299,8 +299,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         private async Task PopulateCategoryLookupsAsync(CategoryEditVm vm, CancellationToken ct)
         {
-            var (options, _) = await BuildCategoryEditorLookupsAsync(ct).ConfigureAwait(false);
+            var (options, cultures) = await BuildCategoryEditorLookupsAsync(ct).ConfigureAwait(false);
             vm.ParentCategoryOptions = options;
+            vm.Cultures = cultures;
         }
 
         private async Task<(List<SelectListItem> ParentCategoryOptions, IReadOnlyList<string> Cultures)> BuildCategoryEditorLookupsAsync(CancellationToken ct)
@@ -367,16 +368,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private async Task EnsureCreateTranslationsAsync(CategoryCreateVm vm, CancellationToken ct)
         {
             await PopulateCategoryLookupsAsync(vm, ct).ConfigureAwait(false);
-            await EnsureTranslationsAsync(vm.Translations, ct).ConfigureAwait(false);
+            vm.MultilingualEnabled = await IsMultilingualEnabledAsync(ct).ConfigureAwait(false);
+            await EnsureTranslationsAsync(vm.Translations, vm.MultilingualEnabled, ct).ConfigureAwait(false);
         }
 
         private async Task EnsureEditTranslationsAsync(CategoryEditVm vm, CancellationToken ct)
         {
             await PopulateCategoryLookupsAsync(vm, ct).ConfigureAwait(false);
-            await EnsureTranslationsAsync(vm.Translations, ct).ConfigureAwait(false);
+            vm.MultilingualEnabled = await IsMultilingualEnabledAsync(ct).ConfigureAwait(false);
+            await EnsureTranslationsAsync(vm.Translations, vm.MultilingualEnabled, ct).ConfigureAwait(false);
         }
 
-        private async Task EnsureTranslationsAsync(List<CategoryTranslationVm> translations, CancellationToken ct)
+        private async Task EnsureTranslationsAsync(List<CategoryTranslationVm> translations, bool multilingualEnabled, CancellationToken ct)
         {
             var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
             var orderedCultures = cultures
@@ -390,6 +393,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 orderedCultures = [defaultCulture];
             }
 
+            if (!multilingualEnabled)
+            {
+                orderedCultures = [defaultCulture];
+                translations.RemoveAll(x => !string.Equals(x.Culture, defaultCulture, StringComparison.OrdinalIgnoreCase));
+            }
+
             foreach (var culture in orderedCultures)
             {
                 if (translations.All(x => !string.Equals(x.Culture, culture, StringComparison.OrdinalIgnoreCase)))
@@ -398,6 +407,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 }
             }
         }
+
+        private async Task<bool> IsMultilingualEnabledAsync(CancellationToken ct)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            return CountCultures(settings.SupportedCulturesCsv) > 1;
+        }
+
+        private static int CountCultures(string? supportedCulturesCsv)
+            => (supportedCulturesCsv ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
 
         private static List<CategoryTranslationVm> FilterCompleteTranslations(IEnumerable<CategoryTranslationVm> translations)
         {

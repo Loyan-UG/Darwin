@@ -8,6 +8,7 @@ using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Settings
 {
@@ -131,6 +132,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             // Localization
             DefaultCulture = dto.DefaultCulture,
             SupportedCulturesCsv = dto.SupportedCulturesCsv,
+            MultilingualEnabled = CountCultures(dto.SupportedCulturesCsv) > 1,
             DefaultCountry = dto.DefaultCountry,
             DefaultCurrency = dto.DefaultCurrency,
             TimeZone = dto.TimeZone,
@@ -289,7 +291,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
 
             // Localization
             DefaultCulture = vm.DefaultCulture,
-            SupportedCulturesCsv = vm.SupportedCulturesCsv,
+            SupportedCulturesCsv = ResolveSupportedCultures(vm),
             DefaultCountry = vm.DefaultCountry,
             DefaultCurrency = vm.DefaultCurrency,
             TimeZone = vm.TimeZone,
@@ -448,5 +450,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
 
         private static bool IsSecretPlaceholder(string value)
             => string.Equals(value.Trim(), SecretPlaceholder, StringComparison.Ordinal);
+
+        private static int CountCultures(string? supportedCulturesCsv)
+            => (supportedCulturesCsv ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+
+        private static string ResolveSupportedCultures(SiteSettingVm vm)
+        {
+            var defaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture)
+                ? Darwin.WebAdmin.Localization.AdminCultureCatalog.DefaultCulture
+                : vm.DefaultCulture.Trim();
+
+            if (!vm.MultilingualEnabled)
+            {
+                return defaultCulture;
+            }
+
+            var cultures = (vm.SupportedCulturesCsv ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Prepend(defaultCulture)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            return cultures.Length == 0 ? defaultCulture : string.Join(",", cultures);
+        }
     }
 }

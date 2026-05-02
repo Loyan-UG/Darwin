@@ -5,6 +5,8 @@ using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Shared.Results;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -101,7 +103,22 @@ public sealed class ConsumerLoyaltySnapshotCache : IConsumerLoyaltySnapshotCache
         var (accessToken, _) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
         var subject = JwtClaimReader.GetSubject(accessToken);
         return string.IsNullOrWhiteSpace(subject)
-            ? baseKey
+            ? $"{baseKey}:{BuildFallbackScope(accessToken)}"
             : $"{baseKey}:{subject}";
+    }
+
+    /// <summary>
+    /// Builds a non-readable cache scope when the JWT subject cannot be parsed.
+    /// This prevents loyalty snapshots from falling back to a shared unscoped key.
+    /// </summary>
+    private static string BuildFallbackScope(string? accessToken)
+    {
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            return "anonymous";
+        }
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(accessToken.Trim()));
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

@@ -4,6 +4,7 @@ namespace Darwin.Mobile.Business.Views;
 
 public partial class QrScanPage : ContentPage
 {
+    private bool _isBarcodeSubscribed;
     private int _completed;
 
     public QrScanPage()
@@ -18,14 +19,20 @@ public partial class QrScanPage : ContentPage
             Multiple = false
         };
 
-        CameraView.BarcodesDetected += OnBarcodesDetected;
+        SubscribeBarcodeReader();
     }
 
     public event EventHandler<string?>? Completed;
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        SubscribeBarcodeReader();
+    }
+
     protected override void OnDisappearing()
     {
-        CameraView.BarcodesDetected -= OnBarcodesDetected;
+        UnsubscribeBarcodeReader();
         base.OnDisappearing();
     }
 
@@ -54,5 +61,33 @@ public partial class QrScanPage : ContentPage
         }
 
         Completed?.Invoke(this, null);
+    }
+
+    /// <summary>
+    /// Subscribes to camera barcode events once per visible scan page instance.
+    /// </summary>
+    private void SubscribeBarcodeReader()
+    {
+        if (_isBarcodeSubscribed)
+        {
+            return;
+        }
+
+        CameraView.BarcodesDetected += OnBarcodesDetected;
+        _isBarcodeSubscribed = true;
+    }
+
+    /// <summary>
+    /// Detaches camera barcode events when the page is no longer visible to avoid stale callbacks.
+    /// </summary>
+    private void UnsubscribeBarcodeReader()
+    {
+        if (!_isBarcodeSubscribed)
+        {
+            return;
+        }
+
+        CameraView.BarcodesDetected -= OnBarcodesDetected;
+        _isBarcodeSubscribed = false;
     }
 }

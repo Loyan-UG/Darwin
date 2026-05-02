@@ -1,22 +1,28 @@
 @model Darwin.WebAdmin.ViewModels.CMS.MediaAssetEditorVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
-<div class="row g-3">
-    <div class="col-12">
-        <label asp-for="Alt" class="form-label">@T.T("AltText")</label>
-        <input asp-for="Alt" class="form-control" />
-        <span asp-validation-for="Alt" class="text-danger"></span>
-    </div>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("MediaAssetMetadata")</h2>
+    <div class="row g-3">
+        <div class="col-12">
+            <label asp-for="Alt" class="form-label">@T.T("AltText")</label>
+            <field-help title="@T.T("AltText")" content="@T.T("MediaAltTextHelp")" placement="right"></field-help>
+            <input asp-for="Alt" class="form-control" />
+            <span asp-validation-for="Alt" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-6">
-        <label asp-for="Title" class="form-label">@T.T("Title")</label>
-        <input asp-for="Title" class="form-control" />
-        <span asp-validation-for="Title" class="text-danger"></span>
-    </div>
+        <div class="col-md-6">
+            <label asp-for="Title" class="form-label">@T.T("Title")</label>
+            <field-help title="@T.T("Title")" content="@T.T("MediaTitleHelp")" placement="right"></field-help>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-6">
-        <label asp-for="Role" class="form-label">@T.T("Role")</label>
-        <input asp-for="Role" class="form-control" placeholder="@T.T("MediaRolePlaceholder")" />
-        <span asp-validation-for="Role" class="text-danger"></span>
+        <div class="col-md-6">
+            <label asp-for="Role" class="form-label">@T.T("Role")</label>
+            <field-help title="@T.T("Role")" content="@T.T("MediaRoleHelp")" placement="right"></field-help>
+            <input asp-for="Role" class="form-control" placeholder="@T.T("MediaRolePlaceholder")" />
+            <span asp-validation-for="Role" class="text-danger"></span>
+        </div>
     </div>
-</div>
+</section>

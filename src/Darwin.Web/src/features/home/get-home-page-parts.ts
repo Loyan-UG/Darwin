@@ -39,7 +39,7 @@ import {
   buildOrderPath,
 } from "@/lib/entity-paths";
 import { buildAppQueryPath } from "@/lib/locale-routing";
-import { getSupportedCultures } from "@/lib/request-culture";
+import { getSupportedCulturesAsync } from "@/lib/request-culture";
 import {
   formatResource,
   getHomeResource,
@@ -56,7 +56,7 @@ export async function getHomePageParts(
   >,
 ): Promise<WebPagePart[]> {
   const copy = getHomeResource(culture);
-  const supportedCultures = getSupportedCultures();
+  const supportedCultures = await getSupportedCulturesAsync();
   const [homeDiscoveryContext, memberCommerceContext, memberIdentityContext] = await Promise.all([
     Promise.resolve(
       preloadedHomeDiscoveryContext ?? getHomeDiscoveryContext(culture),

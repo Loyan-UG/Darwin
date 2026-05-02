@@ -2,6 +2,7 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.Maui.Controls"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.QrScanPage"
@@ -15,10 +16,10 @@
                                        HorizontalOptions="Fill"
                                        VerticalOptions="Fill" />
 
-        <Grid VerticalOptions="End" Padding="16" BackgroundColor="#802C2416">
-            <Button Text="{x:Static res:AppResources.ScannerManualTokenCancel}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Clicked="OnCancelClicked" />
+        <Grid VerticalOptions="End" Padding="16" BackgroundColor="{StaticResource BrushCameraControlScrim}">
+            <buttons:SfButton Text="{x:Static res:AppResources.ScannerManualTokenCancel}"
+                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              Clicked="OnCancelClicked" />
         </Grid>
     </Grid>
 </ContentPage>

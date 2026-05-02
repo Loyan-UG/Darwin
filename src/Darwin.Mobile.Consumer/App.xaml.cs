@@ -16,6 +16,10 @@ namespace Darwin.Mobile.Consumer;
 /// </summary>
 public partial class App : Application
 {
+    private static readonly TimeSpan StartupOperationTimeout = TimeSpan.FromSeconds(12);
+    private static readonly TimeSpan ResumeRefreshTimeout = TimeSpan.FromSeconds(8);
+    private static readonly TimeSpan AuthenticatedBackgroundWarmupTimeout = TimeSpan.FromSeconds(20);
+
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
@@ -62,17 +66,24 @@ public partial class App : Application
 
     private async Task TryRefreshSilentlyAsync()
     {
+        using var timeout = new CancellationTokenSource(ResumeRefreshTimeout);
+
         try
         {
-            var refreshed = await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None).ConfigureAwait(false);
+            var refreshed = await _authService.EnsureAuthenticatedSessionAsync(timeout.Token).ConfigureAwait(false);
             if (!refreshed)
             {
                 await _appRootNavigator.NavigateToLoginAsync();
                 return;
             }
 
-            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
-            _ = _startupWarmupCoordinator.WarmAuthenticatedExperienceAsync(CancellationToken.None);
+            // Resume warmup is deliberately detached from the short auth refresh timeout.
+            // These background tasks hydrate non-critical state and must not force the resume flow to wait.
+            _ = RunAuthenticatedBackgroundWarmupSafelyAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // Resume refresh is bounded so the app never blocks user interaction after returning from background.
         }
         catch
         {
@@ -84,7 +95,12 @@ public partial class App : Application
     {
         try
         {
-            await _localDbMigrator.MigrateAsync(CancellationToken.None).ConfigureAwait(false);
+            using var timeout = new CancellationTokenSource(StartupOperationTimeout);
+            await _localDbMigrator.MigrateAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Startup must continue even if local persistence initialization exceeds the mobile startup budget.
         }
         catch
         {
@@ -94,7 +110,12 @@ public partial class App : Application
         bool tokenValid;
         try
         {
-            tokenValid = await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None).ConfigureAwait(false);
+            using var timeout = new CancellationTokenSource(StartupOperationTimeout);
+            tokenValid = await _authService.EnsureAuthenticatedSessionAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            tokenValid = false;
         }
         catch
         {
@@ -107,8 +128,32 @@ public partial class App : Application
             return;
         }
 
-        _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
         await _appRootNavigator.NavigateToAuthenticatedShellAsync();
-        _ = _startupWarmupCoordinator.WarmAuthenticatedExperienceAsync(CancellationToken.None);
+        // Authenticated startup warmup is deliberately fire-and-forget after the shell route is known.
+        // It keeps the first screen responsive while background cache hydration and push registration complete.
+        _ = RunAuthenticatedBackgroundWarmupSafelyAsync();
+    }
+
+    /// <summary>
+    /// Runs authenticated non-critical startup work behind a bounded background guard.
+    /// Push registration and cache hydration improve the next screens, but they must never block routing
+    /// or surface unobserved task exceptions from fire-and-forget execution.
+    /// </summary>
+    private async Task RunAuthenticatedBackgroundWarmupSafelyAsync()
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(AuthenticatedBackgroundWarmupTimeout);
+            await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(timeout.Token).ConfigureAwait(false);
+            await _startupWarmupCoordinator.WarmAuthenticatedExperienceAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Background warmup is bounded; stale or slow work is retried by the next authenticated app lifecycle event.
+        }
+        catch
+        {
+            // Background warmup is best-effort and must never affect the active screen.
+        }
     }
 }

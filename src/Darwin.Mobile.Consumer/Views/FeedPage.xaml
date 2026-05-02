@@ -2,6 +2,9 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:chips="clr-namespace:Syncfusion.Maui.Toolkit.Chips;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:contracts="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
@@ -11,163 +14,186 @@
     Title="{x:Static res:AppResources.FeedTitle}">
 
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout Padding="20,18,20,28" Spacing="16">
-                <Border Style="{StaticResource CardBorderStyle}">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource TitleLabelStyle}" />
-                        <Label Text="{Binding SelectedPointsText}" Style="{StaticResource BodyLabelStyle}" IsVisible="{Binding CanNavigateWithSelection}" />
+        <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                       IsRefreshing="{Binding IsBusy}"
+                                       ProgressColor="{StaticResource BrandGold500}"
+                                       ProgressBackground="{StaticResource Neutral0}">
+            <pullToRefresh:SfPullToRefresh.PullableContent>
+                <CollectionView ItemsSource="{Binding Items}"
+                                SelectionMode="None"
+                                ItemSizingStrategy="MeasureFirstItem"
+                                ItemsUpdatingScrollMode="KeepScrollOffset">
+                    <CollectionView.Header>
+                        <VerticalStackLayout Padding="20,18,20,12" Spacing="16">
+                            <Border Style="{StaticResource CardBorderStyle}">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource TitleLabelStyle}" />
+                                    <Label Text="{Binding SelectedPointsText}" Style="{StaticResource BodyLabelStyle}" IsVisible="{Binding CanNavigateWithSelection}" />
 
-                        <Border Style="{StaticResource FormFieldBorderStyle}" IsVisible="{Binding HasAccounts}">
-                            <Picker Title="{x:Static res:AppResources.FeedBusinessPickerLabel}"
-                                    ItemsSource="{Binding Accounts}"
-                                    ItemDisplayBinding="{Binding BusinessName}"
-                                    SelectedItem="{Binding SelectedAccount}" />
-                        </Border>
+                                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HasAccounts}">
+                                        <Label Text="{x:Static res:AppResources.FeedBusinessPickerLabel}"
+                                               Style="{StaticResource CaptionLabelStyle}" />
+                                        <chips:SfChipGroup ItemsSource="{Binding Accounts}"
+                                                           DisplayMemberPath="BusinessName"
+                                                           SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
+                                                           ChipType="Choice"
+                                                           ChoiceMode="Single"
+                                                           ChipCornerRadius="8"
+                                                           ChipBackground="{StaticResource BrushSurface}"
+                                                           ChipStroke="{StaticResource BrandGold50}"
+                                                           ChipStrokeThickness="1"
+                                                           ChipTextColor="{StaticResource Neutral900}"
+                                                           ChipTextSize="13"
+                                                           SelectedChipBackground="{StaticResource BrushPrimary}"
+                                                           SelectedChipTextColor="{StaticResource Neutral0}"
+                                                           SelectionIndicatorColor="{StaticResource BrandGold500}" />
+                                    </VerticalStackLayout>
 
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" IsVisible="{Binding HasAccounts}">
-                            <Button Grid.Column="0" Text="{x:Static res:AppResources.FeedRefreshButton}" Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryButtonStyle}" />
-                            <Button Grid.Column="1" Text="{x:Static res:AppResources.FeedOpenQrButton}" Command="{Binding OpenQrCommand}" Style="{StaticResource OutlinedButtonStyle}" IsVisible="{Binding CanNavigateWithSelection}" />
-                            <Button Grid.Column="2" Text="{x:Static res:AppResources.FeedOpenRewardsButton}" Command="{Binding OpenRewardsCommand}" Style="{StaticResource OutlinedButtonStyle}" IsVisible="{Binding CanNavigateWithSelection}" />
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" IsVisible="{Binding HasAccounts}">
+                                        <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.FeedRefreshButton}" Command="{Binding RefreshCommand}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" />
+                                        <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.FeedOpenQrButton}" Command="{Binding OpenQrCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" IsVisible="{Binding CanNavigateWithSelection}" />
+                                        <buttons:SfButton Grid.Column="2" Text="{x:Static res:AppResources.FeedOpenRewardsButton}" Command="{Binding OpenRewardsCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" IsVisible="{Binding CanNavigateWithSelection}" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
 
-                <Border Style="{StaticResource EmptyStateCardBorderStyle}" IsVisible="{Binding HasAccounts, Converter={StaticResource InverseBoolConverter}}">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
-                        <Label Text="{x:Static res:AppResources.FeedNoAccountsMessage}" Style="{StaticResource BodyLabelStyle}" />
-                    </VerticalStackLayout>
-                </Border>
+                            <Border Style="{StaticResource EmptyStateCardBorderStyle}" IsVisible="{Binding HasAccounts, Converter={StaticResource InverseBoolConverter}}">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                                    <Label Text="{x:Static res:AppResources.FeedNoAccountsMessage}" Style="{StaticResource BodyLabelStyle}" />
+                                </VerticalStackLayout>
+                            </Border>
 
-                <VerticalStackLayout Spacing="12" IsVisible="{Binding HasItems}">
-                    <Border Style="{StaticResource CardBorderStyle}">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
-                            <Label Text="{x:Static res:AppResources.FeedEmptyMessage}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasItems, Converter={StaticResource InverseBoolConverter}}" />
-                        </VerticalStackLayout>
-                    </Border>
+                            <VerticalStackLayout Spacing="12" IsVisible="{Binding HasPromotions}">
+                                <Border Style="{StaticResource CardBorderStyle}">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                            <buttons:SfButton Grid.Column="0"
+                                                              Text="{x:Static res:AppResources.FeedPromotionScopeSelectedBusinessButton}"
+                                                              Command="{Binding ShowSelectedBusinessPromotionsCommand}"
+                                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}">
+                                                <buttons:SfButton.Triggers>
+                                                    <DataTrigger TargetType="buttons:SfButton" Binding="{Binding IsPromotionScopeSelectedBusiness}" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource BrushPrimary}" />
+                                                        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
+                                                        <Setter Property="StrokeThickness" Value="0" />
+                                                    </DataTrigger>
+                                                </buttons:SfButton.Triggers>
+                                            </buttons:SfButton>
+                                            <buttons:SfButton Grid.Column="1"
+                                                              Text="{x:Static res:AppResources.FeedPromotionScopeAllBusinessesButton}"
+                                                              Command="{Binding ShowAllBusinessesPromotionsCommand}"
+                                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}">
+                                                <buttons:SfButton.Triggers>
+                                                    <DataTrigger TargetType="buttons:SfButton" Binding="{Binding IsPromotionScopeAllBusinesses}" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource BrushPrimary}" />
+                                                        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
+                                                        <Setter Property="StrokeThickness" Value="0" />
+                                                    </DataTrigger>
+                                                </buttons:SfButton.Triggers>
+                                            </buttons:SfButton>
+                                        </Grid>
+                                        <Label Text="{Binding PromotionScopeText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasPromotionDiagnosticsSnapshotAt}" />
+                                    </VerticalStackLayout>
+                                </Border>
 
-                    <CollectionView ItemsSource="{Binding Items}" IsVisible="{Binding HasItems}">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="contracts:LoyaltyTimelineEntry">
-                                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
-                                    <VerticalStackLayout Spacing="8">
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                            <Label Text="{Binding Kind, Converter={StaticResource LoyaltyTimelineKindConverter}}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
-                                            <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="10,8">
-                                                <VerticalStackLayout Spacing="2" IsVisible="{Binding PointsDelta, Converter={StaticResource NullCheckConverter}}">
-                                                    <Label Text="{x:Static res:AppResources.PointsLabel}"
-                                                           Style="{StaticResource CaptionLabelStyle}"
-                                                           HorizontalTextAlignment="Center" />
-                                                    <Label Text="{Binding PointsDelta, StringFormat='{x:Static res:AppResources.FeedPointsDeltaFormat}'}"
-                                                           TextColor="{StaticResource BrushPrimaryPressed}"
-                                                           HorizontalTextAlignment="Center" />
+                                <VerticalStackLayout Spacing="12"
+                                                     BindableLayout.ItemsSource="{Binding PromotionItems}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="contracts:PromotionFeedItem">
+                                            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
+                                                <VerticalStackLayout Spacing="8">
+                                                    <Label Text="{Binding BusinessName}" Style="{StaticResource SectionEyebrowLabelStyle}" LineBreakMode="WordWrap" />
+                                                    <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                                    <Label Text="{Binding Description}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="WordWrap" MaxLines="4" />
+                                                    <buttons:SfButton Text="{x:Static res:AppResources.FeedOpenPromotionButton}"
+                                                                      Command="{Binding Source={x:Reference FeedRoot}, Path=BindingContext.OpenPromotionCommand}"
+                                                                      CommandParameter="{Binding .}"
+                                                                      Style="{StaticResource SyncfusionPrimaryButtonStyle}" />
                                                 </VerticalStackLayout>
                                             </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+
+                                <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasPromotionDiagnosticsSnapshotAt}">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{x:Static res:AppResources.FeedPromotionDiagnosticsTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                        <Label Text="{Binding PromotionPolicyDiagnosticsSummaryText}" Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding PromotionDiagnosticsVisiblePromotionsPreview}" Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding PromotionDiagnosticsSnapshotAtText}" Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding PromotionDiagnosticsFreshnessText}" FontSize="12" TextColor="{StaticResource Danger500}" IsVisible="{Binding IsPromotionDiagnosticsSnapshotStale}" />
+                                        <Label Text="{Binding PromotionDiagnosticsFreshnessText}" FontSize="12" TextColor="{StaticResource BrushPrimaryPressed}" IsVisible="{Binding IsPromotionDiagnosticsSnapshotStale, Converter={StaticResource InverseBoolConverter}}" />
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                            <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.FeedCopyPromotionDiagnosticsButton}" FontSize="12" Command="{Binding CopyPromotionDiagnosticsCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+                                            <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.FeedPromotionDiagnosticsClearStatusButton}" FontSize="12" Command="{Binding ClearPromotionDiagnosticsStatusCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
                                         </Grid>
-                                        <Label Text="{Binding Note}" Style="{StaticResource BodyLabelStyle}" IsVisible="{Binding Note, Converter={StaticResource NullCheckConverter}}" />
-                                        <Label Text="{Binding PointsSpent, StringFormat='{x:Static res:AppResources.FeedPointsSpentFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding PointsSpent, Converter={StaticResource NullCheckConverter}}" />
-                                        <Label Text="{Binding OccurredAtUtc, StringFormat='{0:yyyy-MM-dd HH:mm}'}" Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding PromotionDiagnosticsCopyStatus}" FontSize="12" TextColor="{StaticResource BrushPrimaryPressed}" IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
                                     </VerticalStackLayout>
                                 </Border>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                            </VerticalStackLayout>
 
-                    <Button Text="{x:Static res:AppResources.FeedLoadMoreButton}" Command="{Binding LoadMoreCommand}" Style="{StaticResource OutlinedButtonStyle}" IsVisible="{Binding HasMore}" />
-                </VerticalStackLayout>
+                            <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasItems}">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                                    <Label Text="{x:Static res:AppResources.FeedEmptyMessage}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasItems, Converter={StaticResource InverseBoolConverter}}" />
+                                </VerticalStackLayout>
+                            </Border>
 
-                <Border Style="{StaticResource EmptyStateCardBorderStyle}" IsVisible="{Binding HasAccounts}">
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border" Binding="{Binding HasItems}" Value="True">
-                            <Setter Property="IsVisible" Value="False" />
-                        </DataTrigger>
-                    </Border.Triggers>
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
-                        <Label Text="{x:Static res:AppResources.FeedEmptyMessage}" Style="{StaticResource BodyLabelStyle}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <VerticalStackLayout Spacing="12" IsVisible="{Binding HasPromotions}">
-                    <Border Style="{StaticResource CardBorderStyle}">
-                        <VerticalStackLayout Spacing="10">
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                <Button Grid.Column="0"
-                                        Text="{x:Static res:AppResources.FeedPromotionScopeSelectedBusinessButton}"
-                                        Command="{Binding ShowSelectedBusinessPromotionsCommand}"
-                                        Style="{StaticResource OutlinedButtonStyle}">
-                                    <Button.Triggers>
-                                        <DataTrigger TargetType="Button" Binding="{Binding IsPromotionScopeSelectedBusiness}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource BrushPrimary}" />
-                                            <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
-                                            <Setter Property="BorderWidth" Value="0" />
-                                        </DataTrigger>
-                                    </Button.Triggers>
-                                </Button>
-                                <Button Grid.Column="1"
-                                        Text="{x:Static res:AppResources.FeedPromotionScopeAllBusinessesButton}"
-                                        Command="{Binding ShowAllBusinessesPromotionsCommand}"
-                                        Style="{StaticResource OutlinedButtonStyle}">
-                                    <Button.Triggers>
-                                        <DataTrigger TargetType="Button" Binding="{Binding IsPromotionScopeAllBusinesses}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource BrushPrimary}" />
-                                            <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
-                                            <Setter Property="BorderWidth" Value="0" />
-                                        </DataTrigger>
-                                    </Button.Triggers>
-                                </Button>
-                            </Grid>
-                            <Label Text="{Binding PromotionScopeText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasPromotionDiagnosticsSnapshotAt}" />
+                            <Border Style="{StaticResource EmptyStateCardBorderStyle}" IsVisible="{Binding HasAccounts}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding HasItems}" Value="True">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource SectionHeadingLabelStyle}" />
+                                    <Label Text="{x:Static res:AppResources.FeedEmptyMessage}" Style="{StaticResource BodyLabelStyle}" />
+                                </VerticalStackLayout>
+                            </Border>
                         </VerticalStackLayout>
-                    </Border>
+                    </CollectionView.Header>
 
-                    <CollectionView ItemsSource="{Binding PromotionItems}" SelectionMode="None" IsVisible="{Binding HasPromotions}">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="contracts:PromotionFeedItem">
-                                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
-                                    <VerticalStackLayout Spacing="8">
-                                        <Label Text="{Binding BusinessName}" Style="{StaticResource SectionEyebrowLabelStyle}" LineBreakMode="WordWrap" />
-                                        <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
-                                        <Label Text="{Binding Description}" Style="{StaticResource BodyLabelStyle}" />
-                                        <Button Text="{x:Static res:AppResources.FeedOpenPromotionButton}"
-                                                Command="{Binding Source={x:Reference FeedRoot}, Path=BindingContext.OpenPromotionCommand}"
-                                                CommandParameter="{Binding .}"
-                                                Style="{StaticResource PrimaryButtonStyle}" />
-                                    </VerticalStackLayout>
-                                </Border>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
 
-                    <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasPromotionDiagnosticsSnapshotAt}">
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="{x:Static res:AppResources.FeedPromotionDiagnosticsTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
-                            <Label Text="{Binding PromotionPolicyDiagnosticsSummaryText}" Style="{StaticResource CaptionLabelStyle}" />
-                            <Label Text="{Binding PromotionDiagnosticsVisiblePromotionsPreview}" Style="{StaticResource CaptionLabelStyle}" />
-                            <Label Text="{Binding PromotionDiagnosticsSnapshotAtText}" Style="{StaticResource CaptionLabelStyle}" />
-                            <Label Text="{Binding PromotionDiagnosticsFreshnessText}" FontSize="12" TextColor="{StaticResource Danger500}" IsVisible="{Binding IsPromotionDiagnosticsSnapshotStale}" />
-                            <Label Text="{Binding PromotionDiagnosticsFreshnessText}" FontSize="12" TextColor="{StaticResource BrushPrimaryPressed}" IsVisible="{Binding IsPromotionDiagnosticsSnapshotStale, Converter={StaticResource InverseBoolConverter}}" />
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                <Button Grid.Column="0" Text="{x:Static res:AppResources.FeedCopyPromotionDiagnosticsButton}" FontSize="12" Command="{Binding CopyPromotionDiagnosticsCommand}" Style="{StaticResource OutlinedButtonStyle}" />
-                                <Button Grid.Column="1" Text="{x:Static res:AppResources.FeedPromotionDiagnosticsClearStatusButton}" FontSize="12" Command="{Binding ClearPromotionDiagnosticsStatusCommand}" Style="{StaticResource SoftButtonStyle}" IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
-                            </Grid>
-                            <Label Text="{Binding PromotionDiagnosticsCopyStatus}" FontSize="12" TextColor="{StaticResource BrushPrimaryPressed}" IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="contracts:LoyaltyTimelineEntry">
+                            <Border Style="{StaticResource CardBorderStyle}" Margin="20,0,20,2">
+                                <VerticalStackLayout Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <Label Text="{Binding Kind, Converter={StaticResource LoyaltyTimelineKindConverter}}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                        <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="10,8">
+                                            <VerticalStackLayout Spacing="2" IsVisible="{Binding PointsDelta, Converter={StaticResource NullCheckConverter}}">
+                                                <Label Text="{x:Static res:AppResources.PointsLabel}"
+                                                       Style="{StaticResource CaptionLabelStyle}"
+                                                       HorizontalTextAlignment="Center" />
+                                                <Label Text="{Binding PointsDelta, StringFormat='{x:Static res:AppResources.FeedPointsDeltaFormat}'}"
+                                                       TextColor="{StaticResource BrushPrimaryPressed}"
+                                                       HorizontalTextAlignment="Center" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                    <Label Text="{Binding Note}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="WordWrap" MaxLines="4" IsVisible="{Binding Note, Converter={StaticResource NullCheckConverter}}" />
+                                    <Label Text="{Binding PointsSpent, StringFormat='{x:Static res:AppResources.FeedPointsSpentFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding PointsSpent, Converter={StaticResource NullCheckConverter}}" />
+                                    <Label Text="{Binding OccurredAtUtc, StringFormat='{0:yyyy-MM-dd HH:mm}'}" Style="{StaticResource CaptionLabelStyle}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                    <CollectionView.Footer>
+                        <VerticalStackLayout Padding="20,12,20,28" Spacing="12">
+                            <buttons:SfButton Text="{x:Static res:AppResources.FeedLoadMoreButton}" Command="{Binding LoadMoreCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" IsVisible="{Binding HasMore}" />
+
+                            <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasError}">
+                                <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource Danger500}" />
+                            </Border>
                         </VerticalStackLayout>
-                    </Border>
-                </VerticalStackLayout>
-
-                <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasError}">
-                    <Label Text="{Binding ErrorMessage}" TextColor="{StaticResource Danger500}" />
-                </Border>
-            </VerticalStackLayout>
-        </ScrollView>
+                    </CollectionView.Footer>
+                </CollectionView>
+            </pullToRefresh:SfPullToRefresh.PullableContent>
+        </pullToRefresh:SfPullToRefresh>
     </Grid>
 </ContentPage>

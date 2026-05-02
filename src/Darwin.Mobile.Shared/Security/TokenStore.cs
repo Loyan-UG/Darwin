@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Maui.Storage;
 
@@ -27,42 +28,66 @@ namespace Darwin.Mobile.Shared.Security
     public sealed class TokenStore : ITokenStore
     {
 #if ANDROID || IOS || MACCATALYST || WINDOWS
+        private const string AccessTokenKey = "access_token";
+        private const string AccessExpiresKey = "access_expires";
+        private const string RefreshTokenKey = "refresh_token";
+        private const string RefreshExpiresKey = "refresh_expires";
+
         /// <inheritdoc />
         public async Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc)
         {
             ValidateTokens(accessToken, refreshToken);
 
-            await SecureStorage.SetAsync("access_token", accessToken).ConfigureAwait(false);
-            await SecureStorage.SetAsync("access_expires", accessExpiresUtc.ToString("O")).ConfigureAwait(false);
-            await SecureStorage.SetAsync("refresh_token", refreshToken).ConfigureAwait(false);
-            await SecureStorage.SetAsync("refresh_expires", refreshExpiresUtc.ToString("O")).ConfigureAwait(false);
+            await SecureStorage.SetAsync(AccessTokenKey, accessToken).ConfigureAwait(false);
+            await SecureStorage.SetAsync(AccessExpiresKey, accessExpiresUtc.ToString("O", CultureInfo.InvariantCulture)).ConfigureAwait(false);
+            await SecureStorage.SetAsync(RefreshTokenKey, refreshToken).ConfigureAwait(false);
+            await SecureStorage.SetAsync(RefreshExpiresKey, refreshExpiresUtc.ToString("O", CultureInfo.InvariantCulture)).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
         public async Task<(string? AccessToken, DateTime? AccessExpiresUtc)> GetAccessAsync()
         {
-            var accessToken = await SecureStorage.GetAsync("access_token").ConfigureAwait(false);
-            var accessExpiry = await SecureStorage.GetAsync("access_expires").ConfigureAwait(false);
+            try
+            {
+                var accessToken = await SecureStorage.GetAsync(AccessTokenKey).ConfigureAwait(false);
+                var accessExpiry = await SecureStorage.GetAsync(AccessExpiresKey).ConfigureAwait(false);
 
-            return (accessToken, DateTime.TryParse(accessExpiry, null, System.Globalization.DateTimeStyles.RoundtripKind, out var expiresUtc) ? expiresUtc : null);
+                return (accessToken, DateTime.TryParse(accessExpiry, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expiresUtc) ? expiresUtc : null);
+            }
+            catch
+            {
+                // SecureStorage can become unreadable after OS backup/restore or keystore invalidation.
+                // Clearing the session is safer than repeatedly failing startup restore with stale encrypted entries.
+                await ClearAsync().ConfigureAwait(false);
+                return (null, null);
+            }
         }
 
         /// <inheritdoc />
         public async Task<(string? RefreshToken, DateTime? RefreshExpiresUtc)> GetRefreshAsync()
         {
-            var refreshToken = await SecureStorage.GetAsync("refresh_token").ConfigureAwait(false);
-            var refreshExpiry = await SecureStorage.GetAsync("refresh_expires").ConfigureAwait(false);
+            try
+            {
+                var refreshToken = await SecureStorage.GetAsync(RefreshTokenKey).ConfigureAwait(false);
+                var refreshExpiry = await SecureStorage.GetAsync(RefreshExpiresKey).ConfigureAwait(false);
 
-            return (refreshToken, DateTime.TryParse(refreshExpiry, null, System.Globalization.DateTimeStyles.RoundtripKind, out var expiresUtc) ? expiresUtc : null);
+                return (refreshToken, DateTime.TryParse(refreshExpiry, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expiresUtc) ? expiresUtc : null);
+            }
+            catch
+            {
+                // Refresh tokens must not be kept if the encrypted store cannot be read reliably.
+                await ClearAsync().ConfigureAwait(false);
+                return (null, null);
+            }
         }
 
         /// <inheritdoc />
         public Task ClearAsync()
         {
-            SecureStorage.Remove("access_token");
-            SecureStorage.Remove("access_expires");
-            SecureStorage.Remove("refresh_token");
-            SecureStorage.Remove("refresh_expires");
+            SecureStorage.Remove(AccessTokenKey);
+            SecureStorage.Remove(AccessExpiresKey);
+            SecureStorage.Remove(RefreshTokenKey);
+            SecureStorage.Remove(RefreshExpiresKey);
             return Task.CompletedTask;
         }
 #else

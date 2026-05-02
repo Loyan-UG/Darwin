@@ -7,8 +7,8 @@ namespace Darwin.Mobile.Business.Views;
 /// </summary>
 /// <remarks>
 /// Keeps view-only concerns in code-behind:
-/// - triggers initial load on appearing,
-/// - maps list selection to ViewModel edit mode.
+/// - triggers initial load on appearing.
+/// Selection behavior is command-bound in XAML so list rendering can use lightweight layouts without code-behind event wiring.
 /// </remarks>
 public partial class RewardsPage : ContentPage
 {
@@ -20,60 +20,36 @@ public partial class RewardsPage : ContentPage
 
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = _viewModel;
-
-        RewardTiersCollectionView.SelectionChanged += OnRewardTierSelected;
-        CampaignsCollectionView.SelectionChanged += OnCampaignSelected;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.OnAppearingAsync();
-    }
-
-    private void OnRewardTierSelected(object? sender, SelectionChangedEventArgs e)
-    {
-        if (e.CurrentSelection.Count == 0)
-        {
-            return;
-        }
 
         try
         {
-            if (e.CurrentSelection[0] is RewardTierEditorItem selected)
-            {
-                _viewModel.BeginEdit(selected);
-            }
+            await _viewModel.OnAppearingAsync();
         }
-        finally
+        catch
         {
-            if (sender is CollectionView collectionView)
-            {
-                collectionView.SelectedItem = null;
-            }
+            // Appearing is an async-void MAUI lifecycle hook. Rewards load failures stay inside ViewModel feedback.
         }
     }
 
-    private void OnCampaignSelected(object? sender, SelectionChangedEventArgs e)
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
     {
-        if (e.CurrentSelection.Count == 0)
-        {
-            return;
-        }
-
         try
         {
-            if (e.CurrentSelection[0] is BusinessCampaignEditorItem selected)
-            {
-                _viewModel.BeginEditCampaign(selected);
-            }
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from rewards.
         }
         finally
         {
-            if (sender is CollectionView collectionView)
-            {
-                collectionView.SelectedItem = null;
-            }
+            base.OnDisappearing();
         }
     }
 }

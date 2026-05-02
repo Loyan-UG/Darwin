@@ -712,9 +712,9 @@
             <div class="card-header">@T.T("BusinessCommunicationTransactionalPolicyTitle")</div>
             <div class="card-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-4">@T.T("BusinessCommunicationSubjectPrefixLabel")</dt>
+                    <dt class="col-sm-4">@T.T("BusinessCommunicationSubjectPrefixLabel") <field-help title="@T.T("BusinessCommunicationSubjectPrefixLabel")" content="@T.T("BusinessCommunicationSubjectPrefixHelp")" placement="right"></field-help></dt>
                     <dd class="col-sm-8">@(Model.TransactionalSubjectPrefixConfigured ? Model.TransactionalSubjectPrefix : T.T("BusinessCommunicationNoPrefixConfigured"))</dd>
-                    <dt class="col-sm-4">@T.T("BusinessCommunicationTestInboxLabel")</dt>
+                    <dt class="col-sm-4">@T.T("BusinessCommunicationTestInboxLabel") <field-help title="@T.T("BusinessCommunicationTestInboxLabel")" content="@T.T("BusinessCommunicationTestInboxHelp")" placement="right"></field-help></dt>
                     <dd class="col-sm-8">@(Model.TestInboxConfigured ? Model.TestInboxEmail : T.T("BusinessCommunicationNoRerouteConfigured"))</dd>
                 </dl>
                 <div class="small text-muted mt-3">
@@ -739,6 +739,7 @@
                               hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("SendTestEmail")</button>
+                            <field-help title="@T.T("SendTestEmail")" content="@T.T("BusinessCommunicationSendTestEmailHelp")" placement="right"></field-help>
                         </form>
                     }
                     @if (Model.CanSendTestSms)
@@ -749,6 +750,7 @@
                               hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("SendTestSms")</button>
+                            <field-help title="@T.T("SendTestSms")" content="@T.T("BusinessCommunicationSendTestSmsHelp")" placement="right"></field-help>
                         </form>
                     }
                     @if (Model.CanSendTestWhatsApp)
@@ -759,6 +761,7 @@
                               hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("SendTestWhatsApp")</button>
+                            <field-help title="@T.T("SendTestWhatsApp")" content="@T.T("BusinessCommunicationSendTestWhatsAppHelp")" placement="right"></field-help>
                         </form>
                     }
                 </div>
@@ -1216,6 +1219,7 @@
                                                   hx-swap="outerHTML">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunSmsTestAction")</button>
+                                                <field-help title="@T.T("BusinessCommunicationRerunSmsTestAction")" content="@T.T("BusinessCommunicationRerunSmsTestHelp")" placement="right"></field-help>
                                             </form>
                                         }
                                         else if (string.Equals(family.ChannelValue, "WhatsApp", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestWhatsApp)
@@ -1226,6 +1230,7 @@
                                                   hx-swap="outerHTML">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-sm btn-outline-primary">@T.T("BusinessCommunicationRerunWhatsAppTestAction")</button>
+                                                <field-help title="@T.T("BusinessCommunicationRerunWhatsAppTestAction")" content="@T.T("BusinessCommunicationRerunWhatsAppTestHelp")" placement="right"></field-help>
                                             </form>
                                         }
                                     }

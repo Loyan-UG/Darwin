@@ -4416,6 +4416,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
+                    b.HasIndex("Purpose", "UsedAtUtc", "ExpiresAtUtc")
+                        .HasDatabaseName("IX_UserTokens_Purpose_UsedAtUtc_ExpiresAtUtc");
+
                     b.ToTable("UserTokens", "Identity");
                 });
 

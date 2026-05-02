@@ -1,23 +1,29 @@
 @model Darwin.WebAdmin.ViewModels.Billing.JournalEntryEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <label asp-for="BusinessId" class="form-label"></label>
-        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("JournalEntryHeaderSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="BusinessId" class="form-label"></label>
+            <field-help title="@T.T("Business")" content="@T.T("JournalEntryBusinessHelp")" placement="right"></field-help>
+            <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="EntryDateUtc" class="form-label"></label>
+            <field-help title="@T.T("EntryDate")" content="@T.T("JournalEntryDateHelp")" placement="right"></field-help>
+            <input asp-for="EntryDateUtc" type="date" class="form-control" />
+        </div>
+        <div class="col-12">
+            <label asp-for="Description" class="form-label"></label>
+            <field-help title="@T.T("Description")" content="@T.T("JournalEntryDescriptionHelp")" placement="right"></field-help>
+            <input asp-for="Description" class="form-control" />
+        </div>
     </div>
-    <div class="col-md-4">
-        <label asp-for="EntryDateUtc" class="form-label"></label>
-        <input asp-for="EntryDateUtc" type="date" class="form-control" />
-    </div>
-    <div class="col-12">
-        <label asp-for="Description" class="form-label"></label>
-        <input asp-for="Description" class="form-control" />
-    </div>
-</div>
+</section>
 
 <div class="d-flex justify-content-between align-items-center mt-4">
-    <h3 class="mb-0">@T.T("Lines")</h3>
+    <h3 class="mb-0">@T.T("Lines") <field-help title="@T.T("Lines")" content="@T.T("JournalEntryLinesHelp")" placement="right"></field-help></h3>
     <button type="button" class="btn btn-outline-secondary btn-sm" id="addJournalLine" data-dynamic-lines-add data-dynamic-lines-container="#journalLines" data-dynamic-lines-template="#journalLineTemplate">@T.T("AddLine")</button>
 </div>
 
@@ -27,10 +33,10 @@
     <div class="card mb-3 line-row"><div class="card-body">
         <input type="hidden" asp-for="Lines[i].Id" />
         <div class="row g-3">
-            <div class="col-md-4"><label asp-for="Lines[i].AccountId" class="form-label"></label><select asp-for="Lines[i].AccountId" asp-items="Model.AccountOptions" class="form-select"></select></div>
-            <div class="col-md-2"><label asp-for="Lines[i].DebitMinor" class="form-label"></label><input asp-for="Lines[i].DebitMinor" class="form-control" /></div>
-            <div class="col-md-2"><label asp-for="Lines[i].CreditMinor" class="form-label"></label><input asp-for="Lines[i].CreditMinor" class="form-control" /></div>
-            <div class="col-md-4"><label asp-for="Lines[i].Memo" class="form-label"></label><input asp-for="Lines[i].Memo" class="form-control" /></div>
+            <div class="col-md-4"><label asp-for="Lines[i].AccountId" class="form-label"></label><field-help title="@T.T("Account")" content="@T.T("JournalEntryLineAccountHelp")" placement="right"></field-help><select asp-for="Lines[i].AccountId" asp-items="Model.AccountOptions" class="form-select"></select></div>
+            <div class="col-md-2"><label asp-for="Lines[i].DebitMinor" class="form-label"></label><field-help title="@T.T("Debit")" content="@T.T("JournalEntryDebitMinorHelp")" placement="right"></field-help><input asp-for="Lines[i].DebitMinor" class="form-control" /></div>
+            <div class="col-md-2"><label asp-for="Lines[i].CreditMinor" class="form-label"></label><field-help title="@T.T("Credit")" content="@T.T("JournalEntryCreditMinorHelp")" placement="right"></field-help><input asp-for="Lines[i].CreditMinor" class="form-control" /></div>
+            <div class="col-md-4"><label asp-for="Lines[i].Memo" class="form-label"></label><field-help title="@T.T("Memo")" content="@T.T("JournalEntryMemoHelp")" placement="right"></field-help><input asp-for="Lines[i].Memo" class="form-control" /></div>
         </div>
         <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line" data-dynamic-lines-remove>@T.T("Remove")</button></div>
     </div></div>
@@ -41,10 +47,10 @@
     <div class="card mb-3 line-row"><div class="card-body">
         <input type="hidden" name="Lines[__index__].Id" value="" />
         <div class="row g-3">
-            <div class="col-md-4"><label class="form-label">@T.T("Account")</label><select class="form-select" name="Lines[__index__].AccountId">@foreach (var option in Model.AccountOptions){<option value="@option.Value">@option.Text</option>}</select></div>
-            <div class="col-md-2"><label class="form-label">@T.T("Debit")</label><input class="form-control" name="Lines[__index__].DebitMinor" value="0" /></div>
-            <div class="col-md-2"><label class="form-label">@T.T("Credit")</label><input class="form-control" name="Lines[__index__].CreditMinor" value="0" /></div>
-            <div class="col-md-4"><label class="form-label">@T.T("Memo")</label><input class="form-control" name="Lines[__index__].Memo" /></div>
+            <div class="col-md-4"><label class="form-label">@T.T("Account")</label><field-help title="@T.T("Account")" content="@T.T("JournalEntryLineAccountHelp")" placement="right"></field-help><select class="form-select" name="Lines[__index__].AccountId">@foreach (var option in Model.AccountOptions){<option value="@option.Value">@option.Text</option>}</select></div>
+            <div class="col-md-2"><label class="form-label">@T.T("Debit")</label><field-help title="@T.T("Debit")" content="@T.T("JournalEntryDebitMinorHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].DebitMinor" value="0" /></div>
+            <div class="col-md-2"><label class="form-label">@T.T("Credit")</label><field-help title="@T.T("Credit")" content="@T.T("JournalEntryCreditMinorHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].CreditMinor" value="0" /></div>
+            <div class="col-md-4"><label class="form-label">@T.T("Memo")</label><field-help title="@T.T("Memo")" content="@T.T("JournalEntryMemoHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].Memo" /></div>
         </div>
         <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line" data-dynamic-lines-remove>@T.T("Remove")</button></div>
     </div></div>

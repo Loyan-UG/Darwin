@@ -2,8 +2,10 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
     x:Class="Darwin.Mobile.Consumer.Views.RegisterPage"
     x:DataType="vm:RegisterViewModel"
     NavigationPage.HasNavigationBar="False"
@@ -25,58 +27,75 @@
                     <Label Text="{x:Static res:AppResources.ProfileSectionTitle}"
                            Style="{StaticResource SectionEyebrowLabelStyle}" />
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.FirstNameLabel}"
-                               Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
-                            <Entry Text="{Binding FirstName}"
-                                   Placeholder="{x:Static res:AppResources.FirstNamePlaceholder}"
-                                   Style="{StaticResource FormEntryStyle}" />
-                        </Border>
-                    </VerticalStackLayout>
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.FirstNameLabel}"
+                                                   ContainerType="Outlined"
+                                                   Stroke="{StaticResource Neutral100}"
+                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   OutlineCornerRadius="8"
+                                                   FocusedStrokeThickness="2"
+                                                   UnfocusedStrokeThickness="1"
+                                                   InputViewPadding="14,6">
+                        <Entry Text="{Binding FirstName}"
+                               Placeholder="{x:Static res:AppResources.FirstNamePlaceholder}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </inputLayout:SfTextInputLayout>
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.LastNameLabel}"
-                               Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
-                            <Entry Text="{Binding LastName}"
-                                   Placeholder="{x:Static res:AppResources.LastNamePlaceholder}"
-                                   Style="{StaticResource FormEntryStyle}" />
-                        </Border>
-                    </VerticalStackLayout>
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.LastNameLabel}"
+                                                   ContainerType="Outlined"
+                                                   Stroke="{StaticResource Neutral100}"
+                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   OutlineCornerRadius="8"
+                                                   FocusedStrokeThickness="2"
+                                                   UnfocusedStrokeThickness="1"
+                                                   InputViewPadding="14,6">
+                        <Entry Text="{Binding LastName}"
+                               Placeholder="{x:Static res:AppResources.LastNamePlaceholder}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </inputLayout:SfTextInputLayout>
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.EmailLabel}"
-                               Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
-                            <Entry Text="{Binding Email}"
-                                   Keyboard="Email"
-                                   Placeholder="{x:Static res:AppResources.EmailPlaceholder}"
-                                   Style="{StaticResource FormEntryStyle}" />
-                        </Border>
-                    </VerticalStackLayout>
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.EmailLabel}"
+                                                   ContainerType="Outlined"
+                                                   Stroke="{StaticResource Neutral100}"
+                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   OutlineCornerRadius="8"
+                                                   FocusedStrokeThickness="2"
+                                                   UnfocusedStrokeThickness="1"
+                                                   InputViewPadding="14,6">
+                        <Entry Text="{Binding Email}"
+                               Keyboard="Email"
+                               Placeholder="{x:Static res:AppResources.EmailPlaceholder}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </inputLayout:SfTextInputLayout>
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.PasswordLabel}"
-                               Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
-                            <Entry Text="{Binding Password}"
-                                   IsPassword="True"
-                                   Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
-                                   Style="{StaticResource FormEntryStyle}" />
-                        </Border>
-                    </VerticalStackLayout>
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.PasswordLabel}"
+                                                   ContainerType="Outlined"
+                                                   Stroke="{StaticResource Neutral100}"
+                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   OutlineCornerRadius="8"
+                                                   FocusedStrokeThickness="2"
+                                                   UnfocusedStrokeThickness="1"
+                                                   EnablePasswordVisibilityToggle="True"
+                                                   InputViewPadding="14,6">
+                        <Entry Text="{Binding Password}"
+                               IsPassword="True"
+                               Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </inputLayout:SfTextInputLayout>
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.ConfirmNewPasswordLabel}"
-                               Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
-                            <Entry Text="{Binding ConfirmPassword}"
-                                   IsPassword="True"
-                                   Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
-                                   Style="{StaticResource FormEntryStyle}" />
-                        </Border>
-                    </VerticalStackLayout>
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.ConfirmNewPasswordLabel}"
+                                                   ContainerType="Outlined"
+                                                   Stroke="{StaticResource Neutral100}"
+                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   OutlineCornerRadius="8"
+                                                   FocusedStrokeThickness="2"
+                                                   UnfocusedStrokeThickness="1"
+                                                   EnablePasswordVisibilityToggle="True"
+                                                   InputViewPadding="14,6">
+                        <Entry Text="{Binding ConfirmPassword}"
+                               IsPassword="True"
+                               Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </inputLayout:SfTextInputLayout>
                 </VerticalStackLayout>
             </Border>
 
@@ -137,10 +156,10 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Button Text="{x:Static res:AppResources.RegisterButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding RegisterCommand}"
-                    IsEnabled="{Binding IsRegistrationReady}" />
+            <buttons:SfButton Text="{x:Static res:AppResources.RegisterButton}"
+                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              Command="{Binding RegisterCommand}"
+                              IsEnabled="{Binding IsRegistrationReady}" />
 
             <Button Text="{x:Static res:AppResources.RegisterReturnToLoginButton}"
                     Style="{StaticResource LinkButtonStyle}"

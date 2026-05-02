@@ -23,21 +23,23 @@ namespace Darwin.Mobile.Consumer.Services.Notifications;
 /// </remarks>
 public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrationCoordinator
 {
-    private const string DeviceIdStorageKey = "consumer.push.device-id.v1";
     private const string LastRegistrationSignatureStorageKey = "consumer.push.last-registration-signature.v1";
 
     private readonly IPushRegistrationService _pushRegistrationService;
     private readonly ITokenStore _tokenStore;
     private readonly IConsumerPushTokenProvider _tokenProvider;
+    private readonly IDeviceIdProvider _deviceIdProvider;
 
     public ConsumerPushRegistrationCoordinator(
         IPushRegistrationService pushRegistrationService,
         ITokenStore tokenStore,
-        IConsumerPushTokenProvider tokenProvider)
+        IConsumerPushTokenProvider tokenProvider,
+        IDeviceIdProvider deviceIdProvider)
     {
         _pushRegistrationService = pushRegistrationService ?? throw new ArgumentNullException(nameof(pushRegistrationService));
         _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
         _tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
+        _deviceIdProvider = deviceIdProvider ?? throw new ArgumentNullException(nameof(deviceIdProvider));
     }
 
     public async Task<Result> TryRegisterCurrentDeviceAsync(CancellationToken cancellationToken)
@@ -58,7 +60,7 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
         }
 
         var pushTokenState = pushTokenStateResult.Value;
-        var deviceId = GetOrCreateDeviceId();
+        var deviceId = await _deviceIdProvider.GetDeviceIdAsync().ConfigureAwait(false);
         var platform = MapPlatform(DeviceInfo.Current.Platform);
         var appVersion = AppInfo.Current?.VersionString;
         var deviceModel = DeviceInfo.Current?.Model;
@@ -101,19 +103,6 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
     public void ResetCachedRegistrationState()
     {
         Preferences.Default.Remove(LastRegistrationSignatureStorageKey);
-    }
-
-    private static string GetOrCreateDeviceId()
-    {
-        var existing = Preferences.Default.Get(DeviceIdStorageKey, string.Empty);
-        if (!string.IsNullOrWhiteSpace(existing))
-        {
-            return existing;
-        }
-
-        var created = Guid.NewGuid().ToString("N");
-        Preferences.Default.Set(DeviceIdStorageKey, created);
-        return created;
     }
 
     private static string BuildRegistrationSignature(

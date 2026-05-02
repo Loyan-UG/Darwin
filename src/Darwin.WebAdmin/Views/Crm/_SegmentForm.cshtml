@@ -6,7 +6,7 @@
     string GlobalCrmSegmentsUrl() => Url.Action("Segments", "Crm") ?? string.Empty;
 }
 
-<form asp-action="@actionName" method="post" class="row g-3">
+<form asp-action="@actionName" method="post">
     @Html.AntiForgeryToken()
     @if (!isCreate)
     {
@@ -14,17 +14,24 @@
         <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
     }
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="col-md-6">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
-    </div>
-    <div class="col-12">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-    <div class="col-12 d-flex gap-2">
+    <section class="admin-form-section">
+        <h2 class="admin-form-section-title">@T.T("CrmSegmentIdentitySection")</h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Name" class="form-label"></label>
+                <field-help title="@T.T("Name")" content="@T.T("CrmSegmentNameHelp")" placement="right"></field-help>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <field-help title="@T.T("Description")" content="@T.T("CrmSegmentDescriptionHelp")" placement="right"></field-help>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+        </div>
+    </section>
+    <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary">@(isCreate ? T.T("Create") : T.T("Save"))</button>
         <a asp-action="Segments" hx-get="@GlobalCrmSegmentsUrl()" hx-target="#crm-segment-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
     </div>

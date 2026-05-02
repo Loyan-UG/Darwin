@@ -26,6 +26,7 @@ namespace Darwin.Mobile.Business.ViewModels
         private readonly IBusinessIdentityContextService _businessIdentityContextService;
         private readonly IBusinessAuthorizationService _businessAuthorizationService;
         private readonly IBusinessAccessService _businessAccessService;
+        private CancellationTokenSource? _loadCancellation;
 
         private bool _loadedOnce;
         private string _businessName = AppResources.HomeUnavailableValue;
@@ -197,16 +198,36 @@ namespace Darwin.Mobile.Business.ViewModels
             await LoadContextAsync().ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Cancels any in-flight business context load when the page is no longer visible.
+        /// </summary>
+        /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+        public override Task OnDisappearingAsync()
+        {
+            CancelCurrentLoad();
+            return Task.CompletedTask;
+        }
+
         private async Task LoadContextAsync()
         {
-            ErrorMessage = null;
-            IsBusy = true;
-            LoadContextCommand.RaiseCanExecuteChanged();
-            ScanCommand.RaiseCanExecuteChanged();
+            if (IsBusy)
+            {
+                return;
+            }
 
+            RunOnMain(() =>
+            {
+                ErrorMessage = null;
+                IsBusy = true;
+                LoadContextCommand.RaiseCanExecuteChanged();
+                ScanCommand.RaiseCanExecuteChanged();
+            });
+
+            var loadCancellation = BeginCurrentLoad();
             try
             {
-                var result = await _businessIdentityContextService.GetCurrentAsync(CancellationToken.None)
+                var cancellationToken = loadCancellation.Token;
+                var result = await _businessIdentityContextService.GetCurrentAsync(cancellationToken)
                     .ConfigureAwait(false);
 
                 if (!result.Succeeded || result.Value is null)
@@ -246,8 +267,8 @@ namespace Darwin.Mobile.Business.ViewModels
                     OnPropertyChanged(nameof(HasBusinessContext));
                 });
 
-                var authSnapshotTask = _businessAuthorizationService.GetSnapshotAsync(CancellationToken.None);
-                var accessStateTask = _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None);
+                var authSnapshotTask = _businessAuthorizationService.GetSnapshotAsync(cancellationToken);
+                var accessStateTask = _businessAccessService.GetCurrentAccessStateAsync(cancellationToken);
                 await Task.WhenAll(authSnapshotTask, accessStateTask).ConfigureAwait(false);
 
                 var authSnapshotResult = await authSnapshotTask.ConfigureAwait(false);
@@ -261,6 +282,10 @@ namespace Darwin.Mobile.Business.ViewModels
 
                     ApplyAccessState(accessStateResult.Succeeded ? accessStateResult.Value : null);
                 });
+            }
+            catch (OperationCanceledException)
+            {
+                // Navigation away from the home page intentionally cancels stale context loads.
             }
             catch (Exception)
             {
@@ -282,18 +307,44 @@ namespace Darwin.Mobile.Business.ViewModels
                     LoadContextCommand.RaiseCanExecuteChanged();
                     ScanCommand.RaiseCanExecuteChanged();
                 });
+
+                EndCurrentLoad(loadCancellation);
             }
         }
 
         private async Task OpenScannerAsync()
         {
-            if (!IsOperationsAllowed)
+            if (IsBusy)
             {
-                ErrorMessage = BusinessOperationalStatusMessage;
                 return;
             }
 
-            await _navigationService.GoToAsync($"//{Routes.Scanner}");
+            if (!IsOperationsAllowed)
+            {
+                RunOnMain(() => ErrorMessage = BusinessOperationalStatusMessage);
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                IsBusy = true;
+                LoadContextCommand.RaiseCanExecuteChanged();
+                ScanCommand.RaiseCanExecuteChanged();
+            });
+
+            try
+            {
+                await _navigationService.GoToAsync($"//{Routes.Scanner}");
+            }
+            finally
+            {
+                RunOnMain(() =>
+                {
+                    IsBusy = false;
+                    LoadContextCommand.RaiseCanExecuteChanged();
+                    ScanCommand.RaiseCanExecuteChanged();
+                });
+            }
         }
 
         private void ApplyAccessState(BusinessAccessStateResponse? state)
@@ -313,6 +364,40 @@ namespace Darwin.Mobile.Business.ViewModels
                 ? BusinessAccessStateUiMapper.BuildSetupChecklistSummary(state)
                 : string.Empty;
             IsOperationsAllowed = state.IsOperationsAllowed;
+        }
+
+        /// <summary>
+        /// Starts a cancellable home-context load and cancels any stale load still in-flight.
+        /// </summary>
+        private CancellationTokenSource BeginCurrentLoad()
+        {
+            var current = new CancellationTokenSource();
+            var previous = Interlocked.Exchange(ref _loadCancellation, current);
+            previous?.Cancel();
+            return current;
+        }
+
+        /// <summary>
+        /// Cancels the active home-context load without disposing a token source still observed by service code.
+        /// </summary>
+        private void CancelCurrentLoad()
+        {
+            var current = Interlocked.Exchange(ref _loadCancellation, null);
+            current?.Cancel();
+        }
+
+        /// <summary>
+        /// Releases a completed home-context load when it still owns the active load slot.
+        /// </summary>
+        /// <param name="loadCancellation">Completed load token source.</param>
+        private void EndCurrentLoad(CancellationTokenSource loadCancellation)
+        {
+            if (ReferenceEquals(_loadCancellation, loadCancellation))
+            {
+                _loadCancellation = null;
+            }
+
+            loadCancellation.Dispose();
         }
     }
 }

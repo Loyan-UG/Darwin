@@ -1,41 +1,52 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Shared.Navigation
 {
     /// <summary>
     /// Default navigation service implementation that delegates to MAUI Shell.
     /// </summary>
+    /// <remarks>
+    /// View models and shared services can resume on background threads after awaited network/storage work.
+    /// This service owns the UI-thread transition so every caller gets safe Shell navigation without duplicating
+    /// platform-specific dispatch logic.
+    /// </remarks>
     public sealed class ShellNavigationService : INavigationService
     {
         /// <inheritdoc />
         public Task GoToAsync(string route, IDictionary<string, object?>? parameters = null)
         {
-            if (Shell.Current is null)
+            return MainThread.InvokeOnMainThreadAsync(() =>
             {
-                throw new InvalidOperationException("Shell navigation is not available. Ensure Shell is initialized.");
-            }
+                if (Shell.Current is null)
+                {
+                    throw new InvalidOperationException("Shell navigation is not available. Ensure Shell is initialized.");
+                }
 
-            if (parameters is null || parameters.Count == 0)
-            {
-                return Shell.Current.GoToAsync(route);
-            }
+                if (parameters is null || parameters.Count == 0)
+                {
+                    return Shell.Current.GoToAsync(route);
+                }
 
-            return Shell.Current.GoToAsync(route, parameters);
+                return Shell.Current.GoToAsync(route, parameters);
+            });
         }
 
         /// <inheritdoc />
         public Task GoBackAsync()
         {
-            if (Shell.Current is null)
+            return MainThread.InvokeOnMainThreadAsync(() =>
             {
-                throw new InvalidOperationException("Shell navigation is not available. Ensure Shell is initialized.");
-            }
+                if (Shell.Current is null)
+                {
+                    throw new InvalidOperationException("Shell navigation is not available. Ensure Shell is initialized.");
+                }
 
-            return Shell.Current.GoToAsync("..");
+                return Shell.Current.GoToAsync("..");
+            });
         }
     }
 }

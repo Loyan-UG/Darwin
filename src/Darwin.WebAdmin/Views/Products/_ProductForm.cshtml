@@ -9,6 +9,7 @@
         });
     var cultures = Model.Cultures ?? Array.Empty<string>();
     var currencies = Model.Currencies ?? Array.Empty<string>();
+    var singleCulture = cultures.FirstOrDefault() ?? string.Empty;
     string ProductsIndexUrl() => Url.Action("Index", "Products") ?? string.Empty;
 }
 
@@ -17,199 +18,242 @@
         <partial name="~/Views/Shared/_Alerts.cshtml" />
         <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">@T.T("Brand")</label>
-                <select asp-for="BrandId" class="form-select"
-                        asp-items="Model.BrandOptions"></select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">@T.T("PrimaryCategory")</label>
-                <select asp-for="PrimaryCategoryId" class="form-select"
-                        asp-items="Model.CategoryOptions"></select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">@T.T("Kind")</label>
-                <select asp-for="Kind" class="form-select"
-                        asp-items="productKindOptions"></select>
-            </div>
-        </div>
-
-        <hr />
-
-        <h5>@T.T("Translations")</h5>
-        @for (int i = 0; i < Model.Translations.Count; i++)
-        {
-            <div class="border rounded p-3 mb-3">
-                <input type="hidden" name="Translations.Index" value="@i" />
-                <div class="row g-3">
-                    <div class="col-md-2">
-                        <label class="form-label">@T.T("Culture")</label>
-                        <select asp-for="Translations[@i].Culture" class="form-select">
-                            @foreach (var cul in cultures)
-                            {
-                                <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label">@T.T("Name")</label>
-                        <input asp-for="Translations[@i].Name" class="form-control" />
-                        <span asp-validation-for="Translations[@i].Name" class="text-danger"></span>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label">@T.T("Slug")</label>
-                        <div class="d-flex align-items-center">
-                            <input asp-for="Translations[@i].Slug" class="form-control" />
-                            <field-help title="@T.T("Slug")"
-                                        content="@T.T("ProductSlugHelp")"
-                                        placement="right"></field-help>
-                        </div>
-                        <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">@T.T("ShortDescription")</label>
-                        <textarea asp-for="Translations[@i].ShortDescription" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">@T.T("SearchKeywords")</label>
-                        <input asp-for="Translations[@i].SearchKeywords" class="form-control" />
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">@T.T("MetaTitle")</label>
-                        <input asp-for="Translations[@i].MetaTitle" class="form-control" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">@T.T("MetaDescription")</label>
-                        <div class="d-flex align-items-center">
-                            <input asp-for="Translations[@i].MetaDescription" class="form-control" />
-                            <field-help title="@T.T("MetaDescription")"
-                                        content="@T.T("ProductMetaDescriptionHelp")"
-                                        placement="right"></field-help>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">@T.T("FullDescriptionHtml")</label>
-                        <div id="quill-editor-desc-@i" class="border rounded" data-quill-product-editor="true"></div>
-                        <textarea asp-for="Translations[@i].FullDescriptionHtml" class="d-none"></textarea>
-                    </div>
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("ProductCatalogPlacement")</h2>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">@T.T("Brand")</label>
+                    <field-help title="@T.T("Brand")" content="@T.T("ProductBrandHelp")" placement="right"></field-help>
+                    <select asp-for="BrandId" class="form-select" asp-items="Model.BrandOptions"></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">@T.T("PrimaryCategory")</label>
+                    <field-help title="@T.T("PrimaryCategory")" content="@T.T("ProductPrimaryCategoryHelp")" placement="right"></field-help>
+                    <select asp-for="PrimaryCategoryId" class="form-select" asp-items="Model.CategoryOptions"></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">@T.T("Kind")</label>
+                    <field-help title="@T.T("Kind")" content="@T.T("ProductKindHelp")" placement="right"></field-help>
+                    <select asp-for="Kind" class="form-select" asp-items="productKindOptions"></select>
                 </div>
             </div>
-        }
+        </section>
 
-        <hr />
+        <section class="admin-form-section">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <h2 class="admin-form-section-title mb-0">@T.T(Model.MultilingualEnabled ? "Translations" : "DefaultLanguageContent")</h2>
+                <span class="badge text-bg-light border">
+                    @(Model.MultilingualEnabled ? T.T("MultilingualContentMode") : T.T("SingleLanguageContentMode"))
+                </span>
+            </div>
 
-        <h5>@T.T("Variants")</h5>
-        @for (int j = 0; j < Model.Variants.Count; j++)
-        {
-            <div class="border rounded p-3 mb-3">
-                <input type="hidden" name="Variants.Index" value="@j" />
-                <input type="hidden" asp-for="Variants[@j].Id" />
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("Sku")</label>
-                        <field-help title="@T.T("Sku")"
-                                    content="@T.T("ProductSkuHelp")"
-                                    placement="right"></field-help>
-                        <div class="d-flex align-items-center">
+            @for (int i = 0; i < Model.Translations.Count; i++)
+            {
+                var cultureLabel = string.IsNullOrWhiteSpace(Model.Translations[i].Culture) ? singleCulture : Model.Translations[i].Culture;
+                <div class="border rounded p-3 mb-3" data-translation-block>
+                    <input type="hidden" name="Translations.Index" value="@i" />
+                    @if (!Model.MultilingualEnabled)
+                    {
+                        <input type="hidden" asp-for="Translations[@i].Culture" value="@singleCulture" />
+                    }
+
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                        <div class="fw-semibold">@cultureLabel</div>
+                        @if (!Model.MultilingualEnabled)
+                        {
+                            <div class="small text-muted">@T.T("SingleLanguageContentHint")</div>
+                        }
+                    </div>
+
+                    <div class="row g-3">
+                        @if (Model.MultilingualEnabled)
+                        {
+                            <div class="col-md-2">
+                                <label class="form-label">@T.T("Culture")</label>
+                                <field-help title="@T.T("Culture")" content="@T.T("ProductCultureHelp")" placement="right"></field-help>
+                                <select asp-for="Translations[@i].Culture" class="form-select">
+                                    @foreach (var cul in cultures)
+                                    {
+                                        <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        <div class="@(Model.MultilingualEnabled ? "col-md-5" : "col-md-6")">
+                            <label class="form-label">@T.T("Name")</label>
+                            <field-help title="@T.T("Name")" content="@T.T("ProductNameHelp")" placement="right"></field-help>
+                            <input asp-for="Translations[@i].Name" class="form-control" />
+                            <span asp-validation-for="Translations[@i].Name" class="text-danger"></span>
+                        </div>
+                        <div class="@(Model.MultilingualEnabled ? "col-md-5" : "col-md-6")">
+                            <label class="form-label">@T.T("Slug")</label>
+                            <div class="d-flex align-items-center">
+                                <input asp-for="Translations[@i].Slug" class="form-control" />
+                                <field-help title="@T.T("Slug")" content="@T.T("ProductSlugHelp")" placement="right"></field-help>
+                            </div>
+                            <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">@T.T("ShortDescription")</label>
+                            <field-help title="@T.T("ShortDescription")" content="@T.T("ProductShortDescriptionHelp")" placement="right"></field-help>
+                            <textarea asp-for="Translations[@i].ShortDescription" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">@T.T("SearchKeywords")</label>
+                            <field-help title="@T.T("SearchKeywords")" content="@T.T("ProductSearchKeywordsHelp")" placement="right"></field-help>
+                            <input asp-for="Translations[@i].SearchKeywords" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">@T.T("MetaTitle")</label>
+                            <field-help title="@T.T("MetaTitle")" content="@T.T("ProductMetaTitleHelp")" placement="right"></field-help>
+                            <input asp-for="Translations[@i].MetaTitle" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">@T.T("MetaDescription")</label>
+                            <div class="d-flex align-items-center">
+                                <input asp-for="Translations[@i].MetaDescription" class="form-control" />
+                                <field-help title="@T.T("MetaDescription")" content="@T.T("ProductMetaDescriptionHelp")" placement="right"></field-help>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">@T.T("FullDescriptionHtml")</label>
+                            <field-help title="@T.T("FullDescriptionHtml")" content="@T.T("ProductFullDescriptionHelp")" placement="right"></field-help>
+                            <div id="quill-editor-desc-@i" class="border rounded" data-quill-product-editor="true"></div>
+                            <textarea asp-for="Translations[@i].FullDescriptionHtml" class="d-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+            }
+        </section>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("Variants")</h2>
+            @for (int j = 0; j < Model.Variants.Count; j++)
+            {
+                <div class="border rounded p-3 mb-3">
+                    <input type="hidden" name="Variants.Index" value="@j" />
+                    <input type="hidden" asp-for="Variants[@j].Id" />
+
+                    <h3 class="h6 mb-3">@T.T("VariantIdentityPricing")</h3>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("Sku")</label>
+                            <field-help title="@T.T("Sku")" content="@T.T("ProductSkuHelp")" placement="right"></field-help>
                             <input asp-for="Variants[@j].Sku" class="form-control" />
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("Gtin")</label>
-                        <input asp-for="Variants[@j].Gtin" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("ManufacturerPartNumber")</label>
-                        <input asp-for="Variants[@j].ManufacturerPartNumber" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("Currency")</label>
-                        <select asp-for="Variants[@j].Currency" class="form-select">
-                            @foreach (var cur in currencies)
-                            {
-                                <option value="@cur" selected="@(Model.Variants[j].Currency == cur)">@cur</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("TaxCategory")</label>
-                        <select asp-for="Variants[@j].TaxCategoryId" class="form-select"
-                                asp-items="Model.TaxCategoryOptions"></select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("BasePriceNetMinor")</label>
-                        <div class="d-flex align-items-center">
-                            <input asp-for="Variants[@j].BasePriceNetMinor" class="form-control" />
-                            <field-help title="@T.T("MinorUnits")"
-                                        content="@T.T("MinorUnitsHelp")"
-                                        placement="right"></field-help>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("Gtin")</label>
+                            <field-help title="@T.T("Gtin")" content="@T.T("ProductGtinHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].Gtin" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("ManufacturerPartNumber")</label>
+                            <field-help title="@T.T("ManufacturerPartNumber")" content="@T.T("ProductManufacturerPartNumberHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].ManufacturerPartNumber" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("Currency")</label>
+                            <field-help title="@T.T("Currency")" content="@T.T("ProductCurrencyHelp")" placement="right"></field-help>
+                            <select asp-for="Variants[@j].Currency" class="form-select">
+                                @foreach (var cur in currencies)
+                                {
+                                    <option value="@cur" selected="@(Model.Variants[j].Currency == cur)">@cur</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("TaxCategory")</label>
+                            <field-help title="@T.T("TaxCategory")" content="@T.T("ProductTaxCategoryHelp")" placement="right"></field-help>
+                            <select asp-for="Variants[@j].TaxCategoryId" class="form-select" asp-items="Model.TaxCategoryOptions"></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("BasePriceNetMinor")</label>
+                            <div class="d-flex align-items-center">
+                                <input asp-for="Variants[@j].BasePriceNetMinor" class="form-control" />
+                                <field-help title="@T.T("MinorUnits")" content="@T.T("MinorUnitsHelp")" placement="right"></field-help>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("CompareAtNetMinor")</label>
+                            <field-help title="@T.T("CompareAtNetMinor")" content="@T.T("ProductCompareAtPriceHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].CompareAtPriceNetMinor" class="form-control" />
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("CompareAtNetMinor")</label>
-                        <input asp-for="Variants[@j].CompareAtPriceNetMinor" class="form-control" />
-                    </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("StockOnHand")</label>
-                        <input asp-for="Variants[@j].StockOnHand" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("StockReserved")</label>
-                        <input asp-for="Variants[@j].StockReserved" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("ReorderPoint")</label>
-                        <input asp-for="Variants[@j].ReorderPoint" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("MinOrderQty")</label>
-                        <input asp-for="Variants[@j].MinOrderQty" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("MaxOrderQty")</label>
-                        <input asp-for="Variants[@j].MaxOrderQty" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("StepOrderQty")</label>
-                        <input asp-for="Variants[@j].StepOrderQty" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("PackageWeight")</label>
-                        <input asp-for="Variants[@j].PackageWeight" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("PackageLength")</label>
-                        <input asp-for="Variants[@j].PackageLength" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("PackageWidth")</label>
-                        <input asp-for="Variants[@j].PackageWidth" class="form-control" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@T.T("PackageHeight")</label>
-                        <input asp-for="Variants[@j].PackageHeight" class="form-control" />
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <div class="form-check">
-                            <input asp-for="Variants[@j].BackorderAllowed" class="form-check-input" />
-                            <label class="form-check-label" asp-for="Variants[@j].BackorderAllowed">@T.T("BackorderAllowed")</label>
+                    <h3 class="h6 mb-3">@T.T("VariantInventoryOrdering")</h3>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("StockOnHand")</label>
+                            <field-help title="@T.T("StockOnHand")" content="@T.T("ProductStockOnHandHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].StockOnHand" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("StockReserved")</label>
+                            <field-help title="@T.T("StockReserved")" content="@T.T("ProductStockReservedHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].StockReserved" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("ReorderPoint")</label>
+                            <field-help title="@T.T("ReorderPoint")" content="@T.T("ProductReorderPointHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].ReorderPoint" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("MinOrderQty")</label>
+                            <field-help title="@T.T("MinOrderQty")" content="@T.T("ProductMinOrderQtyHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].MinOrderQty" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("MaxOrderQty")</label>
+                            <field-help title="@T.T("MaxOrderQty")" content="@T.T("ProductMaxOrderQtyHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].MaxOrderQty" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("StepOrderQty")</label>
+                            <field-help title="@T.T("StepOrderQty")" content="@T.T("ProductStepOrderQtyHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].StepOrderQty" class="form-control" />
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check">
+                                <input asp-for="Variants[@j].BackorderAllowed" class="form-check-input" />
+                                <label class="form-check-label" asp-for="Variants[@j].BackorderAllowed">@T.T("BackorderAllowed")</label>
+                                <field-help title="@T.T("BackorderAllowed")" content="@T.T("ProductBackorderAllowedHelp")" placement="right"></field-help>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <div class="form-check">
-                            <input asp-for="Variants[@j].IsDigital" class="form-check-input" />
-                            <label class="form-check-label" asp-for="Variants[@j].IsDigital">@T.T("IsDigital")</label>
+
+                    <h3 class="h6 mb-3">@T.T("VariantFulfillment")</h3>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("PackageWeight")</label>
+                            <field-help title="@T.T("PackageWeight")" content="@T.T("ProductPackageWeightHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].PackageWeight" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("PackageLength")</label>
+                            <field-help title="@T.T("PackageLength")" content="@T.T("ProductPackageLengthHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].PackageLength" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("PackageWidth")</label>
+                            <field-help title="@T.T("PackageWidth")" content="@T.T("ProductPackageWidthHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].PackageWidth" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">@T.T("PackageHeight")</label>
+                            <field-help title="@T.T("PackageHeight")" content="@T.T("ProductPackageHeightHelp")" placement="right"></field-help>
+                            <input asp-for="Variants[@j].PackageHeight" class="form-control" />
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check">
+                                <input asp-for="Variants[@j].IsDigital" class="form-check-input" />
+                                <label class="form-check-label" asp-for="Variants[@j].IsDigital">@T.T("IsDigital")</label>
+                                <field-help title="@T.T("IsDigital")" content="@T.T("ProductIsDigitalHelp")" placement="right"></field-help>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </section>
     </div>
 
     <div class="card-footer text-end">

@@ -25,6 +25,7 @@ public sealed class RegisterViewModel : BaseViewModel
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly ILegalLinkService _legalLinkService;
+    private CancellationTokenSource? _operationCancellation;
 
     private string _firstName = string.Empty;
     private string _lastName = string.Empty;
@@ -246,6 +247,16 @@ public sealed class RegisterViewModel : BaseViewModel
 
     private bool CanRegister() => IsRegistrationReady;
 
+    /// <summary>
+    /// Cancels any in-flight registration or legal-link operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
     private async Task RegisterAsync()
     {
         if (IsBusy)
@@ -253,14 +264,18 @@ public sealed class RegisterViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        InfoMessage = null;
-        HasPendingEmailConfirmation = false;
-        RaiseRegistrationStateChanged();
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            InfoMessage = null;
+            HasPendingEmailConfirmation = false;
+            RaiseRegistrationStateChanged();
+        });
 
         var normalizedEmail = Email.Trim();
         var rawPassword = Password;
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
@@ -277,19 +292,22 @@ public sealed class RegisterViewModel : BaseViewModel
                 Password = rawPassword
             };
 
-            var response = await _authService.RegisterAsync(request, CancellationToken.None);
+            var response = await _authService.RegisterAsync(request, operationCancellation.Token);
             if (response is null)
             {
-                ErrorMessage = AppResources.RegisterFailed;
+                RunOnMain(() => ErrorMessage = AppResources.RegisterFailed);
                 return;
             }
 
             if (response.ConfirmationEmailSent)
             {
-                HasPendingEmailConfirmation = true;
-                InfoMessage = AppResources.RegisterEmailConfirmationSent;
-                Password = string.Empty;
-                ConfirmPassword = string.Empty;
+                RunOnMain(() =>
+                {
+                    HasPendingEmailConfirmation = true;
+                    InfoMessage = AppResources.RegisterEmailConfirmationSent;
+                    Password = string.Empty;
+                    ConfirmPassword = string.Empty;
+                });
                 return;
             }
 
@@ -299,30 +317,44 @@ public sealed class RegisterViewModel : BaseViewModel
                     normalizedEmail,
                     rawPassword,
                     deviceId: null,
-                    CancellationToken.None);
+                    operationCancellation.Token);
 
                 await _appRootNavigator.NavigateToAuthenticatedShellAsync();
             }
             catch
             {
-                HasPendingEmailConfirmation = false;
-                ErrorMessage = AppResources.RegisterAutoLoginFailed;
-                Password = string.Empty;
-                ConfirmPassword = string.Empty;
+                RunOnMain(() =>
+                {
+                    HasPendingEmailConfirmation = false;
+                    ErrorMessage = AppResources.RegisterAutoLoginFailed;
+                    Password = string.Empty;
+                    ConfirmPassword = string.Empty;
+                });
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from registration intentionally cancels stale account creation work.
         }
         catch (Exception ex)
         {
-            HasPendingEmailConfirmation = false;
-            InfoMessage = null;
-            ErrorMessage = ResolveFriendlyError(ex, AppResources.RegisterFailed);
+            RunOnMain(() =>
+            {
+                HasPendingEmailConfirmation = false;
+                InfoMessage = null;
+                ErrorMessage = ResolveFriendlyError(ex, AppResources.RegisterFailed);
+            });
         }
         finally
         {
-            IsBusy = false;
-            RaiseRegistrationStateChanged();
-            OpenTermsCommand.RaiseCanExecuteChanged();
-            OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseRegistrationStateChanged();
+                OpenTermsCommand.RaiseCanExecuteChanged();
+                OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
+            });
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -394,11 +426,86 @@ public sealed class RegisterViewModel : BaseViewModel
 
     private async Task OpenLegalLinkAsync(LegalLinkKind linkKind)
     {
-        var result = await _legalLinkService.OpenAsync(linkKind, CancellationToken.None).ConfigureAwait(false);
-        if (!result.Succeeded)
+        if (IsBusy)
         {
-            RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
+            return;
         }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseRegistrationStateChanged();
+            RaiseLegalCommandStates();
+        });
+
+        var operationCancellation = BeginCurrentOperation();
+        try
+        {
+            var result = await _legalLinkService.OpenAsync(linkKind, operationCancellation.Token).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from registration intentionally cancels stale legal-link handoffs.
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseRegistrationStateChanged();
+                RaiseLegalCommandStates();
+            });
+
+            EndCurrentOperation(operationCancellation);
+        }
+    }
+
+    /// <summary>
+    /// Starts a cancellable registration-page operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active registration-page operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed registration-page operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
+    }
+
+    /// <summary>
+    /// Refreshes legal-link command state so only one external legal page is opened at a time.
+    /// </summary>
+    private void RaiseLegalCommandStates()
+    {
+        OpenTermsCommand.RaiseCanExecuteChanged();
+        OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>

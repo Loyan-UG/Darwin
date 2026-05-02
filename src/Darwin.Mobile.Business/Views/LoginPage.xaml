@@ -1,6 +1,8 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     x:Class="Darwin.Mobile.Business.Views.LoginPage"
@@ -42,52 +44,47 @@
                            IsVisible="{Binding HasInfo}"
                            AutomationId="InfoLabel" />
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.EmailLabel}"
-                               Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
-                            <Entry Placeholder="{x:Static res:AppResources.EmailLabel}"
-                                   Keyboard="Email"
-                                   Text="{Binding Email}"
-                                   ReturnType="Next"
-                                   Style="{StaticResource FormEntryStyle}"
-                                   AutomationId="EmailEntry" />
-                        </Border>
-                    </VerticalStackLayout>
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.EmailLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                        <Entry Placeholder="{x:Static res:AppResources.EmailLabel}"
+                               Keyboard="Email"
+                               Text="{Binding Email}"
+                               ReturnType="Next"
+                               Style="{StaticResource FormEntryStyle}"
+                               AutomationId="EmailEntry" />
+                    </inputLayout:SfTextInputLayout>
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.PasswordLabel}"
-                               Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
-                            <Entry Placeholder="{x:Static res:AppResources.PasswordLabel}"
-                                   IsPassword="True"
-                                   Text="{Binding Password}"
-                                   ReturnType="Done"
-                                   Style="{StaticResource FormEntryStyle}"
-                                   AutomationId="PasswordEntry" />
-                        </Border>
-                    </VerticalStackLayout>
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.PasswordLabel}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}"
+                                                   EnablePasswordVisibilityToggle="True">
+                        <Entry Placeholder="{x:Static res:AppResources.PasswordLabel}"
+                               IsPassword="True"
+                               Text="{Binding Password}"
+                               ReturnType="Done"
+                               Style="{StaticResource FormEntryStyle}"
+                               AutomationId="PasswordEntry" />
+                    </inputLayout:SfTextInputLayout>
 
-                    <Button Text="{x:Static res:AppResources.LoginButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding LoginCommand}"
-                            IsEnabled="{Binding IsLoginReady}"
-                            AutomationId="SignInButton" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.LoginButton}"
+                                      Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                      Command="{Binding LoginCommand}"
+                                      IsEnabled="{Binding IsLoginReady}"
+                                      AutomationId="SignInButton" />
 
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="12">
-                        <Button Text="{x:Static res:AppResources.LoginAcceptInvitationButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Command="{Binding OpenInvitationAcceptanceCommand}"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                                AutomationId="OpenInvitationAcceptanceButton" />
+                        <buttons:SfButton Text="{x:Static res:AppResources.LoginAcceptInvitationButton}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                          Command="{Binding OpenInvitationAcceptanceCommand}"
+                                          IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                                          AutomationId="OpenInvitationAcceptanceButton" />
 
-                        <Button Grid.Column="1"
-                                Text="{x:Static res:AppResources.RequestActivationEmailButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Command="{Binding RequestActivationEmailCommand}"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                                AutomationId="RequestActivationEmailButton" />
+                        <buttons:SfButton Grid.Column="1"
+                                          Text="{x:Static res:AppResources.RequestActivationEmailButton}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                          Command="{Binding RequestActivationEmailCommand}"
+                                          IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                                          AutomationId="RequestActivationEmailButton" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>

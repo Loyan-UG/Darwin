@@ -20,28 +20,38 @@
               method="post"
               hx-post="@Url.Action("CreateInvoice", "Orders")"
               hx-target="#order-invoice-shell"
-              hx-swap="outerHTML"
-              class="row g-3">
+              hx-swap="outerHTML">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="OrderId" />
-            <div class="col-md-4">
-                <label asp-for="BusinessId" class="form-label"></label>
-                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="CustomerId" class="form-label"></label>
-                <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="PaymentId" class="form-label"></label>
-                <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="DueAtUtc" class="form-label"></label>
-                <input asp-for="DueAtUtc" type="datetime-local" class="form-control" />
-                <span asp-validation-for="DueAtUtc" class="text-danger"></span>
-            </div>
-            <div class="col-12">
+
+            <section class="admin-form-section">
+                <h2 class="admin-form-section-title">@T.T("OrderInvoiceLinksSection")</h2>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="BusinessId" class="form-label"></label>
+                        <field-help title="@T.T("Business")" content="@T.T("OrderInvoiceBusinessHelp")" placement="right"></field-help>
+                        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CustomerId" class="form-label"></label>
+                        <field-help title="@T.T("Customer")" content="@T.T("OrderInvoiceCustomerHelp")" placement="right"></field-help>
+                        <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="PaymentId" class="form-label"></label>
+                        <field-help title="@T.T("Payment")" content="@T.T("OrderInvoicePaymentHelp")" placement="right"></field-help>
+                        <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="DueAtUtc" class="form-label"></label>
+                        <field-help title="@T.T("DueAtUtc")" content="@T.T("OrderInvoiceDueAtUtcHelp")" placement="right"></field-help>
+                        <input asp-for="DueAtUtc" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="DueAtUtc" class="text-danger"></span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="d-flex gap-2">
                 <a asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@OrderDetailsUrl(Model.OrderId)" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
                 <button type="submit" class="btn btn-primary">@T.T("CreateInvoice")</button>
             </div>

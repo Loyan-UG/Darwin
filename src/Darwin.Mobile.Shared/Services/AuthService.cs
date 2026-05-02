@@ -211,19 +211,47 @@ public sealed class AuthService : IAuthService, IDisposable
     /// <inheritdoc />
     public async Task LogoutAsync(CancellationToken ct)
     {
-        ct.ThrowIfCancellationRequested();
-
         var (rt, _) = await _store.GetRefreshAsync().ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(rt))
+
+        try
         {
-            _ = await _api.PostAsync<LogoutRequest, object?>(
-                ApiRoutes.Auth.Logout,
-                new LogoutRequest { RefreshToken = rt! },
-                ct).ConfigureAwait(false);
+            ct.ThrowIfCancellationRequested();
+
+            if (!string.IsNullOrWhiteSpace(rt))
+            {
+                _ = await _api.PostAsync<LogoutRequest, object?>(
+                    ApiRoutes.Auth.Logout,
+                    new LogoutRequest { RefreshToken = rt! },
+                    ct).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Local logout must still complete when remote revoke exceeds the user-facing logout budget.
+        }
+        catch
+        {
+            // Remote revoke is best-effort; clearing local credentials is the security-critical step.
         }
 
-        await _store.ClearAsync().ConfigureAwait(false);
-        await _cache.ClearAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await _store.ClearAsync().ConfigureAwait(false);
+        }
+        catch
+        {
+            // SecureStorage cleanup failures should not keep the in-memory client authenticated.
+        }
+
+        try
+        {
+            await _cache.ClearAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Cache cleanup is best-effort during logout; stale cache entries are scoped and overwritten on next login.
+        }
+
         _api.SetBearerToken(null);
     }
 
@@ -457,7 +485,8 @@ public sealed class AuthService : IAuthService, IDisposable
                 return false;
             }
 
-            _api.SetBearerToken(accessToken);
+            // Keep the client bound to the latest still-valid access token after a non-definitive refresh failure.
+            _api.SetBearerToken(currentAccessToken);
             return true;
         }
 

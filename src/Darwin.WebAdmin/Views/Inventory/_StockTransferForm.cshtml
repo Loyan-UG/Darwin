@@ -1,35 +1,63 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockTransferEditVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
-<div class="row g-3">
-    <div class="col-md-4"><label asp-for="FromWarehouseId" class="form-label"></label><select asp-for="FromWarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select></div>
-    <div class="col-md-4"><label asp-for="ToWarehouseId" class="form-label"></label><select asp-for="ToWarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select></div>
-    <div class="col-md-4"><label asp-for="Status" class="form-label"></label><input asp-for="Status" class="form-control" /></div>
-</div>
-
-<div class="d-flex justify-content-between align-items-center mt-4">
-    <h3 class="mb-0">@T.T("TransferLines")</h3>
-    <button type="button" class="btn btn-outline-secondary btn-sm" id="addTransferLine" data-dynamic-lines-add data-dynamic-lines-container="#transferLines" data-dynamic-lines-template="#transferLineTemplate">@T.T("AddLine")</button>
-</div>
-
-<div id="transferLines" class="mt-3">
-@for (var i = 0; i < Model.Lines.Count; i++)
-{
-    <div class="card mb-3 line-row"><div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-8"><label asp-for="Lines[i].ProductVariantId" class="form-label"></label><select asp-for="Lines[i].ProductVariantId" asp-items="Model.VariantOptions" class="form-select"></select></div>
-            <div class="col-md-4"><label asp-for="Lines[i].Quantity" class="form-label"></label><input asp-for="Lines[i].Quantity" class="form-control" /></div>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("InventoryStockTransferRouteSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="FromWarehouseId" class="form-label"></label>
+            <field-help title="@T.T("FromWarehouse")" content="@T.T("InventoryStockTransferFromWarehouseHelp")" placement="right"></field-help>
+            <select asp-for="FromWarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
         </div>
-        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line" data-dynamic-lines-remove>@T.T("Remove")</button></div>
-    </div></div>
-}
-</div>
+        <div class="col-md-4">
+            <label asp-for="ToWarehouseId" class="form-label"></label>
+            <field-help title="@T.T("ToWarehouse")" content="@T.T("InventoryStockTransferToWarehouseHelp")" placement="right"></field-help>
+            <select asp-for="ToWarehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Status" class="form-label"></label>
+            <field-help title="@T.T("Status")" content="@T.T("InventoryStockTransferStatusHelp")" placement="right"></field-help>
+            <input asp-for="Status" class="form-control" />
+        </div>
+    </div>
+</section>
+
+<section class="admin-form-section">
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="d-flex align-items-center gap-2">
+            <h3 class="mb-0">@T.T("TransferLines")</h3>
+            <field-help title="@T.T("TransferLines")" content="@T.T("InventoryStockTransferLinesHelp")" placement="right"></field-help>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="addTransferLine" data-dynamic-lines-add data-dynamic-lines-container="#transferLines" data-dynamic-lines-template="#transferLineTemplate">@T.T("AddLine")</button>
+    </div>
+
+    <div id="transferLines" class="mt-3">
+    @for (var i = 0; i < Model.Lines.Count; i++)
+    {
+        <div class="card mb-3 line-row"><div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label asp-for="Lines[i].ProductVariantId" class="form-label"></label>
+                    <field-help title="@T.T("ProductVariant")" content="@T.T("InventoryStockTransferLineVariantHelp")" placement="right"></field-help>
+                    <select asp-for="Lines[i].ProductVariantId" asp-items="Model.VariantOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Lines[i].Quantity" class="form-label"></label>
+                    <field-help title="@T.T("Quantity")" content="@T.T("InventoryStockTransferLineQuantityHelp")" placement="right"></field-help>
+                    <input asp-for="Lines[i].Quantity" class="form-control" />
+                </div>
+            </div>
+            <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line" data-dynamic-lines-remove>@T.T("Remove")</button></div>
+        </div></div>
+    }
+    </div>
+</section>
 
 <template id="transferLineTemplate">
     <div class="card mb-3 line-row"><div class="card-body">
         <div class="row g-3">
-            <div class="col-md-8"><label class="form-label">@T.T("ProductVariant")</label><select class="form-select" name="Lines[__index__].ProductVariantId">@foreach (var option in Model.VariantOptions){<option value="@option.Value">@option.Text</option>}</select></div>
-            <div class="col-md-4"><label class="form-label">@T.T("Quantity")</label><input class="form-control" name="Lines[__index__].Quantity" value="1" /></div>
+            <div class="col-md-8"><label class="form-label">@T.T("ProductVariant")</label><field-help title="@T.T("ProductVariant")" content="@T.T("InventoryStockTransferLineVariantHelp")" placement="right"></field-help><select class="form-select" name="Lines[__index__].ProductVariantId">@foreach (var option in Model.VariantOptions){<option value="@option.Value">@option.Text</option>}</select></div>
+            <div class="col-md-4"><label class="form-label">@T.T("Quantity")</label><field-help title="@T.T("Quantity")" content="@T.T("InventoryStockTransferLineQuantityHelp")" placement="right"></field-help><input class="form-control" name="Lines[__index__].Quantity" value="1" /></div>
         </div>
         <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line" data-dynamic-lines-remove>@T.T("Remove")</button></div>
     </div></div>

@@ -86,7 +86,7 @@ namespace Darwin.WebAdmin.Extensions
         {
             var cookieSecurePolicy = ResolveCookieSecurePolicy(config);
 
-            services.AddScoped<IClock, SystemClock>();
+            services.AddSingleton<IClock, SystemClock>();
 
             // Identity handlers required for Auth flows
             services.AddScoped<SignInHandler>();

@@ -19,6 +19,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class ForgotPasswordViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+    private CancellationTokenSource? _operationCancellation;
     private string _email = string.Empty;
     private string? _successMessage;
 
@@ -75,6 +76,16 @@ public sealed class ForgotPasswordViewModel : BaseViewModel
 
     public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
 
+    /// <summary>
+    /// Cancels any in-flight reset-link request when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
     private async Task SendResetLinkAsync()
     {
         if (IsBusy)
@@ -82,40 +93,87 @@ public sealed class ForgotPasswordViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        SuccessMessage = null;
-        RaiseReadinessChanged();
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            SuccessMessage = null;
+            RaiseReadinessChanged();
+            SendResetLinkCommand.RaiseCanExecuteChanged();
+        });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             if (string.IsNullOrWhiteSpace(Email))
             {
-                ErrorMessage = AppResources.EmailRequired;
+                RunOnMain(() => ErrorMessage = AppResources.EmailRequired);
                 return;
             }
 
             var normalizedEmail = Email.Trim();
-            var requested = await _authService.RequestPasswordResetAsync(normalizedEmail, CancellationToken.None);
+            var requested = await _authService.RequestPasswordResetAsync(normalizedEmail, operationCancellation.Token);
 
             if (!requested)
             {
-                ErrorMessage = AppResources.ForgotPasswordFailed;
+                RunOnMain(() => ErrorMessage = AppResources.ForgotPasswordFailed);
                 return;
             }
 
-            SuccessMessage = AppResources.ForgotPasswordSuccess;
+            RunOnMain(() => SuccessMessage = AppResources.ForgotPasswordSuccess);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the reset request screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
-            ErrorMessage = ResolveFriendlyError(ex);
+            RunOnMain(() => ErrorMessage = ResolveFriendlyError(ex));
         }
         finally
         {
-            IsBusy = false;
-            RaiseReadinessChanged();
-            SendResetLinkCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseReadinessChanged();
+                SendResetLinkCommand.RaiseCanExecuteChanged();
+            });
+            EndCurrentOperation(operationCancellation);
         }
+    }
+
+    /// <summary>
+    /// Starts a cancellable password-reset request and cancels any stale request still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active password-reset request without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed password-reset request when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
     }
 
     /// <summary>

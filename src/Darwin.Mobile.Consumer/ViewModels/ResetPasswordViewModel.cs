@@ -15,6 +15,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class ResetPasswordViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+    private CancellationTokenSource? _operationCancellation;
 
     private string _email = string.Empty;
     private string _token = string.Empty;
@@ -72,6 +73,16 @@ public sealed class ResetPasswordViewModel : BaseViewModel
     public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
 
     /// <summary>
+    /// Cancels any in-flight password reset completion when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
     /// Applies prefilled handoff values from earlier auth-recovery steps without overwriting
     /// fields the user has already changed on the reset page.
     /// </summary>
@@ -95,39 +106,44 @@ public sealed class ResetPasswordViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        SuccessMessage = null;
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            SuccessMessage = null;
+            ResetPasswordCommand.RaiseCanExecuteChanged();
+        });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             if (string.IsNullOrWhiteSpace(Email))
             {
-                ErrorMessage = AppResources.EmailRequired;
+                RunOnMain(() => ErrorMessage = AppResources.EmailRequired);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(Token))
             {
-                ErrorMessage = AppResources.ResetPasswordTokenRequired;
+                RunOnMain(() => ErrorMessage = AppResources.ResetPasswordTokenRequired);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(NewPassword))
             {
-                ErrorMessage = AppResources.PasswordRequired;
+                RunOnMain(() => ErrorMessage = AppResources.PasswordRequired);
                 return;
             }
 
             if (NewPassword.Length < 8)
             {
-                ErrorMessage = AppResources.PasswordMinLength;
+                RunOnMain(() => ErrorMessage = AppResources.PasswordMinLength);
                 return;
             }
 
             if (!string.Equals(NewPassword, ConfirmNewPassword, StringComparison.Ordinal))
             {
-                ErrorMessage = AppResources.PasswordMismatch;
+                RunOnMain(() => ErrorMessage = AppResources.PasswordMismatch);
                 return;
             }
 
@@ -135,29 +151,74 @@ public sealed class ResetPasswordViewModel : BaseViewModel
                 Email.Trim(),
                 Token.Trim(),
                 NewPassword,
-                CancellationToken.None);
+                operationCancellation.Token);
 
             if (!success)
             {
-                ErrorMessage = AppResources.ResetPasswordFailed;
+                RunOnMain(() => ErrorMessage = AppResources.ResetPasswordFailed);
                 return;
             }
 
-            SuccessMessage = AppResources.ResetPasswordSuccess;
+            RunOnMain(() =>
+            {
+                SuccessMessage = AppResources.ResetPasswordSuccess;
 
-            // Security hygiene: clear secrets from memory-backed UI bindings after success.
-            Token = string.Empty;
-            NewPassword = string.Empty;
-            ConfirmNewPassword = string.Empty;
+                // Security hygiene: clear secrets from memory-backed UI bindings after success.
+                Token = string.Empty;
+                NewPassword = string.Empty;
+                ConfirmNewPassword = string.Empty;
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the reset completion screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
-            ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ResetPasswordFailed);
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ResetPasswordFailed));
         }
         finally
         {
-            IsBusy = false;
-            ResetPasswordCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                ResetPasswordCommand.RaiseCanExecuteChanged();
+            });
+            EndCurrentOperation(operationCancellation);
         }
+    }
+
+    /// <summary>
+    /// Starts a cancellable password reset completion and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active password reset completion without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed password reset completion when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
     }
 }

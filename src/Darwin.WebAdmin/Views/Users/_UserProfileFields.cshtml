@@ -3,39 +3,42 @@
 
 <div class="col-md-6">
     <label asp-for="FirstName" class="form-label"></label>
+    <field-help title="@T.T("FirstName")" content="@T.T("UserFirstNameHelp")" placement="right"></field-help>
     <input asp-for="FirstName" class="form-control" />
     <span asp-validation-for="FirstName" class="text-danger"></span>
 </div>
 
 <div class="col-md-6">
     <label asp-for="LastName" class="form-label"></label>
+    <field-help title="@T.T("LastName")" content="@T.T("UserLastNameHelp")" placement="right"></field-help>
     <input asp-for="LastName" class="form-control" />
     <span asp-validation-for="LastName" class="text-danger"></span>
 </div>
 
 <div class="col-md-4">
     <label asp-for="Locale" class="form-label"></label>
-    <field-help for="Locale" text="@T.T("UserLocaleHelp")"></field-help>
+    <field-help title="@T.T("Locale")" content="@T.T("UserLocaleHelp")" placement="right"></field-help>
     <setting-select asp-for="Locale" setting="SupportedCulturesCsv"></setting-select>
     <span asp-validation-for="Locale" class="text-danger"></span>
 </div>
 
 <div class="col-md-4">
     <label asp-for="Currency" class="form-label"></label>
-    <field-help for="Currency" text="@T.T("UserCurrencyHelp")"></field-help>
+    <field-help title="@T.T("Currency")" content="@T.T("UserCurrencyHelp")" placement="right"></field-help>
     <setting-select asp-for="Currency" setting="SupportedCurrenciesCsv"></setting-select>
     <span asp-validation-for="Currency" class="text-danger"></span>
 </div>
 
 <div class="col-md-4">
     <label asp-for="Timezone" class="form-label"></label>
-    <field-help for="Timezone" text="@T.T("UserTimezoneHelp")"></field-help>
+    <field-help title="@T.T("TimeZone")" content="@T.T("UserTimezoneHelp")" placement="right"></field-help>
     <setting-select asp-for="Timezone" setting="SupportedTimezonesCsv"></setting-select>
     <span asp-validation-for="Timezone" class="text-danger"></span>
 </div>
 
 <div class="col-md-6">
     <label asp-for="PhoneE164" class="form-label"></label>
+    <field-help title="@T.T("Phone")" content="@T.T("UserPhoneE164Help")" placement="right"></field-help>
     <input asp-for="PhoneE164" class="form-control" />
     <span asp-validation-for="PhoneE164" class="text-danger"></span>
 </div>

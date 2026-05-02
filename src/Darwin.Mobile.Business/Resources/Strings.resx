@@ -112,6 +112,9 @@
   <data name="LoginAccountLocked" xml:space="preserve">
     <value>Your account is currently locked. Please contact support.</value>
   </data>
+  <data name="SessionExpiredReLogin" xml:space="preserve">
+    <value>Your session has expired. Please sign in again.</value>
+  </data>
   <data name="RequestActivationEmailButton" xml:space="preserve">
     <value>Send activation email</value>
   </data>
@@ -645,6 +648,12 @@
   </data>
   <data name="DashboardRecentActivityTitle" xml:space="preserve">
     <value>Recent activity</value>
+  </data>
+  <data name="DashboardActivityMixTitle" xml:space="preserve">
+    <value>Activity mix</value>
+  </data>
+  <data name="DashboardLookbackDaysShortFormat" xml:space="preserve">
+    <value>{0}d</value>
   </data>
   <data name="DashboardRecentActivityEmpty" xml:space="preserve">
     <value>No recent activity was recorded yet.</value>

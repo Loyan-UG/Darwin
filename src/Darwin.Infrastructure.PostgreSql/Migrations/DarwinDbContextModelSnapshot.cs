@@ -4348,6 +4348,9 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = FALSE");
 
+                    b.HasIndex("Purpose", "UsedAtUtc", "ExpiresAtUtc")
+                        .HasDatabaseName("IX_UserTokens_Purpose_UsedAtUtc_ExpiresAtUtc");
+
                     b.ToTable("UserTokens", "Identity");
                 });
 

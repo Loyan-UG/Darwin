@@ -8,69 +8,89 @@
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
 <div class="card mb-3">
-    <div class="card-body row g-3">
-        <div class="col-md-6">
-            <label asp-for="Name" class="form-label"></label>
-            <input asp-for="Name" class="form-control" />
-            <span asp-validation-for="Name" class="text-danger"></span>
-        </div>
+    <div class="card-body">
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("AddOnGroupIdentity")</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label"></label>
+                    <field-help title="@T.T("Name")" content="@T.T("AddOnGroupNameHelp")" placement="right"></field-help>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
 
-        @if (Model.Translations.Count > 0)
-        {
-            <div class="col-12">
-                <div class="border rounded p-2">
-                    <div class="fw-semibold mb-2">@T.T("Translations")</div>
-                    <div class="row g-2">
-                        @for (var i = 0; i < Model.Translations.Count; i++)
-                        {
-                            <div class="col-md-6">
-                                <input type="hidden" name="Translations[@i].Culture" value="@Model.Translations[i].Culture" />
-                                <label class="form-label">@Model.Translations[i].Culture</label>
-                                <input class="form-control" name="Translations[@i].Name" value="@Model.Translations[i].Name" />
+                @if (Model.Translations.Count > 0)
+                {
+                    <div class="col-12">
+                        <div class="border rounded p-3">
+                            <div class="fw-semibold mb-2">
+                                @T.T("Translations")
+                                <field-help title="@T.T("Translations")" content="@T.T("AddOnGroupTranslationsHelp")" placement="right"></field-help>
                             </div>
-                        }
+                            <div class="row g-2">
+                                @for (var i = 0; i < Model.Translations.Count; i++)
+                                {
+                                    <div class="col-md-6">
+                                        <input type="hidden" name="Translations[@i].Culture" value="@Model.Translations[i].Culture" />
+                                        <label class="form-label">@Model.Translations[i].Culture</label>
+                                        <input class="form-control" name="Translations[@i].Name" value="@Model.Translations[i].Name" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("AddOnSelectionPricing")</h2>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label asp-for="Currency" class="form-label"></label>
+                    <field-help title="@T.T("Currency")" content="@T.T("AddOnGroupCurrencyHelp")" placement="right"></field-help>
+                    <input asp-for="Currency" class="form-control" maxlength="3" data-addon-currency-uppercase />
+                    <span asp-validation-for="Currency" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="SelectionMode" class="form-label"></label>
+                    <field-help title="@T.T("SelectionMode")" content="@T.T("AddOnGroupSelectionModeHelp")" placement="right"></field-help>
+                    <select asp-for="SelectionMode" class="form-select" asp-items="selectionModeOptions"></select>
+                    <span asp-validation-for="SelectionMode" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="MinSelections" class="form-label"></label>
+                    <field-help title="@T.T("MinSelections")" content="@T.T("AddOnGroupMinSelectionsHelp")" placement="right"></field-help>
+                    <input asp-for="MinSelections" class="form-control" />
+                    <span asp-validation-for="MinSelections" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="MaxSelections" class="form-label"></label>
+                    <field-help title="@T.T("MaxSelections")" content="@T.T("AddOnGroupMaxSelectionsHelp")" placement="right"></field-help>
+                    <input asp-for="MaxSelections" class="form-control" />
+                    <span asp-validation-for="MaxSelections" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check mt-4 pt-2">
+                        <input asp-for="IsGlobal" class="form-check-input" />
+                        <label asp-for="IsGlobal" class="form-check-label"></label>
+                        <field-help title="@T.T("IsGlobal")" content="@T.T("AddOnGroupIsGlobalHelp")" placement="right"></field-help>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check mt-4 pt-2">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label"></label>
+                        <field-help title="@T.T("Active")" content="@T.T("AddOnGroupActiveHelp")" placement="right"></field-help>
                     </div>
                 </div>
             </div>
-        }
-
-        <div class="col-md-3">
-            <label asp-for="Currency" class="form-label"></label>
-            <input asp-for="Currency" class="form-control" maxlength="3" data-addon-currency-uppercase />
-            <span asp-validation-for="Currency" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-3">
-            <label asp-for="SelectionMode" class="form-label"></label>
-            <select asp-for="SelectionMode" class="form-select" asp-items="selectionModeOptions"></select>
-            <span asp-validation-for="SelectionMode" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-3">
-            <label asp-for="MinSelections" class="form-label"></label>
-            <input asp-for="MinSelections" class="form-control" />
-            <span asp-validation-for="MinSelections" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-3">
-            <label asp-for="MaxSelections" class="form-label"></label>
-            <input asp-for="MaxSelections" class="form-control" />
-            <span asp-validation-for="MaxSelections" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-3">
-            <div class="form-check mt-4 pt-2">
-                <input asp-for="IsGlobal" class="form-check-input" />
-                <label asp-for="IsGlobal" class="form-check-label"></label>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="form-check mt-4 pt-2">
-                <input asp-for="IsActive" class="form-check-input" />
-                <label asp-for="IsActive" class="form-check-label"></label>
-            </div>
-        </div>
+        </section>
     </div>
 </div>
 

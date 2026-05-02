@@ -2,7 +2,9 @@
 <?xaml-comp compile="true" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit">
 
     <!--
         Shared visual language:
@@ -14,6 +16,16 @@
     <!-- Page defaults -->
     <Style TargetType="ContentPage">
         <Setter Property="BackgroundColor" Value="{StaticResource BrushBackground}" />
+    </Style>
+
+    <Style x:Key="SyncfusionOutlinedInputLayoutStyle" TargetType="inputLayout:SfTextInputLayout">
+        <Setter Property="ContainerType" Value="Outlined" />
+        <Setter Property="Stroke" Value="{StaticResource Neutral100}" />
+        <Setter Property="ContainerBackground" Value="{StaticResource Neutral0}" />
+        <Setter Property="OutlineCornerRadius" Value="8" />
+        <Setter Property="FocusedStrokeThickness" Value="2" />
+        <Setter Property="UnfocusedStrokeThickness" Value="1" />
+        <Setter Property="InputViewPadding" Value="14,6" />
     </Style>
 
     <!-- Buttons -->
@@ -61,6 +73,33 @@
     </Style>
 
     <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}" />
+
+    <Style x:Key="SyncfusionPrimaryButtonStyle" TargetType="buttons:SfButton">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="{StaticResource BrandGold500}" Offset="0" />
+                    <GradientStop Color="{StaticResource BrandGold300}" Offset="1" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="TextColor" Value="{StaticResource Neutral0}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="StrokeThickness" Value="0" />
+    </Style>
+
+    <Style x:Key="SyncfusionOutlinedButtonStyle" TargetType="buttons:SfButton">
+        <Setter Property="Background" Value="{StaticResource BrushSurface}" />
+        <Setter Property="TextColor" Value="{StaticResource Neutral900}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="StrokeThickness" Value="1" />
+    </Style>
 
     <Style x:Key="OutlinedButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
         <Setter Property="Padding" Value="16,12" />
@@ -256,6 +295,26 @@
         <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
         <Setter Property="PlaceholderColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
         <Setter Property="AutoSize" Value="TextChanges" />
+    </Style>
+
+    <Style TargetType="Picker">
+        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
+        <Setter Property="TitleColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
+    </Style>
+
+    <Style TargetType="SearchBar">
+        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
+        <Setter Property="CancelButtonColor" Value="{StaticResource BrandGold600}" />
+    </Style>
+
+    <Style TargetType="Switch">
+        <Setter Property="OnColor" Value="{StaticResource BrandGold500}" />
+        <Setter Property="ThumbColor" Value="{StaticResource Neutral0}" />
+    </Style>
+
+    <Style TargetType="CheckBox">
+        <Setter Property="Color" Value="{StaticResource BrandGold500}" />
     </Style>
 
     <Style x:Key="ErrorLabelStyle" TargetType="Label">

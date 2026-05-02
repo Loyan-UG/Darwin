@@ -2,19 +2,26 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     x:Class="Darwin.Mobile.Consumer.Views.MemberCommercePage"
     x:DataType="vm:MemberCommerceViewModel"
     Title="{x:Static res:AppResources.MemberCommerceTitle}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+    <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                   IsRefreshing="{Binding IsBusy}"
+                                   ProgressColor="{StaticResource BrandGold500}"
+                                   ProgressBackground="{StaticResource Neutral0}">
+        <pullToRefresh:SfPullToRefresh.PullableContent>
+            <ScrollView>
+                <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.MemberCommerceTitle}" Style="{StaticResource TitleLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.MemberCommerceSubtitle}" Style="{StaticResource SecondaryBodyLabelStyle}" />
-                    <Button Text="{x:Static res:AppResources.MemberCommerceRefreshButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.MemberCommerceRefreshButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
                     <Label Text="{Binding SuccessMessage}" Style="{StaticResource SuccessLabelStyle}" IsVisible="{Binding HasSuccess}" />
                     <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
                 </VerticalStackLayout>
@@ -33,7 +40,7 @@
                                         <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
-                                        <Button Text="{x:Static res:AppResources.MemberCommerceViewOrderButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewOrderCommand}" CommandParameter="{Binding .}" />
+                                        <buttons:SfButton Text="{x:Static res:AppResources.MemberCommerceViewOrderButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewOrderCommand}" CommandParameter="{Binding .}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -59,7 +66,7 @@
                                                 <Label Text="{Binding TrackingText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasTrackingText}" />
                                                 <Label Text="{Binding ShippedAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasShippedAt}" />
                                                 <Label Text="{Binding DeliveredAtText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasDeliveredAt}" />
-                                                <Button Text="{x:Static res:AppResources.MemberCommerceOpenTrackingButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenOrderShipmentTrackingCommand}" CommandParameter="{Binding .}" IsVisible="{Binding HasTrackingLink}" />
+                                                <buttons:SfButton Text="{x:Static res:AppResources.MemberCommerceOpenTrackingButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenOrderShipmentTrackingCommand}" CommandParameter="{Binding .}" IsVisible="{Binding HasTrackingLink}" />
                                             </VerticalStackLayout>
                                         </Border>
                                     </DataTemplate>
@@ -73,8 +80,8 @@
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                <Button Grid.Column="0" Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RetryOrderPaymentCommand}" IsVisible="{Binding SelectedOrder.CanRetryPayment}" />
-                                <Button Grid.Column="1" Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding CopyOrderDocumentCommand}" IsVisible="{Binding SelectedOrder.HasDocument}" />
+                                <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding RetryOrderPaymentCommand}" IsVisible="{Binding SelectedOrder.CanRetryPayment}" />
+                                <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding CopyOrderDocumentCommand}" IsVisible="{Binding SelectedOrder.HasDocument}" />
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
@@ -96,7 +103,7 @@
                                         <Label Text="{Binding DueDateText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding TotalText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                         <Label Text="{Binding BalanceText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
-                                        <Button Text="{x:Static res:AppResources.MemberCommerceViewInvoiceButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewInvoiceCommand}" CommandParameter="{Binding .}" />
+                                        <buttons:SfButton Text="{x:Static res:AppResources.MemberCommerceViewInvoiceButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewInvoiceCommand}" CommandParameter="{Binding .}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>
@@ -119,8 +126,8 @@
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                <Button Grid.Column="0" Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RetryInvoicePaymentCommand}" IsVisible="{Binding SelectedInvoice.CanRetryPayment}" />
-                                <Button Grid.Column="1" Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding CopyInvoiceDocumentCommand}" IsVisible="{Binding SelectedInvoice.HasDocument}" />
+                                <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding RetryInvoicePaymentCommand}" IsVisible="{Binding SelectedInvoice.CanRetryPayment}" />
+                                <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding CopyInvoiceDocumentCommand}" IsVisible="{Binding SelectedInvoice.HasDocument}" />
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
@@ -128,6 +135,8 @@
             </Border>
 
             <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
-        </VerticalStackLayout>
-    </ScrollView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </pullToRefresh:SfPullToRefresh.PullableContent>
+    </pullToRefresh:SfPullToRefresh>
 </ContentPage>

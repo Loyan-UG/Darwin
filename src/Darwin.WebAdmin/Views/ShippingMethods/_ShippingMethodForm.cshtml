@@ -154,38 +154,52 @@
 <div class="card mb-4">
     <div class="card-header">@T.T("MethodDetails")</div>
     <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="Carrier" class="form-label"></label>
-                <input asp-for="Carrier" class="form-control" />
-                <span asp-validation-for="Carrier" class="text-danger"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="Service" class="form-label"></label>
-                <input asp-for="Service" class="form-control" />
-                <span asp-validation-for="Service" class="text-danger"></span>
-            </div>
-            <div class="col-md-6">
-                <label asp-for="CountriesCsv" class="form-label">@T.T("CountriesCsv")</label>
-                <input asp-for="CountriesCsv" class="form-control" placeholder="@T.T("ShippingMethodCountriesPlaceholder")" />
-                <div class="form-text">@T.T("LeaveCountriesEmpty")</div>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="Currency" class="form-label"></label>
-                <input asp-for="Currency" class="form-control" placeholder="@T.T("ShippingMethodCurrencyPlaceholder")" maxlength="3" />
-            </div>
-            <div class="col-md-3 d-flex align-items-center">
-                <div class="form-check mt-4">
-                    <input asp-for="IsActive" class="form-check-input" />
-                    <label asp-for="IsActive" class="form-check-label"></label>
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("ShippingMethodCarrierService")</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label"></label>
+                    <field-help title="@T.T("Name")" content="@T.T("ShippingMethodNameHelp")" placement="right"></field-help>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Carrier" class="form-label"></label>
+                    <field-help title="@T.T("Carrier")" content="@T.T("ShippingMethodCarrierHelp")" placement="right"></field-help>
+                    <input asp-for="Carrier" class="form-control" />
+                    <span asp-validation-for="Carrier" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Service" class="form-label"></label>
+                    <field-help title="@T.T("Service")" content="@T.T("ShippingMethodServiceHelp")" placement="right"></field-help>
+                    <input asp-for="Service" class="form-control" />
+                    <span asp-validation-for="Service" class="text-danger"></span>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("ShippingMethodCoverageStatus")</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="CountriesCsv" class="form-label">@T.T("CountriesCsv")</label>
+                    <field-help title="@T.T("CountriesCsv")" content="@T.T("ShippingMethodCountriesHelp")" placement="right"></field-help>
+                    <input asp-for="CountriesCsv" class="form-control" placeholder="@T.T("ShippingMethodCountriesPlaceholder")" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Currency" class="form-label"></label>
+                    <field-help title="@T.T("Currency")" content="@T.T("ShippingMethodCurrencyHelp")" placement="right"></field-help>
+                    <input asp-for="Currency" class="form-control" placeholder="@T.T("ShippingMethodCurrencyPlaceholder")" maxlength="3" />
+                </div>
+                <div class="col-md-3 d-flex align-items-center">
+                    <div class="form-check mt-4">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label"></label>
+                        <field-help title="@T.T("Active")" content="@T.T("ShippingMethodActiveHelp")" placement="right"></field-help>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
 
@@ -213,11 +227,11 @@
             <table class="table table-sm align-middle" id="shipping-rates-table">
                 <thead>
                     <tr>
-                        <th>@T.T("MaxMass")</th>
-                        <th>@T.T("MaxSubtotalNet")</th>
-                        <th>@T.T("PriceMinor")</th>
-                    <th class="admin-w-80">@T.T("Sort")</th>
-                    <th class="admin-w-80"></th>
+                        <th>@T.T("MaxMass") <field-help title="@T.T("MaxMass")" content="@T.T("ShippingRateMaxMassHelp")" placement="right"></field-help></th>
+                        <th>@T.T("MaxSubtotalNet") <field-help title="@T.T("MaxSubtotalNet")" content="@T.T("ShippingRateMaxSubtotalHelp")" placement="right"></field-help></th>
+                        <th>@T.T("PriceMinor") <field-help title="@T.T("PriceMinor")" content="@T.T("ShippingRatePriceMinorHelp")" placement="right"></field-help></th>
+                        <th class="admin-w-80">@T.T("Sort") <field-help title="@T.T("Sort")" content="@T.T("ShippingRateSortHelp")" placement="right"></field-help></th>
+                        <th class="admin-w-80"></th>
                     </tr>
                 </thead>
                 <tbody id="shipping-rate-rows">

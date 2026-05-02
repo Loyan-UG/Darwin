@@ -2,6 +2,7 @@ using Darwin.Mobile.Consumer.Constants;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Darwin.Mobile.Consumer.Views;
@@ -11,6 +12,8 @@ namespace Darwin.Mobile.Consumer.Views;
 /// </summary>
 public partial class SettingsPage : ContentPage
 {
+    private int _navigationInProgress;
+
     public SettingsPage()
     {
         InitializeComponent();
@@ -46,27 +49,36 @@ public partial class SettingsPage : ContentPage
         await NavigateSafelyAsync(Routes.AccountDeletion);
     }
 
-    private static Task NavigateSafelyAsync(string route)
+    private Task NavigateSafelyAsync(string route)
     {
         if (string.IsNullOrWhiteSpace(route))
         {
             return Task.CompletedTask;
         }
 
+        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
+        {
+            return Task.CompletedTask;
+        }
+
         return MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            if (Shell.Current is null)
-            {
-                return;
-            }
-
             try
             {
+                if (Shell.Current is null)
+                {
+                    return;
+                }
+
                 await Shell.Current.GoToAsync(route);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Settings navigation to '{route}' failed: {ex}");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _navigationInProgress, 0);
             }
         });
     }

@@ -33,14 +33,22 @@ public sealed class SettingsViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            RaiseCommandStates();
+        });
         try
         {
             await _navigationService.GoToAsync(Routes.ProfileEdit);
         }
         finally
         {
-            IsBusy = false;
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
         }
     }
 
@@ -51,14 +59,31 @@ public sealed class SettingsViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            RaiseCommandStates();
+        });
         try
         {
             await _navigationService.GoToAsync(Routes.ChangePassword);
         }
         finally
         {
-            IsBusy = false;
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
         }
+    }
+
+    /// <summary>
+    /// Updates settings navigation commands after busy-state transitions.
+    /// </summary>
+    private void RaiseCommandStates()
+    {
+        OpenProfileCommand.RaiseCanExecuteChanged();
+        OpenChangePasswordCommand.RaiseCanExecuteChanged();
     }
 }

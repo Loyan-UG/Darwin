@@ -4,13 +4,20 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
     x:Class="Darwin.Mobile.Business.Views.HomePage"
     x:DataType="vm:HomeViewModel"
     Title="{x:Static res:AppResources.HomeTitle}">
 
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout Spacing="14" Padding="20,16,20,24">
+        <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding LoadContextCommand}"
+                                       IsRefreshing="{Binding IsBusy}"
+                                       ProgressColor="{StaticResource BrandGold500}"
+                                       ProgressBackground="{StaticResource Neutral0}">
+            <pullToRefresh:SfPullToRefresh.PullableContent>
+                <ScrollView>
+                    <VerticalStackLayout Spacing="14" Padding="20,16,20,24">
                 <Border Style="{StaticResource CardBorderStyle}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                         <Image Source="loyan_logo.png"
@@ -26,8 +33,8 @@
                 </Border>
 
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                    <Button Grid.Column="0" Text="{x:Static res:AppResources.HomeRefreshContextButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding LoadContextCommand}" />
-                    <Button Grid.Column="1" Text="{x:Static res:AppResources.StartButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ScanCommand}" />
+                    <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.HomeRefreshContextButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding LoadContextCommand}" />
+                    <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.StartButton}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding ScanCommand}" />
                 </Grid>
 
                 <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
@@ -84,10 +91,12 @@
                         <Label Text="{x:Static res:AppResources.HomeTestingHintBody}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                     </VerticalStackLayout>
                 </Border>
-            </VerticalStackLayout>
-        </ScrollView>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </pullToRefresh:SfPullToRefresh.PullableContent>
+        </pullToRefresh:SfPullToRefresh>
 
-        <Grid BackgroundColor="#40FFFFFF" IsVisible="{Binding IsBusy}" InputTransparent="False">
+        <Grid BackgroundColor="{StaticResource BrushBusyOverlay}" IsVisible="{Binding IsBusy}" InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" WidthRequest="280" Spacing="14">
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="12">

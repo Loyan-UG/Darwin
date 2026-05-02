@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Handlers;
 using Microsoft.Maui.Hosting;
+using Syncfusion.Maui.Toolkit.Hosting;
 using ZXing.Net.Maui;
 using UraniumUI;
 using UraniumUI.Icons.FontAwesome;
@@ -17,7 +18,7 @@ using Android.Content.Res;
 namespace Darwin.Mobile.Consumer;
 
 /// <summary>
-/// Configures the MAUI application for the Business project.
+/// Configures the MAUI application for the Consumer project.
 /// </summary>
 public static class MauiProgram
 {
@@ -30,6 +31,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
 
         builder
+            .ConfigureSyncfusionToolkit()
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
             .UseMauiMaps()

@@ -55,10 +55,12 @@
         <div class="row g-3 align-items-end">
             <div class="col-md-5">
                 <label class="form-label" for="flowKey">@T.T("Flow")</label>
+                <field-help title="@T.T("Flow")" content="@T.T("CommunicationTemplatePreviewFlowHelp")" placement="right"></field-help>
                 <select class="form-select" id="flowKey" name="flowKey" asp-items="Model.FlowItems"></select>
             </div>
             <div class="col-md-5">
                 <label class="form-label" for="channel">@T.T("Channel")</label>
+                <field-help title="@T.T("Channel")" content="@T.T("CommunicationTemplatePreviewChannelHelp")" placement="right"></field-help>
                 <select class="form-select" id="channel" name="channel" asp-items="Model.ChannelItems"></select>
             </div>
             <div class="col-md-2">

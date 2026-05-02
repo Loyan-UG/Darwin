@@ -1,26 +1,41 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.WarehouseEditVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <label asp-for="BusinessId" class="form-label"></label>
-        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-    </div>
-    <div class="col-md-8">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="Location" class="form-label"></label>
-        <input asp-for="Location" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="Description" class="form-label"></label>
-        <input asp-for="Description" class="form-control" />
-    </div>
-    <div class="col-12">
-        <div class="form-check">
-            <input asp-for="IsDefault" class="form-check-input" />
-            <label asp-for="IsDefault" class="form-check-label"></label>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("InventoryWarehouseIdentitySection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="BusinessId" class="form-label"></label>
+            <field-help title="@T.T("Business")" content="@T.T("InventoryWarehouseBusinessHelp")" placement="right"></field-help>
+            <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Name" class="form-label"></label>
+            <field-help title="@T.T("Name")" content="@T.T("InventoryWarehouseNameHelp")" placement="right"></field-help>
+            <input asp-for="Name" class="form-control" />
         </div>
     </div>
-</div>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("InventoryWarehouseOperationsSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Location" class="form-label"></label>
+            <field-help title="@T.T("Location")" content="@T.T("InventoryWarehouseLocationHelp")" placement="right"></field-help>
+            <input asp-for="Location" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Description" class="form-label"></label>
+            <field-help title="@T.T("Description")" content="@T.T("InventoryWarehouseDescriptionHelp")" placement="right"></field-help>
+            <input asp-for="Description" class="form-control" />
+        </div>
+        <div class="col-12">
+            <div class="form-check">
+                <input asp-for="IsDefault" class="form-check-input" />
+                <label asp-for="IsDefault" class="form-check-label"></label>
+                <field-help title="@T.T("IsDefault")" content="@T.T("InventoryWarehouseIsDefaultHelp")" placement="right"></field-help>
+            </div>
+        </div>
+    </div>
+</section>

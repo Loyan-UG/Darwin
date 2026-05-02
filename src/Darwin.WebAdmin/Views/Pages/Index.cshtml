@@ -48,19 +48,11 @@
     </div>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">@T.T("Draft")</div><div class="display-6 fw-semibold">@Model.Summary.DraftCount</div></div></div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">@T.T("Published")</div><div class="display-6 fw-semibold">@Model.Summary.PublishedCount</div></div></div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">@T.T("Windowed")</div><div class="display-6 fw-semibold">@Model.Summary.WindowedCount</div></div></div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">@T.T("LiveWindow")</div><div class="display-6 fw-semibold">@Model.Summary.LiveWindowCount</div></div></div>
-    </div>
+<div class="admin-kpi-row mb-3">
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("Draft") <field-help title="@T.T("Draft")" content="@T.T("Draft")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.Summary.DraftCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("Published") <field-help title="@T.T("Published")" content="@T.T("Published")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.Summary.PublishedCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("Windowed") <field-help title="@T.T("Windowed")" content="@T.T("Windowed")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.Summary.WindowedCount</div></div>
+    <div class="admin-kpi-item"><div class="text-muted small">@T.T("LiveWindow") <field-help title="@T.T("LiveWindow")" content="@T.T("LiveWindow")" placement="right"></field-help></div><div class="fs-4 fw-semibold">@Model.Summary.LiveWindowCount</div></div>
 </div>
 
 <div class="card shadow-sm mb-3">
@@ -83,9 +75,9 @@
     </div>
 </div>
 
-<div class="card shadow-sm mb-3">
-    <div class="card-header bg-light fw-semibold">@T.T("ContentOperationsPlaybooks")</div>
-    <div class="card-body p-0">
+<details class="admin-playbook mb-3">
+    <summary>@T.T("ContentOperationsPlaybooks")</summary>
+    <div class="admin-playbook-body p-0">
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
                 <thead class="table-light">
@@ -108,7 +100,7 @@
             </table>
         </div>
     </div>
-</div>
+</details>
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">

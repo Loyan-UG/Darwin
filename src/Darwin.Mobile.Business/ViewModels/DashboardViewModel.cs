@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Business.Services.Reporting;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.ViewModels;
@@ -24,13 +25,26 @@ namespace Darwin.Mobile.Business.ViewModels;
 /// </summary>
 public sealed class DashboardViewModel : BaseViewModel
 {
+    private const string DashboardExportFilePrefix = "business-dashboard-";
+    private const int MaxDisplayedTopCustomers = 10;
+    private const int MaxDisplayedRecentActivities = 25;
+
+    public sealed class DashboardChartPoint
+    {
+        public required string Label { get; init; }
+
+        public required int Value { get; init; }
+    }
+
     private readonly IBusinessActivityTracker _activityTracker;
     private readonly IBusinessAccessService _businessAccessService;
     private readonly TimeProvider _timeProvider;
+    private BusyOperationScope? _currentOperation;
 
     private bool _loadedOnce;
     private bool _isOperationsAllowed = true;
     private int _lookbackDays = 7;
+    private int _selectedLookbackIndex = 1;
     private BusinessDashboardSnapshot? _lastSnapshot;
 
     private int _totalSessions;
@@ -52,9 +66,14 @@ public sealed class DashboardViewModel : BaseViewModel
         _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
-        TopCustomers = new ObservableCollection<BusinessTopCustomerItem>();
-        RecentActivities = new ObservableCollection<BusinessActivityFeedItem>();
+        TopCustomers = new RangeObservableCollection<BusinessTopCustomerItem>();
+        RecentActivities = new RangeObservableCollection<BusinessActivityFeedItem>();
+        ActivityMix = new RangeObservableCollection<DashboardChartPoint>();
         LookbackDayOptions = new ObservableCollection<int> { 1, 7, 14, 30 };
+        LookbackDayLabels = new ObservableCollection<string>(LookbackDayOptions.Select(static value => string.Format(
+            CultureInfo.CurrentCulture,
+            AppResources.DashboardLookbackDaysShortFormat,
+            value)));
 
         RefreshCommand = new AsyncCommand(LoadAsync, () => !IsBusy && _isOperationsAllowed);
         ExportCsvCommand = new AsyncCommand(ExportCsvAsync, () => !IsBusy && _isOperationsAllowed && _lastSnapshot is not null);
@@ -68,8 +87,32 @@ public sealed class DashboardViewModel : BaseViewModel
         {
             if (SetProperty(ref _lookbackDays, value))
             {
-                _ = LoadAsync();
+                SyncSelectedLookbackIndex(value);
+                _ = LoadLatestLookbackAsync();
             }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the selected dashboard lookback segment index.
+    /// The segmented control binds to an index, while reporting logic remains based on day count.
+    /// </summary>
+    public int SelectedLookbackIndex
+    {
+        get => _selectedLookbackIndex;
+        set
+        {
+            if (!SetProperty(ref _selectedLookbackIndex, value))
+            {
+                return;
+            }
+
+            if ((uint)value >= (uint)LookbackDayOptions.Count)
+            {
+                return;
+            }
+
+            LookbackDays = LookbackDayOptions[value];
         }
     }
 
@@ -164,11 +207,21 @@ public sealed class DashboardViewModel : BaseViewModel
         private set => SetProperty(ref _totalRedeemedPoints, value);
     }
 
-    public ObservableCollection<BusinessTopCustomerItem> TopCustomers { get; }
+    public RangeObservableCollection<BusinessTopCustomerItem> TopCustomers { get; }
 
-    public ObservableCollection<BusinessActivityFeedItem> RecentActivities { get; }
+    public RangeObservableCollection<BusinessActivityFeedItem> RecentActivities { get; }
+
+    /// <summary>
+    /// Gets the accrual/redemption mix used by the dashboard chart.
+    /// </summary>
+    public RangeObservableCollection<DashboardChartPoint> ActivityMix { get; }
 
     public ObservableCollection<int> LookbackDayOptions { get; }
+
+    /// <summary>
+    /// Gets display labels for the dashboard lookback segmented control.
+    /// </summary>
+    public ObservableCollection<string> LookbackDayLabels { get; }
 
     public bool HasTopCustomers => TopCustomers.Count > 0;
 
@@ -197,6 +250,17 @@ public sealed class DashboardViewModel : BaseViewModel
         await LoadAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Cancels dashboard refresh/export work when the dashboard is no longer visible.
+    /// This keeps stale continuations from updating UI-bound KPI state after navigation.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
     private async Task LoadAsync()
     {
         if (IsBusy)
@@ -204,21 +268,35 @@ public sealed class DashboardViewModel : BaseViewModel
             return;
         }
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
-            return;
-        }
+        await LoadCoreAsync().ConfigureAwait(false);
+    }
 
-        IsBusy = true;
-        RefreshCommand.RaiseCanExecuteChanged();
-        ExportCsvCommand.RaiseCanExecuteChanged();
-        ExportPdfCommand.RaiseCanExecuteChanged();
+    /// <summary>
+    /// Reloads dashboard data for the newest selected lookback window, cancelling any older in-flight load.
+    /// </summary>
+    private Task LoadLatestLookbackAsync()
+    {
+        return LoadCoreAsync();
+    }
+
+    /// <summary>
+    /// Loads dashboard state and owns operation replacement for both command-triggered and selector-triggered refreshes.
+    /// </summary>
+    private async Task LoadCoreAsync()
+    {
+        using var operation = BeginBusyOperation();
+        var cancellationToken = operation.Token;
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
             var window = TimeSpan.FromDays(Math.Clamp(LookbackDays, 1, 30));
             var snapshot = await _activityTracker
-                .GetDashboardSnapshotAsync(window, CancellationToken.None)
+                .GetDashboardSnapshotAsync(window, cancellationToken)
                 .ConfigureAwait(false);
 
             RunOnMain(() =>
@@ -234,17 +312,25 @@ public sealed class DashboardViewModel : BaseViewModel
                 TotalAccruedPoints = snapshot.TotalAccruedPoints;
                 TotalRedeemedPoints = snapshot.TotalRedeemedPoints;
 
-                TopCustomers.Clear();
-                foreach (var item in snapshot.TopCustomers)
+                // The dashboard keeps the full snapshot for exports, while the on-screen lists stay bounded
+                // because they are rendered inside the dashboard scroll surface rather than virtualized.
+                TopCustomers.ReplaceRange(snapshot.TopCustomers.Take(MaxDisplayedTopCustomers));
+                RecentActivities.ReplaceRange(snapshot.RecentActivities
+                    .OrderByDescending(x => x.OccurredAtUtc)
+                    .Take(MaxDisplayedRecentActivities));
+                ActivityMix.ReplaceRange(new[]
                 {
-                    TopCustomers.Add(item);
-                }
-
-                RecentActivities.Clear();
-                foreach (var item in snapshot.RecentActivities.OrderByDescending(x => x.OccurredAtUtc))
-                {
-                    RecentActivities.Add(item);
-                }
+                    new DashboardChartPoint
+                    {
+                        Label = AppResources.DashboardAccrualsTitle,
+                        Value = Math.Max(0, snapshot.AccrualCount)
+                    },
+                    new DashboardChartPoint
+                    {
+                        Label = AppResources.DashboardRedemptionsTitle,
+                        Value = Math.Max(0, snapshot.RedemptionCount)
+                    }
+                });
 
                 OnPropertyChanged(nameof(HasTopCustomers));
                 OnPropertyChanged(nameof(HasRecentActivities));
@@ -253,16 +339,17 @@ public sealed class DashboardViewModel : BaseViewModel
                 ExportPdfCommand.RaiseCanExecuteChanged();
             });
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the dashboard intentionally cancels stale work.
+        }
         catch
         {
             RunOnMain(() => ErrorMessage = AppResources.DashboardLoadFailed);
         }
         finally
         {
-            IsBusy = false;
-            RefreshCommand.RaiseCanExecuteChanged();
-            ExportCsvCommand.RaiseCanExecuteChanged();
-            ExportPdfCommand.RaiseCanExecuteChanged();
+            EndBusyOperation(operation);
         }
     }
 
@@ -276,18 +363,22 @@ public sealed class DashboardViewModel : BaseViewModel
             return;
         }
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
-            return;
-        }
+        using var operation = BeginBusyOperation();
+        var cancellationToken = operation.Token;
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
             var csv = BuildDashboardCsv(_lastSnapshot, LookbackDays);
+            CleanupPreviousDashboardExports(".csv");
             var fileName = $"business-dashboard-{_timeProvider.GetUtcNow().UtcDateTime:yyyyMMdd-HHmmss}.csv";
             var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
 
-            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8).ConfigureAwait(false);
+            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
 
             await MainThread.InvokeOnMainThreadAsync(() => Share.Default.RequestAsync(new ShareFileRequest
             {
@@ -295,9 +386,17 @@ public sealed class DashboardViewModel : BaseViewModel
                 File = new ShareFile(filePath)
             })).ConfigureAwait(false);
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the dashboard intentionally cancels stale export work.
+        }
         catch
         {
             RunOnMain(() => ErrorMessage = AppResources.DashboardExportCsvFailed);
+        }
+        finally
+        {
+            EndBusyOperation(operation);
         }
     }
 
@@ -311,19 +410,23 @@ public sealed class DashboardViewModel : BaseViewModel
             return;
         }
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
-            return;
-        }
+        using var operation = BeginBusyOperation();
+        var cancellationToken = operation.Token;
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
             var generatedAtUtc = _timeProvider.GetUtcNow().UtcDateTime;
             var pdfBytes = BuildDashboardPdfDocument(_lastSnapshot, LookbackDays, generatedAtUtc);
+            CleanupPreviousDashboardExports(".pdf");
             var fileName = $"business-dashboard-{_timeProvider.GetUtcNow().UtcDateTime:yyyyMMdd-HHmmss}.pdf";
             var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
 
-            await File.WriteAllBytesAsync(filePath, pdfBytes, CancellationToken.None).ConfigureAwait(false);
+            await File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken).ConfigureAwait(false);
 
             await MainThread.InvokeOnMainThreadAsync(() => Share.Default.RequestAsync(new ShareFileRequest
             {
@@ -331,9 +434,17 @@ public sealed class DashboardViewModel : BaseViewModel
                 File = new ShareFile(filePath)
             })).ConfigureAwait(false);
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the dashboard intentionally cancels stale export work.
+        }
         catch
         {
             RunOnMain(() => ErrorMessage = AppResources.DashboardExportPdfFailed);
+        }
+        finally
+        {
+            EndBusyOperation(operation);
         }
     }
 
@@ -561,9 +672,47 @@ public sealed class DashboardViewModel : BaseViewModel
         return "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
     }
 
-    private async Task<bool> EnsureOperationsAllowedAsync()
+    /// <summary>
+    /// Removes previous dashboard export files before creating a new one to keep the app cache bounded.
+    /// </summary>
+    /// <param name="extension">Export file extension, including the leading dot.</param>
+    private static void CleanupPreviousDashboardExports(string extension)
     {
-        var result = await _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            if (string.IsNullOrWhiteSpace(extension) || !Directory.Exists(FileSystem.CacheDirectory))
+            {
+                return;
+            }
+
+            foreach (var filePath in Directory.EnumerateFiles(FileSystem.CacheDirectory, $"{DashboardExportFilePrefix}*{extension}"))
+            {
+                File.Delete(filePath);
+            }
+        }
+        catch
+        {
+            // Export cleanup is opportunistic; stale cache files must not block the operator from sharing a fresh report.
+        }
+    }
+
+    /// <summary>
+    /// Keeps segmented-control selection synchronized when lookback days are changed programmatically.
+    /// </summary>
+    /// <param name="lookbackDays">The active lookback window in days.</param>
+    private void SyncSelectedLookbackIndex(int lookbackDays)
+    {
+        var index = LookbackDayOptions.IndexOf(lookbackDays);
+        if (index >= 0 && _selectedLookbackIndex != index)
+        {
+            _selectedLookbackIndex = index;
+            OnPropertyChanged(nameof(SelectedLookbackIndex));
+        }
+    }
+
+    private async Task<bool> EnsureOperationsAllowedAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await _businessAccessService.GetCurrentAccessStateAsync(cancellationToken).ConfigureAwait(false);
         if (!result.Succeeded || result.Value is null)
         {
             ApplyOperationsBlockedState(AppResources.BusinessAccessStateLoadFailed);
@@ -573,9 +722,13 @@ public sealed class DashboardViewModel : BaseViewModel
         _isOperationsAllowed = result.Value.IsOperationsAllowed;
         if (_isOperationsAllowed)
         {
-            RefreshCommand.RaiseCanExecuteChanged();
-            ExportCsvCommand.RaiseCanExecuteChanged();
-            ExportPdfCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                RefreshCommand.RaiseCanExecuteChanged();
+                ExportCsvCommand.RaiseCanExecuteChanged();
+                ExportPdfCommand.RaiseCanExecuteChanged();
+            });
+
             return true;
         }
 
@@ -598,8 +751,9 @@ public sealed class DashboardViewModel : BaseViewModel
             CampaignTargetingFixMetricsResetCount = 0;
             TotalAccruedPoints = 0;
             TotalRedeemedPoints = 0;
-            TopCustomers.Clear();
-            RecentActivities.Clear();
+            TopCustomers.ClearRange();
+            RecentActivities.ClearRange();
+            ActivityMix.ClearRange();
             OnPropertyChanged(nameof(HasTopCustomers));
             OnPropertyChanged(nameof(HasRecentActivities));
             ErrorMessage = message;
@@ -607,5 +761,112 @@ public sealed class DashboardViewModel : BaseViewModel
             ExportCsvCommand.RaiseCanExecuteChanged();
             ExportPdfCommand.RaiseCanExecuteChanged();
         });
+    }
+
+    /// <summary>
+    /// Marks the dashboard as busy and owns cancellation for one refresh or export operation.
+    /// </summary>
+    private BusyOperationScope BeginBusyOperation()
+    {
+        var operation = new BusyOperationScope(this);
+        var previousOperation = Interlocked.Exchange(ref _currentOperation, operation);
+        previousOperation?.Cancel();
+        previousOperation?.Dispose();
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            RefreshCommand.RaiseCanExecuteChanged();
+            ExportCsvCommand.RaiseCanExecuteChanged();
+            ExportPdfCommand.RaiseCanExecuteChanged();
+        });
+
+        return operation;
+    }
+
+    /// <summary>
+    /// Clears dashboard busy state when the matching operation completes.
+    /// </summary>
+    /// <param name="operation">Operation scope that owns the current busy state.</param>
+    private void EndBusyOperation(BusyOperationScope operation)
+    {
+        if (operation.IsDisposed)
+        {
+            return;
+        }
+
+        var isCurrentOperation = ReferenceEquals(_currentOperation, operation);
+        if (isCurrentOperation)
+        {
+            _currentOperation = null;
+        }
+
+        operation.IsDisposed = true;
+        operation.Cancellation.Dispose();
+
+        if (isCurrentOperation)
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RefreshCommand.RaiseCanExecuteChanged();
+                ExportCsvCommand.RaiseCanExecuteChanged();
+                ExportPdfCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
+    /// <summary>
+    /// Cancels the current dashboard operation and releases the visible busy state.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var operation = Interlocked.Exchange(ref _currentOperation, null);
+        if (operation is null)
+        {
+            return;
+        }
+
+        operation.Cancel();
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            RefreshCommand.RaiseCanExecuteChanged();
+            ExportCsvCommand.RaiseCanExecuteChanged();
+            ExportPdfCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+    /// <summary>
+    /// Owns cancellation and busy-state lifetime for one dashboard operation.
+    /// </summary>
+    private sealed class BusyOperationScope : IDisposable
+    {
+        private readonly DashboardViewModel _owner;
+
+        public BusyOperationScope(DashboardViewModel owner)
+        {
+            _owner = owner;
+            Cancellation = new CancellationTokenSource();
+        }
+
+        public CancellationTokenSource Cancellation { get; }
+
+        public CancellationToken Token => Cancellation.Token;
+
+        public bool IsDisposed { get; set; }
+
+        public void Cancel()
+        {
+            if (!Cancellation.IsCancellationRequested)
+            {
+                Cancellation.Cancel();
+            }
+        }
+
+        public void Dispose()
+        {
+            _owner.EndBusyOperation(this);
+        }
     }
 }

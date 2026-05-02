@@ -158,17 +158,19 @@ public sealed class MobileCacheService : IMobileCacheService
         try
         {
             var keys = await LoadRegistryCoreAsync(ct).ConfigureAwait(false);
-            if (!keys.Add(storageKey))
+            if (keys.Contains(storageKey, StringComparer.Ordinal))
             {
                 return;
             }
 
+            keys.Add(storageKey);
             while (keys.Count > MaxRegistryEntries)
             {
-                var evictedKey = GetOldestRegisteredKey(keys);
-                if (string.IsNullOrWhiteSpace(evictedKey) || !keys.Remove(evictedKey))
+                var evictedKey = keys[0];
+                keys.RemoveAt(0);
+                if (string.IsNullOrWhiteSpace(evictedKey))
                 {
-                    break;
+                    continue;
                 }
 
                 await _keyValueStore.RemoveAsync(evictedKey, ct).ConfigureAwait(false);
@@ -188,7 +190,8 @@ public sealed class MobileCacheService : IMobileCacheService
         try
         {
             var keys = await LoadRegistryCoreAsync(ct).ConfigureAwait(false);
-            if (!keys.Remove(storageKey))
+            var removed = keys.RemoveAll(key => string.Equals(key, storageKey, StringComparison.Ordinal));
+            if (removed == 0)
             {
                 return;
             }
@@ -207,27 +210,27 @@ public sealed class MobileCacheService : IMobileCacheService
         }
     }
 
-    private async Task<HashSet<string>> LoadRegistryCoreAsync(CancellationToken ct)
+    private async Task<List<string>> LoadRegistryCoreAsync(CancellationToken ct)
     {
         var payload = await _keyValueStore.GetAsync(RegistryStorageKey, ct).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(payload))
         {
-            return new HashSet<string>(StringComparer.Ordinal);
+            return new List<string>();
         }
 
         try
         {
             var items = JsonSerializer.Deserialize<List<string>>(payload, JsonOptions) ?? new List<string>();
-            return new HashSet<string>(items, StringComparer.Ordinal);
+            return DeduplicateRegistry(items);
         }
         catch
         {
             await _keyValueStore.RemoveAsync(RegistryStorageKey, ct).ConfigureAwait(false);
-            return new HashSet<string>(StringComparer.Ordinal);
+            return new List<string>();
         }
     }
 
-    private Task SaveRegistryCoreAsync(HashSet<string> keys, CancellationToken ct)
+    private Task SaveRegistryCoreAsync(List<string> keys, CancellationToken ct)
     {
         var payload = JsonSerializer.Serialize(keys, JsonOptions);
         return _keyValueStore.SetAsync(RegistryStorageKey, payload, ct);
@@ -258,20 +261,33 @@ public sealed class MobileCacheService : IMobileCacheService
         }
     }
 
-    private static string GetOldestRegisteredKey(HashSet<string> keys)
-    {
-        foreach (var key in keys)
-        {
-            return key;
-        }
-
-        return string.Empty;
-    }
-
     private sealed class CacheEnvelope<T>
     {
         public DateTime StoredAtUtc { get; init; }
         public DateTime ExpiresAtUtc { get; init; }
         public T? Value { get; init; }
+    }
+
+    /// <summary>
+    /// Preserves registry insertion order while removing duplicate or empty keys from older payloads.
+    /// </summary>
+    /// <param name="items">Registry payload loaded from local storage.</param>
+    /// <returns>Ordered, distinct cache storage keys.</returns>
+    private static List<string> DeduplicateRegistry(List<string> items)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var ordered = new List<string>(Math.Min(items.Count, MaxRegistryEntries));
+
+        foreach (var item in items)
+        {
+            if (string.IsNullOrWhiteSpace(item) || !seen.Add(item))
+            {
+                continue;
+            }
+
+            ordered.Add(item);
+        }
+
+        return ordered;
     }
 }

@@ -13,6 +13,9 @@ namespace Darwin.Mobile.Business;
 /// </summary>
 public partial class App : Application
 {
+    private static readonly TimeSpan StartupOperationTimeout = TimeSpan.FromSeconds(12);
+    private static readonly TimeSpan ResumeRefreshTimeout = TimeSpan.FromSeconds(8);
+
     private readonly IAuthService _authService;
     private readonly ILocalDbMigrator _localDbMigrator;
 
@@ -52,9 +55,11 @@ public partial class App : Application
 
     private async Task TryRefreshSilentlyAsync()
     {
+        using var timeout = new CancellationTokenSource(ResumeRefreshTimeout);
+
         try
         {
-            var refreshed = await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None);
+            var refreshed = await _authService.EnsureAuthenticatedSessionAsync(timeout.Token).ConfigureAwait(false);
             if (refreshed)
             {
                 return;
@@ -68,7 +73,11 @@ public partial class App : Application
                 }
 
                 Windows[0].Page = new AppShell($"//{Constants.Routes.Login}");
-            });
+            }).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Resume refresh is bounded so stale network calls cannot freeze the app after background resume.
         }
         catch
         {
@@ -80,7 +89,12 @@ public partial class App : Application
     {
         try
         {
-            await _localDbMigrator.MigrateAsync(CancellationToken.None);
+            using var timeout = new CancellationTokenSource(StartupOperationTimeout);
+            await _localDbMigrator.MigrateAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Startup must continue even if local persistence initialization exceeds the mobile startup budget.
         }
         catch
         {
@@ -91,7 +105,12 @@ public partial class App : Application
         bool hasAuthenticatedSession;
         try
         {
-            hasAuthenticatedSession = await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None);
+            using var timeout = new CancellationTokenSource(StartupOperationTimeout);
+            hasAuthenticatedSession = await _authService.EnsureAuthenticatedSessionAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            hasAuthenticatedSession = false;
         }
         catch
         {
@@ -101,6 +120,6 @@ public partial class App : Application
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
             window.Page = new AppShell(hasAuthenticatedSession ? $"//{Constants.Routes.Home}" : $"//{Constants.Routes.Login}");
-        });
+        }).ConfigureAwait(false);
     }
 }

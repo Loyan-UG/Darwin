@@ -7,9 +7,29 @@ namespace Darwin.Mobile.Business.Views;
 /// </summary>
 public partial class AccountDeletionPage : ContentPage
 {
+    private readonly AccountDeletionViewModel _viewModel;
+
     public AccountDeletionPage(AccountDeletionViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = viewModel;
+        _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        BindingContext = _viewModel;
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from account deletion.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 }

@@ -19,6 +19,8 @@ namespace Darwin.Mobile.Business;
 /// </summary>
 public sealed partial class AppShell : Shell
 {
+    private static readonly TimeSpan LogoutTimeout = TimeSpan.FromSeconds(10);
+
     private readonly string _initialRoute;
     private bool _startupNavigationDone;
     private bool _logoutAttached = true;
@@ -66,7 +68,14 @@ public sealed partial class AppShell : Shell
 
         Dispatcher.Dispatch(async () =>
         {
-            await GoToAsync(_initialRoute);
+            try
+            {
+                await GoToAsync(_initialRoute);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Business startup navigation to '{_initialRoute}' failed: {ex}");
+            }
         });
     }
 
@@ -80,12 +89,21 @@ public sealed partial class AppShell : Shell
             var auth = Handler?.MauiContext?.Services?.GetService<IAuthService>();
             if (auth is not null)
             {
-                await auth.LogoutAsync(CancellationToken.None);
+                using var timeout = new CancellationTokenSource(LogoutTimeout);
+                // Logout is user-initiated and must clear the local session even when the current page is closing.
+                await auth.LogoutAsync(timeout.Token);
             }
         }
         finally
         {
-            await GoToAsync($"//{Routes.Login}");
+            try
+            {
+                await GoToAsync($"//{Routes.Login}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Business logout navigation failed: {ex}");
+            }
         }
     }
 

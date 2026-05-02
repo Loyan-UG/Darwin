@@ -37,6 +37,7 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
     private string _operatorRoleDisplay = string.Empty;
 
     private CancellationTokenSource? _countdownLoopCts;
+    private CancellationTokenSource? _refreshCancellation;
 
     public StaffAccessBadgeViewModel(
         IBusinessIdentityContextService identityContextService,
@@ -140,6 +141,7 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
     public override Task OnDisappearingAsync()
     {
         StopCountdownLoop();
+        CancelCurrentRefresh();
         return Task.CompletedTask;
     }
 
@@ -154,18 +156,21 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
         {
             IsBusy = true;
             ErrorMessage = null;
+            RefreshBadgeCommand.RaiseCanExecuteChanged();
         });
 
+        var refreshCancellation = BeginCurrentRefresh();
         try
         {
-            var identityResult = await _identityContextService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+            var cancellationToken = refreshCancellation.Token;
+            var identityResult = await _identityContextService.GetCurrentAsync(cancellationToken).ConfigureAwait(false);
             if (!identityResult.Succeeded || identityResult.Value is null)
             {
                 RunOnMain(() => ErrorMessage = AppResources.StaffAccessBadgeLoadFailed);
                 return;
             }
 
-            var authorizationResult = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+            var authorizationResult = await _authorizationService.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
 
             var context = identityResult.Value;
             var role = authorizationResult.Succeeded && authorizationResult.Value is not null
@@ -185,6 +190,10 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
                 ErrorMessage = null;
             });
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the badge page intentionally cancels stale badge refreshes.
+        }
         catch
         {
             RunOnMain(() => ErrorMessage = AppResources.StaffAccessBadgeLoadFailed);
@@ -196,6 +205,8 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
                 IsBusy = false;
                 RefreshBadgeCommand.RaiseCanExecuteChanged();
             });
+
+            EndCurrentRefresh(refreshCancellation);
         }
     }
 
@@ -247,8 +258,9 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
             return;
         }
 
-        _countdownLoopCts = new CancellationTokenSource();
-        _ = RunCountdownLoopAsync(_countdownLoopCts.Token);
+        var countdownLoopCts = new CancellationTokenSource();
+        _countdownLoopCts = countdownLoopCts;
+        _ = RunCountdownLoopAsync(countdownLoopCts);
     }
 
     private void StopCountdownLoop()
@@ -259,12 +271,12 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
         }
 
         _countdownLoopCts.Cancel();
-        _countdownLoopCts.Dispose();
         _countdownLoopCts = null;
     }
 
-    private async Task RunCountdownLoopAsync(CancellationToken cancellationToken)
+    private async Task RunCountdownLoopAsync(CancellationTokenSource countdownLoopCts)
     {
+        var cancellationToken = countdownLoopCts.Token;
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -293,6 +305,8 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
                 // Keep the loop alive; transient failures must not kill countdown updates.
             }
         }
+
+        countdownLoopCts.Dispose();
     }
 
     private void UpdateExpiryText()
@@ -313,5 +327,39 @@ public sealed class StaffAccessBadgeViewModel : BaseViewModel
         var totalSeconds = Math.Max(0, (int)Math.Floor(remaining.TotalSeconds));
         var display = TimeSpan.FromSeconds(totalSeconds);
         ExpiresInText = string.Format(AppResources.StaffAccessBadgeExpiresInFormat, display.ToString(@"mm\:ss"));
+    }
+
+    /// <summary>
+    /// Starts a cancellable badge refresh and cancels any stale refresh still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentRefresh()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _refreshCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the current badge refresh without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentRefresh()
+    {
+        var current = Interlocked.Exchange(ref _refreshCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed badge refresh when it still owns the active refresh slot.
+    /// </summary>
+    /// <param name="refreshCancellation">Completed refresh token source.</param>
+    private void EndCurrentRefresh(CancellationTokenSource refreshCancellation)
+    {
+        if (ReferenceEquals(_refreshCancellation, refreshCancellation))
+        {
+            _refreshCancellation = null;
+        }
+
+        refreshCancellation.Dispose();
     }
 }

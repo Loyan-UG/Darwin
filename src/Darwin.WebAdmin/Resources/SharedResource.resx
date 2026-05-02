@@ -7312,8 +7312,17 @@
   <data name="SiteSettingsCommunicationTestSmsTargetHelp" xml:space="preserve">
     <value>Reserved test target for SMS rollout and staged provider validation.</value>
   </data>
+  <data name="SiteSettingsTransactionalEmailSubjectPrefixHelp" xml:space="preserve">
+    <value>Optional prefix added to transactional email subjects, usually to identify environment, brand, or rollout phase. Keep it short so customer-facing subjects remain readable.</value>
+  </data>
+  <data name="SiteSettingsCommunicationTestInboxEmailHelp" xml:space="preserve">
+    <value>Inbox used for operator-side email tests. Use a monitored internal mailbox rather than a customer address.</value>
+  </data>
   <data name="SiteSettingsPhoneVerificationPreferredChannelHelp" xml:space="preserve">
     <value>Default channel when Web or Mobile does not explicitly request one.</value>
+  </data>
+  <data name="SiteSettingsPhoneVerificationAllowFallbackHelp" xml:space="preserve">
+    <value>Allows the platform to switch between SMS and WhatsApp when the preferred or requested verification channel is unavailable.</value>
   </data>
   <data name="SiteSettingsPhoneVerificationPolicyNote" xml:space="preserve">
     <value>Phone verification policy: if the client does not specify a channel, the platform uses the preferred channel above. If fallback is enabled, the system may switch between SMS and WhatsApp when the preferred or requested channel is unavailable.</value>
@@ -7332,6 +7341,24 @@
   </data>
   <data name="SiteSettingsCommunicationTestWhatsAppTemplateHelp" xml:space="preserve">
     <value>Plain-text WhatsApp message used for operator-side WhatsApp validation.</value>
+  </data>
+  <data name="SiteSettingsBusinessInvitationEmailSubjectTemplateHelp" xml:space="preserve">
+    <value>Subject template for business invitation emails. Keep required placeholders intact so invitees can identify the business and role.</value>
+  </data>
+  <data name="SiteSettingsBusinessInvitationEmailBodyTemplateHelp" xml:space="preserve">
+    <value>HTML body template for business invitation emails. Preserve acceptance-link placeholders and keep the copy suitable for all supported admin languages.</value>
+  </data>
+  <data name="SiteSettingsAccountActivationEmailSubjectTemplateHelp" xml:space="preserve">
+    <value>Subject template for account activation emails sent to users who still need to confirm access.</value>
+  </data>
+  <data name="SiteSettingsAccountActivationEmailBodyTemplateHelp" xml:space="preserve">
+    <value>HTML body template for account activation emails. Preserve token and action-link placeholders so activation remains functional.</value>
+  </data>
+  <data name="SiteSettingsPasswordResetEmailSubjectTemplateHelp" xml:space="preserve">
+    <value>Subject template for password reset emails. Keep it clear and avoid adding sensitive account details.</value>
+  </data>
+  <data name="SiteSettingsPasswordResetEmailBodyTemplateHelp" xml:space="preserve">
+    <value>HTML body template for password reset emails. Preserve token, email, and expiry placeholders so reset links remain valid and auditable.</value>
   </data>
   <data name="SiteSettingsPhoneVerificationSmsTemplateHelp" xml:space="preserve">
     <value>Plain-text SMS template for current-user mobile verification.</value>
@@ -10045,14 +10072,59 @@
   <data name="SiteSettingsPaymentsStripeAlert" xml:space="preserve">
     <value>Stripe is the phase-1 payment provider. Keep the abstraction generic in code, but manage the near-term operational credentials and webhook verification here.</value>
   </data>
+  <data name="SiteSettingsStripeEnabledHelp" xml:space="preserve">
+    <value>Enables Stripe payment flows for checkout and provider callback processing. Keep it off until publishable, secret, and webhook values are configured for the selected environment.</value>
+  </data>
+  <data name="SiteSettingsStripeMerchantDisplayNameHelp" xml:space="preserve">
+    <value>Name shown to customers in Stripe-hosted payment surfaces and receipts where supported. Use the public trading name, not an internal company code.</value>
+  </data>
+  <data name="SiteSettingsStripePublishableKeyHelp" xml:space="preserve">
+    <value>Client-safe Stripe key used by browser payment flows. It is less sensitive than the secret key, but should still match the same Stripe account and environment.</value>
+  </data>
+  <data name="SiteSettingsStripeSecretKeyHelp" xml:space="preserve">
+    <value>Server-side Stripe credential for creating and reconciling payments. Treat it as a secret and store only the configured value from the secure settings source.</value>
+  </data>
+  <data name="SiteSettingsStripeWebhookSecretHelp" xml:space="preserve">
+    <value>Signing secret used to verify Stripe webhook callbacks before they update payment state. Rotate it when webhook endpoints are recreated or compromised.</value>
+  </data>
   <data name="SiteSettingsTaxVatTitle" xml:space="preserve">
     <value>Tax &amp; Invoicing (Phase-1 VAT)</value>
   </data>
   <data name="SiteSettingsTaxVatAlert" xml:space="preserve">
     <value>These settings define the global VAT and invoice-issuer defaults used by phase-1 billing and invoice support surfaces until deeper business-specific tax policies are introduced.</value>
   </data>
+  <data name="SiteSettingsVatEnabledHelp" xml:space="preserve">
+    <value>Turns on VAT-aware billing views and invoice support defaults. This is an operational phase-1 setting, not a full tax-engine or compliance guarantee.</value>
+  </data>
+  <data name="SiteSettingsPricesIncludeVatHelp" xml:space="preserve">
+    <value>Controls whether configured prices are treated as gross prices that already include VAT or net prices that need VAT added.</value>
+  </data>
+  <data name="SiteSettingsAllowReverseChargeHelp" xml:space="preserve">
+    <value>Allows B2B invoice review flows to mark eligible customers as reverse-charge candidates when their tax profile supports it.</value>
+  </data>
+  <data name="SiteSettingsDefaultVatRatePercentHelp" xml:space="preserve">
+    <value>Fallback VAT percentage used when a product, customer, or business-specific tax policy has not supplied a more specific rate.</value>
+  </data>
   <data name="SiteSettingsInvoiceIssuerDefaultsTitle" xml:space="preserve">
     <value>Invoice issuer defaults</value>
+  </data>
+  <data name="SiteSettingsInvoiceIssuerLegalNameHelp" xml:space="preserve">
+    <value>Legal entity name printed as the invoice issuer. Keep it aligned with registration and finance records.</value>
+  </data>
+  <data name="SiteSettingsInvoiceIssuerTaxIdHelp" xml:space="preserve">
+    <value>Tax or VAT identifier for the invoice issuer. This is required for many B2B finance and audit workflows.</value>
+  </data>
+  <data name="SiteSettingsInvoiceIssuerAddressLine1Help" xml:space="preserve">
+    <value>Primary registered address line for the invoice issuer, shown on invoice and tax-review surfaces.</value>
+  </data>
+  <data name="SiteSettingsInvoiceIssuerPostalCodeHelp" xml:space="preserve">
+    <value>Postal code for the invoice issuer's registered address.</value>
+  </data>
+  <data name="SiteSettingsInvoiceIssuerCityHelp" xml:space="preserve">
+    <value>City for the invoice issuer's registered address.</value>
+  </data>
+  <data name="SiteSettingsInvoiceIssuerCountryHelp" xml:space="preserve">
+    <value>Country for the invoice issuer's registered address. Prefer the same country format used by the rest of the billing setup.</value>
   </data>
   <data name="SiteSettingsShippingDhlTitle" xml:space="preserve">
     <value>Shipping (DHL-first)</value>
@@ -10060,11 +10132,56 @@
   <data name="SiteSettingsShippingDhlAlert" xml:space="preserve">
     <value>DHL is the phase-1 carrier. This section keeps carrier access, environment, and default shipper identity centrally manageable from the admin UI.</value>
   </data>
+  <data name="SiteSettingsDhlEnabledHelp" xml:space="preserve">
+    <value>Enables DHL-backed shipment creation and carrier callbacks. Keep it off until the environment, account number, credentials, and shipper identity are complete.</value>
+  </data>
+  <data name="SiteSettingsDhlEnvironmentHelp" xml:space="preserve">
+    <value>Selects the DHL API environment. Sandbox is for validation; Production should only be used with production credentials and operational carrier readiness.</value>
+  </data>
+  <data name="SiteSettingsDhlApiBaseUrlHelp" xml:space="preserve">
+    <value>Base URL for DHL API calls. Use the endpoint that matches the selected environment and avoid mixing sandbox credentials with production endpoints.</value>
+  </data>
+  <data name="SiteSettingsDhlAccountNumberHelp" xml:space="preserve">
+    <value>DHL account number used for shipment labels, billing, and carrier reconciliation.</value>
+  </data>
+  <data name="SiteSettingsDhlApiKeyHelp" xml:space="preserve">
+    <value>DHL API key used by the server when creating shipments. Treat it as a secret and rotate it if carrier access is exposed.</value>
+  </data>
+  <data name="SiteSettingsDhlApiSecretHelp" xml:space="preserve">
+    <value>DHL API secret paired with the API key. Store only the configured secure value and never share it in support notes or screenshots.</value>
+  </data>
   <data name="SiteSettingsDhlApiBaseUrlPlaceholder" xml:space="preserve">
     <value>https://...</value>
   </data>
   <data name="SiteSettingsDefaultShipperIdentityTitle" xml:space="preserve">
     <value>Default shipper identity</value>
+  </data>
+  <data name="SiteSettingsDhlShipperNameHelp" xml:space="preserve">
+    <value>Default sender name printed on labels and used for carrier handoff when an order or business does not override it.</value>
+  </data>
+  <data name="SiteSettingsDhlShipperEmailHelp" xml:space="preserve">
+    <value>Operational sender email for shipment questions and carrier communication.</value>
+  </data>
+  <data name="SiteSettingsDhlShipperPhoneE164Help" xml:space="preserve">
+    <value>Sender phone number in international E.164 format, for example +491701234567. Carriers often require this for labels and delivery exceptions.</value>
+  </data>
+  <data name="SiteSettingsDhlShipperStreetHelp" xml:space="preserve">
+    <value>Street address used as the default shipment origin and return sender address.</value>
+  </data>
+  <data name="SiteSettingsDhlShipperPostalCodeHelp" xml:space="preserve">
+    <value>Postal code for the default shipment origin and return sender address.</value>
+  </data>
+  <data name="SiteSettingsDhlShipperCityHelp" xml:space="preserve">
+    <value>City for the default shipment origin and return sender address.</value>
+  </data>
+  <data name="SiteSettingsDhlShipperCountryHelp" xml:space="preserve">
+    <value>Country for the default shipment origin. Use the carrier-supported country format expected by the DHL integration.</value>
+  </data>
+  <data name="SiteSettingsShipmentAttentionDelayHoursHelp" xml:space="preserve">
+    <value>Number of hours before pending or packed shipments are highlighted for operational follow-up.</value>
+  </data>
+  <data name="SiteSettingsShipmentTrackingGraceHoursHelp" xml:space="preserve">
+    <value>Number of hours a shipped DHL record may wait for tracking before support queues flag it as overdue.</value>
   </data>
   <data name="SiteSettingsShipmentAttentionDelayHelp" xml:space="preserve">
     <value>After this many hours, pending or packed shipments should be treated as awaiting carrier handoff.</value>
@@ -10084,6 +10201,108 @@
   <data name="SiteSettingsMeasurementUnitsTitle" xml:space="preserve">
     <value>Measurement &amp; units</value>
   </data>
+  <data name="SiteSettingsDisplayWeightUnitHelp" xml:space="preserve">
+    <value>Default unit used when displaying weights in admin and public commerce surfaces, for example kg or lb.</value>
+  </data>
+  <data name="SiteSettingsDisplayLengthUnitHelp" xml:space="preserve">
+    <value>Default unit used when displaying dimensions in shipping, catalog, and product surfaces, for example cm or in.</value>
+  </data>
+  <data name="SiteSettingsMeasurementSettingsJsonHelp" xml:space="preserve">
+    <value>Advanced measurement overrides in JSON form. Keep it valid JSON and reserve it for rollout-specific unit behavior that is not covered by the standard fields.</value>
+  </data>
+  <data name="SiteSettingsNumberFormattingOverridesJsonHelp" xml:space="preserve">
+    <value>Advanced number-formatting overrides in JSON form, such as locale-specific decimal or grouping behavior. Keep it valid JSON.</value>
+  </data>
+  <data name="SiteSettingsEnableCanonicalHelp" xml:space="preserve">
+    <value>Outputs canonical URLs so search engines can consolidate duplicate product, catalog, and CMS pages.</value>
+  </data>
+  <data name="SiteSettingsHreflangEnabledHelp" xml:space="preserve">
+    <value>Outputs alternate-language hints when multilingual routing is enabled. Keep this aligned with the supported cultures list.</value>
+  </data>
+  <data name="SiteSettingsSeoTitleTemplateHelp" xml:space="preserve">
+    <value>Default page-title pattern used when a page, product, or category does not provide a more specific SEO title.</value>
+  </data>
+  <data name="SiteSettingsSeoMetaDescriptionTemplateHelp" xml:space="preserve">
+    <value>Default meta-description pattern used as a fallback for public pages. Keep it concise and suitable for search snippets.</value>
+  </data>
+  <data name="SiteSettingsOpenGraphDefaultsJsonHelp" xml:space="preserve">
+    <value>Default Open Graph metadata in JSON form for social previews. Keep it valid JSON and avoid hardcoding per-page content here.</value>
+  </data>
+  <data name="SiteSettingsGoogleAnalyticsIdHelp" xml:space="preserve">
+    <value>Google Analytics measurement ID used by the public web surface when analytics are enabled.</value>
+  </data>
+  <data name="SiteSettingsGoogleTagManagerIdHelp" xml:space="preserve">
+    <value>Google Tag Manager container ID used by the public web surface. Keep tracking and consent behavior aligned with privacy policy.</value>
+  </data>
+  <data name="SiteSettingsGoogleSearchConsoleVerificationHelp" xml:space="preserve">
+    <value>Verification token for proving ownership in Google Search Console. It is not an API secret, but should still be scoped to the correct domain.</value>
+  </data>
+  <data name="SiteSettingsFeatureFlagsJsonHelp" xml:space="preserve">
+    <value>Operational feature flags in JSON form. Keep it valid JSON and use conservative defaults for public or checkout-impacting behavior.</value>
+  </data>
+  <data name="SiteSettingsWhatsAppBusinessPhoneIdHelp" xml:space="preserve">
+    <value>Provider phone-number ID used for WhatsApp Business API sends. It must match the configured account and access token.</value>
+  </data>
+  <data name="SiteSettingsWhatsAppAccessTokenHelp" xml:space="preserve">
+    <value>Provider access token used by the server for WhatsApp sends. Treat it as a secret and rotate it if provider access is exposed.</value>
+  </data>
+  <data name="SiteSettingsWhatsAppFromPhoneE164Help" xml:space="preserve">
+    <value>Sender phone number in E.164 format used for WhatsApp messages, for example +491701234567.</value>
+  </data>
+  <data name="SiteSettingsWhatsAppAdminRecipientsCsvHelp" xml:space="preserve">
+    <value>Comma-separated admin WhatsApp recipients for operational alerts and provider test messages. Use E.164 phone numbers.</value>
+  </data>
+  <data name="SiteSettingsWebAuthnRelyingPartyNameHelp" xml:space="preserve">
+    <value>Human-readable passkey relying-party name shown by authenticators during registration and sign-in.</value>
+  </data>
+  <data name="SiteSettingsWebAuthnAllowedOriginsCsvHelp" xml:space="preserve">
+    <value>Comma-separated HTTPS origins that may use passkey authentication. Keep this limited to trusted admin domains.</value>
+  </data>
+  <data name="SiteSettingsSmtpEnabledHelp" xml:space="preserve">
+    <value>Enables SMTP email sending for configured flows. Keep it off until host, port, credentials, and sender identity are ready.</value>
+  </data>
+  <data name="SiteSettingsSmtpHostHelp" xml:space="preserve">
+    <value>SMTP server hostname used for outbound email delivery.</value>
+  </data>
+  <data name="SiteSettingsSmtpPortHelp" xml:space="preserve">
+    <value>SMTP port for the selected server, commonly 587 for TLS submission or 465 for implicit TLS.</value>
+  </data>
+  <data name="SiteSettingsSmtpEnableSslHelp" xml:space="preserve">
+    <value>Requires encrypted SMTP transport when connecting to the provider. Keep this enabled unless the provider explicitly requires another secure mode.</value>
+  </data>
+  <data name="SiteSettingsSmtpUsernameHelp" xml:space="preserve">
+    <value>SMTP account username used by the server for outbound mail authentication.</value>
+  </data>
+  <data name="SiteSettingsSmtpPasswordHelp" xml:space="preserve">
+    <value>SMTP password or app password. Treat it as a secret and rotate it if mail provider access is exposed.</value>
+  </data>
+  <data name="SiteSettingsSmtpFromAddressHelp" xml:space="preserve">
+    <value>Default From email address for transactional messages. It should be verified by the mail provider and match SPF/DKIM policy.</value>
+  </data>
+  <data name="SiteSettingsSmtpFromDisplayNameHelp" xml:space="preserve">
+    <value>Default sender display name shown in recipient inboxes for transactional messages.</value>
+  </data>
+  <data name="SiteSettingsSmsEnabledHelp" xml:space="preserve">
+    <value>Enables SMS sends for verification and operational flows. Keep it off until provider credentials and sender number are configured.</value>
+  </data>
+  <data name="SiteSettingsSmsProviderHelp" xml:space="preserve">
+    <value>SMS provider identifier used by the configured transport implementation.</value>
+  </data>
+  <data name="SiteSettingsSmsFromPhoneE164Help" xml:space="preserve">
+    <value>Sender phone number in E.164 format used for SMS messages, for example +491701234567.</value>
+  </data>
+  <data name="SiteSettingsSmsApiKeyHelp" xml:space="preserve">
+    <value>SMS provider API key used by the server. Treat it as a secret and rotate it when provider access changes.</value>
+  </data>
+  <data name="SiteSettingsSmsApiSecretHelp" xml:space="preserve">
+    <value>SMS provider secret paired with the API key. Store only the configured secure value and avoid exposing it in support artifacts.</value>
+  </data>
+  <data name="SiteSettingsSmsExtraSettingsJsonHelp" xml:space="preserve">
+    <value>Provider-specific SMS options in JSON form. Keep it valid JSON and avoid storing unnecessary sensitive values here.</value>
+  </data>
+  <data name="SiteSettingsAdminAlertEmailsCsvHelp" xml:space="preserve">
+    <value>Comma-separated admin email recipients for operational alerts, provider failures, and escalation summaries.</value>
+  </data>
   <data name="SiteSettingsTitleHelpTitle" xml:space="preserve">
     <value>Title</value>
   </data>
@@ -10101,6 +10320,21 @@
   </data>
   <data name="SiteSettingsContactEmailHelpContent" xml:space="preserve">
     <value>Primary contact email displayed publicly in footer/contact page.</value>
+  </data>
+  <data name="SiteSettingsImpressumUrlHelp" xml:space="preserve">
+    <value>Public legal notice URL used by the admin and public site surfaces. Use an app-relative or absolute URL that remains reachable without admin access.</value>
+  </data>
+  <data name="SiteSettingsPrivacyPolicyUrlHelp" xml:space="preserve">
+    <value>Public privacy policy URL used by web and mobile surfaces. Keep it aligned with tracking, messaging, and account data handling.</value>
+  </data>
+  <data name="SiteSettingsBusinessTermsUrlHelp" xml:space="preserve">
+    <value>Terms URL shown to business users during onboarding, invitations, and account-management flows.</value>
+  </data>
+  <data name="SiteSettingsSoftDeleteRetentionDaysHelp" xml:space="preserve">
+    <value>Number of days soft-deleted records remain recoverable before background cleanup may remove them.</value>
+  </data>
+  <data name="SiteSettingsSoftDeleteCleanupBatchSizeHelp" xml:space="preserve">
+    <value>Maximum number of expired soft-deleted records processed per cleanup batch. Keep it moderate to avoid long-running background work.</value>
   </data>
   <data name="SiteSettingsDateFormatHelpTitle" xml:space="preserve">
     <value>Date format</value>
@@ -11397,5 +11631,1424 @@
   </data>
   <data name="ProviderCallbackBrevoFailureRowGuidance" xml:space="preserve">
     <value>Delivery failure event: inspect the linked email audit, provider reason, and recipient address before retrying.</value>
+  </data>
+  <data name="SiteSettingMultilingualEnabled" xml:space="preserve">
+    <value>Multilingual site</value>
+  </data>
+  <data name="SiteSettingsMultilingualHelpTitle" xml:space="preserve">
+    <value>Multilingual site</value>
+  </data>
+  <data name="SiteSettingsMultilingualHelpContent" xml:space="preserve">
+    <value>When disabled, content editors only enter the default language and the supported-cultures list is saved as that default culture. Enable it when the public site needs separate localized content, SEO text, and product descriptions per language.</value>
+  </data>
+  <data name="ProductCatalogPlacement" xml:space="preserve">
+    <value>Catalog placement</value>
+  </data>
+  <data name="DefaultLanguageContent" xml:space="preserve">
+    <value>Default language content</value>
+  </data>
+  <data name="MultilingualContentMode" xml:space="preserve">
+    <value>Multilingual mode</value>
+  </data>
+  <data name="SingleLanguageContentMode" xml:space="preserve">
+    <value>Single-language mode</value>
+  </data>
+  <data name="SingleLanguageContentHint" xml:space="preserve">
+    <value>Only the default language will be saved for this product.</value>
+  </data>
+  <data name="VariantIdentityPricing" xml:space="preserve">
+    <value>Identity and pricing</value>
+  </data>
+  <data name="VariantInventoryOrdering" xml:space="preserve">
+    <value>Inventory and ordering</value>
+  </data>
+  <data name="VariantFulfillment" xml:space="preserve">
+    <value>Fulfillment</value>
+  </data>
+  <data name="ProductBrandHelp" xml:space="preserve">
+    <value>Optional brand/manufacturer used for catalog filtering and product discovery. Example: &lt;code&gt;Darwin Market&lt;/code&gt;.</value>
+  </data>
+  <data name="ProductPrimaryCategoryHelp" xml:space="preserve">
+    <value>Main category used for navigation, reporting, and default catalog placement. A product can still be associated with other catalog structures later.</value>
+  </data>
+  <data name="ProductKindHelp" xml:space="preserve">
+    <value>Defines how the product behaves operationally. Simple products usually have one sellable variant; richer products can use several variants.</value>
+  </data>
+  <data name="ProductCultureHelp" xml:space="preserve">
+    <value>Language/culture for this text block. Only ask for multiple cultures when multilingual mode is enabled in Site Settings.</value>
+  </data>
+  <data name="ProductNameHelp" xml:space="preserve">
+    <value>Customer-facing product name in this language. Keep it short and recognizable. Example: &lt;code&gt;Organic apple box 1 kg&lt;/code&gt;.</value>
+  </data>
+  <data name="ProductShortDescriptionHelp" xml:space="preserve">
+    <value>Brief catalog/listing summary shown before the full description. Use one or two sentences focused on what the customer needs to know quickly.</value>
+  </data>
+  <data name="ProductSearchKeywordsHelp" xml:space="preserve">
+    <value>Optional search terms that customers may type but that are not necessarily in the product name. Separate terms with commas.</value>
+  </data>
+  <data name="ProductMetaTitleHelp" xml:space="preserve">
+    <value>SEO browser/search title for this product. Keep it concise and distinct from the public product name when needed.</value>
+  </data>
+  <data name="ProductFullDescriptionHelp" xml:space="preserve">
+    <value>Rich product description shown on the detail page. Include benefits, usage notes, ingredients/specifications, and any buying constraints that reduce support questions.</value>
+  </data>
+  <data name="ProductGtinHelp" xml:space="preserve">
+    <value>Global Trade Item Number such as EAN, UPC, or ISBN. Use it when you need barcode matching, supplier import, or marketplace integration.</value>
+  </data>
+  <data name="ProductManufacturerPartNumberHelp" xml:space="preserve">
+    <value>Manufacturer's own part number. Useful for supplier communication and support when it differs from your internal SKU.</value>
+  </data>
+  <data name="ProductCurrencyHelp" xml:space="preserve">
+    <value>Currency used for this variant price. The amount fields are stored in minor units for this currency.</value>
+  </data>
+  <data name="ProductTaxCategoryHelp" xml:space="preserve">
+    <value>Tax/VAT classification used for checkout, invoices, and compliance reporting.</value>
+  </data>
+  <data name="ProductCompareAtPriceHelp" xml:space="preserve">
+    <value>Optional reference price in minor units, used for crossed-out or comparison pricing. Example: enter &lt;code&gt;1299&lt;/code&gt; for 12.99.</value>
+  </data>
+  <data name="ProductStockOnHandHelp" xml:space="preserve">
+    <value>Physical or available inventory currently held before reservations are subtracted. This is the base number inventory operations work from.</value>
+  </data>
+  <data name="ProductStockReservedHelp" xml:space="preserve">
+    <value>Quantity already reserved for open carts, orders, or fulfillment. Available stock is usually stock on hand minus reserved stock.</value>
+  </data>
+  <data name="ProductReorderPointHelp" xml:space="preserve">
+    <value>Inventory threshold that should trigger replenishment attention. Example: if set to 10, the product appears as needing reorder when available stock reaches 10 or lower.</value>
+  </data>
+  <data name="ProductMinOrderQtyHelp" xml:space="preserve">
+    <value>Minimum quantity a customer may buy in one order line. Example: set to 6 for a product that must be sold as at least six units.</value>
+  </data>
+  <data name="ProductMaxOrderQtyHelp" xml:space="preserve">
+    <value>Maximum quantity a customer may buy in one order line. Use it to limit scarce, regulated, or heavy items.</value>
+  </data>
+  <data name="ProductStepOrderQtyHelp" xml:space="preserve">
+    <value>Quantity increment allowed after the minimum. Example: with minimum 6 and step 6, customers can order 6, 12, 18, and so on.</value>
+  </data>
+  <data name="ProductBackorderAllowedHelp" xml:space="preserve">
+    <value>Allows ordering when available stock is below the requested quantity. Use only when procurement or production can fulfill the shortage.</value>
+  </data>
+  <data name="ProductPackageWeightHelp" xml:space="preserve">
+    <value>Package weight used for shipping rate and label calculations, in the site's configured display/shipping unit.</value>
+  </data>
+  <data name="ProductPackageLengthHelp" xml:space="preserve">
+    <value>Package length used by shipping providers for parcel size validation and rate calculation.</value>
+  </data>
+  <data name="ProductPackageWidthHelp" xml:space="preserve">
+    <value>Package width used by shipping providers for parcel size validation and rate calculation.</value>
+  </data>
+  <data name="ProductPackageHeightHelp" xml:space="preserve">
+    <value>Package height used by shipping providers for parcel size validation and rate calculation.</value>
+  </data>
+  <data name="ProductIsDigitalHelp" xml:space="preserve">
+    <value>Marks the variant as digital/non-shippable. Digital variants should not require parcel dimensions or carrier shipment creation.</value>
+  </data>
+  <data name="BrandIdentity" xml:space="preserve">
+    <value>Brand identity</value>
+  </data>
+  <data name="BrandNameHelp" xml:space="preserve">
+    <value>Customer-facing brand name used in catalog filters, product pages, and storefront discovery. Example: Darwin Market.</value>
+  </data>
+  <data name="CategoryHierarchyPublishing" xml:space="preserve">
+    <value>Hierarchy and publishing</value>
+  </data>
+  <data name="CategoryParentHelp" xml:space="preserve">
+    <value>Choose a parent to make this a child category. Leave empty for a top-level navigation category.</value>
+  </data>
+  <data name="CategorySortOrderHelp" xml:space="preserve">
+    <value>Lower numbers appear earlier when categories are shown in the same parent. Example: 10 before 20.</value>
+  </data>
+  <data name="CategoryActiveHelp" xml:space="preserve">
+    <value>Inactive categories stay in admin data but should not be used for normal storefront navigation or product discovery.</value>
+  </data>
+  <data name="CategoryCultureHelp" xml:space="preserve">
+    <value>Language/culture for this translation. Example: de-DE.</value>
+  </data>
+  <data name="CategoryNameHelp" xml:space="preserve">
+    <value>Customer-facing category name used in menus, breadcrumbs, product listings, and SEO headings.</value>
+  </data>
+  <data name="CategoryMetaTitleHelp" xml:space="preserve">
+    <value>Optional SEO browser title for the category page. Keep it concise and aligned with the visible category name.</value>
+  </data>
+  <data name="CategoryMetaDescriptionHelp" xml:space="preserve">
+    <value>Optional SEO summary for search results and link previews. Describe what customers can find in this category.</value>
+  </data>
+  <data name="AddOnGroupIdentity" xml:space="preserve">
+    <value>Add-on identity</value>
+  </data>
+  <data name="AddOnSelectionPricing" xml:space="preserve">
+    <value>Selection and pricing</value>
+  </data>
+  <data name="SelectionMode" xml:space="preserve">
+    <value>Selection mode</value>
+  </data>
+  <data name="MinSelections" xml:space="preserve">
+    <value>Minimum selections</value>
+  </data>
+  <data name="MaxSelections" xml:space="preserve">
+    <value>Maximum selections</value>
+  </data>
+  <data name="IsGlobal" xml:space="preserve">
+    <value>Global</value>
+  </data>
+  <data name="AddOnGroupNameHelp" xml:space="preserve">
+    <value>Internal name for this option group. Customers see the localized option labels and values where available.</value>
+  </data>
+  <data name="AddOnGroupTranslationsHelp" xml:space="preserve">
+    <value>Localized group names shown to customers when the site has more than one language enabled.</value>
+  </data>
+  <data name="AddOnGroupCurrencyHelp" xml:space="preserve">
+    <value>Three-letter currency code for option price deltas. Example: EUR.</value>
+  </data>
+  <data name="AddOnGroupSelectionModeHelp" xml:space="preserve">
+    <value>Controls whether the customer can choose one option or multiple options from this group.</value>
+  </data>
+  <data name="AddOnGroupMinSelectionsHelp" xml:space="preserve">
+    <value>Minimum number of values the customer must select before checkout can proceed. Use 0 for optional groups.</value>
+  </data>
+  <data name="AddOnGroupMaxSelectionsHelp" xml:space="preserve">
+    <value>Maximum number of values the customer may select. Keep this aligned with the selection mode.</value>
+  </data>
+  <data name="AddOnGroupIsGlobalHelp" xml:space="preserve">
+    <value>Global groups can be reused broadly instead of being tied to a single product-specific configuration.</value>
+  </data>
+  <data name="AddOnGroupActiveHelp" xml:space="preserve">
+    <value>Inactive groups remain stored but should not be offered to customers for new selections.</value>
+  </data>
+  <data name="MediaAssetMetadata" xml:space="preserve">
+    <value>Media metadata</value>
+  </data>
+  <data name="MediaAltTextHelp" xml:space="preserve">
+    <value>Accessible description for screen readers and image fallback text. Describe the image content, not the file name.</value>
+  </data>
+  <data name="MediaTitleHelp" xml:space="preserve">
+    <value>Optional human-readable title used in admin lists or media selection dialogs.</value>
+  </data>
+  <data name="MediaRoleHelp" xml:space="preserve">
+    <value>Optional usage role for the asset. Example: product-gallery, brand-logo, page-hero.</value>
+  </data>
+  <data name="ShippingMethodCarrierService" xml:space="preserve">
+    <value>Carrier and service</value>
+  </data>
+  <data name="ShippingMethodCoverageStatus" xml:space="preserve">
+    <value>Coverage and status</value>
+  </data>
+  <data name="ShippingMethodNameHelp" xml:space="preserve">
+    <value>Customer/admin-facing name for this delivery option. Example: DHL Paket Standard.</value>
+  </data>
+  <data name="ShippingMethodCarrierHelp" xml:space="preserve">
+    <value>Carrier/provider code used for operational grouping and provider routing. Example: DHL.</value>
+  </data>
+  <data name="ShippingMethodServiceHelp" xml:space="preserve">
+    <value>Carrier service level or product code. Example: Standard, Express, Warenpost.</value>
+  </data>
+  <data name="ShippingMethodCountriesHelp" xml:space="preserve">
+    <value>Comma-separated ISO country codes where this method is available. Leave empty for global coverage. Example: DE,AT,CH.</value>
+  </data>
+  <data name="ShippingMethodCurrencyHelp" xml:space="preserve">
+    <value>Three-letter currency for rate tier prices. Example: EUR.</value>
+  </data>
+  <data name="ShippingMethodActiveHelp" xml:space="preserve">
+    <value>Inactive methods remain stored for history but should not be offered for new checkout shipments.</value>
+  </data>
+  <data name="ShippingRateMaxMassHelp" xml:space="preserve">
+    <value>Optional shipment weight ceiling for this tier. Leave empty when the tier is not limited by weight.</value>
+  </data>
+  <data name="ShippingRateMaxSubtotalHelp" xml:space="preserve">
+    <value>Optional cart subtotal ceiling in minor currency units. Example: 5000 means 50.00 in a two-decimal currency.</value>
+  </data>
+  <data name="ShippingRatePriceMinorHelp" xml:space="preserve">
+    <value>Shipping price in minor currency units. Example: 499 means 4.99 in EUR.</value>
+  </data>
+  <data name="ShippingRateSortHelp" xml:space="preserve">
+    <value>Controls evaluation/display order when multiple tiers could apply. Lower numbers are considered first.</value>
+  </data>
+  <data name="BusinessIdentitySection" xml:space="preserve">
+    <value>Business identity</value>
+  </data>
+  <data name="BusinessDefaultsSection" xml:space="preserve">
+    <value>Defaults</value>
+  </data>
+  <data name="BusinessContactSection" xml:space="preserve">
+    <value>Contact</value>
+  </data>
+  <data name="BusinessOwnershipStatusSection" xml:space="preserve">
+    <value>Ownership and status</value>
+  </data>
+  <data name="BusinessFormBusinessNameHelp" xml:space="preserve">
+    <value>Public/business-facing name used in admin queues, merchant views, and customer discovery where applicable.</value>
+  </data>
+  <data name="BusinessFormLegalNameHelp" xml:space="preserve">
+    <value>Registered legal entity name used for compliance, invoices, contracts, and support verification.</value>
+  </data>
+  <data name="BusinessFormCategoryHelp" xml:space="preserve">
+    <value>Operational business category used for filtering, reporting, and onboarding review.</value>
+  </data>
+  <data name="BusinessFormTaxIdHelp" xml:space="preserve">
+    <value>Optional tax or VAT identifier used for billing, invoices, and readiness checks.</value>
+  </data>
+  <data name="BusinessFormWebsiteHelp" xml:space="preserve">
+    <value>Optional public website URL used by support and verification workflows.</value>
+  </data>
+  <data name="BusinessFormShortDescriptionHelp" xml:space="preserve">
+    <value>Short internal/customer-facing summary of what the business offers. Keep it concise.</value>
+  </data>
+  <data name="BusinessFormDefaultCurrencyHelp" xml:space="preserve">
+    <value>Default currency for this business when business-specific pricing, billing, or reporting needs a fallback.</value>
+  </data>
+  <data name="BusinessFormDefaultCultureHelp" xml:space="preserve">
+    <value>Default language/culture for business-facing communication and localized fallback content.</value>
+  </data>
+  <data name="BusinessFormContactEmailHelp" xml:space="preserve">
+    <value>Primary operational contact email for support, readiness review, and merchant follow-up.</value>
+  </data>
+  <data name="BusinessFormContactPhoneHelp" xml:space="preserve">
+    <value>Primary contact phone in E.164 format. Example: +491701234567.</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>First name</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Last name</value>
+  </data>
+  <data name="UserEmailHelp" xml:space="preserve">
+    <value>Primary sign-in and notification email for this user. It must be unique.</value>
+  </data>
+  <data name="UserFirstNameHelp" xml:space="preserve">
+    <value>Given name used in admin displays and customer/member profile context.</value>
+  </data>
+  <data name="UserLastNameHelp" xml:space="preserve">
+    <value>Family name used in admin displays and customer/member profile context.</value>
+  </data>
+  <data name="UserPhoneE164Help" xml:space="preserve">
+    <value>Optional mobile/contact phone in E.164 format. Example: +491701234567.</value>
+  </data>
+  <data name="UserIsActiveHelp" xml:space="preserve">
+    <value>Inactive users remain stored for audit/history but should not be treated as operationally available.</value>
+  </data>
+  <data name="RoleIdentitySection" xml:space="preserve">
+    <value>Role identity</value>
+  </data>
+  <data name="SystemRoleHelp" xml:space="preserve">
+    <value>System roles are built-in roles required by the platform and should not be deleted or repurposed.</value>
+  </data>
+  <data name="PermissionIdentitySection" xml:space="preserve">
+    <value>Permission identity</value>
+  </data>
+  <data name="PermissionDescriptionHelp" xml:space="preserve">
+    <value>Optional context explaining which screen, action, or operational capability this permission controls.</value>
+  </data>
+  <data name="SystemPermissionHelp" xml:space="preserve">
+    <value>System permissions are built-in authorization capabilities required by the platform and should not be deleted or repurposed.</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="Interval" xml:space="preserve">
+    <value>Interval</value>
+  </data>
+  <data name="IntervalCount" xml:space="preserve">
+    <value>Interval count</value>
+  </data>
+  <data name="TrialDays" xml:space="preserve">
+    <value>Trial days</value>
+  </data>
+  <data name="FeaturesJson" xml:space="preserve">
+    <value>Features JSON</value>
+  </data>
+  <data name="ExpenseDate" xml:space="preserve">
+    <value>Expense date</value>
+  </data>
+  <data name="AmountMinor" xml:space="preserve">
+    <value>Amount minor</value>
+  </data>
+  <data name="EntryDate" xml:space="preserve">
+    <value>Entry date</value>
+  </data>
+  <data name="BillingPlanIdentitySection" xml:space="preserve">
+    <value>Plan identity</value>
+  </data>
+  <data name="BillingPlanPricingCadenceSection" xml:space="preserve">
+    <value>Pricing and cadence</value>
+  </data>
+  <data name="BillingPlanMetadataSection" xml:space="preserve">
+    <value>Metadata and availability</value>
+  </data>
+  <data name="BillingPlanCodeHelp" xml:space="preserve">
+    <value>Stable internal plan code used for provider mapping, support, and reporting. Example: PRO_MONTHLY.</value>
+  </data>
+  <data name="BillingPlanNameHelp" xml:space="preserve">
+    <value>Human-readable plan name shown to operators and, where applicable, merchants.</value>
+  </data>
+  <data name="BillingPlanCurrencyHelp" xml:space="preserve">
+    <value>Three-letter currency for the plan price. Example: EUR.</value>
+  </data>
+  <data name="BillingPlanDescriptionHelp" xml:space="preserve">
+    <value>Short explanation of who the plan is for and what it includes.</value>
+  </data>
+  <data name="BillingPlanPriceMinorHelp" xml:space="preserve">
+    <value>Plan price in minor currency units. Example: 1999 means 19.99 in EUR.</value>
+  </data>
+  <data name="BillingPlanIntervalHelp" xml:space="preserve">
+    <value>Billing cadence unit such as monthly or yearly.</value>
+  </data>
+  <data name="BillingPlanIntervalCountHelp" xml:space="preserve">
+    <value>Number of intervals per charge. Example: 1 monthly charges every month; 3 monthly charges every three months.</value>
+  </data>
+  <data name="BillingPlanTrialDaysHelp" xml:space="preserve">
+    <value>Number of free trial days before billing starts. Use 0 when there is no trial.</value>
+  </data>
+  <data name="BillingPlanActiveHelp" xml:space="preserve">
+    <value>Inactive plans remain stored for existing records but should not be offered for new subscriptions.</value>
+  </data>
+  <data name="ExpenseClassificationSection" xml:space="preserve">
+    <value>Expense classification</value>
+  </data>
+  <data name="ExpenseAmountNotesSection" xml:space="preserve">
+    <value>Amount and notes</value>
+  </data>
+  <data name="ExpenseBusinessHelp" xml:space="preserve">
+    <value>Business this expense belongs to for reporting and margin review.</value>
+  </data>
+  <data name="ExpenseSupplierHelp" xml:space="preserve">
+    <value>Optional supplier/vendor linked to the expense for follow-up and procurement context.</value>
+  </data>
+  <data name="ExpenseDateHelp" xml:space="preserve">
+    <value>Date the expense should be recognized for operational finance review.</value>
+  </data>
+  <data name="ExpenseCategoryHelp" xml:space="preserve">
+    <value>Finance category used for filtering and cost analysis. Example: packaging, shipping, software.</value>
+  </data>
+  <data name="ExpenseAmountMinorHelp" xml:space="preserve">
+    <value>Expense amount in minor currency units. Example: 2500 means 25.00 in a two-decimal currency.</value>
+  </data>
+  <data name="ExpenseDescriptionHelp" xml:space="preserve">
+    <value>Operational note explaining why the expense exists and any supplier or reconciliation context.</value>
+  </data>
+  <data name="FinancialAccountIdentitySection" xml:space="preserve">
+    <value>Account identity</value>
+  </data>
+  <data name="FinancialAccountBusinessHelp" xml:space="preserve">
+    <value>Business that owns this account mapping.</value>
+  </data>
+  <data name="FinancialAccountCodeHelp" xml:space="preserve">
+    <value>Stable ledger/account code used for reports and exports. Keep it consistent once downstream workflows depend on it.</value>
+  </data>
+  <data name="FinancialAccountTypeHelp" xml:space="preserve">
+    <value>Accounting type such as asset, liability, revenue, expense, or equity.</value>
+  </data>
+  <data name="FinancialAccountNameHelp" xml:space="preserve">
+    <value>Readable account name operators can recognize during journal and reconciliation work.</value>
+  </data>
+  <data name="JournalEntryHeaderSection" xml:space="preserve">
+    <value>Entry header</value>
+  </data>
+  <data name="JournalEntryBusinessHelp" xml:space="preserve">
+    <value>Business this journal entry belongs to.</value>
+  </data>
+  <data name="JournalEntryDateHelp" xml:space="preserve">
+    <value>Accounting date for the journal entry.</value>
+  </data>
+  <data name="JournalEntryDescriptionHelp" xml:space="preserve">
+    <value>Short explanation of the accounting event, such as refund adjustment or manual correction.</value>
+  </data>
+  <data name="JournalEntryLinesHelp" xml:space="preserve">
+    <value>Journal lines should balance total debits and credits and include enough memo context for audit review.</value>
+  </data>
+  <data name="JournalEntryLineAccountHelp" xml:space="preserve">
+    <value>Financial account affected by this line.</value>
+  </data>
+  <data name="JournalEntryDebitMinorHelp" xml:space="preserve">
+    <value>Debit amount in minor currency units. Leave 0 when this line is a credit.</value>
+  </data>
+  <data name="JournalEntryCreditMinorHelp" xml:space="preserve">
+    <value>Credit amount in minor currency units. Leave 0 when this line is a debit.</value>
+  </data>
+  <data name="JournalEntryMemoHelp" xml:space="preserve">
+    <value>Line-level note explaining the reason for this debit or credit.</value>
+  </data>
+  <data name="PaidAtUtc" xml:space="preserve">
+    <value>Paid at UTC</value>
+  </data>
+  <data name="ProviderTransactionRef" xml:space="preserve">
+    <value>Provider transaction ref</value>
+  </data>
+  <data name="PaymentPartiesSection" xml:space="preserve">
+    <value>Parties</value>
+  </data>
+  <data name="PaymentStatusAmountSection" xml:space="preserve">
+    <value>Status and amount</value>
+  </data>
+  <data name="PaymentProviderReferencesSection" xml:space="preserve">
+    <value>Provider references</value>
+  </data>
+  <data name="PaymentLinksSection" xml:space="preserve">
+    <value>Order and invoice links</value>
+  </data>
+  <data name="PaymentBusinessHelp" xml:space="preserve">
+    <value>Business that owns this payment for settlement, reporting, and support routing.</value>
+  </data>
+  <data name="PaymentCustomerHelp" xml:space="preserve">
+    <value>Optional CRM customer linked to the payment for invoice and support context.</value>
+  </data>
+  <data name="PaymentUserHelp" xml:space="preserve">
+    <value>Optional platform user associated with the payment or customer account.</value>
+  </data>
+  <data name="PaymentProviderHelp" xml:space="preserve">
+    <value>Payment provider or processor name used for reconciliation. Example: Stripe.</value>
+  </data>
+  <data name="PaymentStatusHelp" xml:space="preserve">
+    <value>Current lifecycle status of the payment. Change only when it matches provider evidence and reconciliation state.</value>
+  </data>
+  <data name="PaymentCurrencyHelp" xml:space="preserve">
+    <value>Three-letter currency for the recorded payment amount. Example: EUR.</value>
+  </data>
+  <data name="PaymentAmountMinorHelp" xml:space="preserve">
+    <value>Recorded payment amount in minor currency units. Example: 1299 means 12.99 in a two-decimal currency.</value>
+  </data>
+  <data name="PaymentPaidAtUtcHelp" xml:space="preserve">
+    <value>UTC timestamp when the payment was confirmed or captured. Leave empty while it is still pending.</value>
+  </data>
+  <data name="PaymentProviderTransactionRefHelp" xml:space="preserve">
+    <value>Provider transaction or charge identifier used to reconcile captures, refunds, and disputes.</value>
+  </data>
+  <data name="PaymentProviderPaymentIntentRefHelp" xml:space="preserve">
+    <value>Stripe PaymentIntent or equivalent provider intent reference, when available.</value>
+  </data>
+  <data name="PaymentProviderCheckoutSessionRefHelp" xml:space="preserve">
+    <value>Stripe Checkout Session or equivalent hosted checkout reference, when available.</value>
+  </data>
+  <data name="PaymentOrderIdHelp" xml:space="preserve">
+    <value>Order linked to this payment. Link it when order reconciliation or refunds should be visible from order operations.</value>
+  </data>
+  <data name="PaymentInvoiceIdHelp" xml:space="preserve">
+    <value>Invoice linked to this payment for tax, accounting, and receivables follow-up.</value>
+  </data>
+  <data name="CompanyName" xml:space="preserve">
+    <value>Company name</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="AssignedTo" xml:space="preserve">
+    <value>Assigned to</value>
+  </data>
+  <data name="Source" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="ExpectedCloseDate" xml:space="preserve">
+    <value>Expected close date</value>
+  </data>
+  <data name="EstimatedValueMinor" xml:space="preserve">
+    <value>Estimated value minor</value>
+  </data>
+  <data name="CrmCustomerIdentitySection" xml:space="preserve">
+    <value>Customer identity</value>
+  </data>
+  <data name="CrmCustomerTaxContactSection" xml:space="preserve">
+    <value>Tax and contact</value>
+  </data>
+  <data name="CrmCustomerLinkedUserHelp" xml:space="preserve">
+    <value>Optional platform user that owns identity data. When linked, contact fields should be treated as identity-owned.</value>
+  </data>
+  <data name="CrmCustomerCompanyNameHelp" xml:space="preserve">
+    <value>Company or organization name used for B2B follow-up, invoices, and support context.</value>
+  </data>
+  <data name="CrmCustomerFirstNameHelp" xml:space="preserve">
+    <value>Customer given name used for support, invoices, and communication personalization.</value>
+  </data>
+  <data name="CrmCustomerLastNameHelp" xml:space="preserve">
+    <value>Customer family name used for support, invoices, and communication personalization.</value>
+  </data>
+  <data name="CrmCustomerTaxProfileHelp" xml:space="preserve">
+    <value>Tax profile controls whether the customer is treated as consumer or business for invoice readiness and VAT review.</value>
+  </data>
+  <data name="CrmCustomerVatIdHelp" xml:space="preserve">
+    <value>VAT ID used for B2B tax compliance and invoice readiness. Required for business profiles where applicable.</value>
+  </data>
+  <data name="CrmCustomerEmailHelp" xml:space="preserve">
+    <value>Customer contact email for support, invoice follow-up, and communications when no linked user email is used.</value>
+  </data>
+  <data name="CrmCustomerPhoneHelp" xml:space="preserve">
+    <value>Optional customer contact phone for support escalation and account follow-up.</value>
+  </data>
+  <data name="CrmCustomerNotesHelp" xml:space="preserve">
+    <value>Internal CRM notes for support, segmentation, billing, or tax follow-up. Do not store secrets here.</value>
+  </data>
+  <data name="CrmCustomerAddressesHelp" xml:space="preserve">
+    <value>Billing and shipping addresses used for checkout, invoices, delivery, and tax context.</value>
+  </data>
+  <data name="CrmLeadIdentitySection" xml:space="preserve">
+    <value>Lead identity</value>
+  </data>
+  <data name="CrmLeadContactOwnershipSection" xml:space="preserve">
+    <value>Contact and ownership</value>
+  </data>
+  <data name="CrmLeadFirstNameHelp" xml:space="preserve">
+    <value>Lead given name used for sales/support follow-up.</value>
+  </data>
+  <data name="CrmLeadLastNameHelp" xml:space="preserve">
+    <value>Lead family name used for sales/support follow-up.</value>
+  </data>
+  <data name="CrmLeadCompanyNameHelp" xml:space="preserve">
+    <value>Company or organization the lead represents, if known.</value>
+  </data>
+  <data name="CrmLeadStatusHelp" xml:space="preserve">
+    <value>Current lead lifecycle state. Use it to separate new, qualified, disqualified, and converted follow-up.</value>
+  </data>
+  <data name="CrmLeadEmailHelp" xml:space="preserve">
+    <value>Lead email used for outreach and conversion follow-up.</value>
+  </data>
+  <data name="CrmLeadPhoneHelp" xml:space="preserve">
+    <value>Optional phone for outreach or support follow-up.</value>
+  </data>
+  <data name="CrmLeadAssignedToHelp" xml:space="preserve">
+    <value>Operator responsible for next contact and qualification.</value>
+  </data>
+  <data name="CrmLeadCustomerHelp" xml:space="preserve">
+    <value>Existing customer record this lead has been linked or converted to.</value>
+  </data>
+  <data name="CrmLeadSourceHelp" xml:space="preserve">
+    <value>Where the lead came from. Example: website, referral, campaign, support.</value>
+  </data>
+  <data name="CrmLeadNotesHelp" xml:space="preserve">
+    <value>Internal qualification notes and follow-up context. Do not store secrets here.</value>
+  </data>
+  <data name="CrmSegmentIdentitySection" xml:space="preserve">
+    <value>Segment identity</value>
+  </data>
+  <data name="CrmSegmentNameHelp" xml:space="preserve">
+    <value>Segment name used by support, marketing, and reporting filters.</value>
+  </data>
+  <data name="CrmSegmentDescriptionHelp" xml:space="preserve">
+    <value>Explain who belongs in this segment and when operators should use it.</value>
+  </data>
+  <data name="CrmOpportunityOwnershipSection" xml:space="preserve">
+    <value>Ownership</value>
+  </data>
+  <data name="CrmOpportunityForecastSection" xml:space="preserve">
+    <value>Forecast</value>
+  </data>
+  <data name="CrmOpportunityCustomerHelp" xml:space="preserve">
+    <value>Customer account this opportunity belongs to.</value>
+  </data>
+  <data name="CrmOpportunityAssignedToHelp" xml:space="preserve">
+    <value>Operator responsible for opportunity progress and follow-up.</value>
+  </data>
+  <data name="CrmOpportunityTitleHelp" xml:space="preserve">
+    <value>Short name that identifies the opportunity in CRM queues.</value>
+  </data>
+  <data name="CrmOpportunityStageHelp" xml:space="preserve">
+    <value>Current sales stage used for forecasting and pipeline review.</value>
+  </data>
+  <data name="CrmOpportunityExpectedCloseDateHelp" xml:space="preserve">
+    <value>Expected date when the opportunity should close or be reviewed.</value>
+  </data>
+  <data name="CrmOpportunityEstimatedValueMinorHelp" xml:space="preserve">
+    <value>Estimated opportunity value in minor currency units. Example: 10000 means 100.00 in a two-decimal currency.</value>
+  </data>
+  <data name="CrmOpportunityItemsHelp" xml:space="preserve">
+    <value>Products or variants expected in this opportunity. Keep quantities and prices realistic for forecasting.</value>
+  </data>
+  <data name="CrmOpportunityProductVariantHelp" xml:space="preserve">
+    <value>Product variant proposed or requested in this opportunity.</value>
+  </data>
+  <data name="CrmOpportunityQuantityHelp" xml:space="preserve">
+    <value>Expected quantity for this opportunity line.</value>
+  </data>
+  <data name="CrmOpportunityUnitPriceMinorHelp" xml:space="preserve">
+    <value>Expected unit price in minor currency units. Example: 1299 means 12.99.</value>
+  </data>
+  <data name="CrmInvoicePartiesLinksSection" xml:space="preserve">
+    <value>Parties and links</value>
+  </data>
+  <data name="CrmInvoiceStatusDatesSection" xml:space="preserve">
+    <value>Status and dates</value>
+  </data>
+  <data name="CrmInvoiceTotalsSection" xml:space="preserve">
+    <value>Totals</value>
+  </data>
+  <data name="CrmInvoiceBusinessHelp" xml:space="preserve">
+    <value>Business that owns this invoice for reporting, tax, and collection follow-up.</value>
+  </data>
+  <data name="CrmInvoiceCustomerHelp" xml:space="preserve">
+    <value>Customer receiving the invoice. Customer tax profile and VAT data affect invoice readiness.</value>
+  </data>
+  <data name="CrmInvoicePaymentHelp" xml:space="preserve">
+    <value>Payment linked to this invoice for settlement, refunds, and reconciliation.</value>
+  </data>
+  <data name="CrmInvoiceStatusHelp" xml:space="preserve">
+    <value>Current invoice lifecycle state. Change only when it matches payment and collection evidence.</value>
+  </data>
+  <data name="CrmInvoiceCurrencyHelp" xml:space="preserve">
+    <value>Three-letter invoice currency. Example: EUR.</value>
+  </data>
+  <data name="CrmInvoiceDueDateUtcHelp" xml:space="preserve">
+    <value>UTC due date used for receivables, overdue review, and collection follow-up.</value>
+  </data>
+  <data name="CrmInvoicePaidAtUtcHelp" xml:space="preserve">
+    <value>UTC timestamp when the invoice was paid. Leave empty until payment is confirmed.</value>
+  </data>
+  <data name="CrmInvoiceTotalNetMinorHelp" xml:space="preserve">
+    <value>Invoice net total in minor currency units before tax.</value>
+  </data>
+  <data name="CrmInvoiceTotalTaxMinorHelp" xml:space="preserve">
+    <value>Invoice tax total in minor currency units.</value>
+  </data>
+  <data name="CrmInvoiceTotalGrossMinorHelp" xml:space="preserve">
+    <value>Invoice gross total in minor currency units after tax.</value>
+  </data>
+  <data name="CrmInvoiceRefundAmountMinorHelp" xml:space="preserve">
+    <value>Refund amount in minor currency units. It must not exceed the currently settled amount.</value>
+  </data>
+  <data name="CrmInvoiceRefundReasonHelp" xml:space="preserve">
+    <value>Internal reason for the invoice refund. Use clear operational wording; do not store secrets.</value>
+  </data>
+  <data name="PagePublishingSection" xml:space="preserve">
+    <value>Publishing window</value>
+  </data>
+  <data name="PageStatusHelp" xml:space="preserve">
+    <value>Controls whether this page is draft, scheduled, published, or archived in the storefront.</value>
+  </data>
+  <data name="PagePublishStartUtcHelp" xml:space="preserve">
+    <value>UTC timestamp when the page becomes eligible to appear publicly. Leave empty when it can publish immediately.</value>
+  </data>
+  <data name="PagePublishEndUtcHelp" xml:space="preserve">
+    <value>UTC timestamp when the page should stop appearing publicly. Leave empty for evergreen content.</value>
+  </data>
+  <data name="PageCultureHelp" xml:space="preserve">
+    <value>Language/culture for this page content. In single-language mode only the default culture is requested.</value>
+  </data>
+  <data name="PageTitleHelp" xml:space="preserve">
+    <value>Visible page title for this culture. Keep it clear enough for navigation, search, and support references.</value>
+  </data>
+  <data name="PageMetaTitleHelp" xml:space="preserve">
+    <value>SEO title for this culture. Keep it concise and aligned with the visible page title.</value>
+  </data>
+  <data name="InventoryWarehouseIdentitySection" xml:space="preserve">
+    <value>Warehouse identity</value>
+  </data>
+  <data name="InventoryWarehouseOperationsSection" xml:space="preserve">
+    <value>Operations</value>
+  </data>
+  <data name="InventoryWarehouseBusinessHelp" xml:space="preserve">
+    <value>Business that owns this warehouse and its stock movements.</value>
+  </data>
+  <data name="InventoryWarehouseNameHelp" xml:space="preserve">
+    <value>Operational warehouse name shown in inventory lists, transfers, and stock-level screens.</value>
+  </data>
+  <data name="InventoryWarehouseLocationHelp" xml:space="preserve">
+    <value>Physical or operational location used by staff to identify where stock is stored.</value>
+  </data>
+  <data name="InventoryWarehouseDescriptionHelp" xml:space="preserve">
+    <value>Internal note describing the warehouse purpose, coverage, or handling constraints.</value>
+  </data>
+  <data name="InventoryWarehouseIsDefaultHelp" xml:space="preserve">
+    <value>Marks the warehouse used by default when the system needs an initial stock location for this business.</value>
+  </data>
+  <data name="InventorySupplierIdentitySection" xml:space="preserve">
+    <value>Supplier identity</value>
+  </data>
+  <data name="InventorySupplierContactSection" xml:space="preserve">
+    <value>Contact and procurement notes</value>
+  </data>
+  <data name="InventorySupplierBusinessHelp" xml:space="preserve">
+    <value>Business that can place purchase orders with this supplier.</value>
+  </data>
+  <data name="InventorySupplierNameHelp" xml:space="preserve">
+    <value>Supplier name used in purchase orders, receiving, and procurement review.</value>
+  </data>
+  <data name="InventorySupplierEmailHelp" xml:space="preserve">
+    <value>Primary supplier email for purchase order communication and follow-up.</value>
+  </data>
+  <data name="InventorySupplierPhoneHelp" xml:space="preserve">
+    <value>Primary supplier phone number for urgent purchasing or delivery follow-up.</value>
+  </data>
+  <data name="InventorySupplierAddressHelp" xml:space="preserve">
+    <value>Supplier address used for procurement records and operational reference.</value>
+  </data>
+  <data name="InventorySupplierNotesHelp" xml:space="preserve">
+    <value>Internal procurement notes such as ordering constraints, lead times, or contact preferences. Do not store secrets.</value>
+  </data>
+  <data name="InventoryStockLevelIdentitySection" xml:space="preserve">
+    <value>Stock identity</value>
+  </data>
+  <data name="InventoryStockLevelQuantitiesSection" xml:space="preserve">
+    <value>Quantities and replenishment</value>
+  </data>
+  <data name="InventoryStockLevelWarehouseHelp" xml:space="preserve">
+    <value>Warehouse where this stock level is tracked.</value>
+  </data>
+  <data name="InventoryStockLevelProductVariantHelp" xml:space="preserve">
+    <value>Product variant/SKU whose inventory is tracked in the selected warehouse.</value>
+  </data>
+  <data name="InventoryStockLevelAvailableQuantityHelp" xml:space="preserve">
+    <value>Quantity currently available for sale or allocation in this warehouse.</value>
+  </data>
+  <data name="InventoryStockLevelReservedQuantityHelp" xml:space="preserve">
+    <value>Quantity held for orders or operations and not freely available for new allocation.</value>
+  </data>
+  <data name="InventoryStockLevelReorderPointHelp" xml:space="preserve">
+    <value>Threshold that signals replenishment should be reviewed. Example: reorder when available stock falls to 10.</value>
+  </data>
+  <data name="InventoryStockLevelReorderQuantityHelp" xml:space="preserve">
+    <value>Typical quantity to order when replenishing this variant for the warehouse.</value>
+  </data>
+  <data name="InventoryStockLevelInTransitQuantityHelp" xml:space="preserve">
+    <value>Quantity already ordered or transferred but not yet received into available stock.</value>
+  </data>
+  <data name="InventoryPurchaseOrderHeaderSection" xml:space="preserve">
+    <value>Purchase order header</value>
+  </data>
+  <data name="InventoryPurchaseOrderBusinessHelp" xml:space="preserve">
+    <value>Business that owns the purchase order and receives the replenished stock.</value>
+  </data>
+  <data name="InventoryPurchaseOrderSupplierHelp" xml:space="preserve">
+    <value>Supplier receiving this purchase order.</value>
+  </data>
+  <data name="InventoryPurchaseOrderStatusHelp" xml:space="preserve">
+    <value>Operational purchase-order state, such as Draft, Issued, Received, or Cancelled.</value>
+  </data>
+  <data name="InventoryPurchaseOrderNumberHelp" xml:space="preserve">
+    <value>External or internal purchase order reference used for supplier follow-up and receiving.</value>
+  </data>
+  <data name="InventoryPurchaseOrderOrderedAtUtcHelp" xml:space="preserve">
+    <value>UTC timestamp when the purchase order was placed or issued.</value>
+  </data>
+  <data name="InventoryPurchaseOrderLinesHelp" xml:space="preserve">
+    <value>Variants and quantities expected from the supplier. Keep costs in minor currency units for reconciliation.</value>
+  </data>
+  <data name="InventoryPurchaseOrderLineVariantHelp" xml:space="preserve">
+    <value>Product variant/SKU being purchased from the supplier.</value>
+  </data>
+  <data name="InventoryPurchaseOrderLineQuantityHelp" xml:space="preserve">
+    <value>Quantity ordered for this line.</value>
+  </data>
+  <data name="InventoryPurchaseOrderLineUnitCostMinorHelp" xml:space="preserve">
+    <value>Unit cost in minor currency units. Example: 1299 means 12.99.</value>
+  </data>
+  <data name="InventoryPurchaseOrderLineTotalCostMinorHelp" xml:space="preserve">
+    <value>Total line cost in minor currency units, usually quantity multiplied by unit cost.</value>
+  </data>
+  <data name="InventoryStockTransferRouteSection" xml:space="preserve">
+    <value>Transfer route</value>
+  </data>
+  <data name="InventoryStockTransferFromWarehouseHelp" xml:space="preserve">
+    <value>Warehouse where stock leaves from. It should have enough available quantity for the transfer.</value>
+  </data>
+  <data name="InventoryStockTransferToWarehouseHelp" xml:space="preserve">
+    <value>Warehouse where stock is expected to arrive.</value>
+  </data>
+  <data name="InventoryStockTransferStatusHelp" xml:space="preserve">
+    <value>Operational transfer state, such as Draft, InTransit, Completed, or Cancelled.</value>
+  </data>
+  <data name="InventoryStockTransferLinesHelp" xml:space="preserve">
+    <value>Variants and quantities moving between warehouses.</value>
+  </data>
+  <data name="InventoryStockTransferLineVariantHelp" xml:space="preserve">
+    <value>Product variant/SKU being moved between warehouses.</value>
+  </data>
+  <data name="InventoryStockTransferLineQuantityHelp" xml:space="preserve">
+    <value>Quantity to move for this transfer line.</value>
+  </data>
+  <data name="OrderedAtUtc" xml:space="preserve">
+    <value>Ordered at (UTC)</value>
+  </data>
+  <data name="FromWarehouse" xml:space="preserve">
+    <value>From warehouse</value>
+  </data>
+  <data name="ToWarehouse" xml:space="preserve">
+    <value>To warehouse</value>
+  </data>
+  <data name="IsDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="AvailableQuantity" xml:space="preserve">
+    <value>Available quantity</value>
+  </data>
+  <data name="ReservedQuantity" xml:space="preserve">
+    <value>Reserved quantity</value>
+  </data>
+  <data name="ReorderQuantity" xml:space="preserve">
+    <value>Reorder quantity</value>
+  </data>
+  <data name="InTransitQuantity" xml:space="preserve">
+    <value>In-transit quantity</value>
+  </data>
+  <data name="QuantityDelta" xml:space="preserve">
+    <value>Quantity delta</value>
+  </data>
+  <data name="ReferenceId" xml:space="preserve">
+    <value>Reference ID</value>
+  </data>
+  <data name="InventoryStockSnapshotSection" xml:space="preserve">
+    <value>Current stock snapshot</value>
+  </data>
+  <data name="InventoryAdjustmentSection" xml:space="preserve">
+    <value>Adjustment</value>
+  </data>
+  <data name="InventoryReservationSection" xml:space="preserve">
+    <value>Reservation</value>
+  </data>
+  <data name="InventoryReleaseReservationSection" xml:space="preserve">
+    <value>Release reservation</value>
+  </data>
+  <data name="InventoryReturnReceiptSection" xml:space="preserve">
+    <value>Return receipt</value>
+  </data>
+  <data name="InventoryActionWarehouseHelp" xml:space="preserve">
+    <value>Warehouse affected by this operation. It is locked here to prevent changing the stock target accidentally.</value>
+  </data>
+  <data name="InventoryActionVariantHelp" xml:space="preserve">
+    <value>Product variant/SKU affected by this operation. It is locked here to keep the audit trail precise.</value>
+  </data>
+  <data name="InventoryActionAvailableHelp" xml:space="preserve">
+    <value>Current available quantity before this operation is applied.</value>
+  </data>
+  <data name="InventoryActionReservedHelp" xml:space="preserve">
+    <value>Current reserved quantity before this operation is applied.</value>
+  </data>
+  <data name="InventoryActionReasonHelp" xml:space="preserve">
+    <value>Short operational reason stored with the inventory ledger. Example: StockCount, ManualReserve, OrderCancelled. Do not store secrets.</value>
+  </data>
+  <data name="InventoryReserveQuantityHelp" xml:space="preserve">
+    <value>Quantity to reserve for an order or operation. It should not exceed currently available stock.</value>
+  </data>
+  <data name="InventoryReleaseQuantityHelp" xml:space="preserve">
+    <value>Quantity to release from existing reservations. It should not exceed the current reserved quantity.</value>
+  </data>
+  <data name="InventoryReturnQuantityHelp" xml:space="preserve">
+    <value>Quantity received back from a return and added to available stock after operational review.</value>
+  </data>
+  <data name="IsActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="AccrualMode" xml:space="preserve">
+    <value>Accrual mode</value>
+  </data>
+  <data name="PointsPerCurrencyUnit" xml:space="preserve">
+    <value>Points per currency unit</value>
+  </data>
+  <data name="RulesJson" xml:space="preserve">
+    <value>Rules JSON</value>
+  </data>
+  <data name="PointsRequired" xml:space="preserve">
+    <value>Points required</value>
+  </data>
+  <data name="RewardType" xml:space="preserve">
+    <value>Reward type</value>
+  </data>
+  <data name="RewardValue" xml:space="preserve">
+    <value>Reward value</value>
+  </data>
+  <data name="AllowSelfRedemption" xml:space="preserve">
+    <value>Allow self redemption</value>
+  </data>
+  <data name="MetadataJson" xml:space="preserve">
+    <value>Metadata JSON</value>
+  </data>
+  <data name="CampaignState" xml:space="preserve">
+    <value>Campaign state</value>
+  </data>
+  <data name="Subtitle" xml:space="preserve">
+    <value>Subtitle</value>
+  </data>
+  <data name="MediaUrl" xml:space="preserve">
+    <value>Media URL</value>
+  </data>
+  <data name="LandingUrl" xml:space="preserve">
+    <value>Landing URL</value>
+  </data>
+  <data name="Body" xml:space="preserve">
+    <value>Body</value>
+  </data>
+  <data name="StartsAtUtc" xml:space="preserve">
+    <value>Starts at (UTC)</value>
+  </data>
+  <data name="EndsAtUtc" xml:space="preserve">
+    <value>Ends at (UTC)</value>
+  </data>
+  <data name="TargetingJson" xml:space="preserve">
+    <value>Targeting JSON</value>
+  </data>
+  <data name="PayloadJson" xml:space="preserve">
+    <value>Payload JSON</value>
+  </data>
+  <data name="Member" xml:space="preserve">
+    <value>Member</value>
+  </data>
+  <data name="LoyaltyProgramIdentitySection" xml:space="preserve">
+    <value>Program identity</value>
+  </data>
+  <data name="LoyaltyProgramAccrualSection" xml:space="preserve">
+    <value>Accrual rules</value>
+  </data>
+  <data name="LoyaltyProgramBusinessHelp" xml:space="preserve">
+    <value>Business that owns this loyalty program and its member accounts.</value>
+  </data>
+  <data name="LoyaltyProgramNameHelp" xml:space="preserve">
+    <value>Internal program name shown in loyalty operations and reporting.</value>
+  </data>
+  <data name="LoyaltyProgramIsActiveHelp" xml:space="preserve">
+    <value>Controls whether the program can be used for current accrual and redemption workflows.</value>
+  </data>
+  <data name="LoyaltyProgramAccrualModeHelp" xml:space="preserve">
+    <value>How the program grants points. Choose the mode that matches checkout and campaign policy.</value>
+  </data>
+  <data name="LoyaltyProgramPointsPerCurrencyUnitHelp" xml:space="preserve">
+    <value>Number of points earned per major currency unit when the selected accrual mode uses spend-based earning.</value>
+  </data>
+  <data name="LoyaltyRewardTierThresholdSection" xml:space="preserve">
+    <value>Threshold and reward</value>
+  </data>
+  <data name="LoyaltyRewardTierContentSection" xml:space="preserve">
+    <value>Content and metadata</value>
+  </data>
+  <data name="LoyaltyRewardTierPointsRequiredHelp" xml:space="preserve">
+    <value>Minimum points needed before this reward tier becomes available.</value>
+  </data>
+  <data name="LoyaltyRewardTierRewardTypeHelp" xml:space="preserve">
+    <value>Reward behavior, such as discount, perk, or operational redemption type.</value>
+  </data>
+  <data name="LoyaltyRewardTierRewardValueHelp" xml:space="preserve">
+    <value>Reward value interpreted by the selected reward type. Example: a discount amount or percentage value.</value>
+  </data>
+  <data name="LoyaltyRewardTierAllowSelfRedemptionHelp" xml:space="preserve">
+    <value>Allows members to redeem this reward themselves without staff intervention.</value>
+  </data>
+  <data name="LoyaltyRewardTierDescriptionHelp" xml:space="preserve">
+    <value>Operator-facing reward description. Keep conditions clear enough for support and storefront copy review.</value>
+  </data>
+  <data name="LoyaltyAccountIdentitySection" xml:space="preserve">
+    <value>Account identity</value>
+  </data>
+  <data name="LoyaltyAccountBusinessHelp" xml:space="preserve">
+    <value>Business where the member loyalty account will be created.</value>
+  </data>
+  <data name="LoyaltyAccountMemberHelp" xml:space="preserve">
+    <value>Member user who receives the loyalty account. Create only one active account per business/member pair.</value>
+  </data>
+  <data name="LoyaltyCampaignIdentitySection" xml:space="preserve">
+    <value>Campaign identity</value>
+  </data>
+  <data name="LoyaltyCampaignContentSection" xml:space="preserve">
+    <value>Campaign content</value>
+  </data>
+  <data name="LoyaltyCampaignSchedulingSection" xml:space="preserve">
+    <value>Scheduling</value>
+  </data>
+  <data name="LoyaltyCampaignRulesSection" xml:space="preserve">
+    <value>Targeting and payload</value>
+  </data>
+  <data name="LoyaltyCampaignBusinessHelp" xml:space="preserve">
+    <value>Business that owns this campaign and its audience.</value>
+  </data>
+  <data name="LoyaltyCampaignNameHelp" xml:space="preserve">
+    <value>Internal campaign name used in admin queues and reports.</value>
+  </data>
+  <data name="LoyaltyCampaignChannelsHelp" xml:space="preserve">
+    <value>Delivery or display channel for this campaign.</value>
+  </data>
+  <data name="LoyaltyCampaignStateHelp" xml:space="preserve">
+    <value>Computed campaign lifecycle state based on scheduling and processing.</value>
+  </data>
+  <data name="LoyaltyCampaignTitleHelp" xml:space="preserve">
+    <value>Primary customer-facing campaign title for the selected channel.</value>
+  </data>
+  <data name="LoyaltyCampaignSubtitleHelp" xml:space="preserve">
+    <value>Short supporting message shown near the campaign title when the channel supports it.</value>
+  </data>
+  <data name="LoyaltyCampaignMediaUrlHelp" xml:space="preserve">
+    <value>Optional media URL used by the campaign creative. Use trusted internal or approved public assets.</value>
+  </data>
+  <data name="LoyaltyCampaignLandingUrlHelp" xml:space="preserve">
+    <value>Optional destination URL for campaign clicks or taps.</value>
+  </data>
+  <data name="LoyaltyCampaignBodyHelp" xml:space="preserve">
+    <value>Main campaign message. Keep it aligned with the active site languages and legal constraints.</value>
+  </data>
+  <data name="LoyaltyCampaignStartsAtUtcHelp" xml:space="preserve">
+    <value>UTC time when the campaign becomes eligible to run.</value>
+  </data>
+  <data name="LoyaltyCampaignEndsAtUtcHelp" xml:space="preserve">
+    <value>UTC time when the campaign should stop running. Leave empty only for open-ended campaigns.</value>
+  </data>
+  <data name="ProviderReference" xml:space="preserve">
+    <value>Provider reference</value>
+  </data>
+  <data name="Payment" xml:space="preserve">
+    <value>Payment</value>
+  </data>
+  <data name="DueAtUtc" xml:space="preserve">
+    <value>Due at (UTC)</value>
+  </data>
+  <data name="TrackingNumber" xml:space="preserve">
+    <value>Tracking number</value>
+  </data>
+  <data name="TotalWeight" xml:space="preserve">
+    <value>Total weight</value>
+  </data>
+  <data name="OrderPaymentProviderSection" xml:space="preserve">
+    <value>Provider and status</value>
+  </data>
+  <data name="OrderPaymentAmountSection" xml:space="preserve">
+    <value>Amount and failure details</value>
+  </data>
+  <data name="OrderPaymentProviderHelp" xml:space="preserve">
+    <value>Payment provider that processed or recorded this payment. Example: Stripe, cash, bank-transfer.</value>
+  </data>
+  <data name="OrderPaymentProviderReferenceHelp" xml:space="preserve">
+    <value>Provider transaction/reference id used for reconciliation and support lookup. Do not store secrets.</value>
+  </data>
+  <data name="OrderPaymentStatusHelp" xml:space="preserve">
+    <value>Current payment state. Captured means funds are settled, Authorized means held, Failed means no successful collection.</value>
+  </data>
+  <data name="OrderPaymentAmountMinorHelp" xml:space="preserve">
+    <value>Payment amount in minor currency units. Example: 1299 means 12.99 in a two-decimal currency.</value>
+  </data>
+  <data name="OrderPaymentCurrencyHelp" xml:space="preserve">
+    <value>Three-letter payment currency. It should match the order currency unless there is an explicit reconciliation reason.</value>
+  </data>
+  <data name="OrderPaymentFailureReasonHelp" xml:space="preserve">
+    <value>Operational reason when the payment failed. Keep it clear for support and avoid sensitive provider payloads.</value>
+  </data>
+  <data name="OrderRefundDetailsSection" xml:space="preserve">
+    <value>Refund details</value>
+  </data>
+  <data name="OrderRefundPaymentHelp" xml:space="preserve">
+    <value>Payment being refunded. Choose the payment that actually settled the funds.</value>
+  </data>
+  <data name="OrderRefundAmountMinorHelp" xml:space="preserve">
+    <value>Refund amount in minor currency units. It must not exceed the refundable payment balance.</value>
+  </data>
+  <data name="OrderRefundCurrencyHelp" xml:space="preserve">
+    <value>Three-letter refund currency. It should normally match the original payment currency.</value>
+  </data>
+  <data name="OrderRefundReasonHelp" xml:space="preserve">
+    <value>Internal refund reason for audit and support follow-up. Do not store secrets or full provider payloads.</value>
+  </data>
+  <data name="OrderInvoiceLinksSection" xml:space="preserve">
+    <value>Invoice links</value>
+  </data>
+  <data name="OrderInvoiceBusinessHelp" xml:space="preserve">
+    <value>Business issuing the invoice for this order.</value>
+  </data>
+  <data name="OrderInvoiceCustomerHelp" xml:space="preserve">
+    <value>Customer receiving the invoice. Customer tax data can affect invoice readiness.</value>
+  </data>
+  <data name="OrderInvoicePaymentHelp" xml:space="preserve">
+    <value>Payment linked to the invoice for settlement and reconciliation.</value>
+  </data>
+  <data name="OrderInvoiceDueAtUtcHelp" xml:space="preserve">
+    <value>UTC due date used for receivables and collection follow-up.</value>
+  </data>
+  <data name="OrderShipmentCarrierSection" xml:space="preserve">
+    <value>Carrier and tracking</value>
+  </data>
+  <data name="OrderShipmentCarrierHelp" xml:space="preserve">
+    <value>Carrier handling the shipment. Example: DHL, UPS, postal service, local courier.</value>
+  </data>
+  <data name="OrderShipmentServiceHelp" xml:space="preserve">
+    <value>Carrier service level or method. Example: express, standard, pickup point.</value>
+  </data>
+  <data name="OrderShipmentTrackingNumberHelp" xml:space="preserve">
+    <value>Tracking number visible to operations and customer support.</value>
+  </data>
+  <data name="OrderShipmentProviderReferenceHelp" xml:space="preserve">
+    <value>Provider shipment id/reference used for carrier API callbacks and reconciliation.</value>
+  </data>
+  <data name="OrderShipmentLabelUrlHelp" xml:space="preserve">
+    <value>URL to the carrier label or label asset. Use approved storage and avoid expiring private links when possible.</value>
+  </data>
+  <data name="OrderShipmentLastCarrierEventKeyHelp" xml:space="preserve">
+    <value>Last carrier event key already processed. Used to avoid duplicate callback handling.</value>
+  </data>
+  <data name="OrderShipmentTotalWeightHelp" xml:space="preserve">
+    <value>Total shipment weight used for carrier operations. Keep the unit consistent with provider integration settings.</value>
+  </data>
+  <data name="OrderShipmentLinesHelp" xml:space="preserve">
+    <value>Order lines and quantities included in this shipment.</value>
+  </data>
+  <data name="OrderShipmentLineQuantityHelp" xml:space="preserve">
+    <value>Quantity from this order line included in the shipment. Do not exceed the remaining shippable quantity.</value>
+  </data>
+  <data name="CommunicationTemplatePreviewFlowHelp" xml:space="preserve">
+    <value>Communication flow whose configured templates should be previewed. Use this before changing copy or tokens.</value>
+  </data>
+  <data name="CommunicationTemplatePreviewChannelHelp" xml:space="preserve">
+    <value>Channel previewed for the selected flow, such as email, SMS, or WhatsApp.</value>
+  </data>
+  <data name="ProviderCallbackSearchHelp" xml:space="preserve">
+    <value>Search callback records by provider reference, idempotency key, event type, or related diagnostic text.</value>
+  </data>
+  <data name="ProviderCallbackProviderFilterHelp" xml:space="preserve">
+    <value>Limits the inbox to callbacks from one provider, such as Brevo, Stripe, or DHL.</value>
+  </data>
+  <data name="ProviderCallbackStatusFilterHelp" xml:space="preserve">
+    <value>Filters callback processing status so operators can focus on pending, processed, or failed records.</value>
+  </data>
+  <data name="ProviderCallbackPageSizeHelp" xml:space="preserve">
+    <value>Number of callback records shown per page.</value>
+  </data>
+  <data name="ProviderCallbackStalePendingOnlyHelp" xml:space="preserve">
+    <value>Shows pending callbacks that have waited long enough to require operational review.</value>
+  </data>
+  <data name="ProviderCallbackFailedOnlyHelp" xml:space="preserve">
+    <value>Shows callbacks whose processing failed and may need retry or code/configuration review.</value>
+  </data>
+  <data name="ProviderCallbackBrevoDeliveryFailureOnlyHelp" xml:space="preserve">
+    <value>Limits Brevo callbacks to delivery failure events that usually need customer communication review.</value>
+  </data>
+  <data name="EmailAuditsSearchHelp" xml:space="preserve">
+    <value>Search email audit rows by recipient, subject, flow, provider reference, or diagnostic text.</value>
+  </data>
+  <data name="EmailAuditsStatusFilterHelp" xml:space="preserve">
+    <value>Filters email audit rows by delivery or processing status.</value>
+  </data>
+  <data name="EmailAuditsFlowFilterHelp" xml:space="preserve">
+    <value>Limits email audits to one communication flow, such as activation, order updates, or recovery messages.</value>
+  </data>
+  <data name="EmailAuditsStalePendingOnlyHelp" xml:space="preserve">
+    <value>Shows email rows that stayed pending long enough to need operational review.</value>
+  </data>
+  <data name="EmailAuditsBusinessLinkedFailuresOnlyHelp" xml:space="preserve">
+    <value>Shows failed emails linked to a business, where an owner or support workflow may need follow-up.</value>
+  </data>
+  <data name="EmailAuditsRepeatedFailuresOnlyHelp" xml:space="preserve">
+    <value>Shows recipients or flows with repeated failures that may indicate configuration, provider, or address issues.</value>
+  </data>
+  <data name="EmailAuditsPriorSuccessOnlyHelp" xml:space="preserve">
+    <value>Shows failures where the same chain previously succeeded, useful for spotting regressions or transient provider issues.</value>
+  </data>
+  <data name="EmailAuditsRetryReadyOnlyHelp" xml:space="preserve">
+    <value>Shows rows that are eligible for retry according to current retry policy.</value>
+  </data>
+  <data name="EmailAuditsRetryBlockedOnlyHelp" xml:space="preserve">
+    <value>Shows rows blocked from retry by policy, state, or safety constraints.</value>
+  </data>
+  <data name="EmailAuditsHeavyChainsOnlyHelp" xml:space="preserve">
+    <value>Shows communication chains with unusually high attempt volume that may need throttling or template review.</value>
+  </data>
+  <data name="EmailAuditsPageSizeHelp" xml:space="preserve">
+    <value>Number of email audit rows shown per page.</value>
+  </data>
+  <data name="ChannelAuditsSearchHelp" xml:space="preserve">
+    <value>Search channel audit rows by recipient, provider reference, flow, event, or diagnostic text.</value>
+  </data>
+  <data name="ChannelAuditsProviderFilterHelp" xml:space="preserve">
+    <value>Limits channel audits to one provider lane.</value>
+  </data>
+  <data name="ChannelAuditsChannelFilterHelp" xml:space="preserve">
+    <value>Limits audits to one channel, such as SMS or WhatsApp.</value>
+  </data>
+  <data name="ChannelAuditsFlowFilterHelp" xml:space="preserve">
+    <value>Limits channel audits to one communication flow.</value>
+  </data>
+  <data name="ChannelAuditsStatusFilterHelp" xml:space="preserve">
+    <value>Filters channel audit rows by delivery or processing status.</value>
+  </data>
+  <data name="ChannelAuditsPageSizeHelp" xml:space="preserve">
+    <value>Number of channel audit rows shown per page.</value>
+  </data>
+  <data name="BusinessCommunicationSearchHelp" xml:space="preserve">
+    <value>Search businesses by name, support email, sender identity, or communication setup signal.</value>
+  </data>
+  <data name="BusinessCommunicationFilterHelp" xml:space="preserve">
+    <value>Focuses the business communication list on a specific operational queue.</value>
+  </data>
+  <data name="BusinessCommunicationPageSizeHelp" xml:space="preserve">
+    <value>Number of businesses shown per page.</value>
+  </data>
+  <data name="BusinessCommunicationSetupOnlyHelp" xml:space="preserve">
+    <value>Shows only businesses with communication setup gaps that should be reviewed before sending live traffic.</value>
+  </data>
+  <data name="EmailAuditsFailedActivationsHelp" xml:space="preserve">
+    <value>Activation emails that failed and may block users from completing account setup.</value>
+  </data>
+  <data name="EmailAuditsFailedPasswordResetsHelp" xml:space="preserve">
+    <value>Password reset emails that failed and may prevent account recovery.</value>
+  </data>
+  <data name="EmailAuditsFailedAdminTestsHelp" xml:space="preserve">
+    <value>Admin-triggered test emails that failed, often indicating sender, template, or provider configuration issues.</value>
+  </data>
+  <data name="EmailAuditsRetriedFlowChainsHelp" xml:space="preserve">
+    <value>Communication chains where at least one email was retried.</value>
+  </data>
+  <data name="EmailAuditsPriorSuccessContextsHelp" xml:space="preserve">
+    <value>Failed contexts with earlier successful sends, useful for spotting regressions or transient provider issues.</value>
+  </data>
+  <data name="EmailAuditsRepeatedFailuresKpiHelp" xml:space="preserve">
+    <value>Recipients or flows with repeated failures that should be reviewed before further retry volume builds up.</value>
+  </data>
+  <data name="EmailAuditsRetryReadyKpiHelp" xml:space="preserve">
+    <value>Email rows currently eligible for retry according to retry policy.</value>
+  </data>
+  <data name="EmailAuditsRetryBlockedKpiHelp" xml:space="preserve">
+    <value>Email rows blocked from retry by policy, safety limits, or current state.</value>
+  </data>
+  <data name="EmailAuditsHeavyChainsKpiHelp" xml:space="preserve">
+    <value>Communication chains with high attempt volume that may need throttling, template review, or provider review.</value>
+  </data>
+  <data name="ChannelAuditsRepeatedFailuresKpiHelp" xml:space="preserve">
+    <value>Recipients, providers, or flows with repeated SMS/WhatsApp failures.</value>
+  </data>
+  <data name="ChannelAuditsPriorSuccessContextKpiHelp" xml:space="preserve">
+    <value>Failed channel contexts that previously succeeded, useful for transient provider or template regressions.</value>
+  </data>
+  <data name="ChannelAuditsActionReadyKpiHelp" xml:space="preserve">
+    <value>Channel rows that are ready for an operator or automated retry action.</value>
+  </data>
+  <data name="ChannelAuditsActionBlockedKpiHelp" xml:space="preserve">
+    <value>Channel rows blocked by policy, provider state, or safety rules.</value>
+  </data>
+  <data name="ChannelAuditsEscalationCandidatesKpiHelp" xml:space="preserve">
+    <value>Rows that likely need provider, support, or configuration escalation.</value>
+  </data>
+  <data name="ChannelAuditsHeavyChainsKpiHelp" xml:space="preserve">
+    <value>Channel chains with unusually high attempt volume that may need throttling or flow review.</value>
+  </data>
+  <data name="ChannelAuditsProviderReviewKpiHelp" xml:space="preserve">
+    <value>Rows that need provider-lane review because failure patterns may be external or integration-related.</value>
+  </data>
+  <data name="ChannelAuditsRecoveredProvidersKpiHelp" xml:space="preserve">
+    <value>Provider lanes that had failures followed by successful recovery signals.</value>
+  </data>
+  <data name="BusinessCommunicationSubjectPrefixHelp" xml:space="preserve">
+    <value>Prefix added to transactional email subjects for this business or environment. Useful for test/sandbox distinction.</value>
+  </data>
+  <data name="BusinessCommunicationTestInboxHelp" xml:space="preserve">
+    <value>Configured inbox that receives rerouted test traffic when communication policy requires safe testing.</value>
+  </data>
+  <data name="BusinessCommunicationSendTestEmailHelp" xml:space="preserve">
+    <value>Sends a controlled test email using the current business communication settings.</value>
+  </data>
+  <data name="BusinessCommunicationSendTestSmsHelp" xml:space="preserve">
+    <value>Sends a controlled SMS test using the current policy and provider setup.</value>
+  </data>
+  <data name="BusinessCommunicationSendTestWhatsAppHelp" xml:space="preserve">
+    <value>Sends a controlled WhatsApp test using the current policy and provider setup.</value>
+  </data>
+  <data name="BusinessCommunicationRerunSmsTestHelp" xml:space="preserve">
+    <value>Runs the SMS admin test again for this business and channel family.</value>
+  </data>
+  <data name="BusinessCommunicationRerunWhatsAppTestHelp" xml:space="preserve">
+    <value>Runs the WhatsApp admin test again for this business and channel family.</value>
+  </data>
+  <data name="BusinessLocationIdentitySection" xml:space="preserve">
+    <value>Location identity</value>
+  </data>
+  <data name="BusinessLocationAddressSection" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="BusinessLocationOperationsSection" xml:space="preserve">
+    <value>Operational details</value>
+  </data>
+  <data name="BusinessLocationNameHelp" xml:space="preserve">
+    <value>Location name shown to operators and used to distinguish stores, branches, or pickup points.</value>
+  </data>
+  <data name="BusinessLocationPrimaryHelp" xml:space="preserve">
+    <value>Marks the primary business location used for readiness, storefront, and operational defaults.</value>
+  </data>
+  <data name="BusinessLocationAddressLine1Help" xml:space="preserve">
+    <value>Main street address for this location.</value>
+  </data>
+  <data name="BusinessLocationAddressLine2Help" xml:space="preserve">
+    <value>Optional apartment, suite, floor, or additional address detail.</value>
+  </data>
+  <data name="BusinessLocationPostalCodeHelp" xml:space="preserve">
+    <value>Postal code used for business address, discovery, and delivery/routing context.</value>
+  </data>
+  <data name="BusinessLocationCityHelp" xml:space="preserve">
+    <value>City or locality for this business location.</value>
+  </data>
+  <data name="BusinessLocationRegionHelp" xml:space="preserve">
+    <value>Optional state, province, county, or region for this location.</value>
+  </data>
+  <data name="BusinessLocationCountryCodeHelp" xml:space="preserve">
+    <value>Two-letter ISO country code. Example: DE.</value>
+  </data>
+  <data name="BusinessLocationLatitudeHelp" xml:space="preserve">
+    <value>Optional latitude for maps, distance sorting, and location discovery.</value>
+  </data>
+  <data name="BusinessLocationLongitudeHelp" xml:space="preserve">
+    <value>Optional longitude for maps, distance sorting, and location discovery.</value>
+  </data>
+  <data name="BusinessLocationAltitudeMetersHelp" xml:space="preserve">
+    <value>Optional altitude in meters, used only when operations need precise geographic context.</value>
+  </data>
+  <data name="BusinessLocationOpeningHoursJsonHelp" xml:space="preserve">
+    <value>Structured opening-hours JSON for this location. Keep it valid and aligned with storefront display rules.</value>
+  </data>
+  <data name="BusinessLocationInternalNoteHelp" xml:space="preserve">
+    <value>Internal note for operators. Do not store secrets or private credentials.</value>
+  </data>
+  <data name="BusinessMemberIdentitySection" xml:space="preserve">
+    <value>Member identity and access</value>
+  </data>
+  <data name="BusinessMemberLastOwnerOverrideSection" xml:space="preserve">
+    <value>Last owner override</value>
+  </data>
+  <data name="BusinessMemberUserHelp" xml:space="preserve">
+    <value>User account to add as a business member.</value>
+  </data>
+  <data name="BusinessMemberReadonlyUserHelp" xml:space="preserve">
+    <value>Existing user linked to this business membership. Change the role or active state instead of replacing the user.</value>
+  </data>
+  <data name="BusinessMemberEmailHelp" xml:space="preserve">
+    <value>Email address of the linked user account.</value>
+  </data>
+  <data name="BusinessMemberRoleHelp" xml:space="preserve">
+    <value>Business role controlling what this member can administer or operate.</value>
+  </data>
+  <data name="BusinessMemberIsActiveHelp" xml:space="preserve">
+    <value>Controls whether this membership currently grants access to the business.</value>
+  </data>
+  <data name="BusinessMemberAllowLastOwnerOverrideHelp" xml:space="preserve">
+    <value>Allows removing or deactivating the last active owner. Use only with a clear operational reason.</value>
+  </data>
+  <data name="BusinessMemberOverrideReasonHelp" xml:space="preserve">
+    <value>Required audit reason for changing the last active owner state. Keep it specific and avoid secrets.</value>
+  </data>
+  <data name="BusinessInvitationRecipientSection" xml:space="preserve">
+    <value>Invitation recipient</value>
+  </data>
+  <data name="BusinessInvitationEmailHelp" xml:space="preserve">
+    <value>Email address that will receive the business invitation.</value>
+  </data>
+  <data name="BusinessInvitationRoleHelp" xml:space="preserve">
+    <value>Role granted when the invitation is accepted.</value>
+  </data>
+  <data name="BusinessInvitationExpiresInDaysHelp" xml:space="preserve">
+    <value>Number of days before the invitation expires. Use shorter windows for sensitive roles.</value>
+  </data>
+  <data name="BusinessInvitationInternalNoteHelp" xml:space="preserve">
+    <value>Internal note for support or onboarding context. Do not store secrets.</value>
+  </data>
+  <data name="SiteSettingsAdminTextOverridesHelpContent" xml:space="preserve">
+    <value>Platform-level admin wording overrides by culture and resource key. Use valid JSON and keep translations synchronized when adding another language.</value>
+  </data>
+  <data name="SiteSettingsJwtIssuerHelp" xml:space="preserve">
+    <value>Issuer value written into JWTs and expected by API validators. Change only with coordinated client/API rollout.</value>
+  </data>
+  <data name="SiteSettingsJwtAudienceHelp" xml:space="preserve">
+    <value>Audience value for JWT consumers. Public API and mobile clients must agree with this value.</value>
+  </data>
+  <data name="SiteSettingsJwtClockSkewSecondsHelp" xml:space="preserve">
+    <value>Allowed token clock drift in seconds. Keep low for security while allowing small server/client time differences.</value>
+  </data>
+  <data name="SiteSettingsJwtAccessTokenMinutesHelp" xml:space="preserve">
+    <value>Access token lifetime in minutes. Shorter lifetimes reduce exposure after token theft.</value>
+  </data>
+  <data name="SiteSettingsJwtRefreshTokenDaysHelp" xml:space="preserve">
+    <value>Refresh token lifetime in days. Longer lifetimes improve convenience but increase account takeover window.</value>
+  </data>
+  <data name="SiteSettingsJwtEmitScopesHelp" xml:space="preserve">
+    <value>Includes scope claims in issued JWTs for authorization decisions and diagnostics.</value>
+  </data>
+  <data name="SiteSettingsJwtSingleDeviceOnlyHelp" xml:space="preserve">
+    <value>Restricts a user to one active device/session family when supported by token storage.</value>
+  </data>
+  <data name="SiteSettingsJwtRequireDeviceBindingHelp" xml:space="preserve">
+    <value>Requires refresh tokens to be bound to a known device identifier. Keep enabled for mobile security.</value>
   </data>
 </root>

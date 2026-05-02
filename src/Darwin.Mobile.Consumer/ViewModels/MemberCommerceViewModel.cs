@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -8,6 +7,7 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Invoices;
 using Darwin.Contracts.Orders;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Commerce;
 using Darwin.Mobile.Shared.ViewModels;
@@ -21,6 +21,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class MemberCommerceViewModel : BaseViewModel
 {
     private readonly IMemberCommerceService _memberCommerceService;
+    private BusyOperationScope? _currentOperation;
     private bool _isLoaded;
     private string? _successMessage;
     private MemberCommerceOrderDetailViewModel? _selectedOrder;
@@ -45,12 +46,12 @@ public sealed class MemberCommerceViewModel : BaseViewModel
     /// <summary>
     /// Gets the recent order summaries.
     /// </summary>
-    public ObservableCollection<MemberCommerceOrderItemViewModel> Orders { get; } = new();
+    public RangeObservableCollection<MemberCommerceOrderItemViewModel> Orders { get; } = new();
 
     /// <summary>
     /// Gets the recent invoice summaries.
     /// </summary>
-    public ObservableCollection<MemberCommerceInvoiceItemViewModel> Invoices { get; } = new();
+    public RangeObservableCollection<MemberCommerceInvoiceItemViewModel> Invoices { get; } = new();
 
     /// <summary>
     /// Gets the refresh command.
@@ -179,6 +180,17 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         _isLoaded = true;
     }
 
+    /// <summary>
+    /// Cancels any in-flight commerce operation when the page is no longer visible.
+    /// This keeps payment, document, and detail-load continuations from updating stale UI state after navigation.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
     private async Task RefreshAsync()
     {
         if (IsBusy)
@@ -186,17 +198,13 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
+        var cancellationToken = operation.Token;
 
         try
         {
-            var ordersTask = _memberCommerceService.GetMyOrdersAsync(1, 10, CancellationToken.None);
-            var invoicesTask = _memberCommerceService.GetMyInvoicesAsync(1, 10, CancellationToken.None);
+            var ordersTask = _memberCommerceService.GetMyOrdersAsync(1, 10, cancellationToken);
+            var invoicesTask = _memberCommerceService.GetMyInvoicesAsync(1, 10, cancellationToken);
             await Task.WhenAll(ordersTask, invoicesTask).ConfigureAwait(false);
 
             var ordersResult = await ordersTask.ConfigureAwait(false);
@@ -212,25 +220,27 @@ public sealed class MemberCommerceViewModel : BaseViewModel
                 RunOnMain(() => ErrorMessage = invoicesResult.Error ?? AppResources.MemberCommerceLoadFailed);
             }
 
+            var orders = (ordersResult.Value?.Items ?? Array.Empty<MemberOrderSummary>())
+                .Select(MapOrderSummary)
+                .ToList();
+            var invoices = (invoicesResult.Value?.Items ?? Array.Empty<MemberInvoiceSummary>())
+                .Select(MapInvoiceSummary)
+                .ToList();
+
             RunOnMain(() =>
             {
-                Orders.Clear();
-                foreach (var order in ordersResult.Value?.Items ?? Array.Empty<MemberOrderSummary>())
-                {
-                    Orders.Add(MapOrderSummary(order));
-                }
-
-                Invoices.Clear();
-                foreach (var invoice in invoicesResult.Value?.Items ?? Array.Empty<MemberInvoiceSummary>())
-                {
-                    Invoices.Add(MapInvoiceSummary(invoice));
-                }
-
+                // Replace both history lists in batches so refreshes do not trigger one layout pass per item.
+                Orders.ReplaceRange(orders);
+                Invoices.ReplaceRange(invoices);
                 SelectedOrder = null;
                 SelectedInvoice = null;
                 OnPropertyChanged(nameof(HasOrders));
                 OnPropertyChanged(nameof(HasInvoices));
             });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the commerce screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
@@ -238,18 +248,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RefreshCommand.RaiseCanExecuteChanged();
-                ViewOrderCommand.RaiseCanExecuteChanged();
-                ViewInvoiceCommand.RaiseCanExecuteChanged();
-                RetryOrderPaymentCommand.RaiseCanExecuteChanged();
-                CopyOrderDocumentCommand.RaiseCanExecuteChanged();
-                OpenOrderShipmentTrackingCommand.RaiseCanExecuteChanged();
-                RetryInvoicePaymentCommand.RaiseCanExecuteChanged();
-                CopyInvoiceDocumentCommand.RaiseCanExecuteChanged();
-            });
+            EndBusyOperation(operation);
         }
     }
 
@@ -262,16 +261,11 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
 
         try
         {
-            var result = await _memberCommerceService.GetOrderAsync(item.Id, CancellationToken.None).ConfigureAwait(false);
+            var result = await _memberCommerceService.GetOrderAsync(item.Id, operation.Token).ConfigureAwait(false);
             if (!result.Succeeded || result.Value is null)
             {
                 RunOnMain(() => ErrorMessage = result.Error ?? AppResources.MemberCommerceOrderDetailLoadFailed);
@@ -284,20 +278,17 @@ public sealed class MemberCommerceViewModel : BaseViewModel
                 SelectedInvoice = null;
             });
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the commerce screen intentionally cancels stale work.
+        }
         catch (Exception ex)
         {
             RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.MemberCommerceOrderDetailLoadFailed));
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                ViewOrderCommand.RaiseCanExecuteChanged();
-                RetryOrderPaymentCommand.RaiseCanExecuteChanged();
-                CopyOrderDocumentCommand.RaiseCanExecuteChanged();
-                OpenOrderShipmentTrackingCommand.RaiseCanExecuteChanged();
-            });
+            EndBusyOperation(operation);
         }
     }
 
@@ -310,16 +301,11 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
 
         try
         {
-            var result = await _memberCommerceService.GetInvoiceAsync(item.Id, CancellationToken.None).ConfigureAwait(false);
+            var result = await _memberCommerceService.GetInvoiceAsync(item.Id, operation.Token).ConfigureAwait(false);
             if (!result.Succeeded || result.Value is null)
             {
                 RunOnMain(() => ErrorMessage = result.Error ?? AppResources.MemberCommerceInvoiceDetailLoadFailed);
@@ -332,19 +318,17 @@ public sealed class MemberCommerceViewModel : BaseViewModel
                 SelectedOrder = null;
             });
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the commerce screen intentionally cancels stale work.
+        }
         catch (Exception ex)
         {
             RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.MemberCommerceInvoiceDetailLoadFailed));
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                ViewInvoiceCommand.RaiseCanExecuteChanged();
-                RetryInvoicePaymentCommand.RaiseCanExecuteChanged();
-                CopyInvoiceDocumentCommand.RaiseCanExecuteChanged();
-            });
+            EndBusyOperation(operation);
         }
     }
 
@@ -357,7 +341,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
 
         await RetryPaymentAsync(
             SelectedOrder.ReferenceNumber,
-            request => _memberCommerceService.CreateOrderPaymentIntentAsync(SelectedOrder.Id, request, CancellationToken.None),
+            (request, cancellationToken) => _memberCommerceService.CreateOrderPaymentIntentAsync(SelectedOrder.Id, request, cancellationToken),
             AppResources.MemberCommercePaymentIntentFailed).ConfigureAwait(false);
     }
 
@@ -370,13 +354,13 @@ public sealed class MemberCommerceViewModel : BaseViewModel
 
         await RetryPaymentAsync(
             SelectedInvoice.ReferenceNumber,
-            request => _memberCommerceService.CreateInvoicePaymentIntentAsync(SelectedInvoice.Id, request, CancellationToken.None),
+            (request, cancellationToken) => _memberCommerceService.CreateInvoicePaymentIntentAsync(SelectedInvoice.Id, request, cancellationToken),
             AppResources.MemberCommercePaymentIntentFailed).ConfigureAwait(false);
     }
 
     private async Task RetryPaymentAsync(
         string referenceNumber,
-        Func<CreateStorefrontPaymentIntentRequest, Task<Darwin.Shared.Results.Result<CreateStorefrontPaymentIntentResponse>>> action,
+        Func<CreateStorefrontPaymentIntentRequest, CancellationToken, Task<Darwin.Shared.Results.Result<CreateStorefrontPaymentIntentResponse>>> action,
         string fallbackError)
     {
         if (IsBusy)
@@ -384,19 +368,14 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
 
         try
         {
             var result = await action(new CreateStorefrontPaymentIntentRequest
             {
                 Provider = "HostedCheckout"
-            }).ConfigureAwait(false);
+            }, operation.Token).ConfigureAwait(false);
 
             if (!result.Succeeded || result.Value is null || string.IsNullOrWhiteSpace(result.Value.CheckoutUrl))
             {
@@ -407,18 +386,17 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             await Browser.Default.OpenAsync(result.Value.CheckoutUrl, BrowserLaunchMode.SystemPreferred).ConfigureAwait(false);
             RunOnMain(() => SuccessMessage = string.Format(AppResources.MemberCommerceCheckoutLaunchedFormat, referenceNumber));
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the commerce screen intentionally cancels stale work.
+        }
         catch (Exception ex)
         {
             RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, fallbackError));
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RetryOrderPaymentCommand.RaiseCanExecuteChanged();
-                RetryInvoicePaymentCommand.RaiseCanExecuteChanged();
-            });
+            EndBusyOperation(operation);
         }
     }
 
@@ -431,7 +409,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
 
         await CopyDocumentAsync(
             SelectedOrder.ReferenceNumber,
-            () => _memberCommerceService.DownloadOrderDocumentAsync(SelectedOrder.Id, CancellationToken.None),
+            cancellationToken => _memberCommerceService.DownloadOrderDocumentAsync(SelectedOrder.Id, cancellationToken),
             AppResources.MemberCommerceDocumentDownloadFailed).ConfigureAwait(false);
     }
 
@@ -444,25 +422,20 @@ public sealed class MemberCommerceViewModel : BaseViewModel
 
         await CopyDocumentAsync(
             SelectedInvoice.ReferenceNumber,
-            () => _memberCommerceService.DownloadInvoiceDocumentAsync(SelectedInvoice.Id, CancellationToken.None),
+            cancellationToken => _memberCommerceService.DownloadInvoiceDocumentAsync(SelectedInvoice.Id, cancellationToken),
             AppResources.MemberCommerceDocumentDownloadFailed).ConfigureAwait(false);
     }
 
     private async Task CopyDocumentAsync(
         string referenceNumber,
-        Func<Task<Darwin.Shared.Results.Result<string>>> action,
+        Func<CancellationToken, Task<Darwin.Shared.Results.Result<string>>> action,
         string fallbackError)
     {
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
 
         try
         {
-            var result = await action().ConfigureAwait(false);
+            var result = await action(operation.Token).ConfigureAwait(false);
             if (!result.Succeeded || string.IsNullOrWhiteSpace(result.Value))
             {
                 RunOnMain(() => ErrorMessage = result.Error ?? fallbackError);
@@ -472,18 +445,17 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             await Clipboard.Default.SetTextAsync(result.Value).ConfigureAwait(false);
             RunOnMain(() => SuccessMessage = string.Format(AppResources.MemberCommerceDocumentCopiedFormat, referenceNumber));
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the commerce screen intentionally cancels stale work.
+        }
         catch (Exception ex)
         {
             RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, fallbackError));
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                CopyOrderDocumentCommand.RaiseCanExecuteChanged();
-                CopyInvoiceDocumentCommand.RaiseCanExecuteChanged();
-            });
+            EndBusyOperation(operation);
         }
     }
 
@@ -497,16 +469,15 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
 
         try
         {
             await Browser.Default.OpenAsync(shipment.TrackingUrl, BrowserLaunchMode.SystemPreferred).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the commerce screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
@@ -514,12 +485,125 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         }
         finally
         {
+            EndBusyOperation(operation);
+        }
+    }
+
+    /// <summary>
+    /// Marks the commerce screen as busy and owns cancellation for one user operation.
+    /// </summary>
+    private BusyOperationScope BeginBusyOperation()
+    {
+        var operation = new BusyOperationScope(this);
+        var previousOperation = Interlocked.Exchange(ref _currentOperation, operation);
+        previousOperation?.Cancel();
+        previousOperation?.Dispose();
+
+        RunOnMain(() =>
+        {
+            ErrorMessage = null;
+            SuccessMessage = null;
+            IsBusy = true;
+            RaiseCommandStates();
+        });
+        return operation;
+    }
+
+    /// <summary>
+    /// Clears busy state when the matching commerce operation completes.
+    /// </summary>
+    /// <param name="operation">Operation scope that owns the current busy state.</param>
+    private void EndBusyOperation(BusyOperationScope operation)
+    {
+        if (operation.IsDisposed)
+        {
+            return;
+        }
+
+        var isCurrentOperation = ReferenceEquals(_currentOperation, operation);
+        if (isCurrentOperation)
+        {
+            _currentOperation = null;
+        }
+
+        operation.IsDisposed = true;
+        operation.Cancellation.Dispose();
+
+        if (isCurrentOperation)
+        {
             RunOnMain(() =>
             {
                 IsBusy = false;
-                OpenOrderShipmentTrackingCommand.RaiseCanExecuteChanged();
+                RaiseCommandStates();
             });
         }
+    }
+
+    /// <summary>
+    /// Cancels the current commerce operation and releases the visible busy state.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var operation = Interlocked.Exchange(ref _currentOperation, null);
+        if (operation is null)
+        {
+            return;
+        }
+
+        operation.Cancel();
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            RaiseCommandStates();
+        });
+    }
+
+    /// <summary>
+    /// Owns cancellation and busy-state lifetime for one commerce operation.
+    /// </summary>
+    private sealed class BusyOperationScope : IDisposable
+    {
+        private readonly MemberCommerceViewModel _owner;
+
+        public BusyOperationScope(MemberCommerceViewModel owner)
+        {
+            _owner = owner;
+            Cancellation = new CancellationTokenSource();
+        }
+
+        public CancellationTokenSource Cancellation { get; }
+
+        public CancellationToken Token => Cancellation.Token;
+
+        public bool IsDisposed { get; set; }
+
+        public void Cancel()
+        {
+            if (!Cancellation.IsCancellationRequested)
+            {
+                Cancellation.Cancel();
+            }
+        }
+
+        public void Dispose()
+        {
+            _owner.EndBusyOperation(this);
+        }
+    }
+
+    /// <summary>
+    /// Refreshes all commerce commands after busy-state transitions so payment, document, and tracking actions stay single-flight.
+    /// </summary>
+    private void RaiseCommandStates()
+    {
+        RefreshCommand.RaiseCanExecuteChanged();
+        ViewOrderCommand.RaiseCanExecuteChanged();
+        RetryOrderPaymentCommand.RaiseCanExecuteChanged();
+        CopyOrderDocumentCommand.RaiseCanExecuteChanged();
+        OpenOrderShipmentTrackingCommand.RaiseCanExecuteChanged();
+        ViewInvoiceCommand.RaiseCanExecuteChanged();
+        RetryInvoicePaymentCommand.RaiseCanExecuteChanged();
+        CopyInvoiceDocumentCommand.RaiseCanExecuteChanged();
     }
 
     private static MemberCommerceOrderItemViewModel MapOrderSummary(MemberOrderSummary order)

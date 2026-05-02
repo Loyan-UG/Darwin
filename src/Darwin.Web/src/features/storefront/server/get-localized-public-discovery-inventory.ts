@@ -4,7 +4,7 @@ import { getPublishedPageSet } from "@/features/cms/api/public-cms";
 import { createLocalizedDiscoveryLoader } from "@/lib/localized-discovery-loader";
 import { summarizeLocalizedDiscoveryInventoryHealth } from "@/lib/route-health";
 import { localizedDiscoveryInventoryObservationContext } from "@/lib/route-observation-context";
-import { getSupportedCultures } from "@/lib/request-culture";
+import { getSupportedCultures, getSupportedCulturesAsync } from "@/lib/request-culture";
 import { projectLocalizedPublicDiscoveryInventory } from "@/features/storefront/server/localized-public-discovery-projections";
 
 export const getLocalizedPublicDiscoveryInventory = createLocalizedDiscoveryLoader({
@@ -16,7 +16,7 @@ export const getLocalizedPublicDiscoveryInventory = createLocalizedDiscoveryLoad
     localizedDiscoveryInventoryObservationContext(getSupportedCultures()),
   getSuccessContext: summarizeLocalizedDiscoveryInventoryHealth,
   load: async () => {
-    const supportedCultures = getSupportedCultures();
+    const supportedCultures = await getSupportedCulturesAsync();
     const localizedByCulture = await Promise.all(
       supportedCultures.map(async (culture) => {
         const [pagesResult, productsResult] = await Promise.all([

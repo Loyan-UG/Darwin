@@ -39,9 +39,8 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-md-2">
-            <div class="border rounded p-3 h-100">
+    <div class="admin-kpi-row mb-3">
+        <div class="admin-kpi-item">
                 <div class="text-muted small">@T.T("UsersSummaryTotal")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
                 <div class="mt-2">
@@ -54,10 +53,8 @@
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersPageTitle")</a>
                 </div>
-            </div>
         </div>
-        <div class="col-md-2">
-            <div class="border rounded p-3 h-100">
+        <div class="admin-kpi-item">
                 <div class="text-muted small">@T.T("UsersSummaryUnconfirmed")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.UnconfirmedCount</div>
                 <div class="mt-2 d-flex gap-2 flex-wrap">
@@ -79,10 +76,8 @@
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenFailedActivationEmails")</a>
                 </div>
-            </div>
         </div>
-        <div class="col-md-2">
-            <div class="border rounded p-3 h-100">
+        <div class="admin-kpi-item">
                 <div class="text-muted small">@T.T("UsersSummaryLocked")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.LockedCount</div>
                 <div class="mt-2 d-flex gap-2 flex-wrap">
@@ -104,10 +99,8 @@
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("OpenFailedPasswordResets")</a>
                 </div>
-            </div>
         </div>
-        <div class="col-md-2">
-            <div class="border rounded p-3 h-100">
+        <div class="admin-kpi-item">
                 <div class="text-muted small">@T.T("UsersSummaryInactive")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div>
                 <div class="mt-2">
@@ -120,19 +113,16 @@
                        hx-swap="outerHTML"
                        hx-push-url="true">@T.T("UsersFilterInactive")</a>
                 </div>
-            </div>
         </div>
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
+        <div class="admin-kpi-item">
                 <div class="text-muted small">@T.T("UsersSummaryMobileLinked")</div>
                 <div class="fs-4 fw-semibold">@Model.Summary.MobileLinkedCount</div>
-            </div>
         </div>
     </div>
 
-    <div class="card mb-3">
-        <div class="card-header">@T.T("UsersPlaybooksTitle")</div>
-        <div class="card-body">
+    <details class="admin-playbook mb-3">
+        <summary>@T.T("UsersPlaybooksTitle")</summary>
+        <div class="admin-playbook-body">
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead>
@@ -191,7 +181,7 @@
                 </table>
             </div>
         </div>
-    </div>
+    </details>
 
     <form method="get"
           class="row g-2 mb-3"

@@ -17,11 +17,14 @@
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-<div class="row g-3">
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("BusinessMemberIdentitySection")</h2>
+    <div class="row g-3">
     @if (isCreate)
     {
         <div class="col-12">
             <label asp-for="UserId" class="form-label">@T.T("User")</label>
+            <field-help title="@T.T("User")" content="@T.T("BusinessMemberUserHelp")" placement="right"></field-help>
             <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
             <div class="form-text">
                 <div>@T.T("BusinessMemberAssignmentHelp")</div>
@@ -64,38 +67,47 @@
     {
         <div class="col-md-6">
             <label class="form-label">@T.T("User")</label>
+            <field-help title="@T.T("User")" content="@T.T("BusinessMemberReadonlyUserHelp")" placement="right"></field-help>
             <input class="form-control" value="@Model.UserDisplayName" readonly />
         </div>
         <div class="col-md-6">
             <label class="form-label">@T.T("Email")</label>
+            <field-help title="@T.T("Email")" content="@T.T("BusinessMemberEmailHelp")" placement="right"></field-help>
             <input class="form-control" value="@Model.UserEmail" readonly />
         </div>
     }
     <div class="col-md-6">
         <label asp-for="Role" class="form-label">@T.T("Role")</label>
+        <field-help title="@T.T("Role")" content="@T.T("BusinessMemberRoleHelp")" placement="right"></field-help>
         <select asp-for="Role" asp-items="Model.RoleOptions" class="form-select"></select>
     </div>
     <div class="col-12">
         <div class="form-check">
             <input asp-for="IsActive" class="form-check-input" />
             <label asp-for="IsActive" class="form-check-label">@T.T("BusinessMemberIsActiveLabel")</label>
+            <field-help title="@T.T("BusinessMemberIsActiveLabel")" content="@T.T("BusinessMemberIsActiveHelp")" placement="right"></field-help>
         </div>
     </div>
-    @if (!isCreate && Model.IsLastActiveOwner)
-    {
-        <div class="col-12">
-            <div class="border border-danger rounded p-3">
-                <div class="form-check mb-2">
-                    <input asp-for="AllowLastOwnerOverride" class="form-check-input" />
-                    <label asp-for="AllowLastOwnerOverride" class="form-check-label">@T.T("BusinessMemberAllowLastOwnerOverrideLabel")</label>
-                </div>
-                <label asp-for="OverrideReason" class="form-label">@T.T("BusinessMemberOverrideReasonLabel")</label>
-                <textarea asp-for="OverrideReason" class="form-control" rows="3" placeholder="@T.T("BusinessMemberLastOwnerOverrideRequiredPlaceholder")"></textarea>
-                <span asp-validation-for="OverrideReason" class="text-danger"></span>
+    </div>
+</section>
+
+@if (!isCreate && Model.IsLastActiveOwner)
+{
+    <section class="admin-form-section">
+        <h2 class="admin-form-section-title">@T.T("BusinessMemberLastOwnerOverrideSection")</h2>
+        <div class="border border-danger rounded p-3">
+            <div class="form-check mb-2">
+                <input asp-for="AllowLastOwnerOverride" class="form-check-input" />
+                <label asp-for="AllowLastOwnerOverride" class="form-check-label">@T.T("BusinessMemberAllowLastOwnerOverrideLabel")</label>
+                <field-help title="@T.T("BusinessMemberAllowLastOwnerOverrideLabel")" content="@T.T("BusinessMemberAllowLastOwnerOverrideHelp")" placement="right"></field-help>
             </div>
+            <label asp-for="OverrideReason" class="form-label">@T.T("BusinessMemberOverrideReasonLabel")</label>
+            <field-help title="@T.T("BusinessMemberOverrideReasonLabel")" content="@T.T("BusinessMemberOverrideReasonHelp")" placement="right"></field-help>
+            <textarea asp-for="OverrideReason" class="form-control" rows="3" placeholder="@T.T("BusinessMemberLastOwnerOverrideRequiredPlaceholder")"></textarea>
+            <span asp-validation-for="OverrideReason" class="text-danger"></span>
         </div>
-    }
-</div>
+    </section>
+}
 
 <div class="d-flex gap-2 mt-4">
     <button type="submit" class="btn btn-primary">

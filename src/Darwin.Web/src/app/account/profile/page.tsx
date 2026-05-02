@@ -7,7 +7,7 @@ import {
   createStorefrontContinuationWithCartProps,
 } from "@/features/storefront/route-projections";
 import { getMemberResource } from "@/localization";
-import { getRequestCulture, getSupportedCultures } from "@/lib/request-culture";
+import { getRequestCulture, getSupportedCulturesAsync } from "@/lib/request-culture";
 
 export async function generateMetadata() {
   const culture = await getRequestCulture();
@@ -27,7 +27,7 @@ export default async function ProfileRoute({ searchParams }: ProfileRouteProps) 
   const culture = await getRequestCulture();
   const copy = getMemberResource(culture);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const supportedCultures = getSupportedCultures();
+  const supportedCultures = await getSupportedCulturesAsync();
   const { entryContext, routeContext } = await getMemberEditorPageContext(
     culture,
     "/account/profile",

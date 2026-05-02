@@ -8,94 +8,93 @@
     <div class="card-body">
         <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label">@T.T("Status")</label>
-                <select asp-for="Status" class="form-select">
-                    @foreach (var s in Enum.GetValues(typeof(Darwin.Domain.Enums.PageStatus)))
-                    {
-                        <option value="@s" selected="@(Model.Status.Equals(s))">@s</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">@T.T("PagePublishStartUtc")</label>
-                <input asp-for="PublishStartUtc" type="datetime-local" class="form-control" />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">@T.T("PagePublishEndUtc")</label>
-                <input asp-for="PublishEndUtc" type="datetime-local" class="form-control" />
-            </div>
-        </div>
-
-        <hr />
-
-        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-            <div>
-                <h5 class="mb-1">@T.T("PageTranslationsHeading")</h5>
-                <p class="text-muted mb-0 small">@T.T("PageTranslationsHelp")</p>
-            </div>
-        </div>
-        @for (int i = 0; i < Model.Translations.Count; i++)
-        {
-            <div class="border rounded p-3 mb-3" data-translation-block>
-                <input type="hidden" name="Translations.Index" value="@i" />
-
-                <div class="row g-3">
-                    <div class="col-md-2">
-                        <label class="form-label">@T.T("Culture")</label>
-                        <select asp-for="Translations[@i].Culture" class="form-select">
-                            @foreach (var cul in cultures)
-                            {
-                                <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="col-md-5">
-                        <label class="form-label">@T.T("Title")</label>
-                        <input asp-for="Translations[@i].Title" class="form-control" />
-                    </div>
-
-                    <div class="col-md-5">
-                        <label class="form-label">@T.T("Slug")</label>
-                        <div class="d-flex align-items-center">
-                            <input asp-for="Translations[@i].Slug" class="form-control" />
-                            <field-help title="@T.T("Slug")"
-                                        content="@T.T("PageSlugHelpContent")"
-                                        placement="right"></field-help>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">@T.T("MetaTitle")</label>
-                        <input asp-for="Translations[@i].MetaTitle" class="form-control" />
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">@T.T("MetaDescription")</label>
-                        <div class="d-flex align-items-center">
-                            <input asp-for="Translations[@i].MetaDescription" class="form-control" />
-                            <field-help title="@T.T("MetaDescription")"
-                                        content="@T.T("PageMetaDescriptionHelpContent")"
-                                        placement="right"></field-help>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">@T.T("ContentHtml")</label>
-                        <div class="d-flex align-items-center mb-2">
-                            <small class="text-muted">@T.T("PageContentHelpNote")</small>
-                            <field-help title="@T.T("ContentHtml")"
-                                        content="@T.T("PageContentHelpContent")"
-                                        placement="right"></field-help>
-                        </div>
-                        <div id="page-quill-editor-@i" class="border rounded" data-page-quill-editor="true"></div>
-                        <textarea asp-for="Translations[@i].ContentHtml" class="d-none"></textarea>
-                    </div>
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("PagePublishingSection")</h2>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">@T.T("Status")</label>
+                    <field-help title="@T.T("Status")" content="@T.T("PageStatusHelp")" placement="right"></field-help>
+                    <select asp-for="Status" class="form-select">
+                        @foreach (var s in Enum.GetValues(typeof(Darwin.Domain.Enums.PageStatus)))
+                        {
+                            <option value="@s" selected="@(Model.Status.Equals(s))">@s</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">@T.T("PagePublishStartUtc")</label>
+                    <field-help title="@T.T("PagePublishStartUtc")" content="@T.T("PagePublishStartUtcHelp")" placement="right"></field-help>
+                    <input asp-for="PublishStartUtc" type="datetime-local" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">@T.T("PagePublishEndUtc")</label>
+                    <field-help title="@T.T("PagePublishEndUtc")" content="@T.T("PagePublishEndUtcHelp")" placement="right"></field-help>
+                    <input asp-for="PublishEndUtc" type="datetime-local" class="form-control" />
                 </div>
             </div>
-        }
+        </section>
+
+        <section class="admin-form-section">
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                <h5 class="mb-1">@T.T("PageTranslationsHeading")</h5>
+                <field-help title="@T.T("PageTranslationsHeading")" content="@T.T("PageTranslationsHelp")" placement="right"></field-help>
+            </div>
+            @for (int i = 0; i < Model.Translations.Count; i++)
+            {
+                <div class="border rounded p-3 mb-3" data-translation-block>
+                    <input type="hidden" name="Translations.Index" value="@i" />
+
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label">@T.T("Culture")</label>
+                            <field-help title="@T.T("Culture")" content="@T.T("PageCultureHelp")" placement="right"></field-help>
+                            <select asp-for="Translations[@i].Culture" class="form-select">
+                                @foreach (var cul in cultures)
+                                {
+                                    <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-5">
+                            <label class="form-label">@T.T("Title")</label>
+                            <field-help title="@T.T("Title")" content="@T.T("PageTitleHelp")" placement="right"></field-help>
+                            <input asp-for="Translations[@i].Title" class="form-control" />
+                        </div>
+
+                        <div class="col-md-5">
+                            <label class="form-label">@T.T("Slug")</label>
+                            <field-help title="@T.T("Slug")" content="@T.T("PageSlugHelpContent")" placement="right"></field-help>
+                            <input asp-for="Translations[@i].Slug" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">@T.T("MetaTitle")</label>
+                            <field-help title="@T.T("MetaTitle")" content="@T.T("PageMetaTitleHelp")" placement="right"></field-help>
+                            <input asp-for="Translations[@i].MetaTitle" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">@T.T("MetaDescription")</label>
+                            <field-help title="@T.T("MetaDescription")" content="@T.T("PageMetaDescriptionHelpContent")" placement="right"></field-help>
+                            <input asp-for="Translations[@i].MetaDescription" class="form-control" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">@T.T("ContentHtml")</label>
+                            <div class="d-flex align-items-center mb-2">
+                                <small class="text-muted">@T.T("PageContentHelpNote")</small>
+                                <field-help title="@T.T("ContentHtml")"
+                                            content="@T.T("PageContentHelpContent")"
+                                            placement="right"></field-help>
+                            </div>
+                            <div id="page-quill-editor-@i" class="border rounded" data-page-quill-editor="true"></div>
+                            <textarea asp-for="Translations[@i].ContentHtml" class="d-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+            }
+        </section>
     </div>
 
     <div class="card-footer text-end">

@@ -3,6 +3,7 @@ using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -117,6 +118,8 @@ namespace Darwin.Mobile.Consumer.Services.Platform
         /// </summary>
         private static async Task<string?> TryOpenScanPageOrPromptAsync(CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             if (Shell.Current?.Navigation != null)
             {
                 try
@@ -128,7 +131,7 @@ namespace Darwin.Mobile.Consumer.Services.Platform
                         var scanPage = Activator.CreateInstance(scanPageType) as ContentPage;
                         if (scanPage is not null)
                         {
-                            var tcs = new TaskCompletionSource<string?>();
+                            var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
                             // Handler for the expected 'Completed' event: (object? sender, string? token)
                             void Handler(object? s, string? token) => tcs.TrySetResult(token);
@@ -136,13 +139,17 @@ namespace Darwin.Mobile.Consumer.Services.Platform
                             var evt = scanPage.GetType().GetEvent("Completed");
                             if (evt is not null)
                             {
-                                evt.AddEventHandler(scanPage, (EventHandler<string?>)Handler);
+                                EventHandler<string?> completedHandler = Handler;
+                                evt.AddEventHandler(scanPage, completedHandler);
 
                                 // Push the modal scanning page on the main thread.
                                 await MainThread.InvokeOnMainThreadAsync(async () =>
                                 {
+                                    ct.ThrowIfCancellationRequested();
                                     await Shell.Current!.Navigation.PushModalAsync(scanPage).ConfigureAwait(false);
                                 }).ConfigureAwait(false);
+
+                                ct.ThrowIfCancellationRequested();
 
                                 // Tie the TaskCompletionSource to cancellation to ensure correct modal cleanup.
                                 using (ct.Register(() => tcs.TrySetCanceled(ct)))
@@ -154,7 +161,10 @@ namespace Darwin.Mobile.Consumer.Services.Platform
                                         // Pop the modal page in all paths (success/cancel).
                                         await MainThread.InvokeOnMainThreadAsync(async () =>
                                         {
-                                            await Shell.Current!.Navigation.PopModalAsync().ConfigureAwait(false);
+                                            if (Shell.Current?.Navigation.ModalStack.LastOrDefault() == scanPage)
+                                            {
+                                                await Shell.Current.Navigation.PopModalAsync().ConfigureAwait(false);
+                                            }
                                         }).ConfigureAwait(false);
 
                                         return result;
@@ -163,14 +173,17 @@ namespace Darwin.Mobile.Consumer.Services.Platform
                                     {
                                         await MainThread.InvokeOnMainThreadAsync(async () =>
                                         {
-                                            await Shell.Current!.Navigation.PopModalAsync().ConfigureAwait(false);
+                                            if (Shell.Current?.Navigation.ModalStack.LastOrDefault() == scanPage)
+                                            {
+                                                await Shell.Current.Navigation.PopModalAsync().ConfigureAwait(false);
+                                            }
                                         }).ConfigureAwait(false);
                                         return null;
                                     }
                                     finally
                                     {
                                         // Always detach event handler to avoid leaks.
-                                        evt.RemoveEventHandler(scanPage, (EventHandler<string?>)Handler);
+                                        evt.RemoveEventHandler(scanPage, completedHandler);
                                     }
                                 }
                             }
@@ -193,22 +206,35 @@ namespace Darwin.Mobile.Consumer.Services.Platform
         /// </summary>
         private static async Task<string?> PromptForManualTokenAsync(CancellationToken ct)
         {
-            string? promptResult = null;
+            var promptCompletion = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            await MainThread.InvokeOnMainThreadAsync(async () =>
+            MainThread.BeginInvokeOnMainThread(async () =>
             {
-                // Manual token entry is part of the production fallback path, so the prompt
-                // must remain localized just like the camera-permission experience.
-                promptResult = await Shell.Current!.DisplayPromptAsync(
-                    title: AppResources.ScannerManualTokenTitle,
-                    message: AppResources.ScannerManualTokenMessage,
-                    accept: AppResources.ScannerManualTokenAccept,
-                    cancel: AppResources.ScannerManualTokenCancel,
-                    placeholder: AppResources.ScannerManualTokenPlaceholder,
-                    keyboard: Keyboard.Text).ConfigureAwait(false);
-            }).ConfigureAwait(false);
+                try
+                {
+                    // Manual token entry is part of the production fallback path, so the prompt
+                    // must remain localized just like the camera-permission experience.
+                    var promptResult = await Shell.Current!.DisplayPromptAsync(
+                        title: AppResources.ScannerManualTokenTitle,
+                        message: AppResources.ScannerManualTokenMessage,
+                        accept: AppResources.ScannerManualTokenAccept,
+                        cancel: AppResources.ScannerManualTokenCancel,
+                        placeholder: AppResources.ScannerManualTokenPlaceholder,
+                        keyboard: Keyboard.Text).ConfigureAwait(false);
 
-            return promptResult;
+                    promptCompletion.TrySetResult(promptResult);
+                }
+                catch (Exception ex)
+                {
+                    promptCompletion.TrySetException(ex);
+                }
+            });
+
+            using var cancellationRegistration = ct.CanBeCanceled
+                ? ct.Register(() => promptCompletion.TrySetCanceled(ct))
+                : default;
+
+            return await promptCompletion.Task.ConfigureAwait(false);
         }
     }
 }

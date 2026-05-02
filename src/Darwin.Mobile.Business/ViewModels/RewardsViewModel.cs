@@ -10,6 +10,7 @@ using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Business.Services.Reporting;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -39,12 +40,13 @@ public sealed partial class RewardsViewModel : BaseViewModel
     private readonly IBusinessAccessService _businessAccessService;
     private readonly TimeProvider _timeProvider;
     private readonly List<BusinessCampaignEditorItem> _allCampaigns = new();
+    private BusyOperationScope? _currentOperation;
 
     private bool _loadedOnce;
     private bool _isOperationsAllowed = true;
     private bool _hasRewardManagementPermission = true;
     private bool _canManageRewards = true;
-    private string _operatorRole = "—";
+    private string _operatorRole = "-";
     private Guid _editingRewardTierId;
     private byte[] _editingRowVersion = Array.Empty<byte>();
 
@@ -84,6 +86,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
     private string? _campaignDiagnosticsCopyStatus;
 
     private const int CampaignListPageSize = 50;
+    private static readonly TimeSpan CampaignTelemetryTimeout = TimeSpan.FromSeconds(5);
 
     private const string RewardTypeFreeItem = "FreeItem";
     private const string RewardTypePercentDiscount = "PercentDiscount";
@@ -102,8 +105,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
         _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
-        RewardTiers = new ObservableCollection<RewardTierEditorItem>();
-        Campaigns = new ObservableCollection<BusinessCampaignEditorItem>();
+        RewardTiers = new RangeObservableCollection<RewardTierEditorItem>();
+        Campaigns = new RangeObservableCollection<BusinessCampaignEditorItem>();
         RewardTypeOptions = new ObservableCollection<RewardTypeOption>
         {
             new RewardTypeOption(RewardTypeFreeItem, AppResources.RewardsRewardTypeFreeItem),
@@ -156,7 +159,9 @@ public sealed partial class RewardsViewModel : BaseViewModel
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
         DeleteCommand = new AsyncCommand(DeleteAsync, () => !IsBusy && IsEditMode && CanManageRewards);
         CreateNewCommand = new AsyncCommand(CreateNewAsync, () => !IsBusy && CanManageRewards);
+        SelectRewardTierCommand = new AsyncCommand<RewardTierEditorItem>(SelectRewardTierAsync, tier => !IsBusy && CanManageRewards && tier is not null);
         ToggleCampaignActivationCommand = new AsyncCommand<BusinessCampaignEditorItem>(ToggleCampaignActivationAsync, campaign => !IsBusy && CanManageRewards && campaign is not null);
+        SelectCampaignCommand = new AsyncCommand<BusinessCampaignEditorItem>(SelectCampaignAsync, campaign => !IsBusy && CanManageRewards && campaign is not null);
         SaveCampaignCommand = new AsyncCommand(SaveCampaignAsync, () => !IsBusy && CanManageRewards);
         NewCampaignCommand = new AsyncCommand(NewCampaignAsync, () => !IsBusy && CanManageRewards);
         ClearCampaignFiltersCommand = new AsyncCommand(ClearCampaignFiltersAsync, () => !IsBusy && HasActiveCampaignFilters);
@@ -183,7 +188,9 @@ public sealed partial class RewardsViewModel : BaseViewModel
             {
                 SaveCommand.RaiseCanExecuteChanged();
                 DeleteCommand.RaiseCanExecuteChanged();
+                SelectRewardTierCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(CanDeleteReward));
+                SelectCampaignCommand.RaiseCanExecuteChanged();
                 SaveCampaignCommand.RaiseCanExecuteChanged();
                 NewCampaignCommand.RaiseCanExecuteChanged();
             }
@@ -202,12 +209,12 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Collection of currently configured reward tiers for the business.
     /// </summary>
-    public ObservableCollection<RewardTierEditorItem> RewardTiers { get; }
+    public RangeObservableCollection<RewardTierEditorItem> RewardTiers { get; }
 
     /// <summary>
     /// Collection of business campaigns available for quick lifecycle actions.
     /// </summary>
-    public ObservableCollection<BusinessCampaignEditorItem> Campaigns { get; }
+    public RangeObservableCollection<BusinessCampaignEditorItem> Campaigns { get; }
 
     /// <summary>
     /// Picker options for reward type contract values.
@@ -422,7 +429,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
             TierSegmentCampaignCount,
             PointsThresholdCampaignCount,
             DateWindowCampaignCount),
-        " Aú ",
+        " - ",
         AppResources.RewardsCampaignAudienceUnknown,
         ": ",
         UnknownAudienceCampaignCount.ToString(CultureInfo.InvariantCulture));
@@ -450,7 +457,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 return string.Empty;
             }
 
-            var ageMinutes = Math.Max(0, (int)Math.Round((DateTimeOffset.Now - _campaignDiagnosticsSnapshotAtLocal.Value).TotalMinutes, MidpointRounding.AwayFromZero));
+            var ageMinutes = Math.Max(0, (int)Math.Round((_timeProvider.GetLocalNow() - _campaignDiagnosticsSnapshotAtLocal.Value).TotalMinutes, MidpointRounding.AwayFromZero));
             return ageMinutes > 15
                 ? string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignDiagnosticsFreshnessStaleFormat, ageMinutes)
                 : string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignDiagnosticsFreshnessFreshFormat, ageMinutes);
@@ -462,7 +469,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// </summary>
     public bool IsCampaignDiagnosticsSnapshotStale
         => _campaignDiagnosticsSnapshotAtLocal.HasValue
-           && (DateTimeOffset.Now - _campaignDiagnosticsSnapshotAtLocal.Value).TotalMinutes > 15;
+           && (_timeProvider.GetLocalNow() - _campaignDiagnosticsSnapshotAtLocal.Value).TotalMinutes > 15;
 
     /// <summary>
     /// Localized preview of visible campaign titles to make diagnostics payload easier to read before copying.
@@ -926,7 +933,19 @@ public sealed partial class RewardsViewModel : BaseViewModel
     public AsyncCommand SaveCommand { get; }
     public AsyncCommand DeleteCommand { get; }
     public AsyncCommand CreateNewCommand { get; }
+
+    /// <summary>
+    /// Opens a tapped reward tier card in the tier editor.
+    /// </summary>
+    public AsyncCommand<RewardTierEditorItem> SelectRewardTierCommand { get; }
+
     public AsyncCommand<BusinessCampaignEditorItem> ToggleCampaignActivationCommand { get; }
+
+    /// <summary>
+    /// Opens a tapped campaign card in the campaign editor.
+    /// </summary>
+    public AsyncCommand<BusinessCampaignEditorItem> SelectCampaignCommand { get; }
+
     public AsyncCommand SaveCampaignCommand { get; }
     public AsyncCommand NewCampaignCommand { get; }
     public AsyncCommand ClearCampaignFiltersCommand { get; }
@@ -957,6 +976,17 @@ public sealed partial class RewardsViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Cancels any in-flight reward management operation when the page is no longer visible.
+    /// This prevents stale network continuations from updating the editor after the operator has left the screen.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
     /// Loads current reward configuration from API and refreshes local list.
     /// </summary>
     public async Task LoadConfigurationAsync()
@@ -966,17 +996,18 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
-            return;
-        }
-
-        BeginBusyOperation();
+        using var operationCancellation = BeginBusyOperation();
+        var cancellationToken = operationCancellation.Token;
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
             var response = await _loyaltyService
-                .GetBusinessRewardConfigurationAsync(CancellationToken.None)
+                .GetBusinessRewardConfigurationAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (!response.Succeeded || response.Value is null)
@@ -990,17 +1021,12 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 .Select(RewardTierEditorItem.FromContract)
                 .ToList();
 
-            var campaigns = await LoadCampaignItemsAsync().ConfigureAwait(false);
+            var campaigns = await LoadCampaignItemsAsync(cancellationToken).ConfigureAwait(false);
 
             RunOnMain(() =>
             {
                 ErrorMessage = null;
-                RewardTiers.Clear();
-                foreach (var tier in tiers)
-                {
-                    RewardTiers.Add(tier);
-                }
-
+                RewardTiers.ReplaceRange(tiers);
                 OnPropertyChanged(nameof(HasRewardTiers));
                 ReplaceCampaigns(campaigns);
             });
@@ -1015,13 +1041,17 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 RunOnMain(ClearCampaignEditor);
             }
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the screen intentionally cancels stale reward operations.
+        }
         catch (Exception ex)
         {
             RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.RewardsLoadFailed));
         }
         finally
         {
-            EndBusyOperation();
+            EndBusyOperation(operationCancellation);
         }
     }
 
@@ -1096,6 +1126,36 @@ public sealed partial class RewardsViewModel : BaseViewModel
         });
     }
 
+    /// <summary>
+    /// Handles reward tier card taps and delegates to the existing edit workflow.
+    /// </summary>
+    /// <param name="tier">Tapped reward tier card item.</param>
+    /// <returns>A completed task because edit-state hydration is synchronous and UI-bound.</returns>
+    private Task SelectRewardTierAsync(RewardTierEditorItem? tier)
+    {
+        if (tier is not null)
+        {
+            BeginEdit(tier);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles campaign card taps and delegates to the existing campaign edit workflow.
+    /// </summary>
+    /// <param name="campaign">Tapped campaign card item.</param>
+    /// <returns>A completed task because edit-state hydration is synchronous and UI-bound.</returns>
+    private Task SelectCampaignAsync(BusinessCampaignEditorItem? campaign)
+    {
+        if (campaign is not null)
+        {
+            BeginEditCampaign(campaign);
+        }
+
+        return Task.CompletedTask;
+    }
+
     private Task CreateNewAsync()
     {
         if (!CanManageRewards)
@@ -1115,27 +1175,28 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
-            return;
-        }
-
-        if (!CanManageRewards)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
-            return;
-        }
-
-        if (!TryBuildEditorValues(out var pointsRequired, out var rewardValue, out var validationMessage))
-        {
-            RunOnMain(() => ErrorMessage = validationMessage ?? AppResources.RewardsValidationFailed);
-            return;
-        }
-
-        BeginBusyOperation();
+        using var operationCancellation = BeginBusyOperation();
+        var cancellationToken = operationCancellation.Token;
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            if (!CanManageRewards)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+                return;
+            }
+
+            if (!TryBuildEditorValues(out var pointsRequired, out var rewardValue, out var validationMessage))
+            {
+                RunOnMain(() => ErrorMessage = validationMessage ?? AppResources.RewardsValidationFailed);
+                return;
+            }
+
             Result<BusinessRewardTierMutationResponse> operationResult;
 
             if (IsEditMode)
@@ -1150,7 +1211,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                         Description = string.IsNullOrWhiteSpace(DescriptionInput) ? null : DescriptionInput.Trim(),
                         AllowSelfRedemption = AllowSelfRedemption,
                         RowVersion = _editingRowVersion
-                    }, CancellationToken.None)
+                    }, cancellationToken)
                     .ConfigureAwait(false);
             }
             else
@@ -1163,7 +1224,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                         RewardValue = rewardValue,
                         Description = string.IsNullOrWhiteSpace(DescriptionInput) ? null : DescriptionInput.Trim(),
                         AllowSelfRedemption = AllowSelfRedemption
-                    }, CancellationToken.None)
+                    }, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -1179,7 +1240,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 ClearEditor();
             });
 
-            await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
+            await ReloadConfigurationAfterMutationAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the screen intentionally cancels stale reward operations.
         }
         catch (Exception ex)
         {
@@ -1187,7 +1252,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
         finally
         {
-            EndBusyOperation();
+            EndBusyOperation(operationCancellation);
         }
     }
 
@@ -1198,27 +1263,28 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
-            return;
-        }
-
-        if (!CanManageRewards)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
-            return;
-        }
-
-        BeginBusyOperation();
+        using var operationCancellation = BeginBusyOperation();
+        var cancellationToken = operationCancellation.Token;
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            if (!CanManageRewards)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+                return;
+            }
+
             var result = await _loyaltyService
                 .DeleteBusinessRewardTierAsync(new DeleteBusinessRewardTierRequest
                 {
                     RewardTierId = _editingRewardTierId,
                     RowVersion = _editingRowVersion
-                }, CancellationToken.None)
+                }, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!result.Succeeded)
@@ -1233,7 +1299,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 ClearEditor();
             });
 
-            await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
+            await ReloadConfigurationAfterMutationAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the screen intentionally cancels stale reward operations.
         }
         catch (Exception ex)
         {
@@ -1241,7 +1311,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
         finally
         {
-            EndBusyOperation();
+            EndBusyOperation(operationCancellation);
         }
     }
 
@@ -1427,7 +1497,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
-        await _activityTracker.RecordCampaignTargetingSchemaFixAsync(changed, CancellationToken.None).ConfigureAwait(false);
+        await RecordCampaignTargetingSchemaFixBestEffortAsync(changed).ConfigureAwait(false);
 
         RunOnMain(() =>
         {
@@ -1570,7 +1640,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
-        await _activityTracker.RecordCampaignTargetingFixMetricsResetAsync(CancellationToken.None).ConfigureAwait(false);
+        await RecordCampaignTargetingFixMetricsResetBestEffortAsync().ConfigureAwait(false);
 
         RunOnMain(() =>
         {
@@ -1622,78 +1692,79 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
-            return;
-        }
-
-        if (!CanManageRewards)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(CampaignNameInput) || string.IsNullOrWhiteSpace(CampaignTitleInput))
-        {
-            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignValidationFailed);
-            return;
-        }
-
-        var normalizedCampaignName = CampaignNameInput.Trim();
-        if (HasConflictingCampaignName(normalizedCampaignName, _editingCampaignId))
-        {
-            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignNameDuplicateValidationFailed);
-            return;
-        }
-
-        if (!TryParseCampaignDate(CampaignStartsAtInput, out var startsAtUtc, out var startsError))
-        {
-            RunOnMain(() => ErrorMessage = startsError ?? AppResources.RewardsCampaignDateValidationFailed);
-            return;
-        }
-
-        if (!TryParseCampaignDate(CampaignEndsAtInput, out var endsAtUtc, out var endsError))
-        {
-            RunOnMain(() => ErrorMessage = endsError ?? AppResources.RewardsCampaignDateValidationFailed);
-            return;
-        }
-
-        if (startsAtUtc.HasValue && endsAtUtc.HasValue && startsAtUtc.Value > endsAtUtc.Value)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignDateRangeValidationFailed);
-            return;
-        }
-
-        if (SelectedCampaignChannel is null)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignChannelValidationFailed);
-            return;
-        }
-
-        var selectedChannels = SelectedCampaignChannel.Value;
-
-        if (!TryNormalizeCampaignJsonObject(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var targetingJson, out var targetingError))
-        {
-            RunOnMain(() => ErrorMessage = targetingError ?? AppResources.RewardsCampaignTargetingValidationFailed);
-            return;
-        }
-
-        if (!TryValidateCampaignTargetingSchemaRules(targetingJson, out var targetingSchemaError))
-        {
-            RunOnMain(() => ErrorMessage = targetingSchemaError ?? AppResources.RewardsCampaignTargetingValidationFailed);
-            return;
-        }
-
-        if (!TryNormalizeCampaignJsonObject(CampaignPayloadJsonInput, AppResources.RewardsCampaignPayloadValidationFailed, out var payloadJson, out var payloadError))
-        {
-            RunOnMain(() => ErrorMessage = payloadError ?? AppResources.RewardsCampaignPayloadValidationFailed);
-            return;
-        }
-
-        BeginBusyOperation();
+        using var operationCancellation = BeginBusyOperation();
+        var cancellationToken = operationCancellation.Token;
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            if (!CanManageRewards)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CampaignNameInput) || string.IsNullOrWhiteSpace(CampaignTitleInput))
+            {
+                RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignValidationFailed);
+                return;
+            }
+
+            var normalizedCampaignName = CampaignNameInput.Trim();
+            if (HasConflictingCampaignName(normalizedCampaignName, _editingCampaignId))
+            {
+                RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignNameDuplicateValidationFailed);
+                return;
+            }
+
+            if (!TryParseCampaignDate(CampaignStartsAtInput, out var startsAtUtc, out var startsError))
+            {
+                RunOnMain(() => ErrorMessage = startsError ?? AppResources.RewardsCampaignDateValidationFailed);
+                return;
+            }
+
+            if (!TryParseCampaignDate(CampaignEndsAtInput, out var endsAtUtc, out var endsError))
+            {
+                RunOnMain(() => ErrorMessage = endsError ?? AppResources.RewardsCampaignDateValidationFailed);
+                return;
+            }
+
+            if (startsAtUtc.HasValue && endsAtUtc.HasValue && startsAtUtc.Value > endsAtUtc.Value)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignDateRangeValidationFailed);
+                return;
+            }
+
+            if (SelectedCampaignChannel is null)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignChannelValidationFailed);
+                return;
+            }
+
+            var selectedChannels = SelectedCampaignChannel.Value;
+
+            if (!TryNormalizeCampaignJsonObject(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var targetingJson, out var targetingError))
+            {
+                RunOnMain(() => ErrorMessage = targetingError ?? AppResources.RewardsCampaignTargetingValidationFailed);
+                return;
+            }
+
+            if (!TryValidateCampaignTargetingSchemaRules(targetingJson, out var targetingSchemaError))
+            {
+                RunOnMain(() => ErrorMessage = targetingSchemaError ?? AppResources.RewardsCampaignTargetingValidationFailed);
+                return;
+            }
+
+            if (!TryNormalizeCampaignJsonObject(CampaignPayloadJsonInput, AppResources.RewardsCampaignPayloadValidationFailed, out var payloadJson, out var payloadError))
+            {
+                RunOnMain(() => ErrorMessage = payloadError ?? AppResources.RewardsCampaignPayloadValidationFailed);
+                return;
+            }
+
             Result operationResult;
 
             if (IsCampaignEditMode)
@@ -1711,7 +1782,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                         TargetingJson = targetingJson,
                         PayloadJson = payloadJson,
                         RowVersion = _editingCampaignRowVersion
-                    }, CancellationToken.None)
+                    }, cancellationToken)
                     .ConfigureAwait(false);
             }
             else
@@ -1727,7 +1798,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                         EndsAtUtc = endsAtUtc,
                         TargetingJson = targetingJson,
                         PayloadJson = payloadJson
-                    }, CancellationToken.None)
+                    }, cancellationToken)
                     .ConfigureAwait(false);
 
                 operationResult = createResult.Succeeded ? Result.Ok() : Result.Fail(createResult.Error ?? AppResources.RewardsCampaignSaveFailed);
@@ -1745,7 +1816,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 ClearCampaignEditor();
             });
 
-            await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
+            await ReloadConfigurationAfterMutationAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the screen intentionally cancels stale campaign operations.
         }
         catch (Exception ex)
         {
@@ -1753,7 +1828,50 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
         finally
         {
-            EndBusyOperation();
+            EndBusyOperation(operationCancellation);
+        }
+    }
+
+    /// <summary>
+    /// Creates a short-lived cancellation source for non-critical campaign telemetry.
+    /// Campaign editing must remain responsive when local storage or telemetry persistence is slow.
+    /// </summary>
+    /// <returns>A cancellation source that expires after the campaign telemetry timeout.</returns>
+    private static CancellationTokenSource CreateCampaignTelemetryCancellation()
+    {
+        return new CancellationTokenSource(CampaignTelemetryTimeout);
+    }
+
+    /// <summary>
+    /// Records targeting quick-fix telemetry without allowing telemetry failures to block editing.
+    /// </summary>
+    /// <param name="changed">Indicates whether the quick fix changed the targeting payload.</param>
+    private async Task RecordCampaignTargetingSchemaFixBestEffortAsync(bool changed)
+    {
+        try
+        {
+            using var trackingCancellation = CreateCampaignTelemetryCancellation();
+            await _activityTracker.RecordCampaignTargetingSchemaFixAsync(changed, trackingCancellation.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Telemetry is non-critical and must never interrupt the campaign editor.
+        }
+    }
+
+    /// <summary>
+    /// Records targeting quick-fix reset telemetry without blocking the operator workflow.
+    /// </summary>
+    private async Task RecordCampaignTargetingFixMetricsResetBestEffortAsync()
+    {
+        try
+        {
+            using var trackingCancellation = CreateCampaignTelemetryCancellation();
+            await _activityTracker.RecordCampaignTargetingFixMetricsResetAsync(trackingCancellation.Token).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Telemetry is non-critical and must never interrupt the campaign editor.
         }
     }
 
@@ -1793,9 +1911,9 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Refreshes authorization snapshot for reward-edit operations.
     /// </summary>
-    private async Task RefreshAuthorizationAsync()
+    private async Task RefreshAuthorizationAsync(CancellationToken cancellationToken = default)
     {
-        var snapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+        var snapshot = await _authorizationService.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
 
         RunOnMain(() =>
         {
@@ -1807,7 +1925,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
             }
             else
             {
-                OperatorRole = "—";
+                OperatorRole = "-";
                 _hasRewardManagementPermission = false;
                 CanManageRewards = false;
             }
@@ -1816,9 +1934,9 @@ public sealed partial class RewardsViewModel : BaseViewModel
         });
     }
 
-    private async Task<bool> EnsureOperationsAllowedAsync()
+    private async Task<bool> EnsureOperationsAllowedAsync(CancellationToken cancellationToken = default)
     {
-        var result = await _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None).ConfigureAwait(false);
+        var result = await _businessAccessService.GetCurrentAccessStateAsync(cancellationToken).ConfigureAwait(false);
         if (!result.Succeeded || result.Value is null)
         {
             RunOnMain(() =>
@@ -1887,15 +2005,15 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Reloads tier list after a successful mutation without busy-guard short-circuiting.
     /// </summary>
-    private async Task ReloadConfigurationAfterMutationAsync()
+    private async Task ReloadConfigurationAfterMutationAsync(CancellationToken cancellationToken)
     {
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
         {
             return;
         }
 
         var response = await _loyaltyService
-            .GetBusinessRewardConfigurationAsync(CancellationToken.None)
+            .GetBusinessRewardConfigurationAsync(cancellationToken)
             .ConfigureAwait(false);
 
         if (!response.Succeeded || response.Value is null)
@@ -1909,16 +2027,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
             .Select(RewardTierEditorItem.FromContract)
             .ToList();
 
-        var campaigns = await LoadCampaignItemsAsync().ConfigureAwait(false);
+        var campaigns = await LoadCampaignItemsAsync(cancellationToken).ConfigureAwait(false);
 
         RunOnMain(() =>
         {
-            RewardTiers.Clear();
-            foreach (var tier in tiers)
-            {
-                RewardTiers.Add(tier);
-            }
-
+            RewardTiers.ReplaceRange(tiers);
             OnPropertyChanged(nameof(HasRewardTiers));
             ReplaceCampaigns(campaigns);
         });
@@ -1973,11 +2086,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 .ToList()
         };
 
-        Campaigns.Clear();
-        foreach (var campaign in filtered)
-        {
-            Campaigns.Add(campaign);
-        }
+        Campaigns.ReplaceRange(filtered);
 
         OnPropertyChanged(nameof(HasCampaigns));
         OnPropertyChanged(nameof(TotalCampaignCount));
@@ -2013,7 +2122,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(PointsThresholdCampaignMetricText));
         OnPropertyChanged(nameof(DateWindowCampaignMetricText));
         OnPropertyChanged(nameof(UnknownAudienceCampaignMetricText));
-        _campaignDiagnosticsSnapshotAtLocal = DateTimeOffset.Now;
+        _campaignDiagnosticsSnapshotAtLocal = _timeProvider.GetLocalNow();
         OnPropertyChanged(nameof(CampaignDiagnosticsSnapshotAtText));
         OnPropertyChanged(nameof(CampaignDiagnosticsFreshnessText));
         OnPropertyChanged(nameof(IsCampaignDiagnosticsSnapshotStale));
@@ -2190,10 +2299,10 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Loads business campaigns for lightweight lifecycle controls in Rewards screen.
     /// </summary>
-    private async Task<List<BusinessCampaignEditorItem>> LoadCampaignItemsAsync()
+    private async Task<List<BusinessCampaignEditorItem>> LoadCampaignItemsAsync(CancellationToken cancellationToken)
     {
         var campaignsResult = await _loyaltyService
-            .GetBusinessCampaignsAsync(page: 1, pageSize: CampaignListPageSize, CancellationToken.None)
+            .GetBusinessCampaignsAsync(page: 1, pageSize: CampaignListPageSize, cancellationToken)
             .ConfigureAwait(false);
 
         if (!campaignsResult.Succeeded || campaignsResult.Value is null)
@@ -2223,28 +2332,29 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
-        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
-        {
-            return;
-        }
-
-        if (!CanManageRewards)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
-            return;
-        }
-
-        BeginBusyOperation();
+        using var operationCancellation = BeginBusyOperation();
+        var cancellationToken = operationCancellation.Token;
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync(cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            if (!CanManageRewards)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+                return;
+            }
+
             var result = await _loyaltyService
                 .SetBusinessCampaignActivationAsync(new SetCampaignActivationRequest
                 {
                     Id = campaign.Id,
                     IsActive = !campaign.IsActive,
                     RowVersion = campaign.RowVersion
-                }, CancellationToken.None)
+                }, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!result.Succeeded)
@@ -2254,7 +2364,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
             }
 
             RunOnMain(() => ErrorMessage = null);
-            await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
+            await ReloadConfigurationAfterMutationAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the screen intentionally cancels stale campaign operations.
         }
         catch (Exception)
         {
@@ -2262,7 +2376,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
         finally
         {
-            EndBusyOperation();
+            EndBusyOperation(operationCancellation);
         }
     }
 
@@ -2368,25 +2482,103 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Marks the view model as busy and refreshes command states on the UI thread.
     /// </summary>
-    private void BeginBusyOperation()
+    private BusyOperationScope BeginBusyOperation()
     {
+        var operation = new BusyOperationScope(this);
+        var previousOperation = Interlocked.Exchange(ref _currentOperation, operation);
+        previousOperation?.Cancel();
+        previousOperation?.Dispose();
+
         RunOnMain(() =>
         {
             IsBusy = true;
             RaiseCommandCanExecuteChanged();
         });
+
+        return operation;
     }
 
     /// <summary>
     /// Clears busy state and refreshes command states on the UI thread.
     /// </summary>
-    private void EndBusyOperation()
+    /// <param name="operation">Operation scope that owns the current busy state.</param>
+    private void EndBusyOperation(BusyOperationScope operation)
     {
+        if (operation.IsDisposed)
+        {
+            return;
+        }
+
+        var isCurrentOperation = ReferenceEquals(_currentOperation, operation);
+        if (isCurrentOperation)
+        {
+            _currentOperation = null;
+        }
+
+        operation.IsDisposed = true;
+        operation.Cancellation.Dispose();
+
+        if (isCurrentOperation)
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandCanExecuteChanged();
+            });
+        }
+    }
+
+    /// <summary>
+    /// Signals cancellation for the currently running operation and releases the visible busy state.
+    /// The operation scope is disposed by the operation's own finally block to avoid disposing a token while service code is still observing it.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var operation = Interlocked.Exchange(ref _currentOperation, null);
+        if (operation is null)
+        {
+            return;
+        }
+
+        operation.Cancel();
         RunOnMain(() =>
         {
             IsBusy = false;
             RaiseCommandCanExecuteChanged();
         });
+    }
+
+    /// <summary>
+    /// Owns cancellation and busy-state lifetime for a single reward-management operation.
+    /// </summary>
+    private sealed class BusyOperationScope : IDisposable
+    {
+        private readonly RewardsViewModel _owner;
+
+        public BusyOperationScope(RewardsViewModel owner)
+        {
+            _owner = owner;
+            Cancellation = new CancellationTokenSource();
+        }
+
+        public CancellationTokenSource Cancellation { get; }
+
+        public CancellationToken Token => Cancellation.Token;
+
+        public bool IsDisposed { get; set; }
+
+        public void Cancel()
+        {
+            if (!Cancellation.IsCancellationRequested)
+            {
+                Cancellation.Cancel();
+            }
+        }
+
+        public void Dispose()
+        {
+            _owner.EndBusyOperation(this);
+        }
     }
 
     private void RaiseCommandCanExecuteChanged()
@@ -2395,7 +2587,9 @@ public sealed partial class RewardsViewModel : BaseViewModel
         SaveCommand.RaiseCanExecuteChanged();
         DeleteCommand.RaiseCanExecuteChanged();
         CreateNewCommand.RaiseCanExecuteChanged();
+        SelectRewardTierCommand.RaiseCanExecuteChanged();
         ToggleCampaignActivationCommand.RaiseCanExecuteChanged();
+        SelectCampaignCommand.RaiseCanExecuteChanged();
         SaveCampaignCommand.RaiseCanExecuteChanged();
         NewCampaignCommand.RaiseCanExecuteChanged();
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();

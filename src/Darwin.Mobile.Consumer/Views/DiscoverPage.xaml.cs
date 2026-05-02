@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Threading;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
@@ -28,6 +29,7 @@ public partial class DiscoverPage : ContentPage
     private readonly DiscoverViewModel _viewModel;
     private readonly IServiceProvider _serviceProvider;
     private readonly Dictionary<Pin, DiscoverExploreItem> _pinLookup = new();
+    private int _navigationInProgress;
 
     public DiscoverPage(DiscoverViewModel viewModel, IServiceProvider serviceProvider)
     {
@@ -44,49 +46,44 @@ public partial class DiscoverPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.OnAppearingAsync();
-        RebuildExploreMapPins();
-    }
-
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
-        // Reset any selection state that could remain when leaving the page.
-        ExploreBusinessesCollectionView.SelectedItem = null;
-    }
-
-    /// <summary>
-    /// Selecting a joined business opens detail for quick context view.
-    /// Dedicated action buttons in the same card provide direct QR/Rewards navigation.
-    /// </summary>
-    private async void OnJoinedBusinessSelected(object sender, SelectionChangedEventArgs e)
-    {
-        if (e.CurrentSelection.Count == 0)
-        {
-            return;
-        }
 
         try
         {
-            if (e.CurrentSelection[0] is LoyaltyAccountSummary selected)
-            {
-                var detailsPage = _serviceProvider.GetRequiredService<BusinessDetailPage>();
-                detailsPage.SetBusinessId(selected.BusinessId);
-                await Navigation.PushAsync(detailsPage);
-            }
+            await _viewModel.OnAppearingAsync();
+            RebuildExploreMapPins();
+        }
+        catch
+        {
+            // Appearing is an async-void MAUI lifecycle hook. Keep unexpected load/map failures from crashing the app.
+        }
+    }
+
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from Discover.
         }
         finally
         {
-            ((CollectionView)sender).SelectedItem = null;
+            base.OnDisappearing();
+            // Reset any selection state that could remain when leaving the page.
+            DiscoverCollectionView.SelectedItem = null;
         }
     }
 
     /// <summary>
-    /// Explore item behavior:
-    /// - Joined business: open Rewards directly for faster redemption/accrual usage.
-    /// - Not joined yet: open detail page to review and join flow.
+    /// Routes the selected Discover row according to the active card type.
     /// </summary>
-    private async void OnExploreBusinessSelected(object sender, SelectionChangedEventArgs e)
+    /// <remarks>
+    /// The page uses a single virtualized list for both tabs. Selection therefore inspects the display wrapper
+    /// and dispatches to the same navigation policy that was previously split across two nested lists.
+    /// </remarks>
+    private async void OnDiscoverItemSelected(object sender, SelectionChangedEventArgs e)
     {
         if (e.CurrentSelection.Count == 0)
         {
@@ -95,10 +92,25 @@ public partial class DiscoverPage : ContentPage
 
         try
         {
-            if (e.CurrentSelection[0] is DiscoverExploreItem selected)
+            if (e.CurrentSelection[0] is not DiscoverDisplayItem selected)
             {
-                await NavigateFromExploreSelectionAsync(selected);
+                return;
             }
+
+            if (selected.JoinedAccount is not null)
+            {
+                await OpenBusinessDetailAsync(selected.JoinedAccount.BusinessId);
+                return;
+            }
+
+            if (selected.ExploreItem is not null)
+            {
+                await NavigateFromExploreSelectionAsync(selected.ExploreItem);
+            }
+        }
+        catch
+        {
+            // Selection navigation is best-effort; duplicate taps or stale navigation state must not crash Discover.
         }
         finally
         {
@@ -111,16 +123,24 @@ public partial class DiscoverPage : ContentPage
     /// </summary>
     private async void OnOpenQrClicked(object? sender, EventArgs e)
     {
-        if (sender is not Button { CommandParameter: Guid businessId } || businessId == Guid.Empty)
+        var businessId = ResolveBusinessId(sender);
+        if (businessId == Guid.Empty)
         {
             return;
         }
 
-        await Shell.Current.GoToAsync($"//{Routes.Qr}", new System.Collections.Generic.Dictionary<string, object?>
+        try
         {
-            ["businessId"] = businessId,
-            ["joined"] = true
-        });
+            await NavigateSafelyAsync(() => Shell.Current.GoToAsync($"//{Routes.Qr}", new Dictionary<string, object?>
+            {
+                ["businessId"] = businessId,
+                ["joined"] = true
+            }));
+        }
+        catch
+        {
+            // Quick-action navigation should fail closed and let the user tap again after Shell state recovers.
+        }
     }
 
     /// <summary>
@@ -128,12 +148,20 @@ public partial class DiscoverPage : ContentPage
     /// </summary>
     private async void OnOpenRewardsClicked(object? sender, EventArgs e)
     {
-        if (sender is not Button { CommandParameter: Guid businessId } || businessId == Guid.Empty)
+        var businessId = ResolveBusinessId(sender);
+        if (businessId == Guid.Empty)
         {
             return;
         }
 
-        await OpenRewardsAsync(businessId);
+        try
+        {
+            await OpenRewardsAsync(businessId);
+        }
+        catch
+        {
+            // Quick-action navigation should fail closed and let the user tap again after Shell state recovers.
+        }
     }
 
     /// <summary>
@@ -141,7 +169,14 @@ public partial class DiscoverPage : ContentPage
     /// </summary>
     private void OnExploreBusinessesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        RebuildExploreMapPins();
+        try
+        {
+            RebuildExploreMapPins();
+        }
+        catch
+        {
+            // Map rendering is supplementary; list content remains the source of truth if pins cannot be rebuilt.
+        }
     }
 
     /// <summary>
@@ -149,6 +184,12 @@ public partial class DiscoverPage : ContentPage
     /// </summary>
     private void RebuildExploreMapPins()
     {
+        if (ExploreMap is null)
+        {
+            return;
+        }
+
+        DetachExploreMapPins();
         _pinLookup.Clear();
         ExploreMap.Pins.Clear();
 
@@ -196,7 +237,14 @@ public partial class DiscoverPage : ContentPage
 
         // Keep marker popup visible and navigate directly to detail/rewards flow.
         e.HideInfoWindow = false;
-        await NavigateFromExploreSelectionAsync(item);
+        try
+        {
+            await NavigateFromExploreSelectionAsync(item);
+        }
+        catch
+        {
+            // Marker navigation follows the same best-effort policy as list navigation.
+        }
     }
 
     /// <summary>
@@ -210,16 +258,71 @@ public partial class DiscoverPage : ContentPage
             return;
         }
 
-        var detailsPage = _serviceProvider.GetRequiredService<BusinessDetailPage>();
-        detailsPage.SetBusinessId(selected.BusinessId);
-        await Navigation.PushAsync(detailsPage);
+        await OpenBusinessDetailAsync(selected.BusinessId);
     }
 
-    private static Task OpenRewardsAsync(Guid businessId)
+    private Task OpenRewardsAsync(Guid businessId)
     {
-        return Shell.Current.GoToAsync($"//{Routes.Rewards}", new System.Collections.Generic.Dictionary<string, object?>
+        return NavigateSafelyAsync(() => Shell.Current.GoToAsync($"//{Routes.Rewards}", new Dictionary<string, object?>
+            {
+                ["businessId"] = businessId
+            }));
+    }
+
+    /// <summary>
+    /// Opens a business detail page while preventing duplicate pushes from quick repeated taps.
+    /// </summary>
+    private Task OpenBusinessDetailAsync(Guid businessId)
+    {
+        return NavigateSafelyAsync(async () =>
         {
-            ["businessId"] = businessId
+            var detailsPage = _serviceProvider.GetRequiredService<BusinessDetailPage>();
+            detailsPage.SetBusinessId(businessId);
+            await Navigation.PushAsync(detailsPage);
         });
+    }
+
+    /// <summary>
+    /// Serializes code-behind navigation so map taps, list selections, and quick actions cannot overlap.
+    /// </summary>
+    private async Task NavigateSafelyAsync(Func<Task> navigate)
+    {
+        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
+        {
+            return;
+        }
+
+        try
+        {
+            await navigate();
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _navigationInProgress, 0);
+        }
+    }
+
+    /// <summary>
+    /// Resolves business id from native MAUI and Syncfusion button senders.
+    /// </summary>
+    private static Guid ResolveBusinessId(object? sender)
+    {
+        return sender switch
+        {
+            Button { CommandParameter: Guid businessId } => businessId,
+            Syncfusion.Maui.Toolkit.Buttons.SfButton { CommandParameter: Guid businessId } => businessId,
+            _ => Guid.Empty
+        };
+    }
+
+    /// <summary>
+    /// Detaches marker callbacks before map pins are replaced so stale pin instances cannot call back into this page.
+    /// </summary>
+    private void DetachExploreMapPins()
+    {
+        foreach (var pin in _pinLookup.Keys)
+        {
+            pin.MarkerClicked -= OnExploreMapPinClicked;
+        }
     }
 }

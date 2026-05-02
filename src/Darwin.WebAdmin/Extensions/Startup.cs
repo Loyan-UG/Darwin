@@ -170,13 +170,20 @@ namespace Darwin.WebAdmin.Extensions
                 context.Response.OnStarting(() =>
                 {
                     var headers = context.Response.Headers;
+                    var scriptSrc = app.Environment.IsDevelopment()
+                        ? "script-src 'self' 'unsafe-inline'"
+                        : "script-src 'self'";
+                    var connectSrc = app.Environment.IsDevelopment()
+                        ? "connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*"
+                        : "connect-src 'self'";
+
                     headers.TryAdd("Content-Security-Policy", string.Join("; ",
                         "default-src 'self'",
-                        "script-src 'self'",
-                        "style-src 'self'",
+                        scriptSrc,
+                        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                         "img-src 'self' data: blob:",
-                        "font-src 'self'",
-                        "connect-src 'self'",
+                        "font-src 'self' https://fonts.gstatic.com",
+                        connectSrc,
                         "media-src 'self' blob:",
                         "object-src 'none'",
                         "base-uri 'self'",

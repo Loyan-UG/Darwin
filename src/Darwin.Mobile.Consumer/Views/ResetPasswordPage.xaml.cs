@@ -10,13 +10,34 @@ namespace Darwin.Mobile.Consumer.Views;
 /// </summary>
 public partial class ResetPasswordPage : ContentPage, IQueryAttributable
 {
+    private readonly ResetPasswordViewModel _viewModel;
+
     public ResetPasswordPage(ResetPasswordViewModel viewModel)
     {
         InitializeComponent();
 
+        _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+
         // Injected view model keeps navigation and business logic outside of code-behind.
-        BindingContext = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        BindingContext = _viewModel;
         NavigationPage.SetHasNavigationBar(this, false);
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from password reset.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
     }
 
     /// <summary>
@@ -57,6 +78,23 @@ public partial class ResetPasswordPage : ContentPage, IQueryAttributable
             return null;
         }
 
-        return Uri.UnescapeDataString(raw).Trim();
+        return SafeUnescape(raw);
+    }
+
+    /// <summary>
+    /// Decodes query values defensively so malformed external recovery links cannot crash the reset page.
+    /// </summary>
+    /// <param name="raw">Raw query value supplied by Shell or an app link.</param>
+    /// <returns>Decoded and trimmed value, or the trimmed raw value when decoding is not possible.</returns>
+    private static string SafeUnescape(string raw)
+    {
+        try
+        {
+            return Uri.UnescapeDataString(raw).Trim();
+        }
+        catch (UriFormatException)
+        {
+            return raw.Trim();
+        }
     }
 }

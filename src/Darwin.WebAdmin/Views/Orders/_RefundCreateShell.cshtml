@@ -20,31 +20,41 @@
               method="post"
               hx-post="@Url.Action("AddRefund", "Orders")"
               hx-target="#order-refund-shell"
-              hx-swap="outerHTML"
-              class="row g-3">
+              hx-swap="outerHTML">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="OrderId" />
-            <div class="col-md-6">
-                <label asp-for="PaymentId" class="form-label"></label>
-                <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
-                <span asp-validation-for="PaymentId" class="text-danger"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="AmountMinor" class="form-label"></label>
-                <input asp-for="AmountMinor" class="form-control" />
-                <span asp-validation-for="AmountMinor" class="text-danger"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="Currency" class="form-label"></label>
-                <input asp-for="Currency" class="form-control" />
-                <span asp-validation-for="Currency" class="text-danger"></span>
-            </div>
-            <div class="col-12">
-                <label asp-for="Reason" class="form-label"></label>
-                <input asp-for="Reason" class="form-control" />
-                <span asp-validation-for="Reason" class="text-danger"></span>
-            </div>
-            <div class="col-12">
+
+            <section class="admin-form-section">
+                <h2 class="admin-form-section-title">@T.T("OrderRefundDetailsSection")</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="PaymentId" class="form-label"></label>
+                        <field-help title="@T.T("Payment")" content="@T.T("OrderRefundPaymentHelp")" placement="right"></field-help>
+                        <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
+                        <span asp-validation-for="PaymentId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="AmountMinor" class="form-label"></label>
+                        <field-help title="@T.T("AmountMinor")" content="@T.T("OrderRefundAmountMinorHelp")" placement="right"></field-help>
+                        <input asp-for="AmountMinor" class="form-control" />
+                        <span asp-validation-for="AmountMinor" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Currency" class="form-label"></label>
+                        <field-help title="@T.T("Currency")" content="@T.T("OrderRefundCurrencyHelp")" placement="right"></field-help>
+                        <input asp-for="Currency" class="form-control" />
+                        <span asp-validation-for="Currency" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Reason" class="form-label"></label>
+                        <field-help title="@T.T("Reason")" content="@T.T("OrderRefundReasonHelp")" placement="right"></field-help>
+                        <input asp-for="Reason" class="form-control" />
+                        <span asp-validation-for="Reason" class="text-danger"></span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="d-flex gap-2">
                 <a asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@OrderDetailsUrl(Model.OrderId)" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">@T.T("Back")</a>
                 <button type="submit" class="btn btn-primary">@T.T("Save")</button>
             </div>

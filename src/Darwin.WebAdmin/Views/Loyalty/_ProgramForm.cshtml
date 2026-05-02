@@ -1,18 +1,72 @@
-﻿@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyProgramEditVm
+@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyProgramEditVm
 @{
     var accrualModeOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyAccrualMode>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
     string ProgramsUrl(object? businessId = null) => Url.Action("Programs", "Loyalty", new { businessId }) ?? string.Empty;
     string RewardTiersUrl(Guid loyaltyProgramId) => Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId }) ?? string.Empty;
 }
-<form asp-action="@(ViewData["IsCreate"] as bool? == true ? "CreateProgram" : "EditProgram")" method="post" class="row g-3" hx-post="@Url.Action(ViewData["IsCreate"] as bool? == true ? "CreateProgram" : "EditProgram", "Loyalty")" hx-target="#loyalty-program-editor-shell" hx-swap="outerHTML">
-@Html.AntiForgeryToken()
-@if (ViewData["IsCreate"] as bool? != true) { <input asp-for="Id" type="hidden" /><input asp-for="RowVersion" type="hidden" /> }
-<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-<div class="col-md-4"><label asp-for="BusinessId" class="form-label"></label><select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select></div>
-<div class="col-md-4"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /></div>
-<div class="col-md-4"><label asp-for="AccrualMode" class="form-label"></label><select asp-for="AccrualMode" asp-items="accrualModeOptions" class="form-select"></select></div>
-<div class="col-md-4"><label asp-for="PointsPerCurrencyUnit" class="form-label"></label><input asp-for="PointsPerCurrencyUnit" class="form-control" /></div>
-<div class="col-12"><label asp-for="RulesJson" class="form-label"></label><textarea asp-for="RulesJson" class="form-control" rows="6"></textarea><div class="form-text">@T.T("LoyaltyRulesJsonHelp")</div></div>
-<div class="col-12 form-check ms-2"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
-<div class="col-12 d-flex gap-2"><button type="submit" class="btn btn-primary">@(ViewData["IsCreate"] as bool? == true ? T.T("Create") : T.T("Save"))</button><a asp-action="Programs" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@ProgramsUrl(Model.BusinessId)" hx-target="#loyalty-program-editor-shell" hx-swap="outerHTML">@T.T("Back")</a>@if (ViewData["IsCreate"] as bool? != true) { <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.Id" class="btn btn-outline-primary" hx-get="@RewardTiersUrl(Model.Id)" hx-target="#loyalty-program-editor-shell" hx-swap="outerHTML">@T.T("LoyaltyRewardTiersTitle")</a> }</div>
+<form asp-action="@(ViewData["IsCreate"] as bool? == true ? "CreateProgram" : "EditProgram")"
+      method="post"
+      hx-post="@Url.Action(ViewData["IsCreate"] as bool? == true ? "CreateProgram" : "EditProgram", "Loyalty")"
+      hx-target="#loyalty-program-editor-shell"
+      hx-swap="outerHTML">
+    @Html.AntiForgeryToken()
+    @if (ViewData["IsCreate"] as bool? != true)
+    {
+        <input asp-for="Id" type="hidden" />
+        <input asp-for="RowVersion" type="hidden" />
+    }
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <section class="admin-form-section">
+        <h2 class="admin-form-section-title">@T.T("LoyaltyProgramIdentitySection")</h2>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="BusinessId" class="form-label"></label>
+                <field-help title="@T.T("Business")" content="@T.T("LoyaltyProgramBusinessHelp")" placement="right"></field-help>
+                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Name" class="form-label"></label>
+                <field-help title="@T.T("Name")" content="@T.T("LoyaltyProgramNameHelp")" placement="right"></field-help>
+                <input asp-for="Name" class="form-control" />
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="form-check">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                    <field-help title="@T.T("IsActive")" content="@T.T("LoyaltyProgramIsActiveHelp")" placement="right"></field-help>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-form-section">
+        <h2 class="admin-form-section-title">@T.T("LoyaltyProgramAccrualSection")</h2>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="AccrualMode" class="form-label"></label>
+                <field-help title="@T.T("AccrualMode")" content="@T.T("LoyaltyProgramAccrualModeHelp")" placement="right"></field-help>
+                <select asp-for="AccrualMode" asp-items="accrualModeOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="PointsPerCurrencyUnit" class="form-label"></label>
+                <field-help title="@T.T("PointsPerCurrencyUnit")" content="@T.T("LoyaltyProgramPointsPerCurrencyUnitHelp")" placement="right"></field-help>
+                <input asp-for="PointsPerCurrencyUnit" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label asp-for="RulesJson" class="form-label"></label>
+                <field-help title="@T.T("RulesJson")" content="@T.T("LoyaltyRulesJsonHelp")" placement="right"></field-help>
+                <textarea asp-for="RulesJson" class="form-control" rows="6"></textarea>
+            </div>
+        </div>
+    </section>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@(ViewData["IsCreate"] as bool? == true ? T.T("Create") : T.T("Save"))</button>
+        <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary" hx-get="@ProgramsUrl(Model.BusinessId)" hx-target="#loyalty-program-editor-shell" hx-swap="outerHTML">@T.T("Back")</a>
+        @if (ViewData["IsCreate"] as bool? != true)
+        {
+            <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.Id" class="btn btn-outline-primary" hx-get="@RewardTiersUrl(Model.Id)" hx-target="#loyalty-program-editor-shell" hx-swap="outerHTML">@T.T("LoyaltyRewardTiersTitle")</a>
+        }
+    </div>
 </form>

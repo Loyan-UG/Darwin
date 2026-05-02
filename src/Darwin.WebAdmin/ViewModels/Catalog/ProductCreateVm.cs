@@ -52,6 +52,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public List<SelectListItem> TaxCategoryOptions { get; set; } = new();
         public IReadOnlyList<string> Cultures { get; set; } = Array.Empty<string>();
         public IReadOnlyList<string> Currencies { get; set; } = Array.Empty<string>();
+        public bool MultilingualEnabled { get; set; } = true;
     }
 
     public sealed class ProductCreateVm : ProductEditorVm

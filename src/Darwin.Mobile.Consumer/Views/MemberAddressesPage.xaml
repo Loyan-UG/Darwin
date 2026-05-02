@@ -2,20 +2,28 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     x:Class="Darwin.Mobile.Consumer.Views.MemberAddressesPage"
     x:DataType="vm:MemberAddressesViewModel"
     Title="{x:Static res:AppResources.MemberAddressesTitle}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+    <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                   IsRefreshing="{Binding IsBusy}"
+                                   ProgressColor="{StaticResource BrandGold500}"
+                                   ProgressBackground="{StaticResource Neutral0}">
+        <pullToRefresh:SfPullToRefresh.PullableContent>
+            <ScrollView>
+                <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.MemberAddressesTitle}" Style="{StaticResource TitleLabelStyle}" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Button Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesRefreshButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
-                        <Button Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesCreateButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding StartCreateCommand}" />
+                        <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesRefreshButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
+                        <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesCreateButton}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding StartCreateCommand}" />
                     </Grid>
                     <Label Text="{Binding SuccessMessage}" Style="{StaticResource SuccessLabelStyle}" IsVisible="{Binding HasSuccess}" />
                     <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
@@ -39,10 +47,10 @@
                                             <Label Text="{x:Static res:AppResources.MemberAddressesDefaultShippingBadge}" Style="{StaticResource CaptionLabelStyle}" IsVisible="{Binding IsDefaultShipping}" />
                                         </HorizontalStackLayout>
                                         <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
-                                            <Button Grid.Row="0" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesEditButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}" CommandParameter="{Binding .}" />
-                                            <Button Grid.Row="0" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesDeleteButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}" CommandParameter="{Binding .}" />
-                                            <Button Grid.Row="1" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesSetBillingButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultBillingCommand}" CommandParameter="{Binding .}" />
-                                            <Button Grid.Row="1" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesSetShippingButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultShippingCommand}" CommandParameter="{Binding .}" />
+                                            <buttons:SfButton Grid.Row="0" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesEditButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}" CommandParameter="{Binding .}" />
+                                            <buttons:SfButton Grid.Row="0" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesDeleteButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}" CommandParameter="{Binding .}" />
+                                            <buttons:SfButton Grid.Row="1" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesSetBillingButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultBillingCommand}" CommandParameter="{Binding .}" />
+                                            <buttons:SfButton Grid.Row="1" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesSetShippingButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultShippingCommand}" CommandParameter="{Binding .}" />
                                         </Grid>
                                     </VerticalStackLayout>
                                 </Border>
@@ -58,68 +66,68 @@
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="8">
-                            <Label Text="{x:Static res:AppResources.MemberAddressesFullNameLabel}" Style="{StaticResource FormLabelStyle}" />
-                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesFullNameLabel}"
+                                                           Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                                 <Entry Text="{Binding FullName}" Style="{StaticResource FormEntryStyle}" />
-                            </Border>
+                            </inputLayout:SfTextInputLayout>
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" Spacing="8">
-                            <Label Text="{x:Static res:AppResources.MemberAddressesCompanyLabel}" Style="{StaticResource FormLabelStyle}" />
-                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesCompanyLabel}"
+                                                           Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                                 <Entry Text="{Binding Company}" Style="{StaticResource FormEntryStyle}" />
-                            </Border>
+                            </inputLayout:SfTextInputLayout>
                         </VerticalStackLayout>
                     </Grid>
 
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.MemberAddressesStreet1Label}" Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesStreet1Label}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                             <Entry Text="{Binding Street1}" Style="{StaticResource FormEntryStyle}" />
-                        </Border>
+                        </inputLayout:SfTextInputLayout>
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.MemberAddressesStreet2Label}" Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesStreet2Label}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                             <Entry Text="{Binding Street2}" Style="{StaticResource FormEntryStyle}" />
-                        </Border>
+                        </inputLayout:SfTextInputLayout>
                     </VerticalStackLayout>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="8">
-                            <Label Text="{x:Static res:AppResources.MemberAddressesPostalCodeLabel}" Style="{StaticResource FormLabelStyle}" />
-                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesPostalCodeLabel}"
+                                                           Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                                 <Entry Text="{Binding PostalCode}" Style="{StaticResource FormEntryStyle}" />
-                            </Border>
+                            </inputLayout:SfTextInputLayout>
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" Spacing="8">
-                            <Label Text="{x:Static res:AppResources.MemberAddressesCityLabel}" Style="{StaticResource FormLabelStyle}" />
-                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesCityLabel}"
+                                                           Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                                 <Entry Text="{Binding City}" Style="{StaticResource FormEntryStyle}" />
-                            </Border>
+                            </inputLayout:SfTextInputLayout>
                         </VerticalStackLayout>
                     </Grid>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="8">
-                            <Label Text="{x:Static res:AppResources.MemberAddressesStateLabel}" Style="{StaticResource FormLabelStyle}" />
-                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesStateLabel}"
+                                                           Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                                 <Entry Text="{Binding State}" Style="{StaticResource FormEntryStyle}" />
-                            </Border>
+                            </inputLayout:SfTextInputLayout>
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" Spacing="8">
-                            <Label Text="{x:Static res:AppResources.MemberAddressesCountryCodeLabel}" Style="{StaticResource FormLabelStyle}" />
-                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesCountryCodeLabel}"
+                                                           Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                                 <Entry Text="{Binding CountryCode}" Style="{StaticResource FormEntryStyle}" />
-                            </Border>
+                            </inputLayout:SfTextInputLayout>
                         </VerticalStackLayout>
                     </Grid>
 
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="{x:Static res:AppResources.MemberAddressesPhoneLabel}" Style="{StaticResource FormLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.MemberAddressesPhoneLabel}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                             <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" Style="{StaticResource FormEntryStyle}" />
-                        </Border>
+                        </inputLayout:SfTextInputLayout>
                     </VerticalStackLayout>
 
                     <Border Style="{StaticResource MutedCardBorderStyle}">
@@ -136,13 +144,15 @@
                     </Border>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Button Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesSaveButton}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SaveCommand}" />
-                        <Button Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesCancelButton}" Style="{StaticResource OutlinedButtonStyle}" Command="{Binding CancelEditCommand}" />
+                        <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesSaveButton}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding SaveCommand}" />
+                        <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesCancelButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding CancelEditCommand}" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
 
             <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
-        </VerticalStackLayout>
-    </ScrollView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </pullToRefresh:SfPullToRefresh.PullableContent>
+    </pullToRefresh:SfPullToRefresh>
 </ContentPage>

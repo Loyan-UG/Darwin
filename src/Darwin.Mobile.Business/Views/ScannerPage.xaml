@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     x:Class="Darwin.Mobile.Business.Views.ScannerPage"
     x:DataType="vm:ScannerViewModel"
     Title="{x:Static res:AppResources.ScanTitle}">
@@ -23,8 +24,8 @@
 
             <Border Style="{StaticResource CardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="{Binding ScannerReadinessMessage}" Style="{StaticResource BodyLabelStyle}" />
-                    <Button Text="{x:Static res:AppResources.ScanTitle}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ScanCommand}" IsEnabled="{Binding CanStartScan}" HorizontalOptions="Fill" />
+                    <Label Text="{Binding ScannerReadinessMessage}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="WordWrap" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.ScanTitle}" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding ScanCommand}" IsEnabled="{Binding CanStartScan}" HorizontalOptions="Fill" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}">
                             <VerticalStackLayout Spacing="4">
@@ -69,7 +70,7 @@
             <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasLastScannedToken}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.LastTokenLabel}" Style="{StaticResource SectionHeadingLabelStyle}" />
-                    <Label Text="{Binding LastScannedToken}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="CharacterWrap" />
+                    <Label Text="{Binding LastScannedTokenDisplay}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="CharacterWrap" MaxLines="4" />
                 </VerticalStackLayout>
             </Border>
 

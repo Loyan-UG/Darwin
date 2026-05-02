@@ -744,76 +744,109 @@
     </div>
 }
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <label asp-for="BusinessId" class="form-label"></label>
-        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("PaymentPartiesSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="BusinessId" class="form-label"></label>
+            <field-help title="@T.T("Business")" content="@T.T("PaymentBusinessHelp")" placement="right"></field-help>
+            <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CustomerId" class="form-label"></label>
+            <field-help title="@T.T("Customer")" content="@T.T("PaymentCustomerHelp")" placement="right"></field-help>
+            <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="UserId" class="form-label"></label>
+            <field-help title="@T.T("User")" content="@T.T("PaymentUserHelp")" placement="right"></field-help>
+            <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
+        </div>
     </div>
-    <div class="col-md-4">
-        <label asp-for="CustomerId" class="form-label"></label>
-        <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("PaymentStatusAmountSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="Provider" class="form-label"></label>
+            <field-help title="@T.T("Provider")" content="@T.T("PaymentProviderHelp")" placement="right"></field-help>
+            <input asp-for="Provider" class="form-control" />
+            <span asp-validation-for="Provider" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Status" class="form-label"></label>
+            <field-help title="@T.T("PaymentStatus")" content="@T.T("PaymentStatusHelp")" placement="right"></field-help>
+            <select asp-for="Status" asp-items="paymentStatusOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Currency" class="form-label"></label>
+            <field-help title="@T.T("Currency")" content="@T.T("PaymentCurrencyHelp")" placement="right"></field-help>
+            <input asp-for="Currency" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="AmountMinor" class="form-label"></label>
+            <field-help title="@T.T("AmountMinor")" content="@T.T("PaymentAmountMinorHelp")" placement="right"></field-help>
+            <input asp-for="AmountMinor" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="PaidAtUtc" class="form-label"></label>
+            <field-help title="@T.T("PaidAtUtc")" content="@T.T("PaymentPaidAtUtcHelp")" placement="right"></field-help>
+            <input asp-for="PaidAtUtc" type="datetime-local" class="form-control" />
+        </div>
     </div>
-    <div class="col-md-4">
-        <label asp-for="UserId" class="form-label"></label>
-        <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("PaymentProviderReferencesSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="ProviderTransactionRef" class="form-label"></label>
+            <field-help title="@T.T("ProviderTransactionRef")" content="@T.T("PaymentProviderTransactionRefHelp")" placement="right"></field-help>
+            <input asp-for="ProviderTransactionRef" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="ProviderPaymentIntentRef" class="form-label"></label>
+            <field-help title="@T.T("ProviderPaymentIntentRef")" content="@T.T("PaymentProviderPaymentIntentRefHelp")" placement="right"></field-help>
+            <input asp-for="ProviderPaymentIntentRef" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="ProviderCheckoutSessionRef" class="form-label"></label>
+            <field-help title="@T.T("ProviderCheckoutSessionRef")" content="@T.T("PaymentProviderCheckoutSessionRefHelp")" placement="right"></field-help>
+            <input asp-for="ProviderCheckoutSessionRef" class="form-control" />
+        </div>
     </div>
-    <div class="col-md-6">
-        <label asp-for="Provider" class="form-label"></label>
-        <input asp-for="Provider" class="form-control" />
-        <span asp-validation-for="Provider" class="text-danger"></span>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("PaymentLinksSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="OrderId" class="form-label"></label>
+            <field-help title="@T.T("PaymentOrderId")" content="@T.T("PaymentOrderIdHelp")" placement="right"></field-help>
+            <input asp-for="OrderId" class="form-control" />
+            @if (!string.IsNullOrWhiteSpace(Model.OrderNumber))
+            {
+                <div class="form-text">@T.T("LinkedOrder"): @Model.OrderNumber</div>
+            }
+        </div>
+        <div class="col-md-6">
+            <label asp-for="InvoiceId" class="form-label"></label>
+            <field-help title="@T.T("PaymentInvoiceId")" content="@T.T("PaymentInvoiceIdHelp")" placement="right"></field-help>
+            <input asp-for="InvoiceId" class="form-control" />
+            @if (Model.InvoiceStatus.HasValue || Model.InvoiceTotalGrossMinor.HasValue)
+            {
+                <div class="form-text">
+                    @if (Model.InvoiceStatus.HasValue)
+                    {
+                        <span>@T.T("Status"): @LocalizeInvoiceStatus(Model.InvoiceStatus)</span>
+                    }
+                    @if (Model.InvoiceTotalGrossMinor.HasValue)
+                    {
+                        <span class="ms-2">@T.T("Total"): @Model.Currency @((Model.InvoiceTotalGrossMinor.Value / 100M).ToString("0.00"))</span>
+                    }
+                </div>
+            }
+        </div>
     </div>
-    <div class="col-md-3">
-        <label asp-for="Status" class="form-label"></label>
-        <select asp-for="Status" asp-items="paymentStatusOptions" class="form-select"></select>
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Currency" class="form-label"></label>
-        <input asp-for="Currency" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="AmountMinor" class="form-label"></label>
-        <input asp-for="AmountMinor" class="form-control" />
-        <div class="form-text">@T.T("MinorUnits")</div>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="ProviderTransactionRef" class="form-label"></label>
-        <input asp-for="ProviderTransactionRef" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="ProviderPaymentIntentRef" class="form-label"></label>
-        <input asp-for="ProviderPaymentIntentRef" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="ProviderCheckoutSessionRef" class="form-label"></label>
-        <input asp-for="ProviderCheckoutSessionRef" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="PaidAtUtc" class="form-label"></label>
-        <input asp-for="PaidAtUtc" type="datetime-local" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="OrderId" class="form-label"></label>
-        <input asp-for="OrderId" class="form-control" />
-        @if (!string.IsNullOrWhiteSpace(Model.OrderNumber))
-        {
-            <div class="form-text">@T.T("LinkedOrder"): @Model.OrderNumber</div>
-        }
-    </div>
-    <div class="col-md-6">
-        <label asp-for="InvoiceId" class="form-label"></label>
-        <input asp-for="InvoiceId" class="form-control" />
-        @if (Model.InvoiceStatus.HasValue || Model.InvoiceTotalGrossMinor.HasValue)
-        {
-            <div class="form-text">
-                @if (Model.InvoiceStatus.HasValue)
-                {
-                    <span>@T.T("Status"): @LocalizeInvoiceStatus(Model.InvoiceStatus)</span>
-                }
-                @if (Model.InvoiceTotalGrossMinor.HasValue)
-                {
-                    <span class="ms-2">@T.T("Total"): @Model.Currency @((Model.InvoiceTotalGrossMinor.Value / 100M).ToString("0.00"))</span>
-                }
-            </div>
-        }
-    </div>
-</div>
+</section>

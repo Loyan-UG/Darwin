@@ -131,5 +131,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
 
         /// <summary>Localized fields. Must contain at least one item.</summary>
         public List<BrandTranslationVm> Translations { get; set; } = new();
+
+        public bool MultilingualEnabled { get; set; } = true;
     }
 }

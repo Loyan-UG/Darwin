@@ -37,7 +37,7 @@ public partial class RewardsPage : IQueryAttributable
         }
 
         if (rawBusinessId is string businessIdText &&
-            Guid.TryParse(Uri.UnescapeDataString(businessIdText), out var parsedBusinessId) &&
+            Guid.TryParse(SafeUnescape(businessIdText), out var parsedBusinessId) &&
             parsedBusinessId != Guid.Empty)
         {
             _viewModel.SetBusiness(parsedBusinessId);
@@ -47,6 +47,48 @@ public partial class RewardsPage : IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.OnAppearingAsync();
+
+        try
+        {
+            await _viewModel.OnAppearingAsync();
+        }
+        catch
+        {
+            // Appearing is an async-void MAUI lifecycle hook. Rewards load failures stay inside ViewModel feedback.
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from rewards.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
+    }
+
+    /// <summary>
+    /// Decodes route values defensively so malformed navigation input cannot crash rewards context setup.
+    /// </summary>
+    /// <param name="raw">Raw route value supplied by Shell.</param>
+    /// <returns>Decoded and trimmed value, or the trimmed raw value when decoding is not possible.</returns>
+    private static string SafeUnescape(string raw)
+    {
+        try
+        {
+            return Uri.UnescapeDataString(raw).Trim();
+        }
+        catch (UriFormatException)
+        {
+            return raw.Trim();
+        }
     }
 }

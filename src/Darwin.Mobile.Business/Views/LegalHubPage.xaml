@@ -2,6 +2,7 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.LegalHubPage"
@@ -16,21 +17,21 @@
             <Label Text="{x:Static res:AppResources.LegalHubSubtitle}"
                    Style="{StaticResource SecondaryBodyLabelStyle}" />
 
-            <Button Text="{x:Static res:AppResources.LegalImpressumButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding OpenImpressumCommand}" />
+            <buttons:SfButton Text="{x:Static res:AppResources.LegalImpressumButton}"
+                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              Command="{Binding OpenImpressumCommand}" />
 
-            <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding OpenPrivacyPolicyCommand}" />
+            <buttons:SfButton Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
+                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              Command="{Binding OpenPrivacyPolicyCommand}" />
 
-            <Button Text="{x:Static res:AppResources.LegalTermsButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding OpenTermsCommand}" />
+            <buttons:SfButton Text="{x:Static res:AppResources.LegalTermsButton}"
+                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              Command="{Binding OpenTermsCommand}" />
 
-            <Button Text="{x:Static res:AppResources.LegalAccountDeletionButton}"
-                    Style="{StaticResource OutlinedButtonStyle}"
-                    Clicked="OnAccountDeletionClicked" />
+            <buttons:SfButton Text="{x:Static res:AppResources.LegalAccountDeletionButton}"
+                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                              Clicked="OnAccountDeletionClicked" />
 
             <Label Text="{Binding ErrorMessage}"
                    Style="{StaticResource ErrorLabelStyle}"

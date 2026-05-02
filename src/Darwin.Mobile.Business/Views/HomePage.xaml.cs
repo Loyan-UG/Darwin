@@ -24,8 +24,33 @@ namespace Darwin.Mobile.Business.Views
 
             if (BindingContext is HomeViewModel vm)
             {
-                await vm.OnAppearingAsync();
+                try
+                {
+                    await vm.OnAppearingAsync();
+                }
+                catch
+                {
+                    // Appearing is an async-void MAUI lifecycle hook. Home context failures stay in page state.
+                }
             }
+        }
+
+        /// <inheritdoc />
+        protected override async void OnDisappearing()
+        {
+            if (BindingContext is HomeViewModel vm)
+            {
+                try
+                {
+                    await vm.OnDisappearingAsync();
+                }
+                catch
+                {
+                    // Disappearing cleanup should never crash navigation away from home.
+                }
+            }
+
+            base.OnDisappearing();
         }
     }
 }

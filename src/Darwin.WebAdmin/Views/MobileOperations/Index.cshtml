@@ -427,8 +427,9 @@
 
 @if (Model.Playbooks.Count > 0)
 {
-    <div class="card mb-4">
-        <div class="card-header">@T.T("MobileOperationsPlaybooks")</div>
+    <details class="admin-playbook mb-4">
+        <summary>@T.T("MobileOperationsPlaybooks")</summary>
+        <div class="admin-playbook-body p-0">
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead><tr><th>@T.T("Playbook")</th><th>@T.T("WhenItApplies")</th><th>@T.T("OperatorAction")</th></tr></thead>
@@ -478,7 +479,8 @@
                 </tbody>
             </table>
         </div>
-    </div>
+        </div>
+    </details>
 }
 
 <div class="card mb-4">

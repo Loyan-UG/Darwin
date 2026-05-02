@@ -2,6 +2,7 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     x:Class="Darwin.Mobile.Consumer.Views.SettingsPage"
     Title="{x:Static res:AppResources.SettingsTitle}">
@@ -23,25 +24,25 @@
                            Style="{StaticResource SectionHeadingLabelStyle}" />
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Button Grid.Column="0"
-                                Text="{x:Static res:AppResources.SettingsProfileButton}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Clicked="OnProfileClicked" />
-                        <Button Grid.Column="1"
-                                Text="{x:Static res:AppResources.SettingsPreferencesButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Clicked="OnMemberPreferencesClicked" />
+                        <buttons:SfButton Grid.Column="0"
+                                          Text="{x:Static res:AppResources.SettingsProfileButton}"
+                                          Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                          Clicked="OnProfileClicked" />
+                        <buttons:SfButton Grid.Column="1"
+                                          Text="{x:Static res:AppResources.SettingsPreferencesButton}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                          Clicked="OnMemberPreferencesClicked" />
                     </Grid>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Button Grid.Column="0"
-                                Text="{x:Static res:AppResources.SettingsOrdersAndInvoicesButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Clicked="OnMemberCommerceClicked" />
-                        <Button Grid.Column="1"
-                                Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
-                                Style="{StaticResource OutlinedButtonStyle}"
-                                Clicked="OnChangePasswordClicked" />
+                        <buttons:SfButton Grid.Column="0"
+                                          Text="{x:Static res:AppResources.SettingsOrdersAndInvoicesButton}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                          Clicked="OnMemberCommerceClicked" />
+                        <buttons:SfButton Grid.Column="1"
+                                          Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
+                                          Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                          Clicked="OnChangePasswordClicked" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -51,13 +52,13 @@
                     <Label Text="{x:Static res:AppResources.SettingsLegalHubButton}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                    <Button Text="{x:Static res:AppResources.SettingsLegalHubButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Clicked="OnLegalHubClicked" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.SettingsLegalHubButton}"
+                                      Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                      Clicked="OnLegalHubClicked" />
 
-                    <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            Clicked="OnAccountDeletionClicked" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
+                                      Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                      Clicked="OnAccountDeletionClicked" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

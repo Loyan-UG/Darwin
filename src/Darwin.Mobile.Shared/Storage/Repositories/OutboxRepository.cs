@@ -5,6 +5,7 @@ using Darwin.Mobile.Shared.Storage.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -57,6 +58,8 @@ public sealed class OutboxRepository : IOutboxRepository
         var totalCount = await connection.Table<OutboxMessageRecord>().CountAsync().ConfigureAwait(false);
         while (totalCount >= maxOutbox)
         {
+            ct.ThrowIfCancellationRequested();
+
             var oldest = await connection.Table<OutboxMessageRecord>()
                 .OrderBy(x => x.EnqueuedAtUtc)
                 .FirstOrDefaultAsync()
@@ -73,6 +76,7 @@ public sealed class OutboxRepository : IOutboxRepository
             }
         }
 
+        ct.ThrowIfCancellationRequested();
         await connection.InsertAsync(new OutboxMessageRecord
         {
             Id = Guid.NewGuid().ToString("N"),
@@ -93,6 +97,8 @@ public sealed class OutboxRepository : IOutboxRepository
         var boundedCount = Math.Clamp(maxCount, 1, MaxBatchSize);
         var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
+        ct.ThrowIfCancellationRequested();
+
         var records = await connection.Table<OutboxMessageRecord>()
             .Where(x => !x.IsSucceeded && x.Attempts < MaxAttempts)
             .OrderBy(x => x.EnqueuedAtUtc)
@@ -100,6 +106,7 @@ public sealed class OutboxRepository : IOutboxRepository
             .ToListAsync()
             .ConfigureAwait(false);
 
+        ct.ThrowIfCancellationRequested();
         return records
             .Where(record => IsReadyForRetry(record, nowUtc))
             .Take(boundedCount)
@@ -121,6 +128,7 @@ public sealed class OutboxRepository : IOutboxRepository
         ct.ThrowIfCancellationRequested();
 
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
+        ct.ThrowIfCancellationRequested();
         await connection.DeleteAsync<OutboxMessageRecord>(id).ConfigureAwait(false);
     }
 
@@ -130,6 +138,8 @@ public sealed class OutboxRepository : IOutboxRepository
         ct.ThrowIfCancellationRequested();
 
         var connection = await _database.GetConnectionAsync().ConfigureAwait(false);
+        ct.ThrowIfCancellationRequested();
+
         var record = await connection.Table<OutboxMessageRecord>()
             .Where(x => x.Id == id)
             .FirstOrDefaultAsync()
@@ -143,6 +153,7 @@ public sealed class OutboxRepository : IOutboxRepository
         record.Attempts += 1;
         record.LastError = NormalizeLastError(error);
         record.LastAttemptedAtUtc = _timeProvider.GetUtcNow().UtcDateTime;
+        ct.ThrowIfCancellationRequested();
         await connection.UpdateAsync(record).ConfigureAwait(false);
     }
 
@@ -187,6 +198,15 @@ public sealed class OutboxRepository : IOutboxRepository
         if (normalized.Length > MaxJsonBodyLength)
         {
             throw new ArgumentException($"Outbox payload cannot exceed {MaxJsonBodyLength} characters.", nameof(jsonBody));
+        }
+
+        try
+        {
+            using var _ = JsonDocument.Parse(normalized);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("Outbox payload must be valid JSON.", nameof(jsonBody), ex);
         }
 
         return normalized;

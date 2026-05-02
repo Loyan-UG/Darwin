@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Services.Caching;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -33,12 +36,14 @@ public sealed class FeedViewModel : BaseViewModel
 {
     private const string PromotionSeenAtStoragePrefix = "consumer.feed.promotion.seen-at.v1";
     private static readonly TimeSpan PromotionDisplaySuppressionWindow = TimeSpan.FromHours(8);
+    private static readonly TimeSpan PromotionTrackingTimeout = TimeSpan.FromSeconds(5);
     private const int PromotionDisplayCap = 6;
 
     private readonly ILoyaltyService _loyaltyService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
     private readonly TimeProvider _timeProvider;
+    private CancellationTokenSource? _operationCancellation;
 
     private bool _hasLoaded;
     private bool _isLoadingMore;
@@ -71,9 +76,9 @@ public sealed class FeedViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
-        Items = new ObservableCollection<LoyaltyTimelineEntry>();
-        PromotionItems = new ObservableCollection<PromotionFeedItem>();
-        Accounts = new ObservableCollection<LoyaltyAccountSummary>();
+        Items = new RangeObservableCollection<LoyaltyTimelineEntry>();
+        PromotionItems = new RangeObservableCollection<PromotionFeedItem>();
+        Accounts = new RangeObservableCollection<LoyaltyAccountSummary>();
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         LoadMoreCommand = new AsyncCommand(LoadMoreAsync, () => HasMore && !_isLoadingMore && !IsBusy);
@@ -89,12 +94,12 @@ public sealed class FeedViewModel : BaseViewModel
     /// <summary>
     /// Timeline-backed feed items shown in the UI.
     /// </summary>
-    public ObservableCollection<LoyaltyTimelineEntry> Items { get; }
+    public RangeObservableCollection<LoyaltyTimelineEntry> Items { get; }
 
     /// <summary>
     /// Promotion cards shown at the top of feed for quick actions.
     /// </summary>
-    public ObservableCollection<PromotionFeedItem> PromotionItems { get; }
+    public RangeObservableCollection<PromotionFeedItem> PromotionItems { get; }
 
     /// <summary>
     /// Gets a value indicating whether at least one promotion card exists.
@@ -183,7 +188,7 @@ public sealed class FeedViewModel : BaseViewModel
                 return string.Empty;
             }
 
-            var ageMinutes = Math.Max(0, (int)Math.Round((DateTimeOffset.Now - _promotionDiagnosticsSnapshotAtLocal.Value).TotalMinutes, MidpointRounding.AwayFromZero));
+            var ageMinutes = Math.Max(0, (int)Math.Round((_timeProvider.GetLocalNow() - _promotionDiagnosticsSnapshotAtLocal.Value).TotalMinutes, MidpointRounding.AwayFromZero));
             return ageMinutes > 15
                 ? string.Format(Resources.AppResources.FeedPromotionDiagnosticsFreshnessStaleFormat, ageMinutes)
                 : string.Format(Resources.AppResources.FeedPromotionDiagnosticsFreshnessFreshFormat, ageMinutes);
@@ -195,7 +200,7 @@ public sealed class FeedViewModel : BaseViewModel
     /// </summary>
     public bool IsPromotionDiagnosticsSnapshotStale
         => _promotionDiagnosticsSnapshotAtLocal.HasValue
-           && (DateTimeOffset.Now - _promotionDiagnosticsSnapshotAtLocal.Value).TotalMinutes > 15;
+           && (_timeProvider.GetLocalNow() - _promotionDiagnosticsSnapshotAtLocal.Value).TotalMinutes > 15;
 
     /// <summary>
     /// Gets localized preview text for visible promotions to provide more diagnostics context in support handoff.
@@ -287,7 +292,7 @@ public sealed class FeedViewModel : BaseViewModel
     /// <summary>
     /// Joined loyalty accounts available for business-context switching.
     /// </summary>
-    public ObservableCollection<LoyaltyAccountSummary> Accounts { get; }
+    public RangeObservableCollection<LoyaltyAccountSummary> Accounts { get; }
 
     /// <summary>
     /// Gets a value indicating whether the user has at least one joined account.
@@ -377,6 +382,17 @@ public sealed class FeedViewModel : BaseViewModel
         _hasLoaded = true;
     }
 
+    /// <summary>
+    /// Cancels any in-flight feed operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        EndBusyState();
+        return Task.CompletedTask;
+    }
+
     private async Task RefreshAsync()
     {
         if (IsBusy)
@@ -384,25 +400,29 @@ public sealed class FeedViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        RaiseCommandsCanExecute();
+        BeginBusyState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
-            var selectedBusinessId = await LoadAccountsAndResolveSelectionAsync();
+            var cancellationToken = operationCancellation.Token;
+            var selectedBusinessId = await LoadAccountsAndResolveSelectionAsync(cancellationToken);
             if (selectedBusinessId == Guid.Empty)
             {
                 return;
             }
 
-            await LoadPromotionsAsync(selectedBusinessId);
-            await LoadFirstPageAsync(selectedBusinessId);
+            await LoadPromotionsAsync(selectedBusinessId, cancellationToken);
+            await LoadFirstPageAsync(selectedBusinessId, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from feed intentionally cancels stale refresh work.
         }
         finally
         {
-            IsBusy = false;
-            RaiseCommandsCanExecute();
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -413,9 +433,8 @@ public sealed class FeedViewModel : BaseViewModel
             return;
         }
 
-        _isLoadingMore = true;
-        ErrorMessage = null;
-        LoadMoreCommand.RaiseCanExecuteChanged();
+        BeginLoadingMoreState();
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
@@ -427,11 +446,11 @@ public sealed class FeedViewModel : BaseViewModel
                 BeforeId = _nextBeforeId
             };
 
-            var result = await _loyaltyService.GetMyLoyaltyTimelinePageAsync(request, CancellationToken.None);
+            var result = await _loyaltyService.GetMyLoyaltyTimelinePageAsync(request, operationCancellation.Token);
 
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = Resources.AppResources.FeedLoadFailed;
+                RunOnMain(() => ErrorMessage = Resources.AppResources.FeedLoadFailed);
                 return;
             }
 
@@ -441,11 +460,7 @@ public sealed class FeedViewModel : BaseViewModel
 
             RunOnMain(() =>
             {
-                foreach (var item in ordered)
-                {
-                    Items.Add(item);
-                }
-
+                Items.AddRange(ordered);
                 OnPropertyChanged(nameof(HasItems));
             });
 
@@ -453,10 +468,14 @@ public sealed class FeedViewModel : BaseViewModel
             _nextBeforeId = result.Value.NextBeforeId;
             OnPropertyChanged(nameof(HasMore));
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from feed intentionally cancels stale paging work.
+        }
         finally
         {
-            _isLoadingMore = false;
-            LoadMoreCommand.RaiseCanExecuteChanged();
+            EndLoadingMoreState();
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -464,14 +483,14 @@ public sealed class FeedViewModel : BaseViewModel
     /// Loads all joined accounts and resolves a deterministic selection.
     /// Priority is the previously selected business (if still present), otherwise the first account alphabetically.
     /// </summary>
-    private async Task<Guid> LoadAccountsAndResolveSelectionAsync()
+    private async Task<Guid> LoadAccountsAndResolveSelectionAsync(CancellationToken cancellationToken)
     {
         var previousBusinessId = SelectedAccount?.BusinessId ?? Guid.Empty;
 
-        var accountsResult = await _loyaltySnapshotCache.GetMyAccountsAsync(CancellationToken.None);
+        var accountsResult = await _loyaltySnapshotCache.GetMyAccountsAsync(cancellationToken);
         if (!accountsResult.Succeeded || accountsResult.Value is null)
         {
-            ErrorMessage = Resources.AppResources.FeedLoadFailed;
+            RunOnMain(() => ErrorMessage = Resources.AppResources.FeedLoadFailed);
             return Guid.Empty;
         }
 
@@ -482,18 +501,13 @@ public sealed class FeedViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
-            Accounts.Clear();
-            foreach (var account in orderedAccounts)
-            {
-                Accounts.Add(account);
-            }
-
+            Accounts.ReplaceRange(orderedAccounts);
             OnPropertyChanged(nameof(HasAccounts));
         });
 
         if (orderedAccounts.Count == 0)
         {
-            ErrorMessage = Resources.AppResources.FeedNoAccountsMessage;
+            RunOnMain(() => ErrorMessage = Resources.AppResources.FeedNoAccountsMessage);
             ClearFeedCollections();
             ClearPromotions();
             return Guid.Empty;
@@ -514,7 +528,7 @@ public sealed class FeedViewModel : BaseViewModel
     /// <summary>
     /// Loads the first page for the selected business and resets pagination state.
     /// </summary>
-    private async Task LoadFirstPageAsync(Guid businessId)
+    private async Task LoadFirstPageAsync(Guid businessId, CancellationToken cancellationToken)
     {
         var request = new GetMyLoyaltyTimelinePageRequest
         {
@@ -524,11 +538,11 @@ public sealed class FeedViewModel : BaseViewModel
             BeforeId = null
         };
 
-        var result = await _loyaltyService.GetMyLoyaltyTimelinePageAsync(request, CancellationToken.None);
+        var result = await _loyaltyService.GetMyLoyaltyTimelinePageAsync(request, cancellationToken);
 
         if (!result.Succeeded || result.Value is null)
         {
-            ErrorMessage = Resources.AppResources.FeedLoadFailed;
+            RunOnMain(() => ErrorMessage = Resources.AppResources.FeedLoadFailed);
             ClearFeedCollections();
             return;
         }
@@ -539,12 +553,7 @@ public sealed class FeedViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
-            Items.Clear();
-            foreach (var item in ordered)
-            {
-                Items.Add(item);
-            }
-
+            Items.ReplaceRange(ordered);
             OnPropertyChanged(nameof(HasItems));
         });
 
@@ -570,28 +579,37 @@ public sealed class FeedViewModel : BaseViewModel
                 return;
             }
 
-            IsBusy = true;
-            ErrorMessage = null;
-            RaiseCommandsCanExecute();
+            BeginBusyState();
+            var operationCancellation = BeginCurrentOperation();
 
-            await LoadPromotionsAsync(SelectedAccount.BusinessId);
-            await LoadFirstPageAsync(SelectedAccount.BusinessId);
+            try
+            {
+                await LoadPromotionsAsync(SelectedAccount.BusinessId, operationCancellation.Token);
+                await LoadFirstPageAsync(SelectedAccount.BusinessId, operationCancellation.Token);
+            }
+            finally
+            {
+                EndCurrentOperation(operationCancellation);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Selection changes intentionally cancel stale feed refresh work.
         }
         catch
         {
-            ErrorMessage = Resources.AppResources.FeedLoadFailed;
+            RunOnMain(() => ErrorMessage = Resources.AppResources.FeedLoadFailed);
         }
         finally
         {
-            IsBusy = false;
-            RaiseCommandsCanExecute();
+            EndBusyState();
         }
     }
 
     /// <summary>
     /// Loads promotion cards for the selected business context.
     /// </summary>
-    private async Task LoadPromotionsAsync(Guid selectedBusinessId)
+    private async Task LoadPromotionsAsync(Guid selectedBusinessId, CancellationToken cancellationToken)
     {
         var promotionBusinessId = IsPromotionScopeAllBusinesses ? (Guid?)null : selectedBusinessId;
 
@@ -599,7 +617,7 @@ public sealed class FeedViewModel : BaseViewModel
         {
             BusinessId = promotionBusinessId,
             MaxItems = 8
-        }, CancellationToken.None);
+        }, cancellationToken);
 
         ClearPromotions();
 
@@ -629,7 +647,7 @@ public sealed class FeedViewModel : BaseViewModel
         _promotionFinalCount = result.Value.Diagnostics.FinalCount;
         _promotionAppliedMaxCards = displayCap;
         _promotionAppliedSuppressionMinutes = (int)Math.Round(suppressionWindow.TotalMinutes, MidpointRounding.AwayFromZero);
-        _promotionDiagnosticsSnapshotAtLocal = DateTimeOffset.Now;
+        _promotionDiagnosticsSnapshotAtLocal = _timeProvider.GetLocalNow();
 
         var eligible = unique
             .Where(item => !IsPromotionSuppressed(item, nowUtc, suppressionWindow))
@@ -643,11 +661,7 @@ public sealed class FeedViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
-            foreach (var item in eligible)
-            {
-                PromotionItems.Add(item);
-            }
-
+            PromotionItems.ReplaceRange(eligible);
             OnPropertyChanged(nameof(HasPromotions));
             OnPropertyChanged(nameof(PromotionInitialCandidateCount));
             OnPropertyChanged(nameof(PromotionSuppressedByFrequencyCount));
@@ -741,7 +755,12 @@ public sealed class FeedViewModel : BaseViewModel
     /// Builds a stable preferences key for a promotion card.
     /// </summary>
     private static string BuildPromotionSeenAtStorageKey(PromotionFeedItem item)
-        => $"{PromotionSeenAtStoragePrefix}:{BuildPromotionGuardKey(item)}";
+    {
+        // Store a compact fingerprint instead of raw title/business data so local preferences stay small
+        // and do not expose human-readable promotion details in platform storage metadata.
+        var fingerprint = SHA256.HashData(Encoding.UTF8.GetBytes(BuildPromotionGuardKey(item)));
+        return $"{PromotionSeenAtStoragePrefix}:{Convert.ToHexString(fingerprint).ToLowerInvariant()}";
+    }
 
     /// <summary>
     /// Switches promotions scope to selected business and reloads promotion cards.
@@ -793,17 +812,21 @@ public sealed class FeedViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        RaiseCommandsCanExecute();
+        BeginBusyState(clearError: false);
+        var operationCancellation = BeginCurrentOperation();
 
         try
         {
-            await LoadPromotionsAsync(selectedBusinessId);
+            await LoadPromotionsAsync(selectedBusinessId, operationCancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Scope changes intentionally cancel stale promotion refresh work.
         }
         finally
         {
-            IsBusy = false;
-            RaiseCommandsCanExecute();
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -853,13 +876,28 @@ public sealed class FeedViewModel : BaseViewModel
     /// </summary>
     private async Task OpenQrAsync()
     {
-        if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty)
+        if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty || IsBusy)
         {
             return;
         }
 
-        var parameters = BuildContextParameters();
-        await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
+        BeginBusyState(clearError: false);
+        var operationCancellation = BeginCurrentOperation();
+
+        try
+        {
+            var parameters = BuildContextParameters();
+            await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from feed intentionally cancels stale QR navigation work.
+        }
+        finally
+        {
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
+        }
     }
 
     /// <summary>
@@ -867,13 +905,28 @@ public sealed class FeedViewModel : BaseViewModel
     /// </summary>
     private async Task OpenRewardsAsync()
     {
-        if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty)
+        if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty || IsBusy)
         {
             return;
         }
 
-        var parameters = BuildContextParameters();
-        await _navigationService.GoToAsync($"//{Routes.Rewards}", parameters);
+        BeginBusyState(clearError: false);
+        var operationCancellation = BeginCurrentOperation();
+
+        try
+        {
+            var parameters = BuildContextParameters();
+            await _navigationService.GoToAsync($"//{Routes.Rewards}", parameters);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from feed intentionally cancels stale rewards navigation work.
+        }
+        finally
+        {
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
+        }
     }
 
     /// <summary>
@@ -899,21 +952,36 @@ public sealed class FeedViewModel : BaseViewModel
             return;
         }
 
-        var parameters = new Dictionary<string, object?>
-        {
-            ["businessId"] = item.BusinessId,
-            ["businessName"] = item.BusinessName
-        };
+        BeginBusyState(clearError: false);
+        var operationCancellation = BeginCurrentOperation();
 
-        _ = TrackPromotionInteractionBestEffortAsync(item, PromotionInteractionEventType.Open);
-
-        if (string.Equals(item.CtaKind, "OpenQr", StringComparison.OrdinalIgnoreCase))
+        try
         {
-            await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
-            return;
+            var parameters = new Dictionary<string, object?>
+            {
+                ["businessId"] = item.BusinessId,
+                ["businessName"] = item.BusinessName
+            };
+
+            _ = TrackPromotionInteractionBestEffortAsync(item, PromotionInteractionEventType.Open);
+
+            if (string.Equals(item.CtaKind, "OpenQr", StringComparison.OrdinalIgnoreCase))
+            {
+                await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
+                return;
+            }
+
+            await _navigationService.GoToAsync($"//{Routes.Rewards}", parameters);
         }
-
-        await _navigationService.GoToAsync($"//{Routes.Rewards}", parameters);
+        catch (OperationCanceledException)
+        {
+            // Navigation away from feed intentionally cancels stale promotion navigation work.
+        }
+        finally
+        {
+            EndBusyState();
+            EndCurrentOperation(operationCancellation);
+        }
     }
 
     /// <summary>
@@ -941,6 +1009,7 @@ public sealed class FeedViewModel : BaseViewModel
                 return;
             }
 
+            using var trackingCancellation = CreatePromotionTrackingCancellation();
             await _loyaltyService.TrackPromotionInteractionAsync(new TrackPromotionInteractionRequest
             {
                 BusinessId = item.BusinessId,
@@ -949,12 +1018,112 @@ public sealed class FeedViewModel : BaseViewModel
                 CtaKind = item.CtaKind,
                 EventType = eventType,
                 OccurredAtUtc = _timeProvider.GetUtcNow().UtcDateTime
-            }, CancellationToken.None).ConfigureAwait(false);
+            }, trackingCancellation.Token).ConfigureAwait(false);
         }
         catch
         {
             // Intentionally swallow tracking errors.
         }
+    }
+
+    /// <summary>
+    /// Creates a short-lived cancellation token for best-effort promotion analytics.
+    /// Analytics must never keep mobile UI work alive when the network is slow or unavailable.
+    /// </summary>
+    /// <returns>A cancellation token that expires after the promotion tracking timeout.</returns>
+    private static CancellationTokenSource CreatePromotionTrackingCancellation()
+    {
+        return new CancellationTokenSource(PromotionTrackingTimeout);
+    }
+
+    /// <summary>
+    /// Starts a cancellable feed operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active feed operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed feed operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
+    }
+
+    /// <summary>
+    /// Applies busy state and refreshes feed command availability on the UI thread.
+    /// </summary>
+    /// <param name="clearError">Whether transient user-facing errors should be cleared for the new operation.</param>
+    private void BeginBusyState(bool clearError = true)
+    {
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            if (clearError)
+            {
+                ErrorMessage = null;
+            }
+
+            RaiseCommandsCanExecute();
+        });
+    }
+
+    /// <summary>
+    /// Clears busy state and refreshes feed command availability.
+    /// </summary>
+    private void EndBusyState()
+    {
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            _isLoadingMore = false;
+            RaiseCommandsCanExecute();
+        });
+    }
+
+    /// <summary>
+    /// Marks timeline paging as active without blocking the entire feed refresh pipeline.
+    /// </summary>
+    private void BeginLoadingMoreState()
+    {
+        RunOnMain(() =>
+        {
+            _isLoadingMore = true;
+            ErrorMessage = null;
+            LoadMoreCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+    /// <summary>
+    /// Releases timeline paging state and re-enables load-more when another page is available.
+    /// </summary>
+    private void EndLoadingMoreState()
+    {
+        RunOnMain(() =>
+        {
+            _isLoadingMore = false;
+            LoadMoreCommand.RaiseCanExecuteChanged();
+        });
     }
 
     /// <summary>
@@ -964,7 +1133,7 @@ public sealed class FeedViewModel : BaseViewModel
     {
         RunOnMain(() =>
         {
-            Items.Clear();
+            Items.ClearRange();
             OnPropertyChanged(nameof(HasItems));
         });
 
@@ -989,7 +1158,7 @@ public sealed class FeedViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
-            PromotionItems.Clear();
+            PromotionItems.ClearRange();
             PromotionDiagnosticsCopyStatus = null;
             OnPropertyChanged(nameof(HasPromotions));
             OnPropertyChanged(nameof(PromotionInitialCandidateCount));

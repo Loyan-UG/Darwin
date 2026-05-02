@@ -45,72 +45,52 @@
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-6 col-xl-3">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Products")</div>
-            <div class="display-6 fw-semibold mt-1">@Model.Summary.TotalCount</div>
-            <div class="small text-muted mt-2">@T.T("ProductsOpsTotalNote")</div>
-        </div>
+<div class="admin-kpi-row mb-3">
+    <div class="admin-kpi-item">
+        <span class="text-muted small">@T.T("Products")</span>
+        <strong>@Model.Summary.TotalCount</strong>
+        <field-help title="@T.T("Products")" content="@T.T("ProductsOpsTotalNote")" placement="bottom"></field-help>
     </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Inactive")</div>
-            <div class="display-6 fw-semibold mt-1">@Model.Summary.InactiveCount</div>
-            <div class="small text-muted mt-2">@T.T("ProductsOpsInactiveNote")</div>
-        </div>
+    <div class="admin-kpi-item">
+        <span class="text-muted small">@T.T("Inactive")</span>
+        <strong>@Model.Summary.InactiveCount</strong>
+        <field-help title="@T.T("Inactive")" content="@T.T("ProductsOpsInactiveNote")" placement="bottom"></field-help>
     </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Hidden")</div>
-            <div class="display-6 fw-semibold mt-1">@Model.Summary.HiddenCount</div>
-            <div class="small text-muted mt-2">@T.T("ProductsOpsHiddenNote")</div>
-        </div>
+    <div class="admin-kpi-item">
+        <span class="text-muted small">@T.T("Hidden")</span>
+        <strong>@Model.Summary.HiddenCount</strong>
+        <field-help title="@T.T("Hidden")" content="@T.T("ProductsOpsHiddenNote")" placement="bottom"></field-help>
     </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="border rounded p-3 h-100">
-            <div class="text-muted small">@T.T("Scheduled")</div>
-            <div class="display-6 fw-semibold mt-1">@Model.Summary.ScheduledCount</div>
-            <div class="small text-muted mt-2">@T.T("ProductsOpsScheduledNote")</div>
-        </div>
+    <div class="admin-kpi-item">
+        <span class="text-muted small">@T.T("Scheduled")</span>
+        <strong>@Model.Summary.ScheduledCount</strong>
+        <field-help title="@T.T("Scheduled")" content="@T.T("ProductsOpsScheduledNote")" placement="bottom"></field-help>
+    </div>
+    <div class="admin-kpi-item">
+        <span class="text-muted small">@T.T("SingleVariant")</span>
+        <strong>@Model.Summary.SingleVariantCount</strong>
+        <field-help title="@T.T("SingleVariant")" content="@T.T("ProductsOpsSingleVariantNote")" placement="bottom"></field-help>
+    </div>
+    <div class="admin-kpi-item">
+        <span class="text-muted small">@T.T("ActiveCatalogWindow")</span>
+        <strong>@(Model.Summary.TotalCount - Model.Summary.HiddenCount)</strong>
+        <field-help title="@T.T("ActiveCatalogWindow")" content="@T.T("ProductsOpsVisibilityWindowNote")" placement="bottom"></field-help>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-lg-8">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("SingleVariant")</div>
-                    <div class="fw-semibold mt-1">@Model.Summary.SingleVariantCount</div>
-                    <div class="small text-muted mt-2">@T.T("ProductsOpsSingleVariantNote")</div>
-                </div>
+<details class="admin-playbook mb-4">
+    <summary>@T.T("CatalogOperationsPlaybooks")</summary>
+    <div class="admin-playbook-body">
+        @foreach (var playbook in Model.Playbooks)
+        {
+            <div class="rounded border p-3 bg-light-subtle">
+                <div class="fw-semibold">@playbook.QueueLabel</div>
+                <div class="small text-muted mt-2">@playbook.WhyItMatters</div>
+                <div class="small mt-2"><strong>@T.T("OperatorAction"):</strong> @playbook.OperatorAction</div>
             </div>
-            <div class="col-md-6">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("ActiveCatalogWindow")</div>
-                    <div class="fw-semibold mt-1">@(Model.Summary.TotalCount - Model.Summary.HiddenCount)</div>
-                    <div class="small text-muted mt-2">@T.T("ProductsOpsVisibilityWindowNote")</div>
-                </div>
-            </div>
-        </div>
+        }
     </div>
-    <div class="col-lg-4">
-        <div class="border rounded p-3 h-100">
-            <h2 class="h6 mb-3">@T.T("CatalogOperationsPlaybooks")</h2>
-            <div class="d-grid gap-3">
-                @foreach (var playbook in Model.Playbooks)
-                {
-                    <div class="rounded border p-3 bg-light-subtle">
-                        <div class="fw-semibold">@playbook.QueueLabel</div>
-                        <div class="small text-muted mt-2">@playbook.WhyItMatters</div>
-                        <div class="small mt-2"><strong>@T.T("OperatorAction"):</strong> @playbook.OperatorAction</div>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
+</details>
 
 <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
     <div class="d-flex flex-wrap gap-2">

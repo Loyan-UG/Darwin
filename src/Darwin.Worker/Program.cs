@@ -10,7 +10,7 @@ using Darwin.Worker;
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddLocalization();
-builder.Services.AddScoped<IClock, SystemClock>();
+builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddConfiguredPersistence(builder.Configuration);
 builder.Services.AddSharedHostingDataProtection(builder.Configuration);
 builder.Services.AddIdentityInfrastructure();

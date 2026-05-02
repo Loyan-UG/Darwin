@@ -21,6 +21,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
     private readonly ILegalLinkService _legalLinkService;
+    private CancellationTokenSource? _operationCancellation;
     private string _email = string.Empty;
     private string _password = string.Empty;
     private string? _infoMessage;
@@ -148,11 +149,24 @@ public sealed partial class LoginViewModel : BaseViewModel
             Email = email.Trim();
         }
 
-        Password = string.Empty;
-        ErrorMessage = null;
-        InfoMessage = infoMessage;
-        ShowActivationEmailAction = showActivationEmailAction;
-        RaiseReadinessChanged();
+        RunOnMain(() =>
+        {
+            Password = string.Empty;
+            ErrorMessage = null;
+            InfoMessage = infoMessage;
+            ShowActivationEmailAction = showActivationEmailAction;
+            RaiseReadinessChanged();
+        });
+    }
+
+    /// <summary>
+    /// Cancels any in-flight login, activation-email, or legal-link operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -167,25 +181,35 @@ public sealed partial class LoginViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        InfoMessage = null;
-        ShowActivationEmailAction = false;
-        RaiseReadinessChanged();
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            InfoMessage = null;
+            ShowActivationEmailAction = false;
+            RaiseReadinessChanged();
+        });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             if (string.IsNullOrWhiteSpace(Email))
             {
-                ErrorMessage = AppResources.EmailRequired;
-                ErrorBecameVisibleRequested?.Invoke();
+                RunOnMain(() =>
+                {
+                    ErrorMessage = AppResources.EmailRequired;
+                    ErrorBecameVisibleRequested?.Invoke();
+                });
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(Password))
             {
-                ErrorMessage = AppResources.PasswordRequired;
-                ErrorBecameVisibleRequested?.Invoke();
+                RunOnMain(() =>
+                {
+                    ErrorMessage = AppResources.PasswordRequired;
+                    ErrorBecameVisibleRequested?.Invoke();
+                });
                 return;
             }
 
@@ -193,22 +217,34 @@ public sealed partial class LoginViewModel : BaseViewModel
                 Email.Trim(),
                 Password,
                 deviceId: null,
-                CancellationToken.None);
+                operationCancellation.Token);
 
-            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
+            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(operationCancellation.Token);
 
             await _appRootNavigator.NavigateToAuthenticatedShellAsync();
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from login intentionally cancels stale sign-in work.
+        }
         catch (Exception ex)
         {
-            ErrorMessage = ResolveLoginErrorMessage(ex);
-            ShowActivationEmailAction = string.Equals(ErrorMessage, AppResources.LoginEmailConfirmationRequired, StringComparison.Ordinal);
-            ErrorBecameVisibleRequested?.Invoke();
+            var errorMessage = ResolveLoginErrorMessage(ex);
+            RunOnMain(() =>
+            {
+                ErrorMessage = errorMessage;
+                ShowActivationEmailAction = string.Equals(errorMessage, AppResources.LoginEmailConfirmationRequired, StringComparison.Ordinal);
+                ErrorBecameVisibleRequested?.Invoke();
+            });
         }
         finally
         {
-            IsBusy = false;
-            RaiseReadinessChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseReadinessChanged();
+            });
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -231,54 +267,138 @@ public sealed partial class LoginViewModel : BaseViewModel
 
         if (string.IsNullOrWhiteSpace(Email))
         {
-            ErrorMessage = AppResources.EmailRequired;
-            InfoMessage = null;
-            ShowActivationEmailAction = false;
-            ErrorBecameVisibleRequested?.Invoke();
+            RunOnMain(() =>
+            {
+                ErrorMessage = AppResources.EmailRequired;
+                InfoMessage = null;
+                ShowActivationEmailAction = false;
+                ErrorBecameVisibleRequested?.Invoke();
+            });
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
-        InfoMessage = null;
-        ShowActivationEmailAction = true;
-        RaiseReadinessChanged();
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            InfoMessage = null;
+            ShowActivationEmailAction = true;
+            RaiseReadinessChanged();
+        });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
-            var sent = await _authService.RequestEmailConfirmationAsync(Email.Trim(), CancellationToken.None);
+            var sent = await _authService.RequestEmailConfirmationAsync(Email.Trim(), operationCancellation.Token);
             if (!sent)
             {
-                ErrorMessage = AppResources.ActivationEmailRequestFailed;
-                ShowActivationEmailAction = true;
-                ErrorBecameVisibleRequested?.Invoke();
+                RunOnMain(() =>
+                {
+                    ErrorMessage = AppResources.ActivationEmailRequestFailed;
+                    ShowActivationEmailAction = true;
+                    ErrorBecameVisibleRequested?.Invoke();
+                });
                 return;
             }
 
-            InfoMessage = AppResources.ActivationEmailSent;
-            ShowActivationEmailAction = true;
-            ErrorBecameVisibleRequested?.Invoke();
+            RunOnMain(() =>
+            {
+                InfoMessage = AppResources.ActivationEmailSent;
+                ShowActivationEmailAction = true;
+                ErrorBecameVisibleRequested?.Invoke();
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from login intentionally cancels stale activation email requests.
         }
         catch (Exception ex)
         {
-            ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ActivationEmailRequestFailed);
-            ShowActivationEmailAction = true;
-            ErrorBecameVisibleRequested?.Invoke();
+            RunOnMain(() =>
+            {
+                ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ActivationEmailRequestFailed);
+                ShowActivationEmailAction = true;
+                ErrorBecameVisibleRequested?.Invoke();
+            });
         }
         finally
         {
-            IsBusy = false;
-            RaiseReadinessChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseReadinessChanged();
+            });
+            EndCurrentOperation(operationCancellation);
         }
     }
 
     private async Task OpenLegalLinkAsync(LegalLinkKind linkKind)
     {
-        var result = await _legalLinkService.OpenAsync(linkKind, CancellationToken.None).ConfigureAwait(false);
-        if (!result.Succeeded)
+        if (IsBusy)
         {
-            RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
+            return;
         }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseReadinessChanged();
+        });
+
+        var operationCancellation = BeginCurrentOperation();
+        try
+        {
+            var result = await _legalLinkService.OpenAsync(linkKind, operationCancellation.Token).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
+            }
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseReadinessChanged();
+            });
+
+            EndCurrentOperation(operationCancellation);
+        }
+    }
+
+    /// <summary>
+    /// Starts a cancellable login-page operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active login-page operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed login-page operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
     }
 
     /// <summary>

@@ -10,62 +10,90 @@
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <label asp-for="Name" class="form-label">@T.T("BusinessLocationName")</label>
-        <input asp-for="Name" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="PostalCode" class="form-label">@T.T("BusinessLocationPostalCode")</label>
-        <input asp-for="PostalCode" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="AddressLine1" class="form-label">@T.T("BusinessLocationAddressLine1")</label>
-        <input asp-for="AddressLine1" class="form-control" />
-    </div>
-    <div class="col-md-6">
-        <label asp-for="AddressLine2" class="form-label">@T.T("BusinessLocationAddressLine2")</label>
-        <input asp-for="AddressLine2" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="City" class="form-label">@T.T("BusinessLocationCity")</label>
-        <input asp-for="City" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Region" class="form-label">@T.T("BusinessLocationRegion")</label>
-        <input asp-for="Region" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="CountryCode" class="form-label">@T.T("BusinessLocationCountryCode")</label>
-        <input asp-for="CountryCode" class="form-control" maxlength="2" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Latitude" class="form-label">@T.T("BusinessLocationLatitude")</label>
-        <input asp-for="Latitude" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Longitude" class="form-label">@T.T("BusinessLocationLongitude")</label>
-        <input asp-for="Longitude" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="AltitudeMeters" class="form-label">@T.T("BusinessLocationAltitudeMeters")</label>
-        <input asp-for="AltitudeMeters" class="form-control" />
-    </div>
-    <div class="col-12">
-        <label asp-for="OpeningHoursJson" class="form-label">@T.T("BusinessLocationOpeningHoursJson")</label>
-        <textarea asp-for="OpeningHoursJson" class="form-control" rows="3"></textarea>
-    </div>
-    <div class="col-12">
-        <label asp-for="InternalNote" class="form-label">@T.T("BusinessLocationInternalNote")</label>
-        <textarea asp-for="InternalNote" class="form-control" rows="3"></textarea>
-    </div>
-    <div class="col-12">
-        <div class="form-check">
-            <input asp-for="IsPrimary" class="form-check-input" />
-            <label asp-for="IsPrimary" class="form-check-label">@T.T("BusinessLocationPrimary")</label>
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("BusinessLocationIdentitySection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Name" class="form-label">@T.T("BusinessLocationName")</label>
+            <field-help title="@T.T("BusinessLocationName")" content="@T.T("BusinessLocationNameHelp")" placement="right"></field-help>
+            <input asp-for="Name" class="form-control" />
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="IsPrimary" class="form-check-input" />
+                <label asp-for="IsPrimary" class="form-check-label">@T.T("BusinessLocationPrimary")</label>
+                <field-help title="@T.T("BusinessLocationPrimary")" content="@T.T("BusinessLocationPrimaryHelp")" placement="right"></field-help>
+            </div>
         </div>
     </div>
-</div>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("BusinessLocationAddressSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="AddressLine1" class="form-label">@T.T("BusinessLocationAddressLine1")</label>
+            <field-help title="@T.T("BusinessLocationAddressLine1")" content="@T.T("BusinessLocationAddressLine1Help")" placement="right"></field-help>
+            <input asp-for="AddressLine1" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="AddressLine2" class="form-label">@T.T("BusinessLocationAddressLine2")</label>
+            <field-help title="@T.T("BusinessLocationAddressLine2")" content="@T.T("BusinessLocationAddressLine2Help")" placement="right"></field-help>
+            <input asp-for="AddressLine2" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="PostalCode" class="form-label">@T.T("BusinessLocationPostalCode")</label>
+            <field-help title="@T.T("BusinessLocationPostalCode")" content="@T.T("BusinessLocationPostalCodeHelp")" placement="right"></field-help>
+            <input asp-for="PostalCode" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="City" class="form-label">@T.T("BusinessLocationCity")</label>
+            <field-help title="@T.T("BusinessLocationCity")" content="@T.T("BusinessLocationCityHelp")" placement="right"></field-help>
+            <input asp-for="City" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Region" class="form-label">@T.T("BusinessLocationRegion")</label>
+            <field-help title="@T.T("BusinessLocationRegion")" content="@T.T("BusinessLocationRegionHelp")" placement="right"></field-help>
+            <input asp-for="Region" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CountryCode" class="form-label">@T.T("BusinessLocationCountryCode")</label>
+            <field-help title="@T.T("BusinessLocationCountryCode")" content="@T.T("BusinessLocationCountryCodeHelp")" placement="right"></field-help>
+            <input asp-for="CountryCode" class="form-control" maxlength="2" />
+        </div>
+    </div>
+</section>
+
+<section class="admin-form-section">
+    <h2 class="admin-form-section-title">@T.T("BusinessLocationOperationsSection")</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="Latitude" class="form-label">@T.T("BusinessLocationLatitude")</label>
+            <field-help title="@T.T("BusinessLocationLatitude")" content="@T.T("BusinessLocationLatitudeHelp")" placement="right"></field-help>
+            <input asp-for="Latitude" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Longitude" class="form-label">@T.T("BusinessLocationLongitude")</label>
+            <field-help title="@T.T("BusinessLocationLongitude")" content="@T.T("BusinessLocationLongitudeHelp")" placement="right"></field-help>
+            <input asp-for="Longitude" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="AltitudeMeters" class="form-label">@T.T("BusinessLocationAltitudeMeters")</label>
+            <field-help title="@T.T("BusinessLocationAltitudeMeters")" content="@T.T("BusinessLocationAltitudeMetersHelp")" placement="right"></field-help>
+            <input asp-for="AltitudeMeters" class="form-control" />
+        </div>
+        <div class="col-12">
+            <label asp-for="OpeningHoursJson" class="form-label">@T.T("BusinessLocationOpeningHoursJson")</label>
+            <field-help title="@T.T("BusinessLocationOpeningHoursJson")" content="@T.T("BusinessLocationOpeningHoursJsonHelp")" placement="right"></field-help>
+            <textarea asp-for="OpeningHoursJson" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="col-12">
+            <label asp-for="InternalNote" class="form-label">@T.T("BusinessLocationInternalNote")</label>
+            <field-help title="@T.T("BusinessLocationInternalNote")" content="@T.T("BusinessLocationInternalNoteHelp")" placement="right"></field-help>
+            <textarea asp-for="InternalNote" class="form-control" rows="3"></textarea>
+        </div>
+    </div>
+</section>
 
 <div class="d-flex gap-2 mt-4">
     <button type="submit" class="btn btn-primary">

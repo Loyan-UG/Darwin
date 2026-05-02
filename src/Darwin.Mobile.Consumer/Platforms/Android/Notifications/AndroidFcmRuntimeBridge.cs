@@ -36,38 +36,45 @@ internal static class AndroidFcmRuntimeBridge
         return token;
     }
 
-    private static Task<string?> AsTask(this Android.Gms.Tasks.Task firebaseTask, System.Threading.CancellationToken cancellationToken)
+    private static async Task<string?> AsTask(this Android.Gms.Tasks.Task firebaseTask, System.Threading.CancellationToken cancellationToken)
     {
         var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         firebaseTask.AddOnCompleteListener(new OnCompleteListener(completeTask =>
         {
-            if (cancellationToken.IsCancellationRequested)
+            try
             {
-                tcs.TrySetCanceled(cancellationToken);
-                return;
-            }
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    tcs.TrySetCanceled(cancellationToken);
+                    return;
+                }
 
-            if (!completeTask.IsSuccessful)
+                if (!completeTask.IsSuccessful)
+                {
+                    var errorMessage = completeTask.Exception?.Message;
+                    tcs.TrySetException(new InvalidOperationException(
+                        string.IsNullOrWhiteSpace(errorMessage)
+                            ? "FCM token retrieval failed."
+                            : $"FCM token retrieval failed. {errorMessage}"));
+                    return;
+                }
+
+                // Firebase marks the task complete before Result is read, so this does not block the UI thread.
+                var token = completeTask.Result?.ToString();
+                tcs.TrySetResult(string.IsNullOrWhiteSpace(token) ? null : token);
+            }
+            catch (Exception ex)
             {
-                var errorMessage = completeTask.Exception?.Message;
-                tcs.TrySetException(new InvalidOperationException(
-                    string.IsNullOrWhiteSpace(errorMessage)
-                        ? "FCM token retrieval failed."
-                        : $"FCM token retrieval failed. {errorMessage}"));
-                return;
+                tcs.TrySetException(ex);
             }
-
-            var token = completeTask.Result?.ToString();
-            tcs.TrySetResult(string.IsNullOrWhiteSpace(token) ? null : token);
         }));
 
-        if (cancellationToken.CanBeCanceled)
-        {
-            cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
-        }
+        using var cancellationRegistration = cancellationToken.CanBeCanceled
+            ? cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken))
+            : default;
 
-        return tcs.Task;
+        return await tcs.Task.ConfigureAwait(false);
     }
 
     /// <summary>

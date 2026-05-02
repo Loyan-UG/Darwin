@@ -43,6 +43,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public List<CategoryTranslationVm> Translations { get; set; } = new();
         public List<SelectListItem> ParentCategoryOptions { get; set; } = new();
         public IReadOnlyList<string> Cultures { get; set; } = Array.Empty<string>();
+        public bool MultilingualEnabled { get; set; } = true;
     }
 
     public sealed class CategoryEditVm
@@ -54,5 +55,7 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public byte[]? RowVersion { get; set; }
         public List<CategoryTranslationVm> Translations { get; set; } = new();
         public List<SelectListItem> ParentCategoryOptions { get; set; } = new();
+        public IReadOnlyList<string> Cultures { get; set; } = Array.Empty<string>();
+        public bool MultilingualEnabled { get; set; } = true;
     }
 }

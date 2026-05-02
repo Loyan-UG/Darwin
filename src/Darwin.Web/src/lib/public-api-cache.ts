@@ -47,6 +47,7 @@ export type PublicApiCacheProfile =
   | "default";
 
 const PUBLIC_API_REVALIDATE_BY_KEY: Record<string, number> = {
+  "site-runtime-config": 60,
   "cms-menu": 900,
   "cms-page": 300,
   "cms-pages": 180,

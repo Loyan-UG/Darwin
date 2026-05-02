@@ -20,6 +20,7 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
     private readonly INavigationService _navigationService;
+    private CancellationTokenSource? _operationCancellation;
 
     private string? _invitationToken;
     private string? _firstName;
@@ -55,6 +56,22 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
                 RaiseCommandStates();
             }
         }
+    }
+
+    /// <summary>
+    /// Cancels any in-flight invitation preview or acceptance when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            RaiseCommandStates();
+        });
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -178,18 +195,23 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
         var token = InvitationToken?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(token))
         {
-            ErrorMessage = AppResources.InvitationTokenRequired;
+            RunOnMain(() => ErrorMessage = AppResources.InvitationTokenRequired);
             return;
         }
 
-        IsBusy = true;
-        RaiseCommandStates();
-        RunOnMain(() => ErrorMessage = null);
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseCommandStates();
+        });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
+            var cancellationToken = operationCancellation.Token;
             var preview = await _authService
-                .GetBusinessInvitationPreviewAsync(token, CancellationToken.None)
+                .GetBusinessInvitationPreviewAsync(token, cancellationToken)
                 .ConfigureAwait(false);
 
             RunOnMain(() =>
@@ -198,6 +220,10 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
                 PublishPreviewState();
                 ErrorMessage = null;
             });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the invitation page intentionally cancels stale preview work.
         }
         catch (Exception ex)
         {
@@ -214,6 +240,8 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
                 IsBusy = false;
                 RaiseCommandStates();
             });
+
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -221,7 +249,7 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
     {
         if (!HasPreview)
         {
-            ErrorMessage = AppResources.InvitationPreviewFailed;
+            RunOnMain(() => ErrorMessage = AppResources.InvitationPreviewFailed);
             return;
         }
 
@@ -229,39 +257,43 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
         {
             if (string.IsNullOrWhiteSpace(FirstName))
             {
-                ErrorMessage = AppResources.InvitationFirstNameRequired;
+                RunOnMain(() => ErrorMessage = AppResources.InvitationFirstNameRequired);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(LastName))
             {
-                ErrorMessage = AppResources.InvitationLastNameRequired;
+                RunOnMain(() => ErrorMessage = AppResources.InvitationLastNameRequired);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(Password))
             {
-                ErrorMessage = AppResources.PasswordRequired;
+                RunOnMain(() => ErrorMessage = AppResources.PasswordRequired);
                 return;
             }
 
             if (Password.Length < 8)
             {
-                ErrorMessage = AppResources.PasswordMinLength;
+                RunOnMain(() => ErrorMessage = AppResources.PasswordMinLength);
                 return;
             }
 
             if (!string.Equals(Password, ConfirmPassword, StringComparison.Ordinal))
             {
-                ErrorMessage = AppResources.InvitationPasswordMismatch;
+                RunOnMain(() => ErrorMessage = AppResources.InvitationPasswordMismatch);
                 return;
             }
         }
 
-        IsBusy = true;
-        RaiseCommandStates();
-        RunOnMain(() => ErrorMessage = null);
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseCommandStates();
+        });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             await _authService.AcceptBusinessInvitationAsync(
@@ -273,7 +305,7 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
                         Password = RequiresAccountDetails ? Password : null
                     },
                     deviceId: null,
-                    CancellationToken.None)
+                    operationCancellation.Token)
                 .ConfigureAwait(false);
 
             RunOnMain(() =>
@@ -287,6 +319,10 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
 
             await _navigationService.GoToAsync($"//{Routes.Home}").ConfigureAwait(false);
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the invitation page intentionally cancels stale acceptance work.
+        }
         catch (Exception ex)
         {
             RunOnMain(() => ErrorMessage = ResolveInvitationErrorMessage(ex, AppResources.InvitationAcceptFailed));
@@ -298,7 +334,43 @@ public sealed class AcceptInvitationViewModel : BaseViewModel
                 IsBusy = false;
                 RaiseCommandStates();
             });
+
+            EndCurrentOperation(operationCancellation);
         }
+    }
+
+    /// <summary>
+    /// Starts a cancellable invitation operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active invitation operation without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed invitation operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
     }
 
     private void ResetPreview()

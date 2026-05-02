@@ -15,6 +15,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class ChangePasswordViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+    private CancellationTokenSource? _operationCancellation;
 
     private string _currentPassword = string.Empty;
     private string _newPassword = string.Empty;
@@ -79,6 +80,16 @@ public sealed class ChangePasswordViewModel : BaseViewModel
 
     public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
 
+    /// <summary>
+    /// Cancels any in-flight password change when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
     private bool CanSubmit()
     {
         return !string.IsNullOrWhiteSpace(CurrentPassword) &&
@@ -98,8 +109,10 @@ public sealed class ChangePasswordViewModel : BaseViewModel
             IsBusy = true;
             ErrorMessage = null;
             SuccessMessage = null;
+            UpdatePasswordCommand.RaiseCanExecuteChanged();
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
             if (!CanSubmit())
@@ -123,7 +136,7 @@ public sealed class ChangePasswordViewModel : BaseViewModel
             var changed = await _authService.ChangePasswordAsync(
                 CurrentPassword,
                 NewPassword,
-                CancellationToken.None);
+                operationCancellation.Token);
 
             if (!changed)
             {
@@ -139,6 +152,10 @@ public sealed class ChangePasswordViewModel : BaseViewModel
                 SuccessMessage = AppResources.PasswordChangeSuccess;
             });
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the password screen intentionally cancels stale work.
+        }
         catch (Exception ex)
         {
             RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.PasswordChangeFailed));
@@ -150,6 +167,42 @@ public sealed class ChangePasswordViewModel : BaseViewModel
                 IsBusy = false;
                 UpdatePasswordCommand.RaiseCanExecuteChanged();
             });
+
+            EndCurrentOperation(operationCancellation);
         }
+    }
+
+    /// <summary>
+    /// Starts a cancellable password change operation and cancels any stale operation still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active password change without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed password change when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
     }
 }

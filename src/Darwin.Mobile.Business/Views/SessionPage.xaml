@@ -2,6 +2,8 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.SessionPage"
@@ -14,9 +16,6 @@
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.OperatorRoleFormat}'}"
                            Style="{StaticResource CaptionLabelStyle}" />
-                    <Label Text="{Binding CustomerName}"
-                           Style="{StaticResource TitleLabelStyle}" />
-
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="10">
                         <Border Grid.Column="0"
@@ -70,18 +69,19 @@
                            Style="{StaticResource SectionHeadingLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.AccrualHelpText}"
                            Style="{StaticResource SecondaryBodyLabelStyle}" />
-                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                    <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.PointsPlaceholder}"
+                                                   Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                         <Entry x:Name="PointsEntry"
                                Text="{Binding PointsToAccrue}"
                                Keyboard="Numeric"
                                Placeholder="{x:Static res:AppResources.PointsPlaceholder}"
                                Style="{StaticResource FormEntryStyle}"
                                TextColor="{StaticResource BrushOnSurface}" />
-                    </Border>
-                    <Button Text="{x:Static res:AppResources.ConfirmAccrualButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding ConfirmAccrualCommand}"
-                            Clicked="OnActionClicked" />
+                    </inputLayout:SfTextInputLayout>
+                    <buttons:SfButton Text="{x:Static res:AppResources.ConfirmAccrualButton}"
+                                      Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                      Command="{Binding ConfirmAccrualCommand}"
+                                      Clicked="OnActionClicked" />
                 </VerticalStackLayout>
             </Border>
 
@@ -92,10 +92,10 @@
                            Style="{StaticResource SectionHeadingLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.RedemptionHelpText}"
                            Style="{StaticResource SecondaryBodyLabelStyle}" />
-                    <Button Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding ConfirmRedemptionCommand}"
-                            Clicked="OnActionClicked" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
+                                      Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                      Command="{Binding ConfirmRedemptionCommand}"
+                                      Clicked="OnActionClicked" />
                 </VerticalStackLayout>
             </Border>
 

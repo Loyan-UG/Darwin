@@ -276,32 +276,39 @@
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label" for="query">@T.T("Search")</label>
+                <field-help title="@T.T("Search")" content="@T.T("ProviderCallbackSearchHelp")" placement="right"></field-help>
                 <input class="form-control" id="query" name="query" value="@Model.Query" />
             </div>
             <div class="col-md-2">
                 <label class="form-label" for="provider">@T.T("Provider")</label>
+                <field-help title="@T.T("Provider")" content="@T.T("ProviderCallbackProviderFilterHelp")" placement="right"></field-help>
                 <select class="form-select" id="provider" name="provider" asp-items="Model.ProviderItems"></select>
             </div>
             <div class="col-md-2">
                 <label class="form-label" for="status">@T.T("Status")</label>
+                <field-help title="@T.T("Status")" content="@T.T("ProviderCallbackStatusFilterHelp")" placement="right"></field-help>
                 <select class="form-select" id="status" name="status" asp-items="Model.StatusItems"></select>
             </div>
             <div class="col-md-2">
                 <label class="form-label" for="pageSize">@T.T("PageSize")</label>
+                <field-help title="@T.T("PageSize")" content="@T.T("ProviderCallbackPageSizeHelp")" placement="right"></field-help>
                 <select class="form-select" id="pageSize" name="pageSize" asp-items="Model.PageSizeItems"></select>
             </div>
             <div class="col-md-3">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="stalePendingOnly" name="stalePendingOnly" value="true" checked="@Model.StalePendingOnly" />
                     <label class="form-check-label" for="stalePendingOnly">@T.T("StalePending")</label>
+                    <field-help title="@T.T("StalePending")" content="@T.T("ProviderCallbackStalePendingOnlyHelp")" placement="right"></field-help>
                 </div>
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="failedOnly" name="failedOnly" value="true" checked="@Model.FailedOnly" />
                     <label class="form-check-label" for="failedOnly">@T.T("FailedOnly")</label>
+                    <field-help title="@T.T("FailedOnly")" content="@T.T("ProviderCallbackFailedOnlyHelp")" placement="right"></field-help>
                 </div>
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="deliveryFailureOnly" name="deliveryFailureOnly" value="true" checked="@Model.DeliveryFailureOnly" />
                     <label class="form-check-label" for="deliveryFailureOnly">@T.T("BrevoDeliveryFailureEvents")</label>
+                    <field-help title="@T.T("BrevoDeliveryFailureEvents")" content="@T.T("ProviderCallbackBrevoDeliveryFailureOnlyHelp")" placement="right"></field-help>
                 </div>
             </div>
             <div class="col-12">

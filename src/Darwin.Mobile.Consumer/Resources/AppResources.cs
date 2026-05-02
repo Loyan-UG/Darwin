@@ -128,6 +128,8 @@ public static class AppResources
     public static string RewardsTotalPointsTitle => ResourceManager.GetString(nameof(RewardsTotalPointsTitle), Culture) ?? "Total points";
     public static string RewardsConfiguredRewardsTitle => ResourceManager.GetString(nameof(RewardsConfiguredRewardsTitle), Culture) ?? "Configured rewards";
     public static string RewardsRedeemableRewardsTitle => ResourceManager.GetString(nameof(RewardsRedeemableRewardsTitle), Culture) ?? "Redeemable rewards";
+    public static string RewardsRequiredPointsBadgeLabel => ResourceManager.GetString(nameof(RewardsRequiredPointsBadgeLabel), Culture) ?? "Cost";
+    public static string RewardsHistoryDeltaLabel => ResourceManager.GetString(nameof(RewardsHistoryDeltaLabel), Culture) ?? "Change";
     public static string RewardsRedeemableRewardsCountFormat => ResourceManager.GetString(nameof(RewardsRedeemableRewardsCountFormat), Culture) ?? "Redeemable rewards: {0}";
     public static string RewardsNextRewardNameFormat => ResourceManager.GetString(nameof(RewardsNextRewardNameFormat), Culture) ?? "Next reward: {0}";
     public static string RewardsNextRewardRemainingFormat => ResourceManager.GetString(nameof(RewardsNextRewardRemainingFormat), Culture) ?? "Remaining points: {0}";
@@ -512,6 +514,7 @@ public static class AppResources
     public static string QrAccrualHelpText => ResourceManager.GetString(nameof(QrAccrualHelpText), Culture) ?? "Use this when the business should add new points to your account.";
     public static string QrRedemptionHelpText => ResourceManager.GetString(nameof(QrRedemptionHelpText), Culture) ?? "Use this when you want to redeem points or claim an available reward.";
     public static string QrDiscoverGuidanceMessage => ResourceManager.GetString(nameof(QrDiscoverGuidanceMessage), Culture) ?? "To generate a QR code, first go to Discover, open a business, and join its loyalty program.";
+    public static string QrEmptyStateMessage => ResourceManager.GetString(nameof(QrEmptyStateMessage), Culture) ?? "Your QR code will appear here after a business context is selected and a session is created.";
     public static string QrRefreshGuidanceMessage => ResourceManager.GetString(nameof(QrRefreshGuidanceMessage), Culture) ?? "Accrual creates a QR for earning points. Redemption creates a QR for spending points or rewards.";
     public static string QrJoinedStatusMessage => ResourceManager.GetString(nameof(QrJoinedStatusMessage), Culture) ?? "You have successfully joined this loyalty program. Show this QR code to the business scanner.";
     public static string QrNoBusinessSelectedMessage => ResourceManager.GetString(nameof(QrNoBusinessSelectedMessage), Culture) ?? "No business is selected yet. Please open a business in Discover and join it first.";

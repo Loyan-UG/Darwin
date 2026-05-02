@@ -74,9 +74,9 @@ namespace Darwin.WebApi.Extensions
             // ------------------------------------------------------------
             // 2) Small per-request helpers
             // ------------------------------------------------------------
-            // Register a clock abstraction. SystemClock is stateless; registering as scoped
-            // keeps it consistent with other per-request dependencies and allows test overrides.
-            services.AddScoped<IClock, SystemClock>();
+            // Register a clock abstraction. SystemClock is stateless and singleton-safe;
+            // several singleton security services depend on IClock.
+            services.AddSingleton<IClock, SystemClock>();
 
             // HttpContextAccessor and a CurrentUser service used by handlers to obtain caller id.
             services.AddHttpContextAccessor();

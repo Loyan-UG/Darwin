@@ -13,8 +13,15 @@ using System.Reflection;
 
 namespace Darwin.Mobile.Business.Extensions;
 
+/// <summary>
+/// Composes Business app-specific services: configuration binding, shared mobile services,
+/// platform scanning/location, business authorization context, reporting helpers, pages, and view models.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Adds Business app services and pages into DI.
+    /// </summary>
     public static IServiceCollection AddBusinessApp(this IServiceCollection services)
     {
         var config = new ConfigurationBuilder()

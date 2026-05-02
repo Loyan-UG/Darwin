@@ -15,6 +15,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class MemberPreferencesViewModel : BaseViewModel
 {
     private readonly IProfileService _profileService;
+    private CancellationTokenSource? _operationCancellation;
     private bool _isLoaded;
     private byte[] _rowVersion = Array.Empty<byte>();
     private string? _successMessage;
@@ -117,6 +118,23 @@ public sealed class MemberPreferencesViewModel : BaseViewModel
         _isLoaded = true;
     }
 
+    /// <summary>
+    /// Cancels the current preference load/save operation when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            RefreshCommand.RaiseCanExecuteChanged();
+            SaveCommand.RaiseCanExecuteChanged();
+        });
+
+        return Task.CompletedTask;
+    }
+
     private async Task RefreshAsync()
     {
         if (IsBusy)
@@ -131,28 +149,14 @@ public sealed class MemberPreferencesViewModel : BaseViewModel
             SuccessMessage = null;
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
-            var preferences = await _profileService.GetPreferencesAsync(CancellationToken.None).ConfigureAwait(false);
-            if (preferences is null)
-            {
-                RunOnMain(() => ErrorMessage = AppResources.MemberPreferencesLoadFailed);
-                return;
-            }
-
-            RunOnMain(() =>
-            {
-                _rowVersion = preferences.RowVersion;
-                MarketingConsent = preferences.MarketingConsent;
-                AllowEmailMarketing = preferences.AllowEmailMarketing;
-                AllowSmsMarketing = preferences.AllowSmsMarketing;
-                AllowWhatsAppMarketing = preferences.AllowWhatsAppMarketing;
-                AllowPromotionalPushNotifications = preferences.AllowPromotionalPushNotifications;
-                AllowOptionalAnalyticsTracking = preferences.AllowOptionalAnalyticsTracking;
-                AcceptsTermsAtText = preferences.AcceptsTermsAtUtc.HasValue
-                    ? string.Format(AppResources.MemberPreferencesTermsAcceptedFormat, preferences.AcceptsTermsAtUtc.Value.ToLocalTime())
-                    : null;
-            });
+            await LoadPreferencesSnapshotAsync(operationCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the preferences screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
@@ -166,6 +170,8 @@ public sealed class MemberPreferencesViewModel : BaseViewModel
                 RefreshCommand.RaiseCanExecuteChanged();
                 SaveCommand.RaiseCanExecuteChanged();
             });
+
+            EndCurrentOperation(operationCancellation);
         }
     }
 
@@ -183,8 +189,11 @@ public sealed class MemberPreferencesViewModel : BaseViewModel
             SuccessMessage = null;
         });
 
+        var operationCancellation = BeginCurrentOperation();
         try
         {
+            var cancellationToken = operationCancellation.Token;
+
             var request = new UpdateMemberPreferencesRequest
             {
                 RowVersion = _rowVersion,
@@ -196,7 +205,7 @@ public sealed class MemberPreferencesViewModel : BaseViewModel
                 AllowOptionalAnalyticsTracking = AllowOptionalAnalyticsTracking
             };
 
-            var result = await _profileService.UpdatePreferencesAsync(request, CancellationToken.None).ConfigureAwait(false);
+            var result = await _profileService.UpdatePreferencesAsync(request, cancellationToken).ConfigureAwait(false);
             if (!result.Succeeded)
             {
                 RunOnMain(() => ErrorMessage = result.Error ?? AppResources.MemberPreferencesSaveFailed);
@@ -204,9 +213,12 @@ public sealed class MemberPreferencesViewModel : BaseViewModel
             }
 
             RunOnMain(() => SuccessMessage = AppResources.MemberPreferencesSaved);
-            _isLoaded = false;
-            await RefreshAsync().ConfigureAwait(false);
+            await LoadPreferencesSnapshotAsync(cancellationToken).ConfigureAwait(false);
             _isLoaded = true;
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the preferences screen intentionally cancels stale work.
         }
         catch (Exception ex)
         {
@@ -220,6 +232,71 @@ public sealed class MemberPreferencesViewModel : BaseViewModel
                 RefreshCommand.RaiseCanExecuteChanged();
                 SaveCommand.RaiseCanExecuteChanged();
             });
+
+            EndCurrentOperation(operationCancellation);
         }
+    }
+
+    /// <summary>
+    /// Loads preference values and the latest RowVersion without checking the outer busy state.
+    /// Save uses this helper after a successful update so the next save sends current optimistic-concurrency metadata.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token used for the preferences service call.</param>
+    private async Task LoadPreferencesSnapshotAsync(CancellationToken cancellationToken)
+    {
+        var preferences = await _profileService.GetPreferencesAsync(cancellationToken).ConfigureAwait(false);
+        if (preferences is null)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.MemberPreferencesLoadFailed);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            _rowVersion = preferences.RowVersion;
+            MarketingConsent = preferences.MarketingConsent;
+            AllowEmailMarketing = preferences.AllowEmailMarketing;
+            AllowSmsMarketing = preferences.AllowSmsMarketing;
+            AllowWhatsAppMarketing = preferences.AllowWhatsAppMarketing;
+            AllowPromotionalPushNotifications = preferences.AllowPromotionalPushNotifications;
+            AllowOptionalAnalyticsTracking = preferences.AllowOptionalAnalyticsTracking;
+            AcceptsTermsAtText = preferences.AcceptsTermsAtUtc.HasValue
+                ? string.Format(AppResources.MemberPreferencesTermsAcceptedFormat, preferences.AcceptsTermsAtUtc.Value.ToLocalTime())
+                : null;
+        });
+    }
+
+    /// <summary>
+    /// Starts a cancellable preference operation and cancels any stale operation that was still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentOperation()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _operationCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the current preference operation without disposing the token source while service code may still observe it.
+    /// </summary>
+    private void CancelCurrentOperation()
+    {
+        var current = Interlocked.Exchange(ref _operationCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed preference operation when it still owns the active operation slot.
+    /// </summary>
+    /// <param name="operationCancellation">Completed operation token source.</param>
+    private void EndCurrentOperation(CancellationTokenSource operationCancellation)
+    {
+        if (ReferenceEquals(_operationCancellation, operationCancellation))
+        {
+            _operationCancellation = null;
+        }
+
+        operationCancellation.Dispose();
     }
 }

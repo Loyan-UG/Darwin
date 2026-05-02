@@ -21,6 +21,7 @@ public sealed class ConsumerStartupWarmupCoordinator : IConsumerStartupWarmupCoo
 {
     private static readonly TimeSpan WarmupCooldown = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan WarmupTimeout = TimeSpan.FromSeconds(20);
+    private const int DiscoveryWarmupPageSize = 30;
 
     private readonly IProfileService _profileService;
     private readonly IBusinessService _businessService;
@@ -48,7 +49,7 @@ public sealed class ConsumerStartupWarmupCoordinator : IConsumerStartupWarmupCoo
     /// <inheritdoc />
     public async Task WarmAuthenticatedExperienceAsync(CancellationToken ct)
     {
-        if (!_gate.Wait(0))
+        if (!await _gate.WaitAsync(0, ct).ConfigureAwait(false))
         {
             return;
         }
@@ -104,7 +105,9 @@ public sealed class ConsumerStartupWarmupCoordinator : IConsumerStartupWarmupCoo
         _ = await _businessService.ListAsync(new BusinessListRequest
         {
             Page = 1,
-            PageSize = 80
+            // Warmup only needs enough rows to hydrate the first Discover screen and its cache.
+            // The interactive Discover view still requests its own larger, user-driven result page.
+            PageSize = DiscoveryWarmupPageSize
         }, ct).ConfigureAwait(false);
     }
 }

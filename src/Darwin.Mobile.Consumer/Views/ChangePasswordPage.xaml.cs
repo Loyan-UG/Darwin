@@ -16,4 +16,21 @@ public partial class ChangePasswordPage : ContentPage
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = _viewModel;
     }
+
+    /// <inheritdoc />
+    protected override async void OnDisappearing()
+    {
+        try
+        {
+            await _viewModel.OnDisappearingAsync();
+        }
+        catch
+        {
+            // Disappearing cleanup should never crash navigation away from password change.
+        }
+        finally
+        {
+            base.OnDisappearing();
+        }
+    }
 }

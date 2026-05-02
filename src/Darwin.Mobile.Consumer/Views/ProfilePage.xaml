@@ -2,6 +2,10 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:segmented="clr-namespace:Syncfusion.Maui.Toolkit.SegmentedControl;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     x:Class="Darwin.Mobile.Consumer.Views.ProfilePage"
@@ -9,8 +13,13 @@
     Title="{x:Static res:AppResources.ProfileTitle}">
 
     <Grid>
-        <ScrollView>
-            <VerticalStackLayout Padding="20,16,20,22" Spacing="14">
+        <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
+                                       IsRefreshing="{Binding IsBusy}"
+                                       ProgressColor="{StaticResource BrandGold500}"
+                                       ProgressBackground="{StaticResource Neutral0}">
+            <pullToRefresh:SfPullToRefresh.PullableContent>
+                <ScrollView>
+                    <VerticalStackLayout Padding="20,16,20,22" Spacing="14">
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{x:Static res:AppResources.ProfileSectionTitle}"
@@ -33,44 +42,58 @@
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                <Label Text="{x:Static res:AppResources.FirstNameLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding FirstName}" Style="{StaticResource FormEntryStyle}" /></Border>
+                                <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.FirstNameLabel}"
+                                                               Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                                    <Entry Text="{Binding FirstName}" Style="{StaticResource FormEntryStyle}" />
+                                </inputLayout:SfTextInputLayout>
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Label Text="{x:Static res:AppResources.LastNameLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding LastName}" Style="{StaticResource FormEntryStyle}" /></Border>
+                                <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.LastNameLabel}"
+                                                               Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                                    <Entry Text="{Binding LastName}" Style="{StaticResource FormEntryStyle}" />
+                                </inputLayout:SfTextInputLayout>
                             </VerticalStackLayout>
                         </Grid>
 
-                        <Label Text="{x:Static res:AppResources.EmailLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Email}" IsReadOnly="True" Style="{StaticResource FormEntryStyle}" /></Border>
+                        <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.EmailLabel}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                            <Entry Text="{Binding Email}" IsReadOnly="True" Style="{StaticResource FormEntryStyle}" />
+                        </inputLayout:SfTextInputLayout>
 
-                        <Label Text="{x:Static res:AppResources.PhoneLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding PhoneE164}" Placeholder="{x:Static res:AppResources.ProfilePhonePlaceholder}" Keyboard="Telephone" Style="{StaticResource FormEntryStyle}" /></Border>
+                        <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.PhoneLabel}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                            <Entry Text="{Binding PhoneE164}" Placeholder="{x:Static res:AppResources.ProfilePhonePlaceholder}" Keyboard="Telephone" Style="{StaticResource FormEntryStyle}" />
+                        </inputLayout:SfTextInputLayout>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                <Label Text="{x:Static res:AppResources.LocaleLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Locale}" Placeholder="{x:Static res:AppResources.ProfileLocalePlaceholder}" Style="{StaticResource FormEntryStyle}" /></Border>
+                                <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.LocaleLabel}"
+                                                               Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                                    <Entry Text="{Binding Locale}" Placeholder="{x:Static res:AppResources.ProfileLocalePlaceholder}" Style="{StaticResource FormEntryStyle}" />
+                                </inputLayout:SfTextInputLayout>
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Label Text="{x:Static res:AppResources.CurrencyLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                                <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Currency}" Placeholder="{x:Static res:AppResources.ProfileCurrencyPlaceholder}" Style="{StaticResource FormEntryStyle}" /></Border>
+                                <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.CurrencyLabel}"
+                                                               Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                                    <Entry Text="{Binding Currency}" Placeholder="{x:Static res:AppResources.ProfileCurrencyPlaceholder}" Style="{StaticResource FormEntryStyle}" />
+                                </inputLayout:SfTextInputLayout>
                             </VerticalStackLayout>
                         </Grid>
 
-                        <Label Text="{x:Static res:AppResources.TimezoneLabel}" Style="{StaticResource CaptionLabelStyle}" />
-                        <Border Style="{StaticResource FormFieldBorderStyle}"><Entry Text="{Binding Timezone}" Placeholder="{x:Static res:AppResources.ProfileTimezonePlaceholder}" Style="{StaticResource FormEntryStyle}" /></Border>
+                        <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.TimezoneLabel}"
+                                                       Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
+                            <Entry Text="{Binding Timezone}" Placeholder="{x:Static res:AppResources.ProfileTimezonePlaceholder}" Style="{StaticResource FormEntryStyle}" />
+                        </inputLayout:SfTextInputLayout>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button Grid.Column="0"
-                                    Text="{x:Static res:AppResources.SaveProfileButton}"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    Command="{Binding SaveProfileCommand}" />
-                            <Button Grid.Column="1"
-                                    Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
-                                    Style="{StaticResource OutlinedButtonStyle}"
-                                    Clicked="OnAccountDeletionClicked" />
+                            <buttons:SfButton Grid.Column="0"
+                                              Text="{x:Static res:AppResources.SaveProfileButton}"
+                                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                              Command="{Binding SaveProfileCommand}" />
+                            <buttons:SfButton Grid.Column="1"
+                                              Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Clicked="OnAccountDeletionClicked" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -88,28 +111,42 @@
                         <VerticalStackLayout Spacing="4" IsVisible="{Binding PhoneNumberConfirmed, Converter={StaticResource InverseBoolConverter}}">
                             <Label Text="{x:Static res:AppResources.ProfilePhoneVerificationChannelLabel}"
                                    Style="{StaticResource CaptionLabelStyle}" />
-                            <Picker ItemsSource="{Binding PhoneVerificationChannelOptions}"
-                                    ItemDisplayBinding="{Binding DisplayName}"
-                                    SelectedItem="{Binding SelectedPhoneVerificationChannel}" />
+                            <segmented:SfSegmentedControl ItemsSource="{Binding PhoneVerificationChannelLabels}"
+                                                          SelectedIndex="{Binding SelectedPhoneVerificationChannelIndex, Mode=TwoWay}"
+                                                          SegmentHeight="44"
+                                                          VisibleSegmentsCount="2"
+                                                          CornerRadius="8"
+                                                          SegmentCornerRadius="8"
+                                                          SegmentBackground="{StaticResource BrushSurface}"
+                                                          SelectedSegmentTextColor="{StaticResource Neutral0}"
+                                                          Stroke="{StaticResource BrandGold50}"
+                                                          StrokeThickness="1">
+                                <segmented:SfSegmentedControl.SelectionIndicatorSettings>
+                                    <segmented:SelectionIndicatorSettings Background="{StaticResource BrushPrimary}"
+                                                                         TextColor="{StaticResource Neutral0}"
+                                                                         Stroke="{StaticResource BrandGold500}" />
+                                </segmented:SfSegmentedControl.SelectionIndicatorSettings>
+                            </segmented:SfSegmentedControl>
 
                             <Label Text="{x:Static res:AppResources.ProfilePhoneVerificationCodeLabel}"
                                    Style="{StaticResource CaptionLabelStyle}" />
-                            <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.ProfilePhoneVerificationCodeLabel}"
+                                                           Style="{StaticResource SyncfusionOutlinedInputLayoutStyle}">
                                 <Entry Text="{Binding PhoneVerificationCode}"
                                        Placeholder="{x:Static res:AppResources.ProfilePhoneVerificationCodePlaceholder}"
                                        Keyboard="Numeric"
                                        Style="{StaticResource FormEntryStyle}" />
-                            </Border>
+                            </inputLayout:SfTextInputLayout>
 
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                <Button Grid.Column="0"
-                                        Text="{x:Static res:AppResources.ProfilePhoneVerificationRequestButton}"
-                                        Style="{StaticResource OutlinedButtonStyle}"
-                                        Command="{Binding RequestPhoneVerificationCommand}" />
-                                <Button Grid.Column="1"
-                                        Text="{x:Static res:AppResources.ProfilePhoneVerificationConfirmButton}"
-                                        Style="{StaticResource OutlinedButtonStyle}"
-                                        Command="{Binding ConfirmPhoneVerificationCommand}" />
+                                <buttons:SfButton Grid.Column="0"
+                                                  Text="{x:Static res:AppResources.ProfilePhoneVerificationRequestButton}"
+                                                  Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                                  Command="{Binding RequestPhoneVerificationCommand}" />
+                                <buttons:SfButton Grid.Column="1"
+                                                  Text="{x:Static res:AppResources.ProfilePhoneVerificationConfirmButton}"
+                                                  Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                                  Command="{Binding ConfirmPhoneVerificationCommand}" />
                             </Grid>
                         </VerticalStackLayout>
                     </VerticalStackLayout>
@@ -153,14 +190,14 @@
                                IsVisible="{Binding HasDefaultShippingAddress}" />
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button Grid.Column="0"
-                                    Text="{x:Static res:AppResources.ProfileManageAddressesButton}"
-                                    Style="{StaticResource OutlinedButtonStyle}"
-                                    Clicked="OnManageAddressesClicked" />
-                            <Button Grid.Column="1"
-                                    Text="{x:Static res:AppResources.ProfileManagePreferencesButton}"
-                                    Style="{StaticResource OutlinedButtonStyle}"
-                                    Clicked="OnManagePreferencesClicked" />
+                            <buttons:SfButton Grid.Column="0"
+                                              Text="{x:Static res:AppResources.ProfileManageAddressesButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Clicked="OnManageAddressesClicked" />
+                            <buttons:SfButton Grid.Column="1"
+                                              Text="{x:Static res:AppResources.ProfileManagePreferencesButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Clicked="OnManagePreferencesClicked" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -180,14 +217,14 @@
                         </Border>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button Grid.Column="0"
-                                    Text="{x:Static res:AppResources.ProfilePushRegistrationSyncButton}"
-                                    Style="{StaticResource OutlinedButtonStyle}"
-                                    Command="{Binding SyncPushRegistrationCommand}" />
-                            <Button Grid.Column="1"
-                                    Text="{x:Static res:AppResources.ProfilePushOpenSettingsButton}"
-                                    Style="{StaticResource OutlinedButtonStyle}"
-                                    Command="{Binding OpenNotificationSettingsCommand}" />
+                            <buttons:SfButton Grid.Column="0"
+                                              Text="{x:Static res:AppResources.ProfilePushRegistrationSyncButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Command="{Binding SyncPushRegistrationCommand}" />
+                            <buttons:SfButton Grid.Column="1"
+                                              Text="{x:Static res:AppResources.ProfilePushOpenSettingsButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Command="{Binding OpenNotificationSettingsCommand}" />
                         </Grid>
 
                         <Label Text="{x:Static res:AppResources.ProfilePushOpenSettingsHint}"
@@ -222,16 +259,18 @@
                             <Label Text="{Binding LinkedCustomerLastInteractionText}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"
                                    LineBreakMode="WordWrap" />
-                            <Button Text="{x:Static res:AppResources.ProfileViewCustomerContextButton}"
-                                    Style="{StaticResource OutlinedButtonStyle}"
-                                    Clicked="OnViewCustomerContextClicked" />
+                            <buttons:SfButton Text="{x:Static res:AppResources.ProfileViewCustomerContextButton}"
+                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                              Clicked="OnViewCustomerContextClicked" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
-            </VerticalStackLayout>
-        </ScrollView>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </pullToRefresh:SfPullToRefresh.PullableContent>
+        </pullToRefresh:SfPullToRefresh>
 
-        <Grid BackgroundColor="#40FFFFFF"
+        <Grid BackgroundColor="{StaticResource BrushBusyOverlay}"
               IsVisible="{Binding IsBusy}"
               InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center"

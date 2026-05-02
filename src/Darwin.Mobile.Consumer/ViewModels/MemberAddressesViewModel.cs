@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Profile;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
@@ -18,6 +18,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class MemberAddressesViewModel : BaseViewModel
 {
     private readonly IProfileService _profileService;
+    private BusyOperationScope? _currentOperation;
     private bool _isLoaded;
     private Guid _editingAddressId;
     private byte[] _editingRowVersion = Array.Empty<byte>();
@@ -52,7 +53,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
     }
 
     /// <summary>Gets the current address items.</summary>
-    public ObservableCollection<MemberAddressItemViewModel> Addresses { get; } = new();
+    public RangeObservableCollection<MemberAddressItemViewModel> Addresses { get; } = new();
 
     /// <summary>Gets the refresh command.</summary>
     public AsyncCommand RefreshCommand { get; }
@@ -150,6 +151,17 @@ public sealed class MemberAddressesViewModel : BaseViewModel
         _isLoaded = true;
     }
 
+    /// <summary>
+    /// Cancels the current address-book operation when the page is no longer visible.
+    /// This prevents stale create, update, delete, or default-address responses from changing the editor after navigation.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentOperation();
+        return Task.CompletedTask;
+    }
+
     private async Task RefreshAsync()
     {
         if (IsBusy)
@@ -157,26 +169,15 @@ public sealed class MemberAddressesViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
 
         try
         {
-            var addresses = await _profileService.GetAddressesAsync(CancellationToken.None).ConfigureAwait(false);
-            RunOnMain(() =>
-            {
-                Addresses.Clear();
-                foreach (var address in addresses)
-                {
-                    Addresses.Add(Map(address));
-                }
-
-                OnPropertyChanged(nameof(HasAddresses));
-            });
+            await ReloadAddressesAsync(operation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the address book intentionally cancels stale work.
         }
         catch (Exception ex)
         {
@@ -184,11 +185,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RaiseCanExecuteChanged();
-            });
+            EndBusyOperation(operation);
         }
     }
 
@@ -222,7 +219,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
         }
 
         _editingAddressId = item.Id;
-        _editingRowVersion = item.RowVersion;
+        _editingRowVersion = item.RowVersion.ToArray();
         IsEditingExisting = true;
         SuccessMessage = null;
         ErrorMessage = null;
@@ -253,12 +250,8 @@ public sealed class MemberAddressesViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
+        var cancellationToken = operation.Token;
 
         try
         {
@@ -277,10 +270,10 @@ public sealed class MemberAddressesViewModel : BaseViewModel
                     PhoneE164 = Normalize(PhoneE164),
                     IsDefaultBilling = IsDefaultBilling,
                     IsDefaultShipping = IsDefaultShipping,
-                    RowVersion = _editingRowVersion
+                    RowVersion = _editingRowVersion.ToArray()
                 };
 
-                var result = await _profileService.UpdateAddressAsync(_editingAddressId, update, CancellationToken.None).ConfigureAwait(false);
+                var result = await _profileService.UpdateAddressAsync(_editingAddressId, update, cancellationToken).ConfigureAwait(false);
                 if (!result.Succeeded)
                 {
                     RunOnMain(() => ErrorMessage = result.Error ?? AppResources.MemberAddressesSaveFailed);
@@ -306,7 +299,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
                     IsDefaultShipping = IsDefaultShipping
                 };
 
-                var result = await _profileService.CreateAddressAsync(create, CancellationToken.None).ConfigureAwait(false);
+                var result = await _profileService.CreateAddressAsync(create, cancellationToken).ConfigureAwait(false);
                 if (!result.Succeeded)
                 {
                     RunOnMain(() => ErrorMessage = result.Error ?? AppResources.MemberAddressesSaveFailed);
@@ -316,7 +309,11 @@ public sealed class MemberAddressesViewModel : BaseViewModel
                 RunOnMain(() => SuccessMessage = AppResources.MemberAddressesCreated);
             }
 
-            await ReloadAndResetAsync().ConfigureAwait(false);
+            await ReloadAndResetAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the address book intentionally cancels stale work.
         }
         catch (Exception ex)
         {
@@ -324,11 +321,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RaiseCanExecuteChanged();
-            });
+            EndBusyOperation(operation);
         }
     }
 
@@ -339,19 +332,14 @@ public sealed class MemberAddressesViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
 
         try
         {
             var result = await _profileService.DeleteAddressAsync(
                 item.Id,
-                new DeleteMemberAddressRequest { RowVersion = item.RowVersion },
-                CancellationToken.None).ConfigureAwait(false);
+                new DeleteMemberAddressRequest { RowVersion = item.RowVersion.ToArray() },
+                operation.Token).ConfigureAwait(false);
 
             if (!result.Succeeded)
             {
@@ -360,7 +348,11 @@ public sealed class MemberAddressesViewModel : BaseViewModel
             }
 
             RunOnMain(() => SuccessMessage = AppResources.MemberAddressesDeleted);
-            await ReloadAndResetAsync().ConfigureAwait(false);
+            await ReloadAndResetAsync(operation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the address book intentionally cancels stale work.
         }
         catch (Exception ex)
         {
@@ -368,11 +360,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RaiseCanExecuteChanged();
-            });
+            EndBusyOperation(operation);
         }
     }
 
@@ -389,12 +377,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
             return;
         }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
-        });
+        using var operation = BeginBusyOperation();
 
         try
         {
@@ -405,7 +388,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
                     AsBilling = asBilling,
                     AsShipping = asShipping
                 },
-                CancellationToken.None).ConfigureAwait(false);
+                operation.Token).ConfigureAwait(false);
 
             if (!result.Succeeded)
             {
@@ -414,13 +397,82 @@ public sealed class MemberAddressesViewModel : BaseViewModel
             }
 
             RunOnMain(() => SuccessMessage = successMessage);
-            await ReloadAddressesAsync().ConfigureAwait(false);
+            await ReloadAddressesAsync(operation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from the address book intentionally cancels stale work.
         }
         catch (Exception ex)
         {
             RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.MemberAddressesDefaultFailed));
         }
         finally
+        {
+            EndBusyOperation(operation);
+        }
+    }
+
+    private async Task ReloadAndResetAsync(CancellationToken cancellationToken)
+    {
+        await ReloadAddressesAsync(cancellationToken).ConfigureAwait(false);
+        RunOnMain(ResetEditor);
+    }
+
+    private async Task ReloadAddressesAsync(CancellationToken cancellationToken)
+    {
+        var addresses = await _profileService.GetAddressesAsync(cancellationToken).ConfigureAwait(false);
+        var mappedAddresses = addresses.Select(Map).ToList();
+
+        RunOnMain(() =>
+        {
+            // Address rows are rendered through BindableLayout, so batch replacement avoids repeated layout passes.
+            Addresses.ReplaceRange(mappedAddresses);
+            OnPropertyChanged(nameof(HasAddresses));
+        });
+    }
+
+    /// <summary>
+    /// Marks the address-book screen as busy and owns cancellation for one user operation.
+    /// </summary>
+    private BusyOperationScope BeginBusyOperation()
+    {
+        var operation = new BusyOperationScope(this);
+        var previousOperation = Interlocked.Exchange(ref _currentOperation, operation);
+        previousOperation?.Cancel();
+        previousOperation?.Dispose();
+
+        RunOnMain(() =>
+        {
+            ErrorMessage = null;
+            SuccessMessage = null;
+            IsBusy = true;
+            RaiseCanExecuteChanged();
+        });
+        return operation;
+    }
+
+    /// <summary>
+    /// Clears busy state when the matching address-book operation completes.
+    /// </summary>
+    /// <param name="operation">Operation scope that owns the current busy state.</param>
+    private void EndBusyOperation(BusyOperationScope operation)
+    {
+        if (operation.IsDisposed)
+        {
+            return;
+        }
+
+        var isCurrentOperation = ReferenceEquals(_currentOperation, operation);
+        if (isCurrentOperation)
+        {
+            _currentOperation = null;
+        }
+
+        operation.IsDisposed = true;
+        operation.Cancellation.Dispose();
+
+        if (isCurrentOperation)
         {
             RunOnMain(() =>
             {
@@ -430,25 +482,56 @@ public sealed class MemberAddressesViewModel : BaseViewModel
         }
     }
 
-    private async Task ReloadAndResetAsync()
+    /// <summary>
+    /// Cancels the current address-book operation and releases the visible busy state.
+    /// </summary>
+    private void CancelCurrentOperation()
     {
-        await ReloadAddressesAsync().ConfigureAwait(false);
-        RunOnMain(ResetEditor);
-    }
+        var operation = Interlocked.Exchange(ref _currentOperation, null);
+        if (operation is null)
+        {
+            return;
+        }
 
-    private async Task ReloadAddressesAsync()
-    {
-        var addresses = await _profileService.GetAddressesAsync(CancellationToken.None).ConfigureAwait(false);
+        operation.Cancel();
         RunOnMain(() =>
         {
-            Addresses.Clear();
-            foreach (var address in addresses)
-            {
-                Addresses.Add(Map(address));
-            }
-
-            OnPropertyChanged(nameof(HasAddresses));
+            IsBusy = false;
+            RaiseCanExecuteChanged();
         });
+    }
+
+    /// <summary>
+    /// Owns cancellation and busy-state lifetime for one address-book operation.
+    /// </summary>
+    private sealed class BusyOperationScope : IDisposable
+    {
+        private readonly MemberAddressesViewModel _owner;
+
+        public BusyOperationScope(MemberAddressesViewModel owner)
+        {
+            _owner = owner;
+            Cancellation = new CancellationTokenSource();
+        }
+
+        public CancellationTokenSource Cancellation { get; }
+
+        public CancellationToken Token => Cancellation.Token;
+
+        public bool IsDisposed { get; set; }
+
+        public void Cancel()
+        {
+            if (!Cancellation.IsCancellationRequested)
+            {
+                Cancellation.Cancel();
+            }
+        }
+
+        public void Dispose()
+        {
+            _owner.EndBusyOperation(this);
+        }
     }
 
     private void ResetEditor()
@@ -503,7 +586,7 @@ public sealed class MemberAddressesViewModel : BaseViewModel
         return new MemberAddressItemViewModel
         {
             Id = address.Id,
-            RowVersion = address.RowVersion,
+            RowVersion = address.RowVersion.ToArray(),
             FullName = address.FullName,
             Company = address.Company,
             Street1 = address.Street1,

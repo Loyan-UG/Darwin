@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
+using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Caching;
+using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Integration;
 using Darwin.Mobile.Shared.Services;
@@ -32,9 +35,17 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// </remarks>
 public sealed class DiscoverViewModel : BaseViewModel
 {
+    public sealed class NearbyRadiusOption
+    {
+        public required int Meters { get; init; }
+
+        public required string DisplayName { get; init; }
+    }
+
     private readonly IBusinessService _businessService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly ILocation _location;
+    private CancellationTokenSource? _loadCancellation;
 
     private bool _hasLoaded;
     private bool _isJoinedTabSelected = true;
@@ -42,6 +53,7 @@ public sealed class DiscoverViewModel : BaseViewModel
     private bool _isNearbyOnly;
     private BusinessCategoryKindItem? _selectedCategory;
     private int _selectedNearbyRadiusMeters = DefaultNearbyRadiusMeters;
+    private NearbyRadiusOption? _selectedNearbyRadiusOption;
 
     private const int DefaultNearbyRadiusMeters = 5000;
 
@@ -54,27 +66,40 @@ public sealed class DiscoverViewModel : BaseViewModel
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _location = location ?? throw new ArgumentNullException(nameof(location));
 
-        JoinedAccounts = new ObservableCollection<LoyaltyAccountSummary>();
-        ExploreBusinesses = new ObservableCollection<DiscoverExploreItem>();
+        JoinedAccounts = new RangeObservableCollection<LoyaltyAccountSummary>();
+        ExploreBusinesses = new RangeObservableCollection<DiscoverExploreItem>();
+        DisplayItems = new RangeObservableCollection<DiscoverDisplayItem>();
         CategoryKinds = new ObservableCollection<BusinessCategoryKindItem>();
         NearbyRadiusOptions = new ObservableCollection<int> { 1000, 3000, 5000, 10000 };
+        NearbyRadiusChoices = new ObservableCollection<NearbyRadiusOption>(
+            NearbyRadiusOptions.Select(static meters => new NearbyRadiusOption
+            {
+                Meters = meters,
+                DisplayName = string.Format(CultureInfo.CurrentCulture, AppResources.DiscoverNearbyRadiusMetersFormat, meters)
+            }));
+        _selectedNearbyRadiusOption = NearbyRadiusChoices.FirstOrDefault(x => x.Meters == DefaultNearbyRadiusMeters);
 
-        ShowJoinedTabCommand = new AsyncCommand(ShowJoinedTabAsync);
-        ShowExploreTabCommand = new AsyncCommand(ShowExploreTabAsync);
-        RefreshCommand = new AsyncCommand(RefreshAsync);
-        SearchCommand = new AsyncCommand(SearchAsync);
-        ClearFiltersCommand = new AsyncCommand(ClearFiltersAsync);
+        ShowJoinedTabCommand = new AsyncCommand(ShowJoinedTabAsync, () => !IsBusy);
+        ShowExploreTabCommand = new AsyncCommand(ShowExploreTabAsync, () => !IsBusy);
+        RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
+        SearchCommand = new AsyncCommand(SearchAsync, () => !IsBusy);
+        ClearFiltersCommand = new AsyncCommand(ClearFiltersAsync, () => !IsBusy);
     }
 
     /// <summary>
     /// Businesses where current user already joined loyalty.
     /// </summary>
-    public ObservableCollection<LoyaltyAccountSummary> JoinedAccounts { get; }
+    public RangeObservableCollection<LoyaltyAccountSummary> JoinedAccounts { get; }
 
     /// <summary>
     /// Search/explore result list with joined-state metadata.
     /// </summary>
-    public ObservableCollection<DiscoverExploreItem> ExploreBusinesses { get; }
+    public RangeObservableCollection<DiscoverExploreItem> ExploreBusinesses { get; }
+
+    /// <summary>
+    /// Rows rendered by the single virtualized Discover list for the currently selected tab.
+    /// </summary>
+    public RangeObservableCollection<DiscoverDisplayItem> DisplayItems { get; }
 
     /// <summary>
     /// Available category filter options resolved from API metadata.
@@ -87,12 +112,42 @@ public sealed class DiscoverViewModel : BaseViewModel
     public ObservableCollection<int> NearbyRadiusOptions { get; }
 
     /// <summary>
+    /// Preformatted nearby-radius choices used by the chip selector.
+    /// </summary>
+    public ObservableCollection<NearbyRadiusOption> NearbyRadiusChoices { get; }
+
+    /// <summary>
     /// Selected nearby radius in meters used when <see cref="IsNearbyOnly"/> is enabled.
     /// </summary>
     public int SelectedNearbyRadiusMeters
     {
         get => _selectedNearbyRadiusMeters;
-        set => SetProperty(ref _selectedNearbyRadiusMeters, value);
+        set
+        {
+            if (!SetProperty(ref _selectedNearbyRadiusMeters, value))
+            {
+                return;
+            }
+
+            SyncSelectedNearbyRadiusOption(value);
+        }
+    }
+
+    /// <summary>
+    /// Selected nearby-radius option for chip group binding.
+    /// </summary>
+    public NearbyRadiusOption? SelectedNearbyRadiusOption
+    {
+        get => _selectedNearbyRadiusOption;
+        set
+        {
+            if (!SetProperty(ref _selectedNearbyRadiusOption, value) || value is null)
+            {
+                return;
+            }
+
+            SelectedNearbyRadiusMeters = value.Meters;
+        }
     }
 
     /// <summary>
@@ -200,6 +255,17 @@ public sealed class DiscoverViewModel : BaseViewModel
         _hasLoaded = true;
     }
 
+    /// <summary>
+    /// Cancels any in-flight Discover load when the page is no longer visible.
+    /// </summary>
+    /// <returns>A completed task because cancellation is signaled synchronously.</returns>
+    public override Task OnDisappearingAsync()
+    {
+        CancelCurrentLoad();
+        EndBusyState();
+        return Task.CompletedTask;
+    }
+
     private async Task ShowJoinedTabAsync()
     {
         if (IsJoinedTabSelected)
@@ -207,7 +273,11 @@ public sealed class DiscoverViewModel : BaseViewModel
             return;
         }
 
-        IsJoinedTabSelected = true;
+        RunOnMain(() =>
+        {
+            IsJoinedTabSelected = true;
+            RebuildDisplayItemsForCurrentTab();
+        });
         await RefreshAsync();
     }
 
@@ -218,27 +288,73 @@ public sealed class DiscoverViewModel : BaseViewModel
             return;
         }
 
-        IsJoinedTabSelected = false;
+        RunOnMain(() =>
+        {
+            IsJoinedTabSelected = false;
+            RebuildDisplayItemsForCurrentTab();
+        });
         await RefreshAsync();
     }
 
     private async Task SearchAsync()
     {
-        if (!IsExploreTabSelected)
+        if (IsBusy)
         {
-            IsJoinedTabSelected = false;
+            return;
         }
 
-        await LoadExploreBusinessesAsync();
+        if (!IsExploreTabSelected)
+        {
+            RunOnMain(() => IsJoinedTabSelected = false);
+        }
+
+        BeginBusyState();
+        var loadCancellation = BeginCurrentLoad();
+
+        try
+        {
+            await LoadExploreBusinessesAsync(loadCancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from Discover intentionally cancels stale search work.
+        }
+        finally
+        {
+            EndBusyState();
+            EndCurrentLoad(loadCancellation);
+        }
     }
 
     private async Task ClearFiltersAsync()
     {
-        SearchQuery = null;
-        SelectedCategory = null;
-        IsNearbyOnly = false;
-        SelectedNearbyRadiusMeters = DefaultNearbyRadiusMeters;
+        if (IsBusy)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            SearchQuery = null;
+            SelectedCategory = null;
+            IsNearbyOnly = false;
+            SelectedNearbyRadiusMeters = DefaultNearbyRadiusMeters;
+        });
         await SearchAsync();
+    }
+
+    /// <summary>
+    /// Keeps the chip selector synchronized when nearby radius is changed programmatically.
+    /// </summary>
+    /// <param name="meters">The selected radius in meters.</param>
+    private void SyncSelectedNearbyRadiusOption(int meters)
+    {
+        var option = NearbyRadiusChoices.FirstOrDefault(x => x.Meters == meters);
+        if (option is not null && !ReferenceEquals(_selectedNearbyRadiusOption, option))
+        {
+            _selectedNearbyRadiusOption = option;
+            OnPropertyChanged(nameof(SelectedNearbyRadiusOption));
+        }
     }
 
     private async Task RefreshAsync()
@@ -248,37 +364,55 @@ public sealed class DiscoverViewModel : BaseViewModel
             return;
         }
 
-        IsBusy = true;
-        ErrorMessage = null;
+        BeginBusyState();
+        var loadCancellation = BeginCurrentLoad();
 
         try
         {
+            var cancellationToken = loadCancellation.Token;
             // Joined accounts are loaded first so Explore can label each business as joined/not-joined.
-            await LoadJoinedAccountsAsync();
+            await LoadJoinedAccountsAsync(cancellationToken);
 
             if (IsExploreTabSelected)
             {
-                await LoadCategoryKindsAsync();
-                await LoadExploreBusinessesAsync();
+                await LoadCategoryKindsAsync(cancellationToken);
+                await LoadExploreBusinessesAsync(cancellationToken);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from Discover intentionally cancels stale list loads.
         }
         finally
         {
-            IsBusy = false;
+            EndBusyState();
+            EndCurrentLoad(loadCancellation);
         }
     }
 
-    private async Task LoadJoinedAccountsAsync()
+    /// <summary>
+    /// Refreshes command availability after busy-state transitions so buttons and pull gestures cannot start overlapping requests.
+    /// </summary>
+    private void RaiseCommandStates()
     {
-        var accountsResult = await _loyaltySnapshotCache.GetMyAccountsAsync(CancellationToken.None);
+        ShowJoinedTabCommand.RaiseCanExecuteChanged();
+        ShowExploreTabCommand.RaiseCanExecuteChanged();
+        RefreshCommand.RaiseCanExecuteChanged();
+        SearchCommand.RaiseCanExecuteChanged();
+        ClearFiltersCommand.RaiseCanExecuteChanged();
+    }
+
+    private async Task LoadJoinedAccountsAsync(CancellationToken cancellationToken)
+    {
+        var accountsResult = await _loyaltySnapshotCache.GetMyAccountsAsync(cancellationToken);
 
         if (!accountsResult.Succeeded || accountsResult.Value is null)
         {
-            ErrorMessage = Resources.AppResources.DiscoverLoadJoinedFailed;
-
             RunOnMain(() =>
             {
-                JoinedAccounts.Clear();
+                ErrorMessage = Resources.AppResources.DiscoverLoadJoinedFailed;
+                JoinedAccounts.ClearRange();
+                RebuildDisplayItemsForCurrentTab();
                 OnPropertyChanged(nameof(HasJoinedAccounts));
                 OnPropertyChanged(nameof(JoinedBusinessCount));
                 OnPropertyChanged(nameof(TotalJoinedPointsBalance));
@@ -295,12 +429,8 @@ public sealed class DiscoverViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
-            JoinedAccounts.Clear();
-            foreach (var account in ordered)
-            {
-                JoinedAccounts.Add(account);
-            }
-
+            JoinedAccounts.ReplaceRange(ordered);
+            RebuildDisplayItemsForCurrentTab();
             OnPropertyChanged(nameof(HasJoinedAccounts));
             OnPropertyChanged(nameof(JoinedBusinessCount));
             OnPropertyChanged(nameof(TotalJoinedPointsBalance));
@@ -308,9 +438,9 @@ public sealed class DiscoverViewModel : BaseViewModel
         });
     }
 
-    private async Task LoadCategoryKindsAsync()
+    private async Task LoadCategoryKindsAsync(CancellationToken cancellationToken)
     {
-        var response = await _businessService.GetCategoryKindsAsync(CancellationToken.None);
+        var response = await _businessService.GetCategoryKindsAsync(cancellationToken);
         var items = response?.Items?.OrderBy(i => i.DisplayName).ToList() ?? new List<BusinessCategoryKindItem>();
 
         RunOnMain(() =>
@@ -323,7 +453,7 @@ public sealed class DiscoverViewModel : BaseViewModel
         });
     }
 
-    private async Task LoadExploreBusinessesAsync()
+    private async Task LoadExploreBusinessesAsync(CancellationToken cancellationToken)
     {
         var trimmedQuery = string.IsNullOrWhiteSpace(SearchQuery) ? null : SearchQuery.Trim();
 
@@ -332,7 +462,7 @@ public sealed class DiscoverViewModel : BaseViewModel
 
         if (IsNearbyOnly)
         {
-            var current = await _location.GetCurrentAsync(CancellationToken.None);
+            var current = await _location.GetCurrentAsync(cancellationToken);
             if (current is not null)
             {
                 near = new GeoCoordinateModel
@@ -345,7 +475,7 @@ public sealed class DiscoverViewModel : BaseViewModel
             }
             else
             {
-                ErrorMessage = Resources.AppResources.DiscoverLocationUnavailable;
+                RunOnMain(() => ErrorMessage = Resources.AppResources.DiscoverLocationUnavailable);
             }
         }
 
@@ -360,15 +490,15 @@ public sealed class DiscoverViewModel : BaseViewModel
             RadiusMeters = radiusMeters
         };
 
-        var response = await _businessService.ListAsync(request, CancellationToken.None);
+        var response = await _businessService.ListAsync(request, cancellationToken);
 
         if (response?.Items is null)
         {
-            ErrorMessage = Resources.AppResources.DiscoverLoadExploreFailed;
-
             RunOnMain(() =>
             {
-                ExploreBusinesses.Clear();
+                ErrorMessage = Resources.AppResources.DiscoverLoadExploreFailed;
+                ExploreBusinesses.ClearRange();
+                RebuildDisplayItemsForCurrentTab();
                 OnPropertyChanged(nameof(HasExploreResults));
             });
 
@@ -389,13 +519,80 @@ public sealed class DiscoverViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
-            ExploreBusinesses.Clear();
-            foreach (var item in projected)
-            {
-                ExploreBusinesses.Add(item);
-            }
-
+            ExploreBusinesses.ReplaceRange(projected);
+            RebuildDisplayItemsForCurrentTab();
             OnPropertyChanged(nameof(HasExploreResults));
+        });
+    }
+
+    /// <summary>
+    /// Rebuilds the single virtualized list from the currently selected tab's backing collection.
+    /// </summary>
+    private void RebuildDisplayItemsForCurrentTab()
+    {
+        var items = IsJoinedTabSelected
+            ? JoinedAccounts.Select(DiscoverDisplayItem.FromJoinedAccount)
+            : ExploreBusinesses.Select(DiscoverDisplayItem.FromExploreItem);
+
+        DisplayItems.ReplaceRange(items);
+    }
+
+    /// <summary>
+    /// Starts a cancellable Discover load and cancels any stale load still in-flight.
+    /// </summary>
+    private CancellationTokenSource BeginCurrentLoad()
+    {
+        var current = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _loadCancellation, current);
+        previous?.Cancel();
+        return current;
+    }
+
+    /// <summary>
+    /// Cancels the active Discover load without disposing a token source still observed by service code.
+    /// </summary>
+    private void CancelCurrentLoad()
+    {
+        var current = Interlocked.Exchange(ref _loadCancellation, null);
+        current?.Cancel();
+    }
+
+    /// <summary>
+    /// Releases a completed Discover load when it still owns the active load slot.
+    /// </summary>
+    /// <param name="loadCancellation">Completed load token source.</param>
+    private void EndCurrentLoad(CancellationTokenSource loadCancellation)
+    {
+        if (ReferenceEquals(_loadCancellation, loadCancellation))
+        {
+            _loadCancellation = null;
+        }
+
+        loadCancellation.Dispose();
+    }
+
+    /// <summary>
+    /// Applies busy state and disables Discover actions for the current load.
+    /// </summary>
+    private void BeginBusyState()
+    {
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseCommandStates();
+        });
+    }
+
+    /// <summary>
+    /// Clears busy state and re-enables Discover actions after the current load.
+    /// </summary>
+    private void EndBusyState()
+    {
+        RunOnMain(() =>
+        {
+            IsBusy = false;
+            RaiseCommandStates();
         });
     }
 }

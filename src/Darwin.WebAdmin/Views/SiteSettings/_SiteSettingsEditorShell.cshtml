@@ -612,12 +612,21 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             </div>
             <div class="row">
                 <div class="col-md-4 mb-3">
+                    <div class="form-check form-switch mt-4">
+                        <input class="form-check-input" asp-for="MultilingualEnabled" />
+                        <label class="form-check-label" asp-for="MultilingualEnabled"></label>
+                        <field-help title="@T.T("SiteSettingsMultilingualHelpTitle")"
+                                    content="@T.T("SiteSettingsMultilingualHelpContent")"
+                                    placement="right"></field-help>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
                     <label asp-for="DefaultCulture" class="form-label"></label>
                     <field-help title="@T.T("SiteSettingsDefaultCultureHelpTitle")" content="@T.T("SiteSettingsDefaultCultureHelpContent")" placement="right"></field-help>
                     <setting-select asp-for="DefaultCulture" setting="SupportedCulturesCsv"></setting-select>
                     <span asp-validation-for="DefaultCulture" class="text-danger"></span>
                 </div>
-                <div class="col-md-8 mb-3">
+                <div class="col-md-4 mb-3">
                     <label asp-for="SupportedCulturesCsv" class="form-label"></label>
                     <field-help title="@T.T("SiteSettingsSupportedCulturesHelpTitle")" content="@T.T("SiteSettingsSupportedCulturesHelpContent")" placement="right"></field-help>
                     <input asp-for="SupportedCulturesCsv" class="form-control" value="@Model.SupportedCulturesCsv" />
@@ -662,6 +671,7 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
 
             <div class="mt-3">
                 <label asp-for="AdminTextOverridesJson" class="form-label"></label>
+                <field-help title="@T.T("SiteSettingAdminTextOverridesJson")" content="@T.T("SiteSettingsAdminTextOverridesHelpContent")" placement="right"></field-help>
                 <textarea asp-for="AdminTextOverridesJson" class="form-control font-monospace" rows="6" placeholder="@adminOverridesPlaceholder"></textarea>
                 <span asp-validation-for="AdminTextOverridesJson" class="text-danger"></span>
                 <div class="form-text">
@@ -702,16 +712,19 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="JwtIssuer" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingJwtIssuer")" content="@T.T("SiteSettingsJwtIssuerHelp")" placement="right"></field-help>
                     <input asp-for="JwtIssuer" class="form-control" />
                     <span asp-validation-for="JwtIssuer" class="text-danger"></span>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="JwtAudience" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingJwtAudience")" content="@T.T("SiteSettingsJwtAudienceHelp")" placement="right"></field-help>
                     <input asp-for="JwtAudience" class="form-control" />
                     <span asp-validation-for="JwtAudience" class="text-danger"></span>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="JwtClockSkewSeconds" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingJwtClockSkewSeconds")" content="@T.T("SiteSettingsJwtClockSkewSecondsHelp")" placement="right"></field-help>
                     <input asp-for="JwtClockSkewSeconds" class="form-control" type="number" min="0" />
                     <span asp-validation-for="JwtClockSkewSeconds" class="text-danger"></span>
                 </div>
@@ -720,11 +733,13 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label asp-for="JwtAccessTokenMinutes" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingJwtAccessTokenMinutes")" content="@T.T("SiteSettingsJwtAccessTokenMinutesHelp")" placement="right"></field-help>
                     <input asp-for="JwtAccessTokenMinutes" class="form-control" type="number" min="1" />
                     <span asp-validation-for="JwtAccessTokenMinutes" class="text-danger"></span>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="JwtRefreshTokenDays" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingJwtRefreshTokenDays")" content="@T.T("SiteSettingsJwtRefreshTokenDaysHelp")" placement="right"></field-help>
                     <input asp-for="JwtRefreshTokenDays" class="form-control" type="number" min="1" />
                     <span asp-validation-for="JwtRefreshTokenDays" class="text-danger"></span>
                 </div>
@@ -732,12 +747,14 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                     <div class="form-check form-switch">
                         <input class="form-check-input" asp-for="JwtEmitScopes" />
                         <label class="form-check-label" asp-for="JwtEmitScopes"></label>
+                        <field-help title="@T.T("SiteSettingJwtEmitScopes")" content="@T.T("SiteSettingsJwtEmitScopesHelp")" placement="right"></field-help>
                     </div>
                 </div>
                 <div class="col-md-3 mb-3 d-flex align-items-center">
                     <div class="form-check form-switch">
                         <input class="form-check-input" asp-for="JwtSingleDeviceOnly" />
                         <label class="form-check-label" asp-for="JwtSingleDeviceOnly"></label>
+                        <field-help title="@T.T("SiteSettingJwtSingleDeviceOnly")" content="@T.T("SiteSettingsJwtSingleDeviceOnlyHelp")" placement="right"></field-help>
                     </div>
                 </div>
             </div>
@@ -745,6 +762,7 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="JwtRequireDeviceBinding" />
                 <label class="form-check-label" asp-for="JwtRequireDeviceBinding"></label>
+                <field-help title="@T.T("SiteSettingJwtRequireDeviceBinding")" content="@T.T("SiteSettingsJwtRequireDeviceBindingHelp")" placement="right"></field-help>
             </div>
 
             <div class="row">
@@ -840,28 +858,33 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="BusinessManagementWebsiteUrl" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingBusinessManagementWebsiteUrl")" content="@T.T("SiteSettingsBusinessAppManagementWebsiteHelp")" placement="right"></field-help>
                     <input asp-for="BusinessManagementWebsiteUrl" class="form-control" placeholder="@T.T("SiteSettingsBusinessManagementWebsitePlaceholder")" />
                     <span asp-validation-for="BusinessManagementWebsiteUrl" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsBusinessAppManagementWebsiteHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="AccountDeletionUrl" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingAccountDeletionUrl")" content="@T.T("SiteSettingsBusinessAppDeletionHelp")" placement="right"></field-help>
                     <input asp-for="AccountDeletionUrl" class="form-control" placeholder="@T.T("SiteSettingsAccountDeletionUrlPlaceholder")" />
                     <span asp-validation-for="AccountDeletionUrl" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsBusinessAppDeletionHelp")</div>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="ImpressumUrl" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingImpressumUrl")" content="@T.T("SiteSettingsImpressumUrlHelp")" placement="right"></field-help>
                     <input asp-for="ImpressumUrl" class="form-control" placeholder="@T.T("SiteSettingsImpressumUrlPlaceholder")" />
                     <span asp-validation-for="ImpressumUrl" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="PrivacyPolicyUrl" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingPrivacyPolicyUrl")" content="@T.T("SiteSettingsPrivacyPolicyUrlHelp")" placement="right"></field-help>
                     <input asp-for="PrivacyPolicyUrl" class="form-control" placeholder="@T.T("SiteSettingsPrivacyPolicyUrlPlaceholder")" />
                     <span asp-validation-for="PrivacyPolicyUrl" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="BusinessTermsUrl" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingBusinessTermsUrl")" content="@T.T("SiteSettingsBusinessTermsUrlHelp")" placement="right"></field-help>
                     <input asp-for="BusinessTermsUrl" class="form-control" placeholder="@T.T("SiteSettingsBusinessTermsUrlPlaceholder")" />
                     <span asp-validation-for="BusinessTermsUrl" class="text-danger"></span>
                 </div>
@@ -878,25 +901,30 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="StripeEnabled" />
                 <label class="form-check-label" asp-for="StripeEnabled"></label>
+                <field-help title="@T.T("SiteSettingStripeEnabled")" content="@T.T("SiteSettingsStripeEnabledHelp")" placement="right"></field-help>
             </div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="StripeMerchantDisplayName" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingStripeMerchantDisplayName")" content="@T.T("SiteSettingsStripeMerchantDisplayNameHelp")" placement="right"></field-help>
                     <input asp-for="StripeMerchantDisplayName" class="form-control" />
                     <span asp-validation-for="StripeMerchantDisplayName" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="StripePublishableKey" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingStripePublishableKey")" content="@T.T("SiteSettingsStripePublishableKeyHelp")" placement="right"></field-help>
                     <input asp-for="StripePublishableKey" class="form-control" autocomplete="off" />
                     <span asp-validation-for="StripePublishableKey" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="StripeSecretKey" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingStripeSecretKey")" content="@T.T("SiteSettingsStripeSecretKeyHelp")" placement="right"></field-help>
                     <input asp-for="StripeSecretKey" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="StripeSecretKey" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="StripeWebhookSecret" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingStripeWebhookSecret")" content="@T.T("SiteSettingsStripeWebhookSecretHelp")" placement="right"></field-help>
                     <input asp-for="StripeWebhookSecret" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="StripeWebhookSecret" class="text-danger"></span>
                 </div>
@@ -915,22 +943,26 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                     <div class="form-check form-switch">
                         <input class="form-check-input" asp-for="VatEnabled" />
                         <label class="form-check-label" asp-for="VatEnabled"></label>
+                        <field-help title="@T.T("SiteSettingVatEnabled")" content="@T.T("SiteSettingsVatEnabledHelp")" placement="right"></field-help>
                     </div>
                 </div>
                 <div class="col-md-3 d-flex align-items-center">
                     <div class="form-check form-switch">
                         <input class="form-check-input" asp-for="PricesIncludeVat" />
                         <label class="form-check-label" asp-for="PricesIncludeVat"></label>
+                        <field-help title="@T.T("SiteSettingPricesIncludeVat")" content="@T.T("SiteSettingsPricesIncludeVatHelp")" placement="right"></field-help>
                     </div>
                 </div>
                 <div class="col-md-3 d-flex align-items-center">
                     <div class="form-check form-switch">
                         <input class="form-check-input" asp-for="AllowReverseCharge" />
                         <label class="form-check-label" asp-for="AllowReverseCharge"></label>
+                        <field-help title="@T.T("SiteSettingAllowReverseCharge")" content="@T.T("SiteSettingsAllowReverseChargeHelp")" placement="right"></field-help>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="DefaultVatRatePercent" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDefaultVatRatePercent")" content="@T.T("SiteSettingsDefaultVatRatePercentHelp")" placement="right"></field-help>
                     <input asp-for="DefaultVatRatePercent" class="form-control" type="number" step="0.01" min="0" max="100" />
                     <span asp-validation-for="DefaultVatRatePercent" class="text-danger"></span>
                 </div>
@@ -941,31 +973,37 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="InvoiceIssuerLegalName" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingInvoiceIssuerLegalName")" content="@T.T("SiteSettingsInvoiceIssuerLegalNameHelp")" placement="right"></field-help>
                     <input asp-for="InvoiceIssuerLegalName" class="form-control" />
                     <span asp-validation-for="InvoiceIssuerLegalName" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="InvoiceIssuerTaxId" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingInvoiceIssuerTaxId")" content="@T.T("SiteSettingsInvoiceIssuerTaxIdHelp")" placement="right"></field-help>
                     <input asp-for="InvoiceIssuerTaxId" class="form-control" />
                     <span asp-validation-for="InvoiceIssuerTaxId" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="InvoiceIssuerAddressLine1" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingInvoiceIssuerAddressLine1")" content="@T.T("SiteSettingsInvoiceIssuerAddressLine1Help")" placement="right"></field-help>
                     <input asp-for="InvoiceIssuerAddressLine1" class="form-control" />
                     <span asp-validation-for="InvoiceIssuerAddressLine1" class="text-danger"></span>
                 </div>
                 <div class="col-md-2">
                     <label asp-for="InvoiceIssuerPostalCode" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingInvoiceIssuerPostalCode")" content="@T.T("SiteSettingsInvoiceIssuerPostalCodeHelp")" placement="right"></field-help>
                     <input asp-for="InvoiceIssuerPostalCode" class="form-control" />
                     <span asp-validation-for="InvoiceIssuerPostalCode" class="text-danger"></span>
                 </div>
                 <div class="col-md-2">
                     <label asp-for="InvoiceIssuerCity" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingInvoiceIssuerCity")" content="@T.T("SiteSettingsInvoiceIssuerCityHelp")" placement="right"></field-help>
                     <input asp-for="InvoiceIssuerCity" class="form-control" />
                     <span asp-validation-for="InvoiceIssuerCity" class="text-danger"></span>
                 </div>
                 <div class="col-md-2">
                     <label asp-for="InvoiceIssuerCountry" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingInvoiceIssuerCountry")" content="@T.T("SiteSettingsInvoiceIssuerCountryHelp")" placement="right"></field-help>
                     <input asp-for="InvoiceIssuerCountry" class="form-control" />
                     <span asp-validation-for="InvoiceIssuerCountry" class="text-danger"></span>
                 </div>
@@ -1092,10 +1130,12 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="DhlEnabled" />
                 <label class="form-check-label" asp-for="DhlEnabled"></label>
+                <field-help title="@T.T("SiteSettingDhlEnabled")" content="@T.T("SiteSettingsDhlEnabledHelp")" placement="right"></field-help>
             </div>
             <div class="row g-3">
                 <div class="col-md-4">
                     <label asp-for="DhlEnvironment" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlEnvironment")" content="@T.T("SiteSettingsDhlEnvironmentHelp")" placement="right"></field-help>
                     <select asp-for="DhlEnvironment" class="form-select">
                         <option value="">@T.T("Unspecified")</option>
                         <option value="Sandbox">@T.T("Sandbox")</option>
@@ -1105,21 +1145,25 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 </div>
                 <div class="col-md-8">
                     <label asp-for="DhlApiBaseUrl" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlApiBaseUrl")" content="@T.T("SiteSettingsDhlApiBaseUrlHelp")" placement="right"></field-help>
                     <input asp-for="DhlApiBaseUrl" class="form-control" placeholder="@T.T("SiteSettingsDhlApiBaseUrlPlaceholder")" />
                     <span asp-validation-for="DhlApiBaseUrl" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="DhlAccountNumber" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlAccountNumber")" content="@T.T("SiteSettingsDhlAccountNumberHelp")" placement="right"></field-help>
                     <input asp-for="DhlAccountNumber" class="form-control" />
                     <span asp-validation-for="DhlAccountNumber" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="DhlApiKey" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlApiKey")" content="@T.T("SiteSettingsDhlApiKeyHelp")" placement="right"></field-help>
                     <input asp-for="DhlApiKey" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="DhlApiKey" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="DhlApiSecret" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlApiSecret")" content="@T.T("SiteSettingsDhlApiSecretHelp")" placement="right"></field-help>
                     <input asp-for="DhlApiSecret" class="form-control" type="password" autocomplete="new-password" />
                     <span asp-validation-for="DhlApiSecret" class="text-danger"></span>
                 </div>
@@ -1130,47 +1174,56 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="DhlShipperName" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlShipperName")" content="@T.T("SiteSettingsDhlShipperNameHelp")" placement="right"></field-help>
                     <input asp-for="DhlShipperName" class="form-control" />
                     <span asp-validation-for="DhlShipperName" class="text-danger"></span>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="DhlShipperEmail" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlShipperEmail")" content="@T.T("SiteSettingsDhlShipperEmailHelp")" placement="right"></field-help>
                     <input asp-for="DhlShipperEmail" class="form-control" />
                     <span asp-validation-for="DhlShipperEmail" class="text-danger"></span>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="DhlShipperPhoneE164" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlShipperPhoneE164")" content="@T.T("SiteSettingsDhlShipperPhoneE164Help")" placement="right"></field-help>
                     <input asp-for="DhlShipperPhoneE164" class="form-control" />
                     <span asp-validation-for="DhlShipperPhoneE164" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="DhlShipperStreet" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlShipperStreet")" content="@T.T("SiteSettingsDhlShipperStreetHelp")" placement="right"></field-help>
                     <input asp-for="DhlShipperStreet" class="form-control" />
                     <span asp-validation-for="DhlShipperStreet" class="text-danger"></span>
                 </div>
                 <div class="col-md-2">
                     <label asp-for="DhlShipperPostalCode" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlShipperPostalCode")" content="@T.T("SiteSettingsDhlShipperPostalCodeHelp")" placement="right"></field-help>
                     <input asp-for="DhlShipperPostalCode" class="form-control" />
                     <span asp-validation-for="DhlShipperPostalCode" class="text-danger"></span>
                 </div>
                 <div class="col-md-2">
                     <label asp-for="DhlShipperCity" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlShipperCity")" content="@T.T("SiteSettingsDhlShipperCityHelp")" placement="right"></field-help>
                     <input asp-for="DhlShipperCity" class="form-control" />
                     <span asp-validation-for="DhlShipperCity" class="text-danger"></span>
                 </div>
                 <div class="col-md-2">
                     <label asp-for="DhlShipperCountry" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDhlShipperCountry")" content="@T.T("SiteSettingsDhlShipperCountryHelp")" placement="right"></field-help>
                     <input asp-for="DhlShipperCountry" class="form-control" />
                     <span asp-validation-for="DhlShipperCountry" class="text-danger"></span>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="ShipmentAttentionDelayHours" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingShipmentAttentionDelayHours")" content="@T.T("SiteSettingsShipmentAttentionDelayHoursHelp")" placement="right"></field-help>
                     <input asp-for="ShipmentAttentionDelayHours" class="form-control" type="number" min="1" />
                     <span asp-validation-for="ShipmentAttentionDelayHours" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsShipmentAttentionDelayHelp")</div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="ShipmentTrackingGraceHours" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingShipmentTrackingGraceHours")" content="@T.T("SiteSettingsShipmentTrackingGraceHoursHelp")" placement="right"></field-help>
                     <input asp-for="ShipmentTrackingGraceHours" class="form-control" type="number" min="1" />
                     <span asp-validation-for="ShipmentTrackingGraceHours" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsShipmentTrackingGraceHelp")</div>
@@ -1192,11 +1245,13 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="SoftDeleteRetentionDays" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSoftDeleteRetentionDays")" content="@T.T("SiteSettingsSoftDeleteRetentionDaysHelp")" placement="right"></field-help>
                     <input asp-for="SoftDeleteRetentionDays" class="form-control" type="number" min="1" />
                     <span asp-validation-for="SoftDeleteRetentionDays" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="SoftDeleteCleanupBatchSize" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSoftDeleteCleanupBatchSize")" content="@T.T("SiteSettingsSoftDeleteCleanupBatchSizeHelp")" placement="right"></field-help>
                     <input asp-for="SoftDeleteCleanupBatchSize" class="form-control" type="number" min="1" />
                     <span asp-validation-for="SoftDeleteCleanupBatchSize" class="text-danger"></span>
                 </div>
@@ -1219,20 +1274,24 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="DisplayWeightUnit" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDisplayWeightUnit")" content="@T.T("SiteSettingsDisplayWeightUnitHelp")" placement="right"></field-help>
                     <input asp-for="DisplayWeightUnit" class="form-control" />
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="DisplayLengthUnit" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingDisplayLengthUnit")" content="@T.T("SiteSettingsDisplayLengthUnitHelp")" placement="right"></field-help>
                     <input asp-for="DisplayLengthUnit" class="form-control" />
                 </div>
             </div>
 
             <div class="mb-3">
                 <label asp-for="MeasurementSettingsJson" class="form-label"></label>
+                <field-help title="@T.T("SiteSettingMeasurementSettingsJson")" content="@T.T("SiteSettingsMeasurementSettingsJsonHelp")" placement="right"></field-help>
                 <textarea asp-for="MeasurementSettingsJson" class="form-control" rows="2"></textarea>
             </div>
             <div class="mb-3">
                 <label asp-for="NumberFormattingOverridesJson" class="form-label"></label>
+                <field-help title="@T.T("SiteSettingNumberFormattingOverridesJson")" content="@T.T("SiteSettingsNumberFormattingOverridesJsonHelp")" placement="right"></field-help>
                 <textarea asp-for="NumberFormattingOverridesJson" class="form-control" rows="2"></textarea>
             </div>
         </div>
@@ -1245,22 +1304,27 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="EnableCanonical" />
                 <label class="form-check-label" asp-for="EnableCanonical"></label>
+                <field-help title="@T.T("SiteSettingEnableCanonical")" content="@T.T("SiteSettingsEnableCanonicalHelp")" placement="right"></field-help>
             </div>
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="HreflangEnabled" />
                 <label class="form-check-label" asp-for="HreflangEnabled"></label>
+                <field-help title="@T.T("SiteSettingHreflangEnabled")" content="@T.T("SiteSettingsHreflangEnabledHelp")" placement="right"></field-help>
             </div>
 
             <div class="mb-3">
                 <label asp-for="SeoTitleTemplate" class="form-label"></label>
+                <field-help title="@T.T("SiteSettingSeoTitleTemplate")" content="@T.T("SiteSettingsSeoTitleTemplateHelp")" placement="right"></field-help>
                 <input asp-for="SeoTitleTemplate" class="form-control" />
             </div>
             <div class="mb-3">
                 <label asp-for="SeoMetaDescriptionTemplate" class="form-label"></label>
+                <field-help title="@T.T("SiteSettingSeoMetaDescriptionTemplate")" content="@T.T("SiteSettingsSeoMetaDescriptionTemplateHelp")" placement="right"></field-help>
                 <input asp-for="SeoMetaDescriptionTemplate" class="form-control" />
             </div>
             <div class="mb-3">
                 <label asp-for="OpenGraphDefaultsJson" class="form-label"></label>
+                <field-help title="@T.T("SiteSettingOpenGraphDefaultsJson")" content="@T.T("SiteSettingsOpenGraphDefaultsJsonHelp")" placement="right"></field-help>
                 <textarea asp-for="OpenGraphDefaultsJson" class="form-control" rows="2"></textarea>
             </div>
         </div>
@@ -1273,20 +1337,24 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="GoogleAnalyticsId" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingGoogleAnalyticsId")" content="@T.T("SiteSettingsGoogleAnalyticsIdHelp")" placement="right"></field-help>
                     <input asp-for="GoogleAnalyticsId" class="form-control" />
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="GoogleTagManagerId" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingGoogleTagManagerId")" content="@T.T("SiteSettingsGoogleTagManagerIdHelp")" placement="right"></field-help>
                     <input asp-for="GoogleTagManagerId" class="form-control" />
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="GoogleSearchConsoleVerification" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingGoogleSearchConsoleVerification")" content="@T.T("SiteSettingsGoogleSearchConsoleVerificationHelp")" placement="right"></field-help>
                     <input asp-for="GoogleSearchConsoleVerification" class="form-control" />
                 </div>
             </div>
 
             <div class="mb-3">
                 <label asp-for="FeatureFlagsJson" class="form-label"></label>
+                <field-help title="@T.T("SiteSettingFeatureFlagsJson")" content="@T.T("SiteSettingsFeatureFlagsJsonHelp")" placement="right"></field-help>
                 <textarea asp-for="FeatureFlagsJson" class="form-control" rows="2"></textarea>
             </div>
         </div>
@@ -1305,10 +1373,12 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="WhatsAppBusinessPhoneId" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingWhatsAppBusinessPhoneId")" content="@T.T("SiteSettingsWhatsAppBusinessPhoneIdHelp")" placement="right"></field-help>
                     <input asp-for="WhatsAppBusinessPhoneId" class="form-control" />
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="WhatsAppAccessToken" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingWhatsAppAccessToken")" content="@T.T("SiteSettingsWhatsAppAccessTokenHelp")" placement="right"></field-help>
                     <input asp-for="WhatsAppAccessToken" class="form-control" type="password" autocomplete="new-password" />
                 </div>
             </div>
@@ -1316,10 +1386,12 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="WhatsAppFromPhoneE164" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingWhatsAppFromPhoneE164")" content="@T.T("SiteSettingsWhatsAppFromPhoneE164Help")" placement="right"></field-help>
                     <input asp-for="WhatsAppFromPhoneE164" class="form-control" />
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="WhatsAppAdminRecipientsCsv" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingWhatsAppAdminRecipientsCsv")" content="@T.T("SiteSettingsWhatsAppAdminRecipientsCsvHelp")" placement="right"></field-help>
                     <input asp-for="WhatsAppAdminRecipientsCsv" class="form-control" />
                 </div>
             </div>
@@ -1338,10 +1410,12 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="WebAuthnRelyingPartyName" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingWebAuthnRelyingPartyName")" content="@T.T("SiteSettingsWebAuthnRelyingPartyNameHelp")" placement="right"></field-help>
                     <input asp-for="WebAuthnRelyingPartyName" class="form-control" />
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="WebAuthnAllowedOriginsCsv" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingWebAuthnAllowedOriginsCsv")" content="@T.T("SiteSettingsWebAuthnAllowedOriginsCsvHelp")" placement="right"></field-help>
                     <input asp-for="WebAuthnAllowedOriginsCsv" class="form-control" />
                 </div>
             </div>
@@ -1361,25 +1435,30 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="SmtpEnabled" />
                 <label class="form-check-label" asp-for="SmtpEnabled"></label>
+                <field-help title="@T.T("SiteSettingSmtpEnabled")" content="@T.T("SiteSettingsSmtpEnabledHelp")" placement="right"></field-help>
             </div>
 
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmtpHost" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmtpHost")" content="@T.T("SiteSettingsSmtpHostHelp")" placement="right"></field-help>
                     <input asp-for="SmtpHost" class="form-control" />
                 </div>
                 <div class="col-md-2 mb-3">
                     <label asp-for="SmtpPort" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmtpPort")" content="@T.T("SiteSettingsSmtpPortHelp")" placement="right"></field-help>
                     <input asp-for="SmtpPort" class="form-control" />
                 </div>
                 <div class="col-md-2 mb-3 d-flex align-items-center">
                     <div class="form-check form-switch">
                         <input class="form-check-input" asp-for="SmtpEnableSsl" />
                         <label class="form-check-label" asp-for="SmtpEnableSsl"></label>
+                        <field-help title="@T.T("SiteSettingSmtpEnableSsl")" content="@T.T("SiteSettingsSmtpEnableSslHelp")" placement="right"></field-help>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmtpUsername" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmtpUsername")" content="@T.T("SiteSettingsSmtpUsernameHelp")" placement="right"></field-help>
                     <input asp-for="SmtpUsername" class="form-control" />
                 </div>
             </div>
@@ -1387,14 +1466,17 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmtpPassword" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmtpPassword")" content="@T.T("SiteSettingsSmtpPasswordHelp")" placement="right"></field-help>
                     <input asp-for="SmtpPassword" class="form-control" type="password" autocomplete="new-password" />
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmtpFromAddress" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmtpFromAddress")" content="@T.T("SiteSettingsSmtpFromAddressHelp")" placement="right"></field-help>
                     <input asp-for="SmtpFromAddress" class="form-control" />
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmtpFromDisplayName" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmtpFromDisplayName")" content="@T.T("SiteSettingsSmtpFromDisplayNameHelp")" placement="right"></field-help>
                     <input asp-for="SmtpFromDisplayName" class="form-control" />
                 </div>
             </div>
@@ -1408,19 +1490,23 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="SmsEnabled" />
                 <label class="form-check-label" asp-for="SmsEnabled"></label>
+                <field-help title="@T.T("SiteSettingSmsEnabled")" content="@T.T("SiteSettingsSmsEnabledHelp")" placement="right"></field-help>
             </div>
 
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmsProvider" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmsProvider")" content="@T.T("SiteSettingsSmsProviderHelp")" placement="right"></field-help>
                     <input asp-for="SmsProvider" class="form-control" />
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmsFromPhoneE164" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmsFromPhoneE164")" content="@T.T("SiteSettingsSmsFromPhoneE164Help")" placement="right"></field-help>
                     <input asp-for="SmsFromPhoneE164" class="form-control" />
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="SmsApiKey" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmsApiKey")" content="@T.T("SiteSettingsSmsApiKeyHelp")" placement="right"></field-help>
                     <input asp-for="SmsApiKey" class="form-control" type="password" autocomplete="new-password" />
                 </div>
             </div>
@@ -1428,10 +1514,12 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="SmsApiSecret" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmsApiSecret")" content="@T.T("SiteSettingsSmsApiSecretHelp")" placement="right"></field-help>
                     <input asp-for="SmsApiSecret" class="form-control" type="password" autocomplete="new-password" />
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="SmsExtraSettingsJson" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingSmsExtraSettingsJson")" content="@T.T("SiteSettingsSmsExtraSettingsJsonHelp")" placement="right"></field-help>
                     <textarea asp-for="SmsExtraSettingsJson" class="form-control" rows="2"></textarea>
                 </div>
             </div>
@@ -1444,6 +1532,7 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
         <div class="card-body">
             <div class="mb-3">
                 <label asp-for="AdminAlertEmailsCsv" class="form-label"></label>
+                <field-help title="@T.T("SiteSettingAdminAlertEmailsCsv")" content="@T.T("SiteSettingsAdminAlertEmailsCsvHelp")" placement="right"></field-help>
                 <input asp-for="AdminAlertEmailsCsv" class="form-control" />
             </div>
             <div class="mb-3">
@@ -1794,30 +1883,35 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="TransactionalEmailSubjectPrefix" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingTransactionalEmailSubjectPrefix")" content="@T.T("SiteSettingsTransactionalEmailSubjectPrefixHelp")" placement="right"></field-help>
                     <input asp-for="TransactionalEmailSubjectPrefix" class="form-control" placeholder="@T.T("SiteSettingsTransactionalEmailSubjectPrefixPlaceholder")" />
                     <span asp-validation-for="TransactionalEmailSubjectPrefix" class="text-danger"></span>
                     <div class="form-text">@T.T("BusinessCommunicationPhaseOneImplicationSubjectPrefix")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="CommunicationTestInboxEmail" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingCommunicationTestInboxEmail")" content="@T.T("SiteSettingsCommunicationTestInboxEmailHelp")" placement="right"></field-help>
                     <input asp-for="CommunicationTestInboxEmail" class="form-control" placeholder="@T.T("SiteSettingsCommunicationTestInboxPlaceholder")" />
                     <span asp-validation-for="CommunicationTestInboxEmail" class="text-danger"></span>
                     <div class="form-text">@T.T("BusinessCommunicationPhaseOneImplicationTestInbox")</div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="CommunicationTestSmsRecipientE164" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingCommunicationTestSmsRecipientE164")" content="@T.T("SiteSettingsCommunicationTestSmsTargetHelp")" placement="right"></field-help>
                     <input asp-for="CommunicationTestSmsRecipientE164" class="form-control" placeholder="@T.T("SiteSettingsCommunicationTestPhonePlaceholder")" />
                     <span asp-validation-for="CommunicationTestSmsRecipientE164" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsCommunicationTestSmsTargetHelp")</div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="CommunicationTestWhatsAppRecipientE164" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingCommunicationTestWhatsAppRecipientE164")" content="@T.T("SiteSettingsWhatsAppTransportTestHelp")" placement="right"></field-help>
                     <input asp-for="CommunicationTestWhatsAppRecipientE164" class="form-control" placeholder="@T.T("SiteSettingsCommunicationTestPhonePlaceholder")" />
                     <span asp-validation-for="CommunicationTestWhatsAppRecipientE164" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsWhatsAppTransportTestHelp")</div>
                 </div>
                 <div class="col-md-3">
                     <label asp-for="PhoneVerificationPreferredChannel" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingPhoneVerificationPreferredChannel")" content="@T.T("SiteSettingsPhoneVerificationPreferredChannelHelp")" placement="right"></field-help>
                     <select asp-for="PhoneVerificationPreferredChannel" class="form-select">
                         <option value="Sms">@CommunicationChannelLabel("SMS")</option>
                         <option value="WhatsApp">@CommunicationChannelLabel("WhatsApp")</option>
@@ -1829,6 +1923,7 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" asp-for="PhoneVerificationAllowFallback" />
                         <label class="form-check-label" asp-for="PhoneVerificationAllowFallback"></label>
+                        <field-help title="@T.T("SiteSettingPhoneVerificationAllowFallback")" content="@T.T("SiteSettingsPhoneVerificationAllowFallbackHelp")" placement="right"></field-help>
                     </div>
                 </div>
             </div>
@@ -2018,66 +2113,78 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="CommunicationTestEmailSubjectTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingCommunicationTestEmailSubjectTemplate")" content="@T.T("SiteSettingsCommunicationTestEmailSubjectHelp")" placement="right"></field-help>
                     <input asp-for="CommunicationTestEmailSubjectTemplate" class="form-control" placeholder="@T.T("SiteSettingsCommunicationTestEmailSubjectPlaceholder")" />
                     <span asp-validation-for="CommunicationTestEmailSubjectTemplate" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsCommunicationTestEmailSubjectHelp")</div>
                 </div>
                 <div class="col-md-12">
                     <label asp-for="CommunicationTestEmailBodyTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingCommunicationTestEmailBodyTemplate")" content="@T.T("SiteSettingsCommunicationTestEmailBodyHelp")" placement="right"></field-help>
                     <textarea asp-for="CommunicationTestEmailBodyTemplate" class="form-control" rows="5" placeholder="@T.T("SiteSettingsCommunicationTestEmailBodyPlaceholder")"></textarea>
                     <span asp-validation-for="CommunicationTestEmailBodyTemplate" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsCommunicationTestEmailBodyHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="CommunicationTestSmsTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingCommunicationTestSmsTemplate")" content="@T.T("SiteSettingsCommunicationTestSmsTemplateHelp")" placement="right"></field-help>
                     <textarea asp-for="CommunicationTestSmsTemplate" class="form-control" rows="3" placeholder="@T.T("SiteSettingsCommunicationTestSmsTemplatePlaceholder")"></textarea>
                     <span asp-validation-for="CommunicationTestSmsTemplate" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsCommunicationTestSmsTemplateHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="CommunicationTestWhatsAppTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingCommunicationTestWhatsAppTemplate")" content="@T.T("SiteSettingsCommunicationTestWhatsAppTemplateHelp")" placement="right"></field-help>
                     <textarea asp-for="CommunicationTestWhatsAppTemplate" class="form-control" rows="3" placeholder="@T.T("SiteSettingsCommunicationTestWhatsAppTemplatePlaceholder")"></textarea>
                     <span asp-validation-for="CommunicationTestWhatsAppTemplate" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsCommunicationTestWhatsAppTemplateHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="BusinessInvitationEmailSubjectTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingBusinessInvitationEmailSubjectTemplate")" content="@T.T("SiteSettingsBusinessInvitationEmailSubjectTemplateHelp")" placement="right"></field-help>
                     <input asp-for="BusinessInvitationEmailSubjectTemplate" class="form-control" placeholder="@T.T("SiteSettingsBusinessInvitationEmailSubjectPlaceholder")" />
                     <span asp-validation-for="BusinessInvitationEmailSubjectTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="AccountActivationEmailSubjectTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingAccountActivationEmailSubjectTemplate")" content="@T.T("SiteSettingsAccountActivationEmailSubjectTemplateHelp")" placement="right"></field-help>
                     <input asp-for="AccountActivationEmailSubjectTemplate" class="form-control" placeholder="@T.T("SiteSettingsAccountActivationEmailSubjectPlaceholder")" />
                     <span asp-validation-for="AccountActivationEmailSubjectTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-12">
                     <label asp-for="BusinessInvitationEmailBodyTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingBusinessInvitationEmailBodyTemplate")" content="@T.T("SiteSettingsBusinessInvitationEmailBodyTemplateHelp")" placement="right"></field-help>
                     <textarea asp-for="BusinessInvitationEmailBodyTemplate" class="form-control" rows="6"></textarea>
                     <span asp-validation-for="BusinessInvitationEmailBodyTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-12">
                     <label asp-for="AccountActivationEmailBodyTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingAccountActivationEmailBodyTemplate")" content="@T.T("SiteSettingsAccountActivationEmailBodyTemplateHelp")" placement="right"></field-help>
                     <textarea asp-for="AccountActivationEmailBodyTemplate" class="form-control" rows="5"></textarea>
                     <span asp-validation-for="AccountActivationEmailBodyTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="PasswordResetEmailSubjectTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingPasswordResetEmailSubjectTemplate")" content="@T.T("SiteSettingsPasswordResetEmailSubjectTemplateHelp")" placement="right"></field-help>
                     <input asp-for="PasswordResetEmailSubjectTemplate" class="form-control" placeholder="@T.T("SiteSettingsPasswordResetEmailSubjectPlaceholder")" />
                     <span asp-validation-for="PasswordResetEmailSubjectTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-12">
                     <label asp-for="PasswordResetEmailBodyTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingPasswordResetEmailBodyTemplate")" content="@T.T("SiteSettingsPasswordResetEmailBodyTemplateHelp")" placement="right"></field-help>
                     <textarea asp-for="PasswordResetEmailBodyTemplate" class="form-control" rows="5"></textarea>
                     <span asp-validation-for="PasswordResetEmailBodyTemplate" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="PhoneVerificationSmsTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingPhoneVerificationSmsTemplate")" content="@T.T("SiteSettingsPhoneVerificationSmsTemplateHelp")" placement="right"></field-help>
                     <textarea asp-for="PhoneVerificationSmsTemplate" class="form-control" rows="3" placeholder="@T.T("SiteSettingsPhoneVerificationSmsTemplatePlaceholder")"></textarea>
                     <span asp-validation-for="PhoneVerificationSmsTemplate" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsPhoneVerificationSmsTemplateHelp")</div>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="PhoneVerificationWhatsAppTemplate" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingPhoneVerificationWhatsAppTemplate")" content="@T.T("SiteSettingsPhoneVerificationWhatsAppTemplateHelp")" placement="right"></field-help>
                     <textarea asp-for="PhoneVerificationWhatsAppTemplate" class="form-control" rows="3" placeholder="@T.T("SiteSettingsPhoneVerificationWhatsAppTemplatePlaceholder")"></textarea>
                     <span asp-validation-for="PhoneVerificationWhatsAppTemplate" class="text-danger"></span>
                     <div class="form-text">@T.T("SiteSettingsPhoneVerificationWhatsAppTemplateHelp")</div>

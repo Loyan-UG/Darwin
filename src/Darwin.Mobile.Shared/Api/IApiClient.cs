@@ -7,7 +7,7 @@ namespace Darwin.Mobile.Shared.Api
     /// <summary>
     /// Minimal HTTP abstraction used by the mobile apps with bearer handling and JSON (de)serialization.
     /// Design goals:
-    /// - Keep call sites concise by returning functional Result/Result<T>...</T>
+    /// - Keep call sites concise by returning functional <see cref="Result"/> and <see cref="Result{TValue}"/> values.
     /// - Avoid throwing exceptions for expected HTTP errors (except cancellations).
     /// - Provide helpers for endpoints that intentionally return 204 No Content.
     /// </summary>
