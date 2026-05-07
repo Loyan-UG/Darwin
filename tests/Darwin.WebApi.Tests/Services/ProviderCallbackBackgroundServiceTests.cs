@@ -148,6 +148,53 @@ public sealed class ProviderCallbackBackgroundServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_Should_MarkUnsupportedProviderCallbackAsFailed_WhenProviderIsWhitespace()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "   ",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_whitespace_provider",
+            PayloadJson = "{}",
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single().Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.FailureReason.Should().Contain("Unsupported provider callback provider");
+        item.FailureReason.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
     public async Task ExecuteAsync_Should_MarkInvalidDhlPayloadAsFailed()
     {
         await using var db = ProviderCallbackWorkerTestDbContext.Create();
@@ -191,6 +238,70 @@ public sealed class ProviderCallbackBackgroundServiceTests
         item.Status.Should().Be("Failed");
         item.AttemptCount.Should().Be(1);
         item.FailureReason.Should().Contain("DHL callback payload was invalid");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_MarkDhlCallbackAsFailed_WhenShipmentNotFound()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "DHL",
+            CallbackType = "shipment_event",
+            IdempotencyKey = "evt_dhl_shipment_not_found",
+            PayloadJson = """
+            {
+              "providerShipmentReference": "dhl-ref-missing",
+              "carrierEventKey": "delivered",
+              "occurredAtUtc": "2026-05-02T10:00:00Z",
+              "providerStatus": "DELIVERED",
+              "trackingNumber": "TRK-999"
+            }
+            """,
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new Mock<IStringLocalizer<ValidationResource>>();
+        localizer.Setup(x => x[It.IsAny<string>()]).Returns((string key) => new LocalizedString(key, key));
+        var validator = new ApplyShipmentCarrierEventValidator(localizer.Object);
+        var dhlHandler = new ApplyShipmentCarrierEventHandler(db, validator, localizer.Object);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+        serviceProvider.Setup(x => x.GetService(typeof(ApplyShipmentCarrierEventHandler))).Returns(dhlHandler);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 5,
+                MaxAttempts = 3
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_dhl_shipment_not_found").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.FailureReason.Should().Contain("ShipmentNotFoundForCarrierCallback");
+        item.ProcessedAtUtc.Should().BeNull();
+        item.LastAttemptAtUtc.Should().NotBeNull();
     }
 
     [Fact]
@@ -323,6 +434,81 @@ public sealed class ProviderCallbackBackgroundServiceTests
         item.Status.Should().Be("Pending");
         item.AttemptCount.Should().Be(1);
         item.FailureReason.Should().BeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessEligibleMessages_WhenBatchContainsMaxAttemptsReachedMessage()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_item_blocked_by_max_attempts",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 3,
+                LastAttemptAtUtc = now.AddMinutes(-10),
+                CreatedAtUtc = now.AddMinutes(-20)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_item_processed",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                LastAttemptAtUtc = null,
+                CreatedAtUtc = now.AddMinutes(-5)
+            });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 2,
+                MaxAttempts = 3,
+                RetryCooldownSeconds = 0
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var blockedItem = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_item_blocked_by_max_attempts", TestContext.Current.CancellationToken);
+        var processedItem = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_item_processed", TestContext.Current.CancellationToken);
+
+        blockedItem.AttemptCount.Should().Be(3);
+        blockedItem.Status.Should().Be("Pending");
+        blockedItem.ProcessedAtUtc.Should().BeNull();
+        blockedItem.FailureReason.Should().BeNullOrEmpty();
+        blockedItem.LastAttemptAtUtc.Should().Be(now.AddMinutes(-10));
+
+        processedItem.Status.Should().Be("Failed");
+        processedItem.AttemptCount.Should().Be(1);
+        processedItem.ProcessedAtUtc.Should().BeNull();
+        processedItem.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+        processedItem.LastAttemptAtUtc.Should().Be(now);
     }
 
     [Fact]
@@ -529,6 +715,542 @@ public sealed class ProviderCallbackBackgroundServiceTests
         item.AttemptCount.Should().Be(1);
         item.FailureReason.Should().BeNullOrEmpty();
         item.LastAttemptAtUtc.Should().Be(now.AddHours(-1));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessMessage_WhenStatusIsAlreadySucceeded()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_already_succeeded",
+            PayloadJson = "{}",
+            Status = "Succeeded",
+            AttemptCount = 1,
+            LastAttemptAtUtc = now.AddHours(-1)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 30,
+                MaxAttempts = 3
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single().Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Succeeded");
+        item.AttemptCount.Should().Be(1);
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(now.AddHours(-1));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessMessage_WhenStatusIsAlreadySucceededIgnoreCase()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_already_succeeded_case",
+            PayloadJson = "{}",
+            Status = "SUCCEEDED",
+            AttemptCount = 2,
+            LastAttemptAtUtc = now.AddHours(-1)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 30,
+                MaxAttempts = 3
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single().Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("SUCCEEDED");
+        item.AttemptCount.Should().Be(2);
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(now.AddHours(-1));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessMessage_WhenStatusIsAlreadyProcessedIgnoreCase()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_already_processed_lowercase",
+            PayloadJson = "{}",
+            Status = "processed",
+            AttemptCount = 3,
+            LastAttemptAtUtc = now.AddHours(-2)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 30,
+                MaxAttempts = 3
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single().Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("processed");
+        item.AttemptCount.Should().Be(3);
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(now.AddHours(-2));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessMessage_WhenStatusIsAlreadyFailedIgnoreCase()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_already_failed_uppercase",
+            PayloadJson = "{}",
+            Status = "FAILED",
+            AttemptCount = 4,
+            LastAttemptAtUtc = now.AddHours(-3)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 0,
+                MaxAttempts = 3
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single().Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("FAILED");
+        item.AttemptCount.Should().Be(4);
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(now.AddHours(-3));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessOnlyExactPendingOrFailedStatusesInBatch()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_pending_lowercase",
+                PayloadJson = "{}",
+                Status = "pending",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-20)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_failed_uppercase",
+                PayloadJson = "{}",
+                Status = "FAILED",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-15)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_valid_pending",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-10)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 3,
+                MaxAttempts = 3,
+                RetryCooldownSeconds = 0
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var lower = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_pending_lowercase", TestContext.Current.CancellationToken);
+        var upper = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_failed_uppercase", TestContext.Current.CancellationToken);
+        var valid = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_valid_pending", TestContext.Current.CancellationToken);
+
+        lower.Status.Should().Be("pending");
+        lower.AttemptCount.Should().Be(0);
+        lower.FailureReason.Should().BeNullOrEmpty();
+
+        upper.Status.Should().Be("FAILED");
+        upper.AttemptCount.Should().Be(0);
+        upper.FailureReason.Should().BeNullOrEmpty();
+
+        valid.Status.Should().Be("Failed");
+        valid.AttemptCount.Should().Be(1);
+        valid.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessPendingMessage_WhenBatchContainsSucceededMessage()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_contains_succeeded_skipped",
+                PayloadJson = "{}",
+                Status = "Succeeded",
+                AttemptCount = 1,
+                LastAttemptAtUtc = now.AddHours(-2)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_contains_pending_processed",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-10)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 2,
+                MaxAttempts = 3,
+                RetryCooldownSeconds = 0
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var skipped = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_contains_succeeded_skipped", TestContext.Current.CancellationToken);
+        var processed = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_contains_pending_processed", TestContext.Current.CancellationToken);
+
+        skipped.Status.Should().Be("Succeeded");
+        skipped.AttemptCount.Should().Be(1);
+        skipped.LastAttemptAtUtc.Should().Be(now.AddHours(-2));
+        skipped.FailureReason.Should().BeNullOrEmpty();
+
+        processed.Status.Should().Be("Failed");
+        processed.AttemptCount.Should().Be(1);
+        processed.ProcessedAtUtc.Should().BeNull();
+        processed.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+        processed.LastAttemptAtUtc.Should().Be(now);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessBatchItems_WithNonCanonicalStatus_WhenCanonicalPendingMessageIsPresent()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_noncanonical_pending_lowercase",
+                PayloadJson = "{}",
+                Status = "pending",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-20)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_noncanonical_failed_uppercase",
+                PayloadJson = "{}",
+                Status = "FAILED",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-15)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_noncanonical_pending_canonical",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-10)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 3,
+                MaxAttempts = 3,
+                RetryCooldownSeconds = 0
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var lower = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_noncanonical_pending_lowercase", TestContext.Current.CancellationToken);
+        var upper = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_noncanonical_failed_uppercase", TestContext.Current.CancellationToken);
+        var canonical = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_noncanonical_pending_canonical", TestContext.Current.CancellationToken);
+
+        lower.Status.Should().Be("pending");
+        lower.AttemptCount.Should().Be(0);
+        lower.FailureReason.Should().BeNullOrEmpty();
+
+        upper.Status.Should().Be("FAILED");
+        upper.AttemptCount.Should().Be(0);
+        upper.FailureReason.Should().BeNullOrEmpty();
+
+        canonical.Status.Should().Be("Failed");
+        canonical.AttemptCount.Should().Be(1);
+        canonical.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+        canonical.LastAttemptAtUtc.Should().Be(now);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessOldestItemFirst_WhenBatchSizeIsOne()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_order_oldest",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                LastAttemptAtUtc = now.AddMinutes(-30),
+                CreatedAtUtc = now.AddMinutes(-40)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_order_newest",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                LastAttemptAtUtc = now.AddMinutes(-1),
+                CreatedAtUtc = now.AddMinutes(-20)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_order_failed_middle",
+                PayloadJson = "{}",
+                Status = "Failed",
+                AttemptCount = 0,
+                LastAttemptAtUtc = now.AddMinutes(-10),
+                CreatedAtUtc = now.AddMinutes(-30)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 1,
+                MaxAttempts = 3,
+                RetryCooldownSeconds = 0
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var oldest = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_order_oldest", TestContext.Current.CancellationToken);
+        var failedMiddle = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_order_failed_middle", TestContext.Current.CancellationToken);
+        var newest = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_order_newest", TestContext.Current.CancellationToken);
+
+        oldest.Status.Should().Be("Failed");
+        oldest.AttemptCount.Should().Be(1);
+        oldest.LastAttemptAtUtc.Should().Be(now);
+        oldest.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+
+        failedMiddle.Status.Should().Be("Failed");
+        failedMiddle.AttemptCount.Should().Be(0);
+        failedMiddle.FailureReason.Should().BeNullOrEmpty();
+
+        newest.Status.Should().Be("Pending");
+        newest.AttemptCount.Should().Be(0);
+        newest.FailureReason.Should().BeNullOrEmpty();
     }
 
     [Fact]
@@ -2195,6 +2917,80 @@ public sealed class ProviderCallbackBackgroundServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_Should_ProcessEligibleFailedMessage_WhenBatchContainsFailedMessageAtMaxAttempts()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_failed_blocked",
+                PayloadJson = "{}",
+                Status = "Failed",
+                AttemptCount = 2,
+                LastAttemptAtUtc = fixedTime.AddMinutes(-30),
+                CreatedAtUtc = fixedTime.AddMinutes(-31)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_failed_processed",
+                PayloadJson = "{}",
+                Status = "Failed",
+                AttemptCount = 1,
+                LastAttemptAtUtc = fixedTime.AddMinutes(-5),
+                CreatedAtUtc = fixedTime.AddMinutes(-6)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 2,
+                RetryCooldownSeconds = 0,
+                MaxAttempts = 2
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var blocked = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_batch_failed_blocked").Id, TestContext.Current.CancellationToken);
+        var processed = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_batch_failed_processed").Id, TestContext.Current.CancellationToken);
+
+        blocked.Status.Should().Be("Failed");
+        blocked.AttemptCount.Should().Be(2);
+        blocked.LastAttemptAtUtc.Should().Be(fixedTime.AddMinutes(-30));
+        blocked.ProcessedAtUtc.Should().BeNull();
+        blocked.FailureReason.Should().BeNullOrEmpty();
+
+        processed.Status.Should().Be("Failed");
+        processed.AttemptCount.Should().Be(2);
+        processed.ProcessedAtUtc.Should().BeNull();
+        processed.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+        processed.LastAttemptAtUtc.Should().Be(fixedTime);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_Should_NotProcessMessage_WhenCallbackIsDeleted()
     {
         await using var db = ProviderCallbackWorkerTestDbContext.Create();
@@ -2589,6 +3385,275 @@ public sealed class ProviderCallbackBackgroundServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_Should_NotProcessFailedMessage_WhenRetryCooldownSecondsIsNegative()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_failed_retry_negative",
+            PayloadJson = "{}",
+            Status = "Failed",
+            AttemptCount = 1,
+            LastAttemptAtUtc = fixedTime.AddSeconds(-3),
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = -1,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_failed_retry_negative").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(1);
+        item.Status.Should().Be("Failed");
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(fixedTime.AddSeconds(-3));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessPendingMessage_WhenRetryCooldownSecondsIsNegative()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_pending_retry_negative",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            LastAttemptAtUtc = fixedTime.AddSeconds(-3),
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = -1,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_pending_retry_negative").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(0);
+        item.Status.Should().Be("Pending");
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(fixedTime.AddSeconds(-3));
+        item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessPendingMessage_WhenRetryCooldownSecondsIsNegative_AndLastAttemptAtIsNull()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_pending_retry_negative_no_last_attempt",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            LastAttemptAtUtc = null,
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = -1,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_pending_retry_negative_no_last_attempt").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(1);
+        item.Status.Should().Be("Failed");
+        item.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+        item.LastAttemptAtUtc.Should().Be(fixedTime);
+        item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_RespectRetryCooldownMaxClamp_ForPendingMessages()
+    {
+        var fixedTime = new DateTime(2026, 5, 7, 12, 0, 0, DateTimeKind.Utc);
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_retry_clamp_pending_processed",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            LastAttemptAtUtc = fixedTime.AddHours(-2),
+            CreatedAtUtc = fixedTime.AddHours(-3)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 90000,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_retry_clamp_pending_processed").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(1);
+        item.Status.Should().Be("Failed");
+        item.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+        item.ProcessedAtUtc.Should().BeNull();
+        item.LastAttemptAtUtc.Should().Be(fixedTime);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_RespectRetryCooldownMaxClamp_WhenWithinWindow()
+    {
+        var fixedTime = new DateTime(2026, 5, 7, 12, 0, 0, DateTimeKind.Utc);
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_retry_clamp_pending_skipped",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            LastAttemptAtUtc = fixedTime.AddMinutes(-30),
+            CreatedAtUtc = fixedTime.AddHours(-3)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 90000,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_retry_clamp_pending_skipped").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(0);
+        item.Status.Should().Be("Pending");
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(fixedTime.AddMinutes(-30));
+        item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
     public async Task ExecuteAsync_Should_RespectRetryCooldownNormalization_ForFailedMessages()
     {
         var fixedTime = DateTime.UtcNow;
@@ -2640,6 +3705,147 @@ public sealed class ProviderCallbackBackgroundServiceTests
         item.FailureReason.Should().BeNullOrEmpty();
         item.LastAttemptAtUtc.Should().Be(fixedTime.AddSeconds(-1));
         item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_UseSingleClockSnapshot_ForAllItemsInBatch()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_snapshot_first",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                CreatedAtUtc = fixedTime.AddMinutes(-10)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_batch_snapshot_second",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                CreatedAtUtc = fixedTime.AddMinutes(-10)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 2,
+                RetryCooldownSeconds = 0,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var first = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_snapshot_first", TestContext.Current.CancellationToken);
+        var second = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_snapshot_second", TestContext.Current.CancellationToken);
+
+        first.Status.Should().Be("Failed");
+        first.AttemptCount.Should().Be(1);
+        first.LastAttemptAtUtc.Should().Be(fixedTime);
+        first.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+
+        second.Status.Should().Be("Failed");
+        second.AttemptCount.Should().Be(1);
+        second.LastAttemptAtUtc.Should().Be(fixedTime);
+        second.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessReadyPendingMessage_WhenFailedMessageIsInRetryCooldown()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_failed_in_cooldown",
+                PayloadJson = "{}",
+                Status = "Failed",
+                AttemptCount = 1,
+                LastAttemptAtUtc = fixedTime.AddSeconds(-10),
+                CreatedAtUtc = fixedTime.AddMinutes(-30)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_pending_ready",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                CreatedAtUtc = fixedTime.AddMinutes(-5)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 2,
+                RetryCooldownSeconds = 15,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var blockedFailed = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_failed_in_cooldown", TestContext.Current.CancellationToken);
+        var readyPending = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_pending_ready", TestContext.Current.CancellationToken);
+
+        blockedFailed.Status.Should().Be("Failed");
+        blockedFailed.AttemptCount.Should().Be(1);
+        blockedFailed.LastAttemptAtUtc.Should().Be(fixedTime.AddSeconds(-10));
+        blockedFailed.FailureReason.Should().BeNullOrEmpty();
+
+        readyPending.Status.Should().Be("Failed");
+        readyPending.AttemptCount.Should().Be(1);
+        readyPending.LastAttemptAtUtc.Should().Be(fixedTime);
+        readyPending.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
     }
 
     [Fact]
@@ -2769,6 +3975,214 @@ public sealed class ProviderCallbackBackgroundServiceTests
         item.AttemptCount.Should().Be(25);
         item.Status.Should().Be("Failed");
         item.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'.");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ClampMaxAttemptsToMinimum()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_max_attempts_lower",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 5,
+                MaxAttempts = 0
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_max_attempts_lower").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(1);
+        item.Status.Should().Be("Failed");
+        item.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'.");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ClampNegativeMaxAttemptsToMinimum()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_max_attempts_negative",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 5,
+                MaxAttempts = -1
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_max_attempts_negative").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(1);
+        item.Status.Should().Be("Failed");
+        item.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'.");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessFailedMessage_WhenAttemptCountAtNormalizedMinimum_WithNegativeMaxAttempts()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_max_attempts_negative_failed",
+            PayloadJson = "{}",
+            Status = "Failed",
+            AttemptCount = 1,
+            CreatedAtUtc = fixedTime.AddMinutes(-30),
+            LastAttemptAtUtc = fixedTime.AddMinutes(-20),
+            FailureReason = "pre-existing reason"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 5,
+                MaxAttempts = -1
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_max_attempts_negative_failed").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.FailureReason.Should().Be("pre-existing reason");
+        item.LastAttemptAtUtc.Should().Be(fixedTime.AddMinutes(-20));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessMessage_WhenAttemptCountAlreadyAtNormalizedMinimum()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_max_attempts_normalized_min_skip",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 1,
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 5,
+                MaxAttempts = 0
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_max_attempts_normalized_min_skip").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(1);
+        item.Status.Should().Be("Pending");
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().BeNull();
     }
 
     [Fact]
@@ -6147,9 +7561,552 @@ public sealed class ProviderCallbackBackgroundServiceTests
         scopeFactory.Verify(x => x.CreateScope(), Times.Once);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessNextItem_WhenCancellationRequestedDuringFirstItemClaimSaveInBatch()
+    {
+        var databaseName = $"darwin_provider_callback_worker_batch_claim_cancel_{Guid.NewGuid()}";
+        var now = DateTime.UtcNow;
+        var claimSaveStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using (var setupDb = ProviderCallbackWorkerTestDbContext.Create(databaseName))
+        {
+            setupDb.Set<ProviderCallbackInboxMessage>().AddRange(
+                new ProviderCallbackInboxMessage
+                {
+                    Provider = "Unknown",
+                    CallbackType = "webhook_event",
+                    IdempotencyKey = "evt_batch_claim_cancel_first",
+                    PayloadJson = "{}",
+                    Status = "Pending",
+                    CreatedAtUtc = now.AddHours(-2)
+                },
+                new ProviderCallbackInboxMessage
+                {
+                    Provider = "Unknown",
+                    CallbackType = "webhook_event",
+                    IdempotencyKey = "evt_batch_claim_cancel_second",
+                    PayloadJson = "{}",
+                    Status = "Pending",
+                    CreatedAtUtc = now.AddHours(-1)
+                });
+
+            await setupDb.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var db = ProviderCallbackBackgroundServiceCancellationDelayWithSignalDbContext.Create(
+            databaseName,
+            claimSaveStarted);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 2,
+                MaxAttempts = 3
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(cancellationTokenSource.Token);
+        await claimSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellationTokenSource.Cancel();
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        await using var verificationDb = ProviderCallbackWorkerTestDbContext.Create(databaseName);
+        var firstItem = await verificationDb.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_claim_cancel_first", TestContext.Current.CancellationToken);
+        var secondItem = await verificationDb.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_claim_cancel_second", TestContext.Current.CancellationToken);
+
+        firstItem.Status.Should().Be("Pending");
+        firstItem.AttemptCount.Should().Be(0);
+        firstItem.ProcessedAtUtc.Should().BeNull();
+        firstItem.FailureReason.Should().BeNull();
+        firstItem.LastAttemptAtUtc.Should().BeNull();
+
+        secondItem.Status.Should().Be("Pending");
+        secondItem.AttemptCount.Should().Be(0);
+        secondItem.ProcessedAtUtc.Should().BeNull();
+        secondItem.FailureReason.Should().BeNull();
+        secondItem.LastAttemptAtUtc.Should().BeNull();
+
+        scopeFactory.Verify(x => x.CreateScope(), Times.Once);
+    }
+
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessNextItem_WhenCancellationRequestedDuringFirstItemCompletionInBatch()
+    {
+        var databaseName = $"darwin_provider_callback_worker_batch_completion_cancel_{Guid.NewGuid()}";
+        var now = DateTime.UtcNow;
+        var completionSaveStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using (var setupDb = ProviderCallbackWorkerTestDbContext.Create(databaseName))
+        {
+            setupDb.Set<ProviderCallbackInboxMessage>().AddRange(
+                new ProviderCallbackInboxMessage
+                {
+                    Provider = "Unknown",
+                    CallbackType = "webhook_event",
+                    IdempotencyKey = "evt_batch_completion_cancel_first",
+                    PayloadJson = "{}",
+                    Status = "Pending",
+                    CreatedAtUtc = now.AddHours(-2)
+                },
+                new ProviderCallbackInboxMessage
+                {
+                    Provider = "Unknown",
+                    CallbackType = "webhook_event",
+                    IdempotencyKey = "evt_batch_completion_cancel_second",
+                    PayloadJson = "{}",
+                    Status = "Pending",
+                    CreatedAtUtc = now.AddHours(-1)
+                });
+
+            await setupDb.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var db = ProviderCallbackBackgroundServiceCancellationDuringBatchCompletionSaveDbContext.Create(
+            databaseName,
+            completionSaveStarted);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 2,
+                MaxAttempts = 3
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(cancellationTokenSource.Token);
+        await completionSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellationTokenSource.Cancel();
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        await using var verificationDb = ProviderCallbackWorkerTestDbContext.Create(databaseName);
+        var firstItem = await verificationDb.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_completion_cancel_first", TestContext.Current.CancellationToken);
+        var secondItem = await verificationDb.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_batch_completion_cancel_second", TestContext.Current.CancellationToken);
+
+        firstItem.Status.Should().Be("Pending");
+        firstItem.AttemptCount.Should().Be(1);
+        firstItem.ProcessedAtUtc.Should().BeNull();
+        firstItem.FailureReason.Should().BeNull();
+        firstItem.LastAttemptAtUtc.Should().NotBeNull();
+
+        secondItem.Status.Should().Be("Pending");
+        secondItem.AttemptCount.Should().Be(0);
+        secondItem.ProcessedAtUtc.Should().BeNull();
+        secondItem.FailureReason.Should().BeNull();
+        secondItem.LastAttemptAtUtc.Should().BeNull();
+
+        scopeFactory.Verify(x => x.CreateScope(), Times.Once);
+    }
+
     private sealed class FixedClock(DateTime utcNow) : IClock
     {
         public DateTime UtcNow { get; } = utcNow;
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_RespectRetryCooldownNormalization_ForPendingMessages()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_retry_pending_normalized",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            LastAttemptAtUtc = fixedTime.AddSeconds(-1),
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 0,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_retry_pending_normalized").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(0);
+        item.Status.Should().Be("Pending");
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(fixedTime.AddSeconds(-1));
+        item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessPendingMessage_WhenLastAttemptAtAtOrBeforeCutoff()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_pending_cutoff",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            LastAttemptAtUtc = fixedTime.AddSeconds(-5),
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 5,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_pending_cutoff").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(1);
+        item.Status.Should().Be("Failed");
+        item.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+        item.LastAttemptAtUtc.Should().Be(fixedTime);
+        item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessPendingMessage_WhenRetryCooldownIsBelowMinimum()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_pending_retry_too_low",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            LastAttemptAtUtc = fixedTime.AddSeconds(-3),
+            CreatedAtUtc = fixedTime.AddMinutes(-30)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 1,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_pending_retry_too_low").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(0);
+        item.Status.Should().Be("Pending");
+        item.FailureReason.Should().BeNullOrEmpty();
+        item.LastAttemptAtUtc.Should().Be(fixedTime.AddSeconds(-3));
+        item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessPendingMessage_WhenRetryCooldownIsClampedToMaximum()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_pending_retry_too_high",
+            PayloadJson = "{}",
+            Status = "Pending",
+            AttemptCount = 0,
+            LastAttemptAtUtc = fixedTime.AddSeconds(-3650),
+            CreatedAtUtc = fixedTime.AddMinutes(-120)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 7200,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_pending_retry_too_high").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(1);
+        item.Status.Should().Be("Failed");
+        item.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'.");
+        item.LastAttemptAtUtc.Should().Be(fixedTime);
+        item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessFailedMessage_WhenRetryCooldownIsClampedToMaximum()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Unknown",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_failed_retry_too_high",
+            PayloadJson = "{}",
+            Status = "Failed",
+            AttemptCount = 1,
+            LastAttemptAtUtc = fixedTime.AddSeconds(-3650),
+            CreatedAtUtc = fixedTime.AddMinutes(-120)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                RetryCooldownSeconds = 9000,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_failed_retry_too_high").Id, TestContext.Current.CancellationToken);
+
+        item.AttemptCount.Should().Be(2);
+        item.Status.Should().Be("Failed");
+        item.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'.");
+        item.LastAttemptAtUtc.Should().Be(fixedTime);
+        item.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_SanitizeFailureReason_ForUnsupportedProviderWithControlCharacters()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "U\nn\tk\ro w\n\ra\ty",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_failure_reason_sanitized",
+            PayloadJson = "{}",
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_failure_reason_sanitized").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.FailureReason.Should().NotContain("\n");
+        item.FailureReason.Should().NotContain("\r");
+        item.FailureReason.Should().NotContain("\t");
+        item.FailureReason.Should().Contain("Unsupported provider callback provider");
+        item.FailureReason.Should().Contain("U n k o w a y");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_TruncateFailureReason_ForUnsupportedProvider_WhenFailureMessageExceedsMaxLength()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        var hugeProvider = new string('P', 3000);
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = hugeProvider,
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_failure_reason_truncated",
+            PayloadJson = "{}",
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_failure_reason_truncated").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.FailureReason.Should().HaveLength(1024);
+        item.FailureReason.Should().StartWith("Unsupported provider callback provider '");
+        item.FailureReason.Should().NotBeNullOrWhiteSpace();
     }
 
     private sealed class ProviderCallbackWorkerTestDbContext : DbContext, IAppDbContext
@@ -6453,6 +8410,107 @@ public sealed class ProviderCallbackBackgroundServiceTests
         {
             await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
             return 0;
+        }
+    }
+
+    private sealed class ProviderCallbackBackgroundServiceCancellationDuringBatchCompletionSaveDbContext : DbContext, IAppDbContext
+    {
+        private readonly TaskCompletionSource<bool> _completionSaveStarted;
+        private int _completionSaveCallCount;
+
+        public DbSet<ProviderCallbackInboxMessage> ProviderCallbackInboxMessages { get; set; } = null!;
+        public DbSet<EventLog> EventLogs { get; set; } = null!;
+        public DbSet<EmailDispatchAudit> EmailDispatchAudits { get; set; } = null!;
+        public DbSet<Darwin.Domain.Entities.Orders.Shipment> Shipments { get; set; } = null!;
+        public DbSet<Darwin.Domain.Entities.Orders.ShipmentCarrierEvent> ShipmentCarrierEvents { get; set; } = null!;
+
+        private ProviderCallbackBackgroundServiceCancellationDuringBatchCompletionSaveDbContext(
+            DbContextOptions<ProviderCallbackBackgroundServiceCancellationDuringBatchCompletionSaveDbContext> options,
+            TaskCompletionSource<bool> completionSaveStarted)
+            : base(options)
+        {
+            _completionSaveStarted = completionSaveStarted;
+        }
+
+        public static ProviderCallbackBackgroundServiceCancellationDuringBatchCompletionSaveDbContext Create(
+            string databaseName,
+            TaskCompletionSource<bool> completionSaveStarted)
+        {
+            var options = new DbContextOptionsBuilder<ProviderCallbackBackgroundServiceCancellationDuringBatchCompletionSaveDbContext>()
+                .UseInMemoryDatabase(databaseName)
+                .Options;
+
+            return new ProviderCallbackBackgroundServiceCancellationDuringBatchCompletionSaveDbContext(options, completionSaveStarted);
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public override int SaveChanges()
+        {
+            return SaveChangesAsync().GetAwaiter().GetResult();
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var isCompletionSave = ChangeTracker.Entries<ProviderCallbackInboxMessage>()
+                .Any(entry => entry.State != EntityState.Unchanged && !string.Equals(entry.Entity.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+
+            if (isCompletionSave && Interlocked.Increment(ref _completionSaveCallCount) == 1)
+            {
+                _completionSaveStarted.TrySetResult(true);
+                await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            }
+
+            return await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private sealed class ProviderCallbackBackgroundServiceCancellationDelayWithSignalDbContext : DbContext, IAppDbContext
+    {
+        private readonly TaskCompletionSource<bool> _claimStarted;
+        private int _saveCallCount;
+
+        public DbSet<ProviderCallbackInboxMessage> ProviderCallbackInboxMessages { get; set; } = null!;
+        public DbSet<EventLog> EventLogs { get; set; } = null!;
+        public DbSet<EmailDispatchAudit> EmailDispatchAudits { get; set; } = null!;
+        public DbSet<Darwin.Domain.Entities.Orders.Shipment> Shipments { get; set; } = null!;
+        public DbSet<Darwin.Domain.Entities.Orders.ShipmentCarrierEvent> ShipmentCarrierEvents { get; set; } = null!;
+
+        private ProviderCallbackBackgroundServiceCancellationDelayWithSignalDbContext(
+            DbContextOptions<ProviderCallbackBackgroundServiceCancellationDelayWithSignalDbContext> options,
+            TaskCompletionSource<bool> claimStarted)
+            : base(options)
+        {
+            _claimStarted = claimStarted;
+        }
+
+        public static ProviderCallbackBackgroundServiceCancellationDelayWithSignalDbContext Create(
+            string databaseName,
+            TaskCompletionSource<bool> claimStarted)
+        {
+            var options = new DbContextOptionsBuilder<ProviderCallbackBackgroundServiceCancellationDelayWithSignalDbContext>()
+                .UseInMemoryDatabase(databaseName)
+                .Options;
+
+            return new ProviderCallbackBackgroundServiceCancellationDelayWithSignalDbContext(options, claimStarted);
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public override int SaveChanges()
+        {
+            return SaveChangesAsync().GetAwaiter().GetResult();
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _saveCallCount) == 1)
+            {
+                _claimStarted.TrySetResult(true);
+                await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            }
+
+            return await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
