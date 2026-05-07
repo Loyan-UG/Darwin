@@ -19,6 +19,20 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${shared.siteTitle}`,
     },
     description: shared.siteDescription,
+    icons: {
+      icon: [
+        {
+          url: "/images/DarwinJustLogo.png",
+          type: "image/png",
+        },
+      ],
+      apple: [
+        {
+          url: "/apple-icon.png",
+          type: "image/png",
+        },
+      ],
+    },
   };
 }
 

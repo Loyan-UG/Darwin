@@ -152,7 +152,7 @@ export function AccountContentCompositionWindow({
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
           {copy.accountCompositionJourneyTitle}
         </p>
@@ -163,7 +163,7 @@ export function AccountContentCompositionWindow({
           {[routeCard, nextCard, storefrontCard].map((card) => (
             <article
               key={`${card.label}-${card.title}`}
-              className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+              className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {card.label}
@@ -192,7 +192,7 @@ export function AccountContentCompositionWindow({
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
           {copy.accountCompositionRouteMapTitle}
         </p>
@@ -203,7 +203,7 @@ export function AccountContentCompositionWindow({
           {extendedRouteMapItems.map((item) => (
             <article
               key={`${item.label}-${item.title}`}
-              className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+              className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {item.label}

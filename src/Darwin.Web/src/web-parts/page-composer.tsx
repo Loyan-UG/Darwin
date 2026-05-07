@@ -24,7 +24,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
   return (
     <div className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 flex-col gap-8 px-5 py-10 sm:px-6 lg:px-8">
       {sectionLinks.length > 0 ? (
-        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-5 py-5 shadow-[var(--shadow-panel)] backdrop-blur sm:px-6">
+        <section className="sticky top-4 z-10 rounded-[1rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-5 py-5 shadow-[var(--shadow-panel)] backdrop-blur sm:px-6">
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div className="space-y-1">
@@ -65,7 +65,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-28 overflow-hidden rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] shadow-[var(--shadow-panel)]"
+              className="scroll-mt-28 overflow-hidden rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] shadow-[var(--shadow-panel)]"
             >
               <div className="grid gap-6 px-6 py-8 sm:px-8 sm:py-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
                 <div>
@@ -95,7 +95,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   </div>
                 </div>
 
-                <div className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-6">
+                <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-6">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent)]">
                     {part.panelTitle ?? part.eyebrow}
                   </p>
@@ -120,7 +120,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
@@ -138,7 +138,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                 {part.metrics.map((metric) => (
                   <article
                     key={metric.id}
-                    className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                    className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
                       {metric.label}
@@ -161,7 +161,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
@@ -180,7 +180,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   {part.cards.map((card) => (
                     <article
                       key={card.id}
-                      className="flex h-full flex-col rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                      className="flex h-full flex-col rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
                     >
                       {card.eyebrow ? (
                         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
@@ -210,7 +210,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   ))}
                 </div>
               ) : (
-                <div className="mt-8 rounded-[1.75rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
                   {part.emptyMessage}
                 </div>
               )}
@@ -223,7 +223,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
@@ -242,7 +242,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   {part.items.map((item) => (
                     <article
                       key={item.id}
-                      className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                      className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
                     >
                       {item.meta ? (
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
@@ -267,7 +267,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   ))}
                 </div>
               ) : (
-                <div className="mt-8 rounded-[1.75rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
                   {part.emptyMessage}
                 </div>
               )}
@@ -280,7 +280,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
@@ -299,7 +299,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   {part.items.map((item) => (
                     <article
                       key={item.id}
-                      className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                      className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -340,7 +340,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   ))}
                 </div>
               ) : (
-                <div className="mt-8 rounded-[1.75rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
                   {part.emptyMessage}
                 </div>
               )}
@@ -353,7 +353,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
@@ -372,7 +372,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   {part.items.map((item, index) => (
                     <article
                       key={item.id}
-                      className="relative rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                      className="relative rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
                     >
                       {index < part.items.length - 1 ? (
                         <span className="pointer-events-none absolute -right-3 top-10 hidden h-px w-6 bg-[var(--color-border-strong)] xl:block" />
@@ -403,7 +403,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   ))}
                 </div>
               ) : (
-                <div className="mt-8 rounded-[1.75rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
                   {part.emptyMessage}
                 </div>
               )}
@@ -418,7 +418,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
@@ -438,8 +438,8 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                     key={panel.id}
                     className={
                       index === 0
-                        ? "rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[linear-gradient(145deg,rgba(228,240,212,0.72),rgba(255,253,248,1))] p-5"
-                        : "rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                        ? "rounded-[1rem] border border-[var(--color-border-soft)] bg-[linear-gradient(145deg,rgba(228,240,212,0.72),rgba(255,253,248,1))] p-5"
+                        : "rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
                     }
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
@@ -476,7 +476,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
@@ -495,7 +495,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   {part.columns.map((column) => (
                     <article
                       key={column.id}
-                      className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                      className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
                     >
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                         {column.label}
@@ -533,7 +533,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   ))}
                 </div>
               ) : (
-                <div className="mt-8 rounded-[1.75rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
                   {part.emptyMessage}
                 </div>
               )}
@@ -546,7 +546,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
@@ -565,7 +565,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   {part.items.map((item) => (
                     <article
                       key={item.id}
-                      className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
+                      className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-5"
                     >
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                         {item.label}
@@ -601,7 +601,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
                   ))}
                 </div>
               ) : (
-                <div className="mt-8 rounded-[1.75rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
                   {part.emptyMessage}
                 </div>
               )}
@@ -613,7 +613,7 @@ export function PageComposer({ parts, culture }: PageComposerProps) {
             <section
               key={part.id}
               id={part.id}
-              className="scroll-mt-24 rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-8 text-center shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
+              className="scroll-mt-24 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-8 text-center shadow-[var(--shadow-panel)] sm:px-8 sm:py-10"
             >
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
               {part.eyebrow}

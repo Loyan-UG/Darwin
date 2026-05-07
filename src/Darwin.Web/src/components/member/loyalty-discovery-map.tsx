@@ -65,7 +65,7 @@ export function LoyaltyDiscoveryMap({
 
   if (positionedBusinesses.length === 0) {
     return (
-      <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-sm leading-7 text-[var(--color-text-secondary)]">
+      <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-sm leading-7 text-[var(--color-text-secondary)]">
         {copy.mapPreviewUnavailableMessage}
       </div>
     );
@@ -73,7 +73,7 @@ export function LoyaltyDiscoveryMap({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_300px]">
-      <div className="relative min-h-[22rem] overflow-hidden rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[radial-gradient(circle_at_top,rgba(228,240,212,0.95),rgba(255,253,248,1))]">
+      <div className="relative min-h-[22rem] overflow-hidden rounded-[1rem] border border-[var(--color-border-soft)] bg-[radial-gradient(circle_at_top,rgba(228,240,212,0.95),rgba(255,253,248,1))]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(168,184,153,0.18)_1px,transparent_1px),linear-gradient(to_bottom,rgba(168,184,153,0.18)_1px,transparent_1px)] bg-[size:24px_24px]" />
         {typeof latitude === "number" && typeof longitude === "number" ? (
           <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
@@ -103,7 +103,7 @@ export function LoyaltyDiscoveryMap({
         </div>
       </div>
 
-      <div className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
           {copy.mapLegendTitle}
         </p>
@@ -112,7 +112,7 @@ export function LoyaltyDiscoveryMap({
             <Link
               key={business.id}
               href={localizeHref(buildLoyaltyBusinessPath(business.id), culture)}
-              className="rounded-[1.25rem] bg-white/80 px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)] transition hover:bg-white"
+              className="rounded-[1rem] bg-white/80 px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)] transition hover:bg-white"
             >
               <p className="font-semibold text-[var(--color-text-primary)]">
                 {business.name}

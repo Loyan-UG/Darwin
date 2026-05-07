@@ -124,7 +124,7 @@ export function ProfilePage({
   return (
     <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-6">
-        <div className="overflow-hidden rounded-[2.25rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
+        <div className="overflow-hidden rounded-[1rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_340px] lg:items-end">
             <div>
               <nav
@@ -168,7 +168,7 @@ export function ProfilePage({
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.profileReadinessIdentityLabel}
                 </p>
@@ -176,7 +176,7 @@ export function ProfilePage({
                   {profileReadinessState}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.profileReadinessPhoneLabel}
                 </p>
@@ -184,7 +184,7 @@ export function ProfilePage({
                   {phoneReadinessState}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
+              <article className="rounded-[1rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/78">
                   {copy.profileReadinessLocaleLabel}
                 </p>
@@ -201,7 +201,7 @@ export function ProfilePage({
         <form
           action={updateMemberProfileAction}
           id="profile-form"
-          className="scroll-mt-28 rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
+          className="scroll-mt-28 rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
             {copy.profileRouteLabel}
@@ -330,7 +330,7 @@ export function ProfilePage({
         <div className="flex flex-col gap-6">
           <MemberPortalNav culture={culture} activePath="/account/profile" />
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.boundaryTitle}
             </p>
@@ -339,7 +339,7 @@ export function ProfilePage({
             </p>
           </aside>
 
-          <aside id="profile-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <aside id="profile-readiness" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.profileReadinessTitle}
             </p>
@@ -385,7 +385,7 @@ export function ProfilePage({
             </div>
           </aside>
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.memberRouteSummaryTitle}
             </p>
@@ -467,7 +467,7 @@ export function ProfilePage({
             productsStatus={productsStatus}
           />
 
-          <aside id="profile-verification" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <aside id="profile-verification" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.phoneVerificationEyebrow}
             </p>

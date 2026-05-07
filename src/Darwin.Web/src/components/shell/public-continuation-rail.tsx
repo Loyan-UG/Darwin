@@ -26,7 +26,7 @@ export function PublicContinuationRail({
   items,
 }: PublicContinuationRailProps) {
   return (
-    <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+    <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
         {eyebrow}
       </p>
@@ -40,7 +40,7 @@ export function PublicContinuationRail({
         {items.map((item) => (
           <article
             key={item.id}
-            className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+            className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
               {item.label}

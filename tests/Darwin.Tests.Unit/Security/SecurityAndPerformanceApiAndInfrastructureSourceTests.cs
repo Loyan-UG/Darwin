@@ -690,13 +690,13 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("var defaultTimeZone = siteSettings.TimeZone ?? string.Empty;");
         source.Should().Contain("var roleRes = await _getRoleIdByKey.HandleAsync(\"Members\", ct);");
         source.Should().Contain("if (roleRes.Succeeded) defaultRoleId = roleRes.Value;");
-        source.Should().Contain("var sign = await _signIn.HandleAsync(new SignInDto { Email = email.Trim(), Password = password, RememberMe = true }, ct);");
+        source.Should().Contain("var result = await _register.HandleAsync(create, defaultRoleId, ct);");
         source.Should().Contain("return Redirect(SafeReturnUrl(returnUrl));");
         source.Should().Contain("private async Task IssueCookieAsync(Guid userId, string securityStamp, bool persistent, CancellationToken ct)");
         source.Should().Contain("new Claim(ClaimTypes.NameIdentifier, userId.ToString())");
         source.Should().Contain("new Claim(\"sstamp\", securityStamp)");
         source.Should().Contain("CookieAuthenticationDefaults.AuthenticationScheme");
-        source.Should().Contain("ExpiresUtc = persistent ? DateTimeOffset.UtcNow.AddDays(30) : (DateTimeOffset?)null");
+        source.Should().Contain("ExpiresUtc = persistent ? new DateTimeOffset(_clock.UtcNow, TimeSpan.Zero).AddDays(30) : (DateTimeOffset?)null");
         source.Should().Contain("private async Task<string> DeterminePostLoginRedirectAsync(Guid userId, string? returnUrl, CancellationToken ct)");
         source.Should().Contain("if (IsSafeLocalReturnUrl(returnUrl))");
         source.Should().Contain("await _permissions.HasAsync(userId, \"AccessAdminPanel\", ct)");
@@ -747,11 +747,23 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         dependencyInjectionSource.Should().Contain("factory.Create(typeof(SharedResource));");
         dependencyInjectionSource.Should().Contain("services.AddApplication();");
         dependencyInjectionSource.Should().Contain("services.AddSharedHostingDataProtection(config);");
-        dependencyInjectionSource.Should().Contain("services.AddPersistence(config);");
+        dependencyInjectionSource.Should().Contain("services.AddConfiguredPersistence(config);");
         dependencyInjectionSource.Should().Contain("services.AddAntiforgery(options =>");
         dependencyInjectionSource.Should().Contain("options.HeaderName = \"RequestVerificationToken\";");
         dependencyInjectionSource.Should().Contain("services.AddMemoryCache();");
         dependencyInjectionSource.Should().Contain("services.AddScoped<ISiteSettingCache, SiteSettingCache>();");
+    }
+
+
+    [Fact]
+    public void WebAdminDependencyInjection_Should_FallbackCookiePolicyToAlwaysWhenNotConfigured()
+    {
+        var dependencyInjectionSource = ReadWebAdminFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+
+        dependencyInjectionSource.Should().Contain("private static CookieSecurePolicy ResolveCookieSecurePolicy(IConfiguration config)");
+        dependencyInjectionSource.Should().Contain("var configured = config[\"Security:CookieSecurePolicy\"];");
+        dependencyInjectionSource.Should().Contain("Enum.TryParse<CookieSecurePolicy>(configured, ignoreCase: true, out var policy)");
+        dependencyInjectionSource.Should().Contain(": CookieSecurePolicy.Always;");
     }
 
 
@@ -1546,15 +1558,14 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         controllerSource.Should().Contain("private readonly ProviderCallbackInboxWriter _inboxWriter;");
         controllerSource.Should().Contain("private readonly GetSiteSettingHandler _getSiteSettingHandler;");
         controllerSource.Should().Contain("private readonly StripeWebhookSignatureVerifier _signatureVerifier;");
-        controllerSource.Should().Contain("Request.EnableBuffering();");
         controllerSource.Should().Contain("var signatureHeader = Request.Headers[\"Stripe-Signature\"].ToString();");
         controllerSource.Should().Contain("siteSetting.StripeWebhookSecret");
         controllerSource.Should().Contain("_signatureVerifier.TryVerify(rawPayload, signatureHeader, siteSetting.StripeWebhookSecret, out var errorKey)");
         controllerSource.Should().Contain("var existing = await _inboxWriter.AddIfNewAsync(");
-        controllerSource.Should().Contain("Provider = \"Stripe\",");
-        controllerSource.Should().Contain("IdempotencyKey = eventId,");
-        controllerSource.Should().Contain("PayloadJson = rawPayload,");
-        controllerSource.Should().Contain("duplicate = existing,");
+        controllerSource.Should().Contain("callbackType: eventType,");
+        controllerSource.Should().Contain("idempotencyKey: eventId,");
+        controllerSource.Should().Contain("rawPayload,");
+        controllerSource.Should().Contain("duplicate = existing");
 
         verifierSource.Should().Contain("public sealed class StripeWebhookSignatureVerifier");
         verifierSource.Should().Contain("private static readonly TimeSpan DefaultTolerance = TimeSpan.FromMinutes(10);");
@@ -1566,7 +1577,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
 
         handlerSource.Should().Contain("public sealed class ProcessStripeWebhookHandler");
         handlerSource.Should().Contain("_db.Set<EventLog>()");
-        handlerSource.Should().Contain("AnyAsync(x => x.IdempotencyKey == eventId, ct)");
+        handlerSource.Should().Contain("AnyAsync(x => !x.IsDeleted && x.IdempotencyKey == eventId, ct)");
         handlerSource.Should().Contain("case \"payment_intent.succeeded\":");
         handlerSource.Should().Contain("case \"charge.refunded\":");
         handlerSource.Should().Contain("case \"invoice.paid\":");
@@ -1593,16 +1604,15 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         controllerSource.Should().Contain("[HttpPost(\"/api/v1/shipping/dhl/webhooks\")]");
         controllerSource.Should().Contain("private readonly ProviderCallbackInboxWriter _inboxWriter;");
         controllerSource.Should().Contain("private readonly GetSiteSettingHandler _getSiteSettingHandler;");
-        controllerSource.Should().Contain("Request.EnableBuffering();");
         controllerSource.Should().Contain("var apiKeyHeader = Request.Headers[\"X-DHL-Key\"].ToString();");
         controllerSource.Should().Contain("var signatureHeader = Request.Headers[\"X-DHL-Signature\"].ToString();");
         controllerSource.Should().Contain("TryVerifySignature(rawPayload, signatureHeader, siteSetting.DhlApiSecret)");
         controllerSource.Should().Contain("var idempotencyKey = BuildIdempotencyKey(request);");
         controllerSource.Should().Contain("var existing = await _inboxWriter.AddIfNewAsync(");
-        controllerSource.Should().Contain("Provider = \"DHL\",");
-        controllerSource.Should().Contain("IdempotencyKey = idempotencyKey,");
-        controllerSource.Should().Contain("PayloadJson = rawPayload,");
-        controllerSource.Should().Contain("duplicate = existing,");
+        controllerSource.Should().Contain("callbackType: carrierEventKey,");
+        controllerSource.Should().Contain("idempotencyKey,");
+        controllerSource.Should().Contain("rawPayload,");
+        controllerSource.Should().Contain("duplicate = existing");
         controllerSource.Should().Contain("private static string BuildIdempotencyKey(DhlShipmentCallbackRequest request)");
         controllerSource.Should().Contain("request.OccurredAtUtc.ToUniversalTime().ToString(\"O\")");
 
@@ -1645,7 +1655,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         inboxConfigSource.Should().Contain("public sealed class ProviderCallbackInboxMessageConfiguration : IEntityTypeConfiguration<ProviderCallbackInboxMessage>");
         inboxConfigSource.Should().Contain("builder.ToTable(\"ProviderCallbackInboxMessages\", schema: \"Integration\");");
         inboxConfigSource.Should().Contain("builder.HasIndex(x => new { x.Provider, x.Status, x.CreatedAtUtc });");
-        inboxConfigSource.Should().Contain("builder.HasIndex(x => x.IdempotencyKey);");
+        inboxConfigSource.Should().Contain("builder.HasIndex(x => new { x.Provider, x.IdempotencyKey })");
         shipmentProviderOperationConfigSource.Should().Contain("public sealed class ShipmentProviderOperationConfiguration : IEntityTypeConfiguration<ShipmentProviderOperation>");
         shipmentProviderOperationConfigSource.Should().Contain("builder.ToTable(\"ShipmentProviderOperations\", schema: \"Integration\");");
 
@@ -1706,6 +1716,36 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         source.Should().Contain("options.AddPolicy(\"provider-webhook\"");
         source.Should().Contain("PermitLimit = 60");
         source.Should().Contain("Window = TimeSpan.FromMinutes(1)");
+    }
+
+    [Fact]
+    public void DependencyInjection_Should_RegisterProviderCallbackInboxWriterAsScoped()
+    {
+        var source = ReadWebApiFile(Path.Combine("Extensions", "DependencyInjection.cs"));
+
+        source.Should().Contain("services.AddScoped<ProviderCallbackInboxWriter>();");
+    }
+
+    [Fact]
+    public void ProviderCallbackInboxWriter_Should_KeepDuplicateSafePersistenceContractWired()
+    {
+        var writerSource = ReadWebApiFile(Path.Combine("Services", "ProviderCallbackInboxWriter.cs"));
+
+        writerSource.Should().Contain("private readonly IAppDbContext _db;");
+        writerSource.Should().Contain("public ProviderCallbackInboxWriter(IAppDbContext db)");
+        writerSource.Should().Contain("_db = db ?? throw new ArgumentNullException(nameof(db));");
+        writerSource.Should().Contain("public async Task<bool> AddIfNewAsync(");
+        writerSource.Should().Contain("if (await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false))");
+        writerSource.Should().Contain("_db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage");
+        writerSource.Should().Contain("Status = \"Pending\"");
+        writerSource.Should().Contain("try");
+        writerSource.Should().Contain("await _db.SaveChangesAsync(ct).ConfigureAwait(false);");
+        writerSource.Should().Contain("catch (DbUpdateException)");
+        writerSource.Should().Contain("if (await InboxMessageExistsAsync(provider, idempotencyKey, ct).ConfigureAwait(false))");
+        writerSource.Should().Contain("return true;");
+        writerSource.Should().Contain("throw;");
+        writerSource.Should().Contain("private Task<bool> InboxMessageExistsAsync(string provider, string idempotencyKey, CancellationToken ct)");
+        writerSource.Should().Contain(".AnyAsync(x => !x.IsDeleted && x.Provider == provider && x.IdempotencyKey == idempotencyKey, ct)");
     }
 
     [Fact]

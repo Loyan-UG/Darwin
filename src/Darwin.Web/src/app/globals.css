@@ -152,6 +152,13 @@ select {
   color: var(--color-brand);
 }
 
+.cms-content img,
+.cms-content video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 .cms-content ul,
 .cms-content ol {
   padding-inline-start: 1.4rem;

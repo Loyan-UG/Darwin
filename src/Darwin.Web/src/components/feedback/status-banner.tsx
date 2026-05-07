@@ -15,7 +15,7 @@ export function StatusBanner({
       : "border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] text-[var(--color-text-secondary)]";
 
   return (
-    <div className={`rounded-[1.5rem] border px-4 py-4 ${toneClasses}`}>
+    <div className={`rounded-[1rem] border px-4 py-4 ${toneClasses}`}>
       <p className="text-sm font-semibold">{title}</p>
       <p className="mt-1 text-sm leading-7">{message}</p>
     </div>

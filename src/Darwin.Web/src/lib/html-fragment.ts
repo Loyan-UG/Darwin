@@ -48,3 +48,20 @@ export function sanitizeHtmlFragment(value: string) {
     ),
   );
 }
+
+export function resolveRelativeHtmlMediaUrls(
+  value: string,
+  resolveUrl: (path: string) => string,
+) {
+  if (!value) {
+    return "";
+  }
+
+  return value.replace(
+    /\s(src|href)\s*=\s*(["'])(\/uploads\/[^"']*)\2/gi,
+    (match, attribute: string, quote: string, path: string) => {
+      const resolvedUrl = resolveUrl(path);
+      return resolvedUrl ? ` ${attribute}=${quote}${resolvedUrl}${quote}` : match;
+    },
+  );
+}

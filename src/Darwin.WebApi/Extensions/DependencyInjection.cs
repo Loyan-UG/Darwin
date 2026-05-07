@@ -24,6 +24,7 @@ using Darwin.Application.Meta.Queries;                 // marker for Application
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Infrastructure.Health;
+using Darwin.Infrastructure.Media;
 using Darwin.WebApi.Auth;
 using Darwin.WebApi.Security;
 using Darwin.WebApi.Services;
@@ -77,6 +78,7 @@ namespace Darwin.WebApi.Extensions
             // Register a clock abstraction. SystemClock is stateless and singleton-safe;
             // several singleton security services depend on IClock.
             services.AddSingleton<IClock, SystemClock>();
+            services.Configure<MediaStorageOptions>(configuration.GetSection(MediaStorageOptions.SectionName));
 
             // HttpContextAccessor and a CurrentUser service used by handlers to obtain caller id.
             services.AddHttpContextAccessor();

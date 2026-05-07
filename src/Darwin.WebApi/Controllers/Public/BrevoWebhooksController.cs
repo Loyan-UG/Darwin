@@ -182,7 +182,7 @@ public sealed class BrevoWebhooksController : ApiControllerBase
 
     private static string? ReadString(JsonElement root, string propertyName)
     {
-        return root.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String
+        return TryGetProperty(root, propertyName, out var property) && property.ValueKind == JsonValueKind.String
             ? property.GetString()
             : null;
     }
@@ -203,7 +203,7 @@ public sealed class BrevoWebhooksController : ApiControllerBase
 
     private static string? ReadScalarAsString(JsonElement root, string propertyName)
     {
-        if (!root.TryGetProperty(propertyName, out var property))
+        if (!TryGetProperty(root, propertyName, out var property))
         {
             return null;
         }
@@ -214,5 +214,25 @@ public sealed class BrevoWebhooksController : ApiControllerBase
             JsonValueKind.String => property.GetString(),
             _ => null
         };
+    }
+
+    private static bool TryGetProperty(JsonElement root, string propertyName, out JsonElement property)
+    {
+        property = default;
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        foreach (var item in root.EnumerateObject())
+        {
+            if (string.Equals(item.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                property = item.Value;
+                return true;
+            }
+        }
+
+        return false;
     }
 }

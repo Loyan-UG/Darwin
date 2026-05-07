@@ -81,9 +81,9 @@ export function MemberAuthRequired({
   );
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
-      <div className="w-full rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
+      <div className="w-full rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
         <StatusBanner title={title} message={message} />
-        <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-4">
+        <div className="mt-6 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
             {copy.memberAuthRequiredRouteSummaryTitle}
           </p>
@@ -119,7 +119,7 @@ export function MemberAuthRequired({
             includeLoyalty={false}
           />
         </div>
-        <div className="mt-8 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+        <div className="mt-8 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent)]">
             {copy.memberAuthRequiredOfferBoardTitle}
           </p>

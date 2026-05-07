@@ -139,7 +139,7 @@ export function CommerceAuthHandoff({
       : copy.commerceAuthCartDescription;
 
   return (
-    <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+    <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
         {copy.commerceAuthEyebrow}
       </p>
@@ -150,7 +150,7 @@ export function CommerceAuthHandoff({
         {routeDescription}
       </p>
       <dl className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)] sm:grid-cols-2">
-        <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
           <dt className="font-semibold text-[var(--color-text-primary)]">
             {copy.commerceAuthCartSnapshotLabel}
           </dt>
@@ -161,7 +161,7 @@ export function CommerceAuthHandoff({
             })}
           </dd>
         </div>
-        <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
           <dt className="font-semibold text-[var(--color-text-primary)]">
             {copy.commerceAuthReturnPathLabel}
           </dt>
@@ -196,7 +196,7 @@ export function CommerceAuthHandoff({
           {copy.commerceAuthPasswordCta}
         </Link>
       </div>
-      <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+      <div className="mt-6 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             {copy.commerceAuthOfferBoardTitle}

@@ -186,7 +186,7 @@ export function CmsContentCompositionWindow({
 
   return (
     <>
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
           {copy.cmsCompositionJourneyTitle}
         </p>
@@ -194,7 +194,7 @@ export function CmsContentCompositionWindow({
           {copy.cmsCompositionJourneyMessage}
         </p>
         <div className="mt-5 grid gap-3">
-          <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
               {copy.cmsCompositionJourneyReadLabel}
             </p>
@@ -217,7 +217,7 @@ export function CmsContentCompositionWindow({
             </div>
           </article>
 
-          <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
               {copy.cmsCompositionJourneyReviewLabel}
             </p>
@@ -254,7 +254,7 @@ export function CmsContentCompositionWindow({
             </div>
           </article>
 
-          <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
               {commerceLabel}
             </p>
@@ -276,7 +276,7 @@ export function CmsContentCompositionWindow({
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
           {copy.cmsCompositionRouteMapTitle}
         </p>
@@ -287,7 +287,7 @@ export function CmsContentCompositionWindow({
           {routeMapItems.map((item) => (
             <article
               key={item.id}
-              className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+              className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {item.label}

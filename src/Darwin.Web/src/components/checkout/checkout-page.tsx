@@ -191,7 +191,7 @@ export function CheckoutPage({
   if (!cart) {
     return (
       <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-5 py-10 sm:px-6 lg:px-8">
-        <div className="flex w-full flex-col gap-6 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
+        <div className="flex w-full flex-col gap-6 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
           <StatusBanner
             tone="warning"
             title={copy.checkoutUnavailableTitle}
@@ -233,7 +233,7 @@ export function CheckoutPage({
           </span>
         </nav>
 
-        <div className="overflow-hidden rounded-[2.25rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
+        <div className="overflow-hidden rounded-[1rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_340px] lg:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
@@ -247,7 +247,7 @@ export function CheckoutPage({
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.cartLinesLabel}
                 </p>
@@ -255,7 +255,7 @@ export function CheckoutPage({
                   {cart.items.length}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.shippingLabel}
                 </p>
@@ -263,7 +263,7 @@ export function CheckoutPage({
                   {hasSelectedShipping ? copy.readyYes : copy.readyNo}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
+              <article className="rounded-[1rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/78">
                   {copy.estimatedGrandTotalLabel}
                 </p>
@@ -300,7 +300,7 @@ export function CheckoutPage({
           />
         )}
 
-        <div className="grid gap-4 rounded-[2rem] border border-[#dce6cf] bg-white px-6 py-6 shadow-[0_24px_60px_-36px_rgba(58,92,35,0.3)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="grid gap-4 rounded-[1rem] border border-[#dce6cf] bg-white px-6 py-6 shadow-[0_24px_60px_-36px_rgba(58,92,35,0.3)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.checkoutRouteSummaryTitle}
@@ -315,7 +315,7 @@ export function CheckoutPage({
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.5rem] bg-[#f7fbef] px-4 py-4">
+            <div className="rounded-[1rem] bg-[#f7fbef] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.addressReadyLabel}
               </p>
@@ -323,7 +323,7 @@ export function CheckoutPage({
                 {addressComplete ? copy.readyYes : copy.readyNo}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[#fff7ea] px-4 py-4">
+            <div className="rounded-[1rem] bg-[#fff7ea] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.intentReadyLabel}
               </p>
@@ -331,7 +331,7 @@ export function CheckoutPage({
                 {intent ? copy.readyYes : copy.readyNo}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[#eef8ec] px-4 py-4">
+            <div className="rounded-[1rem] bg-[#eef8ec] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowExposureLabel}
               </p>
@@ -342,7 +342,7 @@ export function CheckoutPage({
           </div>
         </div>
 
-        <section className="sticky top-4 z-10 rounded-[2rem] border border-[#dce6cf] bg-[color:color-mix(in_srgb,white_84%,#eff7e9_16%)] px-6 py-5 shadow-[0_24px_54px_-36px_rgba(58,92,35,0.32)] backdrop-blur">
+        <section className="sticky top-4 z-10 rounded-[1rem] border border-[#dce6cf] bg-[color:color-mix(in_srgb,white_84%,#eff7e9_16%)] px-6 py-5 shadow-[0_24px_54px_-36px_rgba(58,92,35,0.32)] backdrop-blur">
           <div className="flex flex-wrap gap-2">
             {sectionLinks.map((section) => (
               <a
@@ -360,7 +360,7 @@ export function CheckoutPage({
           id="checkout-overview"
           className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
         >
-          <section className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+          <section className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.checkoutConfidenceTitle}
             </p>
@@ -370,7 +370,7 @@ export function CheckoutPage({
                 : copy.checkoutConfidencePendingMessage}
             </p>
             <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.checkoutConfidenceLinesLabel}
                 </p>
@@ -380,7 +380,7 @@ export function CheckoutPage({
                   })}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.checkoutConfidenceAddressLabel}
                 </p>
@@ -390,7 +390,7 @@ export function CheckoutPage({
                     : copy.checkoutConfidenceAddressPending}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.checkoutConfidenceShippingLabel}
                 </p>
@@ -403,12 +403,12 @@ export function CheckoutPage({
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+          <section className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.checkoutAttentionTitle}
             </p>
             <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.checkoutAttentionBillingLabel}
                 </p>
@@ -418,7 +418,7 @@ export function CheckoutPage({
                   })}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.checkoutAttentionPhoneLabel}
                 </p>
@@ -428,7 +428,7 @@ export function CheckoutPage({
                     : copy.checkoutAttentionPhonePending}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.checkoutAttentionAddressBookLabel}
                 </p>
@@ -446,7 +446,7 @@ export function CheckoutPage({
 
         <section
           id="checkout-payment-window"
-          className="scroll-mt-28 rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(150deg,#ffffff_0%,#f7fbef_55%,#fff3dc_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]"
+          className="scroll-mt-28 rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(150deg,#ffffff_0%,#f7fbef_55%,#fff3dc_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.checkoutPaymentWindowTitle}
@@ -455,7 +455,7 @@ export function CheckoutPage({
             {copy.checkoutPaymentWindowMessage}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowRouteLabel}
               </p>
@@ -465,7 +465,7 @@ export function CheckoutPage({
                   : copy.checkoutPaymentWindowRoutePending}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowTotalLabel}
               </p>
@@ -473,7 +473,7 @@ export function CheckoutPage({
                 {formatMoney(projectedCheckoutTotalMinor, cart.currency, culture)}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowCarryOverLabel}
               </p>
@@ -481,7 +481,7 @@ export function CheckoutPage({
                 {formatMoney(openBillingExposureMinor, cart.currency, culture)}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowAccountLabel}
               </p>
@@ -491,7 +491,7 @@ export function CheckoutPage({
                   : copy.checkoutPaymentWindowAccountGuest}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowBillingLabel}
               </p>
@@ -507,7 +507,7 @@ export function CheckoutPage({
                   : copy.checkoutPaymentWindowBillingEmpty}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowExposureLabel}
               </p>
@@ -515,7 +515,7 @@ export function CheckoutPage({
                 {formatMoney(combinedExposureMinor, cart.currency, culture)}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.checkoutPaymentWindowBalanceStateLabel}
               </p>
@@ -549,7 +549,7 @@ export function CheckoutPage({
           className="scroll-mt-28 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_360px]"
         >
           <div className="grid gap-8">
-            <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+            <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                   {copy.savedAddressEyebrow}
@@ -583,7 +583,7 @@ export function CheckoutPage({
                       return (
                         <article
                           key={address.id}
-                          className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5"
+                          className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5"
                         >
                           <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
@@ -649,12 +649,12 @@ export function CheckoutPage({
                     })}
                   </div>
                 ) : (
-                  <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                  <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                     <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
                       {copy.savedAddressEmptyMessage}
                     </p>
                     {memberProfile ? (
-                      <div className="mt-4 rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      <div className="mt-4 rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                           {copy.savedProfilePrefillTitle}
                         </p>
@@ -691,7 +691,7 @@ export function CheckoutPage({
             </section>
 
             {(memberProfile || memberPreferences || memberAddressesStatus !== "idle") && (
-              <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+              <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                     {copy.memberCheckoutContextEyebrow}
@@ -709,7 +709,7 @@ export function CheckoutPage({
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.memberCheckoutIdentityLabel}
                     </p>
@@ -722,7 +722,7 @@ export function CheckoutPage({
                       {memberProfile?.email ?? copy.unavailable}
                     </p>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.memberCheckoutPhoneLabel}
                     </p>
@@ -735,7 +735,7 @@ export function CheckoutPage({
                         : copy.memberCheckoutPhonePending}
                     </p>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.memberCheckoutChannelsLabel}
                     </p>
@@ -745,7 +745,7 @@ export function CheckoutPage({
                       <p>{formatResource(copy.memberCheckoutWhatsAppChannel, { value: whatsAppChannelReady ? copy.readyYes : copy.readyNo })}</p>
                     </div>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.memberCheckoutAddressesLabel}
                     </p>
@@ -786,7 +786,7 @@ export function CheckoutPage({
             )}
 
             {(memberInvoices.length > 0 || memberInvoicesStatus !== "idle") && (
-              <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+              <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                     {copy.memberCheckoutFinanceEyebrow}
@@ -803,7 +803,7 @@ export function CheckoutPage({
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.memberCheckoutFinanceOutstandingLabel}
                     </p>
@@ -817,7 +817,7 @@ export function CheckoutPage({
                         : copy.memberCheckoutFinanceOutstandingEmpty}
                     </p>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.memberCheckoutFinanceInvoiceLabel}
                     </p>
@@ -825,7 +825,7 @@ export function CheckoutPage({
                       {outstandingInvoice?.orderNumber ?? outstandingInvoice?.id ?? copy.memberCheckoutFinanceInvoiceEmpty}
                     </p>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.memberCheckoutFinanceDueLabel}
                     </p>
@@ -858,7 +858,7 @@ export function CheckoutPage({
 
           <form
             action={localizeHref("/checkout", culture)}
-            className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8"
+            className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8"
           >
             <div className="grid gap-6">
               <div>
@@ -913,7 +913,7 @@ export function CheckoutPage({
               </div>
 
               {intent?.requiresShipping && intent.shippingOptions.length > 0 && (
-                <div className="grid gap-3 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-5">
+                <div className="grid gap-3 rounded-[1rem] bg-[var(--color-surface-panel-strong)] p-5">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                       {copy.shippingOptionsTitle}
@@ -984,7 +984,7 @@ export function CheckoutPage({
           </form>
 
           <div className="flex flex-col gap-5">
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.checkoutReadinessTitle}
               </p>
@@ -995,7 +995,7 @@ export function CheckoutPage({
                 {readinessItems.map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                    className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {item.label}
@@ -1019,7 +1019,7 @@ export function CheckoutPage({
               />
             )}
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.checkoutSummaryTitle}
               </p>
@@ -1093,7 +1093,7 @@ export function CheckoutPage({
               )}
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.checkoutLinesTitle}
               </p>
@@ -1113,7 +1113,7 @@ export function CheckoutPage({
                     return (
                   <article
                     key={`${item.variantId}:${item.selectedAddOnValueIdsJson}`}
-                    className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                    className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-3">
@@ -1183,7 +1183,7 @@ export function CheckoutPage({
 
             <form
               action={placeStorefrontOrderAction}
-              className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+              className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
             >
               <input type="hidden" name="cartId" value={cart.cartId} />
               <input type="hidden" name="fullName" value={draft.fullName} />

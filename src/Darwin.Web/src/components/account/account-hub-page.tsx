@@ -210,7 +210,7 @@ export function AccountHubPage({
       <div className="flex w-full flex-col gap-8">
         <div
           id="account-entry"
-          className="scroll-mt-28 overflow-hidden rounded-[2.25rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10"
+          className="scroll-mt-28 overflow-hidden rounded-[1rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10"
         >
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_320px] lg:items-end">
             <div>
@@ -225,7 +225,7 @@ export function AccountHubPage({
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.accountHubReadinessCartLabel}
                 </p>
@@ -233,7 +233,7 @@ export function AccountHubPage({
                   {cartLineCount}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.accountHubReadinessCmsLabel}
                 </p>
@@ -241,7 +241,7 @@ export function AccountHubPage({
                   {cmsPages.length}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
+              <article className="rounded-[1rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/78">
                   {copy.accountHubReadinessReturnLabel}
                 </p>
@@ -253,7 +253,7 @@ export function AccountHubPage({
           </div>
         </div>
 
-        <section className="sticky top-4 z-10 rounded-[2rem] border border-[#dce6cf] bg-[color:color-mix(in_srgb,white_84%,#eff7e9_16%)] px-6 py-5 shadow-[0_24px_54px_-36px_rgba(58,92,35,0.32)] backdrop-blur">
+        <section className="sticky top-4 z-10 rounded-[1rem] border border-[#dce6cf] bg-[color:color-mix(in_srgb,white_84%,#eff7e9_16%)] px-6 py-5 shadow-[0_24px_54px_-36px_rgba(58,92,35,0.32)] backdrop-blur">
           <div className="flex flex-wrap gap-2">
             {sectionLinks.map((section) => (
               <a
@@ -271,7 +271,7 @@ export function AccountHubPage({
           {accountCards.map((card) => (
             <article
               key={card.id}
-              className="flex h-full flex-col rounded-[2rem] border border-[#dce6cf] bg-white p-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_30px_60px_-34px_rgba(58,92,35,0.3)]"
+              className="flex h-full flex-col rounded-[1rem] border border-[#dce6cf] bg-white p-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_30px_60px_-34px_rgba(58,92,35,0.3)]"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {card.eyebrow}
@@ -296,7 +296,7 @@ export function AccountHubPage({
 
         <aside
           id="account-readiness"
-          className="scroll-mt-28 rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
+          className="scroll-mt-28 rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
             {copy.accountHubReadinessTitle}
@@ -393,7 +393,7 @@ export function AccountHubPage({
 
         <aside
           id="account-actions"
-          className="scroll-mt-28 rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
+          className="scroll-mt-28 rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
             {copy.accountHubActionCenterTitle}
@@ -402,7 +402,7 @@ export function AccountHubPage({
             {copy.accountHubActionCenterMessage}
           </p>
           <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-            <article className="rounded-[1.5rem] border border-[#e3ebd6] bg-white px-4 py-4 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.24)]">
+            <article className="rounded-[1rem] border border-[#e3ebd6] bg-white px-4 py-4 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.24)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.accountHubActionCartLabel}
               </p>
@@ -433,7 +433,7 @@ export function AccountHubPage({
               </div>
             </article>
 
-            <article className="rounded-[1.5rem] border border-[#e3ebd6] bg-white px-4 py-4 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.24)]">
+            <article className="rounded-[1rem] border border-[#e3ebd6] bg-white px-4 py-4 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.24)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.accountHubActionCmsLabel}
               </p>
@@ -457,7 +457,7 @@ export function AccountHubPage({
               </div>
             </article>
 
-            <article className="rounded-[1.5rem] border border-[#e3ebd6] bg-white px-4 py-4 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.24)]">
+            <article className="rounded-[1rem] border border-[#e3ebd6] bg-white px-4 py-4 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.24)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.accountHubActionCatalogLabel}
               </p>
@@ -481,7 +481,7 @@ export function AccountHubPage({
               </div>
             </article>
 
-            <article className="rounded-[1.5rem] border border-[#e3ebd6] bg-white px-4 py-4 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.24)]">
+            <article className="rounded-[1rem] border border-[#e3ebd6] bg-white px-4 py-4 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.24)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.accountHubActionProductLabel}
               </p>
@@ -516,7 +516,7 @@ export function AccountHubPage({
 
         <aside
           id="account-offers"
-          className="scroll-mt-28 rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
+          className="scroll-mt-28 rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.accountHubOfferBoardTitle}
@@ -549,7 +549,7 @@ export function AccountHubPage({
           </div>
         </aside>
 
-        <aside className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8">
+        <aside className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-8 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)] sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.sessionStrategyNoteTitle}
           </p>

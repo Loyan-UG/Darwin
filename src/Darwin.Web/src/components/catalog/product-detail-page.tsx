@@ -97,13 +97,13 @@ export function ProductDetailPage({
   if (!product) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
-        <div className="w-full rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
+        <div className="w-full rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
           <StatusBanner
             tone="warning"
             title={copy.productUnavailableTitle}
             message={formatResource(copy.productUnavailableMessage, { status: statusLabel })}
           />
-          <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+          <div className="mt-6 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.productRouteSummaryTitle}
             </p>
@@ -293,7 +293,7 @@ export function ProductDetailPage({
 
       <div
         id="product-overview"
-        className="scroll-mt-28 rounded-[2rem] border border-[rgba(53,92,38,0.12)] bg-[linear-gradient(135deg,#f6ffe9_0%,#ffffff_38%,#fff1d2_100%)] px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)]"
+        className="scroll-mt-28 rounded-[1rem] border border-[rgba(53,92,38,0.12)] bg-[linear-gradient(135deg,#f6ffe9_0%,#ffffff_38%,#fff1d2_100%)] px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)]"
       >
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
           {copy.productRouteSummaryTitle}
@@ -304,13 +304,13 @@ export function ProductDetailPage({
       </div>
 
       <div className="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-white/92 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-white/92 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
           <div className="grid gap-4 sm:grid-cols-2">
             {resolvedGallery.length > 0 ? (
               resolvedGallery.map((media) => (
                 <div
                   key={media.id}
-                  className="flex min-h-52 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-5"
+                  className="flex min-h-52 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-5"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -321,7 +321,7 @@ export function ProductDetailPage({
                 </div>
               ))
             ) : (
-              <div className="flex min-h-72 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-5 sm:col-span-2">
+              <div className="flex min-h-72 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-5 sm:col-span-2">
                 <span className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
                   {copy.noMedia}
                 </span>
@@ -330,7 +330,7 @@ export function ProductDetailPage({
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-[rgba(53,92,38,0.12)] bg-white/92 px-6 py-8 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:px-8">
+        <div className="rounded-[1rem] border border-[rgba(53,92,38,0.12)] bg-white/92 px-6 py-8 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:px-8">
           {status !== "ok" && (
             <div className="mb-6">
               <StatusBanner
@@ -392,7 +392,7 @@ export function ProductDetailPage({
 
           <div
             id="product-readiness"
-            className="mt-6 scroll-mt-28 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
+            className="mt-6 scroll-mt-28 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
           >
             <p className="font-semibold text-[var(--color-text-primary)]">
               {copy.merchandisingSnapshotTitle}
@@ -419,7 +419,7 @@ export function ProductDetailPage({
             </p>
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+          <div className="mt-6 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
             <p className="font-semibold text-[var(--color-text-primary)]">
               {copy.productReadinessTitle}
             </p>
@@ -473,7 +473,7 @@ export function ProductDetailPage({
             </div>
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+          <div className="mt-6 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
             <p className="font-semibold text-[var(--color-text-primary)]">
               {copy.productReviewWindowTitle}
             </p>
@@ -527,7 +527,7 @@ export function ProductDetailPage({
 
           <div
             id="product-review"
-            className="mt-6 scroll-mt-28 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
+            className="mt-6 scroll-mt-28 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
           >
             <p className="font-semibold text-[var(--color-text-primary)]">
               {copy.productNextReviewTargetTitle}
@@ -567,7 +567,7 @@ export function ProductDetailPage({
             ) : null}
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+          <div className="mt-6 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
             <p className="font-semibold text-[var(--color-text-primary)]">
               {copy.productReviewQueueTitle}
             </p>
@@ -610,7 +610,7 @@ export function ProductDetailPage({
             </div>
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+          <div className="mt-6 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
             <p className="font-semibold text-[var(--color-text-primary)]">
               {copy.productReviewNavigationTitle}
             </p>
@@ -682,7 +682,7 @@ export function ProductDetailPage({
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.productReferenceSlugLabel}
               </p>
@@ -690,7 +690,7 @@ export function ProductDetailPage({
                 {product.slug}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.productReferenceMediaLabel}
               </p>
@@ -700,7 +700,7 @@ export function ProductDetailPage({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.productReferenceVariantsLabel}
               </p>
@@ -712,7 +712,7 @@ export function ProductDetailPage({
             </div>
           </div>
 
-          <div className="mt-8 grid gap-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-5">
+          <div className="mt-8 grid gap-4 rounded-[1rem] bg-[var(--color-surface-panel-strong)] p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.variantSnapshotTitle}
             </p>
@@ -739,7 +739,7 @@ export function ProductDetailPage({
 
           <div
             id="product-add-ons"
-            className="mt-8 scroll-mt-28 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-5"
+            className="mt-8 scroll-mt-28 rounded-[1rem] bg-[var(--color-surface-panel-strong)] p-5"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -976,7 +976,7 @@ export function ProductDetailPage({
       {primaryCategory ? (
         <div
           id="product-related"
-          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-white/92 px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:px-8"
+          className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-white/92 px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:px-8"
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -1016,9 +1016,9 @@ export function ProductDetailPage({
                 return (
                 <article
                   key={relatedProduct.id}
-                  className="flex h-full flex-col rounded-[1.5rem] border border-[rgba(53,92,38,0.1)] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.88))] p-4 shadow-[0_18px_40px_rgba(38,76,34,0.06)]"
+                  className="flex h-full flex-col rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.88))] p-4 shadow-[0_18px_40px_rgba(38,76,34,0.06)]"
                 >
-                  <div className="flex min-h-40 items-center justify-center rounded-[1.25rem] bg-white/80 p-4">
+                  <div className="flex min-h-40 items-center justify-center rounded-[1rem] bg-white/80 p-4">
                     {relatedProductImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -1072,7 +1072,7 @@ export function ProductDetailPage({
               })}
             </div>
           ) : (
-            <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
+            <div className="mt-6 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
               <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
                 {copy.relatedProductsEmptyMessage}
               </p>
@@ -1089,7 +1089,7 @@ export function ProductDetailPage({
       ) : null}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-        <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.productOfferWindowTitle}
           </p>
@@ -1101,7 +1101,7 @@ export function ProductDetailPage({
               : copy.productOfferWindowFallback}
           </p>
           <div className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.productOfferWindowPriceLabel}
               </p>
@@ -1109,7 +1109,7 @@ export function ProductDetailPage({
                 {formatMoney(priceMinor, product.currency, culture)}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.productOfferWindowCompareAtLabel}
               </p>
@@ -1122,12 +1122,12 @@ export function ProductDetailPage({
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.productBuyingGuideTitle}
           </p>
           <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.productBuyingGuideCategoryLabel}
               </p>
@@ -1135,7 +1135,7 @@ export function ProductDetailPage({
                 {primaryCategory?.name ?? copy.productBuyingGuideCategoryFallback}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.productBuyingGuideRelatedOfferLabel}
               </p>
@@ -1145,7 +1145,7 @@ export function ProductDetailPage({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.productBuyingGuideVariantLabel}
               </p>
@@ -1159,7 +1159,7 @@ export function ProductDetailPage({
         </section>
       </div>
 
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
           {copy.productCartWindowTitle}
         </p>
@@ -1191,7 +1191,7 @@ export function ProductDetailPage({
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] sm:px-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
@@ -1218,7 +1218,7 @@ export function ProductDetailPage({
               <Link
                 key={page.id}
                 href={localizeHref(buildCmsPagePath(page.slug), culture)}
-                className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4 transition hover:bg-[var(--color-surface-panel)]"
+                className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4 transition hover:bg-[var(--color-surface-panel)]"
               >
                 <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                   {page.title}

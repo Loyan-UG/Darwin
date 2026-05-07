@@ -511,7 +511,7 @@ export function MemberDashboardPage({
           </span>
         </nav>
 
-        <div className="overflow-hidden rounded-[2.25rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
+        <div className="overflow-hidden rounded-[1rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_340px] lg:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
@@ -525,7 +525,7 @@ export function MemberDashboardPage({
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.dashboardCommerceReadinessOrdersLabel}
                 </p>
@@ -533,7 +533,7 @@ export function MemberDashboardPage({
                   {attentionOrders.length}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.dashboardCommunicationEmailLabel}
                 </p>
@@ -543,7 +543,7 @@ export function MemberDashboardPage({
                     : copy.dashboardCommunicationNeedsAttention}
                 </p>
               </article>
-              <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
+              <div className="flex flex-col gap-3 rounded-[1rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/78">
                     {copy.dashboardSecurityStateLabel}
@@ -579,7 +579,7 @@ export function MemberDashboardPage({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid gap-6">
-            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.profileSnapshotTitle}
               </p>
@@ -601,7 +601,7 @@ export function MemberDashboardPage({
               )}
             </div>
 
-            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.preferencesSnapshotTitle}
               </p>
@@ -625,7 +625,7 @@ export function MemberDashboardPage({
           <div className="flex flex-col gap-5">
             <MemberPortalNav culture={culture} activePath="/account" />
 
-            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.memberRouteSummaryTitle}
               </p>
@@ -658,7 +658,7 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.crmContextTitle}
               </p>
@@ -736,7 +736,7 @@ export function MemberDashboardPage({
               cartSectionCheckoutCtaLabel={copy.dashboardStorefrontCartOpenCheckoutCta}
             />
 
-            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.dashboardCommunicationWindowTitle}
               </p>
@@ -747,7 +747,7 @@ export function MemberDashboardPage({
                 })}
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.dashboardCommunicationEmailLabel}
                   </p>
@@ -757,7 +757,7 @@ export function MemberDashboardPage({
                       : copy.dashboardCommunicationNeedsAttention}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.dashboardCommunicationSmsLabel}
                   </p>
@@ -767,7 +767,7 @@ export function MemberDashboardPage({
                       : copy.dashboardCommunicationNeedsAttention}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.dashboardCommunicationWhatsAppLabel}
                   </p>
@@ -800,7 +800,7 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.checkoutLaunchTitle}
               </p>
@@ -828,7 +828,7 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.dashboardSecurityWindowTitle}
               </p>
@@ -840,7 +840,7 @@ export function MemberDashboardPage({
                 })}
               </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.dashboardSecurityPhoneLabel}
                   </p>
@@ -850,7 +850,7 @@ export function MemberDashboardPage({
                       : copy.dashboardSecurityPhonePending}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.dashboardSecuritySessionLabel}
                   </p>
@@ -860,7 +860,7 @@ export function MemberDashboardPage({
                       : copy.dashboardSecuritySessionUnavailable}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.dashboardSecurityStateLabel}
                   </p>
@@ -890,7 +890,7 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.dashboardActionCenterTitle}
               </p>
@@ -903,7 +903,7 @@ export function MemberDashboardPage({
                     <Link
                       key={item.id}
                       href={item.href}
-                      className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
+                      className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
                     >
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                         {item.label}
@@ -941,7 +941,7 @@ export function MemberDashboardPage({
               products={rankedStorefrontProducts}
             />
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.dashboardCommerceWindowTitle}
               </p>
@@ -954,7 +954,7 @@ export function MemberDashboardPage({
                 })}
               </p>
 
-              <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                   {copy.dashboardCommerceReadinessTitle}
                 </p>
@@ -975,7 +975,7 @@ export function MemberDashboardPage({
                   })}
                 </p>
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4">
+                  <div className="rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                       {copy.dashboardCommerceReadinessOrdersLabel}
                     </p>
@@ -990,7 +990,7 @@ export function MemberDashboardPage({
                       })}
                     </p>
                   </div>
-                  <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4">
+                  <div className="rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                       {copy.dashboardCommerceReadinessInvoicesLabel}
                     </p>
@@ -1023,7 +1023,7 @@ export function MemberDashboardPage({
               </div>
 
               <div className="mt-5 grid gap-4">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {copy.dashboardRecentOrdersTitle}
@@ -1075,7 +1075,7 @@ export function MemberDashboardPage({
                   )}
                 </div>
 
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {copy.dashboardRecentInvoicesTitle}
@@ -1129,7 +1129,7 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.dashboardLoyaltyWindowTitle}
               </p>
@@ -1144,7 +1144,7 @@ export function MemberDashboardPage({
 
               {loyaltyOverview ? (
                 <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                       {copy.totalAccountsLabel}
                     </p>
@@ -1152,7 +1152,7 @@ export function MemberDashboardPage({
                       {loyaltyOverview.totalAccounts}
                     </p>
                   </div>
-                  <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                       {copy.activeAccountsLabel}
                     </p>
@@ -1160,7 +1160,7 @@ export function MemberDashboardPage({
                       {loyaltyOverview.activeAccounts}
                     </p>
                   </div>
-                  <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                       {copy.pointsBalanceLabel}
                     </p>
@@ -1171,7 +1171,7 @@ export function MemberDashboardPage({
                 </div>
               ) : null}
 
-              <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                     {copy.dashboardJoinedPlacesTitle}
@@ -1252,7 +1252,7 @@ export function MemberDashboardPage({
                 )}
               </div>
 
-              <div className="mt-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="mt-4 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                     {copy.dashboardRewardFocusTitle}

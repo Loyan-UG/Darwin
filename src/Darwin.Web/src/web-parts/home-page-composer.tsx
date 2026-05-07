@@ -60,7 +60,7 @@ function GroceryCardGrid({
   const shared = getSharedResource(culture);
 
   return (
-    <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-white/90 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
+    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-white/90 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand)]">
@@ -80,7 +80,7 @@ function GroceryCardGrid({
           {part.cards.map((card, index) => (
             <article
               key={card.id}
-              className={`group relative overflow-hidden rounded-[1.75rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5 shadow-[0_16px_40px_rgba(50,88,35,0.08)] transition duration-200 hover:-translate-y-1`}
+              className={`group relative overflow-hidden rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5 shadow-[0_16px_40px_rgba(50,88,35,0.08)] transition duration-200 hover:-translate-y-1`}
             >
               <div
                 aria-hidden="true"
@@ -120,7 +120,7 @@ function GroceryCardGrid({
           ))}
         </div>
       ) : (
-        <div className="mt-8 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+        <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
           {part.emptyMessage}
         </div>
       )}
@@ -138,7 +138,7 @@ function GroceryLinkList({
   compact?: boolean;
 }) {
   return (
-    <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-white/90 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
+    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-white/90 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand)]">
         {part.eyebrow}
       </p>
@@ -154,7 +154,7 @@ function GroceryLinkList({
           {part.items.map((item, index) => (
             <article
               key={item.id}
-              className={`rounded-[1.5rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
+              className={`rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
             >
               {item.meta ? (
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
@@ -179,7 +179,7 @@ function GroceryLinkList({
           ))}
         </div>
       ) : (
-        <div className="mt-8 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+        <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
           {part.emptyMessage}
         </div>
       )}
@@ -195,7 +195,7 @@ function GroceryStatusBoard({
   culture: string;
 }) {
   return (
-    <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,rgba(242,255,233,0.92),rgba(255,255,255,0.96))] p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
+    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,rgba(242,255,233,0.92),rgba(255,255,255,0.96))] p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand)]">
         {part.eyebrow}
       </p>
@@ -211,7 +211,7 @@ function GroceryStatusBoard({
           {part.items.map((item) => (
             <article
               key={item.id}
-              className="rounded-[1.5rem] border border-[rgba(53,92,38,0.1)] bg-white/90 p-5 shadow-[0_10px_30px_rgba(38,76,34,0.05)]"
+              className="rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-white/90 p-5 shadow-[0_10px_30px_rgba(38,76,34,0.05)]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -252,7 +252,7 @@ function GroceryStatusBoard({
           ))}
         </div>
       ) : (
-        <div className="mt-8 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-white/80 px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
+        <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-white/80 px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
           {part.emptyMessage}
         </div>
       )}
@@ -268,7 +268,7 @@ function GroceryRouteMap({
   culture: string;
 }) {
   return (
-    <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-white/90 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
+    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-white/90 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand)]">
         {part.eyebrow}
       </p>
@@ -283,7 +283,7 @@ function GroceryRouteMap({
         {part.items.map((item, index) => (
           <article
             key={item.id}
-            className={`rounded-[1.6rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
+            className={`rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
           >
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
               {item.label}
@@ -356,7 +356,7 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <section className="relative overflow-hidden rounded-[2.5rem] border border-[rgba(61,105,52,0.12)] bg-[linear-gradient(135deg,#f6ffe9_0%,#ffffff_40%,#fff4d8_100%)] px-6 py-8 shadow-[0_34px_120px_rgba(38,76,34,0.12)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+      <section className="relative overflow-hidden rounded-[1rem] border border-[rgba(61,105,52,0.12)] bg-[linear-gradient(135deg,#f6ffe9_0%,#ffffff_40%,#fff4d8_100%)] px-6 py-8 shadow-[0_34px_120px_rgba(38,76,34,0.12)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
         <div
           aria-hidden="true"
           className="absolute -right-20 -top-10 h-72 w-72 rounded-full bg-[rgba(76,175,80,0.12)] blur-3xl"
@@ -406,7 +406,7 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
             </div>
 
             {heroCategories.length > 0 ? (
-              <div className="mt-8 rounded-[1.75rem] border border-white/70 bg-white/78 p-5 shadow-sm backdrop-blur">
+              <div className="mt-8 rounded-[1rem] border border-white/70 bg-white/78 p-5 shadow-sm backdrop-blur">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-brand)]">
@@ -440,7 +440,7 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
           </div>
 
           <div className="grid gap-5">
-            <div className="rounded-[2rem] border border-[rgba(53,92,38,0.12)] bg-white/86 p-6 shadow-sm backdrop-blur">
+            <div className="rounded-[1rem] border border-[rgba(53,92,38,0.12)] bg-white/86 p-6 shadow-sm backdrop-blur">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-brand)]">
@@ -460,7 +460,7 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
                   {heroPriority.map((item, index) => (
                     <div
                       key={item.id}
-                      className="rounded-[1.4rem] border border-[rgba(53,92,38,0.08)] bg-[linear-gradient(135deg,rgba(246,255,233,0.96),rgba(255,255,255,0.96))] p-4"
+                      className="rounded-[1rem] border border-[rgba(53,92,38,0.08)] bg-[linear-gradient(135deg,rgba(246,255,233,0.96),rgba(255,255,255,0.96))] p-4"
                     >
                       <div className="flex items-start gap-3">
                         <span className={`mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full ${getCardAccent(index)} text-xs font-semibold text-white`}>
@@ -492,7 +492,7 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
                   ))}
                 </div>
               ) : (
-                <div className="mt-5 rounded-[1.4rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-5 py-8 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-5 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-5 py-8 text-sm leading-7 text-[var(--color-text-secondary)]">
                   {priority?.emptyMessage ?? shared.siteDescription}
                 </div>
               )}
@@ -503,7 +503,7 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
                 {featureMetrics.map((metric, index) => (
                   <article
                     key={metric.id}
-                    className={`rounded-[1.6rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
+                    className={`rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
                   >
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {metric.label}

@@ -65,7 +65,12 @@
                         <div class="col-md-5">
                             <label class="form-label">@T.T("Slug")</label>
                             <field-help title="@T.T("Slug")" content="@T.T("PageSlugHelpContent")" placement="right"></field-help>
-                            <input asp-for="Translations[@i].Slug" class="form-control" />
+                            <input asp-for="Translations[@i].Slug"
+                                   class="form-control"
+                                   pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                                   inputmode="url"
+                                   autocomplete="off"
+                                   placeholder="@T.T("PageSlugPlaceholder")" />
                         </div>
 
                         <div class="col-md-6">

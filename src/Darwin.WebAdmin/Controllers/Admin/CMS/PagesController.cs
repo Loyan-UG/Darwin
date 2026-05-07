@@ -121,13 +121,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             var dto = new PageCreateDto
             {
                 Status = vm.Status,
-                PublishStartUtc = vm.PublishStartUtc,
-                PublishEndUtc = vm.PublishEndUtc,
+                PublishStartUtc = NormalizeNullableUtc(vm.PublishStartUtc),
+                PublishEndUtc = NormalizeNullableUtc(vm.PublishEndUtc),
                 Translations = translations.Select(t => new PageTranslationDto
                 {
                     Culture = t.Culture,
                     Title = t.Title,
-                    Slug = t.Slug,
+                    Slug = NormalizeSlug(t.Slug),
                     MetaTitle = t.MetaTitle,
                     MetaDescription = t.MetaDescription,
                     ContentHtml = t.ContentHtml
@@ -220,13 +220,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 Id = vm.Id,
                 RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
                 Status = vm.Status,
-                PublishStartUtc = vm.PublishStartUtc,
-                PublishEndUtc = vm.PublishEndUtc,
+                PublishStartUtc = NormalizeNullableUtc(vm.PublishStartUtc),
+                PublishEndUtc = NormalizeNullableUtc(vm.PublishEndUtc),
                 Translations = translations.Select(t => new PageTranslationDto
                 {
                     Culture = t.Culture,
                     Title = t.Title,
-                    Slug = t.Slug,
+                    Slug = NormalizeSlug(t.Slug),
                     MetaTitle = t.MetaTitle,
                     MetaDescription = t.MetaDescription,
                     ContentHtml = t.ContentHtml
@@ -357,6 +357,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                     !string.IsNullOrWhiteSpace(t.Slug))
                 .ToList();
         }
+
+        private static DateTime? NormalizeNullableUtc(DateTime? value)
+        {
+            if (!value.HasValue)
+            {
+                return null;
+            }
+
+            return value.Value.Kind switch
+            {
+                DateTimeKind.Utc => value.Value,
+                DateTimeKind.Local => value.Value.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+            };
+        }
+
+        private static string NormalizeSlug(string slug)
+            => slug.Trim().ToLowerInvariant();
 
         private PagePlaybookVm[] BuildPagePlaybooks()
         {

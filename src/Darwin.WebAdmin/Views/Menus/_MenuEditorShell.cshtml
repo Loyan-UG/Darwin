@@ -1,0 +1,37 @@
+@model Darwin.WebAdmin.ViewModels.CMS.MenuEditorVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true;
+    ViewData["Title"] = isCreate ? T.T("CreateMenu") : T.T("EditMenu");
+}
+
+<div id="menu-editor-shell">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+        <div>
+            <h1 class="m-0">@(isCreate ? T.T("CreateMenu") : T.T("EditMenu"))</h1>
+            <div class="small text-muted mt-1">@T.T("MenuEditorIntro")</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <span class="badge text-bg-light border">@T.T("MenuItems"): @Model.Items.Count(x => !string.IsNullOrWhiteSpace(x.Url))</span>
+            @if (!isCreate)
+            {
+                <span class="badge text-bg-light border">@T.T("Identifier"): @Model.Id</span>
+            }
+        </div>
+    </div>
+
+    <form asp-action="@(isCreate ? "Create" : "Edit")"
+          method="post"
+          hx-post="@Url.Action(isCreate ? "Create" : "Edit", "Menus")"
+          hx-target="#menu-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
+        }
+
+        <partial name="_MenuForm" model="Model" />
+    </form>
+</div>

@@ -7,11 +7,13 @@ using System.Threading.Tasks;
 using Darwin.Application.CMS.Media.Commands;
 using Darwin.Application.CMS.Media.DTOs;
 using Darwin.Application.CMS.Media.Queries;
+using Darwin.Infrastructure.Media;
 using Darwin.WebAdmin.ViewModels.CMS;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Media
 {
@@ -32,6 +34,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         private const long MaxUploadBytes = 5 * 1024 * 1024;
 
         private readonly IWebHostEnvironment _env;
+        private readonly MediaStorageOptions _mediaStorageOptions;
         private readonly GetMediaAssetsPageHandler _getPage;
         private readonly GetMediaAssetOpsSummaryHandler _getSummary;
         private readonly GetMediaAssetForEditHandler _getForEdit;
@@ -45,6 +48,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         /// </summary>
         public MediaController(
             IWebHostEnvironment env,
+            IOptions<MediaStorageOptions> mediaStorageOptions,
             GetMediaAssetsPageHandler getPage,
             GetMediaAssetOpsSummaryHandler getSummary,
             GetMediaAssetForEditHandler getForEdit,
@@ -54,6 +58,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             PurgeUnusedMediaAssetHandler purgeUnused)
         {
             _env = env ?? throw new ArgumentNullException(nameof(env));
+            _mediaStorageOptions = mediaStorageOptions?.Value ?? throw new ArgumentNullException(nameof(mediaStorageOptions));
             _getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
             _getSummary = getSummary ?? throw new ArgumentNullException(nameof(getSummary));
             _getForEdit = getForEdit ?? throw new ArgumentNullException(nameof(getForEdit));
@@ -162,7 +167,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         }
 
         /// <summary>
-        /// Accepts an uploaded media file, stores it safely under <c>wwwroot/uploads</c>, and persists metadata.
+        /// Accepts an uploaded media file, stores it safely under shared media storage, and persists metadata.
         /// </summary>
         [HttpPost]
         [RequestSizeLimit(MaxUploadBytes)]
@@ -385,7 +390,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         }
 
         /// <summary>
-        /// Image upload endpoint for Quill. Returns JSON <c>{ url: "/uploads/..." }</c>.
+        /// Image upload endpoint for Quill. Returns JSON <c>{ url: "..." }</c> with the configured public media URL.
         /// </summary>
         /// <remarks>
         /// Quill sends multipart uploads through fetch with the admin form anti-forgery token. The endpoint remains
@@ -547,7 +552,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 throw new InvalidDataException("Uploaded file signature does not match an allowed image format.");
             }
 
-            var uploadsRoot = Path.Combine(GetWebRootPath(), "uploads");
+            var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(_env.ContentRootPath, _mediaStorageOptions);
             Directory.CreateDirectory(uploadsRoot);
 
             var fileName = $"{Guid.NewGuid():N}{ext}";
@@ -562,7 +567,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             var hash = Convert.ToHexString(SHA256.HashData(bytes));
             return new StoredUploadResult(
                 PhysicalPath: fullPath,
-                PublicUrl: $"/uploads/{fileName}",
+                PublicUrl: MediaStoragePathResolver.BuildPublicUrl(_mediaStorageOptions, fileName),
                 SizeBytes: bytes.LongLength,
                 ContentHash: hash);
         }
@@ -604,27 +609,41 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             };
         }
 
-        private string GetWebRootPath()
-        {
-            if (!string.IsNullOrWhiteSpace(_env.WebRootPath))
-            {
-                return _env.WebRootPath;
-            }
-
-            return Path.Combine(_env.ContentRootPath, "wwwroot");
-        }
-
         private string? TryResolveLocalUploadPath(string? url)
         {
-            if (string.IsNullOrWhiteSpace(url) || !url.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            var uploadRelativePath = TryGetUploadRelativePath(url);
+            if (string.IsNullOrWhiteSpace(uploadRelativePath))
             {
                 return null;
             }
 
-            var relative = url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-            var fullPath = Path.GetFullPath(Path.Combine(GetWebRootPath(), relative));
-            var uploadsRoot = Path.Combine(GetWebRootPath(), "uploads");
+            var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(_env.ContentRootPath, _mediaStorageOptions);
+            var fullPath = Path.GetFullPath(Path.Combine(uploadsRoot, uploadRelativePath.Replace('/', Path.DirectorySeparatorChar)));
             return IsPathUnderRoot(fullPath, uploadsRoot) ? fullPath : null;
+        }
+
+        private string? TryGetUploadRelativePath(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return null;
+            }
+
+            var requestPath = MediaStoragePathResolver.NormalizeRequestPath(_mediaStorageOptions.RequestPath);
+            var path = url.Trim();
+
+            if (Uri.TryCreate(path, UriKind.Absolute, out var absoluteUri))
+            {
+                path = absoluteUri.AbsolutePath;
+            }
+
+            if (!path.StartsWith(requestPath + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var relative = path[(requestPath.Length + 1)..];
+            return relative.Contains("..", StringComparison.Ordinal) ? null : Uri.UnescapeDataString(relative);
         }
 
         private static bool IsPathUnderRoot(string path, string root)

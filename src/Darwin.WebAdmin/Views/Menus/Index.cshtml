@@ -1,0 +1,78 @@
+@model Darwin.WebAdmin.ViewModels.CMS.MenusIndexVm
+@using System.Globalization
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("Menus");
+    string MenusCreateUrl() => Url.Action("Create", "Menus") ?? string.Empty;
+    string MenusEditUrl(Guid id) => Url.Action("Edit", "Menus", new { id }) ?? string.Empty;
+}
+
+<div id="menus-workspace-shell">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+        <div>
+            <h1 class="m-0"><i class="fa-solid fa-bars-staggered me-2"></i>@T.T("Menus")</h1>
+            <div class="small text-muted mt-1">@T.T("MenusWorkspaceIntro")</div>
+        </div>
+        <a asp-action="Create"
+           class="btn btn-primary"
+           hx-get="@MenusCreateUrl()"
+           hx-target="#menus-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+            <i class="fa fa-plus"></i> @T.T("CreateMenu")
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>@T.T("Name")</th>
+                    <th>@T.T("MenuItems")</th>
+                    <th>@T.T("Modified")</th>
+                    <th class="text-end admin-w-220">@T.T("Actions")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count > 0)
+                {
+                    foreach (var menu in Model.Items)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@menu.Name</td>
+                            <td>@menu.ItemsCount</td>
+                            <td>@menu.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture)</td>
+                            <td class="text-end">
+                                <a asp-action="Edit"
+                                   asp-route-id="@menu.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@MenusEditUrl(menu.Id)"
+                                   hx-target="#menus-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
+                                    <i class="fa fa-pen"></i> @T.T("Edit")
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">@T.T("NoMenusFound")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <pager page="Model.Page"
+           page-size="Model.PageSize"
+           total="Model.Total"
+           asp-controller="Menus"
+           asp-action="Index"
+           hx-target="#menus-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+    </pager>
+</div>

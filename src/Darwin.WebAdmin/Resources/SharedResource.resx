@@ -2988,6 +2988,15 @@
   <data name="BusinessSupportQueueIntro" xml:space="preserve">
     <value>Unified onboarding, activation, invitation, and failed-email triage surface for support operators.</value>
   </data>
+  <data name="BusinessSupportGoLiveReadinessHelp" xml:space="preserve">
+    <value>Focuses support operators on business states, invitations, member activation, lockouts, and failed email flows that can block onboarding.</value>
+  </data>
+  <data name="BusinessSupportNeedsAttentionDashboardHelp" xml:space="preserve">
+    <value>Combines operational, billing, communication, invitation, activation, and password-reset queues. Use the action buttons for primary triage; detailed queue labels stay in this help text to reduce visual noise.</value>
+  </data>
+  <data name="BusinessSupportInvitationDebtDashboardHelp" xml:space="preserve">
+    <value>Shows pending or open invitation work, plus related invoice and runtime execution shortcuts that often affect onboarding completion.</value>
+  </data>
   <data name="FailedEmails" xml:space="preserve">
     <value>Failed Emails</value>
   </data>
@@ -5746,17 +5755,32 @@
   <data name="AdminDashboardIntro" xml:space="preserve">
     <value>Use this overview as the operational starting point for the back-office.</value>
   </data>
+  <data name="BusinessContextHelp" xml:space="preserve">
+    <value>Selects the business used for business-scoped cards such as payments, inventory, loyalty, and communication queues.</value>
+  </data>
   <data name="DashboardProductsLabel" xml:space="preserve">
     <value>Products</value>
+  </data>
+  <data name="DashboardProductsHelp" xml:space="preserve">
+    <value>Total catalog products visible to the admin dashboard. Open Catalog to manage product data, pricing, stock settings, and visibility.</value>
   </data>
   <data name="DashboardPagesLabel" xml:space="preserve">
     <value>Pages</value>
   </data>
+  <data name="DashboardPagesHelp" xml:space="preserve">
+    <value>Total CMS pages. Open CMS to manage page content, SEO metadata, slugs, publish windows, and page visibility.</value>
+  </data>
   <data name="DashboardOrdersLabel" xml:space="preserve">
     <value>Orders</value>
   </data>
+  <data name="DashboardOrdersHelp" xml:space="preserve">
+    <value>Total orders currently visible to the back-office. Use this as a shortcut into order review and fulfilment follow-up.</value>
+  </data>
   <data name="DashboardUsersLabel" xml:space="preserve">
     <value>Users</value>
+  </data>
+  <data name="DashboardUsersHelp" xml:space="preserve">
+    <value>Total identity users. Open Identity to review accounts, confirmation status, roles, lockouts, and support actions.</value>
   </data>
   <data name="DashboardOpenCatalogAction" xml:space="preserve">
     <value>Open Catalog</value>
@@ -5800,8 +5824,20 @@
   <data name="DashboardOpenPipelineLabel" xml:space="preserve">
     <value>Open Pipeline</value>
   </data>
+  <data name="DashboardOpenPipelineHelp" xml:space="preserve">
+    <value>Estimated value of open CRM opportunities in the default site currency. It is a pipeline signal, not booked revenue.</value>
+  </data>
+  <data name="DashboardInvoicesHelp" xml:space="preserve">
+    <value>Invoice shortcuts focus on operational queues: overdue, due soon, draft, missing VAT ID, and refunded invoices.</value>
+  </data>
+  <data name="DashboardPaymentsHelp" xml:space="preserve">
+    <value>Payment shortcuts focus on payments that need operator attention: pending, unlinked, or refunded.</value>
+  </data>
   <data name="DashboardBusinessOperationsTitle" xml:space="preserve">
     <value>Business Operations</value>
+  </data>
+  <data name="DashboardBusinessOperationsHelp" xml:space="preserve">
+    <value>Business-scoped operational summary for the selected business. It combines inventory, billing, readiness, tax, and communication queues.</value>
   </data>
   <data name="DashboardCurrentBusinessLabel" xml:space="preserve">
     <value>Current business: {0}</value>
@@ -5820,6 +5856,15 @@
   </data>
   <data name="DashboardPurchaseOrdersLabel" xml:space="preserve">
     <value>Purchase Orders</value>
+  </data>
+  <data name="DashboardBusinessNeedsAttentionHelp" xml:space="preserve">
+    <value>Aggregates business queues that are most likely to block go-live or daily operations. Secondary queue links are collapsed under Queue to keep the dashboard compact.</value>
+  </data>
+  <data name="DashboardBusinessPaymentsHelp" xml:space="preserve">
+    <value>Selected-business payment count with direct links to payment and invoice queues that commonly need finance review.</value>
+  </data>
+  <data name="DashboardPurchaseOrdersHelp" xml:space="preserve">
+    <value>Selected-business purchase orders. Use this to review procurement, supplier follow-up, draft purchase orders, and due-soon invoices.</value>
   </data>
   <data name="DashboardOpenPaymentsAction" xml:space="preserve">
     <value>Open Payments</value>
@@ -5859,6 +5904,9 @@
   </data>
   <data name="MobileOperationsDashboardIntro" xml:space="preserve">
     <value>Device fleet health and support remediation.</value>
+  </data>
+  <data name="DashboardMobileNeedsAttentionHelp" xml:space="preserve">
+    <value>Counts stale devices and devices without push tokens. These usually indicate mobile support or notification-delivery follow-up.</value>
   </data>
   <data name="OpenMobileOps" xml:space="preserve">
     <value>Open Mobile Ops</value>
@@ -6730,6 +6778,9 @@
   <data name="PageSlugHelpContent" xml:space="preserve">
     <value>URL-friendly identifier. Use lowercase letters, digits, and hyphens. Example: <code>about-us</code>.</value>
   </data>
+  <data name="PageSlugPlaceholder" xml:space="preserve">
+    <value>about-us</value>
+  </data>
   <data name="NoPagesFound" xml:space="preserve">
     <value>No pages found.</value>
   </data>
@@ -7521,6 +7572,12 @@
   </data>
   <data name="CommunicationOpsDashboardIntro" xml:space="preserve">
     <value>Phase-1 email/SMS/WhatsApp readiness across platform and business defaults.</value>
+  </data>
+  <data name="CommunicationOpsGoLiveReadinessHelp" xml:space="preserve">
+    <value>Checks whether transport settings, alert routing, business sender identity, and failed communication flows are ready enough for production use.</value>
+  </data>
+  <data name="CommunicationPolicyDashboardHelp" xml:space="preserve">
+    <value>Highlights missing SMTP, admin alert routing, and transactional-email policy setup that can block reliable communication delivery.</value>
   </data>
   <data name="CommunicationTransactionalEmailEnabledLabel" xml:space="preserve">
     <value>Transactional email enabled</value>
@@ -11523,6 +11580,75 @@
   </data>
   <data name="Slug" xml:space="preserve">
     <value>Slug</value>
+  </data>
+  <data name="Menus" xml:space="preserve">
+    <value>Menus</value>
+  </data>
+  <data name="CreateMenu" xml:space="preserve">
+    <value>Create menu</value>
+  </data>
+  <data name="EditMenu" xml:space="preserve">
+    <value>Edit menu</value>
+  </data>
+  <data name="MenusWorkspaceIntro" xml:space="preserve">
+    <value>Manage storefront navigation menus used by the public web shell.</value>
+  </data>
+  <data name="MenuEditorIntro" xml:space="preserve">
+    <value>Configure the menu name, target URLs, order, and localized labels shown in the storefront navigation.</value>
+  </data>
+  <data name="MenuCreated" xml:space="preserve">
+    <value>Menu created successfully.</value>
+  </data>
+  <data name="MenuUpdated" xml:space="preserve">
+    <value>Menu updated successfully.</value>
+  </data>
+  <data name="MenuNotFound" xml:space="preserve">
+    <value>Menu not found.</value>
+  </data>
+  <data name="NoMenusFound" xml:space="preserve">
+    <value>No menus found.</value>
+  </data>
+  <data name="MenuAtLeastOneItemRequired" xml:space="preserve">
+    <value>Add at least one menu item with a URL and label.</value>
+  </data>
+  <data name="MenuName" xml:space="preserve">
+    <value>Menu name</value>
+  </data>
+  <data name="MenuNameHelp" xml:space="preserve">
+    <value>Internal name used by the web shell, for example Main or Footer. It must match the menu names configured in site runtime settings.</value>
+  </data>
+  <data name="MenuIdentitySection" xml:space="preserve">
+    <value>Menu identity</value>
+  </data>
+  <data name="MenuItems" xml:space="preserve">
+    <value>Menu items</value>
+  </data>
+  <data name="MenuItemsHelp" xml:space="preserve">
+    <value>Each filled row becomes a navigation link. Leave unused rows empty; they are ignored on save.</value>
+  </data>
+  <data name="SortOrder" xml:space="preserve">
+    <value>Sort order</value>
+  </data>
+  <data name="Label" xml:space="preserve">
+    <value>Label</value>
+  </data>
+  <data name="LocalizedUrl" xml:space="preserve">
+    <value>Localized URL</value>
+  </data>
+  <data name="MenuItemUrlHelp" xml:space="preserve">
+    <value>Destination path or URL. Use app paths such as /cms/about-us or absolute http/https URLs.</value>
+  </data>
+  <data name="MenuItemSortOrderHelp" xml:space="preserve">
+    <value>Lower values appear first within the same menu level.</value>
+  </data>
+  <data name="MenuItemActiveHelp" xml:space="preserve">
+    <value>Inactive items stay configured but are hidden from public navigation.</value>
+  </data>
+  <data name="MenuItemLabelHelp" xml:space="preserve">
+    <value>Visible navigation text for this culture.</value>
+  </data>
+  <data name="MenuItemLocalizedUrlHelp" xml:space="preserve">
+    <value>Optional culture-specific URL override. Leave empty to use the default item URL.</value>
   </data>
   <data name="State" xml:space="preserve">
     <value>State</value>

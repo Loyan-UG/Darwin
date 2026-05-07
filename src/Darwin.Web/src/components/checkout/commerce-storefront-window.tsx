@@ -204,7 +204,7 @@ export function CommerceStorefrontWindow({
   const categorySpotlightCard = categorySpotlightCards[0] ?? null;
 
   return (
-    <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
         {title ?? copy.storefrontWindowTitle}
       </p>
@@ -221,7 +221,7 @@ export function CommerceStorefrontWindow({
       </p>
 
       <div className="mt-5 grid gap-4 xl:grid-cols-3">
-        <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+        <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
             {copy.storefrontWindowCmsLabel}
           </p>
@@ -243,7 +243,7 @@ export function CommerceStorefrontWindow({
           />
         </article>
 
-        <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+        <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
             {copy.storefrontWindowCatalogLabel}
           </p>
@@ -265,7 +265,7 @@ export function CommerceStorefrontWindow({
           />
         </article>
 
-        <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+        <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
             {copy.storefrontWindowProductLabel}
           </p>
@@ -294,7 +294,7 @@ export function CommerceStorefrontWindow({
         </article>
       </div>
 
-      <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+      <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             {copy.storefrontWindowCampaignTitle}
@@ -312,7 +312,7 @@ export function CommerceStorefrontWindow({
             productCount: products.length,
           })}
         </p>
-        <div className="mt-4 rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4">
+        <div className="mt-4 rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
             {copy.storefrontWindowPromotionLaneSectionTitle}
           </p>
@@ -335,7 +335,7 @@ export function CommerceStorefrontWindow({
         />
       </div>
 
-      <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+      <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
         <p className="text-sm font-semibold text-[var(--color-text-primary)]">
           {copy.storefrontWindowCartTitle}
         </p>

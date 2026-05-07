@@ -120,5 +120,9 @@ public sealed class StripeWebhooksController : ApiControllerBase
         {
             return false;
         }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 }

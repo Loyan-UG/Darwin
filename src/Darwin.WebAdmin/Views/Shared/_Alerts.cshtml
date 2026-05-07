@@ -9,6 +9,14 @@ such as create, update, or validation failures.
 
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
+    const string alertsRenderedKey = "__DarwinAdminAlertsRendered";
+    if (ViewContext.HttpContext.Items.ContainsKey(alertsRenderedKey))
+    {
+        return;
+    }
+
+    ViewContext.HttpContext.Items[alertsRenderedKey] = true;
+
     string? success = TempData["Success"] as string;
     string? error = TempData["Error"] as string;
     string? warning = TempData["Warning"] as string;

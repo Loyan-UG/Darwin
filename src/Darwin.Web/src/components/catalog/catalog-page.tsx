@@ -258,7 +258,7 @@ export function CatalogPage({
   return (
     <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <div className="flex w-full flex-col gap-8">
-        <div className="relative overflow-hidden rounded-[2.5rem] border border-[rgba(61,105,52,0.12)] bg-[linear-gradient(135deg,#f6ffe9_0%,#ffffff_38%,#fff1d2_100%)] px-6 py-8 shadow-[0_34px_120px_rgba(38,76,34,0.12)] sm:px-8 sm:py-10">
+        <div className="relative overflow-hidden rounded-[1rem] border border-[rgba(61,105,52,0.12)] bg-[linear-gradient(135deg,#f6ffe9_0%,#ffffff_38%,#fff1d2_100%)] px-6 py-8 shadow-[0_34px_120px_rgba(38,76,34,0.12)] sm:px-8 sm:py-10">
           <div
             aria-hidden="true"
             className="absolute -right-12 top-0 h-48 w-48 rounded-full bg-[rgba(76,175,80,0.14)] blur-3xl"
@@ -279,7 +279,7 @@ export function CatalogPage({
                 {copy.heroDescription}
               </p>
               {activeCategory ? (
-                <div className="mt-5 rounded-[1.5rem] border border-white/70 bg-white/80 px-5 py-4 shadow-sm">
+                <div className="mt-5 rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
                     {copy.activeCategoryEyebrow}
                   </p>
@@ -317,7 +317,7 @@ export function CatalogPage({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-[1.5rem] border border-white/70 bg-white/80 px-5 py-4 shadow-sm"
+                  className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-sm"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
                     {item.label}
@@ -345,7 +345,7 @@ export function CatalogPage({
           />
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-white/86 px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] backdrop-blur">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-white/86 px-6 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] backdrop-blur">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.catalogRouteSummaryTitle}
           </p>
@@ -365,7 +365,7 @@ export function CatalogPage({
           />
         )}
 
-        <section className="sticky top-4 z-10 rounded-[2rem] border border-[rgba(53,92,38,0.12)] bg-[rgba(255,255,255,0.86)] px-6 py-5 shadow-[0_20px_50px_rgba(38,76,34,0.1)] backdrop-blur">
+        <section className="sticky top-4 z-10 rounded-[1rem] border border-[rgba(53,92,38,0.12)] bg-[rgba(255,255,255,0.86)] px-6 py-5 shadow-[0_20px_50px_rgba(38,76,34,0.1)] backdrop-blur">
           <div className="flex flex-wrap gap-2">
             {sectionLinks.map((section) => (
               <a
@@ -383,7 +383,7 @@ export function CatalogPage({
           id="catalog-overview"
           className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]"
         >
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.resultSummaryTitle}
             </p>
@@ -404,12 +404,12 @@ export function CatalogPage({
                   })}
             </p>
           </div>
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.resultSetTitle}
             </p>
             <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.resultSetLoadedLabel}
                 </p>
@@ -419,7 +419,7 @@ export function CatalogPage({
                   })}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.resultSetVisibleLabel}
                 </p>
@@ -429,7 +429,7 @@ export function CatalogPage({
                   })}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.resultSetTotalLabel}
                 </p>
@@ -462,7 +462,7 @@ export function CatalogPage({
           id="catalog-offer-window"
           className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
         >
-          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.offerWindowTitle}
             </p>
@@ -475,7 +475,7 @@ export function CatalogPage({
                 : copy.offerWindowFallback}
             </p>
             {featuredOfferProduct ? (
-              <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+              <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                 <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   {featuredOfferProduct.product.name}
                 </p>
@@ -516,12 +516,12 @@ export function CatalogPage({
             ) : null}
           </section>
 
-          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.buyingGuideTitle}
             </p>
             <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.buyingGuideCategoryLabel}
                 </p>
@@ -529,7 +529,7 @@ export function CatalogPage({
                   {activeCategory?.name ?? copy.buyingGuideCategoryFallback}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.buyingGuideOfferLabel}
                 </p>
@@ -539,7 +539,7 @@ export function CatalogPage({
                   })}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.buyingGuideLensLabel}
                 </p>
@@ -565,7 +565,7 @@ export function CatalogPage({
           </section>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.catalogReadinessTitle}
           </p>
@@ -575,7 +575,7 @@ export function CatalogPage({
             })}
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogReadinessDiscoveryLabel}
               </p>
@@ -583,7 +583,7 @@ export function CatalogPage({
                 {assortmentReadiness}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogReadinessOfferLabel}
               </p>
@@ -593,7 +593,7 @@ export function CatalogPage({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogReadinessBaseLabel}
               </p>
@@ -603,7 +603,7 @@ export function CatalogPage({
                   })}
                 </p>
               </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogReadinessSupportLabel}
               </p>
@@ -614,7 +614,7 @@ export function CatalogPage({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogFacetImageLabel}
               </p>
@@ -625,7 +625,7 @@ export function CatalogPage({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.catalogFacetSavingsLabel}
               </p>
@@ -639,7 +639,7 @@ export function CatalogPage({
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.catalogReviewTitle}
             </p>
@@ -692,7 +692,7 @@ export function CatalogPage({
               </Link>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.catalogReviewImageCoverageLabel}
                 </p>
@@ -702,7 +702,7 @@ export function CatalogPage({
                   })}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.catalogReviewOfferCoverageLabel}
                 </p>
@@ -733,7 +733,7 @@ export function CatalogPage({
                         }),
                         culture,
                       )}
-                      className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
+                      className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
                     >
                       <p className="font-semibold text-[var(--color-text-primary)]">
                         {product.name}
@@ -744,7 +744,7 @@ export function CatalogPage({
                     </Link>
                   ))
                 ) : (
-                  <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {copy.catalogReviewTargetsFallback}
                   </div>
                 )}
@@ -758,7 +758,7 @@ export function CatalogPage({
           products={products}
         />
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.catalogCartWindowTitle}
           </p>
@@ -790,7 +790,7 @@ export function CatalogPage({
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.catalogCmsWindowTitle}
           </p>
@@ -806,7 +806,7 @@ export function CatalogPage({
                 <Link
                   key={page.id}
                   href={localizeHref(buildCmsPagePath(page.slug), culture)}
-                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
+                  className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 transition hover:bg-[var(--color-surface-panel)]"
                 >
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                     {page.title}
@@ -837,7 +837,7 @@ export function CatalogPage({
         <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
           <aside
             id="catalog-filters"
-            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-white/92 px-5 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)]"
+            className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-white/92 px-5 py-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)]"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.categoriesTitle}
@@ -846,7 +846,7 @@ export function CatalogPage({
             <form
               action={localizeHref("/catalog", culture)}
               method="get"
-              className="mt-5 rounded-[1.5rem] border border-[rgba(53,92,38,0.08)] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,0.98))] px-4 py-4"
+              className="mt-5 rounded-[1rem] border border-[rgba(53,92,38,0.08)] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,0.98))] px-4 py-4"
             >
               {activeCategorySlug ? (
                 <input type="hidden" name="category" value={activeCategorySlug} />
@@ -938,7 +938,7 @@ export function CatalogPage({
                     ),
                     culture,
                   )}
-                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+                  className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
                 >
                   <p className="font-semibold text-[var(--color-text-primary)]">
                     {copy.catalogFacetValueOfferCta}
@@ -981,7 +981,7 @@ export function CatalogPage({
                     ),
                     culture,
                   )}
-                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+                  className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
                 >
                   <p className="font-semibold text-[var(--color-text-primary)]">
                     {copy.catalogFacetWithImageCta}
@@ -1005,7 +1005,7 @@ export function CatalogPage({
                     ),
                     culture,
                   )}
-                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+                  className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
                 >
                   <p className="font-semibold text-[var(--color-text-primary)]">
                     {copy.catalogFacetMissingImageCta}
@@ -1029,7 +1029,7 @@ export function CatalogPage({
                     ),
                     culture,
                   )}
-                  className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+                  className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
                 >
                   <p className="font-semibold text-[var(--color-text-primary)]">
                     {copy.catalogFacetHeroOfferCta}
@@ -1044,7 +1044,7 @@ export function CatalogPage({
             </form>
 
             {activeCategory ? (
-              <div className="mt-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="mt-4 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                 <p className="font-semibold text-[var(--color-text-primary)]">
                   {copy.browsingCategoryPrefix} {activeCategory.name}
                 </p>
@@ -1129,7 +1129,7 @@ export function CatalogPage({
 
           <div id="catalog-results" className="scroll-mt-28 flex flex-col gap-6">
             {!hasProducts ? (
-              <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
+              <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
                   {copy.noResultsEyebrow}
                 </p>
@@ -1139,7 +1139,7 @@ export function CatalogPage({
                 <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
                   {copy.noResultsDescription}
                 </p>
-                <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 text-left">
+                <div className="mt-6 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5 text-left">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                     {copy.catalogRouteSummaryTitle}
                   </p>
@@ -1165,9 +1165,9 @@ export function CatalogPage({
                     return (
                   <article
                     key={product.id}
-                    className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-[rgba(53,92,38,0.1)] bg-white/92 p-5 shadow-[0_22px_60px_rgba(38,76,34,0.08)] transition duration-200 hover:-translate-y-1"
+                    className="flex h-full flex-col overflow-hidden rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-white/92 p-5 shadow-[0_22px_60px_rgba(38,76,34,0.08)] transition duration-200 hover:-translate-y-1"
                   >
-                    <div className="flex min-h-48 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-6">
+                    <div className="flex min-h-48 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(246,255,233,0.95),rgba(255,255,255,1),rgba(255,244,214,0.9))] p-6">
                       {productImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1296,7 +1296,7 @@ export function CatalogPage({
             {totalPages > 1 && (
               <div
                 id="catalog-pagination"
-                className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+                className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                   {copy.paginationTitle}

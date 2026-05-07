@@ -1,11 +1,16 @@
 using Darwin.Infrastructure.Extensions;
+using Darwin.Infrastructure.Media;
 using Darwin.WebApi.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
@@ -55,6 +60,8 @@ namespace Darwin.WebApi.Extensions
                 app.UseHttpsRedirection();
             }
 
+            app.UseMediaStaticFiles();
+
             app.UseRouting();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
@@ -83,6 +90,42 @@ namespace Darwin.WebApi.Extensions
             });
 
             return app;
+        }
+
+        private static void UseMediaStaticFiles(this WebApplication app)
+        {
+            var options = app.Services.GetRequiredService<IOptions<MediaStorageOptions>>().Value;
+            var requestPath = MediaStoragePathResolver.NormalizeRequestPath(options.RequestPath);
+
+            var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(app.Environment.ContentRootPath, options);
+            Directory.CreateDirectory(uploadsRoot);
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(uploadsRoot),
+                RequestPath = requestPath,
+                OnPrepareResponse = PrepareUploadStaticFileResponse
+            });
+
+            foreach (var legacyRoot in MediaStoragePathResolver.ResolveLegacyRootPaths(app.Environment.ContentRootPath, options))
+            {
+                if (!Directory.Exists(legacyRoot))
+                {
+                    continue;
+                }
+
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(legacyRoot),
+                    RequestPath = requestPath,
+                    OnPrepareResponse = PrepareUploadStaticFileResponse
+                });
+            }
+        }
+
+        private static void PrepareUploadStaticFileResponse(StaticFileResponseContext context)
+        {
+            context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+            context.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
         }
     }
 }

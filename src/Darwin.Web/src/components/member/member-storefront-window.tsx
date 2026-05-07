@@ -61,7 +61,7 @@ export function MemberStorefrontWindow({
   cartSectionCheckoutCtaLabel,
 }: MemberStorefrontWindowProps) {
   return (
-    <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+    <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
         {title}
       </p>
@@ -69,7 +69,7 @@ export function MemberStorefrontWindow({
         {message}
       </p>
       <div className="mt-5 grid gap-4 xl:grid-cols-3">
-        <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">
               {cmsTitle}
@@ -88,7 +88,7 @@ export function MemberStorefrontWindow({
           />
         </div>
 
-        <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">
               {catalogTitle}
@@ -107,7 +107,7 @@ export function MemberStorefrontWindow({
           />
         </div>
 
-        <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">
               {productTitle}
@@ -133,7 +133,7 @@ export function MemberStorefrontWindow({
       {promotionLaneCards.length > 0 &&
       promotionLaneSectionTitle &&
       promotionLaneSectionMessage ? (
-        <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             {promotionLaneSectionTitle}
           </p>
@@ -148,7 +148,7 @@ export function MemberStorefrontWindow({
         </div>
       ) : null}
       {cartSectionTitle && cartSectionMessage ? (
-        <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+        <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
           <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             {cartSectionTitle}
           </p>

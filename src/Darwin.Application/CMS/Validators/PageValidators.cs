@@ -1,16 +1,23 @@
 using Darwin.Application.CMS.DTOs;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
+using System.Text.RegularExpressions;
 
 namespace Darwin.Application.CMS.Validators
 {
     public sealed class PageTranslationDtoValidator : AbstractValidator<PageTranslationDto>
     {
-        public PageTranslationDtoValidator()
+        private const string SlugPattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
+
+        public PageTranslationDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Culture).NotEmpty().MaximumLength(10);
             RuleFor(x => x.Title).NotEmpty().MaximumLength(300);
-            RuleFor(x => x.Slug).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.Slug)
+                .NotEmpty()
+                .MaximumLength(200)
+                .Must(static slug => !string.IsNullOrWhiteSpace(slug) && Regex.IsMatch(slug, SlugPattern, RegexOptions.CultureInvariant))
+                .WithMessage(localizer["SlugInvalidFormat"]);
             RuleFor(x => x.ContentHtml).NotNull();
         }
     }
@@ -35,11 +42,11 @@ namespace Darwin.Application.CMS.Validators
     /// </remarks>
     public sealed class PageCreateDtoValidator : AbstractValidator<PageCreateDto>
     {
-        public PageCreateDtoValidator()
+        public PageCreateDtoValidator(IStringLocalizer<ValidationResource> localizer)
         {
             RuleFor(x => x.Translations).NotEmpty();
             RuleFor(x => x.Status).IsInEnum();
-            RuleForEach(x => x.Translations).SetValidator(new PageTranslationDtoValidator());
+            RuleForEach(x => x.Translations).SetValidator(new PageTranslationDtoValidator(localizer));
             RuleFor(x => x.PublishEndUtc).GreaterThan(x => x.PublishStartUtc)
                 .When(x => x.PublishEndUtc.HasValue && x.PublishStartUtc.HasValue);
         }
@@ -68,7 +75,7 @@ namespace Darwin.Application.CMS.Validators
                 .WithMessage(localizer["RowVersionRequired"]);
             RuleFor(x => x.Status).IsInEnum();
             RuleFor(x => x.Translations).NotEmpty();
-            RuleForEach(x => x.Translations).SetValidator(new PageTranslationDtoValidator());
+            RuleForEach(x => x.Translations).SetValidator(new PageTranslationDtoValidator(localizer));
             RuleFor(x => x.PublishEndUtc).GreaterThan(x => x.PublishStartUtc)
                 .When(x => x.PublishEndUtc.HasValue && x.PublishStartUtc.HasValue);
         }

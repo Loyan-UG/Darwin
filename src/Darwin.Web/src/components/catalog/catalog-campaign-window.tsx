@@ -136,7 +136,7 @@ export function CatalogCampaignWindow({
   ];
 
   return (
-    <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
         {copy.campaignWindowTitle}
       </p>
@@ -146,7 +146,7 @@ export function CatalogCampaignWindow({
           productCount: products.length,
         })}
       </p>
-      <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+      <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
           {copy.campaignWindowPromotionLaneSectionTitle}
         </p>

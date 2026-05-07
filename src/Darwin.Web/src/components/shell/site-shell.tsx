@@ -28,7 +28,11 @@ export function SiteShell({
         languageAlternates={languageAlternates}
       />
       <main className="flex flex-1 flex-col">{children}</main>
-      <SiteFooter groups={model.footerGroups} culture={model.culture} />
+      <SiteFooter
+        groups={model.footerGroups}
+        culture={model.culture}
+        columnCount={model.footerColumnCount}
+      />
     </div>
   );
 }
