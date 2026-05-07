@@ -24,4 +24,5 @@ export type ShellModel = {
   primaryNavigation: ShellLink[];
   utilityLinks: ShellLink[];
   footerGroups: ShellLinkGroup[];
+  footerColumnCount: number;
 };

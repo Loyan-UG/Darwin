@@ -88,7 +88,7 @@ export function InvoiceDetailPage({
   if (!invoice) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
-        <div className="w-full rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
+        <div className="w-full rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
           <StatusBanner
             tone="warning"
             title={copy.invoiceDetailUnavailableTitle}
@@ -192,7 +192,7 @@ export function InvoiceDetailPage({
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <SurfaceSectionNav items={sectionLinks} />
-        <div id="invoice-detail-overview" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div id="invoice-detail-overview" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <nav
             aria-label={copy.memberBreadcrumbLabel}
             className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
@@ -227,11 +227,11 @@ export function InvoiceDetailPage({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-6">
-            <div id="invoice-detail-lines" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div id="invoice-detail-lines" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.invoiceLinesTitle}</p>
               <div className="mt-5 flex flex-col gap-4">
                 {invoice.lines.map((line) => (
-                  <article key={line.id} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <article key={line.id} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{line.description}</h2>
@@ -249,7 +249,7 @@ export function InvoiceDetailPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.paymentSummaryTitle}</p>
@@ -271,7 +271,7 @@ export function InvoiceDetailPage({
                   </span>
                 )}
               </div>
-              <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+              <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                 {invoice.paymentSummary}
               </div>
             </div>
@@ -280,7 +280,7 @@ export function InvoiceDetailPage({
           <div className="flex flex-col gap-5">
             <MemberPortalNav culture={culture} activePath="/invoices" />
 
-            <aside id="invoice-detail-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside id="invoice-detail-readiness" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.invoiceDetailReadinessTitle}
               </p>
@@ -290,7 +290,7 @@ export function InvoiceDetailPage({
                 })}
               </p>
               <div className="mt-5 grid gap-3">
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.invoiceDetailReadinessPaymentLabel}
                   </p>
@@ -300,7 +300,7 @@ export function InvoiceDetailPage({
                       : copy.invoiceDetailReadinessPaymentHealthy}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.invoiceDetailReadinessBalanceLabel}
                   </p>
@@ -308,7 +308,7 @@ export function InvoiceDetailPage({
                     {formatMoney(invoice.balanceMinor, invoice.currency, culture)}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.invoiceDetailReadinessDueLabel}
                   </p>
@@ -316,7 +316,7 @@ export function InvoiceDetailPage({
                     {formatDateTime(invoice.dueDateUtc, culture)}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.invoiceDetailReadinessDocumentLabel}
                   </p>
@@ -372,7 +372,7 @@ export function InvoiceDetailPage({
               products={products}
             />
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex items-center justify-between"><span>{copy.statusLabel}</span><span>{localizeInvoiceStatus(invoice.status, culture)}</span></div>
@@ -386,7 +386,7 @@ export function InvoiceDetailPage({
               </div>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.invoiceDetailTimelineTitle}
               </p>
@@ -394,7 +394,7 @@ export function InvoiceDetailPage({
                 {copy.invoiceDetailTimelineMessage}
               </p>
               <div className="mt-5 flex flex-col gap-3">
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.invoiceDetailTimelineCreatedLabel}
                   </p>
@@ -402,7 +402,7 @@ export function InvoiceDetailPage({
                     {formatDateTime(invoice.createdAtUtc, culture)}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.invoiceDetailTimelineDueLabel}
                   </p>
@@ -410,7 +410,7 @@ export function InvoiceDetailPage({
                     {formatDateTime(invoice.dueDateUtc, culture)}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.invoiceDetailTimelineSettledLabel}
                   </p>
@@ -477,7 +477,7 @@ export function InvoiceDetailPage({
               />
             </div>
 
-            <aside id="invoice-detail-actions" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside id="invoice-detail-actions" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.actionsTitle}</p>
               <div className="mt-4 flex flex-col gap-3">
                 {invoice.actions.canRetryPayment && (
@@ -510,7 +510,7 @@ export function InvoiceDetailPage({
               </div>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.invoicesRouteLabel}
               </p>

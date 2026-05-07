@@ -214,7 +214,7 @@ export function CmsPagesIndex({
           </span>
         </nav>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.cmsIndexEyebrow}
           </p>
@@ -238,7 +238,7 @@ export function CmsPagesIndex({
 
         <div
           id="cms-review"
-          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+          className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
         >
           <form action={localizeHref("/cms", culture)} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_auto_auto] lg:items-end">
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -334,7 +334,7 @@ export function CmsPagesIndex({
           </div>
         </div>
 
-        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+        <section className="sticky top-4 z-10 rounded-[1rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
           <div className="flex flex-wrap gap-2">
             {sectionLinks.map((section) => (
               <a
@@ -352,7 +352,7 @@ export function CmsPagesIndex({
           id="cms-overview"
           className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]"
         >
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.cmsResultSummaryTitle}
             </p>
@@ -373,12 +373,12 @@ export function CmsPagesIndex({
                   })}
             </p>
           </div>
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.cmsResultSetTitle}
             </p>
             <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.cmsResultSetLoadedLabel}
                 </p>
@@ -388,7 +388,7 @@ export function CmsPagesIndex({
                   })}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.cmsResultSetVisibleLabel}
                 </p>
@@ -398,7 +398,7 @@ export function CmsPagesIndex({
                   })}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.cmsResultSetTotalLabel}
                 </p>
@@ -432,7 +432,7 @@ export function CmsPagesIndex({
 
         <div
           id="cms-readiness"
-          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+          className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.cmsIndexReadinessTitle}
@@ -443,7 +443,7 @@ export function CmsPagesIndex({
             })}
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.cmsIndexReadinessDiscoveryLabel}
               </p>
@@ -451,7 +451,7 @@ export function CmsPagesIndex({
                 {readinessState}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.cmsIndexReadinessReadyLabel}
               </p>
@@ -461,7 +461,7 @@ export function CmsPagesIndex({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.cmsIndexReadinessAttentionLabel}
               </p>
@@ -471,7 +471,7 @@ export function CmsPagesIndex({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.cmsIndexReadinessSupportLabel}
               </p>
@@ -485,7 +485,7 @@ export function CmsPagesIndex({
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.cmsIndexReviewTitle}
           </p>
@@ -522,7 +522,7 @@ export function CmsPagesIndex({
             </Link>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.cmsIndexReviewMetaTitleLabel}
               </p>
@@ -532,7 +532,7 @@ export function CmsPagesIndex({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.cmsIndexReviewMetaDescriptionLabel}
               </p>
@@ -542,7 +542,7 @@ export function CmsPagesIndex({
                 })}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.cmsIndexReviewMissingBothLabel}
               </p>
@@ -565,7 +565,7 @@ export function CmsPagesIndex({
                 ),
                 culture,
               )}
-              className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+              className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
             >
               <p className="font-semibold text-[var(--color-text-primary)]">
                 {copy.cmsIndexReviewMissingTitleCta}
@@ -587,7 +587,7 @@ export function CmsPagesIndex({
                 ),
                 culture,
               )}
-              className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+              className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
             >
               <p className="font-semibold text-[var(--color-text-primary)]">
                 {copy.cmsIndexReviewMissingDescriptionCta}
@@ -609,7 +609,7 @@ export function CmsPagesIndex({
                 ),
                 culture,
               )}
-              className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
+              className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm transition hover:bg-[var(--color-surface-panel)]"
             >
               <p className="font-semibold text-[var(--color-text-primary)]">
                 {copy.cmsIndexReviewMissingBothCta}
@@ -639,7 +639,7 @@ export function CmsPagesIndex({
                       }),
                       culture,
                     )}
-                    className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
+                    className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
                   >
                     <p className="font-semibold text-[var(--color-text-primary)]">
                       {page.title}
@@ -650,7 +650,7 @@ export function CmsPagesIndex({
                   </Link>
                 ))
               ) : (
-                <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   {copy.cmsIndexReviewTargetsFallback}
                 </div>
               )}
@@ -663,7 +663,7 @@ export function CmsPagesIndex({
             id="cms-groups"
             className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]"
           >
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.cmsGroupingTitle}
               </p>
@@ -687,7 +687,7 @@ export function CmsPagesIndex({
                 ))}
               </div>
             </div>
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.cmsGroupingLargestSetTitle}
               </p>
@@ -705,7 +705,7 @@ export function CmsPagesIndex({
 
         {spotlightPage && (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-            <article className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-7 shadow-[var(--shadow-panel)] sm:px-8">
+            <article className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-7 shadow-[var(--shadow-panel)] sm:px-8">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.cmsSpotlightEyebrow}
               </p>
@@ -736,7 +736,7 @@ export function CmsPagesIndex({
               </div>
             </article>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-7 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-7 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.cmsFollowUpRailTitle}
               </p>
@@ -759,7 +759,7 @@ export function CmsPagesIndex({
                         }),
                         culture,
                       )}
-                      className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
+                      className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)]"
                     >
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                         {formatResource(copy.cmsFollowUpRailItemLabel, {
@@ -775,7 +775,7 @@ export function CmsPagesIndex({
                     </Link>
                   ))
                 ) : (
-                  <div className="rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                  <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                     {copy.cmsFollowUpRailFallback}
                   </div>
                 )}
@@ -833,7 +833,7 @@ export function CmsPagesIndex({
                     return (
                   <article
                     key={page.id}
-                    className="flex h-full flex-col rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
+                    className="flex h-full flex-col rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                       {copy.cmsPageEyebrow}
@@ -900,7 +900,7 @@ export function CmsPagesIndex({
         </div>
 
         {pages.length === 0 && (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.cmsNoPagesMessage}
             </p>
@@ -917,7 +917,7 @@ export function CmsPagesIndex({
         {totalPages > 1 && (
           <div
             id="cms-pagination"
-            className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+            className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.cmsPaginationTitle}

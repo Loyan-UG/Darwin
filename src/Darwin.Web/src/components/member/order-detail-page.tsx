@@ -187,7 +187,7 @@ export function OrderDetailPage({
   if (!order) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
-        <div className="w-full rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
+        <div className="w-full rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
           <StatusBanner
             tone="warning"
             title={copy.orderDetailUnavailableTitle}
@@ -311,7 +311,7 @@ export function OrderDetailPage({
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
         <SurfaceSectionNav items={sectionLinks} />
-        <div id="order-detail-overview" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div id="order-detail-overview" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <nav
             aria-label={copy.memberBreadcrumbLabel}
             className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
@@ -346,7 +346,7 @@ export function OrderDetailPage({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-6">
-            <div id="order-detail-lines" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div id="order-detail-lines" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.billingTitle}</p>
@@ -359,11 +359,11 @@ export function OrderDetailPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.orderLinesTitle}</p>
               <div className="mt-5 flex flex-col gap-4">
                 {order.lines.map((line) => (
-                  <article key={line.id} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <article key={line.id} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{line.name}</h2>
@@ -379,12 +379,12 @@ export function OrderDetailPage({
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.paymentsTitle}</p>
                 {order.payments.length > 0 ? (
                   <div className="mt-5 flex flex-col gap-4">
                     {order.payments.map((payment) => (
-                      <article key={payment.id} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                      <article key={payment.id} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <div>
                             <p className="text-sm font-semibold text-[var(--color-text-primary)]">{payment.provider}</p>
@@ -419,12 +419,12 @@ export function OrderDetailPage({
                 )}
               </div>
 
-              <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.shipmentsTitle}</p>
                 {order.shipments.length > 0 ? (
                   <div className="mt-5 flex flex-col gap-4">
                     {order.shipments.map((shipment) => (
-                      <article key={shipment.id} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                      <article key={shipment.id} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                         <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                           {shipment.carrier} / {shipment.service}
                         </p>
@@ -456,7 +456,7 @@ export function OrderDetailPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.linkedInvoicesTitle}</p>
@@ -480,7 +480,7 @@ export function OrderDetailPage({
               {order.invoices.length > 0 ? (
                 <div className="mt-5 flex flex-col gap-4">
                   {order.invoices.map((invoice) => (
-                    <article key={invoice.id} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <article key={invoice.id} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
                           <p className="text-sm font-semibold text-[var(--color-text-primary)]">{localizeInvoiceStatus(invoice.status, culture)}</p>
@@ -519,7 +519,7 @@ export function OrderDetailPage({
           <div className="flex flex-col gap-5">
             <MemberPortalNav culture={culture} activePath="/orders" />
 
-            <aside id="order-detail-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside id="order-detail-readiness" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.orderDetailReadinessTitle}
               </p>
@@ -530,7 +530,7 @@ export function OrderDetailPage({
                 })}
               </p>
               <div className="mt-5 grid gap-3">
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailReadinessPaymentLabel}
                   </p>
@@ -545,7 +545,7 @@ export function OrderDetailPage({
                     </p>
                   ) : null}
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailReadinessShipmentLabel}
                   </p>
@@ -555,7 +555,7 @@ export function OrderDetailPage({
                     })}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailReadinessInvoicesLabel}
                   </p>
@@ -565,7 +565,7 @@ export function OrderDetailPage({
                     })}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailReadinessDocumentLabel}
                   </p>
@@ -622,7 +622,7 @@ export function OrderDetailPage({
               products={products}
             />
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.summaryTitle}</p>
               <div className="mt-5 space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <div className="flex items-center justify-between"><span>{copy.statusLabel}</span><span>{localizeOrderStatus(order.status, culture)}</span></div>
@@ -635,7 +635,7 @@ export function OrderDetailPage({
               </div>
 
               {(order.shippingMethodName || order.shippingCarrier || order.shippingService) && (
-                <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-6 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   <p className="font-semibold text-[var(--color-text-primary)]">{copy.shippingSnapshotTitle}</p>
                   <p>{order.shippingMethodName ?? copy.methodUnavailable}</p>
                   <p>
@@ -646,7 +646,7 @@ export function OrderDetailPage({
               )}
             </aside>
 
-            <aside id="order-detail-actions" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside id="order-detail-actions" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.orderDetailTimelineTitle}
               </p>
@@ -654,7 +654,7 @@ export function OrderDetailPage({
                 {copy.orderDetailTimelineMessage}
               </p>
               <div className="mt-5 flex flex-col gap-3">
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailTimelineCreatedLabel}
                   </p>
@@ -662,7 +662,7 @@ export function OrderDetailPage({
                     {formatDateTime(order.createdAtUtc, culture)}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailTimelinePaidLabel}
                   </p>
@@ -672,7 +672,7 @@ export function OrderDetailPage({
                       : copy.timelineUnavailable}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailTimelineShippedLabel}
                   </p>
@@ -682,7 +682,7 @@ export function OrderDetailPage({
                       : copy.timelineUnavailable}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailTimelineDeliveredLabel}
                   </p>
@@ -692,7 +692,7 @@ export function OrderDetailPage({
                       : copy.timelineUnavailable}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailTimelineInvoiceDueLabel}
                   </p>
@@ -702,7 +702,7 @@ export function OrderDetailPage({
                       : copy.timelineUnavailable}
                   </p>
                 </article>
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.orderDetailTimelineInvoicePaidLabel}
                   </p>
@@ -769,7 +769,7 @@ export function OrderDetailPage({
               />
             </div>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.actionsTitle}</p>
               <div className="mt-4 flex flex-col gap-3">
                 {order.actions.canRetryPayment && (
@@ -800,7 +800,7 @@ export function OrderDetailPage({
               </div>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.ordersRouteLabel}
               </p>

@@ -1,5 +1,6 @@
 using System.Globalization;
 using Darwin.Infrastructure.Extensions;
+using Darwin.Infrastructure.Media;
 using Darwin.WebAdmin.Localization;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Builder;
@@ -7,9 +8,12 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Darwin.WebAdmin.Extensions
 {
@@ -74,6 +78,7 @@ namespace Darwin.WebAdmin.Extensions
 
             app.UseHttpsRedirection();
             app.UseWebAdminSecurityHeaders();
+            app.UseMediaStaticFiles();
             app.UseStaticFiles(BuildStaticFileOptions());
 
             app.UseRouting();
@@ -163,8 +168,28 @@ namespace Darwin.WebAdmin.Extensions
             };
         }
 
+        private static void UseMediaStaticFiles(this WebApplication app)
+        {
+            var options = app.Services.GetRequiredService<IOptions<MediaStorageOptions>>().Value;
+            var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(app.Environment.ContentRootPath, options);
+            Directory.CreateDirectory(uploadsRoot);
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(uploadsRoot),
+                RequestPath = MediaStoragePathResolver.NormalizeRequestPath(options.RequestPath),
+                OnPrepareResponse = PrepareUploadStaticFileResponse
+            });
+        }
+
+        private static void PrepareUploadStaticFileResponse(StaticFileResponseContext context)
+        {
+            context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        }
+
         private static void UseWebAdminSecurityHeaders(this WebApplication app)
         {
+            var mediaImgSource = ResolveMediaImgSource(app.Services);
             app.Use(async (context, next) =>
             {
                 context.Response.OnStarting(() =>
@@ -181,7 +206,7 @@ namespace Darwin.WebAdmin.Extensions
                         "default-src 'self'",
                         scriptSrc,
                         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-                        "img-src 'self' data: blob:",
+                        $"img-src 'self' data: blob:{mediaImgSource}",
                         "font-src 'self' https://fonts.gstatic.com",
                         connectSrc,
                         "media-src 'self' blob:",
@@ -197,6 +222,19 @@ namespace Darwin.WebAdmin.Extensions
 
                 await next().ConfigureAwait(false);
             });
+        }
+
+        private static string ResolveMediaImgSource(IServiceProvider services)
+        {
+            var options = services.GetRequiredService<IOptions<MediaStorageOptions>>().Value;
+            if (string.IsNullOrWhiteSpace(options.PublicBaseUrl) ||
+                !Uri.TryCreate(options.PublicBaseUrl, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                return string.Empty;
+            }
+
+            return $" {uri.GetLeftPart(UriPartial.Authority)}";
         }
     }
 }

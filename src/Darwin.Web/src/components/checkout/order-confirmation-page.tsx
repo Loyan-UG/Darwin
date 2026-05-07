@@ -254,7 +254,7 @@ export function OrderConfirmationPage({
   if (!confirmation) {
     return (
       <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
-        <div className="w-full rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
+        <div className="w-full rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-10 shadow-[var(--shadow-panel)] sm:px-8">
           <StatusBanner
             tone="warning"
             title={copy.orderConfirmationUnavailableTitle}
@@ -464,7 +464,7 @@ export function OrderConfirmationPage({
           </span>
         </nav>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.orderConfirmationEyebrow}
           </p>
@@ -537,7 +537,7 @@ export function OrderConfirmationPage({
           />
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.confirmationRouteSummaryTitle}
           </p>
@@ -550,7 +550,7 @@ export function OrderConfirmationPage({
           </p>
         </div>
 
-        <section className="sticky top-4 z-10 rounded-[2rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
+        <section className="sticky top-4 z-10 rounded-[1rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-6 py-5 shadow-[var(--shadow-panel)] backdrop-blur">
           <div className="flex flex-wrap gap-2">
             {sectionLinks.map((section) => (
               <a
@@ -568,7 +568,7 @@ export function OrderConfirmationPage({
           id="confirmation-overview"
           className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
         >
-          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.confirmationCareTitle}
             </p>
@@ -578,7 +578,7 @@ export function OrderConfirmationPage({
                 : copy.confirmationCareStableMessage}
             </p>
             <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.confirmationCarePaymentLabel}
                 </p>
@@ -588,7 +588,7 @@ export function OrderConfirmationPage({
                     : copy.confirmationCarePaymentDone}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.confirmationCareReferenceLabel}
                 </p>
@@ -596,7 +596,7 @@ export function OrderConfirmationPage({
                   {confirmation.orderNumber}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.confirmationCareStatusLabel}
                 </p>
@@ -607,7 +607,7 @@ export function OrderConfirmationPage({
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.confirmationNextWindowTitle}
             </p>
@@ -617,7 +617,7 @@ export function OrderConfirmationPage({
                 : copy.confirmationNextWindowGuestMessage}
             </p>
             <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.confirmationNextWindowOrdersLabel}
                 </p>
@@ -629,7 +629,7 @@ export function OrderConfirmationPage({
                     : copy.confirmationNextWindowOrdersFallback}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.confirmationNextWindowBillingLabel}
                 </p>
@@ -645,7 +645,7 @@ export function OrderConfirmationPage({
                     : copy.confirmationNextWindowBillingFallback}
                 </p>
               </div>
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.confirmationNextWindowLoyaltyLabel}
                 </p>
@@ -663,7 +663,7 @@ export function OrderConfirmationPage({
 
         <section
           id="confirmation-payment-window"
-          className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+          className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
             {copy.confirmationPaymentWindowTitle}
@@ -672,7 +672,7 @@ export function OrderConfirmationPage({
             {copy.confirmationPaymentWindowMessage}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.confirmationPaymentWindowAttemptsLabel}
               </p>
@@ -682,7 +682,7 @@ export function OrderConfirmationPage({
                 })}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.confirmationPaymentWindowProviderLabel}
               </p>
@@ -696,7 +696,7 @@ export function OrderConfirmationPage({
                       })}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.confirmationPaymentWindowRouteLabel}
               </p>
@@ -706,7 +706,7 @@ export function OrderConfirmationPage({
                   : copy.confirmationPaymentWindowRouteDone}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.confirmationPaymentWindowAmountLabel}
               </p>
@@ -718,7 +718,7 @@ export function OrderConfirmationPage({
                 )}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.confirmationPaymentWindowRecordedLabel}
               </p>
@@ -730,7 +730,7 @@ export function OrderConfirmationPage({
                 )}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.confirmationPaymentWindowRemainingLabel}
               </p>
@@ -742,7 +742,7 @@ export function OrderConfirmationPage({
                 )}
               </p>
             </article>
-            <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.confirmationPaymentWindowCoverageLabel}
               </p>
@@ -760,7 +760,7 @@ export function OrderConfirmationPage({
           className="scroll-mt-28 grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_360px]"
         >
           <div className="flex flex-col gap-6">
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
@@ -777,7 +777,7 @@ export function OrderConfirmationPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.orderLinesTitle}
               </p>
@@ -785,7 +785,7 @@ export function OrderConfirmationPage({
                 {confirmation.lines.map((line) => (
                   <article
                     key={line.id}
-                    className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                    className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
@@ -815,7 +815,7 @@ export function OrderConfirmationPage({
           </div>
 
           <div className="flex flex-col gap-5">
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.nextStepsTitle}
               </p>
@@ -823,7 +823,7 @@ export function OrderConfirmationPage({
                 {copy.nextStepsDescription}
               </p>
               <div className="mt-5 grid gap-3">
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                     {copy.nextStepsPaymentLabel}
                   </p>
@@ -835,7 +835,7 @@ export function OrderConfirmationPage({
                   </p>
                 </article>
 
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                     {copy.nextStepsAccountLabel}
                   </p>
@@ -847,7 +847,7 @@ export function OrderConfirmationPage({
                   </p>
                 </article>
 
-                <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                     {copy.nextStepsReferenceLabel}
                   </p>
@@ -904,7 +904,7 @@ export function OrderConfirmationPage({
             </aside>
 
             {hasMemberSession ? (
-              <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                   {copy.confirmationMemberWindowTitle}
                 </p>
@@ -916,7 +916,7 @@ export function OrderConfirmationPage({
                   })}
                 </p>
                 <div className="mt-5 grid gap-3">
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.confirmationMemberOrdersLabel}
                     </p>
@@ -928,7 +928,7 @@ export function OrderConfirmationPage({
                         : copy.confirmationMemberOrdersEmpty}
                     </p>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.confirmationMemberInvoicesLabel}
                     </p>
@@ -944,7 +944,7 @@ export function OrderConfirmationPage({
                         : copy.confirmationMemberInvoicesEmpty}
                     </p>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.confirmationMemberLoyaltyLabel}
                     </p>
@@ -979,7 +979,7 @@ export function OrderConfirmationPage({
                 </div>
               </aside>
             ) : (
-              <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+              <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                   {copy.confirmationGuestWindowTitle}
                 </p>
@@ -989,7 +989,7 @@ export function OrderConfirmationPage({
                   })}
                 </p>
                 <div className="mt-5 grid gap-3">
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.confirmationGuestReferenceLabel}
                     </p>
@@ -999,7 +999,7 @@ export function OrderConfirmationPage({
                       })}
                     </p>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                       {copy.confirmationGuestReturnLabel}
                     </p>
@@ -1007,7 +1007,7 @@ export function OrderConfirmationPage({
                       {memberOrderDetailHref}
                     </p>
                   </article>
-                  <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                         {copy.confirmationGuestOfferBoardTitle}
@@ -1032,7 +1032,7 @@ export function OrderConfirmationPage({
                         columnsClassName="grid-cols-1"
                       />
                     </div>
-                    <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-4">
+                    <div className="mt-4 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                         {copy.storefrontWindowPromotionLaneSectionTitle}
                       </p>
@@ -1078,7 +1078,7 @@ export function OrderConfirmationPage({
               </aside>
             )}
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.summaryTitle}
               </p>
@@ -1114,7 +1114,7 @@ export function OrderConfirmationPage({
               </div>
 
               {(confirmation.shippingMethodName || confirmation.shippingCarrier || confirmation.shippingService) && (
-                <div className="mt-6 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-6 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   <p className="font-semibold text-[var(--color-text-primary)]">{copy.shippingSnapshotTitle}</p>
                   <p>{confirmation.shippingMethodName ?? copy.methodUnavailable}</p>
                   <p>
@@ -1125,7 +1125,7 @@ export function OrderConfirmationPage({
               )}
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.paymentsTitle}
               </p>
@@ -1134,7 +1134,7 @@ export function OrderConfirmationPage({
                   confirmation.payments.map((payment) => (
                     <div
                       key={payment.id}
-                      className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
+                      className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]"
                     >
                       <p className="font-semibold text-[var(--color-text-primary)]">
                         {payment.provider} - {localizePaymentStatus(payment.status, culture)}

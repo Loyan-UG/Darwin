@@ -10,6 +10,7 @@ type SiteRuntimeConfig = {
   defaultCulture: string;
   supportedCultures: string[];
   cultureCookieName: string;
+  footerColumnCount: number;
 };
 
 function trimTrailingSlash(value: string) {
@@ -33,6 +34,15 @@ function parseTheme(value?: string): ThemeId {
   }
 
   return availableThemes[0].id;
+}
+
+function parseFooterColumnCount(value?: string) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  if (!Number.isFinite(parsed)) {
+    return 2;
+  }
+
+  return Math.min(Math.max(parsed, 2), 6);
 }
 
 function shouldAllowInsecureWebApiTls(webApiBaseUrl: string) {
@@ -81,5 +91,8 @@ export function getSiteRuntimeConfig(): SiteRuntimeConfig {
     supportedCultures,
     cultureCookieName:
       process.env.DARWIN_WEB_CULTURE_COOKIE_NAME ?? "darwin-web-culture",
+    footerColumnCount: parseFooterColumnCount(
+      process.env.DARWIN_WEB_FOOTER_COLUMN_COUNT,
+    ),
   };
 }

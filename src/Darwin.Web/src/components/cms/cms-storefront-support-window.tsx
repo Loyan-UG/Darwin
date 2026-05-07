@@ -113,7 +113,7 @@ export function CmsStorefrontSupportWindow({
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
@@ -142,7 +142,7 @@ export function CmsStorefrontSupportWindow({
         />
       </section>
 
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
@@ -172,7 +172,7 @@ export function CmsStorefrontSupportWindow({
                 <Link
                   key={product.id}
                   href={localizeHref(product.href, culture)}
-                  className="grid gap-3 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)] md:grid-cols-[72px_minmax(0,1fr)]"
+                  className="grid gap-3 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4 transition hover:bg-[var(--color-surface-panel)] md:grid-cols-[72px_minmax(0,1fr)]"
                 >
                   <div className="flex h-[72px] items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-2">
                     {productImageUrl ? (
@@ -212,7 +212,7 @@ export function CmsStorefrontSupportWindow({
         )}
       </section>
 
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
           {copy.cmsCampaignPromotionLaneSectionTitle}
         </p>
@@ -229,7 +229,7 @@ export function CmsStorefrontSupportWindow({
         />
       </div>
 
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
           {copy.cmsCartWindowTitle}
         </p>

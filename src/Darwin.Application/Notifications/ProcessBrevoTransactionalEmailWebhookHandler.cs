@@ -200,39 +200,83 @@ public sealed class ProcessBrevoTransactionalEmailWebhookHandler
 
     private static string? ReadString(JsonElement root, string propertyName)
     {
-        return root.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String
+        return TryGetProperty(root, propertyName, out var property) && property.ValueKind == JsonValueKind.String
             ? property.GetString()
             : null;
     }
 
     private static DateTime? ReadUnixSeconds(JsonElement root, string propertyName)
     {
-        if (!root.TryGetProperty(propertyName, out var property))
+        if (!TryGetProperty(root, propertyName, out var property))
         {
             return null;
         }
 
         return property.ValueKind switch
         {
-            JsonValueKind.Number when property.TryGetInt64(out var seconds) => DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime,
-            JsonValueKind.String when long.TryParse(property.GetString(), out var seconds) => DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime,
+            JsonValueKind.Number when property.TryGetInt64(out var seconds) => TryFromUnixSeconds(seconds),
+            JsonValueKind.String when long.TryParse(property.GetString(), out var seconds) => TryFromUnixSeconds(seconds),
             _ => null
         };
     }
 
     private static DateTime? ReadUnixMilliseconds(JsonElement root, string propertyName)
     {
-        if (!root.TryGetProperty(propertyName, out var property))
+        if (!TryGetProperty(root, propertyName, out var property))
         {
             return null;
         }
 
         return property.ValueKind switch
         {
-            JsonValueKind.Number when property.TryGetInt64(out var milliseconds) => DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).UtcDateTime,
-            JsonValueKind.String when long.TryParse(property.GetString(), out var milliseconds) => DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).UtcDateTime,
+            JsonValueKind.Number when property.TryGetInt64(out var milliseconds) => TryFromUnixMilliseconds(milliseconds),
+            JsonValueKind.String when long.TryParse(property.GetString(), out var milliseconds) => TryFromUnixMilliseconds(milliseconds),
             _ => null
         };
+    }
+
+    private static DateTime? TryFromUnixSeconds(long seconds)
+    {
+        try
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
+    private static DateTime? TryFromUnixMilliseconds(long milliseconds)
+    {
+        try
+        {
+            return DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).UtcDateTime;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
+    private static bool TryGetProperty(JsonElement root, string propertyName, out JsonElement property)
+    {
+        property = default;
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        foreach (var item in root.EnumerateObject())
+        {
+            if (string.Equals(item.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                property = item.Value;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private sealed class BrevoWebhookPayload

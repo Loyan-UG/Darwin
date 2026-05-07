@@ -163,7 +163,7 @@ export function CheckoutContentCompositionWindow({
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
           {copy.checkoutCompositionJourneyTitle}
         </p>
@@ -171,7 +171,7 @@ export function CheckoutContentCompositionWindow({
           {copy.checkoutCompositionJourneyMessage}
         </p>
         <div className="mt-5 grid gap-3">
-          <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
               {copy.checkoutCompositionJourneyCurrentLabel}
             </p>
@@ -198,7 +198,7 @@ export function CheckoutContentCompositionWindow({
             </div>
           </article>
 
-          <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
               {copy.checkoutCompositionJourneyNextLabel}
             </p>
@@ -226,7 +226,7 @@ export function CheckoutContentCompositionWindow({
             </div>
           </article>
 
-          <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+          <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
               {copy.checkoutCompositionJourneyStorefrontLabel}
             </p>
@@ -265,7 +265,7 @@ export function CheckoutContentCompositionWindow({
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
           {copy.checkoutCompositionRouteMapTitle}
         </p>
@@ -276,7 +276,7 @@ export function CheckoutContentCompositionWindow({
           {routeMapItems.map((item) => (
             <article
               key={item.id}
-              className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+              className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {item.label}

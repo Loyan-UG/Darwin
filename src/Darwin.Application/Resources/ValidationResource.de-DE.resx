@@ -405,6 +405,9 @@
   <data name="SlugMustBeUniquePerCulture" xml:space="preserve">
     <value>Slug muss pro Kultur eindeutig sein.</value>
   </data>
+  <data name="SlugInvalidFormat" xml:space="preserve">
+    <value>Slug darf nur Kleinbuchstaben, Zahlen und einzelne Bindestriche zwischen Woertern enthalten.</value>
+  </data>
   <data name="DuplicateCulturesNotAllowed" xml:space="preserve">
     <value>Doppelte Kulturen sind nicht erlaubt.</value>
   </data>

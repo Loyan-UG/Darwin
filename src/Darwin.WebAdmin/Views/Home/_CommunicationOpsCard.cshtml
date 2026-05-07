@@ -32,8 +32,10 @@
     <div class="card-header bg-white">
         <div class="d-flex align-items-center justify-content-between">
             <div>
-                <div class="fw-semibold">@T.T("CommunicationOpsTitle")</div>
-                <div class="small text-muted">@T.T("CommunicationOpsDashboardIntro")</div>
+                <div class="fw-semibold d-inline-flex align-items-center">
+                    @T.T("CommunicationOpsTitle")
+                    <field-help title="@T.T("CommunicationOpsTitle")" content="@T.T("CommunicationOpsDashboardIntro")" placement="bottom" />
+                </div>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <button type="button"
@@ -55,7 +57,7 @@
         <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
             <div>
                 <div class="text-muted text-uppercase small fw-semibold">@T.T("GoLiveReadiness")</div>
-                <div class="small text-muted">@T.T("CommunicationOpsDashboardIntro")</div>
+                <field-help title="@T.T("GoLiveReadiness")" content="@T.T("CommunicationOpsGoLiveReadinessHelp")" placement="bottom" />
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportQueueTitle")</a>
@@ -105,21 +107,21 @@
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("BusinessesRequiringEmailSetup")</div>
                     <div class="fs-4 fw-semibold">@Model.CommunicationOps.BusinessesRequiringEmailSetupCount</div>
-                    <div class="small text-muted mt-2">@T.T("BusinessesRequiringEmailSetupNote")</div>
+                    <field-help title="@T.T("BusinessesRequiringEmailSetup")" content="@T.T("BusinessesRequiringEmailSetupNote")" placement="bottom" />
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("MissingSupportEmail")</div>
                     <div class="fs-4 fw-semibold">@Model.CommunicationOps.MissingSupportEmailCount</div>
-                    <div class="small text-muted mt-2">@T.T("MissingSupportEmailNote")</div>
+                    <field-help title="@T.T("MissingSupportEmail")" content="@T.T("MissingSupportEmailNote")" placement="bottom" />
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("MissingSenderIdentity")</div>
                     <div class="fs-4 fw-semibold">@Model.CommunicationOps.MissingSenderIdentityCount</div>
-                    <div class="small text-muted mt-2">@T.T("MissingSenderIdentityNote")</div>
+                    <field-help title="@T.T("MissingSenderIdentity")" content="@T.T("MissingSenderIdentityNote")" placement="bottom" />
                 </div>
             </div>
         </div>
@@ -145,9 +147,7 @@
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("NeedsAttention")</div>
                     <div class="fs-4 fw-semibold">@communicationDeliveryVisibilityAttentionCount</div>
-                    <div class="small text-muted mt-2">@T.T("CommunicationRepeatedFailureChainsNote")</div>
-                    <div class="small text-muted mt-2">@T.T("MissingSupportEmail") / @T.T("MissingSenderIdentity")</div>
-                    <div class="small text-muted">@T.T("RetryBlocked") / @T.T("ActionBlocked") / @T.T("EscalationCandidates")</div>
+                    <field-help title="@T.T("NeedsAttention")" content="@T.T("CommunicationRepeatedFailureChainsNote")" placement="bottom" />
                     <div class="d-flex gap-2 flex-wrap mt-3">
                         <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("OpenCommunicationsWorkspace")</a>
                         <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary">@T.T("SupportQueue")</a>
@@ -164,7 +164,7 @@
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("CommunicationPolicy")</div>
                     <div class="fs-4 fw-semibold">@communicationPolicyAttentionCount</div>
-                    <div class="small text-muted mt-2">@T.T("SMTP") / @T.T("AdminAlerts") / @T.T("CommunicationTransactionalEmailEnabledLabel")</div>
+                    <field-help title="@T.T("CommunicationPolicy")" content="@T.T("CommunicationPolicyDashboardHelp")" placement="bottom" />
                     <div class="d-flex gap-2 flex-wrap mt-3">
                         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-primary">@T.T("CommunicationPolicy")</a>
                         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary">@T.T("SMTP")</a>

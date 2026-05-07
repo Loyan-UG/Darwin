@@ -130,7 +130,7 @@ export function ProductStorefrontSupportWindow({
       id="product-storefront-support"
       className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
     >
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
@@ -159,7 +159,7 @@ export function ProductStorefrontSupportWindow({
         />
       </section>
 
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
@@ -188,7 +188,7 @@ export function ProductStorefrontSupportWindow({
         />
       </section>
 
-      <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
+      <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
@@ -217,7 +217,7 @@ export function ProductStorefrontSupportWindow({
         />
       </section>
 
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
           {copy.campaignWindowPromotionLaneSectionTitle}
         </p>
@@ -233,7 +233,7 @@ export function ProductStorefrontSupportWindow({
         />
       </div>
 
-      <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
+      <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)] lg:col-span-2">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
           {copy.productCartWindowTitle}
         </p>

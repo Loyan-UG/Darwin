@@ -186,6 +186,7 @@ export const getShellModel = createCachedObservedLoader({
       primaryNavigation: menu.primaryNavigation,
       utilityLinks: localizeShellLinks(getUtilityLinks(culture), culture),
       footerGroups,
+      footerColumnCount: runtimeConfig.footerColumnCount,
     };
   },
 });

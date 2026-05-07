@@ -226,7 +226,7 @@ export function LoyaltyBusinessPage({
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <nav
@@ -317,7 +317,7 @@ export function LoyaltyBusinessPage({
           />
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.loyaltyBusinessRouteSummaryTitle}
           </p>
@@ -332,7 +332,7 @@ export function LoyaltyBusinessPage({
         </div>
 
         {!dashboard ? (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+          <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.noBusinessDashboardMessage}
             </p>
@@ -367,7 +367,7 @@ export function LoyaltyBusinessPage({
                 [copy.availableRewardsLabel, dashboard.availableRewardsCount],
                 [copy.redeemableNowLabel, dashboard.redeemableRewardsCount],
               ].map(([label, value]) => (
-                <article key={label} className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <article key={label} className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{label}</p>
                   <p className="mt-4 text-3xl font-semibold text-[var(--color-text-primary)]">{value}</p>
                 </article>
@@ -376,7 +376,7 @@ export function LoyaltyBusinessPage({
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
               <div className="flex flex-col gap-6">
-                <article className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <article className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.rewardProgressTitle}</p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
                     {dashboard.nextReward?.name ?? dashboard.account.nextRewardTitle ?? copy.noNextRewardPublished}
@@ -400,7 +400,7 @@ export function LoyaltyBusinessPage({
                   </div>
                 </article>
 
-                <article className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <article className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.phoneVerificationEyebrow}</p>
@@ -420,12 +420,12 @@ export function LoyaltyBusinessPage({
             <input type="hidden" name="returnPath" value={localizeHref(buildLoyaltyBusinessPath(businessId), culture)} />
                     <div className="space-y-5">
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                        <label className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                           <input type="radio" name="mode" value="Accrual" defaultChecked className="mr-3" />
                           <span className="text-sm font-semibold text-[var(--color-text-primary)]">{copy.accrualModeTitle}</span>
                           <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.accrualModeDescription}</p>
                         </label>
-                        <label className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                        <label className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                           <input type="radio" name="mode" value="Redemption" className="mr-3" />
                           <span className="text-sm font-semibold text-[var(--color-text-primary)]">{copy.redemptionModeTitle}</span>
                           <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.redemptionModeDescription}</p>
@@ -442,12 +442,12 @@ export function LoyaltyBusinessPage({
                           ))}
                         </select>
                       </label>
-                      <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                      <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                         <p className="text-sm font-semibold text-[var(--color-text-primary)]">{copy.rewardSelectionTitle}</p>
                         {selectedRewards.length > 0 ? (
                           <div className="mt-4 grid gap-3 md:grid-cols-2">
                             {selectedRewards.map((reward) => (
-                              <label key={reward.loyaltyRewardTierId} className="rounded-[1.25rem] border border-[var(--color-border-soft)] bg-white/70 px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                              <label key={reward.loyaltyRewardTierId} className="rounded-[1rem] border border-[var(--color-border-soft)] bg-white/70 px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                                 <input type="checkbox" name="selectedRewardTierIds" value={reward.loyaltyRewardTierId} className="mr-3" />
                                 <span className="font-semibold text-[var(--color-text-primary)]">{reward.name}</span>
                                 <p>{formatResource(copy.pointsValueLabel, { value: reward.requiredPoints })}</p>
@@ -459,12 +459,12 @@ export function LoyaltyBusinessPage({
                       </div>
                       <button type="submit" className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">{copy.prepareScanTokenCta}</button>
                     </div>
-                    <div className="rounded-[1.75rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
+                    <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-5 py-5">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">{copy.activeTokenTitle}</p>
                       {preparedScanSession ? (
                         <div className="mt-4 space-y-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                           {qrCodeDataUrl ? (
-                            <div className="rounded-[1.5rem] bg-white/85 p-4">
+                            <div className="rounded-[1rem] bg-white/85 p-4">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={qrCodeDataUrl}
@@ -480,7 +480,7 @@ export function LoyaltyBusinessPage({
                             <p>{formatResource(copy.expiresLabel, { value: formatDateTime(preparedScanSession.expiresAtUtc, culture) })}</p>
                             <p>{formatResource(copy.currentBalanceLabel, { value: preparedScanSession.currentPointsBalance })}</p>
                           </div>
-                          <div className="rounded-[1.25rem] bg-white/80 px-4 py-4">
+                          <div className="rounded-[1rem] bg-white/80 px-4 py-4">
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{copy.scanTokenLabel}</p>
                             <code className="mt-2 block break-all text-sm font-semibold text-[var(--color-text-primary)]">{preparedScanSession.scanSessionToken}</code>
                           </div>
@@ -492,12 +492,12 @@ export function LoyaltyBusinessPage({
                   </form>
                 </article>
 
-                <article className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <article className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.rewardsTitle}</p>
                   {rewards?.length ? (
                     <div className="mt-5 grid gap-4 md:grid-cols-2">
                       {rewards.map((reward) => (
-                        <article key={reward.loyaltyRewardTierId} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                        <article key={reward.loyaltyRewardTierId} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{reward.name}</h3>
@@ -516,7 +516,7 @@ export function LoyaltyBusinessPage({
                   ) : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noPublishedRewardsMessage}</p>}
                 </article>
 
-                <article id="promotions" className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <article id="promotions" className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.promotionsTitle}</p>
@@ -527,7 +527,7 @@ export function LoyaltyBusinessPage({
                   {promotions?.items.length ? (
                     <div className="mt-5 grid gap-4 md:grid-cols-2">
                       {promotions.items.map((item) => (
-                        <article key={`${item.businessId}-${item.title}-${item.ctaKind}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                        <article key={`${item.businessId}-${item.title}-${item.ctaKind}`} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">{localizeCampaignState(item.campaignState, copy)}</p>
@@ -553,7 +553,7 @@ export function LoyaltyBusinessPage({
                   ) : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noPromotionCardsMessage}</p>}
                 </article>
 
-                <article className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <article className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.unifiedTimelineTitle}</p>
@@ -564,7 +564,7 @@ export function LoyaltyBusinessPage({
                   {timeline?.items.length ? (
                     <div className="mt-5 flex flex-col gap-4">
                       {timeline.items.map((entry) => (
-                        <article key={`${entry.id}-${entry.occurredAtUtc}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                        <article key={`${entry.id}-${entry.occurredAtUtc}`} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                           <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">{getTimelineKind(entry, copy)}</p>
@@ -583,7 +583,7 @@ export function LoyaltyBusinessPage({
               <div className="flex flex-col gap-5">
                 <MemberPortalNav culture={culture} activePath="/loyalty" />
 
-                <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.accountDetailsTitle}</p>
                   <div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                     <div className="flex items-center justify-between gap-4"><span>{copy.statusLabel}</span><span>{localizeLoyaltyAccountStatus(dashboard.account.status, copy)}</span></div>
@@ -591,7 +591,7 @@ export function LoyaltyBusinessPage({
                     <div className="flex items-center justify-between gap-4"><span>{copy.businessIdShortLabel}</span><span className="truncate">{dashboard.account.businessId}</span></div>
                   </div>
                 </aside>
-                <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                     {copy.loyaltyRouteLabel}
                   </p>
@@ -599,7 +599,7 @@ export function LoyaltyBusinessPage({
                     {copy.loyaltyPortalNote}
                   </p>
                 </aside>
-                <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                     {copy.loyaltyBusinessStorefrontWindowTitle}
                   </p>
@@ -612,7 +612,7 @@ export function LoyaltyBusinessPage({
                     })}
                   </p>
                   <div className="mt-5 grid gap-3">
-                    <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                           {copy.loyaltyBusinessStorefrontCmsTitle}
@@ -649,7 +649,7 @@ export function LoyaltyBusinessPage({
                         </p>
                       )}
                     </article>
-                    <article className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                    <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                           {copy.loyaltyBusinessStorefrontCatalogTitle}
@@ -698,11 +698,11 @@ export function LoyaltyBusinessPage({
                   includeAccount={false}
                   includeOrders
                 />
-                <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+                <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.recentTransactionsTitle}</p>
-                  {dashboard.recentTransactions.length ? <div className="mt-5 flex flex-col gap-4">{dashboard.recentTransactions.map((transaction) => <article key={`${transaction.occurredAtUtc}-${transaction.type}-${transaction.delta}`} className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{localizePointsTransactionType(transaction.type, copy)}</p><p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{formatDateTime(transaction.occurredAtUtc, culture)}</p>{transaction.notes ? <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{transaction.notes}</p> : null}</div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{formatResource(copy.pointsValueLabel, { value: `${transaction.delta >= 0 ? "+" : ""}${transaction.delta}` })}</p></div></article>)}</div> : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noRecentTransactionsMessage}</p>}
+                  {dashboard.recentTransactions.length ? <div className="mt-5 flex flex-col gap-4">{dashboard.recentTransactions.map((transaction) => <article key={`${transaction.occurredAtUtc}-${transaction.type}-${transaction.delta}`} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{localizePointsTransactionType(transaction.type, copy)}</p><p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{formatDateTime(transaction.occurredAtUtc, culture)}</p>{transaction.notes ? <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{transaction.notes}</p> : null}</div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{formatResource(copy.pointsValueLabel, { value: `${transaction.delta >= 0 ? "+" : ""}${transaction.delta}` })}</p></div></article>)}</div> : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noRecentTransactionsMessage}</p>}
                 </aside>
-                {promotions ? <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.feedDiagnosticsTitle}</p><div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]"><div className="flex items-center justify-between gap-4"><span>{copy.initialCandidatesLabel}</span><span>{promotions.diagnostics.initialCandidates}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.suppressedLabel}</span><span>{promotions.diagnostics.suppressedByFrequency}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.deduplicatedLabel}</span><span>{promotions.diagnostics.deduplicated}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.trimmedByCapLabel}</span><span>{promotions.diagnostics.trimmedByCap}</span></div></div></aside> : null}
+                {promotions ? <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.feedDiagnosticsTitle}</p><div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]"><div className="flex items-center justify-between gap-4"><span>{copy.initialCandidatesLabel}</span><span>{promotions.diagnostics.initialCandidates}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.suppressedLabel}</span><span>{promotions.diagnostics.suppressedByFrequency}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.deduplicatedLabel}</span><span>{promotions.diagnostics.deduplicated}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.trimmedByCapLabel}</span><span>{promotions.diagnostics.trimmedByCap}</span></div></div></aside> : null}
               </div>
             </div>
           </>

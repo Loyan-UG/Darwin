@@ -11,6 +11,13 @@
         ['clean']
     ];
 
+    function syncEditorValue(editorEl) {
+        const editorHidden = editorEl?.parentElement?.querySelector('textarea');
+        if (editorHidden && editorEl.__quill) {
+            editorHidden.value = editorEl.__quill.root.innerHTML;
+        }
+    }
+
     function bindSubmit(form, selector, dataKey) {
         if (!form || form.dataset[dataKey] === 'true') {
             return;
@@ -18,12 +25,9 @@
 
         form.addEventListener('submit', function () {
             form.querySelectorAll(selector).forEach(function (editorEl) {
-                const editorHidden = editorEl.parentElement.querySelector('textarea');
-                if (editorHidden && editorEl.__quill) {
-                    editorHidden.value = editorEl.__quill.root.innerHTML;
-                }
+                syncEditorValue(editorEl);
             });
-        });
+        }, true);
         form.dataset[dataKey] = 'true';
     }
 
@@ -62,6 +66,10 @@
 
             bindSubmit(el.closest('form'), selector, options.submitDataKey);
             el.__quill = quill;
+            quill.on('text-change', function () {
+                syncEditorValue(el);
+            });
+            syncEditorValue(el);
             el.dataset.quillInitialized = 'true';
         });
     }

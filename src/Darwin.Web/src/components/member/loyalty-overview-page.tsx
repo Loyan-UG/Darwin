@@ -135,7 +135,7 @@ export function LoyaltyOverviewPage({
           </span>
         </nav>
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.memberLoyaltyEyebrow}
           </p>
@@ -166,7 +166,7 @@ export function LoyaltyOverviewPage({
           <MemberPortalNav culture={culture} activePath="/loyalty" />
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.loyaltyRouteSummaryTitle}
           </p>
@@ -184,7 +184,7 @@ export function LoyaltyOverviewPage({
 
         {hasMemberSession && overview ? (
           <>
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.loyaltyReadinessTitle}
               </p>
@@ -195,7 +195,7 @@ export function LoyaltyOverviewPage({
                 })}
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.loyaltyReadinessJoinedLabel}
                   </p>
@@ -203,7 +203,7 @@ export function LoyaltyOverviewPage({
                     {businesses.length}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.loyaltyReadinessActiveLabel}
                   </p>
@@ -211,7 +211,7 @@ export function LoyaltyOverviewPage({
                     {activeBusinessCount}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                     {copy.loyaltyReadinessRewardLabel}
                   </p>
@@ -247,7 +247,7 @@ export function LoyaltyOverviewPage({
               ].map((item) => (
                 <article
                   key={item.label}
-                  className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
+                  className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                     {item.label}
@@ -259,7 +259,7 @@ export function LoyaltyOverviewPage({
               ))}
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.loyaltyStorefrontWindowTitle}
               </p>
@@ -272,7 +272,7 @@ export function LoyaltyOverviewPage({
                 })}
               </p>
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {copy.loyaltyStorefrontCmsTitle}
@@ -310,7 +310,7 @@ export function LoyaltyOverviewPage({
                   )}
                 </div>
 
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {copy.loyaltyStorefrontCatalogTitle}
@@ -355,7 +355,7 @@ export function LoyaltyOverviewPage({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
@@ -378,7 +378,7 @@ export function LoyaltyOverviewPage({
                       return (
                     <article
                       key={business.businessId}
-                      className="overflow-hidden rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)]"
+                      className="overflow-hidden rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)]"
                     >
                       <div className="flex min-h-44 items-center justify-center bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-5">
                         {primaryImageUrl ? (
@@ -444,7 +444,7 @@ export function LoyaltyOverviewPage({
                   ))}
                 </div>
               ) : (
-                <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
+                <div className="mt-5 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
                   <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
                     {copy.noJoinedLoyaltyPlacesMessage}
                   </p>
@@ -470,7 +470,7 @@ export function LoyaltyOverviewPage({
               {overview.accounts.map((account) => (
                 <article
                   key={account.loyaltyAccountId}
-                  className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
+                  className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                     {localizeLoyaltyAccountStatus(account.status, copy)}
@@ -542,7 +542,7 @@ export function LoyaltyOverviewPage({
             )}
           </>
         ) : hasMemberSession ? (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+          <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.noLoyaltyOverviewMessage}
             </p>
@@ -564,7 +564,7 @@ export function LoyaltyOverviewPage({
         ) : null}
 
         {!hasMemberSession && (
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.loyaltyPublicOverviewStorefrontWindowTitle}
             </p>
@@ -577,7 +577,7 @@ export function LoyaltyOverviewPage({
               })}
             </p>
             <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                     {copy.loyaltyPublicOverviewStorefrontCmsTitle}
@@ -615,7 +615,7 @@ export function LoyaltyOverviewPage({
                 )}
               </div>
 
-              <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+              <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                     {copy.loyaltyPublicOverviewStorefrontCatalogTitle}
@@ -688,7 +688,7 @@ export function LoyaltyOverviewPage({
         />
 
         {!hasMemberSession && (
-          <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">

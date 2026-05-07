@@ -198,6 +198,35 @@ python scripts/ci/verify_coverage.py \
   --mobile-shared-threshold 20
 ```
 
+### 5.4 Current execution snapshot (2026-05-07)
+
+Latest known-good signal for the recently expanded Webhook/reader/writer tests is:
+
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~StripeWebhooksControllerTests"`
+- 38 passed (including constructor-guard tests)
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~DhlWebhooksControllerTests"`
+- 36 passed (including constructor-guard tests)
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~BrevoWebhooksControllerTests"`
+- 46 passed (including constructor-guard tests)
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~WebhooksControllerTests"`
+  - 98 passed
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~ProviderWebhookPayloadReaderTests"`
+  - 19 passed
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~StripeWebhookSignatureVerifierTests"`
+- 26 passed (including constructor-guard tests)
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~ProviderCallbackInboxWriterTests"`  
+  - 18 passed
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~ProviderCallbackBackgroundServiceTests"`  
+  - 89 passed (including batch-level cancellation safety during callback handling)
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~ProviderCallback"`  
+  - 107 passed (verified on 2026-05-07 after adding deterministic completion-fallback, completion-transient-retry, completion-concurrency, batch claim-concurrency, transient claim-save, cooldown bypass, failed-message claim-save-failure handling, and cancellation handling during claim/completion/processing)
+- `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~ProcessBrevoTransactionalEmailWebhookHandlerTests"`  
+  - 102 passed
+
+Running the full `Darwin.WebApi.Tests` suite in the current branch still shows failures in pre-existing suites (mostly `Security` / `Loyalty` areas), so the newly added webhook-focused coverage remains green as an isolated subset.
+
+When adding or refactoring Webhook-related behavior, prefer adding/adjusting tests in this subset before widening to broader suites.
+
 ---
 
 ## 6) CI policy (tests-quality-gates workflow)
@@ -360,4 +389,16 @@ This file should always describe **what is true now**, not only future intent.
 - Add configuration/DI coverage proving `IEmailSender` resolves to Brevo or SMTP based on `Email:Provider`, fails fast for unsupported providers, and fails startup when Brevo is active without required Brevo options.
 - Add Worker coverage for queued `EmailDispatchOperation.Provider=Brevo` and legacy `SMTP` rows, verifying status transitions and `ProviderMessageId` capture.
 - Add WebApi coverage for the Brevo webhook endpoint: Basic Auth required, oversized payload rejected, invalid payload rejected, duplicate event idempotency, and valid event persisted into `ProviderCallbackInboxMessages`.
-- Add Worker coverage for Brevo webhook processing against `EmailDispatchAudit`: delivered/open/click keep successful audit state, hard/soft bounce/spam/blocked/invalid/error mark the audit failed with provider reason.
+  - ✅ Completed in this branch: credential whitespace handling, oversized/invalid payload paths, event normalization (case/whitespace/truncation), and duplicate detection for trimmed message-id/idempotency keys.
+  - ✅ Additional coverage added in this pass: whitespace-only credential values fail configuration validation; oversize detection also validated for UTF-8 multi-byte payload bodies; mixed-case JSON field names are accepted (`EvEnT`, `MeSsAgE-iD`, `Ts`, `DATE`).
+- Add WebApi coverage for the DHL webhook endpoint: missing/invalid site settings and signature validation.
+  - ✅ Completed in this pass: `DhlApiSecret` whitespace treated as not configured, oversized payload detection for UTF-8 multi-byte bodies, and payload that deserializes to `null` returns invalid payload.
+- Add WebApi coverage for the Stripe webhook endpoint: configured secret validation and malformed envelope robustness.
+  - ✅ Completed in this pass: whitespace `StripeWebhookSecret` is treated as missing, and JSON arrays are rejected as invalid payloads.
+- Add WebApi service coverage for `StripeWebhookSignatureVerifier` parser edge-cases.
+  - ✅ Completed in this pass: signature header entries can be reordered (`v1` before `t`) while still validating correctly.
+- Add WebApi service coverage for ProviderCallbackInboxWriter null/empty idempotency semantics.
+  - Completed in this pass: empty and null idempotency key duplicate-check behavior is now tested for both insert and duplicate paths.
+- Add Worker coverage for Brevo webhook processing against `EmailDispatchAudit`.
+  - ✅ Completed in this pass: delivered/open/click keep successful audit state, hard/soft bounce/spam/blocked/invalid/error mark the audit failed with provider reason (including reason trimming and default missing reason), unsupported events do not overwrite successful state, failed audits do not regress to Sent on delivery events, soft-deleted audits are not matched, and correlation keys are matched through mixed-case alias fields.
+

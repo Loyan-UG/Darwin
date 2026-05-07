@@ -34,24 +34,14 @@ function appendSearchParams(
   searchParams: CmsSearchParams | undefined,
   extraParams?: Record<string, string | undefined>,
 ) {
-  if (!searchParams) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(extraParams ?? {})) {
-      if (value) {
-        params.set(key, value);
-      }
-    }
-
-    const query = params.toString();
-    return query ? `${href}?${query}` : href;
-  }
-
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
+
+  for (const [key, value] of Object.entries(searchParams ?? {})) {
     if (value) {
       params.set(key, value);
     }
   }
+
   for (const [key, value] of Object.entries(extraParams ?? {})) {
     if (value) {
       params.set(key, value);
@@ -106,7 +96,7 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
       const alternatePage = alternateContext.detailContext.pageResult.data;
       if (alternatePage) {
         redirect(
-    appendSearchParams(buildCmsPagePath(slug), resolvedSearchParams, {
+          appendSearchParams(buildCmsPagePath(slug), resolvedSearchParams, {
             culture: alternateCulture,
             [INFERRED_CULTURE_SEARCH_PARAM]: "1",
           }),
@@ -145,4 +135,3 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
     />
   );
 }
-

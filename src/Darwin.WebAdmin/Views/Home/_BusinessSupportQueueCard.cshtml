@@ -63,8 +63,10 @@
     <div class="card-header bg-white">
         <div class="d-flex align-items-center justify-content-between">
             <div>
-                <div class="fw-semibold">@T.T("BusinessSupportQueueTitle")</div>
-                <div class="small text-muted">@T.T("BusinessSupportQueueIntro")</div>
+                <div class="fw-semibold d-inline-flex align-items-center">
+                    @T.T("BusinessSupportQueueTitle")
+                    <field-help title="@T.T("BusinessSupportQueueTitle")" content="@T.T("BusinessSupportQueueIntro")" placement="bottom" />
+                </div>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <button type="button"
@@ -82,7 +84,7 @@
         <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
             <div>
                 <div class="text-muted text-uppercase small fw-semibold">@T.T("GoLiveReadiness")</div>
-                <div class="small text-muted">@T.T("BusinessSupportQueueIntro")</div>
+                <field-help title="@T.T("GoLiveReadiness")" content="@T.T("BusinessSupportGoLiveReadinessHelp")" placement="bottom" />
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a asp-controller="Businesses" asp-action="MerchantReadiness" class="btn btn-sm btn-outline-primary">@T.T("MerchantReadinessTitle")</a>
@@ -125,13 +127,8 @@
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@T.T("NeedsAttention")</div>
                     <div class="fs-4 fw-semibold">@supportAttentionCount</div>
-                    <div class="small text-muted mt-2">@T.T("TaxComplianceTitle") / @T.T("Payments") / @T.T("CommunicationPolicy")</div>
-                    <div class="small text-muted">@T.T("RuntimeExecution"): @communicationRuntimeExecutionAttentionCount (@T.T("OpenFailedInvitationEmails"): @failedInvitationAttentionCount / @T.T("UsersFilterUnconfirmed"): @Model.BusinessSupport.PendingActivationMemberCount / @T.T("OpenFailedActivationEmails"): @failedActivationAttentionCount / @T.T("FailedAdminTests"): @failedAdminTestAttentionCount / @T.T("OpenFailedPasswordResets"): @failedPasswordResetAttentionCount)</div>
-                    <div class="small text-muted">@T.T("RetryBlocked") / @T.T("ActionBlocked") / @T.T("EscalationCandidates") / @T.T("PhoneVerification")</div>
-                    <div class="small text-muted">@T.T("Pending") / @T.T("UsersFilterUnconfirmed") / @T.T("UsersFilterLocked") / @T.T("PasswordReset")</div>
-                    <div class="small text-muted">@T.T("OpenFailedInvitationEmails") / @T.T("OpenFailedActivationEmails") / @T.T("FailedAdminTests") / @T.T("OpenFailedPasswordResets")</div>
-                    <div class="small text-muted">@T.T("HeavyChains") / @T.T("RepeatedFailures")</div>
-                    <div class="small text-muted">@T.T("Pending") / @T.T("Unlinked") / @T.T("Refunded") / @T.T("FixVatId")</div>
+                    <div class="small text-muted mt-2">@T.T("RuntimeExecution"): <strong>@communicationRuntimeExecutionAttentionCount</strong></div>
+                    <field-help title="@T.T("NeedsAttention")" content="@T.T("BusinessSupportNeedsAttentionDashboardHelp")" placement="bottom" />
                     <div class="d-flex gap-2 flex-wrap mt-3">
                         <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenQueueAction")</a>
                         <a asp-controller="Businesses" asp-action="MerchantReadiness" class="btn btn-sm btn-outline-secondary">@T.T("MerchantReadinessTitle")</a>
@@ -173,8 +170,8 @@
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)</div>
                     <div class="fs-4 fw-semibold">@InvitationDebtCount(Model.BusinessSupport.PendingInvitationCount, Model.BusinessSupport.OpenInvitationCount)</div>
-                    <div class="small text-muted mt-2">@T.T("Overdue") / @T.T("DueSoon") / @T.T("Draft") / @T.T("MissingVatId")</div>
                     <div class="small text-muted">@T.T("RuntimeExecution"): @communicationRuntimeExecutionAttentionCount</div>
+                    <field-help title="@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)" content="@T.T("BusinessSupportInvitationDebtDashboardHelp")" placement="bottom" />
                     <div class="d-flex gap-2 flex-wrap mt-3">
                         <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenQueueAction")</a>
                         <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-secondary">@T.T("Setup")</a>

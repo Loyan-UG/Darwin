@@ -15,5 +15,5 @@ export function buildCatalogProductPath(slug: string) {
 }
 
 export function buildCmsPagePath(slug: string) {
-  return `/cms/${encodeURIComponent(slug)}`;
+  return `/page/${encodeURIComponent(slug)}`;
 }

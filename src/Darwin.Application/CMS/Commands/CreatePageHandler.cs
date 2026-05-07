@@ -28,8 +28,8 @@ namespace Darwin.Application.CMS.Commands
             var entity = new Page
             {
                 Status = dto.Status,
-                PublishStartUtc = dto.PublishStartUtc,
-                PublishEndUtc = dto.PublishEndUtc
+                PublishStartUtc = NormalizeNullableUtc(dto.PublishStartUtc),
+                PublishEndUtc = NormalizeNullableUtc(dto.PublishEndUtc)
             };
 
             foreach (var t in dto.Translations)
@@ -38,7 +38,7 @@ namespace Darwin.Application.CMS.Commands
                 {
                     Culture = t.Culture.Trim(),
                     Title = t.Title.Trim(),
-                    Slug = t.Slug.Trim(),
+                    Slug = NormalizeSlug(t.Slug),
                     MetaTitle = t.MetaTitle?.Trim(),
                     MetaDescription = t.MetaDescription?.Trim(),
                     ContentHtml = sanitizer.Sanitize(t.ContentHtml ?? string.Empty)
@@ -51,5 +51,23 @@ namespace Darwin.Application.CMS.Commands
             await _db.SaveChangesAsync(ct);
             return entity.Id;
         }
+
+        private static System.DateTime? NormalizeNullableUtc(System.DateTime? value)
+        {
+            if (!value.HasValue)
+            {
+                return null;
+            }
+
+            return value.Value.Kind switch
+            {
+                System.DateTimeKind.Utc => value.Value,
+                System.DateTimeKind.Local => value.Value.ToUniversalTime(),
+                _ => System.DateTime.SpecifyKind(value.Value, System.DateTimeKind.Utc)
+            };
+        }
+
+        private static string NormalizeSlug(string slug)
+            => slug.Trim().ToLowerInvariant();
     }
 }

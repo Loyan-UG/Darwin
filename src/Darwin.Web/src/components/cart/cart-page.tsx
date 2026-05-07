@@ -161,7 +161,7 @@ export function CartPage({
           </span>
         </nav>
 
-        <div className="overflow-hidden rounded-[2.25rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
+        <div className="overflow-hidden rounded-[1rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8 sm:py-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_320px] lg:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
@@ -175,7 +175,7 @@ export function CartPage({
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.cartReadinessLinesLabel}
                 </p>
@@ -183,7 +183,7 @@ export function CartPage({
                   {cart?.items.length ?? 0}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
+              <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                   {copy.couponLabel}
                 </p>
@@ -191,7 +191,7 @@ export function CartPage({
                   {cart?.couponCode ?? copy.cartReadinessCouponNone}
                 </p>
               </article>
-              <article className="rounded-[1.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
+              <article className="rounded-[1rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,116,47,0.94),rgba(255,145,77,0.92))] px-5 py-4 text-white shadow-[0_20px_40px_-28px_rgba(58,92,35,0.55)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/78">
                   {copy.grandTotalLabel}
                 </p>
@@ -230,7 +230,7 @@ export function CartPage({
           />
         )}
 
-        <div className="grid gap-4 rounded-[2rem] border border-[#dce6cf] bg-white px-6 py-6 shadow-[0_24px_60px_-36px_rgba(58,92,35,0.3)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="grid gap-4 rounded-[1rem] border border-[#dce6cf] bg-white px-6 py-6 shadow-[0_24px_60px_-36px_rgba(58,92,35,0.3)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.cartRouteSummaryTitle}
@@ -244,7 +244,7 @@ export function CartPage({
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.5rem] bg-[#f7fbef] px-4 py-4">
+            <div className="rounded-[1rem] bg-[#f7fbef] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.itemsLabel}
               </p>
@@ -252,7 +252,7 @@ export function CartPage({
                 {cart?.items.length ?? 0}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[#fff7ea] px-4 py-4">
+            <div className="rounded-[1rem] bg-[#fff7ea] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.followUpProductsTitle}
               </p>
@@ -260,7 +260,7 @@ export function CartPage({
                 {followUpProducts.length}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[#eef8ec] px-4 py-4">
+            <div className="rounded-[1rem] bg-[#eef8ec] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                 {copy.cartReadinessCheckoutLabel}
               </p>
@@ -274,7 +274,7 @@ export function CartPage({
         </div>
 
         {sectionLinks.length > 0 ? (
-          <section className="sticky top-4 z-10 rounded-[2rem] border border-[#dce6cf] bg-[color:color-mix(in_srgb,white_84%,#eff7e9_16%)] px-6 py-5 shadow-[0_24px_54px_-36px_rgba(58,92,35,0.32)] backdrop-blur">
+          <section className="sticky top-4 z-10 rounded-[1rem] border border-[#dce6cf] bg-[color:color-mix(in_srgb,white_84%,#eff7e9_16%)] px-6 py-5 shadow-[0_24px_54px_-36px_rgba(58,92,35,0.32)] backdrop-blur">
             <div className="flex flex-wrap gap-2">
               {sectionLinks.map((section) => (
                 <a
@@ -294,7 +294,7 @@ export function CartPage({
             id="cart-overview"
             className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
           >
-            <section className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <section className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.cartOpportunityTitle}
               </p>
@@ -333,7 +333,7 @@ export function CartPage({
                   }
 
                   return (
-                    <div className="mt-5 rounded-[1.5rem] border border-[#e3ebd6] bg-white px-5 py-5 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.28)]">
+                    <div className="mt-5 rounded-[1rem] border border-[#e3ebd6] bg-white px-5 py-5 shadow-[0_18px_34px_-28px_rgba(58,92,35,0.28)]">
                       <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                         {bestOffer.product.name}
                       </p>
@@ -364,12 +364,12 @@ export function CartPage({
               ) : null}
             </section>
 
-            <section className="rounded-[2rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
+            <section className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.cartReadinessTitle}
               </p>
               <div className="mt-4 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.cartReadinessLinesLabel}
                   </p>
@@ -379,7 +379,7 @@ export function CartPage({
                     })}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.cartReadinessCouponLabel}
                   </p>
@@ -389,7 +389,7 @@ export function CartPage({
                       : copy.cartReadinessCouponNone}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
                     {copy.cartReadinessCheckoutLabel}
                   </p>
@@ -405,7 +405,7 @@ export function CartPage({
         )}
 
         {!cart || cart.items.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
+          <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
               {copy.emptyCartEyebrow}
             </p>
@@ -456,9 +456,9 @@ export function CartPage({
                   return (
                 <article
                   key={`${item.variantId}:${item.selectedAddOnValueIdsJson}`}
-                  className="grid gap-5 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-5 shadow-[var(--shadow-panel)] md:grid-cols-[160px_minmax(0,1fr)]"
+                  className="grid gap-5 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-5 shadow-[var(--shadow-panel)] md:grid-cols-[160px_minmax(0,1fr)]"
                 >
-                  <div className="flex min-h-40 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-4">
+                  <div className="flex min-h-40 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-4">
                     {itemImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -569,7 +569,7 @@ export function CartPage({
               ))}
             </div>
 
-            <aside className="h-fit rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="h-fit rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.summaryTitle}
               </p>
@@ -622,7 +622,7 @@ export function CartPage({
               </form>
               {hasMemberSession && (
                 <>
-                  <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="mt-6 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                       {copy.cartMemberCheckoutTitle}
                     </p>
@@ -633,7 +633,7 @@ export function CartPage({
                       })}
                     </p>
                     {preferredCheckoutAddress ? (
-                      <div className="mt-4 rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      <div className="mt-4 rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                         <p className="font-semibold text-[var(--color-text-primary)]">
                           {preferredCheckoutAddress.fullName}
                         </p>
@@ -684,7 +684,7 @@ export function CartPage({
                     </div>
                   </div>
 
-                  <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                  <div className="mt-6 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
                       {copy.cartMemberContextTitle}
                     </p>
@@ -696,7 +696,7 @@ export function CartPage({
                       })}
                     </p>
                     <div className="mt-4 grid gap-3">
-                      <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      <div className="rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                         <p className="font-semibold text-[var(--color-text-primary)]">
                           {copy.cartMemberContextIdentityLabel}
                         </p>
@@ -707,7 +707,7 @@ export function CartPage({
                         </p>
                         <p>{memberProfile?.email ?? copy.unavailable}</p>
                       </div>
-                      <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      <div className="rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                         <p className="font-semibold text-[var(--color-text-primary)]">
                           {copy.cartMemberContextPhoneLabel}
                         </p>
@@ -720,7 +720,7 @@ export function CartPage({
                             : copy.cartMemberContextPhonePending}
                         </p>
                       </div>
-                      <div className="rounded-[1.25rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                      <div className="rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                         <p className="font-semibold text-[var(--color-text-primary)]">
                           {copy.cartMemberContextChannelsLabel}
                         </p>
@@ -783,7 +783,7 @@ export function CartPage({
                 >
                   {copy.continueShopping}
                 </Link>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
                   {copy.checkoutSummaryNote}
                 </div>
               </div>
@@ -797,7 +797,7 @@ export function CartPage({
             id="cart-follow-up"
             className="scroll-mt-28 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]"
           >
-            <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.followUpProductsTitle}
               </p>
@@ -812,9 +812,9 @@ export function CartPage({
                     return (
                     <article
                       key={product.id}
-                      className="rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4"
+                      className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] p-4"
                     >
-                      <div className="flex min-h-32 items-center justify-center rounded-[1.25rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-3">
+                      <div className="flex min-h-32 items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-3">
                         {productImageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -855,7 +855,7 @@ export function CartPage({
                   })}
                 </div>
               ) : (
-                <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-5 text-sm leading-7 text-[var(--color-text-secondary)]">
+                <div className="mt-5 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-4 py-5 text-sm leading-7 text-[var(--color-text-secondary)]">
                   <p>{copy.followUpProductsUnavailableMessage}</p>
                   <div className="mt-6 text-left">
                     <CommerceContinuationRail
@@ -868,7 +868,7 @@ export function CartPage({
               )}
             </section>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.cartNextStepsTitle}
               </p>
@@ -876,7 +876,7 @@ export function CartPage({
                 {copy.cartNextStepsDescription}
               </p>
               <div className="mt-5 grid gap-3">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)]">
                     {copy.cartNextStepReviewLabel}
                   </p>
@@ -887,7 +887,7 @@ export function CartPage({
                     {copy.cartNextStepReviewMessage}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)]">
                     {copy.cartNextStepCheckoutLabel}
                   </p>

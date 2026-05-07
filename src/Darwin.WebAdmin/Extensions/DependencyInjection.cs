@@ -47,6 +47,7 @@ using Darwin.Application.Shipping.Validators;
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Infrastructure.Health;
+using Darwin.Infrastructure.Media;
 using Darwin.Infrastructure.Security.Jwt;
 using Darwin.Infrastructure.Security.LoginRateLimiter;
 using Darwin.WebAdmin.Auth;
@@ -87,6 +88,7 @@ namespace Darwin.WebAdmin.Extensions
             var cookieSecurePolicy = ResolveCookieSecurePolicy(config);
 
             services.AddSingleton<IClock, SystemClock>();
+            services.Configure<MediaStorageOptions>(config.GetSection(MediaStorageOptions.SectionName));
 
             // Identity handlers required for Auth flows
             services.AddScoped<SignInHandler>();
@@ -196,6 +198,10 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetPageOpsSummaryHandler>();
             services.AddScoped<GetPageForEditHandler>();
             services.AddScoped<SoftDeletePageHandler>();
+            services.AddScoped<GetMenusPageHandler>();
+            services.AddScoped<GetMenuForEditHandler>();
+            services.AddScoped<CreateMenuHandler>();
+            services.AddScoped<UpdateMenuHandler>();
             services.AddScoped<GetMediaAssetsPageHandler>();
             services.AddScoped<GetMediaAssetOpsSummaryHandler>();
             services.AddScoped<GetMediaAssetForEditHandler>();
@@ -578,7 +584,7 @@ namespace Darwin.WebAdmin.Extensions
             // Composite validators for CMS pages (Create/Edit) combining base + unique slug
             services.AddScoped<IValidator<PageCreateDto>>(sp =>
             {
-                var baseValidator = new PageCreateDtoValidator();
+                var baseValidator = new PageCreateDtoValidator(sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 var unique = new PageCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>(), sp.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Darwin.Application.ValidationResource>>());
                 return new InlineCompositeValidator<PageCreateDto>(baseValidator, unique);
             });

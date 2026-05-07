@@ -1,0 +1,97 @@
+@model Darwin.WebAdmin.ViewModels.CMS.MenuEditorVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    var cultures = Model.Cultures ?? Array.Empty<string>();
+    string MenusIndexUrl() => Url.Action("Index", "Menus") ?? string.Empty;
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <section class="admin-form-section">
+            <h2 class="admin-form-section-title">@T.T("MenuIdentitySection")</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label">@T.T("MenuName")</label>
+                    <field-help title="@T.T("MenuName")" content="@T.T("MenuNameHelp")" placement="right"></field-help>
+                    <input asp-for="Name" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-form-section">
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                <h2 class="admin-form-section-title m-0">@T.T("MenuItems")</h2>
+                <field-help title="@T.T("MenuItems")" content="@T.T("MenuItemsHelp")" placement="right"></field-help>
+            </div>
+
+            @for (int i = 0; i < Model.Items.Count; i++)
+            {
+                <div class="border rounded p-3 mb-3">
+                    <input type="hidden" name="Items.Index" value="@i" />
+                    <input type="hidden" asp-for="Items[@i].Id" />
+
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label asp-for="Items[@i].Url" class="form-label">@T.T("Url")</label>
+                            <field-help title="@T.T("Url")" content="@T.T("MenuItemUrlHelp")" placement="right"></field-help>
+                            <input asp-for="Items[@i].Url" class="form-control" placeholder="/cms/about-us" />
+                            <span asp-validation-for="Items[@i].Url" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="Items[@i].SortOrder" class="form-label">@T.T("SortOrder")</label>
+                            <field-help title="@T.T("SortOrder")" content="@T.T("MenuItemSortOrderHelp")" placement="right"></field-help>
+                            <input asp-for="Items[@i].SortOrder" class="form-control" type="number" min="0" />
+                            <span asp-validation-for="Items[@i].SortOrder" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check form-switch mb-2">
+                                <input asp-for="Items[@i].IsActive" class="form-check-input" />
+                                <label asp-for="Items[@i].IsActive" class="form-check-label">@T.T("Active")</label>
+                                <field-help title="@T.T("Active")" content="@T.T("MenuItemActiveHelp")" placement="right"></field-help>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        @for (int j = 0; j < Model.Items[i].Translations.Count; j++)
+                        {
+                            <div class="col-md-6">
+                                <input type="hidden" name="Items[@i].Translations.Index" value="@j" />
+                                <input type="hidden" asp-for="Items[@i].Translations[@j].Culture" />
+                                <label asp-for="Items[@i].Translations[@j].Label" class="form-label">
+                                    @T.T("Label") (@Model.Items[i].Translations[j].Culture)
+                                </label>
+                                <field-help title="@T.T("Label")" content="@T.T("MenuItemLabelHelp")" placement="right"></field-help>
+                                <input asp-for="Items[@i].Translations[@j].Label" class="form-control" />
+                                <span asp-validation-for="Items[@i].Translations[@j].Label" class="text-danger"></span>
+
+                                @if (Model.MultilingualEnabled)
+                                {
+                                    <label asp-for="Items[@i].Translations[@j].Url" class="form-label mt-2">
+                                        @T.T("LocalizedUrl") (@Model.Items[i].Translations[j].Culture)
+                                    </label>
+                                    <field-help title="@T.T("LocalizedUrl")" content="@T.T("MenuItemLocalizedUrlHelp")" placement="right"></field-help>
+                                    <input asp-for="Items[@i].Translations[@j].Url" class="form-control" placeholder="/cms/about-us" />
+                                    <span asp-validation-for="Items[@i].Translations[@j].Url" class="text-danger"></span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+
+    <div class="card-footer text-end">
+        <a asp-action="Index"
+           class="btn btn-secondary"
+           hx-get="@MenusIndexUrl()"
+           hx-target="#menu-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("Back")</a>
+        <button type="submit" class="btn btn-primary">@T.T("Save")</button>
+    </div>
+</div>

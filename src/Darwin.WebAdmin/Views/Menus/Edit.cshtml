@@ -1,0 +1,11 @@
+@model Darwin.WebAdmin.ViewModels.CMS.MenuEditorVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("EditMenu");
+}
+
+<partial name="_MenuEditorShell" model="Model" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

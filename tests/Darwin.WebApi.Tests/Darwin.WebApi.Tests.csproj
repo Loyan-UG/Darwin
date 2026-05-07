@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Darwin.Infrastructure\Darwin.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Darwin.Worker\Darwin.Worker.csproj" />
     <ProjectReference Include="..\..\src\Darwin.WebApi\Darwin.WebApi.csproj" />
   </ItemGroup>
 

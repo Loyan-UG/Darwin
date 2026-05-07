@@ -220,7 +220,7 @@ export function OrdersPage({
           </span>
         </nav>
 
-        <div id="orders-overview" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <div id="orders-overview" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.ordersEyebrow}
           </p>
@@ -237,7 +237,7 @@ export function OrdersPage({
           />
         )}
 
-        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.ordersWindowTitle}
           </p>
@@ -252,7 +252,7 @@ export function OrdersPage({
           </p>
         </div>
 
-        <div id="orders-filters" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div id="orders-filters" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
               {copy.ordersFilterTitle}
@@ -306,7 +306,7 @@ export function OrdersPage({
           </form>
         </div>
 
-        <div id="orders-readiness" className="scroll-mt-28 rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+        <div id="orders-readiness" className="scroll-mt-28 rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
             {copy.ordersReadinessTitle}
           </p>
@@ -317,7 +317,7 @@ export function OrdersPage({
             })}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                 {copy.ordersReadinessVisibleLabel}
               </p>
@@ -325,7 +325,7 @@ export function OrdersPage({
                 {orders.length}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                 {copy.ordersReadinessAttentionLabel}
               </p>
@@ -333,7 +333,7 @@ export function OrdersPage({
                 {attentionOrders.length}
               </p>
             </div>
-            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+            <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
                 {copy.ordersReadinessValueLabel}
               </p>
@@ -470,7 +470,7 @@ export function OrdersPage({
           {filteredOrders.map((order) => (
             <article
               key={order.id}
-              className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
+              className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-6 shadow-[var(--shadow-panel)]"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -503,7 +503,7 @@ export function OrdersPage({
         </div>
 
         {orders.length === 0 && (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+          <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.noOrdersMessage}
             </p>
@@ -519,7 +519,7 @@ export function OrdersPage({
         )}
 
         {orders.length > 0 && filteredOrders.length === 0 && (
-          <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
+          <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
               {copy.ordersFilterEmptyMessage}
             </p>
@@ -565,7 +565,7 @@ export function OrdersPage({
         <div className="flex flex-col gap-6">
           <MemberPortalNav culture={culture} activePath="/orders" />
 
-          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+          <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
               {copy.ordersRouteLabel}
             </p>

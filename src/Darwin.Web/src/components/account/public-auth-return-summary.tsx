@@ -77,7 +77,7 @@ export function PublicAuthReturnSummary({
   const localizedCartHref = localizeHref("/cart", culture);
 
   return (
-    <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
+    <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
       <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
         {copy.publicAuthReturnEyebrow}
       </p>

@@ -87,7 +87,7 @@ export function LoyaltyPublicBusinessPage({
   return (
     <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
-        <div className="overflow-hidden rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] shadow-[var(--shadow-panel)]">
+        <div className="overflow-hidden rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] shadow-[var(--shadow-panel)]">
           <div className="grid gap-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
             <div className="px-6 py-8 sm:px-8 sm:py-10">
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
@@ -239,7 +239,7 @@ export function LoyaltyPublicBusinessPage({
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-6">
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.programSnapshotTitle}
               </p>
@@ -259,7 +259,7 @@ export function LoyaltyPublicBusinessPage({
                   {rewardTiers.map((reward) => (
                     <article
                       key={reward.id}
-                      className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                      className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -293,7 +293,7 @@ export function LoyaltyPublicBusinessPage({
               )}
             </div>
 
-            <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.contactDetailsTitle}
               </p>
@@ -332,7 +332,7 @@ export function LoyaltyPublicBusinessPage({
           </div>
 
           <div className="flex flex-col gap-5">
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.loyaltyPublicRouteSummaryTitle}
               </p>
@@ -345,7 +345,7 @@ export function LoyaltyPublicBusinessPage({
               </p>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.branchesTitle}
               </p>
@@ -354,7 +354,7 @@ export function LoyaltyPublicBusinessPage({
                   {locations.map((location) => (
                     <article
                       key={location.businessLocationId}
-                      className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
+                      className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"
                     >
                       <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                         {location.name}
@@ -377,7 +377,7 @@ export function LoyaltyPublicBusinessPage({
               )}
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.joinReadinessTitle}
               </p>
@@ -391,7 +391,7 @@ export function LoyaltyPublicBusinessPage({
               </div>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
                 {copy.loyaltyPublicStorefrontWindowTitle}
               </p>
@@ -404,7 +404,7 @@ export function LoyaltyPublicBusinessPage({
                 })}
               </p>
               <div className="mt-5 grid gap-4">
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {copy.loyaltyPublicStorefrontCmsTitle}
@@ -440,7 +440,7 @@ export function LoyaltyPublicBusinessPage({
                   )}
                 </div>
 
-                <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
+                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {copy.loyaltyPublicStorefrontCatalogTitle}
@@ -483,7 +483,7 @@ export function LoyaltyPublicBusinessPage({
               </div>
             </aside>
 
-            <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.memberCrossSurfaceTitle}
               </p>

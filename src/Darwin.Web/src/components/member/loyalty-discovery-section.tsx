@@ -94,7 +94,7 @@ export function LoyaltyDiscoverySection({
   const statusLabel = resolveApiStatusLabel(status, copy);
 
   return (
-    <section className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
+    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
@@ -112,7 +112,7 @@ export function LoyaltyDiscoverySection({
         </p>
       </div>
 
-      <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+      <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
         <p className="font-semibold text-[var(--color-text-primary)]">
           {copy.discoveryWindowTitle}
         </p>
@@ -140,7 +140,7 @@ export function LoyaltyDiscoverySection({
 
       <form
         action={localizeHref("/loyalty", culture)}
-        className="mt-5 grid gap-4 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] p-4 lg:grid-cols-6"
+        className="mt-5 grid gap-4 rounded-[1rem] bg-[var(--color-surface-panel-strong)] p-4 lg:grid-cols-6"
       >
         <label className="flex flex-col gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
           {copy.searchLabel}
@@ -239,7 +239,7 @@ export function LoyaltyDiscoverySection({
       </form>
 
       {(typeof latitude === "number" || typeof longitude === "number") && (
-        <div className="mt-5 rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+        <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
           <p className="font-semibold text-[var(--color-text-primary)]">
             {copy.proximityModeTitle}
           </p>
@@ -265,7 +265,7 @@ export function LoyaltyDiscoverySection({
               return (
             <article
               key={business.id}
-              className="overflow-hidden rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)]"
+              className="overflow-hidden rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)]"
             >
               <div className="flex min-h-44 items-center justify-center bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-5">
                 {logoUrl ? (
@@ -343,7 +343,7 @@ export function LoyaltyDiscoverySection({
           ))}
         </div>
       ) : (
-        <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
+        <div className="mt-5 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] px-5 py-8 text-center">
           <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
             {copy.noDiscoveryMatchesMessage}
           </p>

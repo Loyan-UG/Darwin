@@ -2988,6 +2988,15 @@
   <data name="BusinessSupportQueueIntro" xml:space="preserve">
     <value>Gemeinsame Onboarding-, Aktivierungs-, Einladungs- und Fehler-Mail-Triage fuer Support-Operatoren.</value>
   </data>
+  <data name="BusinessSupportGoLiveReadinessHelp" xml:space="preserve">
+    <value>Fokussiert Support-Operatoren auf Business-Status, Einladungen, Member-Aktivierung, Sperren und fehlgeschlagene E-Mail-Flows, die Onboarding blockieren koennen.</value>
+  </data>
+  <data name="BusinessSupportNeedsAttentionDashboardHelp" xml:space="preserve">
+    <value>Buendelt operative, Billing-, Kommunikations-, Einladungs-, Aktivierungs- und Passwort-Reset-Queues. Nutze die Aktionen fuer die primaere Triage; Detail-Labels bleiben in dieser Hilfe, damit das Dashboard ruhiger bleibt.</value>
+  </data>
+  <data name="BusinessSupportInvitationDebtDashboardHelp" xml:space="preserve">
+    <value>Zeigt ausstehende oder offene Einladungsarbeit sowie verwandte Rechnungs- und Runtime-Shortcuts, die Onboarding-Abschluss haeufig beeinflussen.</value>
+  </data>
   <data name="FailedEmails" xml:space="preserve">
     <value>Fehlgeschlagene E-Mails</value>
   </data>
@@ -5746,17 +5755,32 @@
   <data name="AdminDashboardIntro" xml:space="preserve">
     <value>Nutze diese Uebersicht als operativen Startpunkt fuer das Backoffice.</value>
   </data>
+  <data name="BusinessContextHelp" xml:space="preserve">
+    <value>Waehlt das Business fuer business-spezifische Karten wie Zahlungen, Inventar, Loyalty und Kommunikations-Queues.</value>
+  </data>
   <data name="DashboardProductsLabel" xml:space="preserve">
     <value>Produkte</value>
+  </data>
+  <data name="DashboardProductsHelp" xml:space="preserve">
+    <value>Gesamtzahl der Katalogprodukte im Admin-Dashboard. Oeffne den Katalog, um Produktdaten, Preise, Bestandseinstellungen und Sichtbarkeit zu pflegen.</value>
   </data>
   <data name="DashboardPagesLabel" xml:space="preserve">
     <value>Seiten</value>
   </data>
+  <data name="DashboardPagesHelp" xml:space="preserve">
+    <value>Gesamtzahl der CMS-Seiten. Oeffne das CMS, um Inhalt, SEO-Metadaten, Slugs, Veroeffentlichungszeitraeume und Sichtbarkeit zu pflegen.</value>
+  </data>
   <data name="DashboardOrdersLabel" xml:space="preserve">
     <value>Bestellungen</value>
   </data>
+  <data name="DashboardOrdersHelp" xml:space="preserve">
+    <value>Gesamtzahl der aktuell fuer das Backoffice sichtbaren Bestellungen. Nutze dies als Einstieg in Bestellpruefung und Fulfilment-Follow-up.</value>
+  </data>
   <data name="DashboardUsersLabel" xml:space="preserve">
     <value>Benutzer</value>
+  </data>
+  <data name="DashboardUsersHelp" xml:space="preserve">
+    <value>Gesamtzahl der Identity-Benutzer. Oeffne Identity, um Konten, Bestaetigungsstatus, Rollen, Sperren und Support-Aktionen zu pruefen.</value>
   </data>
   <data name="DashboardOpenCatalogAction" xml:space="preserve">
     <value>Katalog oeffnen</value>
@@ -5800,8 +5824,20 @@
   <data name="DashboardOpenPipelineLabel" xml:space="preserve">
     <value>Offene Pipeline</value>
   </data>
+  <data name="DashboardOpenPipelineHelp" xml:space="preserve">
+    <value>Geschaetzter Wert offener CRM-Opportunitaeten in der Standardwaehrung der Site. Das ist ein Pipeline-Signal, kein gebuchter Umsatz.</value>
+  </data>
+  <data name="DashboardInvoicesHelp" xml:space="preserve">
+    <value>Invoice-Shortcuts fokussieren operative Queues: ueberfaellig, bald faellig, Entwurf, fehlende VAT ID und erstattete Rechnungen.</value>
+  </data>
+  <data name="DashboardPaymentsHelp" xml:space="preserve">
+    <value>Payment-Shortcuts fokussieren Zahlungen, die Operator-Aufmerksamkeit brauchen: ausstehend, nicht verknuepft oder erstattet.</value>
+  </data>
   <data name="DashboardBusinessOperationsTitle" xml:space="preserve">
     <value>Business-Operations</value>
+  </data>
+  <data name="DashboardBusinessOperationsHelp" xml:space="preserve">
+    <value>Business-spezifische operative Zusammenfassung fuer das ausgewaehlte Business. Sie kombiniert Inventar, Abrechnung, Readiness, Steuern und Kommunikations-Queues.</value>
   </data>
   <data name="DashboardCurrentBusinessLabel" xml:space="preserve">
     <value>Aktuelles Business: {0}</value>
@@ -5820,6 +5856,15 @@
   </data>
   <data name="DashboardPurchaseOrdersLabel" xml:space="preserve">
     <value>Bestellungen an Lieferanten</value>
+  </data>
+  <data name="DashboardBusinessNeedsAttentionHelp" xml:space="preserve">
+    <value>Buendelt Business-Queues, die Go-live oder Tagesbetrieb am ehesten blockieren. Sekundaere Queue-Links sind unter Queue eingeklappt, damit das Dashboard kompakt bleibt.</value>
+  </data>
+  <data name="DashboardBusinessPaymentsHelp" xml:space="preserve">
+    <value>Zahlungsanzahl fuer das ausgewaehlte Business mit direkten Links zu Zahlungs- und Rechnungs-Queues, die haeufig Finance-Pruefung brauchen.</value>
+  </data>
+  <data name="DashboardPurchaseOrdersHelp" xml:space="preserve">
+    <value>Bestellungen an Lieferanten fuer das ausgewaehlte Business. Nutze dies fuer Einkauf, Lieferanten-Follow-up, Entwuerfe und bald faellige Rechnungen.</value>
   </data>
   <data name="DashboardOpenPaymentsAction" xml:space="preserve">
     <value>Zahlungen oeffnen</value>
@@ -5859,6 +5904,9 @@
   </data>
   <data name="MobileOperationsDashboardIntro" xml:space="preserve">
     <value>Gesundheit der Geraeteflotte und Support-Remediation.</value>
+  </data>
+  <data name="DashboardMobileNeedsAttentionHelp" xml:space="preserve">
+    <value>Zaehlt veraltete Geraete und Geraete ohne Push-Token. Das weist meist auf Mobile-Support oder Notification-Delivery-Follow-up hin.</value>
   </data>
   <data name="OpenMobileOps" xml:space="preserve">
     <value>Mobile Ops oeffnen</value>
@@ -6730,6 +6778,9 @@
   <data name="PageSlugHelpContent" xml:space="preserve">
     <value>URL-freundliche Kennung. Verwenden Sie Kleinbuchstaben, Ziffern und Bindestriche. Beispiel: <code>about-us</code>.</value>
   </data>
+  <data name="PageSlugPlaceholder" xml:space="preserve">
+    <value>ueber-uns</value>
+  </data>
   <data name="NoPagesFound" xml:space="preserve">
     <value>Keine Seiten gefunden.</value>
   </data>
@@ -7521,6 +7572,12 @@
   </data>
   <data name="CommunicationOpsDashboardIntro" xml:space="preserve">
     <value>Phase-1-Bereitschaft für E-Mail, SMS und WhatsApp über Plattform- und Business-Standards hinweg.</value>
+  </data>
+  <data name="CommunicationOpsGoLiveReadinessHelp" xml:space="preserve">
+    <value>Prueft, ob Transport-Einstellungen, Alert-Routing, Business-Sender-Identitaet und fehlgeschlagene Kommunikationsfluesse produktionsbereit genug sind.</value>
+  </data>
+  <data name="CommunicationPolicyDashboardHelp" xml:space="preserve">
+    <value>Hebt fehlende SMTP-, Admin-Alert-Routing- und transaktionale E-Mail-Policy-Einstellungen hervor, die zuverlaessige Zustellung blockieren koennen.</value>
   </data>
   <data name="CommunicationTransactionalEmailEnabledLabel" xml:space="preserve">
     <value>Transaktionale E-Mail aktiviert</value>
@@ -11523,6 +11580,75 @@
   </data>
   <data name="Slug" xml:space="preserve">
     <value>Slug</value>
+  </data>
+  <data name="Menus" xml:space="preserve">
+    <value>Menues</value>
+  </data>
+  <data name="CreateMenu" xml:space="preserve">
+    <value>Menue erstellen</value>
+  </data>
+  <data name="EditMenu" xml:space="preserve">
+    <value>Menue bearbeiten</value>
+  </data>
+  <data name="MenusWorkspaceIntro" xml:space="preserve">
+    <value>Storefront-Navigationsmenues verwalten, die von der oeffentlichen Web-Shell verwendet werden.</value>
+  </data>
+  <data name="MenuEditorIntro" xml:space="preserve">
+    <value>Menue-Name, Ziel-URLs, Reihenfolge und lokalisierte Labels fuer die Storefront-Navigation konfigurieren.</value>
+  </data>
+  <data name="MenuCreated" xml:space="preserve">
+    <value>Menue wurde erfolgreich erstellt.</value>
+  </data>
+  <data name="MenuUpdated" xml:space="preserve">
+    <value>Menue wurde erfolgreich aktualisiert.</value>
+  </data>
+  <data name="MenuNotFound" xml:space="preserve">
+    <value>Menue nicht gefunden.</value>
+  </data>
+  <data name="NoMenusFound" xml:space="preserve">
+    <value>Keine Menues gefunden.</value>
+  </data>
+  <data name="MenuAtLeastOneItemRequired" xml:space="preserve">
+    <value>Fuegen Sie mindestens einen Menueeintrag mit URL und Label hinzu.</value>
+  </data>
+  <data name="MenuName" xml:space="preserve">
+    <value>Menue-Name</value>
+  </data>
+  <data name="MenuNameHelp" xml:space="preserve">
+    <value>Interner Name, den die Web-Shell verwendet, zum Beispiel Main oder Footer. Er muss zu den Menue-Namen in den Site-Runtime-Einstellungen passen.</value>
+  </data>
+  <data name="MenuIdentitySection" xml:space="preserve">
+    <value>Menue-Identitaet</value>
+  </data>
+  <data name="MenuItems" xml:space="preserve">
+    <value>Menueeintraege</value>
+  </data>
+  <data name="MenuItemsHelp" xml:space="preserve">
+    <value>Jede ausgefuellte Zeile wird ein Navigationslink. Ungenutzte Zeilen leer lassen; sie werden beim Speichern ignoriert.</value>
+  </data>
+  <data name="SortOrder" xml:space="preserve">
+    <value>Sortierung</value>
+  </data>
+  <data name="Label" xml:space="preserve">
+    <value>Label</value>
+  </data>
+  <data name="LocalizedUrl" xml:space="preserve">
+    <value>Lokalisierte URL</value>
+  </data>
+  <data name="MenuItemUrlHelp" xml:space="preserve">
+    <value>Zielpfad oder URL. App-Pfade wie /cms/about-us oder absolute http/https-URLs verwenden.</value>
+  </data>
+  <data name="MenuItemSortOrderHelp" xml:space="preserve">
+    <value>Niedrigere Werte erscheinen zuerst innerhalb derselben Menueebene.</value>
+  </data>
+  <data name="MenuItemActiveHelp" xml:space="preserve">
+    <value>Inaktive Eintraege bleiben konfiguriert, werden aber in der oeffentlichen Navigation ausgeblendet.</value>
+  </data>
+  <data name="MenuItemLabelHelp" xml:space="preserve">
+    <value>Sichtbarer Navigationstext fuer diese Kultur.</value>
+  </data>
+  <data name="MenuItemLocalizedUrlHelp" xml:space="preserve">
+    <value>Optionale kulturspezifische URL-Ueberschreibung. Leer lassen, um die Standard-URL des Eintrags zu verwenden.</value>
   </data>
   <data name="State" xml:space="preserve">
     <value>Status</value>
