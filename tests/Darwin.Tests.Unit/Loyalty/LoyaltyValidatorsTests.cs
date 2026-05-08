@@ -923,4 +923,26 @@ public sealed class LoyaltyValidatorsTests
 
         result.IsValid.Should().BeTrue("a null DeviceId is allowed");
     }
+
+    [Theory]
+    [InlineData(99)]
+    [InlineData(-1)]
+    [InlineData(100)]
+    public void PrepareScan_Should_Fail_WhenModeIsInvalidNumericValue(int modeValue)
+    {
+        // Proves invalid numeric LoyaltyScanMode values are rejected with ModeInvalid
+        // instead of silently defaulting to Accrual (backlog item §7).
+        var dto = new PrepareScanSessionDto
+        {
+            BusinessId = Guid.NewGuid(),
+            Mode = (LoyaltyScanMode)modeValue
+        };
+
+        var result = new PrepareScanSessionDtoValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("out-of-range Mode values must be rejected");
+        result.Errors.Should().Contain(e =>
+            e.PropertyName == nameof(dto.Mode) &&
+            e.ErrorMessage == "ModeInvalid");
+    }
 }

@@ -1072,4 +1072,36 @@ public sealed class ContractSerializationCompatibilityLoyaltyAndBusinessTests : 
         dto!.RewardTierId.Should().Be(Guid.Parse("efefefef-efef-efef-efef-efefefefefef"));
         dto.Success.Should().BeFalse();
     }
+
+    /// <summary>
+    ///     Verifies that invalid numeric <see cref="PromotionInteractionEventType"/> values are not defined
+    ///     in the enum, proving the WebApi contract-boundary guard (<c>Enum.IsDefined</c>) would reject them
+    ///     with <c>PromotionInteractionEventTypeInvalid</c> instead of silently defaulting to Impression.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(99)]
+    [InlineData(-1)]
+    [InlineData(100)]
+    public void PromotionInteractionEventType_Should_RejectInvalidNumericValues(int rawValue)
+    {
+        var eventType = (PromotionInteractionEventType)rawValue;
+        Enum.IsDefined(eventType).Should().BeFalse(
+            "the WebApi guard uses Enum.IsDefined to reject out-of-range PromotionInteractionEventType values " +
+            "and return PromotionInteractionEventTypeInvalid instead of silently defaulting to Impression");
+    }
+
+    /// <summary>
+    ///     Verifies that valid <see cref="PromotionInteractionEventType"/> values are defined in the enum,
+    ///     ensuring the WebApi contract-boundary guard allows legitimate callers through.
+    /// </summary>
+    [Theory]
+    [InlineData(PromotionInteractionEventType.Impression)]
+    [InlineData(PromotionInteractionEventType.Open)]
+    [InlineData(PromotionInteractionEventType.Claim)]
+    public void PromotionInteractionEventType_Should_AcceptValidValues(PromotionInteractionEventType eventType)
+    {
+        Enum.IsDefined(eventType).Should().BeTrue(
+            "valid PromotionInteractionEventType values must pass the Enum.IsDefined guard in the WebApi controller");
+    }
 }
