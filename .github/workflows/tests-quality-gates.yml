@@ -146,6 +146,31 @@ jobs:
           name: webapi-test-results
           path: TestResults/webapi
 
+  webadmin-tests:
+    name: WebAdmin tests + coverage
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore WebAdmin test project
+        run: dotnet restore tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+      - name: Execute WebAdmin tests with coverage
+        run: >
+          dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/webadmin
+      - name: Upload WebAdmin test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webadmin-test-results
+          path: TestResults/webadmin
+
   integration-tests:
     name: Integration tests + coverage
     runs-on: ubuntu-latest
@@ -223,6 +248,7 @@ jobs:
       - contracts-tests
       - infrastructure-tests
       - webapi-tests
+      - webadmin-tests
       - integration-tests
       - mobile-shared-tests
     runs-on: ubuntu-latest
@@ -250,6 +276,11 @@ jobs:
         with:
           name: webapi-test-results
           path: TestResults/webapi
+      - name: Download WebAdmin artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webadmin-test-results
+          path: TestResults/webadmin
       - name: Download integration artifacts
         uses: actions/download-artifact@v4
         with:
@@ -267,5 +298,6 @@ jobs:
           --contracts-threshold 20
           --infrastructure-threshold 20
           --webapi-threshold 20
+          --webadmin-threshold 10
           --integration-threshold 20
           --mobile-shared-threshold 20

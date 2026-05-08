@@ -4,6 +4,8 @@ This document describes both the current implemented domain shape and the near-t
 
 This is a design document, not a claim that every target aggregate below is already implemented in code.
 
+Current go-live provider/compliance gaps are tracked in `docs/go-live-status.md`. As of 2026-05-08, Stripe and DHL have strong callback/queue plumbing but still need live provider creation calls; Tax/VAT/E-Invoice has visibility support but still needs a dedicated compliance workflow.
+
 Status terms used below:
 
 - `Completed`

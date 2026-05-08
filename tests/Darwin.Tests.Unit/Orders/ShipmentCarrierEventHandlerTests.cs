@@ -4632,6 +4632,415 @@ public sealed class ShipmentCarrierEventHandlerTests
     }
 
     [Fact]
+    public async Task ApplyShipmentCarrierEventHandler_Should_InsertDuplicateCarrierTimeline_For_Returned_WhenProviderStatus_Whitespace_AndOccurredAtDiffers()
+    {
+        await using var db = ShipmentCarrierEventTestDbContext.Create();
+
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var firstOccurredAtUtc = DateTime.UtcNow.AddMinutes(-12);
+        var secondOccurredAtUtc = firstOccurredAtUtc.AddMinutes(1);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CARRIER-53",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            ProviderShipmentReference = "dhl-ship-053",
+            Status = ShipmentStatus.Returned,
+            ShippedAtUtc = firstOccurredAtUtc
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApplyShipmentCarrierEventHandler(
+            db,
+            new ApplyShipmentCarrierEventValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-053",
+            CarrierEventKey = "shipment.returned",
+            OccurredAtUtc = firstOccurredAtUtc,
+            ProviderStatus = "   "
+        }, TestContext.Current.CancellationToken);
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "  DHL  ",
+            ProviderShipmentReference = "  dhl-ship-053  ",
+            CarrierEventKey = "  shipment.returned  ",
+            OccurredAtUtc = secondOccurredAtUtc,
+            ProviderStatus = "\t"
+        }, TestContext.Current.CancellationToken);
+
+        var carrierEvents = await db.Set<ShipmentCarrierEvent>()
+            .Where(x => x.ShipmentId == shipmentId)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        carrierEvents.Should().HaveCount(2);
+        carrierEvents.Should().Contain(x =>
+            x.CarrierEventKey == "shipment.returned" &&
+            x.OccurredAtUtc == firstOccurredAtUtc &&
+            x.ProviderStatus == null);
+        carrierEvents.Should().Contain(x =>
+            x.CarrierEventKey == "shipment.returned" &&
+            x.OccurredAtUtc == secondOccurredAtUtc &&
+            x.ProviderStatus == null);
+
+        var shipment = await db.Set<Shipment>()
+            .SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
+        shipment.Status.Should().Be(ShipmentStatus.Returned);
+        shipment.DeliveredAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ApplyShipmentCarrierEventHandler_Should_NotInsertDuplicateCarrierTimeline_For_Returned_WhenProviderStatus_WhitespaceAndNull_Are_Equivalent()
+    {
+        await using var db = ShipmentCarrierEventTestDbContext.Create();
+
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var occurredAtUtc = DateTime.UtcNow.AddMinutes(-7);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CARRIER-54",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            ProviderShipmentReference = "dhl-ship-054",
+            Status = ShipmentStatus.Returned,
+            ShippedAtUtc = occurredAtUtc
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApplyShipmentCarrierEventHandler(
+            db,
+            new ApplyShipmentCarrierEventValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-054",
+            CarrierEventKey = "shipment.returned",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "   "
+        }, TestContext.Current.CancellationToken);
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "  DHL  ",
+            ProviderShipmentReference = "  dhl-ship-054  ",
+            CarrierEventKey = "  shipment.returned  ",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = null
+        }, TestContext.Current.CancellationToken);
+
+        var carrierEvents = await db.Set<ShipmentCarrierEvent>()
+            .Where(x => x.ShipmentId == shipmentId)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        carrierEvents.Should().HaveCount(1);
+        carrierEvents[0].Carrier.Should().Be("DHL");
+        carrierEvents[0].CarrierEventKey.Should().Be("shipment.returned");
+        carrierEvents[0].ProviderStatus.Should().BeNull();
+
+        var shipment = await db.Set<Shipment>()
+            .SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
+        shipment.Status.Should().Be(ShipmentStatus.Returned);
+        shipment.DeliveredAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ApplyShipmentCarrierEventHandler_Should_NotInsertDuplicateCarrierTimeline_For_Delivered_WhenProviderStatus_WhitespaceAndNull_Are_Equivalent()
+    {
+        await using var db = ShipmentCarrierEventTestDbContext.Create();
+
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var occurredAtUtc = DateTime.UtcNow.AddMinutes(-7);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CARRIER-55",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            ProviderShipmentReference = "dhl-ship-055",
+            Status = ShipmentStatus.Shipped
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApplyShipmentCarrierEventHandler(
+            db,
+            new ApplyShipmentCarrierEventValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-055",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "   "
+        }, TestContext.Current.CancellationToken);
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "  DHL  ",
+            ProviderShipmentReference = "  dhl-ship-055  ",
+            CarrierEventKey = "  shipment.delivered  ",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = null
+        }, TestContext.Current.CancellationToken);
+
+        var carrierEvents = await db.Set<ShipmentCarrierEvent>()
+            .Where(x => x.ShipmentId == shipmentId)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        carrierEvents.Should().HaveCount(1);
+        carrierEvents[0].Carrier.Should().Be("DHL");
+        carrierEvents[0].CarrierEventKey.Should().Be("shipment.delivered");
+        carrierEvents[0].ProviderStatus.Should().BeNull();
+
+        var shipment = await db.Set<Shipment>()
+            .SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
+        shipment.Status.Should().Be(ShipmentStatus.Delivered);
+        shipment.DeliveredAtUtc.Should().Be(occurredAtUtc);
+    }
+
+    [Fact]
+    public async Task ApplyShipmentCarrierEventHandler_Should_NotInsertDuplicateCarrierTimeline_For_Delivered_WhenCarrierEventKey_WhitespacePaddingIsEquivalent()
+    {
+        await using var db = ShipmentCarrierEventTestDbContext.Create();
+
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var occurredAtUtc = DateTime.UtcNow.AddMinutes(-8);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CARRIER-56",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            ProviderShipmentReference = "dhl-ship-056",
+            Status = ShipmentStatus.Packed
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApplyShipmentCarrierEventHandler(
+            db,
+            new ApplyShipmentCarrierEventValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-056",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "Delivered"
+        }, TestContext.Current.CancellationToken);
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "\tDHL\t",
+            ProviderShipmentReference = "\t dhl-ship-056\t",
+            CarrierEventKey = "\tshipment.delivered\t",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "   Delivered   "
+        }, TestContext.Current.CancellationToken);
+
+        var carrierEvents = await db.Set<ShipmentCarrierEvent>()
+            .Where(x => x.ShipmentId == shipmentId)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        carrierEvents.Should().HaveCount(1);
+        carrierEvents[0].Carrier.Should().Be("DHL");
+        carrierEvents[0].CarrierEventKey.Should().Be("shipment.delivered");
+        carrierEvents[0].ProviderStatus.Should().Be("Delivered");
+
+        var shipment = await db.Set<Shipment>()
+            .SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
+        shipment.Status.Should().Be(ShipmentStatus.Delivered);
+        shipment.DeliveredAtUtc.Should().Be(occurredAtUtc);
+    }
+
+    [Fact]
+    public async Task ApplyShipmentCarrierEventHandler_Should_InsertDuplicateCarrierTimeline_For_Delivered_WhenProviderStatus_CaseDiffers()
+    {
+        await using var db = ShipmentCarrierEventTestDbContext.Create();
+
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var occurredAtUtc = DateTime.UtcNow.AddMinutes(-9);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CARRIER-57",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            ProviderShipmentReference = "dhl-ship-057",
+            Status = ShipmentStatus.Packed
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApplyShipmentCarrierEventHandler(
+            db,
+            new ApplyShipmentCarrierEventValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-057",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "Delivered"
+        }, TestContext.Current.CancellationToken);
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-057",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "DELIVERED"
+        }, TestContext.Current.CancellationToken);
+
+        var carrierEvents = await db.Set<ShipmentCarrierEvent>()
+            .Where(x => x.ShipmentId == shipmentId)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        carrierEvents.Should().HaveCount(2);
+        carrierEvents.Should().Contain(x => x.ProviderStatus == "Delivered");
+        carrierEvents.Should().Contain(x => x.ProviderStatus == "DELIVERED");
+
+        var shipment = await db.Set<Shipment>()
+            .SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
+        shipment.Status.Should().Be(ShipmentStatus.Delivered);
+        shipment.DeliveredAtUtc.Should().Be(occurredAtUtc);
+    }
+
+    [Fact]
+    public async Task ApplyShipmentCarrierEventHandler_Should_NotInsertDuplicateCarrierTimeline_For_Delivered_WhenProviderStatus_WhitespacePaddingEquivalent()
+    {
+        await using var db = ShipmentCarrierEventTestDbContext.Create();
+
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var occurredAtUtc = DateTime.UtcNow.AddMinutes(-9);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CARRIER-58",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            ProviderShipmentReference = "dhl-ship-058",
+            Status = ShipmentStatus.Packed
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApplyShipmentCarrierEventHandler(
+            db,
+            new ApplyShipmentCarrierEventValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-058",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "Delivered"
+        }, TestContext.Current.CancellationToken);
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-058",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "  Delivered  "
+        }, TestContext.Current.CancellationToken);
+
+        var carrierEvents = await db.Set<ShipmentCarrierEvent>()
+            .Where(x => x.ShipmentId == shipmentId)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        carrierEvents.Should().HaveCount(1);
+        carrierEvents[0].Carrier.Should().Be("DHL");
+        carrierEvents[0].CarrierEventKey.Should().Be("shipment.delivered");
+        carrierEvents[0].ProviderStatus.Should().Be("Delivered");
+
+        var shipment = await db.Set<Shipment>()
+            .SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
+        shipment.Status.Should().Be(ShipmentStatus.Delivered);
+        shipment.DeliveredAtUtc.Should().Be(occurredAtUtc);
+    }
+
+    [Fact]
     public async Task ApplyShipmentCarrierEventHandler_Should_NotInsertDuplicateCarrierTimeline_When_ProviderStatus_WhitespacePaddingIsEquivalent()
     {
         await using var db = ShipmentCarrierEventTestDbContext.Create();
@@ -4690,6 +5099,144 @@ public sealed class ShipmentCarrierEventHandlerTests
         carrierEvents.Should().HaveCount(1);
         carrierEvents[0].CarrierEventKey.Should().Be("shipment.in_transit");
         carrierEvents[0].ProviderStatus.Should().Be("InTransit");
+    }
+
+    [Fact]
+    public async Task ApplyShipmentCarrierEventHandler_Should_NotInsertDuplicateCarrierTimeline_For_Delivered_WhenProviderStatus_LeadingTrailingWhitespaceIsEquivalent()
+    {
+        await using var db = ShipmentCarrierEventTestDbContext.Create();
+
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var occurredAtUtc = DateTime.UtcNow.AddMinutes(-9);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CARRIER-59",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            ProviderShipmentReference = "dhl-ship-059",
+            Status = ShipmentStatus.Packed
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApplyShipmentCarrierEventHandler(
+            db,
+            new ApplyShipmentCarrierEventValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-059",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = " Delivered "
+        }, TestContext.Current.CancellationToken);
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-059",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "Delivered"
+        }, TestContext.Current.CancellationToken);
+
+        var carrierEvents = await db.Set<ShipmentCarrierEvent>()
+            .Where(x => x.ShipmentId == shipmentId)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        carrierEvents.Should().HaveCount(1);
+        carrierEvents[0].Carrier.Should().Be("DHL");
+        carrierEvents[0].CarrierEventKey.Should().Be("shipment.delivered");
+        carrierEvents[0].ProviderStatus.Should().Be("Delivered");
+
+        var shipment = await db.Set<Shipment>()
+            .SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
+        shipment.Status.Should().Be(ShipmentStatus.Delivered);
+        shipment.DeliveredAtUtc.Should().Be(occurredAtUtc);
+    }
+
+    [Fact]
+    public async Task ApplyShipmentCarrierEventHandler_Should_UpdateMissingExceptionFields_For_Delivered_WhenDuplicateProviderStatusAndEventKey()
+    {
+        await using var db = ShipmentCarrierEventTestDbContext.Create();
+
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var occurredAtUtc = DateTime.UtcNow.AddMinutes(-9);
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CARRIER-60",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            ProviderShipmentReference = "dhl-ship-060",
+            Status = ShipmentStatus.Packed
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApplyShipmentCarrierEventHandler(
+            db,
+            new ApplyShipmentCarrierEventValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-060",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = " Delivered "
+        }, TestContext.Current.CancellationToken);
+
+        await handler.HandleAsync(new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "dhl-ship-060",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = occurredAtUtc,
+            ProviderStatus = "Delivered",
+            ExceptionCode = "  CODE  ",
+            ExceptionMessage = "  Msg  "
+        }, TestContext.Current.CancellationToken);
+
+        var carrierEvents = await db.Set<ShipmentCarrierEvent>()
+            .Where(x => x.ShipmentId == shipmentId)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        carrierEvents.Should().HaveCount(1);
+        carrierEvents[0].Carrier.Should().Be("DHL");
+        carrierEvents[0].CarrierEventKey.Should().Be("shipment.delivered");
+        carrierEvents[0].ProviderStatus.Should().Be("Delivered");
+        carrierEvents[0].ExceptionCode.Should().Be("CODE");
+        carrierEvents[0].ExceptionMessage.Should().Be("Msg");
+
+        var shipment = await db.Set<Shipment>()
+            .SingleAsync(x => x.Id == shipmentId, TestContext.Current.CancellationToken);
+        shipment.Status.Should().Be(ShipmentStatus.Delivered);
+        shipment.DeliveredAtUtc.Should().Be(occurredAtUtc);
     }
 
     [Fact]

@@ -88,7 +88,7 @@ test("CMS observation contexts keep browse, detail, and route metadata together"
   assert.deepEqual(cmsDetailRouteObservationContext("de-DE", "faq"), {
     culture: "de-DE",
     slug: "faq",
-    route: "/cms/[slug]",
+    route: "/page/[slug]",
   });
 });
 

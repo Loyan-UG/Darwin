@@ -7,10 +7,7 @@ import {
 import { InvoicesPage } from "@/components/member/invoices-page";
 import { getMemberInvoicesPageContext } from "@/features/member-portal/server/get-member-protected-page-context";
 import { getInvoicesSeoMetadata } from "@/features/member-portal/server/get-member-route-seo-metadata";
-import {
-  createStorefrontContinuationProps,
-  createStorefrontContinuationWithCartProps,
-} from "@/features/storefront/route-projections";
+import { createStorefrontCartProps } from "@/features/storefront/route-projections";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 
@@ -44,8 +41,7 @@ export default async function InvoicesRoute({
   const { session, storefrontContext: authStorefrontContext } = entryContext;
 
   if (!session) {
-    const storefrontProps =
-      createStorefrontContinuationWithCartProps(authStorefrontContext!);
+    const storefrontProps = createStorefrontCartProps(authStorefrontContext!);
     return (
       <MemberAuthRequired
         culture={culture}
@@ -57,8 +53,7 @@ export default async function InvoicesRoute({
     );
   }
 
-  const { invoicesResult, storefrontContext } = routeContext!;
-  const storefrontProps = createStorefrontContinuationProps(storefrontContext);
+  const { invoicesResult } = routeContext!;
 
   return (
     <InvoicesPage
@@ -69,10 +64,6 @@ export default async function InvoicesRoute({
       totalPages={Math.max(1, Math.ceil((invoicesResult.data?.total ?? 0) / (invoicesResult.data?.request.pageSize ?? 12)))}
       visibleQuery={visibleQuery}
       visibleState={visibleState ?? "all"}
-      {...storefrontProps}
-      cartLinkedProductSlugs={storefrontContext.cartLinkedProductSlugs}
-      storefrontCart={storefrontContext.storefrontCart}
-      storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />
   );
 }

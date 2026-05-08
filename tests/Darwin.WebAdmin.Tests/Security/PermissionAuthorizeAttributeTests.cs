@@ -8,6 +8,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
@@ -55,7 +56,7 @@ public sealed class PermissionAuthorizeAttributeTests
         await attribute.OnAuthorizationAsync(contextMissing);
         contextMissing.Result.Should().BeOfType<ForbidResult>();
 
-        var contextInvalid = CreateContext(new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "not-a-guid") }, "Test"));
+        var contextInvalid = CreateContext(new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "not-a-guid") }, "Test")), null);
         await attribute.OnAuthorizationAsync(contextInvalid);
         contextInvalid.Result.Should().BeOfType<ForbidResult>();
     }
@@ -68,16 +69,16 @@ public sealed class PermissionAuthorizeAttributeTests
 
         await attribute.OnAuthorizationAsync(context);
 
-        context.Result.Should().BeOfType<StatusCodeResult>()
-            .And.Subject.StatusCode.Should().Be(500);
+        var result = context.Result.Should().BeOfType<StatusCodeResult>().Subject;
+        result.StatusCode.Should().Be(500);
     }
 
     [Fact]
     public async Task OnAuthorizationAsync_Should_Succeed_ForFullAdmin()
     {
         var service = new FakePermissionService();
-        service.SetPermission(Guid.NewGuid(), "FullAdminAccess", true);
         var userId = service.UserId;
+        service.SetPermission(userId, "FullAdminAccess", true);
         var context = CreateContext(BuildPrincipal(userId), service);
         var attribute = new PermissionAuthorizeAttribute("AnyPermission");
 

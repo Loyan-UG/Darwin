@@ -15,12 +15,12 @@ import {
   homeDiscoveryObservationContext,
 } from "@/lib/route-observation-context";
 
-type HomeDiscoverySupportSource = {
+type HomeDiscoveryStorefrontFootprintSource = {
   storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0];
 };
 
-export function summarizeHomeDiscoveryStorefrontSupport(
-  result: HomeDiscoverySupportSource,
+export function summarizeHomeDiscoveryStorefrontFootprint(
+  result: HomeDiscoveryStorefrontFootprintSource,
 ) {
   const storefront = result.storefrontContext;
 
@@ -70,8 +70,8 @@ const getCachedHomeDiscoveryContext = createCachedObservedLoader({
   getContext: (culture: string) => homeDiscoveryObservationContext(culture),
   getSuccessContext: (result) => ({
     ...summarizeHomeDiscoveryHealth(result),
-    homeDiscoveryStorefrontSupportFootprint:
-      summarizeHomeDiscoveryStorefrontSupport(result),
+    homeDiscoveryStorefrontFootprint:
+      summarizeHomeDiscoveryStorefrontFootprint(result),
   }),
   load: async (culture: string) => {
     const storefrontContext = await loadHomeCoreContext(culture);

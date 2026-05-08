@@ -3,8 +3,7 @@ import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { getMemberEditorPageContext } from "@/features/member-portal/server/get-member-protected-page-context";
 import { getPreferencesSeoMetadata } from "@/features/member-portal/server/get-member-route-seo-metadata";
 import {
-  createStorefrontContinuationProps,
-  createStorefrontContinuationWithCartProps,
+  createStorefrontCartProps,
 } from "@/features/storefront/route-projections";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
@@ -37,7 +36,7 @@ export default async function PreferencesRoute({
 
   if (!session) {
     const storefrontProps =
-      createStorefrontContinuationWithCartProps(authStorefrontContext!);
+      createStorefrontCartProps(authStorefrontContext!);
     return (
       <MemberAuthRequired
         culture={culture}
@@ -49,8 +48,7 @@ export default async function PreferencesRoute({
     );
   }
 
-  const { identityContext, storefrontContext } = routeContext!;
-  const storefrontProps = createStorefrontContinuationProps(storefrontContext);
+  const { identityContext } = routeContext!;
 
   return (
     <PreferencesPage
@@ -61,7 +59,6 @@ export default async function PreferencesRoute({
       profileStatus={identityContext.profileResult.status}
       preferencesStatus={readSearchParam(resolvedSearchParams?.preferencesStatus)}
       preferencesError={readSearchParam(resolvedSearchParams?.preferencesError)}
-      {...storefrontProps}
     />
   );
 }

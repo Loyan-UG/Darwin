@@ -14,14 +14,14 @@ import { createCachedObservedLoader } from "@/lib/observed-loader";
 import { summarizeCmsDetailCoreHealth } from "@/lib/route-health";
 import { cmsDetailObservationContext } from "@/lib/route-observation-context";
 
-type CmsPageDetailReviewWindow = {
+type CmsPageDetailDiscoveryWindow = {
   visibleQuery?: string;
   visibleState: CmsVisibleState;
   visibleSort: CmsVisibleSort;
   metadataFocus: CmsMetadataFocus;
 };
 
-type CmsDetailSupportWorkflowSource = {
+type CmsDetailContextFootprintSource = {
   relatedPagesSeed: {
     status: string;
     data?: {
@@ -32,19 +32,19 @@ type CmsDetailSupportWorkflowSource = {
   relatedPages: Array<unknown>;
 };
 
-function normalizeReviewWindow(
-  reviewWindow?: Partial<CmsPageDetailReviewWindow>,
-): CmsPageDetailReviewWindow {
+function normalizeDiscoveryWindow(
+  discoveryWindow?: Partial<CmsPageDetailDiscoveryWindow>,
+): CmsPageDetailDiscoveryWindow {
   return {
-    visibleQuery: reviewWindow?.visibleQuery?.trim() || undefined,
-    visibleState: reviewWindow?.visibleState ?? "all",
-    visibleSort: reviewWindow?.visibleSort ?? "featured",
-    metadataFocus: reviewWindow?.metadataFocus ?? "all",
+    visibleQuery: discoveryWindow?.visibleQuery?.trim() || undefined,
+    visibleState: discoveryWindow?.visibleState ?? "all",
+    visibleSort: discoveryWindow?.visibleSort ?? "featured",
+    metadataFocus: discoveryWindow?.metadataFocus ?? "all",
   };
 }
 
-export function summarizeCmsDetailSupportWorkflow(
-  result: CmsDetailSupportWorkflowSource,
+export function summarizeCmsDetailContextFootprint(
+  result: CmsDetailContextFootprintSource,
 ) {
   const seededCount = result.relatedPagesSeed.data?.items?.length ?? 0;
 
@@ -58,52 +58,52 @@ const getCachedCmsPageDetailContext = createCachedObservedLoader({
   normalizeArgs: (
     culture: string,
     slug: string,
-    reviewWindow?: Partial<CmsPageDetailReviewWindow>,
-  ): [string, string, CmsPageDetailReviewWindow] => [
+    discoveryWindow?: Partial<CmsPageDetailDiscoveryWindow>,
+  ): [string, string, CmsPageDetailDiscoveryWindow] => [
     culture,
     slug,
-    normalizeReviewWindow(reviewWindow),
+    normalizeDiscoveryWindow(discoveryWindow),
   ],
   getContext: (
     culture: string,
     slug: string,
-    reviewWindow?: Partial<CmsPageDetailReviewWindow>,
+    discoveryWindow?: Partial<CmsPageDetailDiscoveryWindow>,
   ) => {
-    const normalizedReviewWindow = normalizeReviewWindow(reviewWindow);
+    const normalizedDiscoveryWindow = normalizeDiscoveryWindow(discoveryWindow);
 
     return {
       ...cmsDetailObservationContext(culture, slug),
-      visibleQuery: normalizedReviewWindow.visibleQuery ?? null,
+      visibleQuery: normalizedDiscoveryWindow.visibleQuery ?? null,
       visibleState:
-        normalizedReviewWindow.visibleState !== "all"
-          ? normalizedReviewWindow.visibleState
+        normalizedDiscoveryWindow.visibleState !== "all"
+          ? normalizedDiscoveryWindow.visibleState
           : null,
       visibleSort:
-        normalizedReviewWindow.visibleSort !== "featured"
-          ? normalizedReviewWindow.visibleSort
+        normalizedDiscoveryWindow.visibleSort !== "featured"
+          ? normalizedDiscoveryWindow.visibleSort
           : null,
       metadataFocus:
-        normalizedReviewWindow.metadataFocus !== "all"
-          ? normalizedReviewWindow.metadataFocus
+        normalizedDiscoveryWindow.metadataFocus !== "all"
+          ? normalizedDiscoveryWindow.metadataFocus
           : null,
     };
   },
   getSuccessContext: (result) => ({
     ...summarizeCmsDetailCoreHealth(result),
-    cmsDetailSupportWorkflowFootprint:
-      summarizeCmsDetailSupportWorkflow(result),
+    cmsDetailContextFootprint:
+      summarizeCmsDetailContextFootprint(result),
   }),
   load: async (
     culture: string,
     slug: string,
-    reviewWindow?: Partial<CmsPageDetailReviewWindow>,
+    discoveryWindow?: Partial<CmsPageDetailDiscoveryWindow>,
   ) => {
-    const normalizedReviewWindow = normalizeReviewWindow(reviewWindow);
+    const normalizedDiscoveryWindow = normalizeDiscoveryWindow(discoveryWindow);
     const [pageResult, relatedPagesSeed] = await Promise.all([
       getPublicPageBySlug(slug, culture),
       getPublishedPageSet({
         culture,
-        search: normalizedReviewWindow.visibleQuery,
+        search: normalizedDiscoveryWindow.visibleQuery,
       }),
     ]);
 
@@ -112,11 +112,11 @@ const getCachedCmsPageDetailContext = createCachedObservedLoader({
         ? sortVisiblePages(
             filterVisiblePages(
               relatedPagesSeed.data.items,
-              normalizedReviewWindow.visibleState,
+              normalizedDiscoveryWindow.visibleState,
               undefined,
-              normalizedReviewWindow.metadataFocus,
+              normalizedDiscoveryWindow.metadataFocus,
             ),
-            normalizedReviewWindow.visibleSort,
+            normalizedDiscoveryWindow.visibleSort,
           )
         : relatedPagesSeed.data?.items ?? [];
 
@@ -132,12 +132,12 @@ const getCachedCmsPageDetailContext = createCachedObservedLoader({
 export async function getCmsPageDetailContext(
   culture: string,
   slug: string,
-  reviewWindow?: Partial<CmsPageDetailReviewWindow>,
+  discoveryWindow?: Partial<CmsPageDetailDiscoveryWindow>,
 ) {
   return getCachedCmsPageDetailContext(
     culture,
     slug,
-    normalizeReviewWindow(reviewWindow),
+    normalizeDiscoveryWindow(discoveryWindow),
   );
 }
 

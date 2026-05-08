@@ -44,8 +44,8 @@ test("buildSeoVisibilityFootprint classifies localized, single-locale, and priva
     buildSeoVisibilityFootprint({
       noIndex: false,
       languageAlternates: {
-        "de-DE": "/cms/impressum",
-        "en-US": "/en-US/cms/imprint",
+        "de-DE": "/page/impressum",
+        "en-US": "/en-US/page/imprint",
       },
     }),
     "indexable|localized",
@@ -71,8 +71,8 @@ test("buildSeoMetadataState classifies localized, single-locale, and private met
     buildSeoMetadataState({
       noIndex: false,
       languageAlternates: {
-        "de-DE": "/cms/impressum",
-        "en-US": "/en-US/cms/imprint",
+        "de-DE": "/page/impressum",
+        "en-US": "/en-US/page/imprint",
       },
     }),
     "localized",
@@ -112,7 +112,7 @@ test("buildSeoIndexability classifies public and private metadata visibility", (
 test("buildSeoLanguageAlternateState distinguishes present and missing alternates", () => {
   assert.equal(
     buildSeoLanguageAlternateState({
-      "de-DE": "/cms/impressum",
+      "de-DE": "/page/impressum",
     }),
     "present",
   );
@@ -145,14 +145,14 @@ test("buildSeoSummaryFootprint keeps canonical alternate rollups stable", () => 
 test("buildSeoTargetFootprint keeps canonical target classification stable", () => {
   assert.equal(
     buildSeoTargetFootprint({
-      canonicalPath: "/cms/impressum",
+      canonicalPath: "/page/impressum",
       noIndex: false,
       languageAlternates: {
-        "de-DE": "/cms/impressum",
-        "en-US": "/en-US/cms/imprint",
+        "de-DE": "/page/impressum",
+        "en-US": "/en-US/page/imprint",
       },
     }),
-    "indexable|/cms/impressum",
+    "indexable|/page/impressum",
   );
 
   assert.equal(
@@ -213,11 +213,11 @@ test("buildSeoSuccessDiagnostics keeps indexability and alternate footprint alig
         metadata: {
           title: "Impressum",
         },
-        canonicalPath: "/cms/impressum",
+        canonicalPath: "/page/impressum",
         noIndex: false,
         languageAlternates: {
-          "en-US": "/en-US/cms/imprint",
-          "de-DE": "/cms/impressum",
+          "en-US": "/en-US/page/imprint",
+          "de-DE": "/page/impressum",
         },
       },
       {
@@ -231,7 +231,7 @@ test("buildSeoSuccessDiagnostics keeps indexability and alternate footprint alig
       indexability: "indexable",
       seoMetadataState: "localized",
       seoVisibilityFootprint: "indexable|localized",
-      seoTargetFootprint: "indexable|/cms/impressum",
+      seoTargetFootprint: "indexable|/page/impressum",
       languageAlternateState: "present",
       languageAlternateFootprint: "de-DE|en-US",
       seoAlternateSummaryFootprint: "alternates:2[de-DE|en-US]",

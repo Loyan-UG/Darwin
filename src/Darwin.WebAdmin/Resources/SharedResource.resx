@@ -5750,10 +5750,88 @@
     <value>Mobile Operations</value>
   </data>
   <data name="AdminDashboardTitle" xml:space="preserve">
-    <value>Admin Dashboard</value>
+    <value>Dashboard</value>
   </data>
   <data name="AdminDashboardIntro" xml:space="preserve">
     <value>Use this overview as the operational starting point for the back-office.</value>
+  </data>
+  <data name="AdminDashboardSubtitle" xml:space="preserve">
+    <value>Operational attention, business context, and workspace entry points.</value>
+  </data>
+  <data name="DashboardKpisTitle" xml:space="preserve">
+    <value>Dashboard KPIs</value>
+  </data>
+  <data name="DashboardKpiBusinessesAttention" xml:space="preserve">
+    <value>Businesses needing attention</value>
+  </data>
+  <data name="DashboardKpiOrdersAttention" xml:space="preserve">
+    <value>Orders needing attention</value>
+  </data>
+  <data name="DashboardKpiBillingAttention" xml:space="preserve">
+    <value>Payment/Billing attention</value>
+  </data>
+  <data name="DashboardKpiCommunicationAttention" xml:space="preserve">
+    <value>Communication attention</value>
+  </data>
+  <data name="DashboardKpiMobileAttention" xml:space="preserve">
+    <value>Mobile/device attention</value>
+  </data>
+  <data name="DashboardKpiLoyaltyAttention" xml:space="preserve">
+    <value>Loyalty attention</value>
+  </data>
+  <data name="DashboardNeedsAttentionTitle" xml:space="preserve">
+    <value>Needs Attention</value>
+  </data>
+  <data name="DashboardNeedsAttentionHelp" xml:space="preserve">
+    <value>Prioritized operational issues. The dashboard shows at most eight items; detailed diagnostics stay in each module workspace.</value>
+  </data>
+  <data name="DashboardNoAttentionItems" xml:space="preserve">
+    <value>No prioritized attention items are currently visible.</value>
+  </data>
+  <data name="DashboardBusinessContextTitle" xml:space="preserve">
+    <value>Business Context</value>
+  </data>
+  <data name="DashboardOperationsOverviewTitle" xml:space="preserve">
+    <value>Operations Overview</value>
+  </data>
+  <data name="DashboardOperationsOverviewHelp" xml:space="preserve">
+    <value>Compact module summaries with up to three metrics and one primary workspace action per module.</value>
+  </data>
+  <data name="DashboardAttentionBusinessOnboarding" xml:space="preserve">
+    <value>Business onboarding or support work</value>
+  </data>
+  <data name="DashboardAttentionPaymentIssues" xml:space="preserve">
+    <value>Orders with payment issues</value>
+  </data>
+  <data name="DashboardAttentionFulfillment" xml:space="preserve">
+    <value>Orders awaiting fulfilment attention</value>
+  </data>
+  <data name="DashboardAttentionBilling" xml:space="preserve">
+    <value>Billing queue items</value>
+  </data>
+  <data name="DashboardAttentionCommunication" xml:space="preserve">
+    <value>Communication setup or failure items</value>
+  </data>
+  <data name="DashboardAttentionMobile" xml:space="preserve">
+    <value>Mobile device support items</value>
+  </data>
+  <data name="DashboardAttentionInventory" xml:space="preserve">
+    <value>Inventory purchasing items</value>
+  </data>
+  <data name="DashboardAttentionLoyalty" xml:space="preserve">
+    <value>Loyalty redemption items</value>
+  </data>
+  <data name="Critical" xml:space="preserve">
+    <value>Critical</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="BusinessCommunications" xml:space="preserve">
+    <value>Business Communications</value>
   </data>
   <data name="BusinessContextHelp" xml:space="preserve">
     <value>Selects the business used for business-scoped cards such as payments, inventory, loyalty, and communication queues.</value>

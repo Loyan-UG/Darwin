@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
-import type { PublicCategorySummary } from "@/features/catalog/types";
-import type { PublicPageSummary } from "@/features/cms/types";
-import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
 import type { BusinessLocation } from "@/features/businesses/types";
 import {
   clearMemberLoyaltyScanSessionAction,
@@ -23,12 +20,11 @@ import {
   formatResource,
   getMemberResource,
   matchesLocalizedQueryMessageKey,
-  resolveApiStatusLabel,
   resolveLocalizedQueryMessage,
 } from "@/localization";
 import { formatDateTime } from "@/lib/formatting";
-import { buildCmsPagePath, buildLoyaltyBusinessPath } from "@/lib/entity-paths";
-import { buildAppQueryPath, buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
+import { buildLoyaltyBusinessPath } from "@/lib/entity-paths";
+import { buildLocalizedQueryHref, localizeHref } from "@/lib/locale-routing";
 
 type LoyaltyBusinessPageProps = {
   culture: string;
@@ -48,10 +44,6 @@ type LoyaltyBusinessPageProps = {
   scanError?: string;
   promotionStatus?: string;
   promotionError?: string;
-  cmsPages: PublicPageSummary[];
-  cmsPagesStatus: string;
-  categories: PublicCategorySummary[];
-  categoriesStatus: string;
 };
 
 function getPromotionLabel(
@@ -183,18 +175,8 @@ export function LoyaltyBusinessPage({
   scanError,
   promotionStatus,
   promotionError,
-  cmsPages,
-  cmsPagesStatus,
-  categories,
-  categoriesStatus,
 }: LoyaltyBusinessPageProps) {
   const copy = getMemberResource(culture);
-  const dashboardStatusLabel = resolveApiStatusLabel(dashboardStatus, copy);
-  const rewardsStatusLabel = resolveApiStatusLabel(rewardsStatus, copy);
-  const timelineStatusLabel = resolveApiStatusLabel(timelineStatus, copy);
-  const promotionsStatusLabel = resolveApiStatusLabel(promotionsStatus, copy);
-  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy);
-  const categoriesStatusLabel = resolveApiStatusLabel(categoriesStatus, copy);
   const resolvedScanError = resolveLocalizedQueryMessage(scanError, copy);
   const resolvedPromotionError = resolveLocalizedQueryMessage(
     promotionError,
@@ -273,12 +255,7 @@ export function LoyaltyBusinessPage({
           <StatusBanner
             tone="warning"
             title={copy.loyaltyDetailWarningsTitle}
-            message={formatResource(copy.loyaltyDetailWarningsMessage, {
-              dashboardStatus: dashboardStatusLabel ?? dashboardStatus,
-              rewardsStatus: rewardsStatusLabel ?? rewardsStatus,
-              timelineStatus: timelineStatusLabel ?? timelineStatus,
-              promotionsStatus: promotionsStatusLabel ?? promotionsStatus,
-            })}
+            message={copy.loyaltyDetailUnavailableCustomerMessage}
           />
         )}
         {matchesLocalizedQueryMessageKey(
@@ -317,20 +294,6 @@ export function LoyaltyBusinessPage({
           />
         )}
 
-        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-6 shadow-[var(--shadow-panel)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-            {copy.loyaltyBusinessRouteSummaryTitle}
-          </p>
-          <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-            {formatResource(copy.loyaltyBusinessRouteSummaryMessage, {
-              dashboardStatus: dashboardStatusLabel ?? dashboardStatus,
-              rewardsStatus: rewardsStatusLabel ?? rewardsStatus,
-              timelineStatus: timelineStatusLabel ?? timelineStatus,
-              promotionsStatus: promotionsStatusLabel ?? promotionsStatus,
-            })}
-          </p>
-        </div>
-
         {!dashboard ? (
           <div className="rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center">
             <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
@@ -349,13 +312,6 @@ export function LoyaltyBusinessPage({
                 >
                   {copy.memberCrossSurfaceAccountCta}
                 </Link>
-              </div>
-              <div className="mt-8 text-left">
-                <MemberCrossSurfaceRail
-                  culture={culture}
-                  includeAccount={false}
-                  includeOrders
-                />
               </div>
           </div>
         ) : (
@@ -522,7 +478,6 @@ export function LoyaltyBusinessPage({
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">{copy.promotionsTitle}</p>
                       <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.promotionsDescription}</p>
                     </div>
-                    {promotions ? <p className="rounded-full bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)]">{formatResource(copy.visibleLabel, { count: promotions.diagnostics.finalCount })}</p> : null}
                   </div>
                   {promotions?.items.length ? (
                     <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -600,109 +555,9 @@ export function LoyaltyBusinessPage({
                   </p>
                 </aside>
                 <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                    {copy.loyaltyBusinessStorefrontWindowTitle}
-                  </p>
-                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                    {formatResource(copy.loyaltyBusinessStorefrontWindowMessage, {
-                      cmsStatus: cmsPagesStatusLabel ?? cmsPagesStatus,
-                      categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
-                      pageCount: cmsPages.length,
-                      categoryCount: categories.length,
-                    })}
-                  </p>
-                  <div className="mt-5 grid gap-3">
-                    <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                          {copy.loyaltyBusinessStorefrontCmsTitle}
-                        </p>
-                        <Link
-                          href={localizeHref("/cms", culture)}
-                          className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                        >
-                          {copy.loyaltyBusinessStorefrontCmsCta}
-                        </Link>
-                      </div>
-                      {cmsPages.length > 0 ? (
-                        <div className="mt-4 flex flex-col gap-3">
-                          {cmsPages.map((page) => (
-                            <Link
-                              key={page.id}
-                  href={localizeHref(buildCmsPagePath(page.slug), culture)}
-                              className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                            >
-                              <p className="font-semibold text-[var(--color-text-primary)]">
-                                {page.title}
-                              </p>
-                              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                                {page.metaDescription ?? copy.loyaltyBusinessStorefrontCmsFallbackDescription}
-                              </p>
-                            </Link>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                          {formatResource(copy.loyaltyBusinessStorefrontCmsEmptyMessage, {
-                            status: cmsPagesStatusLabel ?? cmsPagesStatus,
-                          })}
-                        </p>
-                      )}
-                    </article>
-                    <article className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                          {copy.loyaltyBusinessStorefrontCatalogTitle}
-                        </p>
-                        <Link
-                          href={localizeHref("/catalog", culture)}
-                          className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                        >
-                          {copy.loyaltyBusinessStorefrontCatalogCta}
-                        </Link>
-                      </div>
-                      {categories.length > 0 ? (
-                        <div className="mt-4 flex flex-col gap-3">
-                          {categories.map((category) => (
-                            <Link
-                              key={category.id}
-                              href={localizeHref(
-                                buildAppQueryPath("/catalog", {
-                                  category: category.slug,
-                                }),
-                                culture,
-                              )}
-                              className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3 transition hover:bg-[var(--color-surface-panel-strong)]"
-                            >
-                              <p className="font-semibold text-[var(--color-text-primary)]">
-                                {category.name}
-                              </p>
-                              <p className="mt-2 text-sm leading-7 text-[var(--color-text-secondary)]">
-                                {category.description ?? copy.loyaltyBusinessStorefrontCatalogFallbackDescription}
-                              </p>
-                            </Link>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                          {formatResource(copy.loyaltyBusinessStorefrontCatalogEmptyMessage, {
-                            status: categoriesStatusLabel ?? categoriesStatus,
-                          })}
-                        </p>
-                      )}
-                    </article>
-                  </div>
-                </aside>
-                <MemberCrossSurfaceRail
-                  culture={culture}
-                  includeAccount={false}
-                  includeOrders
-                />
-                <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.recentTransactionsTitle}</p>
                   {dashboard.recentTransactions.length ? <div className="mt-5 flex flex-col gap-4">{dashboard.recentTransactions.map((transaction) => <article key={`${transaction.occurredAtUtc}-${transaction.type}-${transaction.delta}`} className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{localizePointsTransactionType(transaction.type, copy)}</p><p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{formatDateTime(transaction.occurredAtUtc, culture)}</p>{transaction.notes ? <p className="mt-1 text-sm leading-7 text-[var(--color-text-secondary)]">{transaction.notes}</p> : null}</div><p className="text-sm font-semibold text-[var(--color-text-primary)]">{formatResource(copy.pointsValueLabel, { value: `${transaction.delta >= 0 ? "+" : ""}${transaction.delta}` })}</p></div></article>)}</div> : <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">{copy.noRecentTransactionsMessage}</p>}
                 </aside>
-                {promotions ? <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">{copy.feedDiagnosticsTitle}</p><div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]"><div className="flex items-center justify-between gap-4"><span>{copy.initialCandidatesLabel}</span><span>{promotions.diagnostics.initialCandidates}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.suppressedLabel}</span><span>{promotions.diagnostics.suppressedByFrequency}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.deduplicatedLabel}</span><span>{promotions.diagnostics.deduplicated}</span></div><div className="flex items-center justify-between gap-4"><span>{copy.trimmedByCapLabel}</span><span>{promotions.diagnostics.trimmedByCap}</span></div></div></aside> : null}
               </div>
             </div>
           </>

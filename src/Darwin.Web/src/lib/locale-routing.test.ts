@@ -22,7 +22,7 @@ test("sanitizeAppPath keeps only app-local paths and preserves safe query/hash",
   assert.equal(sanitizeAppPath(undefined, "/account"), "/account");
 });
 
-test("localized helpers keep default culture canonical and prefix alternate cultures", () => {
+test("localized helpers keep public routes canonical across supported cultures", () => {
   const previousCulture = process.env.DARWIN_WEB_CULTURE;
   const previousSupportedCultures = process.env.DARWIN_WEB_SUPPORTED_CULTURES;
   process.env.DARWIN_WEB_CULTURE = "de-DE";
@@ -30,17 +30,17 @@ test("localized helpers keep default culture canonical and prefix alternate cult
 
   try {
     assert.equal(buildLocalizedPath("/catalog", "de-DE"), "/catalog");
-    assert.equal(buildLocalizedPath("/catalog", "en-US"), "/en-US/catalog");
-    assert.equal(localizeHref("/catalog?page=2", "en-US"), "/en-US/catalog?page=2");
+    assert.equal(buildLocalizedPath("/catalog", "en-US"), "/catalog");
+    assert.equal(localizeHref("/catalog?page=2", "en-US"), "/catalog?page=2");
     assert.equal(
       buildLocalizedQueryHref("/catalog", { category: "coffee", page: 2 }, "en-US"),
-      "/en-US/catalog?category=coffee&page=2",
+      "/catalog?category=coffee&page=2",
     );
     assert.equal(
       buildLocalizedAuthHref("/account/sign-in", "https://evil.example.com", "en-US"),
       "/account/sign-in?returnPath=%2Faccount",
     );
-    assert.equal(stripCulturePrefix("/en-US/cms/page").pathname, "/cms/page");
+    assert.equal(stripCulturePrefix("/en-US/page/impressum").pathname, "/page/impressum");
   } finally {
     if (previousCulture === undefined) {
       delete process.env.DARWIN_WEB_CULTURE;

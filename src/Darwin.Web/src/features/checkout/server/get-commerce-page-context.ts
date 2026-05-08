@@ -19,6 +19,7 @@ import {
 
 const getCachedCartPageContext = createCommercePageLoader({
   operation: "load-cart-page-context",
+  cacheResult: false,
   thresholdMs: 325,
   getContext: (culture: string) => ({
     culture,
@@ -56,6 +57,7 @@ const getCachedCartPageContext = createCommercePageLoader({
 
 const getCachedCheckoutPageContext = createCommercePageLoader({
   operation: "load-checkout-page-context",
+  cacheResult: false,
   thresholdMs: 325,
   getContext: (culture: string) => ({
     culture,
@@ -69,6 +71,7 @@ const getCachedCheckoutPageContext = createCommercePageLoader({
 
 const getCachedConfirmationPageContext = createCommercePageLoader({
   operation: "load-confirmation-page-context",
+  cacheResult: false,
   thresholdMs: 325,
   getContext: (culture: string, orderId: string, orderNumber?: string) => ({
     culture,

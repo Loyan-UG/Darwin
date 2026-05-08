@@ -97,10 +97,7 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
 
   const {
     browseContext,
-    continuationSlice,
     visibleWindow,
-    facetSummary,
-    matchingProductsTotal,
     pageSize,
     matchingSetResult,
   } = await getCatalogIndexPageContext(
@@ -122,7 +119,6 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
       products={visibleWindow.items}
       activeCategorySlug={activeCategorySlug}
       totalProducts={visibleWindow.total}
-      matchingProductsTotal={matchingProductsTotal}
       currentPage={visibleWindow.currentPage}
       pageSize={pageSize}
       searchQuery={searchQuery}
@@ -130,14 +126,9 @@ export default async function CatalogRoute({ searchParams }: CatalogRouteProps) 
       visibleSort={visibleSort}
       mediaState={mediaState}
       savingsBand={savingsBand}
-      facetSummary={facetSummary}
-      loadedProductsCount={visibleWindow.items.length}
-      cmsPages={continuationSlice.cmsPages}
-      cartSummary={continuationSlice.cartSummary}
       dataStatus={{
         categories: categoriesResult.status,
         products: matchingSetResult?.status ?? productsResult.status,
-        cmsPages: continuationSlice.cmsPagesStatus,
       }}
     />
   );

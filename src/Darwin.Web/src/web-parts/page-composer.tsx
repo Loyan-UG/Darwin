@@ -10,55 +10,9 @@ type PageComposerProps = {
 
 export function PageComposer({ parts, culture }: PageComposerProps) {
   const shared = getSharedResource(culture);
-  const heroPart = parts.find((part) => part.kind === "hero");
-  const sectionLinks = parts
-    .filter((part) => part.kind !== "hero")
-    .map((part) => ({
-      id: part.id,
-      label: part.eyebrow.trim().length > 0 ? part.eyebrow : part.title,
-      title: part.title,
-    }));
-  const quickNavTitle = heroPart?.eyebrow ?? sectionLinks[0]?.label ?? "";
-  const quickNavDescription = heroPart?.title ?? sectionLinks[0]?.title ?? "";
 
   return (
     <div className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 flex-col gap-8 px-5 py-10 sm:px-6 lg:px-8">
-      {sectionLinks.length > 0 ? (
-        <section className="sticky top-4 z-10 rounded-[1rem] border border-[var(--color-border-soft)] bg-[color:color-mix(in_srgb,var(--color-surface-panel)_92%,white_8%)] px-5 py-5 shadow-[var(--shadow-panel)] backdrop-blur sm:px-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent)]">
-                  {quickNavTitle}
-                </p>
-                <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {quickNavDescription}
-                </p>
-              </div>
-              {heroPart ? (
-                <a
-                  href={`#${heroPart.id}`}
-                  className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-                >
-                  {heroPart.title}
-                </a>
-              ) : null}
-            </div>
-            <div className="flex flex-wrap gap-2">
-            {sectionLinks.map((section) => (
-              <a
-                key={section.id}
-                href={`#${section.id}`}
-                className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                title={section.title}
-              >
-                {section.label}
-              </a>
-            ))}
-          </div>
-          </div>
-        </section>
-      ) : null}
       {parts.map((part) => {
         if (part.kind === "hero") {
           return (

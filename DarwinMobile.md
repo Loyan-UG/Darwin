@@ -6,6 +6,8 @@
 
 > Scope: `Darwin.Mobile.Consumer`, `Darwin.Mobile.Business`, `Darwin.Mobile.Shared`, and mobile-facing contract dependencies.
 
+Current go-live status is summarized in `docs/go-live-status.md`. Mobile should treat DHL tracking/callback fields as available presentation signals, but not assume live DHL shipment/label API integration is complete until the provider gap is closed.
+
 ## 1. Purpose
 
 Darwin has two MAUI apps:

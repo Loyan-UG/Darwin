@@ -1,8 +1,12 @@
-import { createCachedObservedLoader } from "@/lib/observed-loader";
+import {
+  createCachedObservedLoader,
+  createObservedLoader,
+} from "@/lib/observed-loader";
 import { buildPageLoaderBaseDiagnostics } from "@/lib/page-loader-diagnostics";
 
 type CreateCommercePageLoaderOptions<TArgs extends unknown[], TResult> = {
   operation: string;
+  cacheResult?: boolean;
   thresholdMs?: number;
   normalizeArgs?: (...args: TArgs) => TArgs;
   getContext: (...args: TArgs) => Record<string, unknown>;
@@ -39,13 +43,18 @@ export function buildCommercePageLoaderSuccessContext(
 
 export function createCommercePageLoaderCore<TArgs extends unknown[], TResult>({
   operation,
+  cacheResult = true,
   thresholdMs = 325,
   normalizeArgs,
   getContext,
   getSuccessContext,
   load,
 }: CreateCommercePageLoaderOptions<TArgs, TResult>) {
-  return createCachedObservedLoader({
+  const createLoader = cacheResult
+    ? createCachedObservedLoader
+    : createObservedLoader;
+
+  return createLoader({
     area: "commerce-page-context",
     operation,
     thresholdMs,

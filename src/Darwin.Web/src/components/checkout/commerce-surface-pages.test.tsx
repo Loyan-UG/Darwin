@@ -6,11 +6,7 @@ import test from "node:test";
 import React from "react";
 import Module from "node:module";
 import { renderToStaticMarkup } from "react-dom/server";
-import type {
-  PublicCategorySummary,
-  PublicProductSummary,
-} from "@/features/catalog/types";
-import type { PublicPageSummary } from "@/features/cms/types";
+import type { PublicProductSummary } from "@/features/catalog/types";
 
 const stubDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "darwin-server-only-"));
 const serverOnlyStubPath = path.join(stubDirectory, "server-only.js");
@@ -30,14 +26,6 @@ Module._resolveFilename = function patchedResolveFilename(
   return originalResolveFilename.call(this, request, parent, isMain, options);
 };
 
-const category: PublicCategorySummary = {
-  id: "category-1",
-  slug: "fruit",
-  name: "Fruit",
-  description: "Fresh produce aisle",
-  productCount: 8,
-};
-
 const heroProduct: PublicProductSummary = {
   id: "product-1",
   slug: "apples",
@@ -49,13 +37,6 @@ const heroProduct: PublicProductSummary = {
   primaryImageUrl: null,
   shortDescription: "Crisp apples",
   categoryName: "Fruit",
-};
-
-const pageSummary: PublicPageSummary = {
-  id: "page-1",
-  slug: "about",
-  title: "About",
-  metaDescription: "About this storefront",
 };
 
 test("CartPage renders the upgraded grocery basket surface", async () => {
@@ -105,10 +86,6 @@ test("CartPage renders the upgraded grocery basket surface", async () => {
       hasMemberSession: false,
       cartStatus: "updated",
       followUpProducts: [heroProduct],
-      cmsPages: [pageSummary],
-      cmsPagesStatus: "ok",
-      categories: [category],
-      categoriesStatus: "ok",
     }),
   );
 
@@ -190,21 +167,8 @@ test("CheckoutPage renders the upgraded grocery conversion surface", async () =>
       },
       intentStatus: "ok",
       memberAddresses: [],
-      memberAddressesStatus: "unauthenticated",
-      memberProfile: null,
-      memberProfileStatus: "unauthenticated",
-      memberPreferences: null,
-      memberPreferencesStatus: "unauthenticated",
-      memberInvoices: [],
-      memberInvoicesStatus: "unauthenticated",
       profilePrefillActive: false,
       hasMemberSession: false,
-      cmsPages: [pageSummary],
-      cmsPagesStatus: "ok",
-      categories: [category],
-      categoriesStatus: "ok",
-      products: [heroProduct],
-      productsStatus: "ok",
     }),
   );
 

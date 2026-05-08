@@ -29,58 +29,45 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 );
             }
 
-            // Promotions
-            if (!await db.Set<Promotion>().AnyAsync(ct))
-            {
-                var p1 = new Promotion
-                {
-                    Name = "WELCOME10",
-                    Code = "WELCOME10",
-                    Type = Darwin.Domain.Enums.PromotionType.Percentage,
-                    Percent = 10m,
-                    Currency = DomainDefaults.DefaultCurrency,
-                    StartsAtUtc = DateTime.UtcNow.AddDays(-7),
-                    EndsAtUtc = DateTime.UtcNow.AddMonths(6),
-                    MaxRedemptions = 1000,
-                    PerCustomerLimit = 2,
-                    IsActive = true
-                };
-                var p2 = new Promotion
-                {
-                    Name = "FIVER",
-                    Code = "FIVER",
-                    Type = Darwin.Domain.Enums.PromotionType.Amount,
-                    AmountMinor = 500, // €5.00
-                    Currency = DomainDefaults.DefaultCurrency,
-                    StartsAtUtc = DateTime.UtcNow.AddDays(-7),
-                    EndsAtUtc = DateTime.UtcNow.AddMonths(3),
-                    MinSubtotalNetMinor = 2500,
-                    IsActive = true
-                };
-                var p3 = new Promotion
-                {
-                    Name = "SEASONAL",
-                    Code = "SEASONAL",
-                    Type = Darwin.Domain.Enums.PromotionType.Percentage,
-                    Percent = 15m,
-                    Currency = DomainDefaults.DefaultCurrency,
-                    StartsAtUtc = DateTime.UtcNow.AddDays(-3),
-                    EndsAtUtc = DateTime.UtcNow.AddMonths(1),
-                    IsActive = true
-                };
-
-                db.AddRange(p1, p2, p3);
-
-                // Example redemption row (attach later to a real order/user if needed)
-                db.Add(new PromotionRedemption
-                {
-                    PromotionId = p1.Id,
-                    UserId = null,         // guest
-                    OrderId = Guid.NewGuid()
-                });
-            }
+            await EnsurePromotionAsync(db, "WELCOME10", "WELCOME10", Darwin.Domain.Enums.PromotionType.Percentage, 10m, null, null, 1000, 2, ct);
+            await EnsurePromotionAsync(db, "FIVER", "FIVER", Darwin.Domain.Enums.PromotionType.Amount, null, 500, 2500, null, null, ct);
+            await EnsurePromotionAsync(db, "SEASONAL", "SEASONAL", Darwin.Domain.Enums.PromotionType.Percentage, 15m, null, null, null, null, ct);
 
             await db.SaveChangesAsync(ct);
+        }
+
+        private static async Task EnsurePromotionAsync(
+            DarwinDbContext db,
+            string name,
+            string code,
+            Darwin.Domain.Enums.PromotionType type,
+            decimal? percent,
+            long? amountMinor,
+            long? minSubtotalNetMinor,
+            int? maxRedemptions,
+            int? perCustomerLimit,
+            CancellationToken ct)
+        {
+            var promotion = await db.Set<Promotion>()
+                .FirstOrDefaultAsync(x => x.Code == code && !x.IsDeleted, ct);
+
+            if (promotion == null)
+            {
+                promotion = new Promotion { Code = code };
+                db.Add(promotion);
+            }
+
+            promotion.Name = name;
+            promotion.Type = type;
+            promotion.Percent = percent;
+            promotion.AmountMinor = amountMinor;
+            promotion.Currency = DomainDefaults.DefaultCurrency;
+            promotion.StartsAtUtc = DateTime.UtcNow.AddDays(-7);
+            promotion.EndsAtUtc = DateTime.UtcNow.AddMonths(6);
+            promotion.MinSubtotalNetMinor = minSubtotalNetMinor;
+            promotion.MaxRedemptions = maxRedemptions;
+            promotion.PerCustomerLimit = perCustomerLimit;
+            promotion.IsActive = true;
         }
     }
 }

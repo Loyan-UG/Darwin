@@ -9,16 +9,16 @@ import {
 test("fallback shell navigation keeps primary storefront routes discoverable", () => {
   assert.deepEqual(
     getFallbackPrimaryNavigation("en-US").map((link) => link.href),
-    ["/", "/catalog", "/cms", "/account", "/cart", "/checkout", "/orders", "/invoices"],
+    ["/", "/catalog", "/loyalty", "/help", "/page/contact"],
   );
 
   assert.deepEqual(
     getFallbackPrimaryNavigation("de-DE").map((link) => link.href),
-    ["/", "/catalog", "/cms", "/account", "/cart", "/checkout", "/orders", "/invoices"],
+    ["/", "/catalog", "/loyalty", "/help", "/page/kontakt"],
   );
 });
 
-test("fallback shell footer keeps member and mock-checkout routes reachable", () => {
+test("fallback shell footer keeps customer-facing shop, account, support, and legal routes reachable", () => {
   const englishFooterLinks = getFallbackFooterGroups("en-US")
     .flatMap((group) => group.links)
     .map((link) => link.href);
@@ -27,25 +27,32 @@ test("fallback shell footer keeps member and mock-checkout routes reachable", ()
     .map((link) => link.href);
 
   for (const links of [englishFooterLinks, germanFooterLinks]) {
-    assert.ok(links.includes("/cms/impressum"));
-    assert.ok(links.includes("/cms/kontakt"));
+    assert.ok(links.includes("/catalog"));
+    assert.ok(links.includes("/loyalty"));
+    assert.ok(links.includes("/cart"));
     assert.ok(links.includes("/account/sign-in"));
     assert.ok(links.includes("/account/register"));
-    assert.ok(links.includes("/account/profile"));
-    assert.ok(links.includes("/account/preferences"));
-    assert.ok(links.includes("/account/addresses"));
-    assert.ok(links.includes("/account/security"));
-    assert.ok(links.includes("/mock-checkout"));
+    assert.ok(links.includes("/account"));
+    assert.ok(links.includes("/orders"));
+    assert.ok(links.includes("/invoices"));
+    assert.ok(links.includes("/help"));
+    assert.ok(
+      links.includes("/page/contact") || links.includes("/page/kontakt"),
+    );
+    assert.ok(
+      links.includes("/page/legal-notice") || links.includes("/page/impressum"),
+    );
+    assert.equal(links.includes("/mock-checkout"), false);
   }
 });
 
-test("shell utility links keep live commerce entry points reachable", () => {
+test("shell utility links keep account and cart entry points reachable", () => {
   assert.deepEqual(
     getUtilityLinks("en-US").map((link) => link.href),
-    ["/catalog", "/cart", "/checkout"],
+    ["/account", "/cart"],
   );
   assert.deepEqual(
     getUtilityLinks("de-DE").map((link) => link.href),
-    ["/catalog", "/cart", "/checkout"],
+    ["/account", "/cart"],
   );
 });

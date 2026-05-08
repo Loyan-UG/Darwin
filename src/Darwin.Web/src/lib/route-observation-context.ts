@@ -76,7 +76,7 @@ export function cmsDetailObservationContext(culture: string, slug: string) {
 }
 
 export function cmsDetailRouteObservationContext(culture: string, slug: string) {
-  return { culture, slug, route: "/cms/[slug]" };
+  return { culture, slug, route: "/page/[slug]" };
 }
 
 export function catalogBrowseObservationContext(

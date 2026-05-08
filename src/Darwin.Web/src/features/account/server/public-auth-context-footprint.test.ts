@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizePublicAuthStorefrontSupport } from "@/features/account/server/get-public-auth-route-context";
+import { summarizePublicAuthStorefrontFootprint } from "@/features/account/server/get-public-auth-route-context";
 
-test("summarizePublicAuthStorefrontSupport keeps public auth storefront continuity readable", () => {
+test("summarizePublicAuthStorefrontFootprint keeps public auth storefront state compact", () => {
   assert.equal(
-    summarizePublicAuthStorefrontSupport({
+    summarizePublicAuthStorefrontFootprint({
       storefrontContext: {
         cmsPagesResult: { status: "ok", data: { items: [{ slug: "about" }] } },
         cmsPagesStatus: "ok",

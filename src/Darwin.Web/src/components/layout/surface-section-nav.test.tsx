@@ -9,7 +9,7 @@ test("SurfaceSectionNav renders the shared sticky grocery shell", () => {
     React.createElement(SurfaceSectionNav, {
       items: [
         { href: "#overview", label: "Overview" },
-        { href: "#readiness", label: "Readiness" },
+        { href: "#delivery", label: "Delivery" },
         { href: "#actions", label: "Actions" },
       ],
     }),
@@ -19,6 +19,6 @@ test("SurfaceSectionNav renders the shared sticky grocery shell", () => {
   assert.match(html, /rounded-\[2rem\]/);
   assert.match(html, /white_84%,#eff7e9_16%/);
   assert.ok(html.includes('href="#overview"'));
-  assert.ok(html.includes('href="#readiness"'));
+  assert.ok(html.includes('href="#delivery"'));
   assert.ok(html.includes('href="#actions"'));
 });

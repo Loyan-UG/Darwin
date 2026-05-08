@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { CultureSwitcher } from "@/components/shell/culture-switcher";
 import type { ShellLink } from "@/features/shell/types";
 import { localizeHref } from "@/lib/locale-routing";
@@ -59,10 +60,12 @@ export function SiteHeaderTemplate({
               href={localizeHref("/", culture)}
               className="inline-flex items-center gap-3"
             >
-              <img
+              <Image
                 src="/images/DarwinJustLogo.png"
                 alt=""
                 aria-hidden="true"
+                width={48}
+                height={48}
                 className="h-12 w-12 object-contain"
               />
               <span className="block font-[family-name:var(--font-display)] text-2xl leading-none text-[var(--color-text-primary)]">

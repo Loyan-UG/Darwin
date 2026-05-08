@@ -46,7 +46,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         #region Media
 
         /// <summary>
-        /// Creates and upgrades a small set of storefront media assets if none exist.
+        /// Creates and upgrades the core storefront media assets used by seeded product galleries.
         /// </summary>
         private static async Task SeedMediaAsync(DarwinDbContext db, CancellationToken ct)
         {
@@ -84,9 +84,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 await db.SaveChangesAsync(ct);
             }
 
-            if (await db.MediaAssets.AnyAsync(ct)) return;
-
-            var assets = new List<MediaAsset>
+            var assets = new MediaAsset[]
             {
                 new()
                 {
@@ -135,15 +133,30 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 }
             };
 
-            foreach (var asset in assets)
+            var assetUrls = assets.Select(x => x.Url).ToArray();
+            var assetsByUrl = await db.MediaAssets
+                .Where(x => assetUrls.Contains(x.Url))
+                .ToDictionaryAsync(x => x.Url, x => x, ct);
+
+            foreach (var desired in assets)
             {
-                asset.Alt = NormalizeCmsSeedText(asset.Alt);
-                asset.Title = string.IsNullOrWhiteSpace(asset.Title)
-                    ? asset.Title
-                    : NormalizeCmsSeedText(asset.Title);
+                if (!assetsByUrl.TryGetValue(desired.Url, out var asset))
+                {
+                    asset = new MediaAsset { Url = desired.Url };
+                    db.MediaAssets.Add(asset);
+                }
+
+                asset.Alt = NormalizeCmsSeedText(desired.Alt);
+                asset.Title = string.IsNullOrWhiteSpace(desired.Title)
+                    ? desired.Title
+                    : NormalizeCmsSeedText(desired.Title);
+                asset.OriginalFileName = desired.OriginalFileName;
+                asset.SizeBytes = desired.SizeBytes;
+                asset.Width = desired.Width;
+                asset.Height = desired.Height;
+                asset.Role = desired.Role;
             }
 
-            db.MediaAssets.AddRange(assets);
             await db.SaveChangesAsync(ct);
         }
 
@@ -240,14 +253,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var desiredItems = new[]
             {
                 new { Url = "/", DeUrl = "/", Label = "Home", DeLabel = "Start", SortOrder = 0 },
-                new { Url = "/catalog", DeUrl = "/catalog", Label = "Catalog", DeLabel = "Katalog", SortOrder = 1 },
-                new { Url = "/cms", DeUrl = "/cms", Label = "CMS", DeLabel = "Inhalte", SortOrder = 2 },
-                new { Url = "/account", DeUrl = "/account", Label = "Account", DeLabel = "Konto", SortOrder = 3 },
-                new { Url = "/cart", DeUrl = "/cart", Label = "Cart", DeLabel = "Warenkorb", SortOrder = 4 },
-                new { Url = "/checkout", DeUrl = "/checkout", Label = "Checkout", DeLabel = "Kasse", SortOrder = 5 },
-                new { Url = "/orders", DeUrl = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 6 },
-                new { Url = "/invoices", DeUrl = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 7 },
-                new { Url = "/loyalty", DeUrl = "/loyalty", Label = "Loyalty", DeLabel = "Treue", SortOrder = 8 }
+                new { Url = "/catalog", DeUrl = "/catalog", Label = "Shop", DeLabel = "Shop", SortOrder = 1 },
+                new { Url = "/loyalty", DeUrl = "/loyalty", Label = "Loyalty", DeLabel = "Treue", SortOrder = 2 },
+                new { Url = "/help", DeUrl = "/help", Label = "Help", DeLabel = "Hilfe", SortOrder = 3 },
+                new { Url = "/page/contact", DeUrl = "/page/kontakt", Label = "Contact", DeLabel = "Kontakt", SortOrder = 4 }
             };
 
             if (menu == null)
@@ -261,7 +270,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             }
 
             menu.Culture = "en-US";
-            menu.Items.Clear();
+            await ResetMenuItemsAsync(db, menu, ct);
             foreach (var item in desiredItems)
             {
                 menu.Items.Add(new MenuItem
@@ -300,20 +309,22 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var desiredItems = new[]
             {
-                new { Url = "/cms/legal-notice", DeUrl = "/cms/impressum", Label = "Legal notice", DeLabel = "Impressum", SortOrder = 0 },
-                new { Url = "/cms/privacy-policy", DeUrl = "/cms/datenschutz", Label = "Privacy", DeLabel = "Datenschutz", SortOrder = 1 },
-                new { Url = "/cms/terms-and-conditions", DeUrl = "/cms/agb", Label = "Terms", DeLabel = "AGB", SortOrder = 2 },
-                new { Url = "/cms/cancellation-policy", DeUrl = "/cms/widerruf", Label = "Cancellation", DeLabel = "Widerruf", SortOrder = 3 },
-                new { Url = "/cms/contact", DeUrl = "/cms/kontakt", Label = "Contact", DeLabel = "Kontakt", SortOrder = 4 },
-                new { Url = "/account/sign-in", DeUrl = "/account/sign-in", Label = "Sign in", DeLabel = "Anmelden", SortOrder = 5 },
-                new { Url = "/account/register", DeUrl = "/account/register", Label = "Register", DeLabel = "Registrieren", SortOrder = 6 },
-                new { Url = "/account/profile", DeUrl = "/account/profile", Label = "Profile", DeLabel = "Profil", SortOrder = 7 },
-                new { Url = "/account/preferences", DeUrl = "/account/preferences", Label = "Preferences", DeLabel = "Praeferenzen", SortOrder = 8 },
-                new { Url = "/account/addresses", DeUrl = "/account/addresses", Label = "Addresses", DeLabel = "Adressen", SortOrder = 9 },
-                new { Url = "/account/security", DeUrl = "/account/security", Label = "Security", DeLabel = "Sicherheit", SortOrder = 10 },
-                new { Url = "/orders", DeUrl = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 11 },
-                new { Url = "/invoices", DeUrl = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 12 },
-                new { Url = "/checkout", DeUrl = "/checkout", Label = "Checkout", DeLabel = "Kasse", SortOrder = 13 }
+                new { Url = "/catalog", DeUrl = "/catalog", Label = "Catalog", DeLabel = "Katalog", SortOrder = 0 },
+                new { Url = "/loyalty", DeUrl = "/loyalty", Label = "Loyalty", DeLabel = "Treue", SortOrder = 1 },
+                new { Url = "/cart", DeUrl = "/cart", Label = "Cart", DeLabel = "Warenkorb", SortOrder = 2 },
+                new { Url = "/account/sign-in", DeUrl = "/account/sign-in", Label = "Sign in", DeLabel = "Anmelden", SortOrder = 3 },
+                new { Url = "/account/register", DeUrl = "/account/register", Label = "Register", DeLabel = "Registrieren", SortOrder = 4 },
+                new { Url = "/account", DeUrl = "/account", Label = "My account", DeLabel = "Mein Konto", SortOrder = 5 },
+                new { Url = "/orders", DeUrl = "/orders", Label = "Orders", DeLabel = "Bestellungen", SortOrder = 6 },
+                new { Url = "/invoices", DeUrl = "/invoices", Label = "Invoices", DeLabel = "Rechnungen", SortOrder = 7 },
+                new { Url = "/help", DeUrl = "/help", Label = "Help", DeLabel = "Hilfe", SortOrder = 8 },
+                new { Url = "/page/contact", DeUrl = "/page/kontakt", Label = "Contact", DeLabel = "Kontakt", SortOrder = 9 },
+                new { Url = "/page/shipping", DeUrl = "/page/versand", Label = "Shipping", DeLabel = "Versand", SortOrder = 10 },
+                new { Url = "/page/returns", DeUrl = "/page/rueckgabe", Label = "Returns / Cancellation", DeLabel = "Rueckgabe / Widerruf", SortOrder = 11 },
+                new { Url = "/page/legal-notice", DeUrl = "/page/impressum", Label = "Legal notice", DeLabel = "Impressum", SortOrder = 12 },
+                new { Url = "/page/privacy-policy", DeUrl = "/page/datenschutz", Label = "Privacy", DeLabel = "Datenschutz", SortOrder = 13 },
+                new { Url = "/page/terms-and-conditions", DeUrl = "/page/agb", Label = "Terms", DeLabel = "AGB", SortOrder = 14 },
+                new { Url = "/page/cancellation-policy", DeUrl = "/page/widerruf", Label = "Cancellation policy", DeLabel = "Widerrufsbelehrung", SortOrder = 15 }
             };
 
             if (menu == null)
@@ -327,7 +338,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             }
 
             menu.Culture = "en-US";
-            menu.Items.Clear();
+            await ResetMenuItemsAsync(db, menu, ct);
             foreach (var item in desiredItems)
             {
                 menu.Items.Add(new MenuItem
@@ -354,6 +365,31 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 });
             }
 
+            await db.SaveChangesAsync(ct);
+        }
+
+        private static async Task ResetMenuItemsAsync(DarwinDbContext db, Menu menu, CancellationToken ct)
+        {
+            if (menu.Id == Guid.Empty)
+            {
+                menu.Items.Clear();
+                return;
+            }
+
+            var existingItems = await db.MenuItems
+                .Include(x => x.Translations)
+                .Where(x => x.MenuId == menu.Id)
+                .ToListAsync(ct);
+
+            if (existingItems.Count == 0)
+            {
+                menu.Items.Clear();
+                return;
+            }
+
+            db.Set<MenuItemTranslation>().RemoveRange(existingItems.SelectMany(x => x.Translations));
+            db.MenuItems.RemoveRange(existingItems);
+            menu.Items.Clear();
             await db.SaveChangesAsync(ct);
         }
 

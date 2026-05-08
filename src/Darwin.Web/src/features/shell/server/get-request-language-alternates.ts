@@ -16,7 +16,7 @@ function normalizePath(pathname: string | null) {
 }
 
 function isIndexLevelPublicPath(pathname: string) {
-  return pathname === "/" || pathname === "/cms" || pathname === "/catalog";
+  return pathname === "/" || pathname === "/help" || pathname === "/catalog";
 }
 
 function findAlternatesForPath(
@@ -49,13 +49,17 @@ export async function getRequestLanguageAlternates() {
     return buildStablePublicLanguageAlternates(pathname);
   }
 
-  if (!pathname.startsWith("/cms/") && !pathname.startsWith("/catalog/")) {
+  if (
+    !pathname.startsWith("/cms/") &&
+    !pathname.startsWith("/page/") &&
+    !pathname.startsWith("/catalog/")
+  ) {
     return undefined;
   }
 
   const inventory = await getLocalizedPublicDiscoveryInventory();
 
-  return pathname.startsWith("/cms/")
+  return pathname.startsWith("/cms/") || pathname.startsWith("/page/")
     ? findAlternatesForPath(inventory.pageAlternatesById, pathname)
     : findAlternatesForPath(inventory.productAlternatesById, pathname);
 }

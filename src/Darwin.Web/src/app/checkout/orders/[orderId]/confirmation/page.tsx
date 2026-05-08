@@ -72,7 +72,7 @@ export default async function OrderConfirmationRoute({
     );
   }
 
-  const { routeContext, followUpProducts } = await getConfirmationPageContext(
+  const { routeContext } = await getConfirmationPageContext(
     culture,
     resolvedParams.orderId,
     orderNumber,
@@ -80,8 +80,6 @@ export default async function OrderConfirmationRoute({
   const {
     confirmationResult,
     memberSession,
-    commerceSummaryContext,
-    storefrontContext,
   } = routeContext;
 
   return (
@@ -96,20 +94,6 @@ export default async function OrderConfirmationRoute({
       paymentError={paymentError}
       cancelled={cancelled}
       hasMemberSession={Boolean(memberSession)}
-      memberOrders={commerceSummaryContext?.ordersResult.data?.items.slice(0, 2) ?? []}
-      memberOrdersStatus={commerceSummaryContext?.ordersResult.status ?? "idle"}
-      memberInvoices={commerceSummaryContext?.invoicesResult.data?.items.slice(0, 2) ?? []}
-      memberInvoicesStatus={commerceSummaryContext?.invoicesResult.status ?? "idle"}
-      memberLoyaltyOverview={commerceSummaryContext?.loyaltyOverviewResult.data ?? null}
-      memberLoyaltyStatus={commerceSummaryContext?.loyaltyOverviewResult.status ?? "idle"}
-      cmsPages={storefrontContext.cmsPages}
-      cmsPagesStatus={storefrontContext.cmsPagesStatus}
-      categories={storefrontContext.categories}
-      categoriesStatus={storefrontContext.categoriesStatus}
-      products={
-        followUpProducts.length > 0 ? followUpProducts : storefrontContext.products
-      }
-      productsStatus={storefrontContext.productsStatus}
     />
   );
 }

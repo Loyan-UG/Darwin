@@ -3019,7 +3019,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         shellSource.Should().Contain("hx-post=\"@Url.Action(isCreate ? \"CreatePayment\" : \"EditPayment\", \"Billing\")\"");
         shellSource.Should().Contain("@Html.AntiForgeryToken()");
         shellSource.Should().Contain("input type=\"hidden\" asp-for=\"Id\"");
-        shellSource.Should().Contain("input type=\"hidden\" asp-for=\"RowVersion\"");
+        shellSource.Should().Contain("input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\"");
         shellSource.Should().Contain("<partial name=\"_PaymentForm\" model=\"Model\" />");
         shellSource.Should().Contain("@T.T(\"Save\")");
         shellSource.Should().Contain("string PaymentsUrl(Guid? businessId) => Url.Action(\"Payments\", \"Billing\", new { businessId }) ?? string.Empty;");
@@ -3186,7 +3186,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         accountShellSource.Should().Contain("hx-post=\"@Url.Action(isCreate ? \"CreateFinancialAccount\" : \"EditFinancialAccount\", \"Billing\")\"");
         accountShellSource.Should().Contain("@Html.AntiForgeryToken()");
         accountShellSource.Should().Contain("input type=\"hidden\" asp-for=\"Id\"");
-        accountShellSource.Should().Contain("input type=\"hidden\" asp-for=\"RowVersion\"");
+        accountShellSource.Should().Contain("input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\"");
         accountShellSource.Should().Contain("<partial name=\"_FinancialAccountForm\" model=\"Model\" />");
         accountShellSource.Should().Contain("string FinancialAccountsUrl(Guid? businessId) => Url.Action(\"FinancialAccounts\", \"Billing\", new { businessId }) ?? string.Empty;");
         accountShellSource.Should().Contain("hx-get=\"@FinancialAccountsUrl(Model.BusinessId)\"");
@@ -3205,7 +3205,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         expenseShellSource.Should().Contain("hx-post=\"@Url.Action(isCreate ? \"CreateExpense\" : \"EditExpense\", \"Billing\")\"");
         expenseShellSource.Should().Contain("@Html.AntiForgeryToken()");
         expenseShellSource.Should().Contain("input type=\"hidden\" asp-for=\"Id\"");
-        expenseShellSource.Should().Contain("input type=\"hidden\" asp-for=\"RowVersion\"");
+        expenseShellSource.Should().Contain("input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\"");
         expenseShellSource.Should().Contain("<partial name=\"_ExpenseForm\" model=\"Model\" />");
         expenseShellSource.Should().Contain("string ExpensesUrl(Guid? businessId) => Url.Action(\"Expenses\", \"Billing\", new { businessId }) ?? string.Empty;");
         expenseShellSource.Should().Contain("hx-get=\"@ExpensesUrl(Model.BusinessId)\"");
@@ -3223,7 +3223,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         journalShellSource.Should().Contain("hx-post=\"@Url.Action(isCreate ? \"CreateJournalEntry\" : \"EditJournalEntry\", \"Billing\")\"");
         journalShellSource.Should().Contain("@Html.AntiForgeryToken()");
         journalShellSource.Should().Contain("input type=\"hidden\" asp-for=\"Id\"");
-        journalShellSource.Should().Contain("input type=\"hidden\" asp-for=\"RowVersion\"");
+        journalShellSource.Should().Contain("input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\"");
         journalShellSource.Should().Contain("<partial name=\"_JournalEntryForm\" model=\"Model\" />");
         journalShellSource.Should().Contain("string JournalEntriesUrl(Guid? businessId) => Url.Action(\"JournalEntries\", \"Billing\", new { businessId }) ?? string.Empty;");
         journalShellSource.Should().Contain("hx-get=\"@JournalEntriesUrl(Model.BusinessId)\"");
@@ -7874,7 +7874,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         smtpSenderSource.Should().Contain("Status = \"Pending\",");
         smtpSenderSource.Should().Contain("audit.Status = \"Sent\";");
         smtpSenderSource.Should().Contain("audit.Status = \"Failed\";");
-        smtpSenderSource.Should().Contain("audit.FailureMessage = ex.Message.Length > 2000 ? ex.Message.Substring(0, 2000) : ex.Message;");
+        smtpSenderSource.Should().Contain("audit.FailureMessage = NotificationLogSanitizer.TransportFailure(EmailProviderNames.Smtp);");
 
         siteSettingsSeedSource.Should().Contain("BusinessInvitationEmailSubjectTemplate = Darwin.Application.Communication.CommunicationTemplateDefaults.LegacyBusinessInvitationSubjectTemplate");
         siteSettingsSeedSource.Should().Contain("BusinessInvitationEmailBodyTemplate = Darwin.Application.Communication.CommunicationTemplateDefaults.LegacyBusinessInvitationBodyTemplate");
@@ -8134,7 +8134,11 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         passwordResetSource.Should().Contain("IntendedRecipientEmail = user.Email");
 
         notificationsRegistrationSource.Should().Contain("services.AddScoped<SmtpEmailSender>();");
-        notificationsRegistrationSource.Should().Contain("services.AddScoped<IEmailSender, SmtpEmailSender>();");
+        notificationsRegistrationSource.Should().Contain("services.AddHttpClient<BrevoEmailSender>");
+        notificationsRegistrationSource.Should().Contain("services.AddScoped<IEmailSender>(serviceProvider =>");
+        notificationsRegistrationSource.Should().Contain("EmailProviderNames.Normalize(options.Provider) switch");
+        notificationsRegistrationSource.Should().Contain("EmailProviderNames.Brevo => serviceProvider.GetRequiredService<BrevoEmailSender>()");
+        notificationsRegistrationSource.Should().Contain("EmailProviderNames.Smtp => serviceProvider.GetRequiredService<SmtpEmailSender>()");
         notificationsRegistrationSource.Should().Contain("services.AddScoped<ProviderBackedSmsSender>();");
         notificationsRegistrationSource.Should().Contain("services.AddScoped<ISmsSender, ProviderBackedSmsSender>();");
         notificationsRegistrationSource.Should().Contain("services.AddScoped<MetaWhatsAppSender>();");
@@ -8142,19 +8146,22 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         smtpSenderSource.Should().Contain("public sealed class SmtpEmailSender : IEmailSender");
         smtpSenderSource.Should().Contain("var audit = new EmailDispatchAudit");
         smtpSenderSource.Should().Contain("TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim()");
-        smtpSenderSource.Should().Contain("CorrelationKey = string.IsNullOrWhiteSpace(context?.CorrelationKey) ? null : context.CorrelationKey.Trim()");
+        smtpSenderSource.Should().Contain("var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);");
+        smtpSenderSource.Should().Contain("CorrelationKey = correlationKey,");
         smtpSenderSource.Should().Contain("IntendedRecipientEmail = string.IsNullOrWhiteSpace(context?.IntendedRecipientEmail) ? toEmail : context.IntendedRecipientEmail.Trim()");
         smsProviderSource.Should().Contain("public sealed class ProviderBackedSmsSender : ISmsSender");
         smsProviderSource.Should().Contain("var audit = new ChannelDispatchAudit");
         smsProviderSource.Should().Contain("TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim()");
-        smsProviderSource.Should().Contain("CorrelationKey = string.IsNullOrWhiteSpace(context?.CorrelationKey) ? null : context.CorrelationKey.Trim()");
+        smsProviderSource.Should().Contain("var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);");
+        smsProviderSource.Should().Contain("CorrelationKey = correlationKey,");
         smsProviderSource.Should().Contain("IntendedRecipientAddress = string.IsNullOrWhiteSpace(context?.IntendedRecipientAddress) ? toPhoneE164 : context.IntendedRecipientAddress.Trim()");
         smsProviderSource.Should().Contain("audit.ProviderMessageId = ExtractProviderMessageId(body);");
         smsProviderSource.Should().Contain("document.RootElement.TryGetProperty(\"sid\", out var sidElement)");
         whatsAppProviderSource.Should().Contain("public sealed class MetaWhatsAppSender : IWhatsAppSender");
         whatsAppProviderSource.Should().Contain("var audit = new ChannelDispatchAudit");
         whatsAppProviderSource.Should().Contain("TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim()");
-        whatsAppProviderSource.Should().Contain("CorrelationKey = string.IsNullOrWhiteSpace(context?.CorrelationKey) ? null : context.CorrelationKey.Trim()");
+        whatsAppProviderSource.Should().Contain("var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);");
+        whatsAppProviderSource.Should().Contain("CorrelationKey = correlationKey,");
         whatsAppProviderSource.Should().Contain("IntendedRecipientAddress = string.IsNullOrWhiteSpace(context?.IntendedRecipientAddress) ? toPhoneE164 : context.IntendedRecipientAddress.Trim()");
         whatsAppProviderSource.Should().Contain("audit.ProviderMessageId = ExtractProviderMessageId(body);");
         whatsAppProviderSource.Should().Contain("document.RootElement.TryGetProperty(\"messages\", out var messagesElement)");
@@ -8167,7 +8174,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         channelDispatchOperationConfigSource.Should().Contain("builder.Property(x => x.MessageText).IsRequired();");
 
         emailAuditConfigSource.Should().Contain("public sealed class EmailDispatchAuditConfiguration : IEntityTypeConfiguration<EmailDispatchAudit>");
-        emailAuditConfigSource.Should().Contain("builder.ToTable(\"EmailDispatchAudits\")");
+        emailAuditConfigSource.Should().Contain("builder.ToTable(\"EmailDispatchAudits\", schema: \"Integration\")");
         emailAuditConfigSource.Should().Contain("builder.Property(x => x.TemplateKey)");
         emailAuditConfigSource.Should().Contain("builder.Property(x => x.CorrelationKey)");
         emailAuditConfigSource.Should().Contain("builder.Property(x => x.IntendedRecipientEmail)");
@@ -8181,7 +8188,9 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         emailDispatchOperationWorkerSource.Should().Contain("public sealed class EmailDispatchOperationBackgroundService : BackgroundService");
         emailDispatchOperationWorkerSource.Should().Contain("db.Set<EmailDispatchOperation>()");
         emailDispatchOperationWorkerSource.Should().Contain("x.Status == \"Pending\" || x.Status == \"Failed\"");
-        emailDispatchOperationWorkerSource.Should().Contain("var sender = services.GetRequiredService<SmtpEmailSender>();");
+        emailDispatchOperationWorkerSource.Should().Contain("IEmailSender sender = EmailProviderNames.Normalize(item.Provider) switch");
+        emailDispatchOperationWorkerSource.Should().Contain("EmailProviderNames.Brevo => services.GetRequiredService<BrevoEmailSender>()");
+        emailDispatchOperationWorkerSource.Should().Contain("EmailProviderNames.Smtp => services.GetRequiredService<SmtpEmailSender>()");
         emailDispatchOperationWorkerSource.Should().Contain("new EmailDispatchContext");
         channelDispatchOperationWorkerOptionsSource.Should().Contain("public sealed class ChannelDispatchOperationWorkerOptions");
         channelDispatchOperationWorkerSource.Should().Contain("public sealed class ChannelDispatchOperationBackgroundService : BackgroundService");
@@ -8194,14 +8203,16 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         workerSettingsSource.Should().Contain("\"ChannelDispatchOperationWorker\"");
         emailAuditConfigSource.Should().Contain("builder.Property(x => x.ProviderMessageId)");
         emailAuditConfigSource.Should().Contain("builder.HasIndex(x => x.IntendedRecipientEmail);");
-        emailAuditConfigSource.Should().Contain("builder.HasIndex(x => x.CorrelationKey);");
+        emailAuditConfigSource.Should().Contain("builder.HasIndex(new[] { nameof(EmailDispatchAudit.CorrelationKey) }, \"IX_EmailDispatchAudits_CorrelationKey_Model\")");
+        emailAuditConfigSource.Should().Contain("builder.HasIndex(new[] { nameof(EmailDispatchAudit.CorrelationKey) }, \"UX_EmailDispatchAudits_ActiveCorrelation_Model\")");
         channelAuditConfigSource.Should().Contain("public sealed class ChannelDispatchAuditConfiguration : IEntityTypeConfiguration<ChannelDispatchAudit>");
-        channelAuditConfigSource.Should().Contain("builder.ToTable(\"ChannelDispatchAudits\")");
+        channelAuditConfigSource.Should().Contain("builder.ToTable(\"ChannelDispatchAudits\", schema: \"Integration\")");
         channelAuditConfigSource.Should().Contain("builder.Property(x => x.TemplateKey)");
         channelAuditConfigSource.Should().Contain("builder.Property(x => x.CorrelationKey)");
         channelAuditConfigSource.Should().Contain("builder.Property(x => x.IntendedRecipientAddress)");
         channelAuditConfigSource.Should().Contain("builder.Property(x => x.ProviderMessageId)");
-        channelAuditConfigSource.Should().Contain("builder.HasIndex(x => x.CorrelationKey);");
+        channelAuditConfigSource.Should().Contain("builder.HasIndex(x => x.CorrelationKey)");
+        channelAuditConfigSource.Should().Contain("builder.HasIndex(x => new { x.Channel, x.CorrelationKey })");
         channelAuditConfigSource.Should().Contain("builder.HasIndex(x => x.IntendedRecipientAddress);");
         dbContextSource.Should().Contain("public DbSet<EmailDispatchAudit> EmailDispatchAudits => Set<EmailDispatchAudit>();");
         dbContextSource.Should().Contain("public DbSet<ChannelDispatchAudit> ChannelDispatchAudits => Set<ChannelDispatchAudit>();");
@@ -8309,9 +8320,12 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         billingQueriesSource.Should().Contain("dto.ProviderEvents = await GetProviderEventsAsync(dto, ct).ConfigureAwait(false);");
         billingQueriesSource.Should().Contain("private async Task<List<PaymentProviderEventItemDto>> GetProviderEventsAsync(PaymentEditDto dto, CancellationToken ct)");
         billingQueriesSource.Should().Contain("x.Type.StartsWith(\"StripeWebhook:\")");
-        billingQueriesSource.Should().Contain("EF.Functions.Like(x.PropertiesJson, $\"%{paymentIntentRef}%\")");
-        billingQueriesSource.Should().Contain("EF.Functions.Like(x.PropertiesJson, $\"%{checkoutSessionRef}%\")");
-        billingQueriesSource.Should().Contain("EF.Functions.Like(x.PropertiesJson, $\"%{providerTransactionRef}%\")");
+        billingQueriesSource.Should().Contain("var paymentIntentPattern = paymentIntentRef is null ? null : QueryLikePattern.Contains(paymentIntentRef);");
+        billingQueriesSource.Should().Contain("var checkoutSessionPattern = checkoutSessionRef is null ? null : QueryLikePattern.Contains(checkoutSessionRef);");
+        billingQueriesSource.Should().Contain("var providerTransactionPattern = providerTransactionRef is null ? null : QueryLikePattern.Contains(providerTransactionRef);");
+        billingQueriesSource.Should().Contain("(paymentIntentPattern != null && EF.Functions.Like(x.PropertiesJson, paymentIntentPattern, QueryLikePattern.EscapeCharacter))");
+        billingQueriesSource.Should().Contain("(checkoutSessionPattern != null && EF.Functions.Like(x.PropertiesJson, checkoutSessionPattern, QueryLikePattern.EscapeCharacter))");
+        billingQueriesSource.Should().Contain("(providerTransactionPattern != null && EF.Functions.Like(x.PropertiesJson, providerTransactionPattern, QueryLikePattern.EscapeCharacter))");
         billingQueriesSource.Should().Contain("internal static class BillingProviderAuditFormatter");
         billingQueriesSource.Should().Contain("return \"PaymentIntent\";");
         billingQueriesSource.Should().Contain("return \"CheckoutSession\";");

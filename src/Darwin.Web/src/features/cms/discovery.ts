@@ -13,7 +13,7 @@ export type CmsMetadataFocus =
   | "missing-description"
   | "missing-both";
 
-export type CmsReviewTarget = {
+export type CmsContentQualityTarget = {
   page: PublicPageSummary;
   missingMetaTitle: boolean;
   missingMetaDescription: boolean;
@@ -68,7 +68,7 @@ export function hasMetaDescription(page: {
   return Boolean(page.metaDescription?.trim());
 }
 
-export function getCmsReviewTarget(page: PublicPageSummary): CmsReviewTarget {
+export function getCmsContentQualityTarget(page: PublicPageSummary): CmsContentQualityTarget {
   return {
     page,
     missingMetaTitle: !page.metaTitle?.trim(),
@@ -76,11 +76,11 @@ export function getCmsReviewTarget(page: PublicPageSummary): CmsReviewTarget {
   };
 }
 
-export function isCmsReviewTargetPending(target: CmsReviewTarget) {
+export function isCmsContentQualityTargetPending(target: CmsContentQualityTarget) {
   return target.missingMetaTitle || target.missingMetaDescription;
 }
 
-export function sortCmsReviewTargets(targets: CmsReviewTarget[]) {
+export function sortCmsContentQualityTargets(targets: CmsContentQualityTarget[]) {
   return [...targets].sort((left, right) => {
     const leftRank =
       Number(left.missingMetaTitle) + Number(left.missingMetaDescription);
@@ -95,9 +95,9 @@ export function sortCmsReviewTargets(targets: CmsReviewTarget[]) {
   });
 }
 
-export function getPendingCmsReviewTargets(pages: PublicPageSummary[]) {
-  return sortCmsReviewTargets(
-    pages.map(getCmsReviewTarget).filter(isCmsReviewTargetPending),
+export function getPendingCmsContentQualityTargets(pages: PublicPageSummary[]) {
+  return sortCmsContentQualityTargets(
+    pages.map(getCmsContentQualityTarget).filter(isCmsContentQualityTargetPending),
   );
 }
 

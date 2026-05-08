@@ -8,7 +8,7 @@ import {
   getMemberIdentityContext,
 } from "@/features/member-portal/server/get-member-summary-context";
 import { getPublicStorefrontContext } from "@/features/storefront/server/get-public-storefront-context";
-import { createCachedObservedLoader } from "@/lib/observed-loader";
+import { createObservedLoader } from "@/lib/observed-loader";
 import {
   normalizeConfirmationResultArgs,
   normalizeConfirmationRouteArgs,
@@ -22,19 +22,19 @@ import { commerceRouteObservationContext } from "@/lib/route-observation-context
 import type { PublicApiFetchResult } from "@/lib/api/fetch-public-json";
 import { summarizePublicStorefrontHealth } from "@/lib/route-health";
 
-type CommerceRouteStorefrontSupportSource = {
+type CommerceRouteStorefrontFootprintSource = {
   storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0];
 };
 
-export function summarizeCommerceRouteStorefrontSupport(
-  result: CommerceRouteStorefrontSupportSource,
+export function summarizeCommerceRouteStorefrontFootprint(
+  result: CommerceRouteStorefrontFootprintSource,
 ) {
   const storefront = result.storefrontContext;
 
   return `cms:${storefront.cmsPagesStatus}:${storefront.cmsPages.length}|categories:${storefront.categoriesStatus}:${storefront.categories.length}|products:${storefront.productsStatus}:${storefront.products.length}|cart:${storefront.storefrontCartStatus}`;
 }
 
-const getCachedConfirmationResult = createCachedObservedLoader({
+const getObservedConfirmationResult = createObservedLoader({
   area: "commerce-route-context",
   operation: "load-confirmation-result",
   thresholdMs: 275,
@@ -51,7 +51,7 @@ const getCachedConfirmationResult = createCachedObservedLoader({
     ) as Promise<PublicApiFetchResult<PublicStorefrontOrderConfirmation>>),
 });
 
-const getCachedCartRouteContext = createCachedObservedLoader({
+const getObservedCartRouteContext = createObservedLoader({
   area: "commerce-route-context",
   operation: "load-cart-context",
   thresholdMs: 300,
@@ -59,8 +59,8 @@ const getCachedCartRouteContext = createCachedObservedLoader({
   getContext: (culture: string) => commerceRouteObservationContext(culture, "/cart"),
   getSuccessContext: (result) => ({
     ...summarizeCommerceRouteHealth(result),
-    commerceRouteStorefrontSupportFootprint:
-      summarizeCommerceRouteStorefrontSupport(result),
+    commerceRouteStorefrontFootprint:
+      summarizeCommerceRouteStorefrontFootprint(result),
   }),
   load: async (culture: string) => {
     const [model, memberSession, storefrontContext] = await Promise.all([
@@ -79,7 +79,7 @@ const getCachedCartRouteContext = createCachedObservedLoader({
   },
 });
 
-const getCachedCheckoutRouteContext = createCachedObservedLoader({
+const getObservedCheckoutRouteContext = createObservedLoader({
   area: "commerce-route-context",
   operation: "load-checkout-context",
   thresholdMs: 325,
@@ -88,8 +88,8 @@ const getCachedCheckoutRouteContext = createCachedObservedLoader({
     commerceRouteObservationContext(culture, "/checkout"),
   getSuccessContext: (result) => ({
     ...summarizeCommerceRouteHealth(result),
-    commerceRouteStorefrontSupportFootprint:
-      summarizeCommerceRouteStorefrontSupport(result),
+    commerceRouteStorefrontFootprint:
+      summarizeCommerceRouteStorefrontFootprint(result),
   }),
   load: async (culture: string) => {
     const [model, memberSession, storefrontContext] = await Promise.all([
@@ -114,7 +114,7 @@ const getCachedCheckoutRouteContext = createCachedObservedLoader({
   },
 });
 
-const getCachedConfirmationRouteContext = createCachedObservedLoader({
+const getObservedConfirmationRouteContext = createObservedLoader({
   area: "commerce-route-context",
   operation: "load-confirmation-context",
   thresholdMs: 325,
@@ -130,13 +130,13 @@ const getCachedConfirmationRouteContext = createCachedObservedLoader({
     ),
   getSuccessContext: (result) => ({
     ...summarizeCommerceRouteHealth(result),
-    commerceRouteStorefrontSupportFootprint:
-      summarizeCommerceRouteStorefrontSupport(result),
+    commerceRouteStorefrontFootprint:
+      summarizeCommerceRouteStorefrontFootprint(result),
   }),
   load: async (culture: string, orderId: string, orderNumber?: string) => {
     const [confirmationResult, memberSession, storefrontContext] =
       await Promise.all([
-        getCachedConfirmationResult(orderId, orderNumber),
+        getObservedConfirmationResult(orderId, orderNumber),
         getMemberSession(),
         getPublicStorefrontContext(culture),
       ]);
@@ -154,11 +154,11 @@ const getCachedConfirmationRouteContext = createCachedObservedLoader({
 });
 
 export async function getCartRouteContext(culture: string) {
-  return getCachedCartRouteContext(culture);
+  return getObservedCartRouteContext(culture);
 }
 
 export async function getCheckoutRouteContext(culture: string) {
-  return getCachedCheckoutRouteContext(culture);
+  return getObservedCheckoutRouteContext(culture);
 }
 
 export async function getConfirmationRouteContext(
@@ -166,5 +166,5 @@ export async function getConfirmationRouteContext(
   orderId: string,
   orderNumber?: string,
 ) {
-  return getCachedConfirmationRouteContext(culture, orderId, orderNumber);
+  return getObservedConfirmationRouteContext(culture, orderId, orderNumber);
 }

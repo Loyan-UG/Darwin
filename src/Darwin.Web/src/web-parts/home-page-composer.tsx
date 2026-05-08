@@ -3,10 +3,8 @@ import { localizeHref } from "@/lib/locale-routing";
 import { getSharedResource } from "@/localization";
 import { PageComposer } from "@/web-parts/page-composer";
 import type {
+  BlankStatePagePart,
   CardGridPagePart,
-  LinkListPagePart,
-  RouteMapPagePart,
-  StatusListPagePart,
   WebPagePart,
 } from "@/web-parts/types";
 
@@ -51,11 +49,13 @@ function GroceryCardGrid({
   culture,
   columns = "lg:grid-cols-3",
   emphasizeMeta = false,
+  compact = false,
 }: {
   part: CardGridPagePart;
   culture: string;
   columns?: string;
   emphasizeMeta?: boolean;
+  compact?: boolean;
 }) {
   const shared = getSharedResource(culture);
 
@@ -94,7 +94,7 @@ function GroceryCardGrid({
               <h3 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
                 {card.title}
               </h3>
-              <p className="mt-3 min-h-[5.25rem] text-sm leading-7 text-[var(--color-text-secondary)]">
+              <p className={`${compact ? "mt-3" : "mt-3 min-h-[5.25rem]"} text-sm leading-7 text-[var(--color-text-secondary)]`}>
                 {card.description}
               </p>
               <div className="mt-5 flex items-center justify-between gap-4">
@@ -128,195 +128,44 @@ function GroceryCardGrid({
   );
 }
 
-function GroceryLinkList({
+function GroceryActionPanel({
   part,
   culture,
-  compact = false,
 }: {
-  part: LinkListPagePart;
+  part: BlankStatePagePart;
   culture: string;
-  compact?: boolean;
 }) {
   return (
-    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-white/90 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand)]">
-        {part.eyebrow}
-      </p>
-      <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl leading-tight text-[var(--color-text-primary)] sm:text-4xl">
-        {part.title}
-      </h2>
-      <p className="mt-3 text-base leading-8 text-[var(--color-text-secondary)]">
-        {part.description}
-      </p>
-
-      {part.items.length > 0 ? (
-        <div className={`mt-8 grid gap-4 ${compact ? "lg:grid-cols-2" : "xl:grid-cols-3"}`}>
-          {part.items.map((item, index) => (
-            <article
-              key={item.id}
-              className={`rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
+    <section className="relative overflow-hidden rounded-[1rem] border border-[rgba(61,105,52,0.12)] bg-[linear-gradient(135deg,#2f7d32_0%,#558b2f_48%,#f6ffe9_100%)] p-6 text-white shadow-[0_24px_80px_rgba(38,76,34,0.16)] sm:p-8">
+      <div
+        aria-hidden="true"
+        className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/20 blur-3xl"
+      />
+      <div className="relative max-w-3xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/80">
+          {part.eyebrow}
+        </p>
+        <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl leading-tight sm:text-4xl">
+          {part.title}
+        </h2>
+        <p className="mt-3 text-base leading-8 text-white/82">
+          {part.description}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          {part.actions.map((action) => (
+            <Link
+              key={`${part.id}-${action.href}`}
+              href={localizeHref(action.href, culture)}
+              className={
+                action.variant === "secondary"
+                  ? "inline-flex items-center rounded-full border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/18"
+                  : "inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-[var(--color-brand)] shadow-sm transition hover:bg-[var(--color-surface-panel-strong)]"
+              }
             >
-              {item.meta ? (
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                  {item.meta}
-                </p>
-              ) : null}
-              <h3 className="mt-3 text-xl font-semibold text-[var(--color-text-primary)]">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {item.description}
-              </p>
-              <div className="mt-5">
-                <Link
-                  href={localizeHref(item.href, culture)}
-                  className="inline-flex items-center rounded-full border border-[rgba(53,92,38,0.12)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
-                >
-                  {item.ctaLabel}
-                </Link>
-              </div>
-            </article>
+              {action.label}
+            </Link>
           ))}
         </div>
-      ) : (
-        <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
-          {part.emptyMessage}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function GroceryStatusBoard({
-  part,
-  culture,
-}: {
-  part: StatusListPagePart;
-  culture: string;
-}) {
-  return (
-    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,rgba(242,255,233,0.92),rgba(255,255,255,0.96))] p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand)]">
-        {part.eyebrow}
-      </p>
-      <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl leading-tight text-[var(--color-text-primary)] sm:text-4xl">
-        {part.title}
-      </h2>
-      <p className="mt-3 text-base leading-8 text-[var(--color-text-secondary)]">
-        {part.description}
-      </p>
-
-      {part.items.length > 0 ? (
-        <div className="mt-8 grid gap-4 xl:grid-cols-3">
-          {part.items.map((item) => (
-            <article
-              key={item.id}
-              className="rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-white/90 p-5 shadow-[0_10px_30px_rgba(38,76,34,0.05)]"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                    {item.label}
-                  </p>
-                  <h3 className="mt-3 text-xl font-semibold text-[var(--color-text-primary)]">
-                    {item.title}
-                  </h3>
-                </div>
-                <span
-                  className={
-                    item.tone === "warning"
-                      ? "rounded-full bg-[rgba(239,108,0,0.12)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]"
-                      : "rounded-full bg-[rgba(47,125,50,0.12)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)]"
-                  }
-                >
-                  {item.tone === "warning" ? "Watch" : "Ready"}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {item.description}
-              </p>
-              {item.meta ? (
-                <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                  {item.meta}
-                </p>
-              ) : null}
-              <div className="mt-5">
-                <Link
-                  href={localizeHref(item.href, culture)}
-                  className="inline-flex items-center rounded-full bg-[var(--color-text-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-brand)]"
-                >
-                  {item.ctaLabel}
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-8 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-white/80 px-6 py-10 text-center text-sm leading-7 text-[var(--color-text-secondary)]">
-          {part.emptyMessage}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function GroceryRouteMap({
-  part,
-  culture,
-}: {
-  part: RouteMapPagePart;
-  culture: string;
-}) {
-  return (
-    <section className="rounded-[1rem] border border-[var(--color-border-soft)] bg-white/90 p-6 shadow-[0_24px_80px_rgba(38,76,34,0.08)] sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand)]">
-        {part.eyebrow}
-      </p>
-      <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl leading-tight text-[var(--color-text-primary)] sm:text-4xl">
-        {part.title}
-      </h2>
-      <p className="mt-3 text-base leading-8 text-[var(--color-text-secondary)]">
-        {part.description}
-      </p>
-
-      <div className="mt-8 grid gap-5 xl:grid-cols-3">
-        {part.items.map((item, index) => (
-          <article
-            key={item.id}
-            className={`rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-              {item.label}
-            </p>
-            <h3 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
-              {item.title}
-            </h3>
-            <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-              {item.description}
-            </p>
-            {item.meta ? (
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                {item.meta}
-              </p>
-            ) : null}
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                href={localizeHref(item.primaryHref, culture)}
-                className="inline-flex items-center rounded-full bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-brand-strong)]"
-              >
-                {item.primaryCtaLabel}
-              </Link>
-              {item.secondaryHref && item.secondaryCtaLabel ? (
-                <Link
-                  href={localizeHref(item.secondaryHref, culture)}
-                  className="inline-flex items-center rounded-full border border-[rgba(53,92,38,0.12)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
-                >
-                  {item.secondaryCtaLabel}
-                </Link>
-              ) : null}
-            </div>
-          </article>
-        ))}
       </div>
     </section>
   );
@@ -330,29 +179,16 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
     return <PageComposer parts={parts} culture={culture} />;
   }
 
-  const metrics = findPart(parts, "home-metrics", "stat-grid");
-  const priority = findPart(parts, "home-priority-lane", "link-list");
-  const offerBoard = findPart(parts, "home-offer-board", "card-grid");
-  const campaignBoard = findPart(parts, "home-campaign-board", "card-grid");
-  const promotionLanes = findPart(parts, "home-promotion-lanes", "card-grid");
-  const routeMap = findPart(parts, "home-route-map", "route-map");
-  const memberResume = findPart(parts, "home-member-resume", "link-list");
-  const cartResume = findPart(parts, "home-cart-resume", "link-list");
-  const cartWindow = findPart(parts, "home-cart-window", "status-list");
   const categories = findPart(parts, "home-category-spotlight", "card-grid");
   const products = findPart(parts, "home-product-spotlight", "card-grid");
+  const loyalty = findPart(parts, "home-loyalty-teaser", "blank-state");
   const cmsSpotlight = findPart(parts, "home-cms-spotlight", "card-grid");
-  const shortcuts = findPart(parts, "home-shortcuts", "card-grid");
-  const journeys = findPart(parts, "home-journeys", "link-list");
-  const recoveryRail = findPart(parts, "home-recovery-rail", "link-list");
-  const commerceOpportunity = findPart(parts, "home-commerce-opportunity", "status-list");
+  const trustStrip = findPart(parts, "home-trust-strip", "card-grid");
 
   const heroCategories = categories?.cards.slice(0, 6) ?? [];
-  const heroPriority = priority?.items.slice(0, 3) ?? [];
-  const featureMetrics = metrics?.metrics.slice(0, 4) ?? [];
-  const topOffers = offerBoard?.cards.slice(0, 4) ?? products?.cards.slice(0, 4) ?? [];
-  const editorialCards = campaignBoard?.cards.slice(0, 3) ?? cmsSpotlight?.cards.slice(0, 3) ?? [];
-  const supportPanels = [memberResume, cartResume, recoveryRail].filter(Boolean) as LinkListPagePart[];
+  const heroProducts = products?.cards.slice(0, 3) ?? [];
+  const topOffers = products?.cards.slice(0, 8) ?? [];
+  const helpCards = cmsSpotlight?.cards.slice(0, 3) ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
@@ -444,20 +280,20 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-brand)]">
-                    {hero.panelTitle ?? "Storefront board"}
+                    {products?.eyebrow ?? hero.panelTitle ?? "Featured products"}
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold text-[var(--color-text-primary)]">
-                    Grocery-first merchandising
+                    {products?.title ?? shared.siteTitle}
                   </h2>
                 </div>
                 <span className="rounded-full bg-[rgba(239,108,0,0.12)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
-                  Live
+                  Shop
                 </span>
               </div>
 
-              {heroPriority.length > 0 ? (
+              {heroProducts.length > 0 ? (
                 <div className="mt-5 space-y-3">
-                  {heroPriority.map((item, index) => (
+                  {heroProducts.map((item, index) => (
                     <div
                       key={item.id}
                       className="rounded-[1rem] border border-[rgba(53,92,38,0.08)] bg-[linear-gradient(135deg,rgba(246,255,233,0.96),rgba(255,255,255,0.96))] p-4"
@@ -493,31 +329,10 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
                 </div>
               ) : (
                 <div className="mt-5 rounded-[1rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel-strong)] px-5 py-8 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {priority?.emptyMessage ?? shared.siteDescription}
+                  {products?.emptyMessage ?? shared.siteDescription}
                 </div>
               )}
             </div>
-
-            {featureMetrics.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {featureMetrics.map((metric, index) => (
-                  <article
-                    key={metric.id}
-                    className={`rounded-[1rem] border border-[rgba(53,92,38,0.1)] bg-gradient-to-br ${getCardTone(index)} p-5`}
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                      {metric.label}
-                    </p>
-                    <p className="mt-3 text-4xl font-semibold text-[var(--color-text-primary)]">
-                      {metric.value}
-                    </p>
-                    <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {metric.note}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            ) : null}
           </div>
         </div>
       </section>
@@ -526,82 +341,39 @@ export function HomePageComposer({ parts, culture }: HomePageComposerProps) {
         <GroceryCardGrid part={categories} culture={culture} columns="md:grid-cols-2 xl:grid-cols-4" />
       ) : null}
 
-      {topOffers.length > 0 || promotionLanes ? (
-        <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-          {topOffers.length > 0 ? (
-            <GroceryCardGrid
-              part={{
-                ...(offerBoard ?? products!),
-                cards: topOffers,
-              }}
-              culture={culture}
-              columns="md:grid-cols-2"
-              emphasizeMeta
-            />
-          ) : null}
-          {promotionLanes ? (
-            <GroceryCardGrid
-              part={{
-                ...promotionLanes,
-                cards: promotionLanes.cards.slice(0, 4),
-              }}
-              culture={culture}
-              columns="grid-cols-1"
-            />
-          ) : null}
-        </section>
+      {topOffers.length > 0 && products ? (
+        <GroceryCardGrid
+          part={{
+            ...products,
+            cards: topOffers,
+          }}
+          culture={culture}
+          columns="md:grid-cols-2 xl:grid-cols-4"
+          emphasizeMeta
+        />
       ) : null}
 
-      {editorialCards.length > 0 || cmsSpotlight || routeMap ? (
-        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          {editorialCards.length > 0 ? (
-            <GroceryCardGrid
-              part={{
-                ...(campaignBoard ?? cmsSpotlight!),
-                cards: editorialCards,
-              }}
-              culture={culture}
-              columns="md:grid-cols-2 xl:grid-cols-1"
-            />
-          ) : null}
-          <div className="grid gap-6">
-            {routeMap ? <GroceryRouteMap part={routeMap} culture={culture} /> : null}
-            {cmsSpotlight ? (
-              <GroceryCardGrid
-                part={{
-                  ...cmsSpotlight,
-                  cards: cmsSpotlight.cards.slice(0, 3),
-                }}
-                culture={culture}
-                columns="grid-cols-1"
-              />
-            ) : null}
-          </div>
-        </section>
+      {loyalty ? <GroceryActionPanel part={loyalty} culture={culture} /> : null}
+
+      {cmsSpotlight ? (
+        <GroceryCardGrid
+          part={{
+            ...cmsSpotlight,
+            cards: helpCards,
+          }}
+          culture={culture}
+          columns="md:grid-cols-3"
+          compact
+        />
       ) : null}
 
-      {commerceOpportunity || cartWindow ? (
-        <section className="grid gap-6 xl:grid-cols-2">
-          {commerceOpportunity ? <GroceryStatusBoard part={commerceOpportunity} culture={culture} /> : null}
-          {cartWindow ? <GroceryStatusBoard part={cartWindow} culture={culture} /> : null}
-        </section>
-      ) : null}
-
-      {supportPanels.length > 0 ? (
-        <section className="grid gap-6 xl:grid-cols-3">
-          {supportPanels.map((panel) => (
-            <GroceryLinkList key={panel.id} part={panel} culture={culture} compact />
-          ))}
-        </section>
-      ) : null}
-
-      {shortcuts || journeys ? (
-        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          {shortcuts ? (
-            <GroceryCardGrid part={shortcuts} culture={culture} columns="md:grid-cols-3 xl:grid-cols-1" />
-          ) : null}
-          {journeys ? <GroceryLinkList part={journeys} culture={culture} /> : null}
-        </section>
+      {trustStrip ? (
+        <GroceryCardGrid
+          part={trustStrip}
+          culture={culture}
+          columns="md:grid-cols-3"
+          compact
+        />
       ) : null}
     </div>
   );

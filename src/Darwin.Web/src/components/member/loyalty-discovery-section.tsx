@@ -114,10 +114,10 @@ export function LoyaltyDiscoverySection({
 
       <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4 text-sm leading-7 text-[var(--color-text-secondary)]">
         <p className="font-semibold text-[var(--color-text-primary)]">
-          {copy.discoveryWindowTitle}
+          {copy.discoveryResultsTitle}
         </p>
         <p>
-          {formatResource(copy.discoveryWindowMessage, {
+          {formatResource(copy.discoveryResultsMessage, {
             count: businesses.length,
             currentPage,
             totalPages,

@@ -1,25 +1,17 @@
 import Link from "next/link";
-import { PublicAuthCompositionWindow } from "@/components/account/public-auth-composition-window";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
-import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
-import type {
-  PublicCategorySummary,
-  PublicProductSummary,
-} from "@/features/catalog/types";
-import type { PublicCartSummary } from "@/features/cart/types";
-import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type { PublicCartSummary } from "@/features/cart/types";
 import {
   confirmEmailAction,
   requestEmailConfirmationAction,
 } from "@/features/account/actions";
-import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 import {
-  formatResource,
   getMemberResource,
   matchesLocalizedQueryMessageKey,
   resolveLocalizedQueryMessage,
 } from "@/localization";
+import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 
 type ActivationPageProps = {
   culture: string;
@@ -28,25 +20,18 @@ type ActivationPageProps = {
   activationStatus?: string;
   activationError?: string;
   returnPath?: string;
-  cmsPages: PublicPageSummary[];
-  cmsPagesStatus: string;
-  categories: PublicCategorySummary[];
-  categoriesStatus: string;
-  products: PublicProductSummary[];
-  productsStatus: string;
   storefrontCart: PublicCartSummary | null;
-  storefrontCartStatus: string;
 };
 
 function getActivationMessage(status: string | undefined, culture: string) {
   const copy = getMemberResource(culture);
 
   if (matchesLocalizedQueryMessageKey(status, "activationRequestedMessage", "requested")) {
-      return copy.activationRequestedMessage;
+    return copy.activationRequestedMessage;
   }
 
   if (matchesLocalizedQueryMessageKey(status, "activationConfirmedMessage", "confirmed")) {
-      return copy.activationConfirmedMessage;
+    return copy.activationConfirmedMessage;
   }
 
   return undefined;
@@ -59,28 +44,18 @@ export function ActivationPage({
   activationStatus,
   activationError,
   returnPath,
-  cmsPages,
-  cmsPagesStatus,
-  categories,
-  categoriesStatus,
-  products,
-  productsStatus,
   storefrontCart,
-  storefrontCartStatus,
 }: ActivationPageProps) {
   const copy = getMemberResource(culture);
   const statusMessage = getActivationMessage(activationStatus, culture);
-  const resolvedActivationError = resolveLocalizedQueryMessage(
-    activationError,
-    copy,
-  );
+  const resolvedActivationError = resolveLocalizedQueryMessage(activationError, copy);
   const signInHref = buildLocalizedAuthHref("/account/sign-in", returnPath, culture);
   const passwordHref = buildLocalizedAuthHref("/account/password", returnPath, culture);
 
   return (
-    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+    <section className="mx-auto flex w-full max-w-[1180px] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
-        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <header className="rounded-[1rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_48%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.activationEyebrow}
           </p>
@@ -90,25 +65,22 @@ export function ActivationPage({
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
             {copy.activationDescription}
           </p>
-        </div>
+        </header>
 
-        {statusMessage && (
+        {statusMessage ? (
           <StatusBanner title={copy.activationFlowUpdatedTitle} message={statusMessage} />
-        )}
+        ) : null}
 
-        {resolvedActivationError && (
+        {resolvedActivationError ? (
           <StatusBanner
             tone="warning"
             title={copy.activationFlowFailedTitle}
             message={resolvedActivationError}
           />
-        )}
+        ) : null}
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <form
-            action={requestEmailConfirmationAction}
-            className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
-          >
+          <form action={requestEmailConfirmationAction} className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <input type="hidden" name="returnPath" value={returnPath || "/account"} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.requestConfirmationEyebrow}
@@ -120,18 +92,12 @@ export function ActivationPage({
               {copy.emailLabel}
               <input name="email" type="email" required autoComplete="email" inputMode="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
-            <button
-              type="submit"
-              className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-            >
+            <button type="submit" className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
               {copy.requestActivationEmailCta}
             </button>
           </form>
 
-          <form
-            action={confirmEmailAction}
-            className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
-          >
+          <form action={confirmEmailAction} className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <input type="hidden" name="returnPath" value={returnPath || "/account"} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.confirmEmailEyebrow}
@@ -149,86 +115,27 @@ export function ActivationPage({
                 <input name="token" required autoComplete="one-time-code" defaultValue={token} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
             </div>
-            <button
-              type="submit"
-              className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-            >
+            <button type="submit" className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
               {copy.confirmEmailCta}
             </button>
           </form>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={signInHref}
-            className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-          >
-            {copy.signIn}
-          </Link>
-          <Link
-            href={passwordHref}
-            className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-          >
-            {copy.cardPasswordCta}
-          </Link>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="flex flex-wrap gap-3">
+            <Link href={signInHref} className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
+              {copy.signIn}
+            </Link>
+            <Link href={passwordHref} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+              {copy.cardPasswordCta}
+            </Link>
+          </div>
+          <PublicAuthReturnSummary
+            culture={culture}
+            returnPath={returnPath}
+            storefrontCart={storefrontCart}
+          />
         </div>
-
-        <PublicAuthReturnSummary
-          culture={culture}
-          returnPath={returnPath}
-          storefrontCart={storefrontCart}
-        />
-
-        <PublicAuthCompositionWindow
-          culture={culture}
-          routeCard={{
-            label: copy.publicAuthCompositionJourneyCurrentLabel,
-            title: copy.publicAuthCompositionJourneyActivationTitle,
-            description: formatResource(copy.publicAuthCompositionJourneyActivationDescription, {
-              returnPath: returnPath || "/account",
-            }),
-            href: "/account/activation",
-            ctaLabel: copy.publicAuthCompositionJourneyCurrentCta,
-          }}
-          nextCard={{
-            label: copy.publicAuthCompositionJourneyNextLabel,
-            title: copy.publicAuthCompositionJourneySignInTitle,
-            description: copy.publicAuthCompositionJourneyActivationNextDescription,
-            href: signInHref,
-            ctaLabel: copy.publicAuthCompositionJourneySignInCta,
-          }}
-          routeMapItems={[
-            {
-              label: copy.publicAuthCompositionRouteMapCurrentLabel,
-              title: copy.publicAuthCompositionRouteMapActivationTitle,
-              description: copy.publicAuthCompositionRouteMapActivationDescription,
-              href: "/account/activation",
-              ctaLabel: copy.publicAuthCompositionRouteMapCurrentCta,
-            },
-            {
-              label: copy.publicAuthCompositionRouteMapNextLabel,
-              title: copy.publicAuthCompositionRouteMapSignInTitle,
-              description: copy.publicAuthCompositionRouteMapActivationNextDescription,
-              href: signInHref,
-              ctaLabel: copy.publicAuthCompositionRouteMapSignInCta,
-            },
-          ]}
-          cmsPages={cmsPages}
-          categories={categories}
-          products={products}
-        />
-
-        <PublicAuthContinuation
-          culture={culture}
-          cmsPages={cmsPages}
-          cmsPagesStatus={cmsPagesStatus}
-          categories={categories}
-          categoriesStatus={categoriesStatus}
-          products={products}
-          productsStatus={productsStatus}
-          storefrontCart={storefrontCart}
-          storefrontCartStatus={storefrontCartStatus}
-        />
       </div>
     </section>
   );

@@ -3,6 +3,7 @@
 This document describes the current database-provider architecture for Darwin.
 
 For migration execution details and PostgreSQL post-migration checks, see `docs/postgresql-migration-runbook.md`.
+For current go-live application/provider gaps, see `docs/go-live-status.md`.
 
 ## Current Provider Model
 

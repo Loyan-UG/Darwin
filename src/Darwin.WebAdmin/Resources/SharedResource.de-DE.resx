@@ -5750,10 +5750,88 @@
     <value>Mobile Betrieb</value>
   </data>
   <data name="AdminDashboardTitle" xml:space="preserve">
-    <value>Admin-Dashboard</value>
+    <value>Dashboard</value>
   </data>
   <data name="AdminDashboardIntro" xml:space="preserve">
     <value>Nutze diese Uebersicht als operativen Startpunkt fuer das Backoffice.</value>
+  </data>
+  <data name="AdminDashboardSubtitle" xml:space="preserve">
+    <value>Operative Aufmerksamkeit, Business-Kontext und Einstieg in Workspaces.</value>
+  </data>
+  <data name="DashboardKpisTitle" xml:space="preserve">
+    <value>Dashboard-KPIs</value>
+  </data>
+  <data name="DashboardKpiBusinessesAttention" xml:space="preserve">
+    <value>Businesses mit Handlungsbedarf</value>
+  </data>
+  <data name="DashboardKpiOrdersAttention" xml:space="preserve">
+    <value>Bestellungen mit Handlungsbedarf</value>
+  </data>
+  <data name="DashboardKpiBillingAttention" xml:space="preserve">
+    <value>Zahlung/Billing Handlungsbedarf</value>
+  </data>
+  <data name="DashboardKpiCommunicationAttention" xml:space="preserve">
+    <value>Kommunikation Handlungsbedarf</value>
+  </data>
+  <data name="DashboardKpiMobileAttention" xml:space="preserve">
+    <value>Mobile/Geraete Handlungsbedarf</value>
+  </data>
+  <data name="DashboardKpiLoyaltyAttention" xml:space="preserve">
+    <value>Loyalty Handlungsbedarf</value>
+  </data>
+  <data name="DashboardNeedsAttentionTitle" xml:space="preserve">
+    <value>Handlungsbedarf</value>
+  </data>
+  <data name="DashboardNeedsAttentionHelp" xml:space="preserve">
+    <value>Priorisierte operative Probleme. Das Dashboard zeigt hoechstens acht Eintraege; Detaildiagnosen bleiben im jeweiligen Modul-Workspace.</value>
+  </data>
+  <data name="DashboardNoAttentionItems" xml:space="preserve">
+    <value>Aktuell sind keine priorisierten Handlungsbedarfe sichtbar.</value>
+  </data>
+  <data name="DashboardBusinessContextTitle" xml:space="preserve">
+    <value>Business-Kontext</value>
+  </data>
+  <data name="DashboardOperationsOverviewTitle" xml:space="preserve">
+    <value>Operations-Uebersicht</value>
+  </data>
+  <data name="DashboardOperationsOverviewHelp" xml:space="preserve">
+    <value>Kompakte Modulzusammenfassungen mit bis zu drei Kennzahlen und einer primaeren Workspace-Aktion pro Modul.</value>
+  </data>
+  <data name="DashboardAttentionBusinessOnboarding" xml:space="preserve">
+    <value>Business-Onboarding oder Support-Arbeit</value>
+  </data>
+  <data name="DashboardAttentionPaymentIssues" xml:space="preserve">
+    <value>Bestellungen mit Zahlungsproblemen</value>
+  </data>
+  <data name="DashboardAttentionFulfillment" xml:space="preserve">
+    <value>Bestellungen mit Fulfilment-Handlungsbedarf</value>
+  </data>
+  <data name="DashboardAttentionBilling" xml:space="preserve">
+    <value>Billing-Queue-Eintraege</value>
+  </data>
+  <data name="DashboardAttentionCommunication" xml:space="preserve">
+    <value>Kommunikations-Setup oder Fehler</value>
+  </data>
+  <data name="DashboardAttentionMobile" xml:space="preserve">
+    <value>Mobile-Geraete-Support</value>
+  </data>
+  <data name="DashboardAttentionInventory" xml:space="preserve">
+    <value>Inventory-Einkaufseintraege</value>
+  </data>
+  <data name="DashboardAttentionLoyalty" xml:space="preserve">
+    <value>Loyalty-Redemption-Eintraege</value>
+  </data>
+  <data name="Critical" xml:space="preserve">
+    <value>Kritisch</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warnung</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="BusinessCommunications" xml:space="preserve">
+    <value>Business-Kommunikation</value>
   </data>
   <data name="BusinessContextHelp" xml:space="preserve">
     <value>Waehlt das Business fuer business-spezifische Karten wie Zahlungen, Inventar, Loyalty und Kommunikations-Queues.</value>

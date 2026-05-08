@@ -23,22 +23,22 @@ test("groupLocalizedDetailAlternates prefers the default-culture path and keeps 
         ],
       },
     ],
-    (slug) => `/cms/${slug}`,
+    (slug) => `/page/${slug}`,
   );
 
   assert.deepEqual(entries, [
     {
-      path: "/cms/ueber-uns",
+      path: "/page/ueber-uns",
       languageAlternates: {
-        "de-DE": "/cms/ueber-uns",
-        "en-US": "/en-US/cms/about-us",
+        "de-DE": "/page/ueber-uns",
+        "en-US": "/page/about-us",
       },
     },
     {
-      path: "/cms/faq",
+      path: "/page/faq",
       languageAlternates: {
-        "de-DE": "/cms/faq",
-        "en-US": "/en-US/cms/faq",
+        "de-DE": "/page/faq",
+        "en-US": "/page/faq",
       },
     },
   ]);
@@ -86,6 +86,6 @@ test("mapLocalizedDetailAlternatesById keeps canonical localized paths keyed by 
 
   assert.deepEqual(alternatesById.get("product-1"), {
     "de-DE": "/catalog/kaffee",
-    "en-US": "/en-US/catalog/coffee",
+    "en-US": "/catalog/coffee",
   });
 });

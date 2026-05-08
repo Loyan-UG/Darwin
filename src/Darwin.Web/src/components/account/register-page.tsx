@@ -1,23 +1,15 @@
-import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
-import { PublicAuthCompositionWindow } from "@/components/account/public-auth-composition-window";
-import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import Link from "next/link";
-import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
-import type {
-  PublicCategorySummary,
-  PublicProductSummary,
-} from "@/features/catalog/types";
-import type { PublicCartSummary } from "@/features/cart/types";
-import type { PublicPageSummary } from "@/features/cms/types";
+import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
+import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type { PublicCartSummary } from "@/features/cart/types";
 import { registerMemberAction } from "@/features/account/actions";
-import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 import {
-  formatResource,
   getMemberResource,
   matchesLocalizedQueryMessageKey,
   resolveLocalizedQueryMessage,
 } from "@/localization";
+import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 
 type RegisterPageProps = {
   culture: string;
@@ -25,14 +17,7 @@ type RegisterPageProps = {
   registerStatus?: string;
   registerError?: string;
   returnPath?: string;
-  cmsPages: PublicPageSummary[];
-  cmsPagesStatus: string;
-  categories: PublicCategorySummary[];
-  categoriesStatus: string;
-  products: PublicProductSummary[];
-  productsStatus: string;
   storefrontCart: PublicCartSummary | null;
-  storefrontCartStatus: string;
 };
 
 export function RegisterPage({
@@ -41,14 +26,7 @@ export function RegisterPage({
   registerStatus,
   registerError,
   returnPath,
-  cmsPages,
-  cmsPagesStatus,
-  categories,
-  categoriesStatus,
-  products,
-  productsStatus,
   storefrontCart,
-  storefrontCartStatus,
 }: RegisterPageProps) {
   const copy = getMemberResource(culture);
   const resolvedRegisterError = resolveLocalizedQueryMessage(registerError, copy);
@@ -56,8 +34,8 @@ export function RegisterPage({
   const signInHref = buildLocalizedAuthHref("/account/sign-in", returnPath, culture);
 
   return (
-    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
-      <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <section className="mx-auto flex w-full max-w-[1180px] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+      <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <form
           action={registerMemberAction}
           className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
@@ -77,16 +55,16 @@ export function RegisterPage({
             registerStatus,
             "registrationSubmittedMessage",
             "registered",
-          ) && (
+          ) ? (
             <div className="mt-6">
               <StatusBanner
                 title={copy.registrationSubmittedTitle}
                 message={copy.registrationSubmittedMessage}
               />
             </div>
-          )}
+          ) : null}
 
-          {resolvedRegisterError && (
+          {resolvedRegisterError ? (
             <div className="mt-6">
               <StatusBanner
                 tone="warning"
@@ -94,7 +72,7 @@ export function RegisterPage({
                 message={resolvedRegisterError}
               />
             </div>
-          )}
+          ) : null}
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -116,41 +94,19 @@ export function RegisterPage({
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <button
-              type="submit"
-              className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-            >
+            <button type="submit" className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
               {copy.createAccountCta}
             </button>
-            <Link
-              href={activationHref}
-              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-            >
+            <Link href={activationHref} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
               {copy.activationFlowCta}
             </Link>
-            <Link
-              href={signInHref}
-              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-            >
+            <Link href={signInHref} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
               {copy.signIn}
             </Link>
           </div>
         </form>
 
-        <div className="flex flex-col gap-6">
-          <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-accent)]">
-              {copy.currentBoundaryTitle}
-            </p>
-            <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-              <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
-                {copy.currentBoundaryRegistration}
-              </li>
-              <li className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
-                {copy.currentBoundaryCommunication}
-              </li>
-            </ul>
-          </aside>
+        <aside className="flex flex-col gap-6">
           <PublicAuthReturnSummary
             culture={culture}
             returnPath={returnPath}
@@ -160,64 +116,15 @@ export function RegisterPage({
             registerStatus,
             "registrationSubmittedMessage",
             "registered",
-          ) || Boolean(email)) && (
+          ) || Boolean(email)) ? (
             <ActivationRecoveryPanel
               culture={culture}
               email={email}
               returnPath={returnPath}
               compact
             />
-          )}
-          <PublicAuthCompositionWindow
-            culture={culture}
-            routeCard={{
-              label: copy.publicAuthCompositionJourneyCurrentLabel,
-              title: copy.publicAuthCompositionJourneyRegisterTitle,
-              description: formatResource(copy.publicAuthCompositionJourneyRegisterDescription, {
-                returnPath: returnPath || "/account",
-              }),
-              href: "/account/register",
-              ctaLabel: copy.publicAuthCompositionJourneyCurrentCta,
-            }}
-            nextCard={{
-              label: copy.publicAuthCompositionJourneyNextLabel,
-              title: copy.publicAuthCompositionJourneyActivationTitle,
-              description: copy.publicAuthCompositionJourneyRegisterNextDescription,
-              href: activationHref,
-              ctaLabel: copy.publicAuthCompositionJourneyActivationCta,
-            }}
-            routeMapItems={[
-              {
-                label: copy.publicAuthCompositionRouteMapCurrentLabel,
-                title: copy.publicAuthCompositionRouteMapRegisterTitle,
-                description: copy.publicAuthCompositionRouteMapRegisterDescription,
-                href: "/account/register",
-                ctaLabel: copy.publicAuthCompositionRouteMapCurrentCta,
-              },
-              {
-                label: copy.publicAuthCompositionRouteMapNextLabel,
-                title: copy.publicAuthCompositionRouteMapActivationTitle,
-                description: copy.publicAuthCompositionRouteMapActivationDescription,
-                href: activationHref,
-                ctaLabel: copy.publicAuthCompositionRouteMapActivationCta,
-              },
-            ]}
-            cmsPages={cmsPages}
-            categories={categories}
-            products={products}
-          />
-          <PublicAuthContinuation
-            culture={culture}
-            cmsPages={cmsPages}
-            cmsPagesStatus={cmsPagesStatus}
-            categories={categories}
-            categoriesStatus={categoriesStatus}
-            products={products}
-            productsStatus={productsStatus}
-            storefrontCart={storefrontCart}
-            storefrontCartStatus={storefrontCartStatus}
-          />
-        </div>
+          ) : null}
+        </aside>
       </div>
     </section>
   );

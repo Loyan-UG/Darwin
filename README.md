@@ -2,13 +2,15 @@
 
 # Darwin Platform
 
+Current go-live implementation status is summarized in `docs/go-live-status.md`. Treat it as the concise source for provider readiness, dashboard scope, and remaining production blockers.
+
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EntityFrameworkCore-10.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)
 [![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![Next.js](https://img.shields.io/badge/Next.js-14.0-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2.4-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.1-black?logo=next.js)](https://nextjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18.0.0-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.0-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 [![HTMX](https://img.shields.io/badge/HTMX-2.0-3366CC?logo=htmx&logoColor=white)](https://htmx.org/)
 [![Stripe](https://img.shields.io/badge/Stripe-Phase--1-635BFF?logo=stripe&logoColor=white)](https://stripe.com/)
 [![DHL](https://img.shields.io/badge/DHL-Phase--1-FFCC00?logoColor=black)](https://www.dhl.de/)
@@ -20,7 +22,7 @@
 The web layer is intentionally split into two separate applications:
 
 - `Darwin.WebAdmin`: the ASP.NET Core MVC/Razor back-office for staff and operators, using HTMX for server-driven interactions
-- `Darwin.Web`: the Next.js/React front-office for the public storefront and authenticated member portal
+- `Darwin.Web`: the Next.js/React front-office for the clean public storefront and authenticated member portal
 
 Both web applications consume the same core business model through `Darwin.Application` and expose or consume delivery-ready contracts through `Darwin.WebApi`.
 
@@ -100,7 +102,7 @@ src/
 |-- Darwin.Infrastructure.PersistenceProviders - Neutral runtime selector for PostgreSQL/SQL Server
 |-- Darwin.WebAdmin        - MVC + Razor + HTMX back-office
 |-- Darwin.WebApi          - REST API for public, member, business, admin, and future integrations
-|-- Darwin.Web             - Next.js React front-office (SSR/SSG/ISR)
+|-- Darwin.Web             - Next.js React storefront and member portal (SSR/SSG/ISR)
 |-- Darwin.Worker          - Background jobs and schedulers
 |-- Darwin.Shared          - Result wrappers, constants, helpers
 |-- Darwin.Contracts       - Shared API contracts for WebApi and mobile
@@ -113,6 +115,7 @@ Important delivery rules:
 
 - `Darwin.WebAdmin` builds with the .NET solution and is the current operational priority
 - `Darwin.Web` is managed by Node/npm and does not build through `dotnet build`
+- `Darwin.Web` must stay customer-facing; diagnostics, review workflows, and operational readiness concepts belong in server logs, tests, or `Darwin.WebAdmin`, not in public UI
 - `Darwin.WebApi` is the delivery boundary for storefront, member, mobile, and future external consumers
 - `Darwin.Contracts` is the contract boundary; admin DTOs must not leak into public/member delivery
 

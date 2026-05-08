@@ -176,13 +176,6 @@ async function fetchCachedMemberJson<T>(path: string) {
   return getCachedMemberJson(path) as Promise<MemberApiFetchResult<T>>;
 }
 
-function buildPagedQuery(page?: number, pageSize?: number) {
-  return buildQuerySuffix({
-    page: String(page ?? 1),
-    pageSize: String(pageSize ?? 20),
-  });
-}
-
 function buildPagedCultureQuery(
   page?: number,
   pageSize?: number,

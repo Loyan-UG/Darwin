@@ -92,7 +92,7 @@ export default async function ProductDetailRoute({
   const visibleSort = readCatalogVisibleSort(resolvedSearchParams?.visibleSort);
   const mediaState = readCatalogMediaState(resolvedSearchParams?.mediaState);
   const savingsBand = readCatalogSavingsBand(resolvedSearchParams?.savingsBand);
-  const { detailContext, continuationSlice } = await getCatalogDetailPageContext(
+  const { detailContext } = await getCatalogDetailPageContext(
     culture,
     slug,
     category,
@@ -104,12 +104,9 @@ export default async function ProductDetailRoute({
   );
   const {
     productResult,
-    categoriesResult,
     activeCategory,
-    relatedProductsResult,
     relatedProducts,
-    reviewProductsResult,
-    reviewProducts,
+    recommendedProducts,
   } = detailContext;
   const product = productResult.data;
 
@@ -155,24 +152,9 @@ export default async function ProductDetailRoute({
     <ProductDetailPage
       culture={culture}
       product={product}
-      categories={categoriesResult.data?.items ?? []}
       primaryCategory={activeCategory}
-      reviewWindow={{
-        category,
-        visibleQuery,
-        visibleState,
-        visibleSort,
-        mediaState,
-        savingsBand,
-      }}
-      relatedProducts={relatedProducts}
-      reviewProducts={reviewProducts}
-      cmsPages={continuationSlice.cmsPages}
-      cartSummary={continuationSlice.cartSummary}
+      relatedProducts={relatedProducts.length > 0 ? relatedProducts : recommendedProducts}
       status={productResult.status}
-      relatedProductsStatus={relatedProductsResult?.status}
-      reviewProductsStatus={reviewProductsResult?.status}
-      cmsPagesStatus={continuationSlice.cmsPagesStatus}
     />
   );
 }

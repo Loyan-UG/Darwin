@@ -8,14 +8,14 @@ import {
   summarizePublicStorefrontHealth,
 } from "@/lib/route-health";
 
-type HomeStorefrontSupportSource = {
+type HomeStorefrontFootprintSource = {
   homeDiscoveryContext: {
     storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0];
   };
 };
 
-export function summarizeHomeStorefrontSupport(
-  result: HomeStorefrontSupportSource,
+export function summarizeHomeStorefrontFootprint(
+  result: HomeStorefrontFootprintSource,
 ) {
   const storefront = result.homeDiscoveryContext.storefrontContext;
 
@@ -29,7 +29,7 @@ const loadHomeRouteContext = createObservedLoader({
   getContext: (culture: string) => ({ culture }),
   getSuccessContext: (result) => ({
     ...summarizeHomeRouteHealth(result),
-    homeRouteStorefrontSupportFootprint: summarizeHomeStorefrontSupport(result),
+    homeRouteStorefrontFootprint: summarizeHomeStorefrontFootprint(result),
   }),
   load: async (culture: string) => {
     const [memberSession, homeDiscoveryContext] = await Promise.all([

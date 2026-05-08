@@ -7,13 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --require ./src/test/server-only-shim.cjs --test src/**/*.test.ts"
   },
   "dependencies": {
     "next": "16.2.1",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
     "undici": "^7.24.7"
   },
   "devDependencies": {

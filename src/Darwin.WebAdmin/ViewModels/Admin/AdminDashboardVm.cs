@@ -14,6 +14,26 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         public CrmSummaryVm Crm { get; set; } = new();
 
         /// <summary>
+        /// Gets or sets the top-level dashboard KPI cards.
+        /// </summary>
+        public IReadOnlyList<DashboardKpiVm> Kpis { get; set; } = Array.Empty<DashboardKpiVm>();
+
+        /// <summary>
+        /// Gets or sets the prioritized issues rendered in the dashboard attention panel.
+        /// </summary>
+        public IReadOnlyList<DashboardAttentionItemVm> AttentionItems { get; set; } = Array.Empty<DashboardAttentionItemVm>();
+
+        /// <summary>
+        /// Gets or sets compact summaries for module workspaces.
+        /// </summary>
+        public IReadOnlyList<DashboardModuleSummaryVm> ModuleSummaries { get; set; } = Array.Empty<DashboardModuleSummaryVm>();
+
+        /// <summary>
+        /// Gets or sets the selected-business operational context, when a business is selected.
+        /// </summary>
+        public DashboardBusinessContextVm? BusinessContext { get; set; }
+
+        /// <summary>
         /// Gets or sets the total number of active businesses available to the back-office.
         /// </summary>
         public int BusinessCount { get; set; }
@@ -32,6 +52,21 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         /// Gets or sets the total number of orders.
         /// </summary>
         public int OrderCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the count of non-finalized orders.
+        /// </summary>
+        public int OpenOrderCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets orders with failed payments.
+        /// </summary>
+        public int OrderPaymentIssueCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets paid or partially shipped orders that need fulfilment attention.
+        /// </summary>
+        public int OrderFulfillmentAttentionCount { get; set; }
 
         /// <summary>
         /// Gets or sets the total number of admin-manageable users.
@@ -112,6 +147,71 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         /// Gets or sets the business selector options shown on the dashboard.
         /// </summary>
         public IReadOnlyList<SelectListItem> BusinessOptions { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    /// <summary>
+    /// Compact dashboard KPI card.
+    /// </summary>
+    public sealed class DashboardKpiVm
+    {
+        public string LabelKey { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public string BadgeKey { get; set; } = string.Empty;
+        public string BadgeCssClass { get; set; } = "text-bg-secondary";
+        public string ActionLabelKey { get; set; } = string.Empty;
+        public string Controller { get; set; } = string.Empty;
+        public string Action { get; set; } = "Index";
+        public object? RouteValues { get; set; }
+    }
+
+    /// <summary>
+    /// Prioritized dashboard attention item.
+    /// </summary>
+    public sealed class DashboardAttentionItemVm
+    {
+        public string Severity { get; set; } = "info";
+        public string TitleKey { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public string ModuleKey { get; set; } = string.Empty;
+        public string ActionLabelKey { get; set; } = string.Empty;
+        public string Controller { get; set; } = string.Empty;
+        public string Action { get; set; } = "Index";
+        public object? RouteValues { get; set; }
+    }
+
+    /// <summary>
+    /// Compact module workspace summary.
+    /// </summary>
+    public sealed class DashboardModuleSummaryVm
+    {
+        public string TitleKey { get; set; } = string.Empty;
+        public IReadOnlyList<DashboardMetricVm> Metrics { get; set; } = Array.Empty<DashboardMetricVm>();
+        public string PrimaryActionLabelKey { get; set; } = string.Empty;
+        public string PrimaryController { get; set; } = string.Empty;
+        public string PrimaryAction { get; set; } = "Index";
+        public object? PrimaryRouteValues { get; set; }
+        public string? SecondaryActionLabelKey { get; set; }
+        public string? SecondaryController { get; set; }
+        public string? SecondaryAction { get; set; }
+        public object? SecondaryRouteValues { get; set; }
+    }
+
+    /// <summary>
+    /// Label/value metric used by compact dashboard cards.
+    /// </summary>
+    public sealed class DashboardMetricVm
+    {
+        public string LabelKey { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Selected-business dashboard context row set.
+    /// </summary>
+    public sealed class DashboardBusinessContextVm
+    {
+        public string BusinessName { get; set; } = string.Empty;
+        public IReadOnlyList<DashboardModuleSummaryVm> Rows { get; set; } = Array.Empty<DashboardModuleSummaryVm>();
     }
 
     /// <summary>

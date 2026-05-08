@@ -7,7 +7,7 @@ import {
 } from "@/lib/shared-context-diagnostics";
 import { createSharedContextLoader } from "@/lib/shared-context-loader";
 import { summarizeProtectedMemberEntryHealth } from "@/lib/route-health";
-import { summarizePublicAuthStorefrontSupport } from "@/features/account/server/get-public-auth-route-context";
+import { summarizePublicAuthStorefrontFootprint } from "@/features/account/server/get-public-auth-route-context";
 
 const getCachedMemberEntryContext = createSharedContextLoader({
   kind: "member-entry",
@@ -28,8 +28,8 @@ const getCachedMemberEntryContext = createSharedContextLoader({
         sessionState,
         storefrontState,
       }),
-      memberEntryStorefrontSupportFootprint: result.storefrontContext
-        ? summarizePublicAuthStorefrontSupport({
+    memberEntryStorefrontFootprint: result.storefrontContext
+      ? summarizePublicAuthStorefrontFootprint({
             storefrontContext: result.storefrontContext,
           })
         : "storefront:missing",

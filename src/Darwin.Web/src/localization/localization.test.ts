@@ -15,7 +15,7 @@ test("resolveLocalizedQueryMessage falls back to shared resources for bundle-ext
 
   assert.equal(
     resolveLocalizedQueryMessage("i18n:publicApiNetworkErrorMessage", commerce),
-    "Ein Teil der Storefront-Inhalte ist momentan nicht verfuegbar.",
+    "Einige Inhalte sind voruebergehend nicht verfuegbar.",
   );
 });
 
@@ -46,8 +46,11 @@ test("resolveProblemQueryMessage keeps only localized problem details", () => {
 test("resolveApiStatusLabel localizes shared API status tokens", () => {
   const shared = getSharedResource("de-DE");
 
-  assert.equal(resolveApiStatusLabel("network-error", shared), "Netzwerkproblem");
-  assert.equal(resolveApiStatusLabel("not-found", shared), "nicht gefunden");
+  assert.equal(
+    resolveApiStatusLabel("network-error", shared),
+    "Voruebergehend nicht verfuegbar",
+  );
+  assert.equal(resolveApiStatusLabel("not-found", shared), "Nicht verfuegbar");
   assert.equal(resolveApiStatusLabel("custom-status", shared), "custom-status");
 });
 
@@ -58,13 +61,13 @@ test("resolveStatusMappedMessage resolves mapped status keys across bundle regis
     resolveStatusMappedMessage("unauthorized", member, {
       unauthorized: "memberSessionUnauthorizedMessage",
     }),
-    "The current member session cannot access this route.",
+    "Please sign in again to continue.",
   );
 
   assert.equal(
     resolveStatusMappedMessage("network-error", member, {
       "network-error": "publicApiNetworkErrorMessage",
     }),
-    "Part of the storefront content is temporarily unavailable.",
+    "Some content is temporarily unavailable.",
   );
 });

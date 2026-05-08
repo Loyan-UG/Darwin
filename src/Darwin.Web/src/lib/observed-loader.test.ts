@@ -143,7 +143,7 @@ test("createObservedLoader passes normalized args into success context", async (
   ]);
 });
 
-test("createCachedObservedLoader keeps bare default loaders usable without extra hooks", async () => {
+test("createCachedObservedLoader keeps bare default loaders usable outside a React cache boundary", async () => {
   let executions = 0;
   const loader = createCachedObservedLoader({
     area: "unit-loader",
@@ -159,9 +159,9 @@ test("createCachedObservedLoader keeps bare default loaders usable without extra
     loader("de-DE"),
   ]);
 
-  assert.equal(first, second);
-  assert.match(first, /^de-DE:/);
-  assert.equal(executions, 1);
+  assert.equal(first, "de-DE:1");
+  assert.equal(second, "de-DE:2");
+  assert.equal(executions, 2);
 });
 
 test("createObservedLoader keeps bare default loaders usable without extra hooks", async () => {
@@ -202,7 +202,7 @@ test("createObservedLoader keeps explicit undefined context hooks equivalent to 
   assert.equal(second, "de-DE:2");
   assert.equal(executions, 2);
 });
-test("createCachedObservedLoader keeps explicit undefined context hooks equivalent to bare cached defaults", async () => {
+test("createCachedObservedLoader keeps explicit undefined context hooks usable outside a React cache boundary", async () => {
   let executions = 0;
   const loader = createCachedObservedLoader({
     area: "unit-loader",
@@ -220,9 +220,9 @@ test("createCachedObservedLoader keeps explicit undefined context hooks equivale
     loader("de-DE"),
   ]);
 
-  assert.equal(first, second);
-  assert.match(first, /^de-DE:/);
-  assert.equal(executions, 1);
+  assert.equal(first, "de-DE:1");
+  assert.equal(second, "de-DE:2");
+  assert.equal(executions, 2);
 });
 
 test("createObservedLoader keeps undefined success-context hooks explicit when base context exists", async () => {
@@ -246,7 +246,7 @@ test("createObservedLoader keeps undefined success-context hooks explicit when b
   assert.equal(executions, 2);
 });
 
-test("createCachedObservedLoader keeps undefined success-context hooks explicit when base context exists", async () => {
+test("createCachedObservedLoader keeps undefined success-context hooks explicit outside a React cache boundary", async () => {
   let executions = 0;
   const loader = createCachedObservedLoader({
     area: "unit-loader",
@@ -264,9 +264,9 @@ test("createCachedObservedLoader keeps undefined success-context hooks explicit 
     loader("de-DE"),
   ]);
 
-  assert.equal(first, second);
-  assert.match(first, /^de-DE:/);
-  assert.equal(executions, 1);
+  assert.equal(first, "de-DE:1");
+  assert.equal(second, "de-DE:2");
+  assert.equal(executions, 2);
 });test("createObservedLoader keeps empty observation context hooks equivalent to explicit base defaults", async () => {
   let executions = 0;
   const loader = createObservedLoader({
@@ -288,7 +288,7 @@ test("createCachedObservedLoader keeps undefined success-context hooks explicit 
   assert.equal(executions, 2);
 });
 
-test("createCachedObservedLoader keeps empty observation context hooks equivalent to explicit cached defaults", async () => {
+test("createCachedObservedLoader keeps empty observation context hooks usable outside a React cache boundary", async () => {
   let executions = 0;
   const loader = createCachedObservedLoader({
     area: "unit-loader",
@@ -306,9 +306,9 @@ test("createCachedObservedLoader keeps empty observation context hooks equivalen
     loader("de-DE"),
   ]);
 
-  assert.equal(first, second);
-  assert.match(first, /^de-DE:/);
-  assert.equal(executions, 1);
+  assert.equal(first, "de-DE:1");
+  assert.equal(second, "de-DE:2");
+  assert.equal(executions, 2);
 });
 
 

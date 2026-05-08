@@ -5,6 +5,31 @@
 
 > Scope: `Darwin.WebApi`, its audience segmentation, contract rules, security model, BFF direction, and delivery expectations.
 
+## Current Route and Provider Callback Status
+
+Reviewed: 2026-05-08. See `docs/go-live-status.md` for implementation/gap detail.
+
+Canonical route roots:
+
+- `api/v1/public/*`: anonymous storefront, CMS, catalog, public provider callbacks.
+- `api/v1/member/*`: authenticated customer/member operations.
+- `api/v1/business/*`: business/mobile operator workflows.
+- `api/v1/admin/*`: future HTTP admin/integration surface only where direct WebAdmin handler usage is not enough.
+
+Provider callbacks:
+
+- Stripe canonical webhook route: `api/v1/public/billing/stripe/webhooks`.
+- Stripe legacy alias still present: `api/v1/billing/stripe/webhooks`.
+- DHL canonical webhook route: `api/v1/public/shipping/dhl/webhooks`.
+- DHL legacy alias still present: `api/v1/shipping/dhl/webhooks`.
+- Brevo canonical webhook route: `api/v1/public/notifications/brevo/webhooks`.
+
+Current production gaps:
+
+- Stripe webhooks and reconciliation are implemented, but storefront Stripe PaymentIntent/Checkout Session creation is still local placeholder behavior.
+- DHL callbacks and provider-operation queueing are implemented, but live DHL shipment/label API calls are still a go-live blocker.
+- Brevo callback and delivery plumbing are implemented; production readiness depends on provider account/domain/webhook setup and Worker deployment.
+
 ## Purpose
 
 `Darwin.WebApi` is the shared HTTP delivery boundary for:

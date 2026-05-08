@@ -120,7 +120,7 @@ export function buildPublicSitemapEntries(input: {
   }>;
 }) {
   const supportedCultures = canonicalizeSupportedCultures(input.supportedCultures);
-  const indexLevelLocalizedPaths = ["/", "/catalog", "/cms"].flatMap((path) =>
+  const indexLevelLocalizedPaths = ["/", "/catalog", "/help"].flatMap((path) =>
     supportedCultures.map((culture) => buildLocalizedPath(path, culture)),
   );
   const staticEntries = Array.from(new Set(indexLevelLocalizedPaths)).map((path) =>

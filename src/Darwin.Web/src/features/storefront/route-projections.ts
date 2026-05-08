@@ -72,6 +72,14 @@ export function createStorefrontContinuationWithCartProps(
   };
 }
 
+export function createStorefrontCartProps(
+  storefrontContext: PublicStorefrontContext,
+) {
+  return {
+    storefrontCart: storefrontContext.storefrontCart,
+  };
+}
+
 export function createStorefrontContinuationWithCartAndLinkedProps(
   storefrontContext: PublicStorefrontContext,
   options?: SliceOptions,

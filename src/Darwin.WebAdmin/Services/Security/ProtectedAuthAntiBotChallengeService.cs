@@ -43,7 +43,7 @@ namespace Darwin.WebAdmin.Services.Security
                 return Task.FromResult(AuthAntiBotVerificationResult.Success());
             }
 
-            if (!string.IsNullOrWhiteSpace(check.HoneypotValue))
+            if (!string.IsNullOrEmpty(check.HoneypotValue))
             {
                 return Task.FromResult(AuthAntiBotVerificationResult.Fail("Honeypot was filled."));
             }

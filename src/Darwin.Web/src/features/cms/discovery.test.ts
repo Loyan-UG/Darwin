@@ -4,7 +4,7 @@ import type { PublicPageSummary } from "@/features/cms/types";
 import {
   buildCmsVisibleWindow,
   filterVisiblePages,
-  getPendingCmsReviewTargets,
+  getPendingCmsContentQualityTargets,
   readCmsMetadataFocus,
   isDiscoveryReadyPage,
   readCmsVisibleSort,
@@ -31,7 +31,7 @@ test("readCmsVisibleState keeps only supported CMS lens values", () => {
   assert.equal(readCmsVisibleState("invalid"), "all");
 });
 
-test("readCmsVisibleSort keeps only supported CMS review-priority values", () => {
+test("readCmsVisibleSort keeps only supported CMS sort values", () => {
   assert.equal(readCmsVisibleSort("title-asc"), "title-asc");
   assert.equal(readCmsVisibleSort("ready-first"), "ready-first");
   assert.equal(readCmsVisibleSort("invalid"), "featured");
@@ -205,7 +205,7 @@ test("buildCmsVisibleWindow also applies metadata focus across the full matching
   assert.deepEqual(window.items.map((page) => page.id), ["both"]);
 });
 
-test("getPendingCmsReviewTargets prioritizes the strongest metadata debt first", () => {
+test("getPendingCmsContentQualityTargets prioritizes the strongest metadata debt first", () => {
   const pages = [
     createPage({
       id: "both",
@@ -230,7 +230,7 @@ test("getPendingCmsReviewTargets prioritizes the strongest metadata debt first",
     }),
   ];
 
-  const targets = getPendingCmsReviewTargets(pages);
+  const targets = getPendingCmsContentQualityTargets(pages);
 
   assert.deepEqual(targets.map((target) => target.page.id), ["both", "title"]);
   assert.equal(targets[0]?.missingMetaTitle, true);

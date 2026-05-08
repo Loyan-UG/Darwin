@@ -118,6 +118,34 @@ Current implementation details:
 - Direct application sends resolve `IEmailSender` based on `Email:Provider`.
 - Queued admin communication-test emails store the active provider name and `Darwin.Worker` dispatches either `Brevo` or `SMTP`.
 - Startup validation fails fast when `Email:Provider=Brevo` but `Email:Brevo:ApiKey`, `Email:Brevo:SenderEmail`, or a valid timeout are not configured.
+
+## Payment Provider: Stripe
+
+Stripe webhook ingress is implemented at `api/v1/public/billing/stripe/webhooks` and validates signatures before writing idempotent provider callback inbox messages.
+
+Production setup still needs a real storefront payment creation integration. The current storefront handler creates local Stripe-like references for the payment handoff and should not be treated as live Stripe Checkout or PaymentIntent creation.
+
+Before live payments:
+
+1. Store Stripe secret key and webhook secret in environment/platform secrets.
+2. Implement real PaymentIntent or Checkout Session creation behind the existing storefront payment handoff.
+3. Confirm provider references are stored on `Payment.ProviderPaymentIntentRef`, `Payment.ProviderCheckoutSessionRef`, and `Payment.ProviderTransactionRef`.
+4. Confirm `ProviderCallbackWorker:Enabled=true` and Stripe webhook events process successfully.
+5. Smoke `checkout.session.completed`, `payment_intent.succeeded`, failed payment, refund, and dispute visibility in WebAdmin.
+
+## Shipping Provider: DHL
+
+DHL webhook ingress is implemented at `api/v1/public/shipping/dhl/webhooks` and validates API key plus HMAC signature before writing idempotent provider callback inbox messages.
+
+Production setup still needs real DHL shipment and label API calls. Current provider-operation handlers create phase-one provider shipment references, tracking numbers, and label operations without calling DHL.
+
+Before live DHL shipping:
+
+1. Store DHL API key/secret and account settings in environment/platform secrets or secured site settings.
+2. Replace phase-one shipment/label generation with real DHL API calls.
+3. Persist carrier labels in the configured media/document store and expose durable download URLs.
+4. Confirm `ShipmentProviderOperationBackgroundService` is enabled and failed/stuck operations are recoverable from WebAdmin.
+5. Smoke shipment creation, label generation, tracking update callback, exception callback, and return/RMA handling.
 - Brevo sends through `POST /v3/smtp/email`.
 - Brevo request payload includes sender, reply-to when configured, HTML content, generated text content, tags, and correlation/idempotency headers when the current flow supplies a correlation key.
 - `EmailDispatchAudit.ProviderMessageId` stores the Brevo `messageId` when Brevo returns it.

@@ -3,8 +3,7 @@ import { type AccountHubPage } from "@/components/account/account-hub-page";
 import { type MemberDashboardPage } from "@/components/account/member-dashboard-page";
 import type { PublicStorefrontContext } from "@/features/storefront/public-storefront-context";
 import {
-  createStorefrontContinuationWithCartAndLinkedProps,
-  createStorefrontContinuationWithCartProps,
+  createStorefrontCartProps,
 } from "@/features/storefront/route-projections";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 
@@ -18,10 +17,6 @@ type IdentityContext = {
   };
   preferencesResult: {
     data?: MemberDashboardProps["preferences"] | null;
-    status: string;
-  };
-  customerContextResult: {
-    data?: MemberDashboardProps["customerContext"] | null;
     status: string;
   };
   addressesResult: {
@@ -78,7 +73,7 @@ export function buildAccountEntryView(options: {
     options;
 
   if (!session || !memberRouteContext) {
-    const storefrontProps = createStorefrontContinuationWithCartProps(
+    const storefrontProps = createStorefrontCartProps(
       publicRouteContext!.storefrontContext,
     );
 
@@ -98,8 +93,7 @@ export function buildAccountEntryView(options: {
     loyaltyBusinessesResult,
     storefrontContext,
   } = memberRouteContext;
-  const storefrontProps =
-    createStorefrontContinuationWithCartAndLinkedProps(storefrontContext);
+  const storefrontProps = createStorefrontCartProps(storefrontContext);
 
   return {
     kind: "member",
@@ -110,8 +104,6 @@ export function buildAccountEntryView(options: {
       profileStatus: identityContext.profileResult.status,
       preferences: identityContext.preferencesResult.data ?? null,
       preferencesStatus: identityContext.preferencesResult.status,
-      customerContext: identityContext.customerContextResult.data ?? null,
-      customerContextStatus: identityContext.customerContextResult.status,
       addresses: identityContext.addressesResult.data ?? [],
       addressesStatus: identityContext.addressesResult.status,
       recentOrders: commerceSummaryContext.ordersResult.data?.items ?? [],

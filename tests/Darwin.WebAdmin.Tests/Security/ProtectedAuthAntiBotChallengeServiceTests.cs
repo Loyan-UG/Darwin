@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Security;
+using Darwin.Application.Abstractions.Services;
 using Darwin.WebAdmin.Services.Security;
 using FluentAssertions;
 using Microsoft.AspNetCore.DataProtection;
@@ -377,6 +378,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
         var provider = DataProtectionProvider.Create(tempPath);
         return new ProtectedAuthAntiBotChallengeService(
             provider,
+            new TestClock(),
             new TestOptionsMonitor(options ?? new AuthAntiBotOptions()));
     }
 
@@ -408,8 +410,13 @@ sealed class TestOptionsMonitor : IOptionsMonitor<AuthAntiBotOptions>
     }
 
     public AuthAntiBotOptions CurrentValue => _current;
-    public AuthAntiBotOptions Get(string name) => _current;
-    public IDisposable OnChange(Action<AuthAntiBotOptions, string> listener) => new NullDisposable();
+    public AuthAntiBotOptions Get(string? name) => _current;
+    public IDisposable OnChange(Action<AuthAntiBotOptions, string?> listener) => new NullDisposable();
+}
+
+sealed class TestClock : IClock
+{
+    public DateTime UtcNow => DateTime.UtcNow;
 }
 
 sealed class NullDisposable : IDisposable

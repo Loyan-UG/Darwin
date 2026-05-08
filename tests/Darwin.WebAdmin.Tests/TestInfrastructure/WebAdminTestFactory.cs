@@ -571,11 +571,12 @@ public sealed class WebAdminTestFactory : WebApplicationFactory<Program>
         {
             config.AddJsonFile("appsettings.Testing.json", optional: true, reloadOnChange: false);
             config.AddJsonFile("appsettings.Testing.Development.json", optional: true, reloadOnChange: false);
+            config.AddEnvironmentVariables();
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = "Server=(localdb)\\MSSQLLocalDB;Database=Darwin_WebAdmin_SmokeTests;Trusted_Connection=True;TrustServerCertificate=True"
+                ["ConnectionStrings:DefaultConnection"] = "Server=(localdb)\\MSSQLLocalDB;Database=Darwin_WebAdmin_SmokeTests;Trusted_Connection=True;TrustServerCertificate=True",
+                ["DataProtection:RequireKeyEncryption"] = "false"
             });
-            config.AddEnvironmentVariables();
         });
         builder.ConfigureServices(services =>
         {

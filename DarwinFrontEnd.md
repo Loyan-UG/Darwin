@@ -8,6 +8,8 @@
 
 > Scope: `src/Darwin.Web`, the public storefront and authenticated member portal.
 
+Current provider status matters for the storefront: Stripe webhook/reconciliation exists, but live Stripe PaymentIntent/Checkout Session creation is still a backend go-live blocker. Do not present the current checkout handoff as a production Stripe checkout until `docs/go-live-status.md` says that gap is closed.
+
 ## 1. Purpose
 
 `Darwin.Web` is the customer-facing web application for:
@@ -65,6 +67,44 @@ Practical consequence:
 
 That foundation is now in place, so the next slices should build on the existing shell and feature boundaries instead of reworking the app from scratch.
 
+## 2.3 Customer-Facing Page Architecture
+
+`Darwin.Web` is the public storefront and member portal. It must not render internal diagnostics, route-health summaries, readiness dashboards, review queues, composition windows, route maps, API status labels, loaded-count/server-total summaries, or back-office review language to customers. Observability and loader diagnostics stay server-side, in tests, or in `Darwin.WebAdmin`.
+
+Approved public page map:
+
+- `/`: storefront landing page with a hero, catalog CTA, loyalty/account CTA, 4-6 featured categories, 4-8 featured products or offers, one loyalty teaser, up to 3 help/content cards, and an optional trust strip.
+- `/catalog`: product listing with title, search, category filter, optional sort/basic filters, product grid, pagination, and empty state.
+- `/catalog/[slug]`: product detail with breadcrumb, gallery, name, price, description, variants/add-ons when supported, quantity, add-to-cart, shipping note, details, and up to 4 related products.
+- `/help`: customer help and information listing with search, article/page cards, pagination, and optional topics. `/cms` redirects to this public entry point. Do not label the experience as "CMS" for customers.
+- `/page/[slug]`: customer-facing content detail pages with breadcrumb, title, published content, related pages, and back/help links. Legacy `/cms` remains an index redirect/compatibility entry, not a visible customer label.
+- `/loyalty`: public loyalty explanation and partner discovery for anonymous users; points, joined businesses, reward progress, recent activity, and discovery/join flows for signed-in users.
+- `/cart`: cart items, quantity update, remove item, coupon, order summary, continue shopping, checkout CTA, empty state, and up to 4 recommendations.
+- `/checkout`: contact/customer information, address, shipping method, payment/hosted checkout handoff, order summary, place-order CTA, and concise error/success messages.
+- `/checkout/orders/[orderId]/confirmation`: confirmation status, order number, payment status, shipping summary, and next actions to view order, continue shopping, account/orders, or retry payment.
+
+Approved authenticated member page map:
+
+- `/account`: anonymous sign-in/register/recovery entry or signed-in member dashboard with profile summary, recent orders, open invoices, loyalty summary, missing-address reminder, quick links, and sign out.
+- `/account/profile`: profile edit form, phone verification state/action, save button, and back link.
+- `/account/preferences`: marketing/privacy preferences for supported channels and save button.
+- `/account/addresses`: address list, create/edit/delete, default billing/shipping actions, and checkout link when useful.
+- `/account/security`: password, 2FA/passkey/phone verification where supported, and concise security notes.
+- `/orders`, `/orders/[id]`, `/invoices`, `/invoices/[id]`: member order/invoice lists and details with status, date, totals, lines, payment/shipping state, invoice/document links when supported, retry-payment actions when allowed, and pagination where needed.
+
+Navigation rules:
+
+- Primary navigation is customer-facing only: Home, Shop, Loyalty, Help, Contact.
+- Utility navigation is Account and Cart.
+- Checkout is reachable from Cart or direct checkout continuation, not from primary navigation.
+- Orders, invoices, profile, preferences, addresses, security, and loyalty account details live inside the member area.
+- CMS content is presented as help, information, company, contact, legal, shipping, returns, terms, privacy, or cancellation content. Customers should not see "CMS" as a domain label.
+
+Seed/menu alignment:
+
+- Backend seed now aligns the `main-navigation` menu with Home, Shop, Loyalty, Help, and Contact, using `/help` for the help index and `/page/[slug]` for customer-facing content detail links.
+- Footer fallback groups are Shop, Account, Support, and Legal. The current backend menu seed is a flat `MenuItem` structure, so grouped footer presentation remains a frontend responsibility unless WebAdmin publishes a grouped footer contract later.
+
 ### Current implementation snapshot
 
 The first web slice is now in place:
@@ -89,24 +129,17 @@ The first web slice is now in place:
 - public account hub, protected auth-required gates, and cart/checkout auth handoff now also consume those shared offer-card projections, so entry and recovery surfaces keep the same next-buy and campaign narrative instead of drifting back to route-local offer shaping
 - Home now also consumes shared offer-card and category-spotlight projections for its live offer board and category campaign board, so the storefront entry route no longer keeps a separate route-local storytelling model for those core content-and-commerce web parts
 - account editor, protected history, and auth-entry routes now also consume those same canonical storefront projection helpers, so member/auth surfaces keep one stable content+browse+cart prop shape instead of repeating route-local storefront wiring
-- profile, preferences, addresses, and security now also expose one shared self-service composition window with explicit current-task, next-step, and storefront route mapping, so the core member editor family no longer stops at forms plus a storefront side rail alone
-- checkout now also exposes a dedicated composition window with explicit current task, next conversion step, and route mapping into cart, account continuity, CMS, and catalog, so the core pre-purchase route no longer stops at forms, readiness cards, and a storefront side rail alone
-- sign-in, register, activation, and password recovery now also expose one shared public-auth composition window with explicit current-route, next-account-step, and storefront route mapping, so the core public auth/recovery family no longer stops at forms plus continuation rails alone
-- cart now also includes a dedicated composition window with explicit basket review, next checkout step, and route mapping into account, CMS, and catalog follow-up, so the core basket surface no longer behaves like an isolated line-item page before checkout begins
-- the public `/account` hub now also includes a dedicated composition window with explicit current-entry, next recovery or cart step, and route mapping into CMS and catalog follow-up, so the main anonymous account-entry surface no longer behaves like an auth-card island
-- `/catalog` now also includes a dedicated composition window with explicit current browse, next review handoff, and route mapping into CMS plus cart/account continuity, so the main catalog surface no longer behaves like a bare listing and facet page
-- `/cms` now also includes a dedicated composition window with explicit current browse, next review handoff, strongest reading route, and storefront continuation mapping, so the main CMS surface no longer behaves like only a content list plus review rail
-- public auth entry and recovery surfaces now also expose explicit promotion lanes for hero offers, value offers, live offers, and base assortment, so sign-in/register/activation/password routes can jump directly into real merchandising windows instead of only generic campaign cards
-- the public `/account` hub now also exposes explicit promotion lanes for hero offers, value offers, live offers, and base assortment, so anonymous account entry can jump directly into real merchandising windows instead of stopping at a generic offer board alone
-- Home now also carries an explicit entry-journey route map for current entry, next review move, and strongest storefront continuation, so the main storefront entry no longer behaves like only a stack of modular teaser sections
-- reusable page composition now also includes a sticky in-page quick-jump rail keyed to the active web parts, so long multi-section storefront pages like Home are easier to scan and reopen without manually scrolling through every section again
-- `/catalog` and `/cms` now also include sticky in-page quick-jump rails for their main browse/review sections, so long discovery routes are easier to scan and reopen without manually scrolling back through filters, composition, readiness, and result areas
-- `/account`, `/cart`, `/checkout`, and order confirmation now also include sticky in-page quick-jump rails for their main orientation and handoff sections, so account-entry and conversion routes are easier to scan and reopen without manually scrolling back through readiness, composition, basket/payment, and next-step areas
-- `/catalog/[slug]` and `/cms/[slug]` now also include sticky in-page quick-jump rails for their main content, readiness, review, composition, and follow-up sections, so drilled-in discovery routes are easier to scan and reopen without manually scrolling back through long detail surfaces
-- `/account/profile`, `/account/preferences`, `/account/addresses`, and `/account/security` now also include sticky in-page quick-jump rails for their main form, readiness, composition, and follow-up sections, so long self-service routes are easier to scan and reopen without manually scrolling back through editor-heavy pages
-- `/orders`, `/orders/[id]`, `/invoices`, and `/invoices/[id]` now also include sticky in-page quick-jump rails for their main overview, readiness, storefront, results, and action sections, so member history and detail routes are easier to scan and reopen without manually scrolling back through long operational pages
-- `/orders`, `/orders/[id]`, `/invoices`, and `/invoices/[id]` now also include explicit composition windows with current route, next operational handoff, and storefront route maps, so the main member history/detail family no longer stops at records plus follow-up rails and behaves more like a connected journey surface
-- the protected member dashboard now also includes an explicit composition window with current route, next operational handoff, and storefront route maps, so the main signed-in `/account` surface no longer stops at snapshots plus follow-up rails and behaves more like a connected journey surface
+- profile, preferences, addresses, and security are focused self-service forms with member-portal navigation and no storefront side rails or composition windows
+- checkout is a focused conversion page with contact, address, shipping, payment handoff, order summary, and concise shopper-facing errors only
+- sign-in, register, activation, and password recovery are focused account-action pages without merchandising boards or cross-surface rails
+- cart renders basket review, coupon, order summary, continue-shopping, checkout CTA, empty state, and a small optional recommendation strip only
+- `/account` renders either a focused anonymous account entry or a signed-in dashboard with profile, recent orders, invoices, loyalty, addresses, quick links, and sign out
+- `/catalog` is a product listing with search, category/filter/sort controls, grid, pagination, and empty state only
+- `/help` is the customer-facing help/content listing; `/cms` remains a compatibility redirect and is not a visible customer domain label
+- Home is a concise storefront landing page with hero, category/product highlights, one loyalty teaser, help cards, and trust strip only
+- public content detail lives at `/page/[slug]`; route maps, review queues, readiness sections, and sticky quick-jump rails must not be rendered to shoppers
+- `/orders`, `/orders/[id]`, `/invoices`, and `/invoices/[id]` are member record pages with lists/details, payment/shipping state, documents/actions, and pagination where needed
+- the protected member dashboard is a concise member portal surface; internal diagnostics stay server-side or in WebAdmin
 - shared observed loader helpers now also back the main storefront, CMS/catalog route-context, member-route, and Home-discovery assembly paths, so caching plus slow/failure diagnostics are wired through one canonical server pattern instead of being hand-built per route
 - shared public-discovery, member-protected, and commerce page-loader cores now also accept canonical argument normalization directly, so cache-key cleanup and loader diagnostics can stay on the reusable family-loader abstraction instead of being re-implemented per route family
 - those shared public-discovery, member-protected, and commerce page-loader cores now also emit standardized family diagnostics such as normalization mode plus continuation/auth fallback footprints, so production tracing can see the operational loader shape without reopening route-local context wiring
@@ -647,7 +680,7 @@ Current public publish rules are:
 Current contract implications for `Darwin.Web`:
 
 - `main-navigation` should be fetched from the public CMS API and treated as the primary source of storefront navigation
-- `/cms/[slug]` should be tested against real published slugs such as `ueber-uns` and `faq`
+- `/page/[slug]` should be tested against real published slugs such as `ueber-uns` and `faq`; `/cms` is not a customer-facing detail route label
 - catalog browsing should expect real product slugs and at least a representative set of products with primary images, but it must still tolerate `PrimaryImageUrl == null`
 - product-detail media carries `alt`, `title`, and `role` when media exists
 - category cards should not assume category-image support yet; category media is not part of the current public category contract

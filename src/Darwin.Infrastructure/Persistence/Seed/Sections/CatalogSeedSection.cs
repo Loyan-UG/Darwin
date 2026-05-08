@@ -38,9 +38,7 @@ public sealed class CatalogSeedSection
             if (!await db.Categories.AnyAsync(ct))
                 await CreateCategoriesDeAsync(db, ct);
 
-            // Products (create if none exist)
-        if (!await db.Products.AnyAsync(ct))
-            await CreateProductsDeAsync(db, ct);
+        await EnsureSeededStorefrontProductsAsync(db, ct);
 
         await EnsureEnglishCatalogTranslationsAsync(db, ct);
 
@@ -171,37 +169,7 @@ public sealed class CatalogSeedSection
 
             var standardTax = await EnsureStandardTaxCategoryAsync(db, ct);
 
-            // Strongly-typed tuple array to avoid CS0826 while keeping the same item set.
-            var items = new (string Name, string EnName, string Slug, string Brand, string Cat, decimal Price, decimal? Compare, string SKU)[]
-            {
-                // Smartphones
-                ("iPhone 15 Pro 128GB",            "iPhone 15 Pro 128GB",    "iphone-15-pro-128",     "apple",          "iphones",           1199m,  null,           "APL-IP15P-128-001"),
-                ("Samsung Galaxy S24 256GB",       "Samsung Galaxy S24 256GB","galaxy-s24-256",        "samsung",        "android-phones",     999m,   1099m,         "SMS-S24-256-001"),
-                ("Google Pixel 9 128GB",           "Google Pixel 9 128GB",   "pixel-9-128",           "google",         "android-phones",     799m,   869m,          "GGL-PX9-128-001"),
-                ("Xiaomi 14 Pro 256GB",            "Xiaomi 14 Pro 256GB",    "xiaomi-14-pro-256",     "xiaomi",         "android-phones",     799m,   null,           "XMI-14P-256-001"),
-                ("OnePlus 12 256GB",               "OnePlus 12 256GB",       "oneplus-12-256",        "oneplus",        "android-phones",     869m,   949m,          "1P-12-256-001"),
-
-                // Laptops
-                ("MacBook Air 13 M3 8/256",        "MacBook Air 13 M3 8/256","macbook-air-13-m3",     "apple",          "ultrabooks",        1299m,   1399m,         "APL-MBA13-M3-001"),
-                ("Dell XPS 13 16/512",             "Dell XPS 13 16/512",     "dell-xps-13-2025",      "dell",           "ultrabooks",        1599m,   null,          "DEL-XPS13-001"),
-                ("HP Envy 15",                     "HP Envy 15",             "hp-envy-15",            "hp",             "business-laptops",  1199m,   1299m,         "HP-ENVY15-001"),
-                ("Lenovo ThinkPad X1 Carbon",      "Lenovo ThinkPad X1 Carbon","thinkpad-x1-carbon",  "lenovo",         "business-laptops",  1899m,   1999m,         "LNV-X1C-001"),
-                ("ASUS ROG Zephyrus G14",          "ASUS ROG Zephyrus G14",  "rog-g14-2025",          "asus",           "gaming-laptops",    1799m,   1899m,         "ASU-G14-001"),
-
-                // Components & Peripherals
-                ("Logitech MX Master 3S",          "Logitech MX Master 3S",  "logitech-mx-master-3s", "logitech",       "mice",               119m,   139m,          "LOG-MX3S-001"),
-                ("Corsair K70 RGB Pro",            "Corsair K70 RGB Pro",    "corsair-k70-rgb-pro",   "corsair",        "keyboards",          179m,   null,          "COR-K70-RGBP-001"),
-                ("Samsung 980 Pro 1TB NVMe",       "Samsung 980 Pro 1TB NVMe","samsung-980-pro-1tb", "samsung",        "storage",            129m,   159m,          "SMS-980PRO-1TB-001"),
-                ("Seagate BarraCuda 4TB",          "Seagate BarraCuda 4TB",  "seagate-barracuda-4tb", "seagate",        "storage",             99m,   null,          "SEA-BC-4TB-001"),
-                ("WD Black SN850X 2TB",            "WD Black SN850X 2TB",    "wd-black-sn850x-2tb",   "western-digital","storage",            229m,   259m,          "WD-SN850X-2TB-001"),
-
-                // Monitors & Accessories
-                ("LG 27UL850 27\" 4K",             "LG 27UL850 27\" 4K",     "lg-27ul850-4k",         "lg",             "monitors",           349m,   399m,          "LG-27UL850-001"),
-                ("Sony WH-1000XM5",                "Sony WH-1000XM5",        "sony-wh-1000xm5",       "sony",           "headphones",         329m,   379m,          "SNY-WH1000XM5-001"),
-                ("Anker PowerCore 20K",            "Anker PowerCore 20K",    "anker-powercore-20k",   "anker",          "power-banks",         59m,    69m,          "ANK-PWRCR20K-001"),
-                ("Razer DeathAdder V3",            "Razer DeathAdder V3",    "razer-deathadder-v3",   "razer",          "mice",                89m,   109m,          "RZR-DA-V3-001"),
-                ("Kingston Fury 32GB DDR5",        "Kingston Fury 32GB DDR5","kingston-fury-32gb-ddr5","kingston",      "pc-komponenten",     129m,   149m,          "KNG-FURY-32G-001")
-            };
+            var items = GetStorefrontProductSeeds();
 
             foreach (var it in items)
             {
@@ -301,6 +269,166 @@ public sealed class CatalogSeedSection
                 db.Add(v);
                 await db.SaveChangesAsync(ct);
             }
+        }
+
+        private static async Task EnsureSeededStorefrontProductsAsync(DarwinDbContext db, CancellationToken ct)
+        {
+            if (!await db.Products.AnyAsync(ct))
+            {
+                await CreateProductsDeAsync(db, ct);
+                return;
+            }
+
+            var brandMap = await db.Brands
+                .Include(b => b.Translations)
+                .ToDictionaryAsync(b => b.Slug ?? string.Empty, b => b, ct);
+
+            var catMap = await db.Categories
+                .Include(c => c.Translations)
+                .Select(c => new
+                {
+                    Cat = c,
+                    Slug = c.Translations
+                        .Where(t => t.Culture == DomainDefaults.DefaultCulture)
+                        .Select(t => t.Slug)
+                        .FirstOrDefault() ?? string.Empty
+                })
+                .ToDictionaryAsync(x => x.Slug, x => x.Cat, ct);
+
+            var standardTax = await EnsureStandardTaxCategoryAsync(db, ct);
+            var existingProducts = await db.Products
+                .Include(x => x.Translations)
+                .Where(x => x.Translations.Any(t => t.Culture == DomainDefaults.DefaultCulture))
+                .ToListAsync(ct);
+            var variantsBySku = await db.ProductVariants
+                .Where(x => !x.IsDeleted)
+                .ToDictionaryAsync(x => x.Sku, x => x, ct);
+            var variantsById = await db.ProductVariants
+                .Where(x => !x.IsDeleted)
+                .ToDictionaryAsync(x => x.Id, x => x, ct);
+
+            foreach (var item in GetStorefrontProductSeeds())
+            {
+                if (!brandMap.TryGetValue(item.Brand, out var brand)) continue;
+                if (!catMap.TryGetValue(item.Cat, out var category)) continue;
+
+                var product = existingProducts.FirstOrDefault(x =>
+                    x.Translations.Any(t =>
+                        t.Culture == DomainDefaults.DefaultCulture &&
+                        string.Equals(t.Slug, item.Slug, StringComparison.OrdinalIgnoreCase)));
+
+                if (product == null)
+                {
+                    var germanCopy = BuildProductSeedCopy(item.Name, item.Cat, english: false);
+                    var englishCopy = BuildProductSeedCopy(item.EnName, item.Cat, english: true);
+                    product = new Product
+                    {
+                        BrandId = brand.Id,
+                        PrimaryCategoryId = category.Id,
+                        IsActive = true,
+                        IsVisible = true,
+                        Kind = Darwin.Domain.Enums.ProductKind.Simple
+                    };
+                    product.Translations.Add(new ProductTranslation
+                    {
+                        Culture = DomainDefaults.DefaultCulture,
+                        Name = item.Name,
+                        Slug = item.Slug,
+                        ShortDescription = germanCopy.ShortDescription,
+                        FullDescriptionHtml = germanCopy.FullDescriptionHtml,
+                        MetaTitle = germanCopy.MetaTitle,
+                        MetaDescription = germanCopy.MetaDescription
+                    });
+                    product.Translations.Add(new ProductTranslation
+                    {
+                        Culture = EnglishCulture,
+                        Name = item.EnName,
+                        Slug = item.Slug,
+                        ShortDescription = englishCopy.ShortDescription,
+                        FullDescriptionHtml = englishCopy.FullDescriptionHtml,
+                        MetaTitle = item.EnName,
+                        MetaDescription = englishCopy.MetaDescription
+                    });
+                    db.Add(product);
+                    existingProducts.Add(product);
+                    await db.SaveChangesAsync(ct);
+                }
+
+                product.BrandId = brand.Id;
+                product.PrimaryCategoryId = category.Id;
+                product.IsActive = true;
+                product.IsVisible = true;
+                product.Kind = Darwin.Domain.Enums.ProductKind.Simple;
+
+                var forcedVariantId = item.Slug == "iphone-15-pro-128"
+                    ? Guid.Parse("11111111-1111-1111-1111-111111111111")
+                    : item.Slug == "galaxy-s24-256"
+                        ? Guid.Parse("22222222-2222-2222-2222-222222222222")
+                        : (Guid?)null;
+
+                if (!variantsBySku.TryGetValue(item.SKU, out var variant) &&
+                    (!forcedVariantId.HasValue || !variantsById.TryGetValue(forcedVariantId.Value, out variant)))
+                {
+                    variant = new ProductVariant
+                    {
+                        Id = forcedVariantId ?? Guid.NewGuid(),
+                        ProductId = product.Id,
+                        Sku = item.SKU
+                    };
+                    db.Add(variant);
+                    variantsById[variant.Id] = variant;
+                }
+
+                variant.ProductId = product.Id;
+                variant.Sku = item.SKU;
+                variantsBySku[item.SKU] = variant;
+                variant.Currency = DomainDefaults.DefaultCurrency;
+                variant.TaxCategoryId = standardTax.Id;
+                variant.BasePriceNetMinor = Money.FromMajor(item.Price, DomainDefaults.DefaultCurrency).AmountMinor;
+                variant.CompareAtPriceNetMinor = item.Compare.HasValue
+                    ? Money.FromMajor(item.Compare.Value, DomainDefaults.DefaultCurrency).AmountMinor
+                    : null;
+                variant.PackageWeight ??= item.Cat is "ultrabooks" or "business-laptops" or "gaming-laptops"
+                    ? 1800
+                    : item.Cat is "monitors"
+                        ? 5500
+                        : item.Cat is "storage" or "pc-komponenten"
+                            ? 200
+                            : 350;
+                variant.PackageLength ??= item.Cat is "monitors" ? 720 : 180;
+                variant.PackageWidth ??= item.Cat is "monitors" ? 500 : 90;
+                variant.PackageHeight ??= item.Cat is "monitors" ? 180 : 60;
+                variant.IsDigital = false;
+            }
+
+            await db.SaveChangesAsync(ct);
+        }
+
+        private static (string Name, string EnName, string Slug, string Brand, string Cat, decimal Price, decimal? Compare, string SKU)[] GetStorefrontProductSeeds()
+        {
+            return new (string Name, string EnName, string Slug, string Brand, string Cat, decimal Price, decimal? Compare, string SKU)[]
+            {
+                ("iPhone 15 Pro 128GB", "iPhone 15 Pro 128GB", "iphone-15-pro-128", "apple", "iphones", 1199m, null, "APL-IP15P-128-001"),
+                ("Samsung Galaxy S24 256GB", "Samsung Galaxy S24 256GB", "galaxy-s24-256", "samsung", "android-phones", 999m, 1099m, "SMS-S24-256-001"),
+                ("Google Pixel 9 128GB", "Google Pixel 9 128GB", "pixel-9-128", "google", "android-phones", 799m, 869m, "GGL-PX9-128-001"),
+                ("Xiaomi 14 Pro 256GB", "Xiaomi 14 Pro 256GB", "xiaomi-14-pro-256", "xiaomi", "android-phones", 799m, null, "XMI-14P-256-001"),
+                ("OnePlus 12 256GB", "OnePlus 12 256GB", "oneplus-12-256", "oneplus", "android-phones", 869m, 949m, "1P-12-256-001"),
+                ("MacBook Air 13 M3 8/256", "MacBook Air 13 M3 8/256", "macbook-air-13-m3", "apple", "ultrabooks", 1299m, 1399m, "APL-MBA13-M3-001"),
+                ("Dell XPS 13 16/512", "Dell XPS 13 16/512", "dell-xps-13-2025", "dell", "ultrabooks", 1599m, null, "DEL-XPS13-001"),
+                ("HP Envy 15", "HP Envy 15", "hp-envy-15", "hp", "business-laptops", 1199m, 1299m, "HP-ENVY15-001"),
+                ("Lenovo ThinkPad X1 Carbon", "Lenovo ThinkPad X1 Carbon", "thinkpad-x1-carbon", "lenovo", "business-laptops", 1899m, 1999m, "LNV-X1C-001"),
+                ("ASUS ROG Zephyrus G14", "ASUS ROG Zephyrus G14", "rog-g14-2025", "asus", "gaming-laptops", 1799m, 1899m, "ASU-G14-001"),
+                ("Logitech MX Master 3S", "Logitech MX Master 3S", "logitech-mx-master-3s", "logitech", "mice", 119m, 139m, "LOG-MX3S-001"),
+                ("Corsair K70 RGB Pro", "Corsair K70 RGB Pro", "corsair-k70-rgb-pro", "corsair", "keyboards", 179m, null, "COR-K70-RGBP-001"),
+                ("Samsung 980 Pro 1TB NVMe", "Samsung 980 Pro 1TB NVMe", "samsung-980-pro-1tb", "samsung", "storage", 129m, 159m, "SMS-980PRO-1TB-001"),
+                ("Seagate BarraCuda 4TB", "Seagate BarraCuda 4TB", "seagate-barracuda-4tb", "seagate", "storage", 99m, null, "SEA-BC-4TB-001"),
+                ("WD Black SN850X 2TB", "WD Black SN850X 2TB", "wd-black-sn850x-2tb", "western-digital", "storage", 229m, 259m, "WD-SN850X-2TB-001"),
+                ("LG 27UL850 27\" 4K", "LG 27UL850 27\" 4K", "lg-27ul850-4k", "lg", "monitors", 349m, 399m, "LG-27UL850-001"),
+                ("Sony WH-1000XM5", "Sony WH-1000XM5", "sony-wh-1000xm5", "sony", "headphones", 329m, 379m, "SNY-WH1000XM5-001"),
+                ("Anker PowerCore 20K", "Anker PowerCore 20K", "anker-powercore-20k", "anker", "power-banks", 59m, 69m, "ANK-PWRCR20K-001"),
+                ("Razer DeathAdder V3", "Razer DeathAdder V3", "razer-deathadder-v3", "razer", "mice", 89m, 109m, "RZR-DA-V3-001"),
+                ("Kingston Fury 32GB DDR5", "Kingston Fury 32GB DDR5", "kingston-fury-32gb-ddr5", "kingston", "pc-komponenten", 129m, 149m, "KNG-FURY-32G-001")
+            };
         }
 
         private static async Task EnsureEnglishCatalogTranslationsAsync(DarwinDbContext db, CancellationToken ct)

@@ -17,14 +17,14 @@ import {
   summarizeCmsRouteHealth,
 } from "@/lib/route-health";
 
-type CmsIndexSupportWorkflowSource = {
+type CmsIndexContextFootprintSource = {
   categoriesResult?: { status: string; data?: { items?: Array<unknown> } | null } | null;
   productsResult?: { status: string; data?: { items?: Array<unknown> } | null } | null;
   cartSummary?: { status: string } | null;
 };
 
-export function summarizeCmsIndexSupportWorkflow(
-  result: CmsIndexSupportWorkflowSource,
+export function summarizeCmsIndexContextFootprint(
+  result: CmsIndexContextFootprintSource,
 ) {
   return `categories:${result.categoriesResult?.status ?? "unknown"}:${result.categoriesResult?.data?.items?.length ?? 0}|products:${result.productsResult?.status ?? "unknown"}:${result.productsResult?.data?.items?.length ?? 0}|cart:${result.cartSummary?.status ?? "missing"}`;
 }
@@ -108,7 +108,7 @@ const getCachedCmsIndexPageContext = createPublicDiscoveryPageLoader({
   },
   getSuccessContext: (result) => ({
     ...summarizeCmsIndexPageHealth(result),
-    cmsIndexSupportWorkflowFootprint: summarizeCmsIndexSupportWorkflow({
+    cmsIndexContextFootprint: summarizeCmsIndexContextFootprint({
       categoriesResult: result.storefrontContext?.categoriesResult,
       productsResult: result.storefrontContext?.productsResult,
       cartSummary: {
@@ -131,7 +131,7 @@ const getCachedCmsDetailPageContext = createPublicDiscoveryPageLoader({
     metadataFocus?: string,
   ) => ({
     culture,
-    route: "/cms/[slug]",
+    route: "/page/[slug]",
     slug,
     visibleQuery: visibleQuery ?? null,
     visibleState: visibleState ?? null,

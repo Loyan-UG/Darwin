@@ -42,7 +42,7 @@ export function readCatalogSavingsBand(value?: string): CatalogSavingsBand {
   );
 }
 
-export type CatalogReviewTarget = {
+export type CatalogQualityTarget = {
   product: PublicProductSummary;
   missingImage: boolean;
   savingsAmount: number;
@@ -82,9 +82,9 @@ export function getCatalogSavingsPercent(product: PublicProductSummary) {
   );
 }
 
-export function getCatalogReviewTarget(
+export function getCatalogQualityTarget(
   product: PublicProductSummary,
-): CatalogReviewTarget {
+): CatalogQualityTarget {
   return {
     product,
     missingImage: !product.primaryImageUrl?.trim(),
@@ -92,7 +92,7 @@ export function getCatalogReviewTarget(
   };
 }
 
-export function sortCatalogReviewTargets(targets: CatalogReviewTarget[]) {
+export function sortCatalogQualityTargets(targets: CatalogQualityTarget[]) {
   return [...targets].sort((left, right) => {
     if (left.missingImage !== right.missingImage) {
       return left.missingImage ? -1 : 1;
@@ -106,8 +106,8 @@ export function sortCatalogReviewTargets(targets: CatalogReviewTarget[]) {
   });
 }
 
-export function getCatalogReviewTargets(products: PublicProductSummary[]) {
-  return sortCatalogReviewTargets(products.map(getCatalogReviewTarget));
+export function getCatalogQualityTargets(products: PublicProductSummary[]) {
+  return sortCatalogQualityTargets(products.map(getCatalogQualityTarget));
 }
 
 export function filterCatalogVisibleProducts(
