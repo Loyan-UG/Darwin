@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Darwin.Application;
+using Darwin.Application.Abstractions.Shipping;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.Commands;
 using Darwin.Domain.Entities.Orders;
@@ -46,7 +47,9 @@ public sealed class ApplyDhlShipmentLabelOperationHandlerTests
             Id = orderId,
             OrderNumber = "ORD-DHL-LABEL-APPLY-1",
             Currency = "EUR",
-            Status = OrderStatus.Paid
+            Status = OrderStatus.Paid,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}"
         });
 
         db.Set<Shipment>().Add(new Shipment
@@ -55,19 +58,21 @@ public sealed class ApplyDhlShipmentLabelOperationHandlerTests
             OrderId = orderId,
             Carrier = "DHL",
             Service = "Parcel",
-            Status = ShipmentStatus.Pending
+            Status = ShipmentStatus.Pending,
+            ProviderShipmentReference = "00340434292135100100",
+            TrackingNumber = "00340434292135100100"
         });
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new ApplyDhlShipmentLabelOperationHandler(db, new TestStringLocalizer());
+        var handler = new ApplyDhlShipmentLabelOperationHandler(db, new FakeDhlShipmentProviderClient(), new FakeShipmentLabelStorage(), new TestStringLocalizer());
 
         var result = await handler.HandleAsync(shipmentId, TestContext.Current.CancellationToken);
 
         result.Status.Should().Be(ShipmentStatus.Packed);
-        result.ProviderShipmentReference.Should().StartWith("dhl-ship-");
-        result.TrackingNumber.Should().StartWith("22222222220101-");
-        result.LabelUrl.Should().Be($"https://api-sandbox.dhl.example/shipments/{Uri.EscapeDataString(result.ProviderShipmentReference!)}/label");
+        result.ProviderShipmentReference.Should().Be("00340434292135100100");
+        result.TrackingNumber.Should().Be("00340434292135100100");
+        result.LabelUrl.Should().Be("/uploads/dhl-label.pdf");
         result.LastCarrierEventKey.Should().Be("shipment.label_created");
         result.TrackingUrl.Should().NotBeNull();
 
@@ -115,7 +120,9 @@ public sealed class ApplyDhlShipmentLabelOperationHandlerTests
             Id = orderId,
             OrderNumber = "ORD-DHL-LABEL-APPLY-2",
             Currency = "EUR",
-            Status = OrderStatus.Paid
+            Status = OrderStatus.Paid,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}"
         });
 
         db.Set<Shipment>().Add(new Shipment
@@ -129,7 +136,7 @@ public sealed class ApplyDhlShipmentLabelOperationHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new ApplyDhlShipmentLabelOperationHandler(db, new TestStringLocalizer());
+        var handler = new ApplyDhlShipmentLabelOperationHandler(db, new FakeDhlShipmentProviderClient(), new FakeShipmentLabelStorage(), new TestStringLocalizer());
 
         var act = () => handler.HandleAsync(shipmentId, TestContext.Current.CancellationToken);
 
@@ -204,5 +211,30 @@ public sealed class ApplyDhlShipmentLabelOperationHandlerTests
             Array.Empty<LocalizedString>();
 
         public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
+    }
+
+    private sealed class FakeDhlShipmentProviderClient : IDhlShipmentProviderClient
+    {
+        public Task<DhlShipmentCreateResult> CreateShipmentAsync(SiteSetting settings, Order order, Shipment shipment, Darwin.Application.Orders.DTOs.CheckoutAddressDto receiver, CancellationToken ct = default)
+            => Task.FromResult(new DhlShipmentCreateResult());
+
+        public Task<DhlShipmentLabelResult> GetLabelAsync(SiteSetting settings, Shipment shipment, CancellationToken ct = default)
+        {
+            shipment.ProviderShipmentReference.Should().Be("00340434292135100100");
+            return Task.FromResult(new DhlShipmentLabelResult
+            {
+                LabelPdfBytes = [1, 2, 3]
+            });
+        }
+    }
+
+    private sealed class FakeShipmentLabelStorage : IShipmentLabelStorage
+    {
+        public Task<string> SaveLabelAsync(Guid shipmentId, string provider, byte[] content, string contentType, CancellationToken ct = default)
+        {
+            provider.Should().Be("DHL");
+            content.Should().NotBeEmpty();
+            return Task.FromResult("/uploads/dhl-label.pdf");
+        }
     }
 }

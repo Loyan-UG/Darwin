@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Payments;
 using Darwin.Application;
 using Darwin.Application.CartCheckout.Queries;
 using Darwin.Application.Orders.Commands;
@@ -12,6 +13,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Entities.Shipping;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -807,7 +809,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
     }
 
     [Fact]
-    public async Task CompleteStorefrontPayment_Should_MarkPaymentCaptured_AndOrderPaid()
+    public async Task CompleteStorefrontPayment_Should_KeepStripePaymentPending_UntilVerifiedWebhookCaptures()
     {
         await using var db = StorefrontCheckoutFlowTestDbContext.Create();
         var orderId = Guid.NewGuid();
@@ -829,7 +831,8 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                     Id = paymentId,
                     OrderId = orderId,
                     Provider = "Stripe",
-                    ProviderTransactionRef = "chk_pending",
+                    ProviderTransactionRef = "cs_pending",
+                    ProviderCheckoutSessionRef = "cs_pending",
                     AmountMinor = 2590,
                     Currency = "EUR",
                     Status = PaymentStatus.Pending
@@ -846,24 +849,24 @@ public sealed class StorefrontCheckoutFlowHandlersTests
             OrderId = orderId,
             PaymentId = paymentId,
             OrderNumber = "D-20260326-00003",
-            ProviderReference = "psp_txn_1001",
+            ProviderReference = "cs_pending",
             Outcome = StorefrontPaymentOutcome.Succeeded
         }, TestContext.Current.CancellationToken);
 
-        result.OrderStatus.Should().Be(OrderStatus.Paid);
-        result.PaymentStatus.Should().Be(PaymentStatus.Captured);
-        result.PaidAtUtc.Should().NotBeNull();
+        result.OrderStatus.Should().Be(OrderStatus.Created);
+        result.PaymentStatus.Should().Be(PaymentStatus.Pending);
+        result.PaidAtUtc.Should().BeNull();
 
         var persistedPayment = await db.Set<Payment>()
             .AsNoTracking()
             .SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
-        persistedPayment.Status.Should().Be(PaymentStatus.Captured);
-        persistedPayment.ProviderTransactionRef.Should().Be("psp_txn_1001");
+        persistedPayment.Status.Should().Be(PaymentStatus.Pending);
+        persistedPayment.ProviderTransactionRef.Should().Be("cs_pending");
 
         var persistedOrder = await db.Set<Order>()
             .AsNoTracking()
             .SingleAsync(x => x.Id == orderId, TestContext.Current.CancellationToken);
-        persistedOrder.Status.Should().Be(OrderStatus.Paid);
+        persistedOrder.Status.Should().Be(OrderStatus.Created);
     }
 
     [Fact]
@@ -911,18 +914,18 @@ public sealed class StorefrontCheckoutFlowHandlersTests
         }, TestContext.Current.CancellationToken);
 
         result.OrderStatus.Should().Be(OrderStatus.Created);
-        result.PaymentStatus.Should().Be(PaymentStatus.Voided);
+        result.PaymentStatus.Should().Be(PaymentStatus.Pending);
         result.PaidAtUtc.Should().BeNull();
 
         var persistedPayment = await db.Set<Payment>()
             .AsNoTracking()
             .SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
-        persistedPayment.Status.Should().Be(PaymentStatus.Voided);
-        persistedPayment.FailureReason.Should().Be("Customer closed the checkout window.");
+        persistedPayment.Status.Should().Be(PaymentStatus.Pending);
+        persistedPayment.FailureReason.Should().BeNull();
     }
 
     [Fact]
-    public async Task CompleteStorefrontPayment_Should_NotRequireProviderReferences_WhenNotProvided()
+    public async Task CompleteStorefrontPayment_Should_NotRequireProviderReferences_WhenNotProvided_AndWaitForWebhook()
     {
         await using var db = StorefrontCheckoutFlowTestDbContext.Create();
         var orderId = Guid.NewGuid();
@@ -967,17 +970,16 @@ public sealed class StorefrontCheckoutFlowHandlersTests
             OrderId = orderId,
             PaymentId = paymentId,
             OrderNumber = "D-20260326-00005",
-            Outcome = StorefrontPaymentOutcome.Succeeded,
-            ProviderReference = "psp_txn_1002"
+            Outcome = StorefrontPaymentOutcome.Succeeded
         }, TestContext.Current.CancellationToken);
 
-        result.OrderStatus.Should().Be(OrderStatus.Paid);
-        result.PaymentStatus.Should().Be(PaymentStatus.Captured);
-        result.PaidAtUtc.Should().Be(fixedClock);
+        result.OrderStatus.Should().Be(OrderStatus.Created);
+        result.PaymentStatus.Should().Be(PaymentStatus.Pending);
+        result.PaidAtUtc.Should().BeNull();
     }
 
     [Fact]
-    public async Task CompleteStorefrontPayment_Should_MarkPaymentFailed_WhenOutcomeFailed()
+    public async Task CompleteStorefrontPayment_Should_KeepStripePaymentPending_WhenReturnOutcomeFailed()
     {
         await using var db = StorefrontCheckoutFlowTestDbContext.Create();
         var orderId = Guid.NewGuid();
@@ -1021,14 +1023,14 @@ public sealed class StorefrontCheckoutFlowHandlersTests
         }, TestContext.Current.CancellationToken);
 
         result.OrderStatus.Should().Be(OrderStatus.Created);
-        result.PaymentStatus.Should().Be(PaymentStatus.Failed);
+        result.PaymentStatus.Should().Be(PaymentStatus.Pending);
         result.PaidAtUtc.Should().BeNull();
 
         var persistedPayment = await db.Set<Payment>()
             .AsNoTracking()
             .SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
-        persistedPayment.Status.Should().Be(PaymentStatus.Failed);
-        persistedPayment.FailureReason.Should().Be("Card was declined.");
+        persistedPayment.Status.Should().Be(PaymentStatus.Pending);
+        persistedPayment.FailureReason.Should().BeNull();
     }
 
     [Fact]
@@ -1436,7 +1438,7 @@ public sealed class StorefrontCheckoutFlowHandlersTests
     }
 
     [Fact]
-    public async Task CreateStorefrontPaymentIntent_Should_CreateStripeReferences_WhenNoPendingMatch()
+    public async Task CreateStorefrontPaymentIntent_Should_CreateStripeCheckoutSession_WhenNoPendingMatch()
     {
         await using var db = StorefrontCheckoutFlowTestDbContext.Create();
         var orderId = Guid.NewGuid();
@@ -1468,26 +1470,37 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 }
             ]
         });
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Title = "Darwin",
+            ContactEmail = "ops@example.test",
+            StripeEnabled = true,
+            StripeSecretKey = "sk_test_unit"
+        });
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new CreateStorefrontPaymentIntentHandler(
             db,
             new TestStringLocalizer(),
-            new FakeClock(fixedClock));
+            new FakeClock(fixedClock),
+            new FakeStorefrontPaymentSessionClient());
 
         var result = await handler.HandleAsync(new CreateStorefrontPaymentIntentDto
         {
             OrderId = orderId,
             OrderNumber = "D-20300430-00012",
-            Provider = "Stripe"
+            Provider = "Stripe",
+            ReturnUrl = "https://shop.example/return",
+            CancelUrl = "https://shop.example/cancel"
         }, TestContext.Current.CancellationToken);
 
         result.PaymentId.Should().NotBe(paymentId);
         result.Provider.Should().Be("Stripe");
-        result.ProviderReference.Should().StartWith("cs_");
-        result.ProviderPaymentIntentReference.Should().StartWith("pi_");
-        result.ProviderCheckoutSessionReference.Should().StartWith("cs_");
+        result.ProviderReference.Should().Be("cs_unit_session");
+        result.ProviderPaymentIntentReference.Should().Be("pi_unit_intent");
+        result.ProviderCheckoutSessionReference.Should().Be("cs_unit_session");
+        result.CheckoutUrl.Should().Be("https://checkout.stripe.test/session/cs_unit_session");
         result.ExpiresAtUtc.Should().Be(fixedClock.AddMinutes(15));
     }
 
@@ -1820,6 +1833,27 @@ public sealed class StorefrontCheckoutFlowHandlersTests
                 builder.Property(x => x.Currency).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
+
+            modelBuilder.Entity<SiteSetting>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Title).IsRequired();
+                builder.Property(x => x.ContactEmail).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.SupportedCulturesCsv).IsRequired();
+                builder.Property(x => x.DefaultCountry).IsRequired();
+                builder.Property(x => x.DefaultCurrency).IsRequired();
+                builder.Property(x => x.TimeZone).IsRequired();
+                builder.Property(x => x.DateFormat).IsRequired();
+                builder.Property(x => x.TimeFormat).IsRequired();
+                builder.Property(x => x.MeasurementSystem).IsRequired();
+                builder.Property(x => x.DisplayWeightUnit).IsRequired();
+                builder.Property(x => x.DisplayLengthUnit).IsRequired();
+                builder.Property(x => x.WebAuthnRelyingPartyId).IsRequired();
+                builder.Property(x => x.WebAuthnRelyingPartyName).IsRequired();
+                builder.Property(x => x.WebAuthnAllowedOriginsCsv).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
         }
     }
 
@@ -1844,5 +1878,23 @@ public sealed class StorefrontCheckoutFlowHandlersTests
         }
 
         public DateTime UtcNow { get; }
+    }
+
+    private sealed class FakeStorefrontPaymentSessionClient : IStorefrontPaymentSessionClient
+    {
+        public Task<StorefrontPaymentSessionResult> CreateSessionAsync(StorefrontPaymentSessionRequest request, CancellationToken ct = default)
+        {
+            request.SecretKey.Should().Be("sk_test_unit");
+            request.ReturnUrl.Should().Be("https://shop.example/return");
+            request.CancelUrl.Should().Be("https://shop.example/cancel");
+
+            return Task.FromResult(new StorefrontPaymentSessionResult
+            {
+                ProviderReference = "cs_unit_session",
+                ProviderCheckoutSessionReference = "cs_unit_session",
+                ProviderPaymentIntentReference = "pi_unit_intent",
+                CheckoutUrl = "https://checkout.stripe.test/session/cs_unit_session"
+            });
+        }
     }
 }

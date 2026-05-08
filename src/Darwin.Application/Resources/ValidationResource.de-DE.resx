@@ -69,6 +69,12 @@
   <data name="StorefrontStripeCheckoutBaseUrlNotConfigured" xml:space="preserve">
     <value>Die Stripe-Checkout-Basis-URL des Storefront ist nicht konfiguriert.</value>
   </data>
+  <data name="StorefrontStripeCheckoutNotConfigured" xml:space="preserve">
+    <value>Stripe Checkout ist nicht aktiviert oder der serverseitige Stripe-Schluessel fehlt.</value>
+  </data>
+  <data name="StorefrontStripeCheckoutUrlsRequired" xml:space="preserve">
+    <value>Rueckkehr- und Abbruch-URLs fuer Stripe Checkout sind erforderlich.</value>
+  </data>
   <data name="StorefrontPaymentProviderNotSupported" xml:space="preserve">
     <value>Es werden nur Stripe-Storefront-Zahlungen unterstuetzt.</value>
   </data>
@@ -1423,6 +1429,15 @@
   </data>
   <data name="ShipmentCarrierMustBeDhlForLabelGeneration" xml:space="preserve">
     <value>Im aktuellen Stand koennen nur DHL-Sendungen Carrier-Label erzeugen.</value>
+  </data>
+  <data name="DhlLabelGenerationRequiresProviderShipmentReference" xml:space="preserve">
+    <value>Die DHL-Label-Erzeugung benoetigt eine Sendungsreferenz des Providers.</value>
+  </data>
+  <data name="DhlLabelGenerationResponseInvalid" xml:space="preserve">
+    <value>Die DHL-Label-Erzeugung hat eine ungueltige Antwort geliefert.</value>
+  </data>
+  <data name="DhlShipmentShippingAddressRequired" xml:space="preserve">
+    <value>Die DHL-Sendungserstellung benoetigt eine vollstaendige Lieferadresse.</value>
   </data>
   <data name="CommunicationDispatchOperationNotFound" xml:space="preserve">
     <value>Der Kommunikationsversand wurde nicht gefunden.</value>

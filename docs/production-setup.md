@@ -123,15 +123,15 @@ Current implementation details:
 
 Stripe webhook ingress is implemented at `api/v1/public/billing/stripe/webhooks` and validates signatures before writing idempotent provider callback inbox messages.
 
-Production setup still needs a real storefront payment creation integration. The current storefront handler creates local Stripe-like references for the payment handoff and should not be treated as live Stripe Checkout or PaymentIntent creation.
+Storefront payment creation now supports real Stripe Checkout Sessions when Stripe is enabled in Site Settings and a server-side Stripe secret key is configured. Storefront return URLs only validate the handoff context; final payment state must come from verified Stripe webhooks.
 
 Before live payments:
 
 1. Store Stripe secret key and webhook secret in environment/platform secrets.
-2. Implement real PaymentIntent or Checkout Session creation behind the existing storefront payment handoff.
+2. Enable Stripe in Site Settings only after the server-side secret key and webhook secret are supplied through secure configuration.
 3. Confirm provider references are stored on `Payment.ProviderPaymentIntentRef`, `Payment.ProviderCheckoutSessionRef`, and `Payment.ProviderTransactionRef`.
 4. Confirm `ProviderCallbackWorker:Enabled=true` and Stripe webhook events process successfully.
-5. Smoke `checkout.session.completed`, `payment_intent.succeeded`, failed payment, refund, and dispute visibility in WebAdmin.
+5. Smoke Checkout Session creation against a Stripe test account, then smoke `checkout.session.completed`, `payment_intent.succeeded`, failed payment, refund, and dispute visibility in WebAdmin.
 
 ## Shipping Provider: DHL
 

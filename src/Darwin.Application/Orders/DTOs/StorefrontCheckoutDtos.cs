@@ -102,6 +102,12 @@ public sealed class CreateStorefrontPaymentIntentDto
 
     /// <summary>Gets or sets the requested storefront payment provider label.</summary>
     public string Provider { get; set; } = "Stripe";
+
+    /// <summary>Gets or sets the absolute URL the provider redirects to after successful checkout.</summary>
+    public string? ReturnUrl { get; set; }
+
+    /// <summary>Gets or sets the absolute URL the provider redirects to when checkout is cancelled.</summary>
+    public string? CancelUrl { get; set; }
 }
 
 /// <summary>
@@ -138,6 +144,9 @@ public sealed class StorefrontPaymentIntentResultDto
 
     /// <summary>Gets or sets the expiration timestamp for the intent.</summary>
     public DateTime ExpiresAtUtc { get; set; }
+
+    /// <summary>Gets or sets the provider-hosted checkout URL when a real provider session was created.</summary>
+    public string? CheckoutUrl { get; set; }
 }
 
 /// <summary>
