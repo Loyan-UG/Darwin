@@ -683,6 +683,157 @@ public sealed class OrderValidatorsTests
     }
 
     [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_Carrier_Is_Whitespace()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "   ",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("Carrier with whitespace only should be rejected");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Carrier));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_ProviderShipmentReference_Is_Whitespace()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "   ",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("ProviderShipmentReference with whitespace only should be rejected");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ProviderShipmentReference));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_CarrierEventKey_Is_Whitespace()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "   ",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("CarrierEventKey with whitespace only should be rejected");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.CarrierEventKey));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_Carrier_Is_Null()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = null!,
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("Carrier is required");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Carrier));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_ProviderShipmentReference_Is_Null()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = null!,
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("ProviderShipmentReference is required");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ProviderShipmentReference));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    [InlineData("\r\n")]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_CarrierEventKey_Is_Null_Or_Whitespace(string? carrierEventKey)
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = carrierEventKey!,
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("CarrierEventKey is required");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.CarrierEventKey));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Pass_When_Optional_Fields_Are_Empty()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            TrackingNumber = string.Empty,
+            LabelUrl = string.Empty,
+            Service = string.Empty,
+            ProviderStatus = string.Empty,
+            ExceptionCode = string.Empty,
+            ExceptionMessage = string.Empty
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("empty optional fields should be treated as absent");
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Pass_When_Optional_Fields_Are_Null()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            TrackingNumber = null!,
+            LabelUrl = null!,
+            Service = null!,
+            ProviderStatus = null!,
+            ExceptionCode = null!,
+            ExceptionMessage = null!
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("null optional fields should be treated as absent");
+    }
+
+    [Fact]
     public void ApplyShipmentCarrierEvent_Should_Fail_When_ProviderShipmentReference_Empty()
     {
         var dto = new ApplyShipmentCarrierEventDto
@@ -734,6 +885,82 @@ public sealed class OrderValidatorsTests
     }
 
     [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_With_Multiple_Missing_Required_Fields()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "   ",
+            ProviderShipmentReference = "",
+            CarrierEventKey = null!,
+            OccurredAtUtc = default
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("multiple required fields are missing");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Carrier));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ProviderShipmentReference));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.CarrierEventKey));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.OccurredAtUtc));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_Multiple_Optional_Fields_Too_Long()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            TrackingNumber = new string('T', 129),
+            LabelUrl = new string('L', 2049),
+            Service = new string('S', 65),
+            ProviderStatus = new string('P', 65),
+            ExceptionCode = new string('E', 129),
+            ExceptionMessage = new string('M', 513)
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("multiple optional fields exceeding limits should fail");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.TrackingNumber));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.LabelUrl));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Service));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ProviderStatus));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ExceptionCode));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ExceptionMessage));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_Optional_Fields_Exceed_Max_Length_Because_Of_Whitespace_Padding()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "REF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            TrackingNumber = $" {new string('T', 128)} ",
+            LabelUrl = $" {new string('L', 2048)} ",
+            Service = $" {new string('S', 64)} ",
+            ProviderStatus = $" {new string('P', 64)} ",
+            ExceptionCode = $" {new string('E', 128)} ",
+            ExceptionMessage = $" {new string('M', 512)} "
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("whitespace-padded fields should fail validator length checks");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.TrackingNumber));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.LabelUrl));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Service));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ProviderStatus));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ExceptionCode));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ExceptionMessage));
+    }
+
+    [Fact]
     public void ApplyShipmentCarrierEvent_Should_Pass_With_Optional_Fields_Set()
     {
         var dto = new ApplyShipmentCarrierEventDto
@@ -753,6 +980,276 @@ public sealed class OrderValidatorsTests
         var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeTrue("all optional fields within limits should pass");
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_Carrier_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = new string('D', 65),
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("Carrier is limited to 64 chars");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Carrier));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_ProviderShipmentReference_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = new string('R', 129),
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("ProviderShipmentReference is limited to 128 chars");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ProviderShipmentReference));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_CarrierEventKey_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = new string('K', 129),
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("CarrierEventKey is limited to 128 chars");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.CarrierEventKey));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_TrackingNumber_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            TrackingNumber = new string('T', 129)
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("TrackingNumber is limited to 128 chars when set");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.TrackingNumber));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_LabelUrl_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            LabelUrl = new string('L', 2049)
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("LabelUrl is limited to 2048 chars when set");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.LabelUrl));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_Service_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            Service = new string('S', 65)
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("Service is limited to 64 chars when set");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Service));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_ProviderStatus_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            ProviderStatus = new string('P', 65)
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("ProviderStatus is limited to 64 chars when set");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ProviderStatus));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_ExceptionCode_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            ExceptionCode = new string('E', 129)
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("ExceptionCode is limited to 128 chars when set");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ExceptionCode));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_ExceptionMessage_TooLong()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            ExceptionMessage = new string('X', 513)
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("ExceptionMessage is limited to 512 chars when set");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ExceptionMessage));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Pass_When_Optional_Fields_Are_Whitespace()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = "shipment.delivered",
+            OccurredAtUtc = DateTime.UtcNow,
+            TrackingNumber = "   ",
+            LabelUrl = "\t",
+            Service = "\r\n",
+            ProviderStatus = "   ",
+            ExceptionCode = "   ",
+            ExceptionMessage = "   "
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("whitespace-only optional fields should be treated as absent");
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Pass_When_Optional_Fields_Are_At_MaxLength()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = new string('D', 64),
+            ProviderShipmentReference = new string('R', 128),
+            CarrierEventKey = new string('K', 128),
+            OccurredAtUtc = DateTime.UtcNow,
+            TrackingNumber = new string('T', 128),
+            LabelUrl = new string('L', 2048),
+            Service = new string('S', 64),
+            ProviderStatus = new string('P', 64),
+            ExceptionCode = new string('E', 128),
+            ExceptionMessage = new string('M', 512)
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("all fields at exact max length should pass");
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Pass_When_CarrierEventKey_Is_Max_Length()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = new string('K', 128),
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("CarrierEventKey at exact max length is valid");
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Pass_When_Required_Fields_Are_At_Max_Length()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = new string('C', 64),
+            ProviderShipmentReference = new string('R', 128),
+            CarrierEventKey = new string('K', 128),
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("all required fields at exact max length should pass");
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_Required_Fields_With_Whitespace_Padding_Exceed_Max_Length()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = $" {new string('C', 64)} ",
+            ProviderShipmentReference = $" {new string('R', 128)} ",
+            CarrierEventKey = "shipment.created",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("whitespace padding must be included in validator length checks");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.Carrier));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.ProviderShipmentReference));
+    }
+
+    [Fact]
+    public void ApplyShipmentCarrierEvent_Should_Fail_When_CarrierEventKey_With_Whitespace_Padding_Exceed_Max_Length()
+    {
+        var dto = new ApplyShipmentCarrierEventDto
+        {
+            Carrier = "DHL",
+            ProviderShipmentReference = "DHLREF-001",
+            CarrierEventKey = $" {new string('K', 128)} ",
+            OccurredAtUtc = DateTime.UtcNow
+        };
+
+        var result = new ApplyShipmentCarrierEventValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("CarrierEventKey must enforce maximum length before trimming");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.CarrierEventKey));
     }
 
     // ─── UpdateOrderStatusValidator ──────────────────────────────────────────

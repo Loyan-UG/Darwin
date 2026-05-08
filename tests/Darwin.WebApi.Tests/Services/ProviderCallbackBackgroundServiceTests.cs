@@ -195,6 +195,163 @@ public sealed class ProviderCallbackBackgroundServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_Should_FailKnownProviderCallback_WhenHandlerIsNotRegistered()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Stripe",
+            CallbackType = "payment_intent.succeeded",
+            IdempotencyKey = "evt_stripe_no_handler",
+            PayloadJson = """
+            {
+              "id": "evt_stripe_no_handler",
+              "type": "charge.succeeded",
+              "data": {
+                "object": {}
+              }
+            }
+            """,
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single().Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.FailureReason.Should().Contain("No service for type");
+        item.FailureReason.Should().Contain("ProcessStripeWebhookHandler");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_FailBrevoCallback_WhenHandlerIsNotRegistered()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "Brevo",
+            CallbackType = "message_event",
+            IdempotencyKey = "evt_brevo_no_handler",
+            PayloadJson = """
+            {
+              "event": "message_opened",
+              "email": "user@example.com"
+            }
+            """,
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single().Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.FailureReason.Should().Contain("No service for type");
+        item.FailureReason.Should().Contain("ProcessBrevoTransactionalEmailWebhookHandler");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_FailDhlCallback_WhenHandlerIsNotRegistered()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "DHL",
+            CallbackType = "shipment_event",
+            IdempotencyKey = "evt_dhl_no_handler",
+            PayloadJson = "{}",
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single().Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.FailureReason.Should().Contain("No service for type");
+        item.FailureReason.Should().Contain("ApplyShipmentCarrierEventHandler");
+    }
+
+    [Fact]
     public async Task ExecuteAsync_Should_MarkInvalidDhlPayloadAsFailed()
     {
         await using var db = ProviderCallbackWorkerTestDbContext.Create();
@@ -383,6 +540,228 @@ public sealed class ProviderCallbackBackgroundServiceTests
         updatedShipment.LastCarrierEventKey.Should().Be("delivered");
         updatedShipment.TrackingNumber.Should().Be("TRK-123");
         updatedShipment.LabelUrl.Should().Be("https://example.test/label.png");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_FailDhlCallback_WhenCarrierEventPayloadIsInvalidForValidation()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<Darwin.Domain.Entities.Orders.Shipment>().Add(new Darwin.Domain.Entities.Orders.Shipment
+        {
+            Carrier = "DHL",
+            Service = "Standard",
+            ProviderShipmentReference = "dhl-ref-2",
+            OrderId = Guid.NewGuid(),
+            Status = ShipmentStatus.Pending
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "DHL",
+            CallbackType = "shipment_event",
+            IdempotencyKey = "evt_dhl_validation_failed",
+            PayloadJson = """
+            {
+              "providerShipmentReference": "",
+              "carrierEventKey": "delivered",
+              "occurredAtUtc": "2026-05-02T10:00:00Z",
+              "providerStatus": "DELIVERED",
+              "trackingNumber": "TRK-555",
+              "labelUrl": "https://example.test/label.png"
+            }
+            """,
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new Mock<IStringLocalizer<ValidationResource>>();
+        localizer.Setup(x => x[It.IsAny<string>()]).Returns((string key) => new LocalizedString(key, key));
+        var validator = new ApplyShipmentCarrierEventValidator(localizer.Object);
+        var dhlHandler = new ApplyShipmentCarrierEventHandler(db, validator, localizer.Object);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+        serviceProvider.Setup(x => x.GetService(typeof(ApplyShipmentCarrierEventHandler))).Returns(dhlHandler);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_dhl_validation_failed").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.FailureReason.Should().Contain("ProviderShipmentReference");
+        item.FailureReason.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_FailDhlCallback_WhenCarrierEventOccurredAtUtcIsMissing()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<Darwin.Domain.Entities.Orders.Shipment>().Add(new Darwin.Domain.Entities.Orders.Shipment
+        {
+            Carrier = "DHL",
+            Service = "Standard",
+            ProviderShipmentReference = "dhl-ref-3",
+            OrderId = Guid.NewGuid(),
+            Status = ShipmentStatus.Pending
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "dhl",
+            CallbackType = "shipment_event",
+            IdempotencyKey = "evt_dhl_validation_missing_time",
+            PayloadJson = """
+            {
+              "providerShipmentReference": "dhl-ref-3",
+              "carrierEventKey": "delivered",
+              "providerStatus": "DELIVERED",
+              "trackingNumber": "TRK-777",
+              "labelUrl": "https://example.test/label.png"
+            }
+            """,
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new Mock<IStringLocalizer<ValidationResource>>();
+        localizer.Setup(x => x[It.IsAny<string>()]).Returns((string key) => new LocalizedString(key, key));
+        var validator = new ApplyShipmentCarrierEventValidator(localizer.Object);
+        var dhlHandler = new ApplyShipmentCarrierEventHandler(db, validator, localizer.Object);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+        serviceProvider.Setup(x => x.GetService(typeof(ApplyShipmentCarrierEventHandler))).Returns(dhlHandler);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_dhl_validation_missing_time").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.FailureReason.Should().Contain("CarrierEventOccurredAtUtcRequired");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_FailDhlCallback_WhenCarrierEventTrackingNumberExceedsMaxLength()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        var tooLongTrackingNumber = new string('T', 129);
+        var payloadJson = """
+            {
+              "providerShipmentReference": "dhl-ref-4",
+              "carrierEventKey": "delivered",
+              "occurredAtUtc": "2026-05-02T10:00:00Z",
+              "providerStatus": "DELIVERED",
+              "trackingNumber": "__TRACKING__",
+              "labelUrl": "https://example.test/label.png"
+            }
+            """;
+        db.Set<Darwin.Domain.Entities.Orders.Shipment>().Add(new Darwin.Domain.Entities.Orders.Shipment
+        {
+            Carrier = "DHL",
+            Service = "Standard",
+            ProviderShipmentReference = "dhl-ref-4",
+            OrderId = Guid.NewGuid(),
+            Status = ShipmentStatus.Pending
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "dhl",
+            CallbackType = "shipment_event",
+            IdempotencyKey = "evt_dhl_validation_tracking_number_too_long",
+            PayloadJson = payloadJson.Replace("__TRACKING__", tooLongTrackingNumber),
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new Mock<IStringLocalizer<ValidationResource>>();
+        localizer.Setup(x => x[It.IsAny<string>()]).Returns((string key) => new LocalizedString(key, key));
+        var validator = new ApplyShipmentCarrierEventValidator(localizer.Object);
+        var dhlHandler = new ApplyShipmentCarrierEventHandler(db, validator, localizer.Object);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+        serviceProvider.Setup(x => x.GetService(typeof(ApplyShipmentCarrierEventHandler))).Returns(dhlHandler);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_dhl_validation_tracking_number_too_long").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.FailureReason.Should().Contain("TrackingNumber");
+        item.FailureReason.Should().NotBeNullOrWhiteSpace();
     }
 
     [Fact]
@@ -1007,6 +1386,73 @@ public sealed class ProviderCallbackBackgroundServiceTests
         valid.Status.Should().Be("Failed");
         valid.AttemptCount.Should().Be(1);
         valid.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotProcessMessage_WhenStatusIsNotCanonical()
+    {
+        var now = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_status_non_canonical",
+                PayloadJson = "{}",
+                Status = "InReview",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-20)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_processable_pending",
+                PayloadJson = "{}",
+                Status = "Pending",
+                AttemptCount = 0,
+                CreatedAtUtc = now.AddMinutes(-10)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                BatchSize = 5,
+                MaxAttempts = 2
+            }),
+            new FixedClock(now),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var nonCanonicalStatusItem = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_status_non_canonical", TestContext.Current.CancellationToken);
+        var pendingItem = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_processable_pending", TestContext.Current.CancellationToken);
+
+        nonCanonicalStatusItem.Status.Should().Be("InReview");
+        nonCanonicalStatusItem.AttemptCount.Should().Be(0);
+        nonCanonicalStatusItem.LastAttemptAtUtc.Should().BeNull();
+        nonCanonicalStatusItem.FailureReason.Should().BeNull();
+
+        pendingItem.Status.Should().Be("Failed");
+        pendingItem.AttemptCount.Should().Be(1);
+        pendingItem.FailureReason.Should().Contain("Unsupported provider callback provider 'Unknown'");
     }
 
     [Fact]
@@ -4298,6 +4744,120 @@ public sealed class ProviderCallbackBackgroundServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_Should_ProcessOnlyOneMessage_InOneIteration_WhenPollIntervalIsHuge()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().AddRange(
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_poll_interval_huge_first",
+                PayloadJson = "{}",
+                Status = "Pending",
+                CreatedAtUtc = fixedTime.AddMinutes(-10)
+            },
+            new ProviderCallbackInboxMessage
+            {
+                Provider = "Unknown",
+                CallbackType = "webhook_event",
+                IdempotencyKey = "evt_poll_interval_huge_second",
+                PayloadJson = "{}",
+                Status = "Pending",
+                CreatedAtUtc = fixedTime.AddMinutes(-9)
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 1000,
+                BatchSize = 1,
+                RetryCooldownSeconds = 5,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var first = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_poll_interval_huge_first", TestContext.Current.CancellationToken);
+        var second = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_poll_interval_huge_second", TestContext.Current.CancellationToken);
+
+        first.Status.Should().Be("Failed");
+        first.AttemptCount.Should().Be(1);
+        second.Status.Should().Be("Pending");
+        second.AttemptCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_NotTrimProviderBeforeBranching()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = " Unknown ",
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_unknown_provider_trimmed",
+            PayloadJson = "{}",
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 1,
+                RetryCooldownSeconds = 5,
+                MaxAttempts = 3
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_unknown_provider_trimmed", TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.FailureReason.Should().Contain("Unsupported provider callback provider");
+        item.ProcessedAtUtc.Should().BeNull();
+        item.LastAttemptAtUtc.Should().Be(fixedTime);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_Should_ProcessStripeCallback_WhenProviderCaseIsDifferent()
     {
         await using var db = ProviderCallbackWorkerTestDbContext.Create();
@@ -4354,6 +4914,195 @@ public sealed class ProviderCallbackBackgroundServiceTests
         item.AttemptCount.Should().Be(1);
         item.ProcessedAtUtc.Should().NotBeNull();
         item.FailureReason.Should().BeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_RejectTrimmedStripeProviderValue()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = " sTRiPe ",
+            CallbackType = "payment_intent.succeeded",
+            IdempotencyKey = "evt_stripe_trimmed",
+            PayloadJson = """
+            {
+              "id": "evt_stripe_trimmed",
+              "type": "charge.succeeded",
+              "data": {
+                "object": {}
+              }
+            }
+            """,
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_stripe_trimmed").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.LastAttemptAtUtc.Should().Be(fixedTime);
+        item.FailureReason.Should().Be("Unsupported provider callback provider ' sTRiPe '.");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_FailUnknownProvider_WhenProviderIsEmptyString()
+    {
+        var fixedTime = DateTime.UtcNow;
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = string.Empty,
+            CallbackType = "webhook_event",
+            IdempotencyKey = "evt_unknown_provider_empty",
+            PayloadJson = "{}",
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(fixedTime),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.IdempotencyKey == "evt_unknown_provider_empty", TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Failed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().BeNull();
+        item.LastAttemptAtUtc.Should().Be(fixedTime);
+        item.FailureReason.Should().Be("Unsupported provider callback provider ''.");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessDhlCallback_WhenProviderCaseIsDifferent()
+    {
+        await using var db = ProviderCallbackWorkerTestDbContext.Create();
+        var shipment = new Darwin.Domain.Entities.Orders.Shipment
+        {
+            Carrier = "DHL",
+            Service = "Standard",
+            ProviderShipmentReference = "dhl-ref-case",
+            OrderId = Guid.NewGuid(),
+            Status = ShipmentStatus.Pending
+        };
+        db.Set<Darwin.Domain.Entities.Orders.Shipment>().Add(shipment);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.Set<ProviderCallbackInboxMessage>().Add(new ProviderCallbackInboxMessage
+        {
+            Provider = "dHl",
+            CallbackType = "shipment_event",
+            IdempotencyKey = "evt_dhl_case",
+            PayloadJson = """
+            {
+              "providerShipmentReference": "dhl-ref-case",
+              "carrierEventKey": "delivered",
+              "occurredAtUtc": "2026-05-02T10:00:00Z",
+              "providerStatus": "DELIVERED",
+              "trackingNumber": "TRK-321",
+              "labelUrl": "https://example.test/label2.png"
+            }
+            """,
+            Status = "Pending"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var localizer = new Mock<IStringLocalizer<ValidationResource>>();
+        localizer.Setup(x => x[It.IsAny<string>()]).Returns((string key) => new LocalizedString(key, key));
+        var validator = new ApplyShipmentCarrierEventValidator(localizer.Object);
+        var dhlHandler = new ApplyShipmentCarrierEventHandler(db, validator, localizer.Object);
+
+        var serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IAppDbContext))).Returns(db);
+        serviceProvider.Setup(x => x.GetService(typeof(ApplyShipmentCarrierEventHandler))).Returns(dhlHandler);
+
+        var scope = new Mock<IServiceScope>();
+        scope.Setup(x => x.ServiceProvider).Returns(serviceProvider.Object);
+
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+
+        var service = new ProviderCallbackBackgroundService(
+            scopeFactory.Object,
+            Options.Create(new ProviderCallbackWorkerOptions
+            {
+                Enabled = true,
+                PollIntervalSeconds = 5,
+                BatchSize = 5,
+                MaxAttempts = 1
+            }),
+            new FixedClock(DateTime.UtcNow),
+            new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        var item = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(x => x.Id == db.Set<ProviderCallbackInboxMessage>().Single(y => y.IdempotencyKey == "evt_dhl_case").Id, TestContext.Current.CancellationToken);
+
+        item.Status.Should().Be("Processed");
+        item.AttemptCount.Should().Be(1);
+        item.ProcessedAtUtc.Should().NotBeNull();
+        item.FailureReason.Should().BeNullOrEmpty();
+
+        var updatedShipment = await db.Set<Darwin.Domain.Entities.Orders.Shipment>()
+            .SingleAsync(x => x.Id == shipment.Id, TestContext.Current.CancellationToken);
+        updatedShipment.Status.Should().Be(ShipmentStatus.Delivered);
+        updatedShipment.LastCarrierEventKey.Should().Be("delivered");
+        updatedShipment.TrackingNumber.Should().Be("TRK-321");
+        updatedShipment.LabelUrl.Should().Be("https://example.test/label2.png");
     }
 
     [Fact]
@@ -8550,3 +9299,4 @@ public sealed class ProviderCallbackBackgroundServiceTests
         }
     }
 }
+
