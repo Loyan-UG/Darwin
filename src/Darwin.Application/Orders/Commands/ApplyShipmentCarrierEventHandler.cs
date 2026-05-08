@@ -28,11 +28,14 @@ public sealed class ApplyShipmentCarrierEventHandler
     {
         await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
 
+        var normalizedCarrier = dto.Carrier.Trim();
+        var normalizedReference = dto.ProviderShipmentReference.Trim();
+
         var shipment = await _db.Set<Shipment>()
             .FirstOrDefaultAsync(
-                x => x.ProviderShipmentReference == dto.ProviderShipmentReference &&
+                x => x.ProviderShipmentReference == normalizedReference &&
                      !x.IsDeleted &&
-                     x.Carrier == dto.Carrier,
+                     x.Carrier == normalizedCarrier,
                 ct)
             .ConfigureAwait(false);
 
@@ -41,8 +44,6 @@ public sealed class ApplyShipmentCarrierEventHandler
             throw new ValidationException(_localizer["ShipmentNotFoundForCarrierCallback"]);
         }
 
-        var normalizedCarrier = dto.Carrier.Trim();
-        var normalizedReference = dto.ProviderShipmentReference.Trim();
         var normalizedEventKey = dto.CarrierEventKey.Trim();
         var normalizedProviderStatus = string.IsNullOrWhiteSpace(dto.ProviderStatus) ? null : dto.ProviderStatus.Trim();
         var normalizedExceptionCode = string.IsNullOrWhiteSpace(dto.ExceptionCode) ? null : dto.ExceptionCode.Trim();

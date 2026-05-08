@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,7 +25,7 @@ namespace Darwin.Tests.Unit.CMS;
 /// </summary>
 public sealed class CmsPageHandlerTests
 {
-    // ─── Shared helpers ──────────────────────────────────────────────────────
+    // â”€â”€â”€ Shared helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static IStringLocalizer<ValidationResource> CreateLocalizer()
     {
@@ -52,13 +52,13 @@ public sealed class CmsPageHandlerTests
         }
     };
 
-    // ─── CreatePageHandler ────────────────────────────────────────────────────
+    // â”€â”€â”€ CreatePageHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task CreatePage_Should_Persist_Page_With_Translations()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageCreateDtoValidator();
+        var validator = new PageCreateDtoValidator(CreateLocalizer());
         var handler = new CreatePageHandler(db, validator);
 
         var id = await handler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
@@ -74,7 +74,7 @@ public sealed class CmsPageHandlerTests
     public async Task CreatePage_Should_Sanitize_Content_Html()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageCreateDtoValidator();
+        var validator = new PageCreateDtoValidator(CreateLocalizer());
         var handler = new CreatePageHandler(db, validator);
 
         var dto = ValidCreateDto();
@@ -91,7 +91,7 @@ public sealed class CmsPageHandlerTests
     public async Task CreatePage_Should_Persist_Multiple_Translations()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageCreateDtoValidator();
+        var validator = new PageCreateDtoValidator(CreateLocalizer());
         var handler = new CreatePageHandler(db, validator);
 
         var dto = new PageCreateDto
@@ -115,7 +115,7 @@ public sealed class CmsPageHandlerTests
     public async Task CreatePage_Should_Persist_PublishWindow_When_Provided()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageCreateDtoValidator();
+        var validator = new PageCreateDtoValidator(CreateLocalizer());
         var handler = new CreatePageHandler(db, validator);
 
         var start = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -135,7 +135,7 @@ public sealed class CmsPageHandlerTests
     public async Task CreatePage_Should_Throw_When_Translations_Empty()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageCreateDtoValidator();
+        var validator = new PageCreateDtoValidator(CreateLocalizer());
         var handler = new CreatePageHandler(db, validator);
 
         var dto = new PageCreateDto { Translations = new List<PageTranslationDto>() };
@@ -149,7 +149,7 @@ public sealed class CmsPageHandlerTests
     public async Task CreatePage_Should_Throw_When_Slug_Empty()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageCreateDtoValidator();
+        var validator = new PageCreateDtoValidator(CreateLocalizer());
         var handler = new CreatePageHandler(db, validator);
 
         var dto = ValidCreateDto();
@@ -164,7 +164,7 @@ public sealed class CmsPageHandlerTests
     public async Task CreatePage_Should_Throw_When_PublishEnd_Before_Start()
     {
         var db = TestDbFactory.Create();
-        var validator = new PageCreateDtoValidator();
+        var validator = new PageCreateDtoValidator(CreateLocalizer());
         var handler = new CreatePageHandler(db, validator);
 
         var dto = ValidCreateDto();
@@ -176,13 +176,13 @@ public sealed class CmsPageHandlerTests
         await act.Should().ThrowAsync<ValidationException>("end before start should be invalid");
     }
 
-    // ─── UpdatePageHandler ────────────────────────────────────────────────────
+    // â”€â”€â”€ UpdatePageHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task UpdatePage_Should_Persist_Changed_Status_And_Translations()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -235,7 +235,7 @@ public sealed class CmsPageHandlerTests
     public async Task UpdatePage_Should_Throw_On_Concurrency_Conflict()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -260,7 +260,7 @@ public sealed class CmsPageHandlerTests
     public async Task UpdatePage_Should_Sanitize_Content_Html_On_Update()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -288,13 +288,13 @@ public sealed class CmsPageHandlerTests
         updated.Translations[0].ContentHtml.Should().Contain("<p>");
     }
 
-    // ─── SoftDeletePageHandler ────────────────────────────────────────────────
+    // â”€â”€â”€ SoftDeletePageHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task SoftDeletePage_Should_Set_IsDeleted_Flag()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -326,7 +326,7 @@ public sealed class CmsPageHandlerTests
     public async Task SoftDeletePage_Should_Fail_On_Concurrency_Conflict()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -340,7 +340,7 @@ public sealed class CmsPageHandlerTests
     public async Task SoftDeletePage_Should_Succeed_When_RowVersion_Matches()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -357,13 +357,13 @@ public sealed class CmsPageHandlerTests
         page!.IsDeleted.Should().BeTrue();
     }
 
-    // ─── GetPageForEditHandler ────────────────────────────────────────────────
+    // â”€â”€â”€ GetPageForEditHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task GetPageForEdit_Should_Return_Dto_With_Translations()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -392,7 +392,7 @@ public sealed class CmsPageHandlerTests
     public async Task GetPageForEdit_Should_Include_RowVersion()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -402,7 +402,7 @@ public sealed class CmsPageHandlerTests
         dto!.RowVersion.Should().NotBeNull("RowVersion is needed for optimistic concurrency");
     }
 
-    // ─── GetPagesPageHandler ──────────────────────────────────────────────────
+    // â”€â”€â”€ GetPagesPageHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task GetPagesPage_Should_Return_Empty_When_No_Pages()
@@ -420,7 +420,7 @@ public sealed class CmsPageHandlerTests
     public async Task GetPagesPage_Should_Return_All_Pages_Without_Filter()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
 
         await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
@@ -444,7 +444,7 @@ public sealed class CmsPageHandlerTests
     public async Task GetPagesPage_Should_Filter_By_Status_Draft()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
 
         await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
@@ -468,7 +468,7 @@ public sealed class CmsPageHandlerTests
     public async Task GetPagesPage_Should_Apply_Search_By_Title()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
 
         await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
@@ -491,7 +491,7 @@ public sealed class CmsPageHandlerTests
     public async Task GetPagesPage_Should_Respect_Pagination()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
 
         for (var i = 1; i <= 5; i++)
@@ -516,7 +516,7 @@ public sealed class CmsPageHandlerTests
     public async Task GetPagesPage_Should_Clamp_Invalid_Page_And_PageSize()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
         await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
 
@@ -531,7 +531,7 @@ public sealed class CmsPageHandlerTests
     public async Task GetPagesPage_Should_Filter_By_Status_Published()
     {
         var db = TestDbFactory.Create();
-        var createValidator = new PageCreateDtoValidator();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
         var createHandler = new CreatePageHandler(db, createValidator);
 
         await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken); // Draft
@@ -551,3 +551,4 @@ public sealed class CmsPageHandlerTests
         items.Single().Title.Should().Be("Published");
     }
 }
+
