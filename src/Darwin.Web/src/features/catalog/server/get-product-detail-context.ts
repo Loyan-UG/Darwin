@@ -26,7 +26,7 @@ import {
   productDetailRelatedObservationContext,
 } from "@/lib/route-observation-context";
 
-type ProductDetailReviewWindow = {
+type ProductDetailRecommendationWindow = {
   category?: string;
   visibleQuery?: string;
   visibleState?: string;
@@ -35,28 +35,30 @@ type ProductDetailReviewWindow = {
   savingsBand?: string;
 };
 
-type ProductDetailSupportWorkflowSource = {
+type ProductDetailContextFootprintSource = {
   relatedProductsResult?: { status: string } | null;
   relatedProducts: Array<unknown>;
-  reviewProductsResult?: { status: string } | null;
-  reviewProducts: Array<unknown>;
+  recommendedProductsResult?: { status: string } | null;
+  recommendedProducts: Array<unknown>;
 };
 
-function normalizeReviewWindow(reviewWindow?: ProductDetailReviewWindow) {
+function normalizeRecommendationWindow(
+  recommendationWindow?: ProductDetailRecommendationWindow,
+) {
   return {
-    category: reviewWindow?.category?.trim() || undefined,
-    visibleQuery: reviewWindow?.visibleQuery?.trim() || undefined,
-    visibleState: readCatalogVisibleState(reviewWindow?.visibleState),
-    visibleSort: readCatalogVisibleSort(reviewWindow?.visibleSort),
-    mediaState: readCatalogMediaState(reviewWindow?.mediaState),
-    savingsBand: readCatalogSavingsBand(reviewWindow?.savingsBand),
+    category: recommendationWindow?.category?.trim() || undefined,
+    visibleQuery: recommendationWindow?.visibleQuery?.trim() || undefined,
+    visibleState: readCatalogVisibleState(recommendationWindow?.visibleState),
+    visibleSort: readCatalogVisibleSort(recommendationWindow?.visibleSort),
+    mediaState: readCatalogMediaState(recommendationWindow?.mediaState),
+    savingsBand: readCatalogSavingsBand(recommendationWindow?.savingsBand),
   };
 }
 
-export function summarizeProductDetailSupportWorkflow(
-  result: ProductDetailSupportWorkflowSource,
+export function summarizeProductDetailContextFootprint(
+  result: ProductDetailContextFootprintSource,
 ) {
-  return `related:${result.relatedProductsResult?.status ?? "not-requested"}:${result.relatedProducts.length}|review:${result.reviewProductsResult?.status ?? "not-requested"}:${result.reviewProducts.length}`;
+  return `related:${result.relatedProductsResult?.status ?? "not-requested"}:${result.relatedProducts.length}|recommended:${result.recommendedProductsResult?.status ?? "not-requested"}:${result.recommendedProducts.length}`;
 }
 
 const loadProductDetailCoreContext = createCachedObservedLoader({
@@ -102,56 +104,59 @@ const getCachedProductDetailContext = createCachedObservedLoader({
   normalizeArgs: (
     culture: string,
     slug: string,
-    reviewWindow?: ProductDetailReviewWindow,
-  ): [string, string, ProductDetailReviewWindow] => [
+    recommendationWindow?: ProductDetailRecommendationWindow,
+  ): [string, string, ProductDetailRecommendationWindow] => [
     culture,
     slug,
-    normalizeReviewWindow(reviewWindow),
+    normalizeRecommendationWindow(recommendationWindow),
   ],
   getContext: (
     culture: string,
     slug: string,
-    reviewWindow?: ProductDetailReviewWindow,
+    recommendationWindow?: ProductDetailRecommendationWindow,
   ) => {
-    const normalizedReviewWindow = normalizeReviewWindow(reviewWindow);
+    const normalizedRecommendationWindow =
+      normalizeRecommendationWindow(recommendationWindow);
 
     return {
       ...productDetailObservationContext(culture, slug),
-      categorySlug: normalizedReviewWindow.category ?? null,
-      visibleQuery: normalizedReviewWindow.visibleQuery ?? null,
+      categorySlug: normalizedRecommendationWindow.category ?? null,
+      visibleQuery: normalizedRecommendationWindow.visibleQuery ?? null,
       visibleState:
-        normalizedReviewWindow.visibleState !== "all"
-          ? normalizedReviewWindow.visibleState
+        normalizedRecommendationWindow.visibleState !== "all"
+          ? normalizedRecommendationWindow.visibleState
           : null,
       visibleSort:
-        normalizedReviewWindow.visibleSort !== "featured"
-          ? normalizedReviewWindow.visibleSort
+        normalizedRecommendationWindow.visibleSort !== "featured"
+          ? normalizedRecommendationWindow.visibleSort
           : null,
       mediaState:
-        normalizedReviewWindow.mediaState !== "all"
-          ? normalizedReviewWindow.mediaState
+        normalizedRecommendationWindow.mediaState !== "all"
+          ? normalizedRecommendationWindow.mediaState
           : null,
       savingsBand:
-        normalizedReviewWindow.savingsBand !== "all"
-          ? normalizedReviewWindow.savingsBand
+        normalizedRecommendationWindow.savingsBand !== "all"
+          ? normalizedRecommendationWindow.savingsBand
           : null,
     };
   },
   getSuccessContext: (result) => ({
     ...summarizeCatalogDetailCoreHealth(result),
-    productDetailSupportWorkflowFootprint:
-      summarizeProductDetailSupportWorkflow(result),
+    productDetailContextFootprint:
+      summarizeProductDetailContextFootprint(result),
     relatedStatus: result.relatedProductsResult?.status ?? "not-requested",
     relatedCount: result.relatedProducts.length,
-    reviewStatus: result.reviewProductsResult?.status ?? "not-requested",
-    reviewCount: result.reviewProducts.length,
+    recommendedStatus:
+      result.recommendedProductsResult?.status ?? "not-requested",
+    recommendedCount: result.recommendedProducts.length,
   }),
   load: async (
     culture: string,
     slug: string,
-    reviewWindow?: ProductDetailReviewWindow,
+    recommendationWindow?: ProductDetailRecommendationWindow,
   ) => {
-    const normalizedReviewWindow = normalizeReviewWindow(reviewWindow);
+    const normalizedRecommendationWindow =
+      normalizeRecommendationWindow(recommendationWindow);
     const { productResult, categoriesResult } = await loadProductDetailCoreContext(
       culture,
       slug,
@@ -164,27 +169,27 @@ const getCachedProductDetailContext = createCachedObservedLoader({
       activeCategory && productResult.data
         ? await loadProductDetailRelatedProducts(culture, slug, activeCategory.slug)
         : null;
-    const reviewCategorySlug =
-      normalizedReviewWindow.category ?? activeCategory?.slug;
-    const reviewProductsResult =
-      productResult.data && reviewCategorySlug
+    const recommendedCategorySlug =
+      normalizedRecommendationWindow.category ?? activeCategory?.slug;
+    const recommendedProductsResult =
+      productResult.data && recommendedCategorySlug
         ? await getCatalogBrowseSet(
             culture,
-            reviewCategorySlug,
-            normalizedReviewWindow.visibleQuery,
+            recommendedCategorySlug,
+            normalizedRecommendationWindow.visibleQuery,
           )
         : null;
-    const reviewProducts =
-      reviewProductsResult?.status === "ok" && reviewProductsResult.data
+    const recommendedProducts =
+      recommendedProductsResult?.status === "ok" && recommendedProductsResult.data
         ? sortCatalogVisibleProducts(
             filterCatalogVisibleProducts(
-              reviewProductsResult.data.items,
-              normalizedReviewWindow.visibleState,
+              recommendedProductsResult.data.items,
+              normalizedRecommendationWindow.visibleState,
               undefined,
-              normalizedReviewWindow.mediaState,
-              normalizedReviewWindow.savingsBand,
+              normalizedRecommendationWindow.mediaState,
+              normalizedRecommendationWindow.savingsBand,
             ),
-            normalizedReviewWindow.visibleSort,
+            normalizedRecommendationWindow.visibleSort,
           ).filter((product) => product.slug !== productResult.data?.slug)
         : [];
     const relatedProducts =
@@ -198,8 +203,8 @@ const getCachedProductDetailContext = createCachedObservedLoader({
       activeCategory,
       relatedProductsResult,
       relatedProducts,
-      reviewProductsResult,
-      reviewProducts,
+      recommendedProductsResult,
+      recommendedProducts,
     };
   },
 });
@@ -207,12 +212,12 @@ const getCachedProductDetailContext = createCachedObservedLoader({
 export async function getProductDetailContext(
   culture: string,
   slug: string,
-  reviewWindow?: ProductDetailReviewWindow,
+  recommendationWindow?: ProductDetailRecommendationWindow,
 ) {
   return getCachedProductDetailContext(
     culture,
     slug,
-    normalizeReviewWindow(reviewWindow),
+    normalizeRecommendationWindow(recommendationWindow),
   );
 }
 

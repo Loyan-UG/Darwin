@@ -1,26 +1,18 @@
 import Link from "next/link";
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
-import { PublicAuthCompositionWindow } from "@/components/account/public-auth-composition-window";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
-import { PublicAuthContinuation } from "@/components/account/public-auth-continuation";
-import type {
-  PublicCategorySummary,
-  PublicProductSummary,
-} from "@/features/catalog/types";
-import type { PublicCartSummary } from "@/features/cart/types";
-import type { PublicPageSummary } from "@/features/cms/types";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type { PublicCartSummary } from "@/features/cart/types";
 import {
   requestPasswordResetAction,
   resetPasswordAction,
 } from "@/features/account/actions";
-import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 import {
-  formatResource,
   getMemberResource,
   matchesLocalizedQueryMessageKey,
   resolveLocalizedQueryMessage,
 } from "@/localization";
+import { buildLocalizedAuthHref } from "@/lib/locale-routing";
 
 type PasswordPageProps = {
   culture: string;
@@ -29,14 +21,7 @@ type PasswordPageProps = {
   passwordStatus?: string;
   passwordError?: string;
   returnPath?: string;
-  cmsPages: PublicPageSummary[];
-  cmsPagesStatus: string;
-  categories: PublicCategorySummary[];
-  categoriesStatus: string;
-  products: PublicProductSummary[];
-  productsStatus: string;
   storefrontCart: PublicCartSummary | null;
-  storefrontCartStatus: string;
 };
 
 function getPasswordMessage(status: string | undefined, culture: string) {
@@ -59,14 +44,7 @@ export function PasswordPage({
   passwordStatus,
   passwordError,
   returnPath,
-  cmsPages,
-  cmsPagesStatus,
-  categories,
-  categoriesStatus,
-  products,
-  productsStatus,
   storefrontCart,
-  storefrontCartStatus,
 }: PasswordPageProps) {
   const copy = getMemberResource(culture);
   const statusMessage = getPasswordMessage(passwordStatus, culture);
@@ -75,9 +53,9 @@ export function PasswordPage({
   const activationHref = buildLocalizedAuthHref("/account/activation", returnPath, culture);
 
   return (
-    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-12 sm:px-6 lg:px-8">
+    <section className="mx-auto flex w-full max-w-[1180px] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
-        <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+        <header className="rounded-[1rem] border border-[#dbe7c7] bg-[linear-gradient(135deg,#f5ffe8_0%,#ffffff_48%,#fff1d0_100%)] px-6 py-8 shadow-[0_28px_70px_-34px_rgba(58,92,35,0.38)] sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-brand)]">
             {copy.passwordRecoveryEyebrow}
           </p>
@@ -87,25 +65,22 @@ export function PasswordPage({
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
             {copy.passwordRecoveryDescription}
           </p>
-        </div>
+        </header>
 
-        {statusMessage && (
+        {statusMessage ? (
           <StatusBanner title={copy.passwordFlowUpdatedTitle} message={statusMessage} />
-        )}
+        ) : null}
 
-        {resolvedPasswordError && (
+        {resolvedPasswordError ? (
           <StatusBanner
             tone="warning"
             title={copy.passwordFlowFailedTitle}
             message={resolvedPasswordError}
           />
-        )}
+        ) : null}
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <form
-            action={requestPasswordResetAction}
-            className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
-          >
+          <form action={requestPasswordResetAction} className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <input type="hidden" name="returnPath" value={returnPath || "/account"} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.requestResetEyebrow}
@@ -117,18 +92,12 @@ export function PasswordPage({
               {copy.emailLabel}
               <input name="email" type="email" required autoComplete="email" inputMode="email" defaultValue={email} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
             </label>
-            <button
-              type="submit"
-              className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-            >
+            <button type="submit" className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
               {copy.requestResetEmailCta}
             </button>
           </form>
 
-          <form
-            action={resetPasswordAction}
-            className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8"
-          >
+          <form action={resetPasswordAction} className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8">
             <input type="hidden" name="returnPath" value={returnPath || "/account"} />
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
               {copy.completeResetEyebrow}
@@ -150,93 +119,35 @@ export function PasswordPage({
                 <input name="newPassword" type="password" required minLength={8} autoComplete="new-password" className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel-strong)] px-4 py-3 text-sm font-normal outline-none" />
               </label>
             </div>
-            <button
-              type="submit"
-              className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-            >
+            <button type="submit" className="mt-6 inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
               {copy.resetPasswordCta}
             </button>
           </form>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={signInHref}
-            className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]"
-          >
-            {copy.signIn}
-          </Link>
-          <Link
-            href={activationHref}
-            className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
-          >
-            {copy.activationFlowCta}
-          </Link>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="flex flex-wrap gap-3">
+            <Link href={signInHref} className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-[var(--color-brand-contrast)] transition hover:bg-[var(--color-brand-strong)]">
+              {copy.signIn}
+            </Link>
+            <Link href={activationHref} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-5 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
+              {copy.activationFlowCta}
+            </Link>
+          </div>
+          <aside className="flex flex-col gap-6">
+            <ActivationRecoveryPanel
+              culture={culture}
+              email={email}
+              returnPath={returnPath}
+              compact
+            />
+            <PublicAuthReturnSummary
+              culture={culture}
+              returnPath={returnPath}
+              storefrontCart={storefrontCart}
+            />
+          </aside>
         </div>
-
-        <ActivationRecoveryPanel
-          culture={culture}
-          email={email}
-          returnPath={returnPath}
-          compact
-        />
-
-        <PublicAuthReturnSummary
-          culture={culture}
-          returnPath={returnPath}
-          storefrontCart={storefrontCart}
-        />
-
-        <PublicAuthCompositionWindow
-          culture={culture}
-          routeCard={{
-            label: copy.publicAuthCompositionJourneyCurrentLabel,
-            title: copy.publicAuthCompositionJourneyPasswordTitle,
-            description: formatResource(copy.publicAuthCompositionJourneyPasswordDescription, {
-              returnPath: returnPath || "/account",
-            }),
-            href: "/account/password",
-            ctaLabel: copy.publicAuthCompositionJourneyCurrentCta,
-          }}
-          nextCard={{
-            label: copy.publicAuthCompositionJourneyNextLabel,
-            title: copy.publicAuthCompositionJourneySignInTitle,
-            description: copy.publicAuthCompositionJourneyPasswordNextDescription,
-            href: signInHref,
-            ctaLabel: copy.publicAuthCompositionJourneySignInCta,
-          }}
-          routeMapItems={[
-            {
-              label: copy.publicAuthCompositionRouteMapCurrentLabel,
-              title: copy.publicAuthCompositionRouteMapPasswordTitle,
-              description: copy.publicAuthCompositionRouteMapPasswordDescription,
-              href: "/account/password",
-              ctaLabel: copy.publicAuthCompositionRouteMapCurrentCta,
-            },
-            {
-              label: copy.publicAuthCompositionRouteMapNextLabel,
-              title: copy.publicAuthCompositionRouteMapSignInTitle,
-              description: copy.publicAuthCompositionRouteMapPasswordNextDescription,
-              href: signInHref,
-              ctaLabel: copy.publicAuthCompositionRouteMapSignInCta,
-            },
-          ]}
-          cmsPages={cmsPages}
-          categories={categories}
-          products={products}
-        />
-
-        <PublicAuthContinuation
-          culture={culture}
-          cmsPages={cmsPages}
-          cmsPagesStatus={cmsPagesStatus}
-          categories={categories}
-          categoriesStatus={categoriesStatus}
-          products={products}
-          productsStatus={productsStatus}
-          storefrontCart={storefrontCart}
-          storefrontCartStatus={storefrontCartStatus}
-        />
       </div>
     </section>
   );

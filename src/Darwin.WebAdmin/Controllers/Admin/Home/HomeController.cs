@@ -1,7 +1,5 @@
 using Darwin.Application.Billing.Queries;
 using Darwin.Application.Businesses.Queries;
-using Darwin.Application.Catalog.Queries;
-using Darwin.Application.CMS.Queries;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Queries;
 using Darwin.Application.Identity.Queries;
@@ -26,10 +24,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
     public sealed class HomeController : AdminBaseController
     {
         private readonly GetCrmSummaryHandler _getCrmSummary;
-        private readonly GetProductsPageHandler _getProductsPage;
-        private readonly GetPagesPageHandler _getPagesPage;
         private readonly GetOrdersPageHandler _getOrdersPage;
-        private readonly GetUsersPageHandler _getUsersPage;
         private readonly GetPaymentsPageHandler _getPaymentsPage;
         private readonly GetWarehousesPageHandler _getWarehousesPage;
         private readonly GetSuppliersPageHandler _getSuppliersPage;
@@ -48,10 +43,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
         /// </summary>
         public HomeController(
             GetCrmSummaryHandler getCrmSummary,
-            GetProductsPageHandler getProductsPage,
-            GetPagesPageHandler getPagesPage,
             GetOrdersPageHandler getOrdersPage,
-            GetUsersPageHandler getUsersPage,
             GetPaymentsPageHandler getPaymentsPage,
             GetWarehousesPageHandler getWarehousesPage,
             GetSuppliersPageHandler getSuppliersPage,
@@ -66,10 +58,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             ISiteSettingCache siteSettingCache)
         {
             _getCrmSummary = getCrmSummary ?? throw new ArgumentNullException(nameof(getCrmSummary));
-            _getProductsPage = getProductsPage ?? throw new ArgumentNullException(nameof(getProductsPage));
-            _getPagesPage = getPagesPage ?? throw new ArgumentNullException(nameof(getPagesPage));
             _getOrdersPage = getOrdersPage ?? throw new ArgumentNullException(nameof(getOrdersPage));
-            _getUsersPage = getUsersPage ?? throw new ArgumentNullException(nameof(getUsersPage));
             _getPaymentsPage = getPaymentsPage ?? throw new ArgumentNullException(nameof(getPaymentsPage));
             _getWarehousesPage = getWarehousesPage ?? throw new ArgumentNullException(nameof(getWarehousesPage));
             _getSuppliersPage = getSuppliersPage ?? throw new ArgumentNullException(nameof(getSuppliersPage));
@@ -94,10 +83,10 @@ namespace Darwin.WebAdmin.Controllers.Admin
 
             var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var crmSummary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
-            var products = await _getProductsPage.HandleAsync(page: 1, pageSize: 1, culture: siteSettings.DefaultCulture, ct).ConfigureAwait(false);
-            var pages = await _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: siteSettings.DefaultCulture, ct: ct).ConfigureAwait(false);
             var orders = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct).ConfigureAwait(false);
-            var users = await _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, filter: Darwin.Application.Identity.DTOs.UserQueueFilter.All, ct: ct).ConfigureAwait(false);
+            var openOrders = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, query: null, filter: Darwin.Application.Orders.DTOs.OrderQueueFilter.Open, ct: ct).ConfigureAwait(false);
+            var orderPaymentIssues = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, query: null, filter: Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues, ct: ct).ConfigureAwait(false);
+            var fulfillmentAttention = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, query: null, filter: Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention, ct: ct).ConfigureAwait(false);
             var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
             var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);
             var mobileDeviceOps = await _getMobileDeviceOpsSummary.HandleAsync(ct).ConfigureAwait(false);
@@ -121,19 +110,22 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 scanSessionCount = (await _getLoyaltyScanSessionsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, mode: null, status: null, ct).ConfigureAwait(false)).Total;
             }
 
+            var mappedBusinessSupport = MapBusinessSupportSummary(businessSupport);
+            var mappedCommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings);
+
             var vm = new AdminDashboardVm
             {
                 BusinessCount = businessOptions.Count,
                 BusinessOptions = businessOptions,
                 SelectedBusinessId = selectedBusinessId,
                 SelectedBusinessLabel = businessOptions.FirstOrDefault(x => x.Selected)?.Text ?? string.Empty,
-                ProductCount = products.Total,
-                PageCount = pages.Total,
                 OrderCount = orders.Total,
-                UserCount = users.Total,
+                OpenOrderCount = openOrders.Total,
+                OrderPaymentIssueCount = orderPaymentIssues.Total,
+                OrderFulfillmentAttentionCount = fulfillmentAttention.Total,
                 Crm = MapCrmSummary(crmSummary, siteSettings.DefaultCurrency),
-                BusinessSupport = MapBusinessSupportSummary(businessSupport),
-                CommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings),
+                BusinessSupport = mappedBusinessSupport,
+                CommunicationOps = mappedCommunicationOps,
                 PaymentCount = paymentCount,
                 WarehouseCount = warehouseCount,
                 SupplierCount = supplierCount,
@@ -145,6 +137,11 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 MobileStaleDeviceCount = mobileDeviceOps.StaleDevicesCount,
                 MobileMissingPushTokenCount = mobileDeviceOps.DevicesMissingPushTokenCount
             };
+
+            vm.Kpis = BuildKpis(vm);
+            vm.AttentionItems = BuildAttentionItems(vm);
+            vm.BusinessContext = BuildBusinessContext(vm);
+            vm.ModuleSummaries = BuildModuleSummaries(vm);
 
             return View(vm);
         }
@@ -282,6 +279,199 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 FailedPasswordResetCount = dto.FailedPasswordResetCount,
                 FailedAdminTestCount = dto.FailedAdminTestCount
             };
+        }
+
+        private static IReadOnlyList<DashboardKpiVm> BuildKpis(AdminDashboardVm vm)
+        {
+            var businessAttention = BusinessAttentionCount(vm.BusinessSupport);
+            var billingAttention = (vm.PaymentCount ?? 0) + vm.OrderPaymentIssueCount;
+            var communicationAttention = CommunicationAttentionCount(vm);
+            var mobileAttention = MobileAttentionCount(vm);
+
+            var kpis = new List<DashboardKpiVm>
+            {
+                CreateKpi("DashboardKpiBusinessesAttention", businessAttention, "Businesses", "SupportQueue", "BusinessSupportOpenQueueAction", businessAttention > 0 ? "Warning" : "Ready", businessAttention > 0 ? "text-bg-warning" : "text-bg-success"),
+                CreateKpi("DashboardKpiOrdersAttention", vm.OrderFulfillmentAttentionCount, "Orders", "Index", "DashboardOpenOrdersAction", vm.OrderFulfillmentAttentionCount > 0 ? "Warning" : "Ready", vm.OrderFulfillmentAttentionCount > 0 ? "text-bg-warning" : "text-bg-success"),
+                CreateKpi("DashboardKpiBillingAttention", billingAttention, "Billing", "Payments", "DashboardOpenPaymentsAction", billingAttention > 0 ? "Warning" : "Ready", billingAttention > 0 ? "text-bg-warning" : "text-bg-success"),
+                CreateKpi("DashboardKpiCommunicationAttention", communicationAttention, "BusinessCommunications", "Index", "OpenWorkspaceAction", communicationAttention > 0 ? "Warning" : "Ready", communicationAttention > 0 ? "text-bg-warning" : "text-bg-success"),
+                CreateKpi("DashboardKpiMobileAttention", mobileAttention, "MobileOperations", "Index", "OpenMobileOps", mobileAttention > 0 ? "Warning" : "Ready", mobileAttention > 0 ? "text-bg-warning" : "text-bg-success")
+            };
+
+            if (vm.SelectedBusinessId.HasValue)
+            {
+                var loyaltyAttention = vm.PendingRedemptionCount ?? 0;
+                kpis.Add(CreateKpi("DashboardKpiLoyaltyAttention", loyaltyAttention, "Loyalty", "Redemptions", "Redemptions", loyaltyAttention > 0 ? "Warning" : "Ready", loyaltyAttention > 0 ? "text-bg-warning" : "text-bg-success", new { businessId = vm.SelectedBusinessId }));
+            }
+
+            return kpis;
+        }
+
+        private static DashboardKpiVm CreateKpi(
+            string labelKey,
+            int count,
+            string controller,
+            string action,
+            string actionLabelKey,
+            string badgeKey,
+            string badgeCssClass,
+            object? routeValues = null)
+        {
+            return new DashboardKpiVm
+            {
+                LabelKey = labelKey,
+                Count = count,
+                Controller = controller,
+                Action = action,
+                ActionLabelKey = actionLabelKey,
+                BadgeKey = badgeKey,
+                BadgeCssClass = badgeCssClass,
+                RouteValues = routeValues
+            };
+        }
+
+        private static IReadOnlyList<DashboardAttentionItemVm> BuildAttentionItems(AdminDashboardVm vm)
+        {
+            var items = new List<DashboardAttentionItemVm>
+            {
+                CreateAttention("critical", "DashboardAttentionBusinessOnboarding", BusinessAttentionCount(vm.BusinessSupport), "BusinessesTitle", "Businesses", "SupportQueue", "BusinessSupportOpenQueueAction"),
+                CreateAttention("critical", "DashboardAttentionPaymentIssues", vm.OrderPaymentIssueCount, "Orders", "Orders", "Index", "DashboardOpenOrdersAction", new { filter = Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues }),
+                CreateAttention("warning", "DashboardAttentionFulfillment", vm.OrderFulfillmentAttentionCount, "Orders", "Orders", "Index", "DashboardOpenOrdersAction", new { filter = Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention }),
+                CreateAttention("warning", "DashboardAttentionBilling", vm.PaymentCount ?? 0, "Billing", "Billing", "Payments", "DashboardOpenPaymentsAction", vm.SelectedBusinessId.HasValue ? new { businessId = vm.SelectedBusinessId } : null),
+                CreateAttention("warning", "DashboardAttentionCommunication", CommunicationAttentionCount(vm), "Communications", "BusinessCommunications", "Index", "OpenWorkspaceAction"),
+                CreateAttention("warning", "DashboardAttentionMobile", MobileAttentionCount(vm), "MobileOperations", "MobileOperations", "Index", "OpenMobileOps"),
+                CreateAttention("info", "DashboardAttentionInventory", vm.PurchaseOrderCount ?? 0, "Inventory", "Inventory", "PurchaseOrders", "DashboardOpenPurchaseOrdersAction", vm.SelectedBusinessId.HasValue ? new { businessId = vm.SelectedBusinessId } : null),
+                CreateAttention("info", "DashboardAttentionLoyalty", vm.PendingRedemptionCount ?? 0, "Loyalty", "Loyalty", "Redemptions", "Redemptions", vm.SelectedBusinessId.HasValue ? new { businessId = vm.SelectedBusinessId } : null)
+            };
+
+            return items
+                .Where(item => item.Count > 0)
+                .OrderBy(item => item.Severity == "critical" ? 0 : item.Severity == "warning" ? 1 : 2)
+                .ThenByDescending(item => item.Count)
+                .Take(8)
+                .ToList();
+        }
+
+        private static DashboardAttentionItemVm CreateAttention(
+            string severity,
+            string titleKey,
+            int count,
+            string moduleKey,
+            string controller,
+            string action,
+            string actionLabelKey,
+            object? routeValues = null)
+        {
+            return new DashboardAttentionItemVm
+            {
+                Severity = severity,
+                TitleKey = titleKey,
+                Count = count,
+                ModuleKey = moduleKey,
+                Controller = controller,
+                Action = action,
+                ActionLabelKey = actionLabelKey,
+                RouteValues = routeValues
+            };
+        }
+
+        private static DashboardBusinessContextVm? BuildBusinessContext(AdminDashboardVm vm)
+        {
+            if (!vm.SelectedBusinessId.HasValue)
+            {
+                return null;
+            }
+
+            return new DashboardBusinessContextVm
+            {
+                BusinessName = vm.SelectedBusinessLabel,
+                Rows = new[]
+                {
+                    CreateModule("GoLiveReadiness", [Metric("NeedsAttention", BusinessAttentionCount(vm.BusinessSupport).ToString())], "MerchantReadinessTitle", "Businesses", "MerchantReadiness"),
+                    CreateModule("Billing", [Metric("DashboardPaymentsLabel", (vm.PaymentCount ?? 0).ToString()), Metric("DashboardKpiBillingAttention", ((vm.PaymentCount ?? 0) + vm.OrderPaymentIssueCount).ToString())], "DashboardOpenPaymentsAction", "Billing", "Payments", new { businessId = vm.SelectedBusinessId }),
+                    CreateModule("Communications", [Metric("DashboardKpiCommunicationAttention", CommunicationAttentionCount(vm).ToString())], "OpenWorkspaceAction", "BusinessCommunications", "Index"),
+                    CreateModule("Inventory", [Metric("DashboardWarehousesLabel", (vm.WarehouseCount ?? 0).ToString()), Metric("DashboardPurchaseOrdersLabel", (vm.PurchaseOrderCount ?? 0).ToString())], "DashboardOpenInventoryAction", "Inventory", "Warehouses", new { businessId = vm.SelectedBusinessId }),
+                    CreateModule("Loyalty", [Metric("Accounts", (vm.LoyaltyAccountCount ?? 0).ToString()), Metric("PendingRedemptions", (vm.PendingRedemptionCount ?? 0).ToString())], "OpenLoyalty", "Loyalty", "Accounts", new { businessId = vm.SelectedBusinessId })
+                }
+            };
+        }
+
+        private static IReadOnlyList<DashboardModuleSummaryVm> BuildModuleSummaries(AdminDashboardVm vm)
+        {
+            return new[]
+            {
+                CreateModule("DashboardCrmTitle", [Metric("DashboardCustomersLabel", vm.Crm.CustomerCount.ToString()), Metric("DashboardLeadsLabel", vm.Crm.LeadCount.ToString()), Metric("DashboardOpenOpportunitiesLabel", vm.Crm.OpenOpportunityCount.ToString())], "DashboardOpenCrmAction", "Crm", "Index"),
+                CreateModule("Orders", [Metric("DashboardOrdersLabel", vm.OrderCount.ToString()), Metric("OpenQueue", vm.OpenOrderCount.ToString()), Metric("FulfillmentAttention", vm.OrderFulfillmentAttentionCount.ToString())], "DashboardOpenOrdersAction", "Orders", "Index"),
+                CreateModule("Inventory", [Metric("DashboardWarehousesLabel", (vm.WarehouseCount ?? 0).ToString()), Metric("DashboardSuppliersLabel", (vm.SupplierCount ?? 0).ToString()), Metric("DashboardPurchaseOrdersLabel", (vm.PurchaseOrderCount ?? 0).ToString())], "DashboardOpenInventoryAction", "Inventory", "Warehouses", vm.SelectedBusinessId.HasValue ? new { businessId = vm.SelectedBusinessId } : null),
+                CreateModule("Billing", [Metric("DashboardPaymentsLabel", (vm.PaymentCount ?? 0).ToString()), Metric("DashboardAttentionPaymentIssues", vm.OrderPaymentIssueCount.ToString())], "DashboardOpenPaymentsAction", "Billing", "Payments", vm.SelectedBusinessId.HasValue ? new { businessId = vm.SelectedBusinessId } : null),
+                CreateModule("Loyalty", [Metric("Accounts", (vm.LoyaltyAccountCount ?? 0).ToString()), Metric("PendingRedemptions", (vm.PendingRedemptionCount ?? 0).ToString()), Metric("RecentScanSessions", (vm.ScanSessionCount ?? 0).ToString())], "OpenLoyalty", "Loyalty", "Accounts", vm.SelectedBusinessId.HasValue ? new { businessId = vm.SelectedBusinessId } : null),
+                CreateModule("MobileOperations", [Metric("ActiveDevices", vm.MobileActiveDeviceCount.ToString()), Metric("MobileStaleDevices", vm.MobileStaleDeviceCount.ToString()), Metric("MobileMissingPushToken", vm.MobileMissingPushTokenCount.ToString())], "OpenMobileOps", "MobileOperations", "Index"),
+                CreateModule("CommunicationOpsTitle", [Metric("BusinessesRequiringEmailSetup", vm.CommunicationOps.BusinessesRequiringEmailSetupCount.ToString()), Metric("MissingSupportEmail", vm.CommunicationOps.MissingSupportEmailCount.ToString()), Metric("FailedEmails", CommunicationFailureCount(vm.CommunicationOps).ToString())], "OpenWorkspaceAction", "BusinessCommunications", "Index")
+            };
+        }
+
+        private static DashboardModuleSummaryVm CreateModule(
+            string titleKey,
+            IReadOnlyList<DashboardMetricVm> metrics,
+            string primaryActionLabelKey,
+            string primaryController,
+            string primaryAction,
+            object? primaryRouteValues = null)
+        {
+            return new DashboardModuleSummaryVm
+            {
+                TitleKey = titleKey,
+                Metrics = metrics,
+                PrimaryActionLabelKey = primaryActionLabelKey,
+                PrimaryController = primaryController,
+                PrimaryAction = primaryAction,
+                PrimaryRouteValues = primaryRouteValues
+            };
+        }
+
+        private static DashboardMetricVm Metric(string labelKey, string value)
+        {
+            return new DashboardMetricVm
+            {
+                LabelKey = labelKey,
+                Value = value
+            };
+        }
+
+        private static int BusinessAttentionCount(BusinessSupportSummaryVm summary)
+        {
+            return summary.AttentionBusinessCount
+                + summary.PendingApprovalBusinessCount
+                + summary.SuspendedBusinessCount
+                + summary.MissingOwnerBusinessCount
+                + summary.PendingInvitationCount
+                + summary.PendingActivationMemberCount
+                + summary.LockedMemberCount;
+        }
+
+        private static int CommunicationAttentionCount(AdminDashboardVm vm)
+        {
+            var missingRuntimeDependencyCount = (vm.CommunicationOps.EmailTransportConfigured ? 0 : 1)
+                + (vm.CommunicationOps.AdminAlertRoutingConfigured ? 0 : 1)
+                + (vm.CommunicationOps.TransactionalEmailBusinessesCount > 0 ? 0 : 1);
+
+            return missingRuntimeDependencyCount
+                + vm.CommunicationOps.BusinessesRequiringEmailSetupCount
+                + vm.CommunicationOps.MissingSupportEmailCount
+                + vm.CommunicationOps.MissingSenderIdentityCount
+                + CommunicationFailureCount(vm.CommunicationOps);
+        }
+
+        private static int CommunicationFailureCount(BusinessCommunicationOpsSummaryVm summary)
+        {
+            return summary.FailedInvitationCount
+                + summary.FailedActivationCount
+                + summary.FailedPasswordResetCount
+                + summary.FailedAdminTestCount;
+        }
+
+        private static int MobileAttentionCount(AdminDashboardVm vm)
+        {
+            return vm.MobileStaleDeviceCount + vm.MobileMissingPushTokenCount;
         }
     }
 }

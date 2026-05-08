@@ -18,14 +18,14 @@ import {
   summarizeCatalogRouteHealth,
 } from "@/lib/route-health";
 
-type CatalogIndexSupportWorkflowSource = {
+type CatalogIndexContextFootprintSource = {
   cmsPagesResult?: { status: string; data?: { items?: Array<unknown> } | null } | null;
   productsResult?: { status: string; data?: { items?: Array<unknown> } | null } | null;
   cartSummary?: { status: string } | null;
 };
 
-export function summarizeCatalogIndexSupportWorkflow(
-  result: CatalogIndexSupportWorkflowSource,
+export function summarizeCatalogIndexContextFootprint(
+  result: CatalogIndexContextFootprintSource,
 ) {
   return `cms:${result.cmsPagesResult?.status ?? "unknown"}:${result.cmsPagesResult?.data?.items?.length ?? 0}|products:${result.productsResult?.status ?? "unknown"}:${result.productsResult?.data?.items?.length ?? 0}|cart:${result.cartSummary?.status ?? "missing"}`;
 }
@@ -125,8 +125,8 @@ const getCachedCatalogIndexPageContext = createPublicDiscoveryPageLoader({
   },
   getSuccessContext: (result) => ({
     ...summarizeCatalogIndexPageHealth(result),
-    catalogIndexSupportWorkflowFootprint:
-      summarizeCatalogIndexSupportWorkflow({
+    catalogIndexContextFootprint:
+      summarizeCatalogIndexContextFootprint({
         cmsPagesResult: result.storefrontContext?.cmsPagesResult,
         productsResult: result.storefrontContext?.productsResult,
         cartSummary: {

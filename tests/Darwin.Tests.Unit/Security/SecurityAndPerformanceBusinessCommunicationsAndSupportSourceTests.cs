@@ -788,7 +788,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
 
         controllerSource.Should().Contain("public async Task<IActionResult> SendTestEmail(CancellationToken ct = default)");
         controllerSource.Should().Contain("var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);");
-        controllerSource.Should().Contain("var emailTransportConfigured = settings.SmtpEnabled &&");
+        controllerSource.Should().Contain("var emailTransportConfigured = IsEmailTransportConfigured(settings);");
         controllerSource.Should().Contain("SetErrorMessage(\"EmailTransportNotReadyForCommunicationTest\")");
         controllerSource.Should().Contain("SetErrorMessage(\"CommunicationTestInboxNotConfigured\")");
         controllerSource.Should().Contain("BuildCommunicationTestPlaceholders(");
@@ -885,7 +885,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         controllerSource.Should().Contain(".FirstOrDefaultAsync(ct)");
         controllerSource.Should().Contain("if (!latestAttemptAtUtc.HasValue)");
         controllerSource.Should().Contain("var cooldownUntilUtc = latestAttemptAtUtc.Value.AddMinutes(5);");
-        controllerSource.Should().Contain("return cooldownUntilUtc > DateTime.UtcNow ? cooldownUntilUtc : null;");
+        controllerSource.Should().Contain("return cooldownUntilUtc > nowUtc ? cooldownUntilUtc : null;");
     }
 
 
@@ -896,10 +896,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
 
         controllerSource.Should().Contain("private async Task<bool> CanSendTestEmailAsync(CancellationToken ct)");
         controllerSource.Should().Contain("var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);");
-        controllerSource.Should().Contain("return settings.SmtpEnabled &&");
-        controllerSource.Should().Contain("!string.IsNullOrWhiteSpace(settings.SmtpHost) &&");
-        controllerSource.Should().Contain("settings.SmtpPort.HasValue &&");
-        controllerSource.Should().Contain("!string.IsNullOrWhiteSpace(settings.SmtpFromAddress) &&");
+        controllerSource.Should().Contain("return IsEmailTransportConfigured(settings) &&");
         controllerSource.Should().Contain("!string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail);");
         controllerSource.Should().Contain("CanSendTestEmail = await CanSendTestEmailAsync(ct).ConfigureAwait(false),");
     }
@@ -1966,28 +1963,19 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Home", "_BusinessSupportQueueCard.cshtml"));
 
-        source.Should().Contain("string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch");
-        source.Should().Contain("BusinessMemberSupportFilter.Attention => T.T(\"NeedsAttention\")");
-        source.Should().Contain("BusinessMemberSupportFilter.PendingActivation => T.T(\"PendingActivation\")");
-        source.Should().Contain("string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
-        source.Should().Contain("BusinessInvitationQueueFilter.Open => T.T(\"BusinessSupportOpenInvitationsLabel\")");
-        source.Should().Contain("string InvitationDebtSummaryLabel(int pendingInvitationCount) => pendingInvitationCount > 0");
-        source.Should().Contain("int InvitationDebtCount(int pendingInvitationCount, int openInvitationCount) => pendingInvitationCount > 0");
-        source.Should().Contain("string BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch");
-        source.Should().Contain("BusinessOperationalStatus.PendingApproval => T.T(\"PendingApproval\")");
-        source.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)");
-        source.Should().Contain("@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)");
-        source.Should().Contain("T.T(\"BusinessSupportPendingInvitationsLabel\")");
-        source.Should().Contain("InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open)");
-        source.Should().Contain("@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)");
-        source.Should().Contain("@InvitationDebtCount(Model.BusinessSupport.PendingInvitationCount, Model.BusinessSupport.OpenInvitationCount)");
-        source.Should().Contain("@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)");
-        source.Should().Contain("@T.T(\"GoLiveReadiness\")");
-        source.Should().Contain("@T.T(\"NeedsAttention\")");
+        source.Should().Contain("var invitationAttentionCount = Model.BusinessSupport.PendingInvitationCount + Model.BusinessSupport.OpenInvitationCount;");
+        source.Should().Contain("var memberAttentionCount = Model.BusinessSupport.PendingActivationMemberCount + Model.BusinessSupport.LockedMemberCount;");
+        source.Should().Contain("var businessAttentionCount = Model.BusinessSupport.AttentionBusinessCount");
+        source.Should().Contain("var totalAttentionCount = businessAttentionCount + invitationAttentionCount + memberAttentionCount;");
+        source.Should().Contain("@T.T(\"BusinessesTitle\")");
+        source.Should().Contain("@T.T(\"Invitations\")");
+        source.Should().Contain("@T.T(\"Members\")");
+        source.Should().Contain("@T.T(\"NeedsAttention\"): <strong>@totalAttentionCount</strong>");
         source.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
-        source.Should().Contain("@T.T(\"Setup\")");
-        source.Should().NotContain("<div class=\"text-muted small\">@T.T(\"OpenInvitations\")</div>");
-        source.Should().NotContain("<div class=\"text-muted small\">@T.T(\"PendingActivation\")</div>");
+        source.Should().Contain("@T.T(\"BusinessSupportOpenQueueAction\")");
+        source.Should().NotContain("string MemberSupportLabel(");
+        source.Should().NotContain("string InvitationQueueLabel(");
+        source.Should().NotContain("string BusinessOperationalQueueLabel(");
     }
 
 
@@ -1996,51 +1984,15 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Home", "_BusinessSupportQueueCard.cshtml"));
 
-        source.Should().Contain("var communicationRuntimeExecutionAttentionCount = Model.BusinessSupport.PendingActivationMemberCount");
-        source.Should().Contain("Model.BusinessSupport.FailedInvitationCount");
-        source.Should().Contain("Model.BusinessSupport.FailedActivationCount");
-        source.Should().Contain("Model.BusinessSupport.FailedPasswordResetCount");
-        source.Should().Contain("Model.BusinessSupport.FailedAdminTestCount");
         source.Should().Contain("string BusinessSupportQueueFragmentUrl(Guid? businessId) => Url.Action(\"BusinessSupportQueueFragment\", \"Home\", new { businessId }) ?? string.Empty;");
         source.Should().Contain("hx-get=\"@BusinessSupportQueueFragmentUrl(Model.SelectedBusinessId)\"");
         source.Should().Contain("hx-target=\"#business-support-queue-card\"");
         source.Should().Contain("@T.T(\"BusinessSupportOpenQueueAction\")");
-        source.Should().Contain("@T.T(\"BusinessSupportSuspendedBusinessesLabel\")");
-        source.Should().Contain("@T.T(\"BusinessSupportMissingOwnerBusinessesLabel\")");
-        source.Should().Contain("@T.T(\"BusinessSupportLockedMembersLabel\")");
-        source.Should().Contain("@if (Model.SelectedBusinessId.HasValue)");
-        source.Should().Contain("@T.T(\"BusinessSupportCurrentSnapshotLabel\")");
-        source.Should().Contain("@Model.SelectedBusinessLabel");
-        source.Should().Contain("string InvitationDebtSummaryLabel(int pendingInvitationCount) => pendingInvitationCount > 0");
-        source.Should().Contain("int InvitationDebtCount(int pendingInvitationCount, int openInvitationCount) => pendingInvitationCount > 0");
-        source.Should().Contain("string InvitationActionLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch");
-        source.Should().Contain("T.T(\"BusinessSupportOpenInvitationsLabel\")");
-        source.Should().Contain("T.T(\"BusinessSupportPendingInvitationsLabel\")");
-        source.Should().Contain("@T.T(\"BusinessSupportPendingActivationLabel\")");
-        source.Should().Contain("@T.T(\"BusinessSupportLockedMembersLabel\")");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessPendingInvitationCount > 0");
-        source.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation\"");
-        source.Should().Contain("@T.T(\"BusinessSupportOpenPendingActivationAction\")");
-        source.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked\"");
-        source.Should().Contain("@T.T(\"BusinessSupportOpenLockedMembersAction\")");
-        source.Should().Contain("Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending");
-        source.Should().Contain("Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open");
-        source.Should().Contain("T.T(\"BusinessSetupOpenInvitationsAction\")");
-        source.Should().Contain("T.T(\"Pending\")");
-        source.Should().Contain("@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)");
-        source.Should().Contain("@InvitationDebtSummaryLabel(Model.BusinessSupport.SelectedBusinessPendingInvitationCount)");
-        source.Should().Contain("@InvitationDebtCount(Model.BusinessSupport.SelectedBusinessPendingInvitationCount, Model.BusinessSupport.SelectedBusinessOpenInvitationCount)");
-        source.Should().Contain("var selectedBusinessRuntimeExecutionAttentionCount = Model.BusinessSupport.SelectedBusinessPendingActivationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedInvitationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedActivationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedAdminTestCount");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\"): @Model.BusinessSupport.SelectedBusinessPendingActivationCount");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        source.Should().Contain("@InvitationActionLabel(selectedBusinessInvitationFilter)");
+        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"SupportQueue\"");
+        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"MerchantReadiness\"");
+        source.Should().NotContain("@if (Model.SelectedBusinessId.HasValue)");
+        source.Should().NotContain("asp-route-businessId=\"@Model.SelectedBusinessId\"");
+        source.Should().NotContain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation\"");
     }
 
 
@@ -2087,7 +2039,7 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
         source.Should().Contain("hx-swap=\"outerHTML\"");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
-        source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        source.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         source.Should().Contain("@T.T(\"SettingsCategories\")");
         source.Should().Contain("href=\"#site-settings-basics\">@T.T(\"General\")</a>");
         source.Should().Contain("href=\"#site-settings-localization\">@T.T(\"Localization\")</a>");
@@ -2659,27 +2611,15 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
     {
         var cardSource = ReadWebAdminFile(Path.Combine("Views", "Home", "_CommunicationOpsCard.cshtml"));
 
-        cardSource.Should().Contain("var communicationRuntimeExecutionAttentionCount = Model.BusinessSupport.PendingActivationMemberCount");
-        cardSource.Should().Contain("Model.CommunicationOps.FailedInvitationCount");
-        cardSource.Should().Contain("Model.CommunicationOps.FailedActivationCount");
-        cardSource.Should().Contain("Model.CommunicationOps.FailedPasswordResetCount");
-        cardSource.Should().Contain("Model.CommunicationOps.FailedAdminTestCount");
-        cardSource.Should().Contain("@T.T(\"RuntimeExecution\")");
-        cardSource.Should().Contain("@T.T(\"OpenFailedInvitationEmails\") / @T.T(\"OpenFailedActivationEmails\") / @T.T(\"FailedAdminTests\") / @T.T(\"OpenFailedPasswordResets\")");
-        cardSource.Should().Contain("@T.T(\"OpenFailedInvitationEmails\"): @failedInvitationAttentionCount");
-        cardSource.Should().Contain("@T.T(\"UsersFilterUnconfirmed\")");
-        cardSource.Should().Contain("@T.T(\"UsersFilterLocked\")");
-        cardSource.Should().Contain("asp-controller=\"BusinessCommunications\" asp-action=\"EmailAudits\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
-        cardSource.Should().Contain("asp-controller=\"BusinessCommunications\" asp-action=\"EmailAudits\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        cardSource.Should().Contain("asp-controller=\"BusinessCommunications\" asp-action=\"EmailAudits\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        cardSource.Should().Contain("asp-controller=\"BusinessCommunications\" asp-action=\"EmailAudits\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
-        cardSource.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
-        cardSource.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        cardSource.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        cardSource.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
-        cardSource.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-retryBlockedOnly=\"true\"");
-        cardSource.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-phoneVerificationOnly=\"true\"");
-        cardSource.Should().Contain("asp-controller=\"BusinessCommunications\" asp-action=\"Index\" class=\"btn btn-sm btn-outline-secondary\">@T.T(\"OpenCommunicationsWorkspace\")</a>");
+        cardSource.Should().Contain("var failedFlowCount = Model.CommunicationOps.FailedInvitationCount");
+        cardSource.Should().Contain("+ Model.CommunicationOps.FailedActivationCount");
+        cardSource.Should().Contain("+ Model.CommunicationOps.FailedPasswordResetCount");
+        cardSource.Should().Contain("+ Model.CommunicationOps.FailedAdminTestCount;");
+        cardSource.Should().Contain("@T.T(\"FailedEmails\")");
+        cardSource.Should().Contain("asp-controller=\"BusinessCommunications\" asp-action=\"Index\"");
+        cardSource.Should().Contain("@T.T(\"OpenWorkspaceAction\")");
+        cardSource.Should().NotContain("asp-action=\"EmailAudits\"");
+        cardSource.Should().NotContain("asp-route-businessId=\"@Model.SelectedBusinessId\"");
     }
 
 

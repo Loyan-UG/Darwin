@@ -1,4 +1,4 @@
-# 🧪 Darwin Testing Strategy & Execution Guide (Updated)
+﻿# 🧪 Darwin Testing Strategy & Execution Guide (Updated)
 
 This document is the authoritative testing guide for the Darwin repository.
 It is intentionally practical: what exists today, what quality gates enforce, how to run tests locally, and what to improve next.
@@ -42,7 +42,7 @@ The repository currently contains these test projects:
 7. `tests/Darwin.WebAdmin.Tests`
    - WebAdmin-focused smoke and security tests for the admin panel (e.g., security header checks, authentication flows, anti-forgery token validation).
    - Uses `Microsoft.AspNetCore.Mvc.Testing` with an in-process `WebAdminTestFactory`.
-   - **Not yet wired into CI or coverage-gate** — local execution only at this stage.
+   - Wired into `tests-quality-gates.yml` as the `webadmin` coverage lane.
 8. `tests/Darwin.Tests.Common`
    - Shared test infrastructure/helpers consumed by other suites.
 
@@ -55,9 +55,9 @@ CI treats the main suites as independent lanes:
 - infrastructure
 - webapi
 - integration
+- webadmin
 - mobile-shared
 
-The `webadmin` lane exists as a project but is **not yet included** in the `tests-quality-gates.yml` workflow or `scripts/ci/verify_coverage.py`.
 
 Lane coverage is validated from Cobertura reports via `scripts/ci/verify_coverage.py`.
 
@@ -118,7 +118,7 @@ Use for mobile shared client reliability:
 - Retry/reliability behavior.
 - Service-level behavior and failure handling.
 
-### 3.7 WebAdmin lane (`Darwin.WebAdmin.Tests`) *(not yet in CI)*
+### 3.7 WebAdmin lane (`Darwin.WebAdmin.Tests`)
 
 Use for the WebAdmin panel's HTTP-level correctness:
 
@@ -165,7 +165,7 @@ dotnet test tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj
 
 dotnet test tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj
 
-# WebAdmin tests (local only — not yet in CI lane):
+# WebAdmin tests:
 dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
 ```
 
@@ -224,7 +224,7 @@ Latest known-good signal for the recently expanded Webhook/reader/writer tests i
   - 102 passed
 
 `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ShipmentCarrierEventHandlerTests"`  
-  - 92 passed (as of 2026-05-08 after adding returned timeline append coverage for whitespace provider-status with changing carrier event keys)
+  - 100 passed (as of 2026-05-08 after adding delivered exception-field merge-on-duplicate dedupe coverage)
 
 `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ApplyShipmentCarrierEvent_Should"`  
   - 36 passed (including required max-length and optional-field boundary validation coverage)
@@ -370,11 +370,17 @@ If behavior crosses layers, prefer one extra integration test over many brittle 
 
 Current direction for stronger confidence:
 
-- Wire `Darwin.WebAdmin.Tests` into CI (`tests-quality-gates.yml`) as a dedicated `webadmin` lane and add it to `scripts/ci/verify_coverage.py` with an initial threshold.
+- Grow the new `webadmin` coverage lane from its initial low threshold after it has stable green CI history.
 - Increase depth in infrastructure and webapi lanes where currently thinner than unit/integration.
 - Expand integration matrices for concurrency/authorization edge-cases.
 - Raise lane thresholds gradually after sustained green history.
 - Keep this document synchronized with actual test inventory and CI behavior in each related PR.
+
+### Current local verification notes
+
+- `Darwin.WebAdmin.Tests` compiles and targeted security tests pass locally. The full local smoke suite timed out after 5 minutes in the current desktop environment and should be re-run in CI or with a longer timeout before raising the `webadmin` lane threshold.
+- The focused WebApi provider-callback run now passes 280 of 280 tests when built into isolated artifacts. Two provider-callback worker assertions had their short local waits lengthened so the first background-service iteration can complete consistently.
+- The focused unit run for Shipment/Stripe/Billing/Communication source-contract coverage now passes 459 of 459 tests after realigning dashboard, communication-provider, billing, DHL, and route-boundary contracts with the current implementation.
 
 ---
 
@@ -407,5 +413,3 @@ This file should always describe **what is true now**, not only future intent.
   - Completed in this pass: empty and null idempotency key duplicate-check behavior is now tested for both insert and duplicate paths.
 - Add Worker coverage for Brevo webhook processing against `EmailDispatchAudit`.
   - ✅ Completed in this pass: delivered/open/click keep successful audit state, hard/soft bounce/spam/blocked/invalid/error mark the audit failed with provider reason (including reason trimming and default missing reason), unsupported events do not overwrite successful state, failed audits do not regress to Sent on delivery events, soft-deleted audits are not matched, and correlation keys are matched through mixed-case alias fields.
-
-

@@ -11,7 +11,6 @@ import type {
   PublicProductDetail,
   PublicProductSummary,
 } from "@/features/catalog/types";
-import type { PublicPageSummary } from "@/features/cms/types";
 
 const stubDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "darwin-product-detail-surface-"));
 const serverOnlyStubPath = path.join(stubDirectory, "server-only.js");
@@ -89,48 +88,15 @@ const relatedProducts: PublicProductSummary[] = [
   },
 ];
 
-const reviewProducts: PublicProductSummary[] = [
-  product,
-  ...relatedProducts,
-];
-
-const cmsPages: PublicPageSummary[] = [
-  {
-    id: "cms-1",
-    slug: "herb-guide",
-    title: "Herb guide",
-    metaDescription: "Storage tips for herbs",
-  },
-];
-
 test("ProductDetailPage renders the upgraded grocery detail surface directly", async () => {
   const { ProductDetailPage } = await import("@/components/catalog/product-detail-page");
   const html = renderToStaticMarkup(
     React.createElement(ProductDetailPage, {
       culture: "en-US",
       product,
-      categories: [category],
       primaryCategory: category,
-      reviewWindow: {
-        category: "fruit",
-        visibleState: "offers",
-        visibleSort: "offers-first",
-        mediaState: "with-image",
-        savingsBand: "hero",
-      },
       relatedProducts,
-      reviewProducts,
-      cmsPages,
-      cartSummary: {
-        status: "ok",
-        itemCount: 2,
-        currency: "EUR",
-        grandTotalGrossMinor: 1400,
-      },
       status: "ok",
-      relatedProductsStatus: "ok",
-      reviewProductsStatus: "ok",
-      cmsPagesStatus: "ok",
     }),
   );
 
@@ -139,17 +105,10 @@ test("ProductDetailPage renders the upgraded grocery detail surface directly", a
     /linear-gradient\(135deg,#f6ffe9_0%,#ffffff_38%,#fff1d2_100%\)/,
   );
   assert.match(html, /Apples/);
-  assert.match(html, /Review queue/);
-  assert.match(html, /More products from this category|Move across public storefront routes/);
+  assert.doesNotMatch(html, /Review queue/);
+  assert.match(html, /Related products/);
   assert.ok(
     html.includes('href="/en-US/cart"') || html.includes('href="/cart"'),
-  );
-  assert.ok(
-    html.includes('href="/en-US/checkout"') || html.includes('href="/checkout"'),
-  );
-  assert.ok(
-    html.includes('href="/en-US/cms/herb-guide"') ||
-      html.includes('href="/cms/herb-guide"'),
   );
   assert.ok(
     html.includes('href="/en-US/catalog/pears"') ||

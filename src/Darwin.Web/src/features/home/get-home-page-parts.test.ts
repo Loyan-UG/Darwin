@@ -225,46 +225,110 @@ function createHomeDiscoveryContext(): Awaited<ReturnType<typeof getHomeDiscover
   } as Awaited<ReturnType<typeof getHomeDiscoveryContext>>;
 }
 
-test("getHomePageParts keeps home promotion lanes on a real merchandising card board", async () => {
+test("getHomePageParts returns a concise customer-facing home page model", async () => {
   const parts = await getHomePageParts("en-US", null, createHomeDiscoveryContext());
 
-  const promotionLanes = parts.find((part) => part.id === "home-promotion-lanes");
-  assert.ok(promotionLanes);
-  assert.equal(promotionLanes.kind, "card-grid");
-  assert.ok("cards" in promotionLanes);
-  assert.equal(promotionLanes.cards.length, 4);
-  assert.match(promotionLanes.cards[0].href, /\/catalog/);
+  assert.deepEqual(
+    parts.map((part) => part.id),
+    [
+      "home-hero",
+      "home-category-spotlight",
+      "home-product-spotlight",
+      "home-loyalty-teaser",
+      "home-cms-spotlight",
+      "home-trust-strip",
+    ],
+  );
 
-  const routeMap = parts.find((part) => part.id === "home-route-map");
-  assert.ok(routeMap);
-  assert.equal(routeMap.kind, "route-map");
-  assert.ok("items" in routeMap);
-  assert.equal(routeMap.items.length, 3);
+  const hero = parts.find((part) => part.id === "home-hero");
+  assert.ok(hero);
+  assert.equal(hero.kind, "hero");
+  assert.ok("actions" in hero);
+  assert.deepEqual(
+    hero.actions.map((action) => action.href),
+    ["/catalog", "/loyalty", "/account"],
+  );
 
-  const readiness = parts.find((part) => part.id === "home-browse-readiness");
-  assert.ok(readiness);
-  assert.equal(readiness.kind, "status-list");
-  assert.ok("items" in readiness);
-  assert.equal(readiness.items.length, 2);
+  const categories = parts.find((part) => part.id === "home-category-spotlight");
+  assert.ok(categories);
+  assert.equal(categories.kind, "card-grid");
+  assert.ok("cards" in categories);
+  assert.equal(categories.cards.length, 1);
+  assert.equal(categories.cards[0].href, "/catalog?category=coffee");
+
+  const products = parts.find((part) => part.id === "home-product-spotlight");
+  assert.ok(products);
+  assert.equal(products.kind, "card-grid");
+  assert.ok("cards" in products);
+  assert.equal(products.cards.length, 3);
+  assert.equal(products.cards[0].title, "Hero Coffee");
+  assert.equal(products.cards[0].href, "/catalog/hero-coffee");
+
+  const loyalty = parts.find((part) => part.id === "home-loyalty-teaser");
+  assert.ok(loyalty);
+  assert.equal(loyalty.kind, "blank-state");
+  assert.ok("actions" in loyalty);
+  assert.deepEqual(
+    loyalty.actions.map((action) => action.href),
+    ["/loyalty", "/account"],
+  );
+
+  const help = parts.find((part) => part.id === "home-cms-spotlight");
+  assert.ok(help);
+  assert.equal(help.kind, "card-grid");
+  assert.ok("cards" in help);
+  assert.equal(help.cards.length, 1);
+  assert.equal(help.cards[0].href, "/page/story-one");
+
+  const trust = parts.find((part) => part.id === "home-trust-strip");
+  assert.ok(trust);
+  assert.equal(trust.kind, "card-grid");
+  assert.ok("cards" in trust);
+  assert.deepEqual(
+    trust.cards.map((card) => card.href),
+    ["/page/shipping", "/page/payment", "/page/returns"],
+  );
+
+  assert.equal(parts.find((part) => part.id === "home-promotion-lanes"), undefined);
+  assert.equal(parts.find((part) => part.id === "home-route-map"), undefined);
+  assert.equal(parts.find((part) => part.id === "home-browse-readiness"), undefined);
 });
 
-test("getHomePageParts keeps the home recovery rail explicit when discovery contracts degrade", async () => {
+test("getHomePageParts keeps degraded discovery customer-safe with empty states", async () => {
   const degradedContext = createHomeDiscoveryContext();
   degradedContext.pagesResult = { status: "error", message: "cms degraded" };
   degradedContext.productsResult = { status: "error", message: "catalog degraded" };
   degradedContext.categoriesResult = { status: "error", message: "categories degraded" };
 
   const parts = await getHomePageParts("en-US", null, degradedContext);
-  const recoveryRail = parts.find((part) => part.id === "home-recovery-rail");
 
-  assert.ok(recoveryRail);
-  assert.equal(recoveryRail.kind, "spotlight-board");
-  assert.ok("cards" in recoveryRail);
-  assert.equal(recoveryRail.cards.length, 3);
-  assert.equal(recoveryRail.cards[0].href, "/cms");
-  assert.equal(recoveryRail.cards[1].href, "/catalog");
-  assert.equal(recoveryRail.cards[2].href, "/account");
-  assert.match(recoveryRail.cards[0].description, /degraded/i);
-  assert.match(recoveryRail.cards[1].description, /Catalog recovery currently depends/i);
+  assert.deepEqual(
+    parts.map((part) => part.id),
+    [
+      "home-hero",
+      "home-category-spotlight",
+      "home-product-spotlight",
+      "home-loyalty-teaser",
+      "home-cms-spotlight",
+      "home-trust-strip",
+    ],
+  );
+
+  const categories = parts.find((part) => part.id === "home-category-spotlight");
+  const products = parts.find((part) => part.id === "home-product-spotlight");
+  const help = parts.find((part) => part.id === "home-cms-spotlight");
+  assert.ok(categories && "cards" in categories && "emptyMessage" in categories);
+  assert.ok(products && "cards" in products && "emptyMessage" in products);
+  assert.ok(help && "cards" in help && "emptyMessage" in help);
+  assert.equal(categories.cards.length, 0);
+  assert.equal(products.cards.length, 0);
+  assert.equal(help.cards.length, 0);
+  assert.equal(categories.emptyMessage, "Categories are temporarily unavailable.");
+  assert.equal(products.emptyMessage, "Products are temporarily unavailable.");
+  assert.equal(help.emptyMessage, "Help pages are temporarily unavailable.");
+
+  assert.equal(parts.find((part) => part.id === "home-recovery-rail"), undefined);
+  assert.equal(parts.find((part) => part.kind === "route-map"), undefined);
+  assert.equal(parts.find((part) => part.kind === "status-list"), undefined);
 });
 

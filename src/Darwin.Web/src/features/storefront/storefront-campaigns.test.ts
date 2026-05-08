@@ -109,7 +109,7 @@ test("buildStorefrontPageSpotlightCards and buildStorefrontCategorySpotlightLink
     id: "member-page-page-1",
     title: "About",
     description: "About this storefront",
-    href: "/cms/about",
+    href: "/page/about",
   });
   assert.deepEqual(categoryCards[0], {
     id: "member-category-category-1",

@@ -13,6 +13,23 @@ Status terms used below:
 - `Planned / Near-term`
 - `Future / Later phase`
 
+## Current Go-Live Blockers and Near-Term Tasks
+
+Reviewed: 2026-05-08. See `docs/go-live-status.md` for the code-backed status summary.
+
+Go-live blockers:
+
+- `Stripe`: replace the local Stripe-like storefront payment intent/session placeholders with real Stripe PaymentIntent or Checkout Session creation, then make verified Stripe webhooks the final payment state authority.
+- `DHL`: replace phase-one DHL provider-reference, tracking-number, and label-url generation with real DHL shipment/label API calls and persisted label storage.
+- `Tax/VAT/E-Invoice`: turn Billing/TaxCompliance from visibility into an operator workflow for VAT ID validation, reverse-charge decisions, immutable issued-invoice snapshots, invoice export/archive, and e-invoice generation.
+- `Production readiness`: verify Brevo sender domain/DKIM/DMARC, Stripe/DHL provider secrets, worker deployment, provider callback processing, and restricted PostgreSQL runtime grants in the target environment.
+
+Near-term tasks:
+
+- Add focused handler tests for the compact WebAdmin dashboard view model projection and attention-item ordering.
+- Add live-provider abstraction tests before wiring Stripe and DHL SDK/API calls so webhook idempotency and operator visibility remain stable.
+- Grow the new WebAdmin CI lane threshold once the hosted smoke suite stabilizes in CI.
+
 ## 0. Cross-Chat Coordination Ledger
 
 This section is the shared handoff ledger between the active implementation chats:
@@ -69,6 +86,14 @@ Active entries:
 - `[Closed] 2026-04-02 | From: Web | To: WebAdmin | Topic: payment-attempt ordering metadata for confirmation/member commerce | Message: Darwin.Web can now render storefront confirmation and member commerce payment states, but the public/member payment snapshots only expose `status` and optional `paidAtUtc`. When multiple payment attempts exist, web cannot safely derive the latest attempt state without either attempt ordering guarantees or a creation timestamp on each payment snapshot. The current web fix now avoids showing a stale inferred "latest" status, but richer route summaries still need canonical payment-attempt ordering metadata from WebApi. | Expected action: public/member payment snapshots now expose canonical `createdAtUtc`, so web/mobile can display the current payment-attempt state without heuristic guessing.` 
 
 ## 1. Current Delivery Focus
+
+### Darwin.Web UI Simplification and Customer-Facing Information Architecture Cleanup
+
+- `High priority / In Progress`: keep simplifying `Darwin.Web` so it is a clean storefront and member portal instead of an internal route-review surface.
+- `Completed foundation`: public shell navigation and fallback footer links now use customer-facing primary navigation only: Home, Shop, Loyalty, Help, and Contact, with Account and Cart as utilities.
+- `Completed foundation`: backend `main-navigation` seed now aligns with the customer-facing public navigation, and footer seed links cover the required Shop, Account, Support, and Legal destinations.
+- `Completed foundation`: Home, catalog listing, product detail, help/content listing, content detail, account entry, auth recovery, cart, checkout, confirmation, loyalty overview, loyalty business detail, order list, invoice list, order detail, invoice detail, profile, preferences, addresses, and security have been simplified to remove customer-visible route maps, composition windows, readiness panels, review queues, storefront continuation rails, and diagnostic status summaries.
+- `Planned / Near-term`: update route/component tests that intentionally asserted the previous over-composed page model so they assert the new customer-facing page map without weakening security, localization, route normalization, SEO, or API contract tests.
 
 ### PostgreSQL Primary Persistence Track
 

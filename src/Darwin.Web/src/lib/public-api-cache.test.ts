@@ -346,7 +346,7 @@ test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS an
       cacheIdentity: {
         normalizedPath:
           "/api/v1/public/catalog/categories?page=1&pageSize=100",
-        revalidate: 900,
+        revalidate: 300,
         keyTag: "public:catalog-categories",
         pathTag:
           "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
@@ -363,7 +363,7 @@ test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS an
   assert.deepEqual(
     getPublicApiCachePolicy("catalog-categories", "/api/v1/public/catalog/categories?page=1&pageSize=100"),
     {
-      revalidate: 900,
+      revalidate: 300,
       tags: [
         "public:catalog-categories",
         "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
@@ -383,7 +383,7 @@ test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS an
       cacheIdentity: {
         normalizedPath:
           "/api/v1/public/catalog/categories?page=1&pageSize=100",
-        revalidate: 900,
+        revalidate: 300,
         keyTag: "public:catalog-categories",
         pathTag:
           "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
@@ -395,7 +395,7 @@ test("getPublicApiCachePolicy returns long-lived cache windows for stable CMS an
       fetchCacheOptions: {
         cache: "force-cache",
         next: {
-          revalidate: 900,
+          revalidate: 300,
           tags: [
             "public:catalog-categories",
             "path:/api/v1/public/catalog/categories?page=1&pageSize=100",
@@ -518,7 +518,7 @@ test("normalizePublicApiCachePath keeps equivalent query strings on one canonica
   );
 });
 
-test("getPublicApiCachePolicy keeps CMS search and catalog review windows on shorter path-aware cache windows", () => {
+test("getPublicApiCachePolicy keeps CMS search and catalog browse windows on shorter path-aware cache windows", () => {
   assert.equal(
     getPublicApiCachePolicy(
       "catalog-categories",
@@ -1035,6 +1035,9 @@ test("getPublicApiRequestPlan keeps mutations uncached while preserving canonica
           "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
         ],
       },
+      fetchCacheOptions: {
+        cache: "no-store",
+      },
     },
   );
   assert.deepEqual(
@@ -1127,17 +1130,17 @@ test("getPublicApiRequestPlan keeps mutations uncached while preserving canonica
     ),
     {
       requestUrl:
-        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+        "http://localhost:5134/api/v1/public/catalog/products?culture=de-DE&mediaState=with-image&page=1&pageSize=12",
       cacheIdentity: {
         normalizedPath:
-          "/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+          "/api/v1/public/catalog/products?culture=de-DE&mediaState=with-image&page=1&pageSize=12",
         revalidate: 90,
         keyTag: "public:catalog-products",
         pathTag:
-          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+          "path:/api/v1/public/catalog/products?culture=de-DE&mediaState=with-image&page=1&pageSize=12",
         tags: [
           "public:catalog-products",
-          "path:/api/v1/public/catalog/products?culture=de-DE&page=1&pageSize=12&mediaState=with-image",
+          "path:/api/v1/public/catalog/products?culture=de-DE&mediaState=with-image&page=1&pageSize=12",
         ],
       },
       fetchCacheOptions: {

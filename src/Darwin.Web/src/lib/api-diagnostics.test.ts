@@ -528,6 +528,8 @@ test("logApiFailure reset clears dedupe state between runs", () => {
   };
 
   try {
+    __resetApiFailureLogForTests();
+
     const diagnostics = withFailureDiagnostics(
       createDiagnostics("public-api", "/api/v1/public/catalog/products"),
       "network-error",

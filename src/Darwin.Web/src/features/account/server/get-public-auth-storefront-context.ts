@@ -1,6 +1,6 @@
 import "server-only";
-import { getPublicStorefrontContext } from "@/features/storefront/server/get-public-storefront-context";
+import { getPublicStorefrontCartContext } from "@/features/storefront/server/get-public-storefront-cart-context";
 
 export async function getPublicAuthStorefrontContext(culture: string) {
-  return getPublicStorefrontContext(culture);
+  return getPublicStorefrontCartContext(culture);
 }

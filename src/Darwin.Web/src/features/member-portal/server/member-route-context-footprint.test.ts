@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeMemberRouteStorefrontSupport } from "@/features/member-portal/server/get-member-route-context";
+import { summarizeMemberRouteStorefrontFootprint } from "@/features/member-portal/server/get-member-route-context";
 
-test("summarizeMemberRouteStorefrontSupport keeps storefront support readable for member routes", () => {
+test("summarizeMemberRouteStorefrontFootprint keeps member route state compact", () => {
   assert.equal(
-    summarizeMemberRouteStorefrontSupport({
+    summarizeMemberRouteStorefrontFootprint({
       storefrontContext: {
         cmsPagesResult: { status: "ok", data: { items: [{ slug: "about" }] } },
         cmsPagesStatus: "ok",

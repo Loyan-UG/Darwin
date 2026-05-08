@@ -21,7 +21,7 @@ export default async function CartRoute({ searchParams }: CartRouteProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const culture = await getRequestCulture();
   const { routeContext, followUpProducts } = await getCartPageContext(culture);
-  const { model, memberSession, identityContext, storefrontContext } = routeContext;
+  const { model, memberSession, identityContext } = routeContext;
 
   return (
     <CartPage
@@ -43,10 +43,6 @@ export default async function CartRoute({ searchParams }: CartRouteProps) {
       ])}
       cartError={readSingleSearchParam(resolvedSearchParams?.cartError)}
       followUpProducts={followUpProducts}
-      cmsPages={storefrontContext.cmsPages}
-      cmsPagesStatus={storefrontContext.cmsPagesStatus}
-      categories={storefrontContext.categories}
-      categoriesStatus={storefrontContext.categoriesStatus}
     />
   );
 }

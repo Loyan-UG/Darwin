@@ -75,7 +75,7 @@ export const getCmsIndexSeoMetadata =
     const normalizedVisibleState = visibleState ?? "all";
     const normalizedVisibleSort = visibleSort ?? "featured";
     const normalizedMetadataFocus = metadataFocus ?? "all";
-    const canonicalPath = buildAppQueryPath("/cms", {
+    const canonicalPath = buildAppQueryPath("/help", {
       page: page > 1 ? page : undefined,
       search,
       visibleQuery,

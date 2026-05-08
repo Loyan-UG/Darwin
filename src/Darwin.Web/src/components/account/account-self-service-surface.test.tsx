@@ -7,11 +7,6 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type {
-  PublicCategorySummary,
-  PublicProductSummary,
-} from "@/features/catalog/types";
-import type { PublicPageSummary } from "@/features/cms/types";
-import type {
   MemberAddress,
   MemberCustomerProfile,
   MemberPreferences,
@@ -38,34 +33,6 @@ Module._resolveFilename = function patchedResolveFilename(
 };
 
 const copy = getMemberResource("en-US");
-
-const category: PublicCategorySummary = {
-  id: "category-1",
-  slug: "fruit",
-  name: "Fruit",
-  description: "Fresh produce aisle",
-  productCount: 8,
-};
-
-const product: PublicProductSummary = {
-  id: "product-1",
-  slug: "apples",
-  name: "Apples",
-  priceMinor: 700,
-  compareAtPriceMinor: 1000,
-  currency: "EUR",
-  imageUrl: null,
-  primaryImageUrl: null,
-  shortDescription: "Crisp apples",
-  categoryName: "Fruit",
-};
-
-const cmsPage: PublicPageSummary = {
-  id: "cms-1",
-  slug: "herb-guide",
-  title: "Herb guide",
-  metaDescription: "Storage tips for herbs",
-};
 
 const profile: MemberCustomerProfile = {
   id: "profile-1",
@@ -126,18 +93,11 @@ test("ProfilePage renders the upgraded grocery self-service surface", async () =
       status: "ok",
       profileStatus: "saved",
       phoneStatus: "confirmed",
-      cmsPages: [cmsPage],
-      cmsPagesStatus: "ok",
-      categories: [category],
-      categoriesStatus: "ok",
-      products: [product],
-      productsStatus: "ok",
     }),
   );
 
   assert.match(html, gradientPattern);
   assert.match(html, new RegExp(copy.profileEditTitle));
-  assert.match(html, new RegExp(copy.profileReadinessTitle));
   assert.match(html, new RegExp(copy.phoneVerificationTitle));
   assert.ok(
     html.includes('href="/en-US/account/preferences"') ||
@@ -155,19 +115,12 @@ test("PreferencesPage renders the upgraded grocery self-service surface", async 
       profile,
       profileStatus: "ok",
       preferencesStatus: "saved",
-      cmsPages: [cmsPage],
-      cmsPagesStatus: "ok",
-      categories: [category],
-      categoriesStatus: "ok",
-      products: [product],
-      productsStatus: "ok",
     }),
   );
 
   assert.match(html, gradientPattern);
   assert.match(html, new RegExp(copy.preferencesEditTitle));
-  assert.match(html, new RegExp(copy.preferencesChannelReadinessTitle));
-  assert.match(html, new RegExp(copy.preferencesRouteSummaryTitle));
+  assert.match(html, new RegExp(copy.memberPreferencesChannelsTitle));
   assert.ok(
     html.includes('href="/en-US/account/addresses"') ||
       html.includes('href="/account/addresses"'),
@@ -182,18 +135,11 @@ test("AddressesPage renders the upgraded grocery self-service surface", async ()
       addresses,
       status: "ok",
       addressesStatus: "updated",
-      cmsPages: [cmsPage],
-      cmsPagesStatus: "ok",
-      categories: [category],
-      categoriesStatus: "ok",
-      products: [product],
-      productsStatus: "ok",
     }),
   );
 
   assert.match(html, gradientPattern);
   assert.match(html, new RegExp(copy.addressesTitle));
-  assert.match(html, new RegExp(copy.addressesReadinessTitle));
   assert.match(html, new RegExp(copy.savedAddressLabel));
   assert.ok(
     html.includes('href="/en-US/checkout') || html.includes('href="/checkout'),
@@ -209,19 +155,12 @@ test("SecurityPage renders the upgraded grocery self-service surface", async () 
       profile,
       profileStatus: "ok",
       securityStatus: "saved",
-      cmsPages: [cmsPage],
-      cmsPagesStatus: "ok",
-      categories: [category],
-      categoriesStatus: "ok",
-      products: [product],
-      productsStatus: "ok",
     }),
   );
 
   assert.match(html, gradientPattern);
   assert.match(html, new RegExp(copy.securityEditTitle));
-  assert.match(html, new RegExp(copy.securityCurrentStateTitle));
-  assert.match(html, new RegExp(copy.memberRouteSummaryTitle));
+  assert.match(html, new RegExp(copy.memberSecurityStatusTitle));
   assert.ok(
     html.includes('href="/en-US/account/profile"') ||
       html.includes('href="/account/profile"'),

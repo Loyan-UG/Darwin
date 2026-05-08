@@ -46,10 +46,80 @@ export function localizeShellLinks(
   }));
 }
 
+function getLocalizedHelpLabel(culture: string) {
+  return culture.toLowerCase().startsWith("de") ? "Hilfe" : "Help";
+}
+
+function normalizePrimaryNavigationLink(link: ShellLink, culture: string): ShellLink | null {
+  const label = link.label.trim();
+  const href = link.href.trim();
+  const lowerLabel = label.toLowerCase();
+
+  if (
+    lowerLabel === "cms" ||
+    lowerLabel === "checkout" ||
+    lowerLabel === "orders" ||
+    lowerLabel === "invoices"
+  ) {
+    return null;
+  }
+
+  if (href === "/cms/faq" || href === "/cms/help") {
+    return {
+      label: getLocalizedHelpLabel(culture),
+      href: "/help",
+    };
+  }
+
+  if (href === "/cms/contact") {
+    return {
+      label,
+      href: "/page/contact",
+    };
+  }
+
+  if (href === "/cms/kontakt") {
+    return {
+      label,
+      href: "/page/kontakt",
+    };
+  }
+
+  if (
+    href === "/" ||
+    href === "/catalog" ||
+    href === "/loyalty" ||
+    href === "/help" ||
+    href === "/contact" ||
+    href === "/page/contact" ||
+    href === "/page/kontakt"
+  ) {
+    return {
+      label,
+      href,
+    };
+  }
+
+  return null;
+}
+
+export function filterCustomerPrimaryNavigation(
+  links: ShellLink[],
+  culture: string,
+) {
+  return links.flatMap((link) => {
+    const normalizedLink = normalizePrimaryNavigationLink(link, culture);
+    return normalizedLink ? [normalizedLink] : [];
+  });
+}
+
 export function resolveShellMenu(input: ResolveShellMenuInput) {
   const cmsLinks = input.menuItems
     ? localizeShellLinks(
-        mapMenuItemsToLinks(input.menuItems, input.normalizeHref),
+        filterCustomerPrimaryNavigation(
+          mapMenuItemsToLinks(input.menuItems, input.normalizeHref),
+          input.culture,
+        ),
         input.culture,
         input.localizeLink,
       )
@@ -57,7 +127,7 @@ export function resolveShellMenu(input: ResolveShellMenuInput) {
   const primaryNavigation = cmsLinks.length > 0
     ? cmsLinks
     : localizeShellLinks(
-        input.fallbackLinks,
+        filterCustomerPrimaryNavigation(input.fallbackLinks, input.culture),
         input.culture,
         input.localizeLink,
       );

@@ -1,5 +1,6 @@
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Common;
+using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Enums;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
@@ -42,14 +43,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         {
             _logger.LogInformation("Seeding Orders (orders/payments/shipments) ...");
 
-            // If any orders already exist, don't reseed.
-            if (await db.Orders.AnyAsync(ct))
-            {
-                _logger.LogInformation("Orders already present. Skipping.");
-                return;
-            }
-
-            // Ensure product variants are available — orders are seeded only if variants exist.
+            // If any orders already exist, don't reseed the full demo set.
+            // Ensure product variants are available before order coverage is repaired.
             var variants = await db.ProductVariants
                 .OrderBy(v => v.Sku)
                 .ToListAsync(ct);
@@ -57,6 +52,13 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             if (variants.Count == 0)
             {
                 _logger.LogWarning("Skipping order seeding because no ProductVariants exist.");
+                return;
+            }
+
+            if (await db.Orders.AnyAsync(ct))
+            {
+                _logger.LogInformation("Orders already present. Checking storefront member coverage.");
+                await EnsurePrimaryConsumerOrderCoverageAsync(db, variants, ct);
                 return;
             }
 
@@ -94,8 +96,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     DiscountTotalMinor = 0,
                     GrandTotalGrossMinor = grandTotal,
                     Status = i % 2 == 0 ? OrderStatus.Paid : OrderStatus.Confirmed,
-                    BillingAddressJson = "{\"name\":\"Darwin Demo Customer\",\"street\":\"Hauptstraße 1\",\"city\":\"Berlin\",\"zip\":\"10115\"}",
-                    ShippingAddressJson = "{\"name\":\"Darwin Demo Customer\",\"street\":\"Hauptstraße 1\",\"city\":\"Berlin\",\"zip\":\"10115\"}",
+                    BillingAddressJson = "{\"name\":\"Darwin Demo Customer\",\"street\":\"Hauptstrasse 1\",\"city\":\"Berlin\",\"zip\":\"10115\"}",
+                    ShippingAddressJson = "{\"name\":\"Darwin Demo Customer\",\"street\":\"Hauptstrasse 1\",\"city\":\"Berlin\",\"zip\":\"10115\"}",
                     InternalNotes = "Seeded order for backend operations review."
                 };
 
@@ -168,7 +170,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                         OrderId = order.Id,
                         PaymentId = payment.Id,
                         AmountMinor = 500,
-                        Reason = "Teilrückerstattung (Test)"
+                        Reason = "Partial refund (test)"
                     };
                     // Collect refunds separately because Order has no Refunds navigation.
                     refunds.Add(refund);
@@ -186,10 +188,192 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 db.AddRange(refunds);
             }
 
-            // Single SaveChanges to persist all new entities in the correct order.
             await db.SaveChangesAsync(ct);
 
+            await EnsurePrimaryConsumerOrderCoverageAsync(db, variants, ct);
+
             _logger.LogInformation("Orders seeding done.");
+        }
+
+        private static async Task EnsurePrimaryConsumerOrderCoverageAsync(
+            DarwinDbContext db,
+            IReadOnlyList<Domain.Entities.Catalog.ProductVariant> variants,
+            CancellationToken ct)
+        {
+            var user = await db.Users.FirstOrDefaultAsync(x => x.Email == "cons1@darwin.de" && !x.IsDeleted, ct);
+            if (user is null || variants.Count == 0)
+            {
+                return;
+            }
+
+            var businessId = await db.Set<Domain.Entities.Businesses.Business>()
+                .Where(x => !x.IsDeleted && x.IsActive)
+                .OrderBy(x => x.Name)
+                .Select(x => (Guid?)x.Id)
+                .FirstOrDefaultAsync(ct);
+
+            var shippingMethod = await db.ShippingMethods
+                .Where(x => !x.IsDeleted && x.IsActive)
+                .OrderBy(x => x.Name)
+                .FirstOrDefaultAsync(ct);
+
+            for (var i = 0; i < 3; i++)
+            {
+                var orderNumber = $"WEB-CONS1-2026-{i + 1:D3}";
+                var order = await db.Orders
+                    .Include(x => x.Lines)
+                    .Include(x => x.Payments)
+                    .Include(x => x.Shipments)
+                    .FirstOrDefaultAsync(x => x.OrderNumber == orderNumber && !x.IsDeleted, ct);
+
+                var variant = variants[i % variants.Count];
+                var quantity = i + 1;
+                var vatRate = 0.19m;
+                var subtotalNet = variant.BasePriceNetMinor * quantity;
+                var taxTotal = (long)Math.Round(subtotalNet * vatRate);
+                var shipping = i == 0 ? 0 : 590;
+                var grandTotal = subtotalNet + taxTotal + shipping;
+                var status = i == 2 ? OrderStatus.Confirmed : OrderStatus.Paid;
+
+                if (order is null)
+                {
+                    order = new Order
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderNumber = orderNumber
+                    };
+                    db.Orders.Add(order);
+                }
+
+                order.UserId = user.Id;
+                order.Currency = DomainDefaults.DefaultCurrency;
+                order.PricesIncludeTax = false;
+                order.SubtotalNetMinor = subtotalNet;
+                order.TaxTotalMinor = taxTotal;
+                order.ShippingTotalMinor = shipping;
+                order.DiscountTotalMinor = 0;
+                order.GrandTotalGrossMinor = grandTotal;
+                order.Status = status;
+                order.ShippingMethodId = shippingMethod?.Id;
+                order.ShippingMethodName = shippingMethod?.Name ?? "DHL Standard";
+                order.ShippingCarrier = shippingMethod?.Carrier ?? "DHL";
+                order.ShippingService = shippingMethod?.Service ?? "Standard";
+                order.BillingAddressJson = "{\"name\":\"Emma Krueger\",\"street\":\"Hauptstrasse 1\",\"city\":\"Berlin\",\"zip\":\"10115\",\"country\":\"DE\"}";
+                order.ShippingAddressJson = order.BillingAddressJson;
+                order.InternalNotes = "Self-healed storefront member seed order for Web testing.";
+
+                var line = order.Lines.FirstOrDefault(x => x.VariantId == variant.Id && !x.IsDeleted);
+                if (line is null)
+                {
+                    line = new OrderLine
+                    {
+                        Id = Guid.NewGuid(),
+                        VariantId = variant.Id
+                    };
+                    order.Lines.Add(line);
+                }
+
+                line.Name = $"Seed item {variant.Sku}";
+                line.Sku = variant.Sku;
+                line.Quantity = quantity;
+                line.UnitPriceNetMinor = variant.BasePriceNetMinor;
+                line.VatRate = vatRate;
+                line.UnitPriceGrossMinor = (long)Math.Round(variant.BasePriceNetMinor * (1 + vatRate));
+                line.LineTaxMinor = taxTotal;
+                line.LineGrossMinor = line.UnitPriceGrossMinor * quantity;
+                line.AddOnValueIdsJson = "[]";
+                line.AddOnPriceDeltaMinor = 0;
+
+                var payment = order.Payments.FirstOrDefault(x => !x.IsDeleted);
+                if (payment is null)
+                {
+                    payment = new Darwin.Domain.Entities.Billing.Payment
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderId = order.Id
+                    };
+                    order.Payments.Add(payment);
+                }
+
+                payment.BusinessId = businessId;
+                payment.UserId = user.Id;
+                payment.Provider = i == 2 ? "Stripe" : "PayPal";
+                payment.ProviderTransactionRef = $"WEB-SEED-PAY-{i + 1:D3}";
+                payment.AmountMinor = grandTotal;
+                payment.Currency = DomainDefaults.DefaultCurrency;
+                payment.Status = i == 2 ? PaymentStatus.Pending : PaymentStatus.Captured;
+                payment.PaidAtUtc = i == 2 ? null : DateTime.UtcNow.AddDays(-(i + 1));
+
+                var shipment = order.Shipments.FirstOrDefault(x => !x.IsDeleted);
+                if (shipment is null)
+                {
+                    shipment = new Shipment
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderId = order.Id
+                    };
+                    order.Shipments.Add(shipment);
+                }
+
+                shipment.Carrier = order.ShippingCarrier ?? "DHL";
+                shipment.Service = order.ShippingService ?? "Standard";
+                shipment.TrackingNumber = $"DHL-CONS1-{i + 1:D6}";
+                shipment.TotalWeight = variant.PackageWeight ?? 1200;
+                shipment.Status = i == 2 ? ShipmentStatus.Pending : ShipmentStatus.Shipped;
+                shipment.ShippedAtUtc = i == 2 ? null : DateTime.UtcNow.AddDays(-i);
+
+                await db.SaveChangesAsync(ct);
+                await EnsureMemberInvoiceForOrderAsync(db, order, payment, businessId, i, ct);
+            }
+        }
+
+        private static async Task EnsureMemberInvoiceForOrderAsync(
+            DarwinDbContext db,
+            Order order,
+            Darwin.Domain.Entities.Billing.Payment payment,
+            Guid? businessId,
+            int index,
+            CancellationToken ct)
+        {
+            var invoice = await db.Set<Invoice>()
+                .Include(x => x.Lines)
+                .FirstOrDefaultAsync(x => x.OrderId == order.Id && !x.IsDeleted, ct);
+
+            if (invoice is null)
+            {
+                invoice = new Invoice
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = order.Id
+                };
+                db.Set<Invoice>().Add(invoice);
+            }
+
+            invoice.BusinessId = businessId;
+            invoice.PaymentId = payment.Id;
+            invoice.Status = order.Status == OrderStatus.Paid ? InvoiceStatus.Paid : InvoiceStatus.Open;
+            invoice.Currency = order.Currency;
+            invoice.TotalNetMinor = order.SubtotalNetMinor + order.ShippingTotalMinor;
+            invoice.TotalTaxMinor = order.TaxTotalMinor;
+            invoice.TotalGrossMinor = order.GrandTotalGrossMinor;
+            invoice.DueDateUtc = DateTime.UtcNow.Date.AddDays(14 + index);
+            invoice.PaidAtUtc = invoice.Status == InvoiceStatus.Paid ? payment.PaidAtUtc : null;
+
+            var line = invoice.Lines.FirstOrDefault(x => !x.IsDeleted);
+            if (line is null)
+            {
+                line = new InvoiceLine { Id = Guid.NewGuid() };
+                invoice.Lines.Add(line);
+            }
+
+            line.Description = $"Invoice for order {order.OrderNumber}";
+            line.Quantity = 1;
+            line.UnitPriceNetMinor = invoice.TotalNetMinor;
+            line.TaxRate = 0.19m;
+            line.TotalNetMinor = invoice.TotalNetMinor;
+            line.TotalGrossMinor = invoice.TotalGrossMinor;
+
+            await db.SaveChangesAsync(ct);
         }
     }
 }

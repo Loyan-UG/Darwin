@@ -1,233 +1,51 @@
 @model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    string MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter filter) => filter switch
-    {
-        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation => T.T("PendingActivation"),
-        Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention => T.T("NeedsAttention"),
-        _ => T.T("Members")
-    };
-
-    string InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
-    {
-        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open => T.T("BusinessSupportOpenInvitationsLabel"),
-        _ => T.T("Invitations")
-    };
-    string InvitationDebtSummaryLabel(int pendingInvitationCount) => pendingInvitationCount > 0
-        ? T.T("BusinessSupportPendingInvitationsLabel")
-        : InvitationQueueLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open);
-    int InvitationDebtCount(int pendingInvitationCount, int openInvitationCount) => pendingInvitationCount > 0
-        ? pendingInvitationCount
-        : openInvitationCount;
-    var selectedBusinessInvitationFilter = Model.BusinessSupport.SelectedBusinessPendingInvitationCount > 0
-        ? Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending
-        : Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Open;
-    string InvitationActionLabel(Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter filter) => filter switch
-    {
-        Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending => T.T("Pending"),
-        _ => T.T("BusinessSetupOpenInvitationsAction")
-    };
-    string BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus status) => status switch
-    {
-        Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval => T.T("PendingApproval"),
-        Darwin.Domain.Enums.BusinessOperationalStatus.Suspended => T.T("SuspendedBusinesses"),
-        _ => T.T("BusinessesTitle")
-    };
-    var supportAttentionCount = Model.BusinessSupport.AttentionBusinessCount
+    var invitationAttentionCount = Model.BusinessSupport.PendingInvitationCount + Model.BusinessSupport.OpenInvitationCount;
+    var memberAttentionCount = Model.BusinessSupport.PendingActivationMemberCount + Model.BusinessSupport.LockedMemberCount;
+    var businessAttentionCount = Model.BusinessSupport.AttentionBusinessCount
         + Model.BusinessSupport.PendingApprovalBusinessCount
-        + InvitationDebtCount(Model.BusinessSupport.PendingInvitationCount, Model.BusinessSupport.OpenInvitationCount)
-        + Model.BusinessSupport.PendingActivationMemberCount
-        + Model.BusinessSupport.LockedMemberCount;
-    var failedInvitationAttentionCount = Model.BusinessSupport.FailedInvitationCount;
-    var failedActivationAttentionCount = Model.BusinessSupport.FailedActivationCount;
-    var failedPasswordResetAttentionCount = Model.BusinessSupport.FailedPasswordResetCount;
-    var failedAdminTestAttentionCount = Model.BusinessSupport.FailedAdminTestCount;
-    var communicationRuntimeExecutionAttentionCount = Model.BusinessSupport.PendingActivationMemberCount
-        + failedInvitationAttentionCount
-        + failedActivationAttentionCount
-        + failedPasswordResetAttentionCount
-        + failedAdminTestAttentionCount;
-    var selectedBusinessFailedInvitationAttentionCount = Model.BusinessSupport.SelectedBusinessFailedInvitationCount;
-    var selectedBusinessFailedActivationAttentionCount = Model.BusinessSupport.SelectedBusinessFailedActivationCount;
-    var selectedBusinessFailedPasswordResetAttentionCount = Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount;
-    var selectedBusinessFailedAdminTestAttentionCount = Model.BusinessSupport.SelectedBusinessFailedAdminTestCount;
-    var selectedBusinessRuntimeExecutionAttentionCount = Model.BusinessSupport.SelectedBusinessPendingActivationCount
-        + selectedBusinessFailedInvitationAttentionCount
-        + selectedBusinessFailedActivationAttentionCount
-        + selectedBusinessFailedPasswordResetAttentionCount
-        + selectedBusinessFailedAdminTestAttentionCount;
+        + Model.BusinessSupport.SuspendedBusinessCount
+        + Model.BusinessSupport.MissingOwnerBusinessCount;
+    var totalAttentionCount = businessAttentionCount + invitationAttentionCount + memberAttentionCount;
     string BusinessSupportQueueFragmentUrl(Guid? businessId) => Url.Action("BusinessSupportQueueFragment", "Home", new { businessId }) ?? string.Empty;
 }
 
-<div id="business-support-queue-card" class="card h-100 shadow-sm border-warning-subtle">
+<div id="business-support-queue-card" class="card h-100 shadow-sm">
     <div class="card-header bg-white">
-        <div class="d-flex align-items-center justify-content-between">
-            <div>
-                <div class="fw-semibold d-inline-flex align-items-center">
-                    @T.T("BusinessSupportQueueTitle")
-                    <field-help title="@T.T("BusinessSupportQueueTitle")" content="@T.T("BusinessSupportQueueIntro")" placement="bottom" />
-                </div>
+        <div class="d-flex align-items-center justify-content-between gap-2">
+            <div class="fw-semibold d-inline-flex align-items-center">
+                @T.T("BusinessSupportQueueTitle")
+                <field-help title="@T.T("BusinessSupportQueueTitle")" content="@T.T("BusinessSupportQueueIntro")" placement="bottom" />
             </div>
-            <div class="d-flex flex-wrap gap-2">
-                <button type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        hx-get="@BusinessSupportQueueFragmentUrl(Model.SelectedBusinessId)"
-                        hx-target="#business-support-queue-card"
-                        hx-swap="outerHTML">
-                    @T.T("Refresh")
-                </button>
-                <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary">@T.T("BusinessSupportOpenQueueAction")</a>
-            </div>
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    hx-get="@BusinessSupportQueueFragmentUrl(Model.SelectedBusinessId)"
+                    hx-target="#business-support-queue-card"
+                    hx-swap="outerHTML">
+                @T.T("Refresh")
+            </button>
         </div>
     </div>
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
-            <div>
-                <div class="text-muted text-uppercase small fw-semibold">@T.T("GoLiveReadiness")</div>
-                <field-help title="@T.T("GoLiveReadiness")" content="@T.T("BusinessSupportGoLiveReadinessHelp")" placement="bottom" />
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a asp-controller="Businesses" asp-action="MerchantReadiness" class="btn btn-sm btn-outline-primary">@T.T("MerchantReadinessTitle")</a>
-                <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-secondary">@T.T("Setup")</a>
-                <a asp-controller="Billing" asp-action="TaxCompliance" class="btn btn-sm btn-outline-secondary">@T.T("TaxComplianceTitle")</a>
-                <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("Communications")</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary">@T.T("CommunicationPolicy")</a>
-            </div>
-        </div>
-
         <div class="row g-3">
-            <div class="col-6">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention)</div>
-                    <div class="fs-4 fw-semibold">@Model.BusinessSupport.AttentionBusinessCount</div>
-                </div>
+            <div class="col-4">
+                <div class="text-muted small">@T.T("BusinessesTitle")</div>
+                <div class="fs-4 fw-semibold">@businessAttentionCount</div>
             </div>
-            <div class="col-6">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</div>
-                    <div class="fs-4 fw-semibold">@Model.BusinessSupport.PendingApprovalBusinessCount</div>
-                </div>
+            <div class="col-4">
+                <div class="text-muted small">@T.T("Invitations")</div>
+                <div class="fs-4 fw-semibold">@invitationAttentionCount</div>
             </div>
-            <div class="col-6">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)</div>
-                    <div class="fs-4 fw-semibold">@InvitationDebtCount(Model.BusinessSupport.PendingInvitationCount, Model.BusinessSupport.OpenInvitationCount)</div>
-                </div>
-            </div>
-            <div class="col-6">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@MemberSupportLabel(Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation)</div>
-                    <div class="fs-4 fw-semibold">@Model.BusinessSupport.PendingActivationMemberCount</div>
-                </div>
+            <div class="col-4">
+                <div class="text-muted small">@T.T("Members")</div>
+                <div class="fs-4 fw-semibold">@memberAttentionCount</div>
             </div>
         </div>
-
-        <div class="row g-3 mt-1">
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("NeedsAttention")</div>
-                    <div class="fs-4 fw-semibold">@supportAttentionCount</div>
-                    <div class="small text-muted mt-2">@T.T("RuntimeExecution"): <strong>@communicationRuntimeExecutionAttentionCount</strong></div>
-                    <field-help title="@T.T("NeedsAttention")" content="@T.T("BusinessSupportNeedsAttentionDashboardHelp")" placement="bottom" />
-                    <div class="d-flex gap-2 flex-wrap mt-3">
-                        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenQueueAction")</a>
-                        <a asp-controller="Businesses" asp-action="MerchantReadiness" class="btn btn-sm btn-outline-secondary">@T.T("MerchantReadinessTitle")</a>
-                        <a asp-controller="Billing" asp-action="TaxCompliance" class="btn btn-sm btn-outline-secondary">@T.T("TaxComplianceTitle")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("Communications")</a>
-                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary">@T.T("CommunicationPolicy")</a>
-                        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-secondary">@T.T("Payments")</a>
-                        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Pending" class="btn btn-sm btn-outline-secondary">@T.T("Pending")</a>
-                        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Unlinked" class="btn btn-sm btn-outline-secondary">@T.T("Unlinked")</a>
-                        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Refunded" class="btn btn-sm btn-outline-secondary">@T.T("Refunded")</a>
-                        <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="MissingVatId" class="btn btn-sm btn-outline-secondary">@T.T("FixVatId")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("RetryBlocked")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("ActionBlocked")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("EscalationCandidates")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-phoneVerificationOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("PhoneVerification")</a>
-                        <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending" class="btn btn-sm btn-outline-secondary">@T.T("Pending")</a>
-                        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterUnconfirmed")</a>
-                        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterLocked")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedInvitationEmails")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AccountActivation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedActivationEmails")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AdminCommunicationTest" class="btn btn-sm btn-outline-secondary">@T.T("FailedAdminTests")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="PasswordReset" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedPasswordResets")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-chainFollowUpOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("HeavyChains")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-repeatedFailuresOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("RepeatedFailures")</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@BusinessOperationalQueueLabel(Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)</div>
-                    <div class="fs-4 fw-semibold">@Model.BusinessSupport.PendingApprovalBusinessCount</div>
-                    <div class="d-flex gap-2 flex-wrap mt-3">
-                        <a asp-controller="Businesses" asp-action="Index" asp-route-status="@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval" class="btn btn-sm btn-outline-primary">@T.T("PendingApproval")</a>
-                        <a asp-controller="Businesses" asp-action="MerchantReadiness" class="btn btn-sm btn-outline-secondary">@T.T("MerchantReadinessTitle")</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)</div>
-                    <div class="fs-4 fw-semibold">@InvitationDebtCount(Model.BusinessSupport.PendingInvitationCount, Model.BusinessSupport.OpenInvitationCount)</div>
-                    <div class="small text-muted">@T.T("RuntimeExecution"): @communicationRuntimeExecutionAttentionCount</div>
-                    <field-help title="@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)" content="@T.T("BusinessSupportInvitationDebtDashboardHelp")" placement="bottom" />
-                    <div class="d-flex gap-2 flex-wrap mt-3">
-                        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenQueueAction")</a>
-                        <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-secondary">@T.T("Setup")</a>
-                        <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="Overdue" class="btn btn-sm btn-outline-warning">@T.T("Overdue")</a>
-                        <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="DueSoon" class="btn btn-sm btn-outline-warning">@T.T("DueSoon")</a>
-                        <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="Draft" class="btn btn-sm btn-outline-warning">@T.T("Draft")</a>
-                        <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="MissingVatId" class="btn btn-sm btn-outline-warning">@T.T("FixVatId")</a>
-                    </div>
-                </div>
-            </div>
+        <div class="small text-muted mt-3">@T.T("NeedsAttention"): <strong>@totalAttentionCount</strong></div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenQueueAction")</a>
+            <a asp-controller="Businesses" asp-action="MerchantReadiness" class="btn btn-sm btn-outline-secondary">@T.T("MerchantReadinessTitle")</a>
         </div>
-
-        <div class="small text-muted mt-3">
-            @T.T("BusinessSupportSuspendedBusinessesLabel"): <strong>@Model.BusinessSupport.SuspendedBusinessCount</strong>
-            <span class="mx-2">|</span>
-            @T.T("BusinessSupportMissingOwnerBusinessesLabel"): <strong>@Model.BusinessSupport.MissingOwnerBusinessCount</strong>
-            <span class="mx-2">|</span>
-            @T.T("BusinessSupportLockedMembersLabel"): <strong>@Model.BusinessSupport.LockedMemberCount</strong>
-        </div>
-
-        @if (Model.SelectedBusinessId.HasValue)
-        {
-            <div class="border rounded p-3 mt-3">
-                <div class="text-muted small">@T.T("BusinessSupportCurrentSnapshotLabel")</div>
-                <div class="fw-semibold mt-1">@Model.SelectedBusinessLabel</div>
-                <div class="small text-muted mt-2">
-                    @InvitationDebtSummaryLabel(Model.BusinessSupport.SelectedBusinessPendingInvitationCount): <strong>@InvitationDebtCount(Model.BusinessSupport.SelectedBusinessPendingInvitationCount, Model.BusinessSupport.SelectedBusinessOpenInvitationCount)</strong>
-                    <span class="mx-2">|</span>
-                    @T.T("BusinessSupportPendingActivationLabel"): <strong>@Model.BusinessSupport.SelectedBusinessPendingActivationCount</strong>
-                    <span class="mx-2">|</span>
-                    @T.T("BusinessSupportLockedMembersLabel"): <strong>@Model.BusinessSupport.SelectedBusinessLockedMemberCount</strong>
-                </div>
-                <div class="small text-muted mt-2">@T.T("RuntimeExecution"): <strong>@selectedBusinessRuntimeExecutionAttentionCount</strong> (@T.T("OpenFailedInvitationEmails"): @selectedBusinessFailedInvitationAttentionCount / @T.T("UsersFilterUnconfirmed"): @Model.BusinessSupport.SelectedBusinessPendingActivationCount / @T.T("OpenFailedActivationEmails"): @selectedBusinessFailedActivationAttentionCount / @T.T("FailedAdminTests"): @selectedBusinessFailedAdminTestAttentionCount / @T.T("OpenFailedPasswordResets"): @selectedBusinessFailedPasswordResetAttentionCount)</div>
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenPendingActivationAction")</a>
-                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportOpenLockedMembersAction")</a>
-                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@selectedBusinessInvitationFilter" class="btn btn-sm btn-outline-primary">@InvitationActionLabel(selectedBusinessInvitationFilter)</a>
-                    <a asp-controller="Billing" asp-action="TaxCompliance" class="btn btn-sm btn-outline-secondary">@T.T("TaxComplianceTitle")</a>
-                    <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="Overdue" class="btn btn-sm btn-outline-secondary">@T.T("Overdue")</a>
-                    <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="DueSoon" class="btn btn-sm btn-outline-secondary">@T.T("DueSoon")</a>
-                    <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="Draft" class="btn btn-sm btn-outline-secondary">@T.T("Draft")</a>
-                    <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Pending" class="btn btn-sm btn-outline-secondary">@T.T("Pending")</a>
-                    <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Unlinked" class="btn btn-sm btn-outline-secondary">@T.T("Unlinked")</a>
-                    <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.SelectedBusinessId" asp-route-queue="@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Refunded" class="btn btn-sm btn-outline-secondary">@T.T("Refunded")</a>
-                    <a asp-controller="Crm" asp-action="Invoices" asp-route-filter="MissingVatId" class="btn btn-sm btn-outline-secondary">@T.T("FixVatId")</a>
-                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary">@T.T("CommunicationPolicy")</a>
-                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("RetryBlocked")</a>
-                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("ActionBlocked")</a>
-                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("EscalationCandidates")</a>
-                    <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-phoneVerificationOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("PhoneVerification")</a>
-                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedInvitationEmails")</a>
-                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="PasswordReset" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedPasswordResets")</a>
-                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AccountActivation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedActivationEmails")</a>
-                    <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AdminCommunicationTest" class="btn btn-sm btn-outline-secondary">@T.T("FailedAdminTests")</a>
-                </div>
-            </div>
-        }
     </div>
 </div>

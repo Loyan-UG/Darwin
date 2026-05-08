@@ -274,7 +274,7 @@ test("observeAsyncOperation reports failures with timing metadata", async () => 
     operation: "load",
     operationKey: "checkout:load",
     durationMs: failures[0]?.durationMs,
-    durationBand: "slow",
+    durationBand: "within-threshold",
     healthState: "failed",
     outcomeKind: "failure",
     signalKind: "failure",

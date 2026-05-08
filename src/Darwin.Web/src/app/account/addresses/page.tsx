@@ -3,8 +3,7 @@ import { MemberAuthRequired } from "@/components/member/member-auth-required";
 import { getMemberEditorPageContext } from "@/features/member-portal/server/get-member-protected-page-context";
 import { getAddressesSeoMetadata } from "@/features/member-portal/server/get-member-route-seo-metadata";
 import {
-  createStorefrontContinuationProps,
-  createStorefrontContinuationWithCartProps,
+  createStorefrontCartProps,
 } from "@/features/storefront/route-projections";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
@@ -37,7 +36,7 @@ export default async function AddressesRoute({
 
   if (!session) {
     const storefrontProps =
-      createStorefrontContinuationWithCartProps(authStorefrontContext!);
+      createStorefrontCartProps(authStorefrontContext!);
     return (
       <MemberAuthRequired
         culture={culture}
@@ -49,8 +48,7 @@ export default async function AddressesRoute({
     );
   }
 
-  const { identityContext, storefrontContext } = routeContext!;
-  const storefrontProps = createStorefrontContinuationProps(storefrontContext);
+  const { identityContext } = routeContext!;
 
   return (
     <AddressesPage
@@ -59,7 +57,6 @@ export default async function AddressesRoute({
       status={identityContext.addressesResult.status}
       addressesStatus={readSearchParam(resolvedSearchParams?.addressesStatus)}
       addressesError={readSearchParam(resolvedSearchParams?.addressesError)}
-      {...storefrontProps}
     />
   );
 }

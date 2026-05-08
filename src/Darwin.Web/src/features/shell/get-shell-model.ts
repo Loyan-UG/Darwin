@@ -67,6 +67,14 @@ function normalizeLegacySeedHref(rawHref: string) {
     return `${buildCatalogProductPath(pathname.slice(3))}${suffix}`;
   }
 
+  if (pathname === "/cms" || pathname === "/cms/help" || pathname === "/cms/faq") {
+    return `/help${suffix}`;
+  }
+
+  if (pathname.startsWith("/cms/")) {
+    return `${buildCmsPagePath(pathname.slice(5))}${suffix}`;
+  }
+
   const slug = pathname.startsWith("/") ? pathname.slice(1) : pathname;
   if (legacyCmsSlugs.has(slug)) {
     return `${buildCmsPagePath(slug)}${suffix}`;

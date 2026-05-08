@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { PublicMenuItem } from "@/features/cms/types";
 import {
+  filterCustomerPrimaryNavigation,
   mapMenuItemsToLinks,
   resolveShellMenu,
   sortMenuItems,
@@ -104,6 +105,13 @@ test("resolveShellMenu prefers localized cms links when valid menu items exist",
         url: "javascript:alert(1)",
         sortOrder: 2,
       },
+      {
+        id: "checkout",
+        parentId: null,
+        label: "Checkout",
+        url: "/checkout",
+        sortOrder: 3,
+      },
     ],
     fallbackLinks: [
       {
@@ -165,7 +173,7 @@ test("resolveShellMenu keeps richer fallback navigation discoverable when CMS me
     fallbackLinks: [
       { label: "Home", href: "/" },
       { label: "Catalog", href: "/catalog" },
-      { label: "CMS", href: "/cms" },
+      { label: "Help", href: "/help" },
       { label: "Checkout", href: "/checkout" },
     ],
     localizeLink: (href, culture) => `${culture}:${href}`,
@@ -179,8 +187,30 @@ test("resolveShellMenu keeps richer fallback navigation discoverable when CMS me
   assert.deepEqual(result.primaryNavigation, [
     { label: "Home", href: "en-US:/" },
     { label: "Catalog", href: "en-US:/catalog" },
-    { label: "CMS", href: "en-US:/cms" },
-    { label: "Checkout", href: "en-US:/checkout" },
+    { label: "Help", href: "en-US:/help" },
   ]);
+});
+
+test("filterCustomerPrimaryNavigation keeps CMS-backed primary menus storefront-safe", () => {
+  assert.deepEqual(
+    filterCustomerPrimaryNavigation(
+      [
+        { label: "Home", href: "/" },
+        { label: "Shop", href: "/catalog" },
+        { label: "FAQ", href: "/cms/faq" },
+        { label: "Contact", href: "/cms/contact" },
+        { label: "CMS", href: "/cms" },
+        { label: "Orders", href: "/orders" },
+        { label: "Checkout", href: "/checkout" },
+      ],
+      "en-US",
+    ),
+    [
+      { label: "Home", href: "/" },
+      { label: "Shop", href: "/catalog" },
+      { label: "Help", href: "/help" },
+      { label: "Contact", href: "/page/contact" },
+    ],
+  );
 });
 

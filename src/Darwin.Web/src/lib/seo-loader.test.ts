@@ -27,11 +27,11 @@ test("createCachedObservedSeoMetadataLoader keeps metadata payloads stable per a
         metadata: {
           title: `${culture}:${slug}:${executions}`,
         },
-        canonicalPath: `/cms/${slug}`,
+        canonicalPath: `/page/${slug}`,
         noIndex: false,
         languageAlternates: {
-          "de-DE": `/cms/${slug}`,
-          "en-US": `/en-US/cms/${slug}`,
+          "de-DE": `/page/${slug}`,
+          "en-US": `/en-US/page/${slug}`,
         },
       };
     },
@@ -41,9 +41,9 @@ test("createCachedObservedSeoMetadataLoader keeps metadata payloads stable per a
   const second = await loader("de-DE", "impressum");
   const third = await loader("en-US", "imprint");
 
-  assert.equal(first.canonicalPath, "/cms/impressum");
-  assert.equal(second.canonicalPath, "/cms/impressum");
-  assert.equal(third.canonicalPath, "/cms/imprint");
+  assert.equal(first.canonicalPath, "/page/impressum");
+  assert.equal(second.canonicalPath, "/page/impressum");
+  assert.equal(third.canonicalPath, "/page/imprint");
   assert.equal(first.noIndex, false);
   assert.equal(third.noIndex, false);
   assert.equal(executions >= 2, true);
@@ -87,7 +87,7 @@ test("createCachedObservedSeoMetadataLoader normalizes equivalent arguments befo
       metadata: {
         title: `${culture}:${slug}`,
       },
-      canonicalPath: `/cms/${slug}`,
+      canonicalPath: `/page/${slug}`,
       noIndex: false,
       languageAlternates: {},
     }),
@@ -98,8 +98,8 @@ test("createCachedObservedSeoMetadataLoader normalizes equivalent arguments befo
     loader(" de-DE ", " impressum "),
   ]);
 
-  assert.equal(first.canonicalPath, "/cms/impressum");
-  assert.equal(second.canonicalPath, "/cms/impressum");
+  assert.equal(first.canonicalPath, "/page/impressum");
+  assert.equal(second.canonicalPath, "/page/impressum");
   assert.equal(String(first.metadata.title), "de-DE:impressum");
   assert.equal(String(second.metadata.title), "de-DE:impressum");
 });
@@ -120,18 +120,18 @@ test("createCachedObservedSeoMetadataLoader feeds normalized args into observati
       metadata: {
         title: `${culture}:${slug}`,
       },
-      canonicalPath: `/cms/${slug}`,
+      canonicalPath: `/page/${slug}`,
       noIndex: false,
       languageAlternates: {
-        "de-DE": `/cms/${slug}`,
-        "en-US": `/en-US/cms/${slug}`,
+        "de-DE": `/page/${slug}`,
+        "en-US": `/en-US/page/${slug}`,
       },
     }),
   });
 
   const result = await loader(" de-DE ", " impressum ");
 
-  assert.equal(result.canonicalPath, "/cms/impressum");
+  assert.equal(result.canonicalPath, "/page/impressum");
   assert.deepEqual(contextSnapshot, {
     culture: "de-DE",
     slug: "impressum",
@@ -182,10 +182,10 @@ test("buildSeoLoaderSuccessContext classifies indexability alongside health data
       metadata: {
         title: "Impressum",
       },
-      canonicalPath: "/cms/impressum",
+      canonicalPath: "/page/impressum",
       noIndex: true,
       languageAlternates: {
-        "de-DE": "/cms/impressum",
+        "de-DE": "/page/impressum",
       },
     }, {
       hasCanonicalNormalization: true,
@@ -198,13 +198,13 @@ test("buildSeoLoaderSuccessContext classifies indexability alongside health data
       seoIndexability: "noindex",
       seoMetadataState: "private",
       seoVisibilityFootprint: "noindex|private",
-      seoTargetFootprint: "noindex|/cms/impressum",
+      seoTargetFootprint: "noindex|/page/impressum",
       languageAlternateState: "present",
       languageAlternateFootprint: "de-DE",
       seoAlternateDetailFootprint: "de-DE",
       seoAlternateSummaryFootprint: "alternates:1[de-DE]",
       seoSummaryFootprint: "noindex|alternates:1[de-DE]",
-      canonicalPath: "/cms/impressum",
+      canonicalPath: "/page/impressum",
       noIndex: true,
       languageAlternateCount: 1,
     },
@@ -272,7 +272,7 @@ test("createCachedObservedSeoMetadataLoader keeps undefined observation context 
       metadata: {
         title: `${culture}:${slug}`,
       },
-      canonicalPath: `/cms/${slug}`,
+      canonicalPath: `/page/${slug}`,
       noIndex: false,
       languageAlternates: {},
     }),
@@ -280,7 +280,7 @@ test("createCachedObservedSeoMetadataLoader keeps undefined observation context 
 
   const result = await loader("de-DE", "faq");
 
-  assert.equal(result.canonicalPath, "/cms/faq");
+  assert.equal(result.canonicalPath, "/page/faq");
   assert.equal(result.noIndex, false);
   assert.deepEqual(result.languageAlternates, {});
 });test("createCachedObservedSeoMetadataLoader keeps empty observation context branches explicit", async () => {
@@ -292,7 +292,7 @@ test("createCachedObservedSeoMetadataLoader keeps undefined observation context 
       metadata: {
         title: `${culture}:${slug}`,
       },
-      canonicalPath: `/cms/${slug}`,
+      canonicalPath: `/page/${slug}`,
       noIndex: false,
       languageAlternates: {},
     }),
@@ -300,7 +300,7 @@ test("createCachedObservedSeoMetadataLoader keeps undefined observation context 
 
   const result = await loader("de-DE", "faq");
 
-  assert.equal(result.canonicalPath, "/cms/faq");
+  assert.equal(result.canonicalPath, "/page/faq");
   assert.equal(result.noIndex, false);
   assert.deepEqual(result.languageAlternates, {});
 });

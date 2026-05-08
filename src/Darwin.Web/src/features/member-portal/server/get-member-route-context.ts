@@ -10,7 +10,7 @@ import {
   getMemberInvoicesPageContext,
   getMemberOrdersPageContext,
 } from "@/features/member-portal/server/get-member-summary-context";
-import { getPublicStorefrontContext } from "@/features/storefront/server/get-public-storefront-context";
+import { getPublicStorefrontCartContext } from "@/features/storefront/server/get-public-storefront-cart-context";
 import { createCachedObservedLoader } from "@/lib/observed-loader";
 import {
   normalizeCultureArg,
@@ -26,12 +26,12 @@ import {
 import { memberRouteObservationContext } from "@/lib/route-observation-context";
 import { summarizePublicStorefrontHealth } from "@/lib/route-health";
 
-type MemberRouteStorefrontSupportSource = {
+type MemberRouteStorefrontFootprintSource = {
   storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0];
 };
 
-export function summarizeMemberRouteStorefrontSupport(
-  result: MemberRouteStorefrontSupportSource,
+export function summarizeMemberRouteStorefrontFootprint(
+  result: MemberRouteStorefrontFootprintSource,
 ) {
   const storefront = result.storefrontContext;
 
@@ -47,8 +47,8 @@ export const getMemberDashboardRouteContext = createCachedObservedLoader({
     memberRouteObservationContext(culture, "/account"),
   getSuccessContext: (result) => ({
     ...summarizeMemberDashboardHealth(result),
-    memberRouteStorefrontSupportFootprint:
-      summarizeMemberRouteStorefrontSupport(result),
+    memberRouteStorefrontFootprint:
+      summarizeMemberRouteStorefrontFootprint(result),
   }),
   load: async (culture: string) => {
     const [
@@ -60,7 +60,7 @@ export const getMemberDashboardRouteContext = createCachedObservedLoader({
       getMemberIdentityContext(),
       getMemberCommerceSummaryContext(culture),
       getCurrentMemberLoyaltyBusinesses({ page: 1, pageSize: 3, culture }),
-      getPublicStorefrontContext(culture),
+      getPublicStorefrontCartContext(culture),
     ]);
 
     return {
@@ -80,13 +80,13 @@ export const getMemberEditorRouteContext = createCachedObservedLoader({
   getContext: (culture: string) => ({ culture, routeGroup: "account-editor" }),
   getSuccessContext: (result) => ({
     ...summarizeMemberEditorHealth(result),
-    memberRouteStorefrontSupportFootprint:
-      summarizeMemberRouteStorefrontSupport(result),
+    memberRouteStorefrontFootprint:
+      summarizeMemberRouteStorefrontFootprint(result),
   }),
   load: async (culture: string) => {
     const [identityContext, storefrontContext] = await Promise.all([
       getMemberIdentityContext(),
-      getPublicStorefrontContext(culture),
+      getPublicStorefrontCartContext(culture),
     ]);
 
     return {
@@ -108,13 +108,13 @@ export const getMemberOrdersRouteContext = createCachedObservedLoader({
     }),
   getSuccessContext: (result) => ({
     ...summarizeMemberCollectionHealth(result),
-    memberRouteStorefrontSupportFootprint:
-      summarizeMemberRouteStorefrontSupport(result),
+    memberRouteStorefrontFootprint:
+      summarizeMemberRouteStorefrontFootprint(result),
   }),
   load: async (culture: string, page: number, pageSize: number) => {
     const [ordersResult, storefrontContext] = await Promise.all([
       getMemberOrdersPageContext(culture, page, pageSize),
-      getPublicStorefrontContext(culture),
+      getPublicStorefrontCartContext(culture),
     ]);
 
     return {
@@ -136,13 +136,13 @@ export const getMemberInvoicesRouteContext = createCachedObservedLoader({
     }),
   getSuccessContext: (result) => ({
     ...summarizeMemberCollectionHealth(result),
-    memberRouteStorefrontSupportFootprint:
-      summarizeMemberRouteStorefrontSupport(result),
+    memberRouteStorefrontFootprint:
+      summarizeMemberRouteStorefrontFootprint(result),
   }),
   load: async (culture: string, page: number, pageSize: number) => {
     const [invoicesResult, storefrontContext] = await Promise.all([
       getMemberInvoicesPageContext(culture, page, pageSize),
-      getPublicStorefrontContext(culture),
+      getPublicStorefrontCartContext(culture),
     ]);
 
     return {
@@ -161,14 +161,14 @@ export const getMemberOrderDetailRouteContext = createCachedObservedLoader({
     memberRouteObservationContext(culture, "/orders/[id]", { id }),
   getSuccessContext: (result) => ({
     ...summarizeMemberCollectionHealth(result),
-    memberRouteStorefrontSupportFootprint:
-      summarizeMemberRouteStorefrontSupport(result),
+    memberRouteStorefrontFootprint:
+      summarizeMemberRouteStorefrontFootprint(result),
     detail: summarizeMemberDetailHealth(result.orderResult),
   }),
   load: async (culture: string, id: string) => {
     const [orderResult, storefrontContext] = await Promise.all([
       getCurrentMemberOrder(id, culture),
-      getPublicStorefrontContext(culture),
+      getPublicStorefrontCartContext(culture),
     ]);
 
     return {
@@ -187,14 +187,14 @@ export const getMemberInvoiceDetailRouteContext = createCachedObservedLoader({
     memberRouteObservationContext(culture, "/invoices/[id]", { id }),
   getSuccessContext: (result) => ({
     ...summarizeMemberCollectionHealth(result),
-    memberRouteStorefrontSupportFootprint:
-      summarizeMemberRouteStorefrontSupport(result),
+    memberRouteStorefrontFootprint:
+      summarizeMemberRouteStorefrontFootprint(result),
     detail: summarizeMemberDetailHealth(result.invoiceResult),
   }),
   load: async (culture: string, id: string) => {
     const [invoiceResult, storefrontContext] = await Promise.all([
       getCurrentMemberInvoice(id, culture),
-      getPublicStorefrontContext(culture),
+      getPublicStorefrontCartContext(culture),
     ]);
 
     return {

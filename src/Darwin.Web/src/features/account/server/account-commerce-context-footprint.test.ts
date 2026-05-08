@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeAccountPageStorefrontSupport } from "@/features/account/server/get-account-page-context";
-import { summarizeCommerceRouteStorefrontSupport } from "@/features/checkout/server/get-commerce-route-context";
+import { summarizeAccountPageStorefrontFootprint } from "@/features/account/server/get-account-page-context";
+import { summarizeCommerceRouteStorefrontFootprint } from "@/features/checkout/server/get-commerce-route-context";
 
-test("summarizeAccountPageStorefrontSupport keeps public and member storefront support readable", () => {
+test("summarizeAccountPageStorefrontFootprint keeps public and member storefront state compact", () => {
   assert.equal(
-    summarizeAccountPageStorefrontSupport({
+    summarizeAccountPageStorefrontFootprint({
       session: null,
       publicRouteContext: {
         storefrontContext: {
@@ -30,9 +30,9 @@ test("summarizeAccountPageStorefrontSupport keeps public and member storefront s
   );
 });
 
-test("summarizeCommerceRouteStorefrontSupport keeps storefront continuity readable", () => {
+test("summarizeCommerceRouteStorefrontFootprint keeps storefront state compact", () => {
   assert.equal(
-    summarizeCommerceRouteStorefrontSupport({
+    summarizeCommerceRouteStorefrontFootprint({
       storefrontContext: {
         cmsPagesResult: { status: "ok", data: { items: [{ slug: "about" }] } },
         cmsPagesStatus: "ok",

@@ -1,22 +1,11 @@
 import Link from "next/link";
-import { AccountContentCompositionWindow } from "@/components/account/account-content-composition-window";
 import { MemberPortalNav } from "@/components/account/member-portal-nav";
 import { StatusBanner } from "@/components/feedback/status-banner";
-import { buildMemberPromotionLaneCards } from "@/components/member/member-promotion-lanes";
-import { MemberStorefrontWindow } from "@/components/member/member-storefront-window";
 import type { PublicCartSummary } from "@/features/cart/types";
-import type {
-  PublicCategorySummary,
-  PublicProductSummary,
-} from "@/features/catalog/types";
-import type { PublicPageSummary } from "@/features/cms/types";
-import { MemberCrossSurfaceRail } from "@/components/member/member-cross-surface-rail";
-import { sortProductsByOpportunity } from "@/features/catalog/merchandising";
 import { buildCheckoutDraftSearch, toCheckoutDraftFromMemberAddress } from "@/features/checkout/helpers";
 import { signOutMemberAction } from "@/features/member-session/actions";
 import type { MemberSession } from "@/features/member-session/types";
 import type {
-  LinkedCustomerContext,
   MemberAddress,
   MemberCustomerProfile,
   MemberInvoiceSummary,
@@ -25,11 +14,6 @@ import type {
   MyLoyaltyBusinessSummary,
   MyLoyaltyOverview,
 } from "@/features/member-portal/types";
-import {
-  buildStorefrontCategorySpotlightLinkCards,
-  buildStorefrontOfferCards,
-  buildStorefrontPageSpotlightCards,
-} from "@/features/storefront/storefront-campaigns";
 import {
   formatResource,
   getMemberResource,
@@ -52,8 +36,6 @@ type MemberDashboardPageProps = {
   profileStatus: string;
   preferences: MemberPreferences | null;
   preferencesStatus: string;
-  customerContext: LinkedCustomerContext | null;
-  customerContextStatus: string;
   addresses: MemberAddress[];
   addressesStatus: string;
   recentOrders: MemberOrderSummary[];
@@ -65,14 +47,6 @@ type MemberDashboardPageProps = {
   loyaltyBusinesses: MyLoyaltyBusinessSummary[];
   loyaltyBusinessesStatus: string;
   storefrontCart: PublicCartSummary | null;
-  storefrontCartStatus: string;
-  cmsPages: PublicPageSummary[];
-  cmsPagesStatus: string;
-  categories: PublicCategorySummary[];
-  categoriesStatus: string;
-  products: PublicProductSummary[];
-  productsStatus: string;
-  cartLinkedProductSlugs: string[];
 };
 
 type DashboardActionItem = {
@@ -95,8 +69,6 @@ export function MemberDashboardPage({
   profileStatus,
   preferences,
   preferencesStatus,
-  customerContext,
-  customerContextStatus,
   addresses,
   addressesStatus,
   recentOrders,
@@ -108,24 +80,12 @@ export function MemberDashboardPage({
   loyaltyBusinesses,
   loyaltyBusinessesStatus,
   storefrontCart,
-  storefrontCartStatus,
-  cmsPages,
-  cmsPagesStatus,
-  categories,
-  categoriesStatus,
-  products,
-  productsStatus,
-  cartLinkedProductSlugs,
 }: MemberDashboardPageProps) {
   const copy = getMemberResource(culture);
   const localizedProfileStatus =
     resolveApiStatusLabel(profileStatus, copy) ?? profileStatus;
   const localizedPreferencesStatus =
     resolveApiStatusLabel(preferencesStatus, copy) ?? preferencesStatus;
-  const localizedCustomerContextStatus = resolveApiStatusLabel(
-    customerContextStatus,
-    copy,
-  ) ?? customerContextStatus;
   const localizedAddressesStatus =
     resolveApiStatusLabel(addressesStatus, copy) ?? addressesStatus;
   const localizedRecentOrdersStatus = resolveApiStatusLabel(
@@ -144,16 +104,6 @@ export function MemberDashboardPage({
     loyaltyBusinessesStatus,
     copy,
   ) ?? loyaltyBusinessesStatus;
-  const localizedStorefrontCartStatus = resolveApiStatusLabel(
-    storefrontCartStatus,
-    copy,
-  ) ?? storefrontCartStatus;
-  const localizedCmsPagesStatus =
-    resolveApiStatusLabel(cmsPagesStatus, copy) ?? cmsPagesStatus;
-  const localizedCategoriesStatus =
-    resolveApiStatusLabel(categoriesStatus, copy) ?? categoriesStatus;
-  const localizedProductsStatus =
-    resolveApiStatusLabel(productsStatus, copy) ?? productsStatus;
   const hasValidSessionExpiry = parseUtcTimestamp(session.accessTokenExpiresAtUtc) !== null;
   const sessionNeedsAttention =
     !hasValidSessionExpiry;
@@ -204,8 +154,6 @@ export function MemberDashboardPage({
   const outstandingInvoices = recentInvoices.filter(
     (invoice) => invoice.balanceMinor > 0,
   );
-  const primaryCurrency =
-    recentOrders[0]?.currency ?? recentInvoices[0]?.currency ?? "EUR";
   const attentionOrderValueMinor = attentionOrders.reduce(
     (total, order) => total + order.grandTotalGrossMinor,
     0,
@@ -220,59 +168,11 @@ export function MemberDashboardPage({
       ? localizeHref(buildInvoicePath(outstandingInvoices[0].id), culture)
       : localizeHref("/orders", culture);
   const commercePrimaryCta = attentionOrders[0]
-    ? copy.dashboardCommerceReadinessOrdersCta
+    ? copy.dashboardCommerceSummaryOrdersCta
     : outstandingInvoices[0]
-      ? copy.dashboardCommerceReadinessInvoicesCta
+      ? copy.dashboardCommerceSummaryInvoicesCta
       : copy.dashboardOpenOrdersCta;
   const hasStorefrontCart = Boolean(storefrontCart && storefrontCart.items.length > 0);
-  const cartLinkedSlugSet = new Set(cartLinkedProductSlugs);
-  const rankedStorefrontProducts =
-    (cartLinkedSlugSet.size > 0
-      ? sortProductsByOpportunity(
-          products.filter((product) => !cartLinkedSlugSet.has(product.slug)),
-        )
-      : sortProductsByOpportunity(products)
-    ).slice(0, 3);
-  const storefrontOfferCards = buildStorefrontOfferCards(rankedStorefrontProducts, {
-    labels: {
-      heroOffer: copy.offerCampaignHeroLabel,
-      valueOffer: copy.offerCampaignValueLabel,
-      priceDrop: copy.offerCampaignPriceDropLabel,
-      steadyPick: copy.offerCampaignSteadyLabel,
-    },
-    formatPrice: (product) => formatMoney(product.priceMinor, product.currency, culture),
-    describeWithSavings: (_product, input) =>
-      formatResource(copy.dashboardStorefrontProductOfferDescription, {
-        savingsPercent: input.savingsPercent,
-        price: input.price,
-      }),
-    describeWithoutSavings: (product) =>
-      product.shortDescription ?? copy.dashboardStorefrontProductFallbackDescription,
-    fallbackDescription: copy.dashboardStorefrontProductFallbackDescription,
-    formatMeta: (product) =>
-      typeof product.compareAtPriceMinor === "number" &&
-      product.compareAtPriceMinor > product.priceMinor
-        ? formatResource(copy.dashboardStorefrontProductOfferMeta, {
-            compareAt: formatMoney(
-              product.compareAtPriceMinor,
-              product.currency,
-              culture,
-            ),
-          })
-        : null,
-  });
-  const cmsSpotlightCards = buildStorefrontPageSpotlightCards(cmsPages, {
-    prefix: "dashboard",
-    fallbackDescription: copy.dashboardStorefrontCmsFallbackDescription,
-  });
-  const categorySpotlightCards = buildStorefrontCategorySpotlightLinkCards(categories, {
-    prefix: "dashboard",
-    fallbackDescription: copy.dashboardStorefrontCatalogFallbackDescription,
-  });
-  const promotionLaneCards = buildMemberPromotionLaneCards(
-    rankedStorefrontProducts,
-    culture,
-  );
   const actionItems: DashboardActionItem[] = [
     hasStorefrontCart
       ? {
@@ -367,134 +267,6 @@ export function MemberDashboardPage({
       : null,
   ].filter((item): item is DashboardActionItem => item !== null);
 
-  const dashboardCompositionRouteCard = {
-    label: copy.dashboardCompositionJourneyCurrentLabel,
-    title: copy.dashboardCompositionJourneyCurrentTitle,
-    description: formatResource(copy.dashboardCompositionJourneyCurrentDescription, {
-      profileStatus: localizedProfileStatus,
-      preferencesStatus: localizedPreferencesStatus,
-      ordersStatus: localizedRecentOrdersStatus,
-      invoicesStatus: localizedRecentInvoicesStatus,
-    }),
-    href: "/account",
-    ctaLabel: copy.dashboardCompositionJourneyCurrentCta,
-    meta: formatResource(copy.dashboardCompositionJourneyCurrentMeta, {
-      orderCount: recentOrders.length,
-      invoiceCount: recentInvoices.length,
-    }),
-  };
-  const dashboardCompositionNextCard = attentionOrders[0]
-    ? {
-        label: copy.dashboardCompositionJourneyNextLabel,
-        title: copy.dashboardCompositionJourneyNextOrdersTitle,
-        description: formatResource(copy.dashboardCompositionJourneyNextOrdersDescription, {
-          count: attentionOrders.length,
-          total: formatMoney(attentionOrderValueMinor, primaryCurrency, culture),
-        }),
-        href: buildOrderPath(attentionOrders[0].id),
-        ctaLabel: copy.dashboardCompositionJourneyNextOrdersCta,
-      }
-    : outstandingInvoices[0]
-      ? {
-          label: copy.dashboardCompositionJourneyNextLabel,
-          title: copy.dashboardCompositionJourneyNextInvoicesTitle,
-          description: formatResource(copy.dashboardCompositionJourneyNextInvoicesDescription, {
-            count: outstandingInvoices.length,
-            balance: formatMoney(
-              outstandingInvoiceBalanceMinor,
-              outstandingInvoices[0].currency,
-              culture,
-            ),
-          }),
-          href: buildInvoicePath(outstandingInvoices[0].id),
-          ctaLabel: copy.dashboardCompositionJourneyNextInvoicesCta,
-        }
-      : !profile?.phoneNumberConfirmed || sessionNeedsAttention
-        ? {
-            label: copy.dashboardCompositionJourneyNextLabel,
-            title: copy.dashboardCompositionJourneyNextSecurityTitle,
-            description: formatResource(copy.dashboardCompositionJourneyNextSecurityDescription, {
-              profileStatus: localizedProfileStatus,
-            }),
-            href: "/account/security",
-            ctaLabel: copy.dashboardCompositionJourneyNextSecurityCta,
-          }
-        : addresses.length === 0
-          ? {
-              label: copy.dashboardCompositionJourneyNextLabel,
-              title: copy.dashboardCompositionJourneyNextAddressesTitle,
-              description: copy.dashboardCompositionJourneyNextAddressesDescription,
-              href: "/account/addresses",
-              ctaLabel: copy.dashboardCompositionJourneyNextAddressesCta,
-            }
-          : {
-              label: copy.dashboardCompositionJourneyNextLabel,
-              title: copy.dashboardCompositionJourneyNextCheckoutTitle,
-              description: copy.dashboardCompositionJourneyNextCheckoutDescription,
-              href: checkoutHref,
-              ctaLabel: copy.dashboardCompositionJourneyNextCheckoutCta,
-            };
-  const dashboardCompositionRouteMapItems = [
-    {
-      label: copy.dashboardCompositionRouteMapProfileLabel,
-      title: copy.dashboardCompositionRouteMapProfileTitle,
-      description: formatResource(copy.dashboardCompositionRouteMapProfileDescription, {
-        status: localizedProfileStatus,
-      }),
-      href: "/account/profile",
-      ctaLabel: copy.dashboardCompositionRouteMapProfileCta,
-      meta: formatResource(copy.dashboardCompositionRouteMapProfileMeta, {
-        phoneState: profile?.phoneNumberConfirmed ? copy.yes : copy.no,
-      }),
-    },
-    {
-      label: copy.dashboardCompositionRouteMapCommerceLabel,
-      title: attentionOrders[0]
-        ? copy.dashboardCompositionRouteMapCommerceOrdersTitle
-        : outstandingInvoices[0]
-          ? copy.dashboardCompositionRouteMapCommerceInvoicesTitle
-          : copy.dashboardCompositionRouteMapCommerceFallbackTitle,
-      description: attentionOrders[0]
-        ? formatResource(copy.dashboardCompositionRouteMapCommerceOrdersDescription, {
-            count: attentionOrders.length,
-            total: formatMoney(attentionOrderValueMinor, primaryCurrency, culture),
-          })
-        : outstandingInvoices[0]
-          ? formatResource(copy.dashboardCompositionRouteMapCommerceInvoicesDescription, {
-              count: outstandingInvoices.length,
-              balance: formatMoney(
-                outstandingInvoiceBalanceMinor,
-                outstandingInvoices[0].currency,
-                culture,
-              ),
-            })
-          : copy.dashboardCompositionRouteMapCommerceFallbackDescription,
-      href: commercePrimaryHref,
-      ctaLabel: commercePrimaryCta,
-      meta: formatResource(copy.dashboardCompositionRouteMapCommerceMeta, {
-        orderCount: attentionOrders.length,
-        invoiceCount: outstandingInvoices.length,
-      }),
-    },
-    {
-      label: copy.dashboardCompositionRouteMapPreferencesLabel,
-      title: copy.dashboardCompositionRouteMapPreferencesTitle,
-      description: formatResource(copy.dashboardCompositionRouteMapPreferencesDescription, {
-        status: localizedPreferencesStatus,
-      }),
-      href: "/account/preferences",
-      ctaLabel: copy.dashboardCompositionRouteMapPreferencesCta,
-      meta: formatResource(copy.dashboardCompositionRouteMapPreferencesMeta, {
-        email: emailChannelReady
-          ? copy.dashboardCommunicationReady
-          : copy.dashboardCommunicationNeedsAttention,
-        sms: smsChannelReady
-          ? copy.dashboardCommunicationReady
-          : copy.dashboardCommunicationNeedsAttention,
-      }),
-    },
-  ];
-
   return (
     <section className="mx-auto flex w-full max-w-[1320px] flex-1 px-5 py-12 sm:px-6 lg:px-8">
       <div className="flex w-full flex-col gap-8">
@@ -527,7 +299,7 @@ export function MemberDashboardPage({
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               <article className="rounded-[1rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_40px_-28px_rgba(58,92,35,0.45)] backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">
-                  {copy.dashboardCommerceReadinessOrdersLabel}
+                  {copy.dashboardCommerceSummaryOrdersLabel}
                 </p>
                 <p className="mt-2 text-xl font-semibold text-[var(--color-text-primary)]">
                   {attentionOrders.length}
@@ -565,14 +337,13 @@ export function MemberDashboardPage({
           </div>
         </div>
 
-        {(profileStatus !== "ok" || preferencesStatus !== "ok" || customerContextStatus !== "ok") && (
+        {(profileStatus !== "ok" || preferencesStatus !== "ok") && (
           <StatusBanner
             tone="warning"
             title={copy.memberDataWarningsTitle}
             message={formatResource(copy.memberDataWarningsMessage, {
               profileStatus: localizedProfileStatus,
               preferencesStatus: localizedPreferencesStatus,
-              customerContextStatus: localizedCustomerContextStatus,
             })}
           />
         )}
@@ -626,122 +397,11 @@ export function MemberDashboardPage({
             <MemberPortalNav culture={culture} activePath="/account" />
 
             <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                {copy.memberRouteSummaryTitle}
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
+                {copy.dashboardCommunicationPanelTitle}
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.memberRouteSummaryMessage, {
-                  profileStatus: localizedProfileStatus,
-                  preferencesStatus: localizedPreferencesStatus,
-                  customerContextStatus: localizedCustomerContextStatus,
-                })}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={localizeHref("/account/profile", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                >
-                  {copy.memberRouteSummaryProfileCta}
-                </Link>
-                <Link
-                  href={localizeHref("/account/preferences", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                >
-                  {copy.memberRouteSummaryPreferencesCta}
-                </Link>
-                <Link
-                  href={localizeHref("/account/security", culture)}
-                  className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                >
-                  {copy.memberRouteSummarySecurityCta}
-                </Link>
-              </div>
-            </div>
-
-            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#fff7ea_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.crmContextTitle}
-              </p>
-              {customerContext ? (
-                <div className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  <p className="font-semibold text-[var(--color-text-primary)]">{customerContext.displayName}</p>
-                  <p>{customerContext.email}</p>
-                  {customerContext.companyName ? <p>{customerContext.companyName}</p> : null}
-                  <p>{formatResource(copy.crmInteractionsLabel, { count: customerContext.interactionCount })}</p>
-                  {customerContext.lastInteractionAtUtc ? (
-                    <p>{formatResource(copy.crmLastInteractionLabel, { value: formatDateTime(customerContext.lastInteractionAtUtc, culture) })}</p>
-                  ) : null}
-                  {customerContext.segments.length > 0 ? (
-                    <p>{formatResource(copy.crmSegmentsLabel, { segments: customerContext.segments.map((segment) => segment.name).join(", ") })}</p>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {copy.crmContextUnavailable}
-                </p>
-              )}
-            </div>
-
-            <MemberStorefrontWindow
-              culture={culture}
-              title={copy.dashboardStorefrontWindowTitle}
-              message={formatResource(copy.dashboardStorefrontWindowMessage, {
-                cmsStatus: localizedCmsPagesStatus,
-                categoriesStatus: localizedCategoriesStatus,
-                productsStatus: localizedProductsStatus,
-                pageCount: cmsPages.length,
-                categoryCount: categories.length,
-                productCount: products.length,
-              })}
-              cmsTitle={copy.dashboardStorefrontCmsTitle}
-              cmsCtaLabel={copy.dashboardStorefrontCmsCta}
-              cmsCards={cmsSpotlightCards}
-              cmsEmptyMessage={formatResource(copy.dashboardStorefrontCmsEmptyMessage, {
-                status: localizedCmsPagesStatus,
-              })}
-              catalogTitle={copy.dashboardStorefrontCatalogTitle}
-              catalogCtaLabel={copy.dashboardStorefrontCatalogCta}
-              categoryCards={categorySpotlightCards}
-              catalogEmptyMessage={formatResource(copy.dashboardStorefrontCatalogEmptyMessage, {
-                status: localizedCategoriesStatus,
-              })}
-              productTitle={copy.dashboardStorefrontProductTitle}
-              productCtaLabel={copy.dashboardStorefrontProductCta}
-              productMessage={
-                cartLinkedSlugSet.size > 0
-                  ? formatResource(copy.dashboardStorefrontProductCartAwareMessage, {
-                      count: cartLinkedSlugSet.size,
-                    })
-                  : copy.dashboardStorefrontProductMessage
-              }
-              productCards={storefrontOfferCards}
-              productEmptyMessage={formatResource(copy.dashboardStorefrontProductEmptyMessage, {
-                status: localizedProductsStatus,
-              })}
-              promotionLaneSectionTitle={copy.memberStorefrontPromotionLaneSectionTitle}
-              promotionLaneSectionMessage={copy.memberStorefrontPromotionLaneSectionMessage}
-              promotionLaneCards={promotionLaneCards}
-              cartSectionTitle={copy.dashboardStorefrontCartTitle}
-              cartSectionMessage={
-                hasStorefrontCart && storefrontCart
-                  ? formatResource(copy.dashboardStorefrontCartMessage, {
-                      status: localizedStorefrontCartStatus,
-                      count: storefrontCart.items.length,
-                    })
-                  : formatResource(copy.dashboardStorefrontCartEmptyMessage, {
-                      status: localizedStorefrontCartStatus,
-                    })
-              }
-              cartSectionCartCtaLabel={copy.dashboardStorefrontCartOpenCartCta}
-              cartSectionCheckoutCtaLabel={copy.dashboardStorefrontCartOpenCheckoutCta}
-            />
-
-            <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.dashboardCommunicationWindowTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.dashboardCommunicationWindowMessage, {
+                {formatResource(copy.dashboardCommunicationPanelMessage, {
                   profileStatus: localizedProfileStatus,
                   preferencesStatus: localizedPreferencesStatus,
                 })}
@@ -830,10 +490,10 @@ export function MemberDashboardPage({
 
             <div className="rounded-[1rem] border border-[#dce6cf] bg-[linear-gradient(160deg,#ffffff_0%,#f7fbef_100%)] px-6 py-6 shadow-[0_24px_54px_-34px_rgba(58,92,35,0.25)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.dashboardSecurityWindowTitle}
+                {copy.dashboardSecurityPanelTitle}
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.dashboardSecurityWindowMessage, {
+                {formatResource(copy.dashboardSecurityPanelMessage, {
                   phoneVerified: profile?.phoneNumberConfirmed ? copy.yes : copy.no,
                   expiresAt: formatDateTime(session.accessTokenExpiresAtUtc, culture),
                   state: securityState,
@@ -931,22 +591,12 @@ export function MemberDashboardPage({
               )}
             </div>
 
-            <AccountContentCompositionWindow
-              culture={culture}
-              routeCard={dashboardCompositionRouteCard}
-              nextCard={dashboardCompositionNextCard}
-              routeMapItems={dashboardCompositionRouteMapItems}
-              cmsPages={cmsPages}
-              categories={categories}
-              products={rankedStorefrontProducts}
-            />
-
             <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.dashboardCommerceWindowTitle}
+                {copy.dashboardCommercePanelTitle}
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.dashboardCommerceWindowMessage, {
+                {formatResource(copy.dashboardCommercePanelMessage, {
                   ordersStatus: localizedRecentOrdersStatus,
                   invoicesStatus: localizedRecentInvoicesStatus,
                   orderCount: recentOrders.length,
@@ -956,10 +606,10 @@ export function MemberDashboardPage({
 
               <div className="mt-5 rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
-                  {copy.dashboardCommerceReadinessTitle}
+                  {copy.dashboardCommerceSummaryTitle}
                 </p>
                 <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {formatResource(copy.dashboardCommerceReadinessMessage, {
+                  {formatResource(copy.dashboardCommerceSummaryMessage, {
                     orderCount: attentionOrders.length,
                     orderValue: formatMoney(
                       attentionOrderValueMinor,
@@ -977,10 +627,10 @@ export function MemberDashboardPage({
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
-                      {copy.dashboardCommerceReadinessOrdersLabel}
+                      {copy.dashboardCommerceSummaryOrdersLabel}
                     </p>
                     <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
-                      {formatResource(copy.dashboardCommerceReadinessOrdersValue, {
+                      {formatResource(copy.dashboardCommerceSummaryOrdersValue, {
                         count: attentionOrders.length,
                         total: formatMoney(
                           attentionOrderValueMinor,
@@ -992,10 +642,10 @@ export function MemberDashboardPage({
                   </div>
                   <div className="rounded-[1rem] bg-[var(--color-surface-panel)] px-4 py-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">
-                      {copy.dashboardCommerceReadinessInvoicesLabel}
+                      {copy.dashboardCommerceSummaryInvoicesLabel}
                     </p>
                     <p className="mt-2 text-base font-semibold text-[var(--color-text-primary)]">
-                      {formatResource(copy.dashboardCommerceReadinessInvoicesValue, {
+                      {formatResource(copy.dashboardCommerceSummaryInvoicesValue, {
                         count: outstandingInvoices.length,
                         total: formatMoney(
                           outstandingInvoiceBalanceMinor,
@@ -1131,10 +781,10 @@ export function MemberDashboardPage({
 
             <div className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.dashboardLoyaltyWindowTitle}
+                {copy.dashboardLoyaltyPanelTitle}
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.dashboardLoyaltyWindowMessage, {
+                {formatResource(copy.dashboardLoyaltyPanelMessage, {
                   overviewStatus: localizedLoyaltyOverviewStatus,
                   businessesStatus: localizedLoyaltyBusinessesStatus,
                   accountCount: loyaltyOverview?.totalAccounts ?? 0,
@@ -1319,12 +969,6 @@ export function MemberDashboardPage({
               </div>
             </div>
 
-            <MemberCrossSurfaceRail
-              culture={culture}
-              includeOrders
-              includeInvoices
-              includeLoyalty
-            />
           </div>
         </div>
       </div>

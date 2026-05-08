@@ -56,9 +56,11 @@ test("buildAccountEntryView sanitizes the public return path and keeps storefron
 
   assert.equal(view.kind, "public");
   assert.equal(view.props.returnPath, "/account");
-  assert.equal(view.props.cmsPages.length, 1);
-  assert.equal(view.props.categories.length, 1);
-  assert.equal(view.props.products.length, 1);
+  assert.deepEqual(Object.keys(view.props).sort(), [
+    "culture",
+    "returnPath",
+    "storefrontCart",
+  ]);
 });
 
 test("buildAccountEntryView assembles the member dashboard props from the shared route context", () => {
@@ -216,4 +218,6 @@ test("buildAccountEntryView assembles the member dashboard props from the shared
   assert.equal(view.props.recentInvoices.length, 1);
   assert.equal(view.props.loyaltyBusinesses.length, 1);
   assert.equal(view.props.storefrontCart?.grandTotalGrossMinor, 1099);
+  assert.equal("cmsPages" in view.props, false);
+  assert.equal("products" in view.props, false);
 });

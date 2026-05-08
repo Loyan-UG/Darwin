@@ -57,9 +57,7 @@ function resolveReturnContext(
 
   return {
     title: copy.publicAuthReturnGenericTitle,
-    description: formatResource(copy.publicAuthReturnGenericDescription, {
-      returnPath,
-    }),
+    description: copy.publicAuthReturnGenericDescription,
   };
 }
 
@@ -87,18 +85,12 @@ export function PublicAuthReturnSummary({
       <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
         {context.description}
       </p>
-      <dl className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
+      <div className="mt-5 grid gap-3 text-sm leading-7 text-[var(--color-text-secondary)]">
         <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
-          <dt className="font-semibold text-[var(--color-text-primary)]">
-            {copy.publicAuthReturnPathLabel}
-          </dt>
-          <dd>{safeReturnPath}</dd>
-        </div>
-        <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-4 py-3">
-          <dt className="font-semibold text-[var(--color-text-primary)]">
+          <p className="font-semibold text-[var(--color-text-primary)]">
             {copy.publicAuthReturnCartStateLabel}
-          </dt>
-          <dd>
+          </p>
+          <p>
             {storefrontCart
               ? formatResource(copy.publicAuthReturnCartStateValue, {
                   itemCount: cartLineCount,
@@ -109,9 +101,9 @@ export function PublicAuthReturnSummary({
                   ),
                 })
               : copy.publicAuthReturnCartStateEmpty}
-          </dd>
+          </p>
         </div>
-      </dl>
+      </div>
       <div className="mt-6 flex flex-wrap gap-3">
         <a
           href={localizedReturnHref}

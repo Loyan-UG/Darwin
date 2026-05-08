@@ -32,8 +32,6 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
     model,
     memberSession,
     identityContext,
-    commerceSummaryContext,
-    storefrontContext,
   } = routeContext;
   const requestedDraft = readCheckoutDraftFromSearchParams(resolvedSearchParams);
   const checkoutError = readSingleSearchParam(resolvedSearchParams?.checkoutError);
@@ -42,7 +40,6 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
   );
   const memberAddresses = identityContext?.addressesResult.data ?? [];
   const memberProfile = identityContext?.profileResult.data ?? null;
-  const memberPreferences = identityContext?.preferencesResult.data ?? null;
   const preferredMemberAddress =
     memberAddresses.find((address) => address.id === selectedMemberAddressId) ??
     memberAddresses.find((address) => address.isDefaultShipping) ??
@@ -90,22 +87,9 @@ export default async function CheckoutRoute({ searchParams }: CheckoutRouteProps
       intentMessage={intentMessage}
       checkoutError={checkoutError}
       memberAddresses={memberAddresses}
-      memberAddressesStatus={identityContext?.addressesResult.status ?? "idle"}
-      memberProfile={memberProfile}
-      memberProfileStatus={identityContext?.profileResult.status ?? "idle"}
-      memberPreferences={memberPreferences}
-      memberPreferencesStatus={identityContext?.preferencesResult.status ?? "idle"}
-      memberInvoices={commerceSummaryContext?.invoicesResult.data?.items ?? []}
-      memberInvoicesStatus={commerceSummaryContext?.invoicesResult.status ?? "idle"}
       profilePrefillActive={!preferredMemberAddress && Boolean(memberProfile)}
       selectedMemberAddressId={effectiveSelectedMemberAddressId}
       hasMemberSession={Boolean(memberSession)}
-      cmsPages={storefrontContext.cmsPages}
-      cmsPagesStatus={storefrontContext.cmsPagesStatus}
-      categories={storefrontContext.categories}
-      categoriesStatus={storefrontContext.categoriesStatus}
-      products={storefrontContext.products}
-      productsStatus={storefrontContext.productsStatus}
     />
   );
 }

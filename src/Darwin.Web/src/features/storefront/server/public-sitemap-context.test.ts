@@ -9,10 +9,10 @@ test("buildPublicSitemapEntries combines static and localized detail entries int
     supportedCultures: ["de-DE", "en-US"],
     cmsSitemapEntries: [
       {
-        path: "/cms/impressum",
+        path: "/page/impressum",
         languageAlternates: {
-          "de-DE": "/cms/impressum",
-          "en-US": "/en-US/cms/imprint",
+          "de-DE": "/page/impressum",
+          "en-US": "/page/imprint",
         },
       },
     ],
@@ -21,24 +21,24 @@ test("buildPublicSitemapEntries combines static and localized detail entries int
         path: "/catalog/kaffee",
         languageAlternates: {
           "de-DE": "/catalog/kaffee",
-          "en-US": "/en-US/catalog/coffee",
+          "en-US": "/catalog/coffee",
         },
       },
     ],
   });
 
-  assert.equal(result.staticEntryCount, 6);
+  assert.equal(result.staticEntryCount, 3);
   assert.equal(result.cmsEntryCount, 1);
   assert.equal(result.productEntryCount, 1);
-  assert.equal(result.entries.length, 8);
+  assert.equal(result.entries.length, 5);
   assert.equal(result.entries[0]?.url, `${siteUrl}/`);
-  assert.deepEqual(result.entries[6]?.alternates?.languages, {
-    "de-DE": `${siteUrl}/cms/impressum`,
-    "en-US": `${siteUrl}/en-US/cms/imprint`,
+  assert.deepEqual(result.entries[3]?.alternates?.languages, {
+    "de-DE": `${siteUrl}/page/impressum`,
+    "en-US": `${siteUrl}/page/imprint`,
   });
-  assert.deepEqual(result.entries[7]?.alternates?.languages, {
+  assert.deepEqual(result.entries[4]?.alternates?.languages, {
     "de-DE": `${siteUrl}/catalog/kaffee`,
-    "en-US": `${siteUrl}/en-US/catalog/coffee`,
+    "en-US": `${siteUrl}/catalog/coffee`,
   });
 });
 
@@ -48,21 +48,21 @@ test("buildPublicSitemapEntries canonicalizes alternate ordering before emitting
     supportedCultures: ["de-DE", "en-US"],
     cmsSitemapEntries: [
       {
-        path: "/cms/impressum",
+        path: "/page/impressum",
         languageAlternates: {
-          "en-US": "/en-US/cms/imprint",
-          "x-default": "/cms/impressum",
-          "de-DE": "/cms/impressum",
+          "en-US": "/page/imprint",
+          "x-default": "/page/impressum",
+          "de-DE": "/page/impressum",
         },
       },
     ],
     productSitemapEntries: [],
   });
 
-  assert.deepEqual(result.entries[6]?.alternates?.languages, {
-    "x-default": `${siteUrl}/cms/impressum`,
-    "de-DE": `${siteUrl}/cms/impressum`,
-    "en-US": `${siteUrl}/en-US/cms/imprint`,
+  assert.deepEqual(result.entries[3]?.alternates?.languages, {
+    "x-default": `${siteUrl}/page/impressum`,
+    "de-DE": `${siteUrl}/page/impressum`,
+    "en-US": `${siteUrl}/page/imprint`,
   });
 });
 
@@ -74,16 +74,13 @@ test("buildPublicSitemapEntries canonicalizes supported cultures before emitting
     productSitemapEntries: [],
   });
 
-  assert.equal(result.staticEntryCount, 6);
+  assert.equal(result.staticEntryCount, 3);
   assert.deepEqual(
-    result.entries.slice(0, 6).map((entry) => entry.url),
+    result.entries.slice(0, 3).map((entry) => entry.url),
     [
       `${siteUrl}/`,
-      `${siteUrl}/en-US`,
       `${siteUrl}/catalog`,
-      `${siteUrl}/en-US/catalog`,
-      `${siteUrl}/cms`,
-      `${siteUrl}/en-US/cms`,
+      `${siteUrl}/help`,
     ],
   );
 });

@@ -1505,8 +1505,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         billingManagementQueriesSource.Should().Contain("PaymentProviderCheckoutSessionRef = x.Payment.ProviderCheckoutSessionRef");
         billingManagementQueriesSource.Should().Contain("item.PaymentProviderPaymentIntentRef,");
         billingManagementQueriesSource.Should().Contain("item.PaymentProviderCheckoutSessionRef,");
-        billingManagementQueriesSource.Should().Contain("(x.Payment.ProviderPaymentIntentRef != null && x.Payment.ProviderPaymentIntentRef.Contains(term))");
-        billingManagementQueriesSource.Should().Contain("(x.Payment.ProviderCheckoutSessionRef != null && x.Payment.ProviderCheckoutSessionRef.Contains(term))");
+        billingManagementQueriesSource.Should().Contain("(x.Payment.ProviderPaymentIntentRef != null && EF.Functions.Like(x.Payment.ProviderPaymentIntentRef, term, QueryLikePattern.EscapeCharacter))");
+        billingManagementQueriesSource.Should().Contain("(x.Payment.ProviderCheckoutSessionRef != null && EF.Functions.Like(x.Payment.ProviderCheckoutSessionRef, term, QueryLikePattern.EscapeCharacter))");
     }
 
 
@@ -2948,13 +2948,14 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Home", "_CommunicationOpsCard.cshtml"));
 
-        source.Should().Contain("string CommunicationChannelLabel(string channel) => channel switch");
-        source.Should().Contain("\"SMS\" => T.T(\"SMS\")");
-        source.Should().Contain("\"WhatsApp\" => T.T(\"WhatsApp\")");
-        source.Should().Contain("asp-fragment=\"site-settings-sms\" class=\"btn btn-sm btn-outline-secondary\">@CommunicationChannelLabel(\"SMS\")</a>");
-        source.Should().Contain("asp-fragment=\"site-settings-whatsapp\" class=\"btn btn-sm btn-outline-secondary\">@CommunicationChannelLabel(\"WhatsApp\")</a>");
-        source.Should().NotContain("asp-fragment=\"site-settings-sms\" class=\"btn btn-sm btn-outline-secondary\">@T.T(\"SMS\")</a>");
-        source.Should().NotContain("asp-fragment=\"site-settings-whatsapp\" class=\"btn btn-sm btn-outline-secondary\">@T.T(\"WhatsApp\")</a>");
+        source.Should().Contain("string CommunicationOpsFragmentUrl(Guid? businessId) => Url.Action(\"CommunicationOpsFragment\", \"Home\", new { businessId }) ?? string.Empty;");
+        source.Should().Contain("hx-get=\"@CommunicationOpsFragmentUrl(Model.SelectedBusinessId)\"");
+        source.Should().Contain("hx-target=\"#communication-ops-card\"");
+        source.Should().Contain("@T.T(\"OpenWorkspaceAction\")");
+        source.Should().Contain("asp-fragment=\"site-settings-communications-policy\"");
+        source.Should().NotContain("string CommunicationChannelLabel(");
+        source.Should().NotContain("asp-fragment=\"site-settings-sms\"");
+        source.Should().NotContain("asp-fragment=\"site-settings-whatsapp\"");
     }
 
 
@@ -3224,81 +3225,21 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Home", "_CommunicationOpsCard.cshtml"));
 
-        source.Should().Contain("var communicationDeliveryVisibilityAttentionCount = Model.CommunicationOps.MissingSupportEmailCount");
-        source.Should().Contain("var communicationFamilyAttentionCount = Model.CommunicationOps.BusinessesRequiringEmailSetupCount;");
+        source.Should().Contain("var setupAttentionCount = (Model.CommunicationOps.EmailTransportConfigured ? 0 : 1)");
+        source.Should().Contain("+ Model.CommunicationOps.BusinessesRequiringEmailSetupCount");
+        source.Should().Contain("var failedFlowCount = Model.CommunicationOps.FailedInvitationCount");
+        source.Should().Contain("var totalAttentionCount = setupAttentionCount + failedFlowCount;");
         source.Should().Contain("string CommunicationOpsFragmentUrl(Guid? businessId) => Url.Action(\"CommunicationOpsFragment\", \"Home\", new { businessId }) ?? string.Empty;");
         source.Should().Contain("hx-get=\"@CommunicationOpsFragmentUrl(Model.SelectedBusinessId)\"");
         source.Should().Contain("hx-target=\"#communication-ops-card\"");
         source.Should().Contain("@T.T(\"OpenWorkspaceAction\")");
-        source.Should().Contain("asp-fragment=\"site-settings-smtp\"");
-        source.Should().Contain("asp-fragment=\"site-settings-admin-routing\"");
-        source.Should().Contain("@T.T(\"GoLiveReadiness\")");
-        source.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
-        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Invitations\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending\"");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\")");
-        source.Should().Contain("@T.T(\"UsersFilterLocked\")");
-        source.Should().Contain("@T.T(\"OpenFailedActivationEmails\")");
-        source.Should().Contain("@T.T(\"OpenFailedInvitationEmails\")");
-        source.Should().Contain("asp-controller=\"Users\" asp-action=\"Index\" asp-route-filter=\"@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked\"");
-        source.Should().Contain("@T.T(\"FailedAdminTests\")");
-        source.Should().Contain("@T.T(\"OpenFailedPasswordResets\")");
-        source.Should().Contain("var failedInvitationAttentionCount = Model.CommunicationOps.FailedInvitationCount;");
-        source.Should().Contain("var failedActivationAttentionCount = Model.CommunicationOps.FailedActivationCount;");
-        source.Should().Contain("var failedPasswordResetAttentionCount = Model.CommunicationOps.FailedPasswordResetCount;");
-        source.Should().Contain("var failedAdminTestAttentionCount = Model.CommunicationOps.FailedAdminTestCount;");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\"): @Model.BusinessSupport.PendingActivationMemberCount");
-        source.Should().Contain("@T.T(\"OpenFailedActivationEmails\"): @failedActivationAttentionCount");
-        source.Should().Contain("@T.T(\"FailedAdminTests\"): @failedAdminTestAttentionCount");
-        source.Should().Contain("@T.T(\"OpenFailedPasswordResets\"): @failedPasswordResetAttentionCount");
-        source.Should().Contain("@T.T(\"ReviewProviderLane\")");
-        source.Should().Contain("asp-controller=\"MobileOperations\" asp-action=\"Index\"");
-        source.Should().Contain("@T.T(\"RetryBlocked\")");
-        source.Should().Contain("@T.T(\"HeavyChains\")");
-        source.Should().Contain("@T.T(\"RepeatedFailures\")");
-        source.Should().Contain("@T.T(\"ActionBlocked\")");
-        source.Should().Contain("@T.T(\"EscalationCandidates\")");
-        source.Should().Contain("@T.T(\"EmailTransport\")");
-        source.Should().Contain("@T.T(\"SmsTransport\")");
-        source.Should().Contain("@T.T(\"WhatsAppTransport\")");
-        source.Should().Contain("@T.T(\"AdminAlertRouting\")");
-        source.Should().Contain("T.T(\"NeedsAttention\")");
-        source.Should().Contain("@communicationDeliveryVisibilityAttentionCount");
-        source.Should().Contain("@T.T(\"CommunicationRepeatedFailureChainsNote\")");
-        source.Should().Contain("@T.T(\"OpenCommunicationsWorkspace\")");
+        source.Should().Contain("@T.T(\"NeedsSetup\")");
+        source.Should().Contain("@T.T(\"FailedEmails\")");
+        source.Should().Contain("@T.T(\"NeedsAttention\")");
         source.Should().Contain("@T.T(\"CommunicationPolicy\")");
-        source.Should().Contain("@T.T(\"BusinessesRequiringEmailSetup\")");
-        source.Should().Contain("@T.T(\"MissingSupportEmail\")");
-        source.Should().Contain("@T.T(\"MissingSenderIdentity\")");
-        source.Should().Contain("@T.T(\"PasswordReset\")");
-        source.Should().Contain("@T.T(\"PhoneVerification\")");
-        source.Should().Contain("asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        source.Should().Contain("asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        source.Should().Contain("asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
-        source.Should().Contain("asp-route-retryBlockedOnly=\"true\"");
-        source.Should().Contain("asp-route-chainFollowUpOnly=\"true\"");
-        source.Should().Contain("asp-route-repeatedFailuresOnly=\"true\"");
-        source.Should().Contain("asp-route-actionBlockedOnly=\"true\"");
-        source.Should().Contain("asp-route-escalationCandidatesOnly=\"true\"");
-        source.Should().Contain("asp-route-phoneVerificationOnly=\"true\"");
         source.Should().Contain("asp-fragment=\"site-settings-communications-policy\"");
-        source.Should().Contain("@T.T(\"CommunicationTransactionalEmailEnabledLabel\")");
-        source.Should().Contain("@T.T(\"CommunicationMarketingEmailEnabledLabel\")");
-        source.Should().Contain("@T.T(\"CommunicationOperationalAlertsEnabledLabel\")");
-        source.Should().Contain("@if (Model.SelectedBusinessId.HasValue)");
-        source.Should().Contain("@T.T(\"CommunicationOpenCurrentBusinessSetupAction\")");
-        source.Should().Contain("asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention\"");
-        source.Should().Contain("@T.T(\"CommunicationOpenMemberSupportAction\")");
-        source.Should().Contain("@T.T(\"CommunicationInspectProfileAction\")");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-retryBlockedOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-chainFollowUpOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-repeatedFailuresOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-actionBlockedOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-escalationCandidatesOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-phoneVerificationOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
+        source.Should().NotContain("@if (Model.SelectedBusinessId.HasValue)");
+        source.Should().NotContain("asp-route-businessId=\"@Model.SelectedBusinessId\"");
     }
 
 
@@ -3307,86 +3248,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Home", "_BusinessSupportQueueCard.cshtml"));
 
-        source.Should().Contain("var supportAttentionCount = Model.BusinessSupport.AttentionBusinessCount");
-        source.Should().Contain("var failedInvitationAttentionCount = Model.BusinessSupport.FailedInvitationCount;");
-        source.Should().Contain("var failedActivationAttentionCount = Model.BusinessSupport.FailedActivationCount;");
-        source.Should().Contain("var failedPasswordResetAttentionCount = Model.BusinessSupport.FailedPasswordResetCount;");
-        source.Should().Contain("var failedAdminTestAttentionCount = Model.BusinessSupport.FailedAdminTestCount;");
-        source.Should().Contain("var communicationRuntimeExecutionAttentionCount = Model.BusinessSupport.PendingActivationMemberCount");
-        source.Should().Contain("var selectedBusinessRuntimeExecutionAttentionCount = Model.BusinessSupport.SelectedBusinessPendingActivationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedInvitationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedActivationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedAdminTestCount");
-        source.Should().Contain("+ failedInvitationAttentionCount");
-        source.Should().Contain("+ failedActivationAttentionCount");
-        source.Should().Contain("+ failedPasswordResetAttentionCount");
-        source.Should().Contain("+ failedAdminTestAttentionCount");
-        source.Should().Contain("@T.T(\"GoLiveReadiness\")");
+        source.Should().Contain("var businessAttentionCount = Model.BusinessSupport.AttentionBusinessCount");
+        source.Should().Contain("+ Model.BusinessSupport.PendingApprovalBusinessCount");
+        source.Should().Contain("+ Model.BusinessSupport.SuspendedBusinessCount");
+        source.Should().Contain("+ Model.BusinessSupport.MissingOwnerBusinessCount;");
+        source.Should().Contain("var totalAttentionCount = businessAttentionCount + invitationAttentionCount + memberAttentionCount;");
         source.Should().Contain("@T.T(\"BusinessSupportQueueIntro\")");
         source.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
-        source.Should().Contain("asp-action=\"Setup\" asp-route-id=\"@Model.SelectedBusinessId\"");
-        source.Should().Contain("@T.T(\"TaxComplianceTitle\")");
-        source.Should().Contain("@T.T(\"Communications\")");
-        source.Should().Contain("@T.T(\"CommunicationPolicy\")");
-        source.Should().Contain("@T.T(\"RuntimeExecution\")");
         source.Should().Contain("T.T(\"NeedsAttention\")");
-        source.Should().Contain("@supportAttentionCount");
-        source.Should().Contain("@T.T(\"Payments\")");
-        source.Should().Contain("@T.T(\"RetryBlocked\")");
-        source.Should().Contain("@T.T(\"ActionBlocked\")");
-        source.Should().Contain("@T.T(\"EscalationCandidates\")");
-        source.Should().Contain("@T.T(\"PhoneVerification\")");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\")");
-        source.Should().Contain("@T.T(\"UsersFilterLocked\")");
-        source.Should().Contain("@T.T(\"OpenFailedActivationEmails\")");
-        source.Should().Contain("@T.T(\"FailedAdminTests\")");
-        source.Should().Contain("@T.T(\"OpenFailedPasswordResets\")");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\"): @Model.BusinessSupport.PendingActivationMemberCount");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\"): @Model.BusinessSupport.SelectedBusinessPendingActivationCount");
-        source.Should().Contain("@T.T(\"OpenFailedInvitationEmails\"): @failedInvitationAttentionCount");
-        source.Should().Contain("@T.T(\"OpenFailedActivationEmails\"): @failedActivationAttentionCount");
-        source.Should().Contain("@T.T(\"FailedAdminTests\"): @failedAdminTestAttentionCount");
-        source.Should().Contain("@T.T(\"OpenFailedPasswordResets\"): @failedPasswordResetAttentionCount");
-        source.Should().Contain("@T.T(\"HeavyChains\")");
-        source.Should().Contain("@T.T(\"RepeatedFailures\")");
-        source.Should().Contain("@T.T(\"Pending\")");
-        source.Should().Contain("@T.T(\"PasswordReset\")");
-        source.Should().Contain("@T.T(\"Unlinked\")");
-        source.Should().Contain("@T.T(\"Refunded\")");
-        source.Should().Contain("@T.T(\"FixVatId\")");
-        source.Should().Contain("@T.T(\"Overdue\")");
-        source.Should().Contain("@T.T(\"DueSoon\")");
-        source.Should().Contain("@T.T(\"Draft\")");
         source.Should().Contain("@T.T(\"BusinessSupportOpenQueueAction\")");
-        source.Should().Contain("asp-route-status=\"@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval\"");
-        source.Should().Contain("@InvitationDebtSummaryLabel(Model.BusinessSupport.PendingInvitationCount)");
-        source.Should().Contain("@InvitationDebtCount(Model.BusinessSupport.PendingInvitationCount, Model.BusinessSupport.OpenInvitationCount)");
-        source.Should().Contain("@T.T(\"BusinessSupportCurrentSnapshotLabel\")");
-        source.Should().Contain("@T.T(\"BusinessSupportOpenPendingActivationAction\")");
-        source.Should().Contain("@T.T(\"BusinessSupportOpenLockedMembersAction\")");
-        source.Should().Contain("asp-action=\"TaxCompliance\"");
-        source.Should().Contain("asp-action=\"Payments\" asp-route-businessId=\"@Model.SelectedBusinessId\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Pending\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Unlinked\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Refunded\"");
-        source.Should().Contain("asp-action=\"Edit\" asp-fragment=\"site-settings-communications-policy\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-retryBlockedOnly=\"true\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
-        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-actionBlockedOnly=\"true\"");
-        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-escalationCandidatesOnly=\"true\"");
-        source.Should().Contain("asp-action=\"ChannelAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-phoneVerificationOnly=\"true\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-chainFollowUpOnly=\"true\"");
-        source.Should().Contain("asp-action=\"EmailAudits\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-repeatedFailuresOnly=\"true\"");
-        source.Should().Contain("asp-route-filter=\"Overdue\"");
-        source.Should().Contain("asp-route-filter=\"DueSoon\"");
-        source.Should().Contain("asp-route-filter=\"Draft\"");
-        source.Should().Contain("asp-route-filter=\"MissingVatId\"");
+        source.Should().NotContain("asp-route-businessId=\"@Model.SelectedBusinessId\"");
+        source.Should().NotContain("asp-action=\"EmailAudits\"");
+        source.Should().NotContain("asp-route-status=\"@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval\"");
     }
 
 
@@ -3681,31 +3554,19 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Home", "_CommunicationOpsCard.cshtml"));
 
-        source.Should().Contain("string CommunicationChannelLabel(string channel) => channel switch");
-        source.Should().Contain("string DependencyStatusLabel(bool configured, string configuredLabel, string missingLabel) => configured");
-        source.Should().Contain("var communicationPolicyAttentionCount = (Model.CommunicationOps.EmailTransportConfigured ? 0 : 1)");
-        source.Should().Contain("var communicationDeliveryVisibilityAttentionCount = Model.CommunicationOps.MissingSupportEmailCount");
-        source.Should().Contain("var communicationFamilyAttentionCount = Model.CommunicationOps.BusinessesRequiringEmailSetupCount;");
-        source.Should().Contain("\"SMS\" => T.T(\"SMS\")");
-        source.Should().Contain("\"WhatsApp\" => T.T(\"WhatsApp\")");
-        source.Should().Contain("_ => string.IsNullOrWhiteSpace(channel) ? T.T(\"CommonUnclassified\") : T.T(channel)");
-        source.Should().Contain("@CommunicationChannelLabel(\"SMS\")");
-        source.Should().Contain("@CommunicationChannelLabel(\"WhatsApp\")");
-        source.Should().Contain("@DependencyStatusLabel(Model.CommunicationOps.EmailTransportConfigured, \"Ready\", \"NeedsSetup\")");
-        source.Should().Contain("@DependencyStatusLabel(Model.CommunicationOps.SmsTransportConfigured, \"Ready\", \"NotReady\")");
-        source.Should().Contain("@DependencyStatusLabel(Model.CommunicationOps.WhatsAppTransportConfigured, \"Ready\", \"NotReady\")");
-        source.Should().Contain("@DependencyStatusLabel(Model.CommunicationOps.AdminAlertRoutingConfigured, \"Configured\", \"Missing\")");
+        source.Should().Contain("var setupAttentionCount = (Model.CommunicationOps.EmailTransportConfigured ? 0 : 1)");
+        source.Should().Contain("+ (Model.CommunicationOps.AdminAlertRoutingConfigured ? 0 : 1)");
+        source.Should().Contain("+ Model.CommunicationOps.BusinessesRequiringEmailSetupCount");
+        source.Should().Contain("+ Model.CommunicationOps.MissingSupportEmailCount");
+        source.Should().Contain("+ Model.CommunicationOps.MissingSenderIdentityCount;");
+        source.Should().Contain("@T.T(\"NeedsSetup\")");
+        source.Should().Contain("@T.T(\"FailedEmails\")");
+        source.Should().Contain("@T.T(\"NeedsAttention\")");
         source.Should().Contain("@T.T(\"CommunicationPolicy\")");
-        source.Should().Contain("@T.T(\"MissingSupportEmail\") / @T.T(\"MissingSenderIdentity\")");
-        source.Should().Contain("@T.T(\"RetryBlocked\") / @T.T(\"ActionBlocked\") / @T.T(\"EscalationCandidates\")");
-        source.Should().Contain("@T.T(\"Pending\")");
-        source.Should().Contain("@T.T(\"PasswordReset\")");
-        source.Should().Contain("@T.T(\"PhoneVerification\")");
-        source.Should().Contain("@T.T(\"MobileOperationsTitle\")");
-        source.Should().Contain("asp-fragment=\"site-settings-admin-routing\"");
-        source.Should().Contain("asp-route-phoneVerificationOnly=\"true\"");
-        source.Should().Contain("asp-action=\"Setup\" asp-route-id=\"@Model.SelectedBusinessId\"");
-        source.Should().Contain("asp-action=\"Members\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention\"");
+        source.Should().NotContain("string CommunicationChannelLabel(");
+        source.Should().NotContain("string DependencyStatusLabel(");
+        source.Should().NotContain("asp-route-phoneVerificationOnly=\"true\"");
+        source.Should().NotContain("asp-action=\"Setup\" asp-route-id=\"@Model.SelectedBusinessId\"");
     }
 
 
@@ -11794,14 +11655,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         shippingSource.Should().Contain("public async Task<IActionResult> GetRatesAsync([FromBody] PublicShippingRateRequest? request, CancellationToken ct = default)");
         shippingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
         shippingSource.Should().Contain("var items = await _rateShipmentHandler.HandleAsync(new RateShipmentInputDto");
-        shippingSource.Should().Contain("Country = normalizedCountry,");
+        shippingSource.Should().Contain("Country = normalizedCountry.ToUpperInvariant(),");
         shippingSource.Should().Contain("SubtotalNetMinor = request.SubtotalNetMinor,");
         shippingSource.Should().Contain("ShipmentMass = request.ShipmentMass,");
         shippingSource.Should().Contain("Currency = normalizedCurrency");
-        shippingSource.Should().Contain("}, normalizedCurrency, ct).ConfigureAwait(false);");
+        shippingSource.Should().Contain("}, normalizedCurrency.ToUpperInvariant(), ct).ConfigureAwait(false);");
         shippingSource.Should().Contain("return Ok(items.Select(MapOption).ToList());");
         shippingSource.Should().Contain("catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)");
-        shippingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ShippingOptionsCouldNotBeCalculated\"], ex.Message);");
+        shippingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"ShippingOptionsCouldNotBeCalculated\"]);");
         shippingSource.Should().Contain("private static PublicShippingOption MapOption(ShippingOptionDto dto)");
         shippingSource.Should().Contain("MethodId = dto.MethodId,");
         shippingSource.Should().Contain("Carrier = dto.Carrier,");
@@ -11829,13 +11690,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         billingSource.Should().Contain("request.RowVersion,");
         billingSource.Should().Contain("return Ok(new SetCancelAtPeriodEndResponse");
         billingSource.Should().Contain("CancelAtPeriodEnd = result.Value.CancelAtPeriodEnd,");
-        billingSource.Should().Contain("public async Task<IActionResult> GetBillingPlansAsync([FromQuery] bool activeOnly = true, CancellationToken ct = default)");
+        billingSource.Should().Contain("public async Task<IActionResult> GetBillingPlansAsync([FromQuery] bool activeOnly = true, [FromQuery] string? culture = null, CancellationToken ct = default)");
         billingSource.Should().Contain("var (hasBusinessAccess, _, errorResult) = await TryGetCurrentBusinessIdAsync(requireOperationsAllowed: false, ct).ConfigureAwait(false);");
         billingSource.Should().Contain("var dto = await _getBillingPlansHandler");
         billingSource.Should().Contain("var response = new GetBillingPlansResponse");
         billingSource.Should().Contain("Items = dto.Items");
         billingSource.Should().Contain("TrialDays = x.TrialDays,");
-        billingSource.Should().Contain("public async Task<IActionResult> CreateSubscriptionCheckoutIntentAsync([FromBody] CreateSubscriptionCheckoutIntentRequest request, CancellationToken ct = default)");
+        billingSource.Should().Contain("public async Task<IActionResult> CreateSubscriptionCheckoutIntentAsync([FromBody] CreateSubscriptionCheckoutIntentRequest? request, CancellationToken ct = default)");
+        billingSource.Should().Contain("if (request is null)");
+        billingSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RequestPayloadRequired\"]);");
         billingSource.Should().Contain("var validation = await _createSubscriptionCheckoutIntentHandler");
         billingSource.Should().Contain(".ValidateAsync(businessId, request.PlanId, ct)");
         billingSource.Should().Contain("return ProblemFromResult(validation, _validationLocalizer[\"CheckoutIntentCreationFailed\"]);");
@@ -11848,7 +11711,9 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         billingSource.Should().Contain("var checkoutUrl = new UriBuilder(baseUri)");
         billingSource.Should().Contain("Query = queryBuilder.ToQueryString().Value?.TrimStart('?')");
         billingSource.Should().Contain("CheckoutUrl = checkoutUrl,");
-        billingSource.Should().Contain("ExpiresAtUtc = DateTime.UtcNow.AddMinutes(15),");
+        billingSource.Should().Contain("private readonly IClock _clock;");
+        billingSource.Should().Contain("_clock = clock ?? throw new ArgumentNullException(nameof(clock));");
+        billingSource.Should().Contain("ExpiresAtUtc = _clock.UtcNow.AddMinutes(15),");
         billingSource.Should().Contain("Provider = \"Stripe\"");
         billingSource.Should().Contain("private static BusinessSubscriptionStatusResponse MapStatus(BusinessSubscriptionStatusDto dto)");
         billingSource.Should().Contain("CancelAtPeriodEnd = dto.CancelAtPeriodEnd");
@@ -11875,7 +11740,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         loyaltySource.Should().Contain("SelectedRewardTierIds = request.SelectedRewardTierIds?");
         loyaltySource.Should().Contain(".Where(x => x != Guid.Empty)");
         loyaltySource.Should().Contain(".Distinct()");
-        loyaltySource.Should().Contain("DeviceId = request.DeviceId");
+        loyaltySource.Should().Contain("DeviceId = NormalizeText(request.DeviceId)");
         loyaltySource.Should().Contain("var result = await _prepareScanSessionHandler.HandleAsync(dto, ct).ConfigureAwait(false);");
         loyaltySource.Should().Contain("if (result.Value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&");
         loyaltySource.Should().Contain(".EnrichSelectedRewardsAsync(request.BusinessId, result.Value.SelectedRewardTierIds, failIfMissing: true, ct)");
@@ -12804,7 +12669,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         controllerSource.Should().Contain("private readonly GenerateDhlShipmentLabelHandler _generateDhlShipmentLabel;");
         controllerSource.Should().Contain("public async Task<IActionResult> GenerateDhlLabel(");
-        controllerSource.Should().Contain("await _generateDhlShipmentLabel.HandleAsync(shipmentId, ct).ConfigureAwait(false);");
+        controllerSource.Should().Contain("var version = DecodeBase64RowVersion(rowVersion);");
+        controllerSource.Should().Contain("await _generateDhlShipmentLabel.HandleAsync(shipmentId, version, ct).ConfigureAwait(false);");
         controllerSource.Should().Contain("SetSuccessMessage(\"DhlLabelGenerationQueued\");");
         controllerSource.Should().Contain("SetErrorMessage(\"DhlLabelGenerationFailed\");");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter });");
@@ -12873,7 +12739,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createHandlerSource.Should().Contain("shipment.LastCarrierEventKey = \"shipment.provider_created\";");
         createHandlerSource.Should().Contain("await ShipmentCarrierEventRecorder.AddIfMissingAsync(");
         createHandlerSource.Should().Contain("OperationType == \"GenerateLabel\"");
-        createHandlerSource.Should().Contain("_db.Set<ShipmentProviderOperation>().Add(new ShipmentProviderOperation");
+        createHandlerSource.Should().Contain("queuedLabelOperationEntry = new ShipmentProviderOperation");
+        createHandlerSource.Should().Contain("_db.Set<ShipmentProviderOperation>().Add(queuedLabelOperationEntry);");
 
         helperSource.Should().Contain("internal static class DhlShipmentPhaseOneMetadata");
         helperSource.Should().Contain("return $\"dhl-ship-{shipment.Id:N}\";");

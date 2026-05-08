@@ -1,67 +1,125 @@
-﻿using Darwin.Application.Abstractions.Persistence;
-using Darwin.Domain.Common;
-using Darwin.Domain.Entities.CartCheckout;
-using Darwin.Infrastructure.Persistence.Db;
-using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Domain.Common;
+using Darwin.Domain.Entities.CartCheckout;
+using Darwin.Domain.Entities.Catalog;
+using Darwin.Infrastructure.Persistence.Db;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Infrastructure.Persistence.Seed.Sections
 {
     /// <summary>
-    /// Seeds a few carts and items to simulate both guest and signed-in flows.
+    /// Seeds and repairs sample carts for both guest and signed-in storefront flows.
     /// </summary>
     public sealed class CartSeedSection
     {
         /// <summary>
-        /// Creates several sample carts with VAT and unit price snapshots.
+        /// Creates sample carts with coherent VAT and unit price snapshots.
         /// </summary>
         public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
         {
-            if (await db.Set<Cart>().AnyAsync(ct)) return;
+            var variants = await db.ProductVariants
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.Sku)
+                .ToListAsync(ct);
 
-            var userAlice = await db.Users.FirstOrDefaultAsync(u => u.Email == "alice@example.com" && !u.IsDeleted, ct);
-
-            // User-owned cart
-            var cart1 = new Cart
+            if (variants.Count == 0)
             {
-                UserId = userAlice?.Id,
-                Currency = DomainDefaults.DefaultCurrency,
-                CouponCode = "WELCOME10"
-            };
-            db.Add(cart1);
+                return;
+            }
 
-            db.Add(new CartItem
-            {
-                CartId = cart1.Id,
-                VariantId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                Quantity = 1,
-                UnitPriceNetMinor = 2999, // €29.99 net
-                VatRate = 0.19m,
-                SelectedAddOnValueIdsJson = "[]"
-            });
+            var taxCategoryIds = variants.Select(x => x.TaxCategoryId).Distinct().ToArray();
+            var taxRatesById = await db.TaxCategories
+                .Where(x => taxCategoryIds.Contains(x.Id) && !x.IsDeleted)
+                .ToDictionaryAsync(x => x.Id, x => x.VatRate, ct);
 
-            // Guest cart
-            var cart2 = new Cart
+            var member = await db.Users.FirstOrDefaultAsync(u => u.Email == "cons1@darwin.de" && !u.IsDeleted, ct);
+            if (member != null)
             {
-                UserId = null,
-                AnonymousId = "anon-123",
-                Currency = DomainDefaults.DefaultCurrency
-            };
-            db.Add(cart2);
+                var firstVariant = variants.FirstOrDefault(x => x.Id == Guid.Parse("11111111-1111-1111-1111-111111111111"))
+                    ?? variants[0];
+                var secondVariant = variants.FirstOrDefault(x => x.Id == Guid.Parse("22222222-2222-2222-2222-222222222222"))
+                    ?? variants[Math.Min(1, variants.Count - 1)];
 
-            db.Add(new CartItem
+                var memberCart = await EnsureCartAsync(db, member.Id, null, "WELCOME10", ct);
+                await EnsureCartItemAsync(db, memberCart.Id, firstVariant, quantity: 1, ResolveVatRate(firstVariant, taxRatesById), ct);
+                await EnsureCartItemAsync(db, memberCart.Id, secondVariant, quantity: 1, ResolveVatRate(secondVariant, taxRatesById), ct);
+            }
+
+            var guestVariant = variants.FirstOrDefault(x => x.Id == Guid.Parse("22222222-2222-2222-2222-222222222222"))
+                ?? variants[Math.Min(1, variants.Count - 1)];
+            var guestCart = await EnsureCartAsync(db, null, "anon-123", null, ct);
+            await EnsureCartItemAsync(db, guestCart.Id, guestVariant, quantity: 2, ResolveVatRate(guestVariant, taxRatesById), ct);
+        }
+
+        private static async Task<Cart> EnsureCartAsync(
+            DarwinDbContext db,
+            Guid? userId,
+            string? anonymousId,
+            string? couponCode,
+            CancellationToken ct)
+        {
+            var cart = userId.HasValue
+                ? await db.Set<Cart>().FirstOrDefaultAsync(x => x.UserId == userId.Value && !x.IsDeleted, ct)
+                : await db.Set<Cart>().FirstOrDefaultAsync(x => x.AnonymousId == anonymousId && !x.IsDeleted, ct);
+
+            if (cart == null)
             {
-                CartId = cart2.Id,
-                VariantId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                Quantity = 2,
-                UnitPriceNetMinor = 999, // €9.99 net
-                VatRate = 0.07m,
-                SelectedAddOnValueIdsJson = "[]"
-            });
+                cart = new Cart
+                {
+                    UserId = userId,
+                    AnonymousId = anonymousId
+                };
+                db.Add(cart);
+            }
+
+            cart.Currency = DomainDefaults.DefaultCurrency;
+            cart.CouponCode = couponCode;
 
             await db.SaveChangesAsync(ct);
+            return cart;
+        }
+
+        private static async Task EnsureCartItemAsync(
+            DarwinDbContext db,
+            Guid cartId,
+            ProductVariant variant,
+            int quantity,
+            decimal vatRate,
+            CancellationToken ct)
+        {
+            var item = await db.Set<CartItem>()
+                .FirstOrDefaultAsync(x => x.CartId == cartId && x.VariantId == variant.Id && !x.IsDeleted, ct);
+
+            if (item == null)
+            {
+                item = new CartItem
+                {
+                    CartId = cartId,
+                    VariantId = variant.Id
+                };
+                db.Add(item);
+            }
+
+            item.Quantity = quantity;
+            item.UnitPriceNetMinor = variant.BasePriceNetMinor;
+            item.VatRate = vatRate;
+            item.SelectedAddOnValueIdsJson = "[]";
+            item.AddOnPriceDeltaMinor = 0;
+
+            await db.SaveChangesAsync(ct);
+        }
+
+        private static decimal ResolveVatRate(
+            ProductVariant variant,
+            IReadOnlyDictionary<Guid, decimal> taxRatesById)
+        {
+            return taxRatesById.TryGetValue(variant.TaxCategoryId, out var rate)
+                ? rate
+                : 0.19m;
         }
     }
 }

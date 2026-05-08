@@ -123,17 +123,17 @@ select {
   background: rgba(31, 111, 120, 0.2);
 }
 
-.cms-content {
+.content-body {
   color: var(--color-text-secondary);
   line-height: 1.9;
 }
 
-.cms-content h1,
-.cms-content h2,
-.cms-content h3,
-.cms-content h4,
-.cms-content h5,
-.cms-content h6 {
+.content-body h1,
+.content-body h2,
+.content-body h3,
+.content-body h4,
+.content-body h5,
+.content-body h6 {
   margin-top: 2.5rem;
   margin-bottom: 1rem;
   color: var(--color-text-primary);
@@ -141,26 +141,26 @@ select {
   line-height: 1.2;
 }
 
-.cms-content p,
-.cms-content ul,
-.cms-content ol,
-.cms-content blockquote {
+.content-body p,
+.content-body ul,
+.content-body ol,
+.content-body blockquote {
   margin-block: 1rem;
 }
 
-.cms-content a {
+.content-body a {
   color: var(--color-brand);
 }
 
-.cms-content img,
-.cms-content video {
+.content-body img,
+.content-body video {
   display: block;
   max-width: 100%;
   height: auto;
 }
 
-.cms-content ul,
-.cms-content ol {
+.content-body ul,
+.content-body ol {
   padding-inline-start: 1.4rem;
 }
 

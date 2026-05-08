@@ -1,232 +1,53 @@
 @model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
-    string CommunicationChannelLabel(string channel) => channel switch
-    {
-        "SMS" => T.T("SMS"),
-        "WhatsApp" => T.T("WhatsApp"),
-        _ => string.IsNullOrWhiteSpace(channel) ? T.T("CommonUnclassified") : T.T(channel)
-    };
-    string DependencyStatusLabel(bool configured, string configuredLabel, string missingLabel) => configured
-        ? T.T(configuredLabel)
-        : T.T(missingLabel);
-    var communicationPolicyAttentionCount = (Model.CommunicationOps.EmailTransportConfigured ? 0 : 1)
+    var setupAttentionCount = (Model.CommunicationOps.EmailTransportConfigured ? 0 : 1)
         + (Model.CommunicationOps.AdminAlertRoutingConfigured ? 0 : 1)
-        + (Model.CommunicationOps.TransactionalEmailBusinessesCount > 0 ? 0 : 1);
-    var communicationDeliveryVisibilityAttentionCount = Model.CommunicationOps.MissingSupportEmailCount
+        + Model.CommunicationOps.BusinessesRequiringEmailSetupCount
+        + Model.CommunicationOps.MissingSupportEmailCount
         + Model.CommunicationOps.MissingSenderIdentityCount;
-    var failedInvitationAttentionCount = Model.CommunicationOps.FailedInvitationCount;
-    var failedActivationAttentionCount = Model.CommunicationOps.FailedActivationCount;
-    var failedPasswordResetAttentionCount = Model.CommunicationOps.FailedPasswordResetCount;
-    var failedAdminTestAttentionCount = Model.CommunicationOps.FailedAdminTestCount;
-    var communicationRuntimeExecutionAttentionCount = Model.BusinessSupport.PendingActivationMemberCount
-        + failedInvitationAttentionCount
-        + failedActivationAttentionCount
-        + failedPasswordResetAttentionCount
-        + failedAdminTestAttentionCount;
-    var communicationFamilyAttentionCount = Model.CommunicationOps.BusinessesRequiringEmailSetupCount;
+    var failedFlowCount = Model.CommunicationOps.FailedInvitationCount
+        + Model.CommunicationOps.FailedActivationCount
+        + Model.CommunicationOps.FailedPasswordResetCount
+        + Model.CommunicationOps.FailedAdminTestCount;
+    var totalAttentionCount = setupAttentionCount + failedFlowCount;
     string CommunicationOpsFragmentUrl(Guid? businessId) => Url.Action("CommunicationOpsFragment", "Home", new { businessId }) ?? string.Empty;
 }
 
-<div id="communication-ops-card" class="card shadow-sm">
+<div id="communication-ops-card" class="card h-100 shadow-sm">
     <div class="card-header bg-white">
-        <div class="d-flex align-items-center justify-content-between">
-            <div>
-                <div class="fw-semibold d-inline-flex align-items-center">
-                    @T.T("CommunicationOpsTitle")
-                    <field-help title="@T.T("CommunicationOpsTitle")" content="@T.T("CommunicationOpsDashboardIntro")" placement="bottom" />
-                </div>
+        <div class="d-flex align-items-center justify-content-between gap-2">
+            <div class="fw-semibold d-inline-flex align-items-center">
+                @T.T("CommunicationOpsTitle")
+                <field-help title="@T.T("CommunicationOpsTitle")" content="@T.T("CommunicationOpsDashboardIntro")" placement="bottom" />
             </div>
-            <div class="d-flex flex-wrap gap-2">
-                <button type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        hx-get="@CommunicationOpsFragmentUrl(Model.SelectedBusinessId)"
-                        hx-target="#communication-ops-card"
-                        hx-swap="outerHTML">
-                    @T.T("Refresh")
-                </button>
-                <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("OpenWorkspaceAction")</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary">@T.T("SMTP")</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary">@CommunicationChannelLabel("SMS")</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary">@CommunicationChannelLabel("WhatsApp")</a>
-                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary">@T.T("AdminAlerts")</a>
-            </div>
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    hx-get="@CommunicationOpsFragmentUrl(Model.SelectedBusinessId)"
+                    hx-target="#communication-ops-card"
+                    hx-swap="outerHTML">
+                @T.T("Refresh")
+            </button>
         </div>
     </div>
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
-            <div>
-                <div class="text-muted text-uppercase small fw-semibold">@T.T("GoLiveReadiness")</div>
-                <field-help title="@T.T("GoLiveReadiness")" content="@T.T("CommunicationOpsGoLiveReadinessHelp")" placement="bottom" />
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary">@T.T("BusinessSupportQueueTitle")</a>
-                <a asp-controller="Businesses" asp-action="Invitations" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending" class="btn btn-sm btn-outline-secondary">@T.T("Pending")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedInvitationEmails")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" asp-route-flowKey="AccountActivation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedActivationEmails")</a>
-                <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Unconfirmed" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterUnconfirmed")</a>
-                <a asp-controller="Users" asp-action="Index" asp-route-filter="@Darwin.Application.Identity.DTOs.UserQueueFilter.Locked" class="btn btn-sm btn-outline-secondary">@T.T("PasswordReset")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" asp-route-flowKey="AdminCommunicationTest" class="btn btn-sm btn-outline-secondary">@T.T("FailedAdminTests")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" asp-route-flowKey="PasswordReset" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedPasswordResets")</a>
-                <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-providerReviewOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("ReviewProviderLane")</a>
-                <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("MobileOperationsTitle")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("RetryBlocked")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-chainFollowUpOnly="true" class="btn btn-sm btn-outline-warning">@T.T("HeavyChains")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-repeatedFailuresOnly="true" class="btn btn-sm btn-outline-warning">@T.T("RepeatedFailures")</a>
-                <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("ActionBlocked")</a>
-                <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-dark">@T.T("EscalationCandidates")</a>
-            </div>
-        </div>
-
         <div class="row g-3">
-            <div class="col-md-3">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("EmailTransport")</div>
-                    <div class="fw-semibold mt-1">@DependencyStatusLabel(Model.CommunicationOps.EmailTransportConfigured, "Ready", "NeedsSetup")</div>
-                </div>
+            <div class="col-4">
+                <div class="text-muted small">@T.T("NeedsSetup")</div>
+                <div class="fs-4 fw-semibold">@setupAttentionCount</div>
             </div>
-            <div class="col-md-3">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("SmsTransport")</div>
-                    <div class="fw-semibold mt-1">@DependencyStatusLabel(Model.CommunicationOps.SmsTransportConfigured, "Ready", "NotReady")</div>
-                </div>
+            <div class="col-4">
+                <div class="text-muted small">@T.T("FailedEmails")</div>
+                <div class="fs-4 fw-semibold">@failedFlowCount</div>
             </div>
-            <div class="col-md-3">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("WhatsAppTransport")</div>
-                    <div class="fw-semibold mt-1">@DependencyStatusLabel(Model.CommunicationOps.WhatsAppTransportConfigured, "Ready", "NotReady")</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("AdminAlertRouting")</div>
-                    <div class="fw-semibold mt-1">@DependencyStatusLabel(Model.CommunicationOps.AdminAlertRoutingConfigured, "Configured", "Missing")</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("BusinessesRequiringEmailSetup")</div>
-                    <div class="fs-4 fw-semibold">@Model.CommunicationOps.BusinessesRequiringEmailSetupCount</div>
-                    <field-help title="@T.T("BusinessesRequiringEmailSetup")" content="@T.T("BusinessesRequiringEmailSetupNote")" placement="bottom" />
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("MissingSupportEmail")</div>
-                    <div class="fs-4 fw-semibold">@Model.CommunicationOps.MissingSupportEmailCount</div>
-                    <field-help title="@T.T("MissingSupportEmail")" content="@T.T("MissingSupportEmailNote")" placement="bottom" />
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("MissingSenderIdentity")</div>
-                    <div class="fs-4 fw-semibold">@Model.CommunicationOps.MissingSenderIdentityCount</div>
-                    <field-help title="@T.T("MissingSenderIdentity")" content="@T.T("MissingSenderIdentityNote")" placement="bottom" />
-                </div>
+            <div class="col-4">
+                <div class="text-muted small">@T.T("NeedsAttention")</div>
+                <div class="fs-4 fw-semibold">@totalAttentionCount</div>
             </div>
         </div>
-
-        <div class="row g-3 mt-1">
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("RuntimeExecution")</div>
-                    <div class="fs-4 fw-semibold">@communicationRuntimeExecutionAttentionCount</div>
-                    <div class="small text-muted mt-2">@T.T("OpenFailedInvitationEmails"): @failedInvitationAttentionCount / @T.T("UsersFilterUnconfirmed"): @Model.BusinessSupport.PendingActivationMemberCount / @T.T("OpenFailedActivationEmails"): @failedActivationAttentionCount / @T.T("FailedAdminTests"): @failedAdminTestAttentionCount / @T.T("OpenFailedPasswordResets"): @failedPasswordResetAttentionCount</div>
-                    <div class="d-flex gap-2 flex-wrap mt-3">
-                        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterUnconfirmed")</a>
-                        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterLocked")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedInvitationEmails")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AccountActivation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedActivationEmails")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AdminCommunicationTest" class="btn btn-sm btn-outline-secondary">@T.T("FailedAdminTests")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="PasswordReset" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedPasswordResets")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("OpenCommunicationsWorkspace")</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("NeedsAttention")</div>
-                    <div class="fs-4 fw-semibold">@communicationDeliveryVisibilityAttentionCount</div>
-                    <field-help title="@T.T("NeedsAttention")" content="@T.T("CommunicationRepeatedFailureChainsNote")" placement="bottom" />
-                    <div class="d-flex gap-2 flex-wrap mt-3">
-                        <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("OpenCommunicationsWorkspace")</a>
-                        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary">@T.T("SupportQueue")</a>
-                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary">@T.T("CommunicationPolicy")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("RetryBlocked")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-chainFollowUpOnly="true" class="btn btn-sm btn-outline-warning">@T.T("HeavyChains")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-repeatedFailuresOnly="true" class="btn btn-sm btn-outline-warning">@T.T("RepeatedFailures")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("ActionBlocked")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-dark">@T.T("EscalationCandidates")</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("CommunicationPolicy")</div>
-                    <div class="fs-4 fw-semibold">@communicationPolicyAttentionCount</div>
-                    <field-help title="@T.T("CommunicationPolicy")" content="@T.T("CommunicationPolicyDashboardHelp")" placement="bottom" />
-                    <div class="d-flex gap-2 flex-wrap mt-3">
-                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-primary">@T.T("CommunicationPolicy")</a>
-                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary">@T.T("SMTP")</a>
-                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary">@T.T("AdminAlerts")</a>
-                        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary">@T.T("BusinessSupportQueueTitle")</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small">@T.T("BusinessCommunicationProfileSupportSignalsTitle")</div>
-                    <div class="fs-4 fw-semibold">@communicationFamilyAttentionCount</div>
-                    <div class="small text-muted mt-2">@T.T("Pending") / @T.T("UsersFilterUnconfirmed") / @T.T("UsersFilterLocked") / @T.T("PasswordReset")</div>
-                    <div class="small text-muted">@T.T("OpenFailedInvitationEmails") / @T.T("OpenFailedActivationEmails") / @T.T("FailedAdminTests") / @T.T("OpenFailedPasswordResets")</div>
-                    <div class="small text-muted">@T.T("PhoneVerification") / @T.T("RetryBlocked")</div>
-                    <div class="d-flex gap-2 flex-wrap mt-3">
-                        <a asp-controller="Businesses" asp-action="Invitations" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending" class="btn btn-sm btn-outline-secondary">@T.T("Pending")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedInvitationEmails")</a>
-                        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation" class="btn btn-sm btn-outline-secondary">@T.T("UsersFilterUnconfirmed")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AccountActivation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedActivationEmails")</a>
-                        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked" class="btn btn-sm btn-outline-secondary">@T.T("PasswordReset")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AdminCommunicationTest" class="btn btn-sm btn-outline-secondary">@T.T("FailedAdminTests")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="PasswordReset" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedPasswordResets")</a>
-                        @if (Model.SelectedBusinessId.HasValue)
-                        {
-                            <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("CommunicationOpenCurrentBusinessSetupAction")</a>
-                            <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention" class="btn btn-sm btn-outline-secondary">@T.T("PasswordReset")</a>
-                            <a asp-controller="BusinessCommunications" asp-action="Details" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-secondary">@T.T("CommunicationInspectProfileAction")</a>
-                        }
-                        <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-phoneVerificationOnly="true" class="btn btn-sm btn-outline-dark">@T.T("PhoneVerification")</a>
-                        <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("MobileOperationsTitle")</a>
-                        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-warning">@T.T("RetryBlocked")</a>
-                    </div>
-                </div>
-            </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-sm btn-outline-primary">@T.T("OpenWorkspaceAction")</a>
+            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary">@T.T("CommunicationPolicy")</a>
         </div>
-
-        <div class="small text-muted mt-3">
-            @T.T("CommunicationTransactionalEmailEnabledLabel"): <strong>@Model.CommunicationOps.TransactionalEmailBusinessesCount</strong>
-            <span class="mx-2">|</span>
-            @T.T("CommunicationMarketingEmailEnabledLabel"): <strong>@Model.CommunicationOps.MarketingEmailBusinessesCount</strong>
-            <span class="mx-2">|</span>
-            @T.T("CommunicationOperationalAlertsEnabledLabel"): <strong>@Model.CommunicationOps.OperationalAlertBusinessesCount</strong>
-        </div>
-
-        @if (Model.SelectedBusinessId.HasValue)
-        {
-            <div class="d-flex flex-wrap gap-2 mt-3">
-                <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("CommunicationOpenCurrentBusinessSetupAction")</a>
-                <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.SelectedBusinessId" asp-route-filter="@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Attention" class="btn btn-sm btn-outline-primary">@T.T("CommunicationOpenMemberSupportAction")</a>
-                <a asp-controller="BusinessCommunications" asp-action="Details" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-sm btn-outline-primary">@T.T("CommunicationInspectProfileAction")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-retryBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("RetryBlocked")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-chainFollowUpOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("HeavyChains")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-repeatedFailuresOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("RepeatedFailures")</a>
-                <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-actionBlockedOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("ActionBlocked")</a>
-                <a asp-controller="BusinessCommunications" asp-action="ChannelAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-escalationCandidatesOnly="true" class="btn btn-sm btn-outline-secondary">@T.T("EscalationCandidates")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedInvitationEmails")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="PasswordReset" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedPasswordResets")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AccountActivation" class="btn btn-sm btn-outline-secondary">@T.T("OpenFailedActivationEmails")</a>
-                <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-businessId="@Model.SelectedBusinessId" asp-route-status="Failed" asp-route-flowKey="AdminCommunicationTest" class="btn btn-sm btn-outline-secondary">@T.T("FailedAdminTests")</a>
-                <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary">@T.T("MobileOperationsTitle")</a>
-            </div>
-        }
     </div>
 </div>

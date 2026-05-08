@@ -42,22 +42,24 @@ test("buildSeoMetadata derives x-default from the configured default culture whe
   });
 });
 
-test("buildStablePublicLanguageAlternates returns locale-prefixed alternates for public index routes", () => {
+test("buildStablePublicLanguageAlternates returns stable public alternates for public index routes", () => {
   assert.deepEqual(buildStablePublicLanguageAlternates("/"), {
     "x-default": "/",
     "de-DE": "/",
-    "en-US": "/en-US",
+    "en-US": "/",
   });
 
-  assert.deepEqual(buildStablePublicLanguageAlternates("/cms"), {
-    "x-default": "/cms",
-    "de-DE": "/cms",
-    "en-US": "/en-US/cms",
+  assert.deepEqual(buildStablePublicLanguageAlternates("/help"), {
+    "x-default": "/help",
+    "de-DE": "/help",
+    "en-US": "/help",
   });
 
   assert.deepEqual(buildStablePublicLanguageAlternates("/catalog"), {
     "x-default": "/catalog",
     "de-DE": "/catalog",
-    "en-US": "/en-US/catalog",
+    "en-US": "/catalog",
   });
+
+  assert.equal(buildStablePublicLanguageAlternates("/mock-checkout"), undefined);
 });

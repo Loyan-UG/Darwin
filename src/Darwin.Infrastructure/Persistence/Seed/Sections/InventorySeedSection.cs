@@ -59,10 +59,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 await SeedSuppliersAsync(db, businesses, ct);
             }
 
-            if (!await db.StockLevels.AnyAsync(ct))
-            {
-                await SeedStockLevelsAsync(db, warehouses, variants, ct);
-            }
+            await EnsureStockLevelsAsync(db, warehouses, variants, ct);
 
             if (!await db.InventoryTransactions.AnyAsync(ct))
             {
@@ -167,6 +164,65 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             }
 
             db.StockLevels.AddRange(stockLevels);
+            await db.SaveChangesAsync(ct);
+        }
+
+        private static async Task EnsureStockLevelsAsync(
+            DarwinDbContext db,
+            IReadOnlyList<Warehouse> warehouses,
+            IReadOnlyList<Domain.Entities.Catalog.ProductVariant> variants,
+            CancellationToken ct)
+        {
+            if (warehouses.Count == 0 || variants.Count == 0)
+            {
+                return;
+            }
+
+            if (!await db.StockLevels.AnyAsync(ct))
+            {
+                await SeedStockLevelsAsync(db, warehouses, variants, ct);
+                return;
+            }
+
+            var defaultWarehouse = warehouses.FirstOrDefault(x => x.IsDefault) ?? warehouses[0];
+            var storefrontVariants = variants.Take(20).ToList();
+            var storefrontVariantIds = storefrontVariants.Select(v => v.Id).ToArray();
+            var existingLevels = await db.StockLevels
+                .Where(x => x.WarehouseId == defaultWarehouse.Id && storefrontVariantIds.Contains(x.ProductVariantId))
+                .ToListAsync(ct);
+
+            foreach (var variant in storefrontVariants)
+            {
+                var level = existingLevels.FirstOrDefault(x => x.ProductVariantId == variant.Id);
+                if (level == null)
+                {
+                    level = new StockLevel
+                    {
+                        WarehouseId = defaultWarehouse.Id,
+                        ProductVariantId = variant.Id,
+                        ReorderPoint = 8,
+                        ReorderQuantity = 20
+                    };
+                    db.StockLevels.Add(level);
+                    existingLevels.Add(level);
+                }
+
+                if (level.AvailableQuantity < 12)
+                {
+                    level.AvailableQuantity = 36;
+                }
+
+                if (level.ReservedQuantity < 0)
+                {
+                    level.ReservedQuantity = 0;
+                }
+
+                if (level.InTransitQuantity < 0)
+                {
+                    level.InTransitQuantity = 0;
+                }
+            }
+
             await db.SaveChangesAsync(ct);
         }
 

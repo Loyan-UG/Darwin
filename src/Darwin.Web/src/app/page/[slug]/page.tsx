@@ -1,13 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import { CmsPageDetail } from "@/components/cms/cms-page-detail";
-import {
-  readCmsMetadataFocus,
-  readCmsVisibleSort,
-  readCmsVisibleState,
-} from "@/features/cms/discovery";
+import { HelpPageDetail } from "@/components/cms/help-page-detail";
 import { getCmsDetailPageContext } from "@/features/cms/server/get-cms-page-context";
 import { getCmsSeoMetadata } from "@/features/cms/server/get-cms-seo-metadata";
-import { readSearchTextParam } from "@/features/checkout/helpers";
 import {
   INFERRED_CULTURE_SEARCH_PARAM,
   localizeHref,
@@ -15,23 +9,17 @@ import {
 import { buildCmsPagePath } from "@/lib/entity-paths";
 import { getRequestCulture, getSupportedCulturesAsync } from "@/lib/request-culture";
 
-type CmsSearchParams = {
-  visibleQuery?: string;
-  visibleState?: string;
-  visibleSort?: string;
-  metadataFocus?: string;
-};
+type HelpSearchParams = Record<string, string | undefined>;
 
-type CmsPageProps = {
+type HelpPageProps = {
   params: Promise<{
     slug: string;
   }>;
-  searchParams?: Promise<CmsSearchParams>;
 };
 
 function appendSearchParams(
   href: string,
-  searchParams: CmsSearchParams | undefined,
+  searchParams: HelpSearchParams | undefined,
   extraParams?: Record<string, string | undefined>,
 ) {
   const params = new URLSearchParams();
@@ -52,30 +40,21 @@ function appendSearchParams(
   return query ? `${href}?${query}` : href;
 }
 
-export async function generateMetadata({ params }: CmsPageProps) {
+export async function generateMetadata({ params }: HelpPageProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
   const { metadata } = await getCmsSeoMetadata(culture, slug);
   return metadata;
 }
 
-export default async function CmsPage({ params, searchParams }: CmsPageProps) {
+export default async function HelpPage({ params }: HelpPageProps) {
   const culture = await getRequestCulture();
   const { slug } = await params;
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const visibleQuery = readSearchTextParam(resolvedSearchParams?.visibleQuery);
-  const visibleState = readCmsVisibleState(resolvedSearchParams?.visibleState);
-  const visibleSort = readCmsVisibleSort(resolvedSearchParams?.visibleSort);
-  const metadataFocus = readCmsMetadataFocus(resolvedSearchParams?.metadataFocus);
-  const { detailContext, continuationSlice } = await getCmsDetailPageContext(
+  const { detailContext } = await getCmsDetailPageContext(
     culture,
     slug,
-    visibleQuery,
-    visibleState,
-    visibleSort,
-    metadataFocus,
   );
-  const { pageResult, relatedPagesResult, relatedPages } = detailContext;
+  const { pageResult, relatedPages } = detailContext;
   const page = pageResult.data;
 
   if (!page && pageResult.status === "not-found") {
@@ -87,16 +66,12 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
       const alternateContext = await getCmsDetailPageContext(
         alternateCulture,
         slug,
-        visibleQuery,
-        visibleState,
-        visibleSort,
-        metadataFocus,
       );
 
       const alternatePage = alternateContext.detailContext.pageResult.data;
       if (alternatePage) {
         redirect(
-          appendSearchParams(buildCmsPagePath(slug), resolvedSearchParams, {
+          appendSearchParams(buildCmsPagePath(slug), undefined, {
             culture: alternateCulture,
             [INFERRED_CULTURE_SEARCH_PARAM]: "1",
           }),
@@ -109,29 +84,17 @@ export default async function CmsPage({ params, searchParams }: CmsPageProps) {
 
   if (page?.slug && page.slug !== slug) {
     redirect(
-      appendSearchParams(localizeHref(buildCmsPagePath(page.slug), culture), resolvedSearchParams),
+      localizeHref(buildCmsPagePath(page.slug), culture),
     );
   }
 
   return (
-    <CmsPageDetail
+    <HelpPageDetail
       culture={culture}
       page={page}
       status={pageResult.status}
       message={pageResult.message}
-      reviewWindow={{
-        visibleQuery,
-        visibleState,
-        visibleSort,
-        metadataFocus,
-      }}
       relatedPages={relatedPages}
-      relatedStatus={relatedPagesResult.status}
-      categories={continuationSlice.categories}
-      categoriesStatus={continuationSlice.categoriesStatus}
-      products={continuationSlice.products}
-      productsStatus={continuationSlice.productsStatus}
-      cartSummary={continuationSlice.cartSummary}
     />
   );
 }

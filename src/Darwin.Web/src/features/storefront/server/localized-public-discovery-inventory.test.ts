@@ -37,19 +37,19 @@ test("projectLocalizedPublicDiscoveryInventory precomputes alternates and sitema
     },
   ]);
   assert.deepEqual(inventory.pageAlternatesById.get("page-1"), {
-    "de-DE": "/cms/impressum",
-    "en-US": "/en-US/cms/imprint",
+    "de-DE": "/page/impressum",
+    "en-US": "/page/imprint",
   });
   assert.deepEqual(inventory.productAlternatesById.get("product-1"), {
     "de-DE": "/catalog/kaffee",
-    "en-US": "/en-US/catalog/coffee",
+    "en-US": "/catalog/coffee",
   });
   assert.deepEqual(inventory.cmsSitemapEntries, [
     {
-      path: "/cms/impressum",
+      path: "/page/impressum",
       languageAlternates: {
-        "de-DE": "/cms/impressum",
-        "en-US": "/en-US/cms/imprint",
+        "de-DE": "/page/impressum",
+        "en-US": "/page/imprint",
       },
     },
   ]);
@@ -58,7 +58,7 @@ test("projectLocalizedPublicDiscoveryInventory precomputes alternates and sitema
       path: "/catalog/kaffee",
       languageAlternates: {
         "de-DE": "/catalog/kaffee",
-        "en-US": "/en-US/catalog/coffee",
+        "en-US": "/catalog/coffee",
       },
     },
   ]);
@@ -89,13 +89,13 @@ test("projectLocalizedPublicDiscoveryInventory skips invalid items and keeps loc
   ]);
 
   assert.deepEqual(inventory.pageAlternatesById.get("page-1"), {
-    "de-DE": "/cms/impressum",
-    "en-US": "/en-US/cms/imprint",
+    "de-DE": "/page/impressum",
+    "en-US": "/page/imprint",
   });
   assert.equal(inventory.pageAlternatesById.has("page-missing-slug"), false);
   assert.deepEqual(inventory.productAlternatesById.get("product-1"), {
     "de-DE": "/catalog/kaffee",
-    "en-US": "/en-US/catalog/coffee",
+    "en-US": "/catalog/coffee",
   });
   assert.equal(
     inventory.productAlternatesById.has("product-missing-slug"),
@@ -103,10 +103,10 @@ test("projectLocalizedPublicDiscoveryInventory skips invalid items and keeps loc
   );
   assert.deepEqual(inventory.cmsSitemapEntries, [
     {
-      path: "/cms/impressum",
+      path: "/page/impressum",
       languageAlternates: {
-        "de-DE": "/cms/impressum",
-        "en-US": "/en-US/cms/imprint",
+        "de-DE": "/page/impressum",
+        "en-US": "/page/imprint",
       },
     },
   ]);
@@ -115,7 +115,7 @@ test("projectLocalizedPublicDiscoveryInventory skips invalid items and keeps loc
       path: "/catalog/kaffee",
       languageAlternates: {
         "de-DE": "/catalog/kaffee",
-        "en-US": "/en-US/catalog/coffee",
+        "en-US": "/catalog/coffee",
       },
     },
   ]);

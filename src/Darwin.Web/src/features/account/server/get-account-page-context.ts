@@ -7,14 +7,14 @@ import { summarizePublicStorefrontHealth } from "@/lib/route-health";
 import { summarizeAccountPageHealth } from "@/lib/route-health";
 import { memberRouteObservationContext } from "@/lib/route-observation-context";
 
-type AccountPageStorefrontSupportSource = {
+type AccountPageStorefrontFootprintSource = {
   session: unknown | null;
   publicRouteContext: { storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0] } | null;
   memberRouteContext: { storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0] } | null;
 };
 
-export function summarizeAccountPageStorefrontSupport(
-  result: AccountPageStorefrontSupportSource,
+export function summarizeAccountPageStorefrontFootprint(
+  result: AccountPageStorefrontFootprintSource,
 ) {
   const storefrontContext =
     result.memberRouteContext?.storefrontContext ??
@@ -35,8 +35,8 @@ export const getAccountPageContext = createCachedObservedLoader({
   getContext: (culture: string) => memberRouteObservationContext(culture, "/account"),
   getSuccessContext: (result) => ({
     ...summarizeAccountPageHealth(result),
-    accountPageStorefrontSupportFootprint:
-      summarizeAccountPageStorefrontSupport(result),
+    accountPageStorefrontFootprint:
+      summarizeAccountPageStorefrontFootprint(result),
   }),
   load: async (culture: string) => {
     const session = await getMemberSession();

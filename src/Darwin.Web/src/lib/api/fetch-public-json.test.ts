@@ -108,7 +108,7 @@ test("public JSON request helpers keep GET cache wiring and POST body shaping ca
       {
         cache: "force-cache",
         next: {
-          revalidate: 180,
+          revalidate: 120,
           tags: ["public:cms-pages"],
         },
       },
@@ -124,7 +124,7 @@ test("public JSON request helpers keep GET cache wiring and POST body shaping ca
       method: "POST",
       cache: "force-cache",
       next: {
-        revalidate: 180,
+        revalidate: 120,
         tags: ["public:cms-pages"],
       },
       headers: {
@@ -139,7 +139,7 @@ test("public JSON request helpers keep GET cache wiring and POST body shaping ca
       {
         cache: "force-cache",
         next: {
-          revalidate: 180,
+          revalidate: 120,
           tags: ["public:cms-pages", "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48"],
         },
       },
@@ -147,7 +147,7 @@ test("public JSON request helpers keep GET cache wiring and POST body shaping ca
     {
       cache: "force-cache",
       next: {
-        revalidate: 180,
+        revalidate: 120,
         tags: ["public:cms-pages", "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48"],
       },
       headers: {
@@ -207,7 +207,7 @@ test("public JSON execution helpers keep request context and cached args canonic
         cacheIdentity: {
           normalizedPath:
             "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
-          revalidate: 180,
+          revalidate: 120,
           keyTag: "public:cms-pages",
           pathTag:
             "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
@@ -218,9 +218,9 @@ test("public JSON execution helpers keep request context and cached args canonic
         },
         fetchCacheOptions: {
           cache: "force-cache",
-          next: {
-            revalidate: 180,
-            tags: [
+      next: {
+        revalidate: 120,
+        tags: [
               "public:cms-pages",
               "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
             ],
@@ -241,7 +241,7 @@ test("public JSON execution helpers keep request context and cached args canonic
       requestInit: {
         cache: "force-cache",
         next: {
-          revalidate: 180,
+          revalidate: 120,
           tags: [
             "public:cms-pages",
             "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
@@ -378,7 +378,7 @@ test("public JSON WebApi execution context keeps request planning and execution 
       cacheIdentity: {
         normalizedPath:
           "/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
-        revalidate: 180,
+        revalidate: 120,
         keyTag: "public:cms-pages",
         pathTag:
           "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
@@ -390,7 +390,7 @@ test("public JSON WebApi execution context keeps request planning and execution 
       fetchCacheOptions: {
         cache: "force-cache",
         next: {
-          revalidate: 180,
+          revalidate: 120,
           tags: [
             "public:cms-pages",
             "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",
@@ -419,7 +419,7 @@ test("public JSON WebApi execution context keeps request planning and execution 
       requestInit: {
         cache: "force-cache",
         next: {
-          revalidate: 180,
+          revalidate: 120,
           tags: [
             "public:cms-pages",
             "path:/api/v1/public/cms/pages?culture=de-DE&page=1&pageSize=48",

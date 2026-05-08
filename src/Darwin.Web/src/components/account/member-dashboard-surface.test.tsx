@@ -7,11 +7,6 @@ import React from "react";
 import Module from "node:module";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { PublicCartSummary } from "@/features/cart/types";
-import type {
-  PublicCategorySummary,
-  PublicProductSummary,
-} from "@/features/catalog/types";
-import type { PublicPageSummary } from "@/features/cms/types";
 
 const stubDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "darwin-member-dashboard-"));
 const serverOnlyStubPath = path.join(stubDirectory, "server-only.js");
@@ -29,34 +24,6 @@ Module._resolveFilename = function patchedResolveFilename(
   }
 
   return originalResolveFilename.call(this, request, parent, isMain, options);
-};
-
-const category: PublicCategorySummary = {
-  id: "category-1",
-  slug: "fruit",
-  name: "Fruit",
-  description: "Fresh produce aisle",
-  productCount: 8,
-};
-
-const product: PublicProductSummary = {
-  id: "product-1",
-  slug: "apples",
-  name: "Apples",
-  priceMinor: 700,
-  compareAtPriceMinor: 1000,
-  currency: "EUR",
-  imageUrl: null,
-  primaryImageUrl: null,
-  shortDescription: "Crisp apples",
-  categoryName: "Fruit",
-};
-
-const cmsPage: PublicPageSummary = {
-  id: "cms-1",
-  slug: "herb-guide",
-  title: "Herb guide",
-  metaDescription: "Storage tips for herbs",
 };
 
 const storefrontCart: PublicCartSummary = {
@@ -198,14 +165,6 @@ test("MemberDashboardPage renders the upgraded grocery member dashboard surface"
       ],
       loyaltyBusinessesStatus: "ok",
       storefrontCart,
-      storefrontCartStatus: "ok",
-      cmsPages: [cmsPage],
-      cmsPagesStatus: "ok",
-      categories: [category],
-      categoriesStatus: "ok",
-      products: [product],
-      productsStatus: "ok",
-      cartLinkedProductSlugs: [],
     }),
   );
 
@@ -214,8 +173,9 @@ test("MemberDashboardPage renders the upgraded grocery member dashboard surface"
     /linear-gradient\(135deg,#f5ffe8_0%,#ffffff_42%,#fff1d0_100%\)/,
   );
   assert.match(html, /Action center/);
-  assert.match(html, /Storefront continuation/);
-  assert.match(html, /Promotion lanes/);
+  assert.match(html, /Orders and invoices/);
+  assert.doesNotMatch(html, /Storefront continuation/);
+  assert.doesNotMatch(html, /Promotion lanes/);
   assert.ok(html.includes('href="/en-US/checkout"') || html.includes('href="/checkout"'));
   assert.ok(
     html.includes('href="/en-US/orders/order-1"') ||

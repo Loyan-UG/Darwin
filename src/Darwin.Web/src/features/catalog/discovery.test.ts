@@ -4,8 +4,8 @@ import type { PublicProductSummary } from "@/features/catalog/types";
 import {
   buildCatalogVisibleWindow,
   filterCatalogVisibleProducts,
+  getCatalogQualityTargets,
   getCatalogSavingsPercent,
-  getCatalogReviewTargets,
   getCatalogSavingsAmount,
   hasPrimaryImage,
   readCatalogMediaState,
@@ -37,7 +37,7 @@ test("readCatalogVisibleState keeps only supported catalog lens values", () => {
   assert.equal(readCatalogVisibleState("unknown"), "all");
 });
 
-test("readCatalogVisibleSort keeps only supported catalog review sort values", () => {
+test("readCatalogVisibleSort keeps only supported catalog sort values", () => {
   assert.equal(readCatalogVisibleSort("offers-first"), "offers-first");
   assert.equal(readCatalogVisibleSort("base-first"), "base-first");
   assert.equal(readCatalogVisibleSort("price-desc"), "price-desc");
@@ -121,7 +121,7 @@ test("filterCatalogVisibleProducts applies query and visible-state lens together
   );
 });
 
-test("sortCatalogVisibleProducts prioritizes offer-first or base-first review windows", () => {
+test("sortCatalogVisibleProducts prioritizes offer-first or base-first browse windows", () => {
   const products = [
     createProduct({
       id: "offer-b",
@@ -222,7 +222,7 @@ test("summarizeCatalogFacets counts filterable browse states from the matching s
   });
 });
 
-test("getCatalogReviewTargets prioritizes missing images before savings-led review targets", () => {
+test("getCatalogQualityTargets prioritizes missing images before savings-led quality targets", () => {
   const products = [
     createProduct({
       id: "missing-image",
@@ -245,7 +245,7 @@ test("getCatalogReviewTargets prioritizes missing images before savings-led revi
     }),
   ];
 
-  const targets = getCatalogReviewTargets(products);
+  const targets = getCatalogQualityTargets(products);
 
   assert.deepEqual(targets.map((target) => target.product.id), [
     "missing-image",

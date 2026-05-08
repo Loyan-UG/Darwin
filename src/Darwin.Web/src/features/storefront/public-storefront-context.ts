@@ -24,6 +24,20 @@ export type StorefrontShoppingContextShape = {
   cartLinkedProductSlugs: string[];
 };
 
+export function createEmptyStorefrontContinuationContext(): StorefrontContinuationContextShape {
+  return {
+    cmsPagesResult: { data: null, status: "ok" },
+    cmsPages: [],
+    cmsPagesStatus: "ok",
+    categoriesResult: { data: null, status: "ok" },
+    categories: [],
+    categoriesStatus: "ok",
+    productsResult: { data: null, status: "ok" },
+    products: [],
+    productsStatus: "ok",
+  };
+}
+
 export function mergePublicStorefrontContext(
   continuationContext: StorefrontContinuationContextShape,
   shoppingContext: StorefrontShoppingContextShape,

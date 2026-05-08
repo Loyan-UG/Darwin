@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeCatalogIndexSupportWorkflow } from "@/features/catalog/server/get-catalog-page-context";
-import { summarizeCmsIndexSupportWorkflow } from "@/features/cms/server/get-cms-page-context";
+import { summarizeCatalogIndexContextFootprint } from "@/features/catalog/server/get-catalog-page-context";
+import { summarizeCmsIndexContextFootprint } from "@/features/cms/server/get-cms-page-context";
 
-test("summarizeCatalogIndexSupportWorkflow keeps CMS, products, and cart support readable", () => {
+test("summarizeCatalogIndexContextFootprint keeps catalog context state compact", () => {
   assert.equal(
-    summarizeCatalogIndexSupportWorkflow({
+    summarizeCatalogIndexContextFootprint({
       cmsPagesResult: { status: "ok", data: { items: [{ id: "page-1" }] } },
       productsResult: { status: "ok", data: { items: [{ id: "product-1" }, { id: "product-2" }] } },
       cartSummary: { status: "ok" },
@@ -14,7 +14,7 @@ test("summarizeCatalogIndexSupportWorkflow keeps CMS, products, and cart support
   );
 
   assert.equal(
-    summarizeCatalogIndexSupportWorkflow({
+    summarizeCatalogIndexContextFootprint({
       cmsPagesResult: null,
       productsResult: null,
       cartSummary: null,
@@ -23,9 +23,9 @@ test("summarizeCatalogIndexSupportWorkflow keeps CMS, products, and cart support
   );
 });
 
-test("summarizeCmsIndexSupportWorkflow keeps category, product, and cart support readable", () => {
+test("summarizeCmsIndexContextFootprint keeps help context state compact", () => {
   assert.equal(
-    summarizeCmsIndexSupportWorkflow({
+    summarizeCmsIndexContextFootprint({
       categoriesResult: { status: "degraded", data: { items: [{ id: "category-1" }] } },
       productsResult: { status: "ok", data: { items: [{ id: "product-1" }, { id: "product-2" }, { id: "product-3" }] } },
       cartSummary: { status: "not-found" },
@@ -34,7 +34,7 @@ test("summarizeCmsIndexSupportWorkflow keeps category, product, and cart support
   );
 
   assert.equal(
-    summarizeCmsIndexSupportWorkflow({
+    summarizeCmsIndexContextFootprint({
       categoriesResult: null,
       productsResult: null,
       cartSummary: null,

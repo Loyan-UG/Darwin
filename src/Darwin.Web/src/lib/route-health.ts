@@ -237,7 +237,7 @@ export function summarizePublicStorefrontHealth(
 }
 
 
-export function summarizeStorefrontSupportFootprint(result: {
+export function summarizeStorefrontContextFootprint(result: {
   cmsStatus: string;
   cmsCount: number;
   categoriesStatus: string;
@@ -342,7 +342,7 @@ export function summarizeCatalogIndexPageHealth(
     baseAssortmentCount: result.facetSummary.baseCount,
     promotionLaneFootprint,
     catalogBrowseWorkflowFootprint: `mode:${browseMode}|matching:${matchingStatus}:${result.matchingProductsTotal}|visible:${result.visibleWindow.items.length}/${result.visibleWindow.total}|lanes:${promotionLaneFootprint}`,
-    catalogSupportWorkflowFootprint: `cms:${storefrontSummary.cmsStatus}:${storefrontSummary.cmsCount}|products:${storefrontSummary.productsStatus}:${storefrontSummary.productCount}|cart:${storefrontSummary.cartStatus}`,
+    catalogContextFootprint: `cms:${storefrontSummary.cmsStatus}:${storefrontSummary.cmsCount}|products:${storefrontSummary.productsStatus}:${storefrontSummary.productCount}|cart:${storefrontSummary.cartStatus}`,
   };
 }
 
@@ -405,7 +405,7 @@ export function summarizeCmsRouteHealth(
     corePagesStatus,
     corePageCount,
     cmsWorkflowFootprint: `core:${corePagesStatus}:${corePageCount}|lanes:${storefrontSummary.promotionLaneFootprint}`,
-    cmsSupportWorkflowFootprint: `categories:${storefrontSummary.categoriesStatus}:${storefrontSummary.categoryCount}|products:${storefrontSummary.productsStatus}:${storefrontSummary.productCount}|cart:${storefrontSummary.cartStatus}`,
+    cmsContextFootprint: `categories:${storefrontSummary.categoriesStatus}:${storefrontSummary.categoryCount}|products:${storefrontSummary.productsStatus}:${storefrontSummary.productCount}|cart:${storefrontSummary.cartStatus}`,
   };
 }
 
@@ -441,7 +441,7 @@ export function summarizeCmsIndexPageHealth(
     missingMetaDescriptionCount:
       result.metadataSummary.missingMetaDescriptionCount,
     missingBothCount: result.metadataSummary.missingBothCount,
-    cmsBrowseWorkflowFootprint: `mode:${browseMode}|matching:${matchingStatus}:${result.matchingItemsTotal}|visible:${result.visibleWindow.items.length}/${result.visibleWindow.total}|review:${result.metadataSummary.attentionCount}|ready:${result.metadataSummary.readyCount}`,
+    cmsBrowseWorkflowFootprint: `mode:${browseMode}|matching:${matchingStatus}:${result.matchingItemsTotal}|visible:${result.visibleWindow.items.length}/${result.visibleWindow.total}|attention:${result.metadataSummary.attentionCount}|ready:${result.metadataSummary.readyCount}`,
   };
 }
 
@@ -497,7 +497,7 @@ export function summarizeMemberDashboardHealth(
     loyaltyBusinessesStatus: result.loyaltyBusinessesResult.status,
     loyaltyBusinessCount,
     memberWorkflowFootprint: `orders:${result.commerceSummaryContext.ordersResult.status}|invoices:${result.commerceSummaryContext.invoicesResult.status}|loyalty:${result.commerceSummaryContext.loyaltyOverviewResult.status}|lanes:${storefrontSummary.promotionLaneFootprint}`,
-    memberStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
+    memberStorefrontContextFootprint: summarizeStorefrontContextFootprint(storefrontSummary),
   };
 }
 
@@ -515,7 +515,7 @@ export function summarizeMemberEditorHealth(
     addressesStatus: result.identityContext.addressesResult.status,
     addressCount,
     memberWorkflowFootprint: `profile:${result.identityContext.profileResult.status}|preferences:${result.identityContext.preferencesResult.status}|addresses:${addressCount}|lanes:${storefrontSummary.promotionLaneFootprint}`,
-    memberStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
+    memberStorefrontContextFootprint: summarizeStorefrontContextFootprint(storefrontSummary),
   };
 }
 
@@ -538,7 +538,7 @@ export function summarizeMemberCollectionHealth(
     invoicesStatus,
     invoiceCount,
     memberWorkflowFootprint: `orders:${ordersStatus}:${orderCount}|invoices:${invoicesStatus}:${invoiceCount}|lanes:${storefrontSummary.promotionLaneFootprint}`,
-    memberStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
+    memberStorefrontContextFootprint: summarizeStorefrontContextFootprint(storefrontSummary),
   };
 }
 
@@ -614,7 +614,7 @@ export function summarizeHomeRouteHealth(result: {
     partCount: result.parts.length,
     ...storefrontSummary,
     homeWorkflowFootprint: `session:${result.memberSession ? "present" : "missing"}|parts:${result.parts.length}|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`,
-    homeStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
+    homeStorefrontContextFootprint: summarizeStorefrontContextFootprint(storefrontSummary),
   };
 }
 
@@ -719,7 +719,7 @@ export function summarizeCartPageHealth(result: {
     followUpProductCount: result.followUpProducts.length,
     ...promotionSummary,
     commerceWorkflowFootprint: `surface:cart|session:${memberSessionState}|addresses:${addressesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
-    commerceStorefrontSupportFootprint: `products:${result.followUpProducts.length}|cart:${result.routeContext.model.status}|addresses:${addressesStatus}`,
+    commerceStorefrontContextFootprint: `products:${result.followUpProducts.length}|cart:${result.routeContext.model.status}|addresses:${addressesStatus}`,
   };
 }
 
@@ -756,7 +756,7 @@ export function summarizeCheckoutPageHealth(result: {
     ),
     ...promotionSummary,
     commerceWorkflowFootprint: `surface:checkout|session:${memberSessionState}|addresses:${addressesStatus}|invoices:${invoicesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
-    commerceStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
+    commerceStorefrontContextFootprint: summarizeStorefrontContextFootprint(storefrontSummary),
   };
 }
 
@@ -787,7 +787,7 @@ export function summarizeConfirmationPageHealth(result: {
     ...promotionSummary,
     commerceWorkflowFootprint: `surface:confirmation|session:${memberSessionState}|orders:${ordersStatus}|invoices:${invoicesStatus}|lanes:${promotionSummary.promotionLaneFootprint}`,
     confirmationFollowUpWorkflowFootprint: `products:${result.followUpProducts.length}|lanes:${promotionSummary.promotionLaneFootprint}`,
-    commerceStorefrontSupportFootprint: `products:${result.followUpProducts.length}|orders:${ordersStatus}|invoices:${invoicesStatus}`,
+    commerceStorefrontContextFootprint: `products:${result.followUpProducts.length}|orders:${ordersStatus}|invoices:${invoicesStatus}`,
   };
 }
 export function summarizeStorefrontShoppingHealth(result: ShoppingContextLike) {
@@ -873,7 +873,7 @@ export function summarizePublicAuthRouteHealth(result: {
   return {
     ...storefrontSummary,
     authEntryWorkflowFootprint: `route:${result.route ?? "unknown"}|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`,
-    authEntryStorefrontSupportFootprint: summarizeStorefrontSupportFootprint(storefrontSummary),
+    authEntryStorefrontContextFootprint: summarizeStorefrontContextFootprint(storefrontSummary),
   };
 }
 
@@ -901,7 +901,7 @@ export function summarizeAccountPageHealth(result: {
       sessionState: "present",
       ...dashboardSummary,
       accountWorkflowFootprint: `surface:member|orders:${dashboardSummary.ordersStatus}|invoices:${dashboardSummary.invoicesStatus}|lanes:${dashboardSummary.promotionLaneFootprint}`,
-      accountStorefrontSupportFootprint: dashboardSummary.memberStorefrontSupportFootprint,
+      accountStorefrontContextFootprint: dashboardSummary.memberStorefrontContextFootprint,
     };
   }
 
@@ -915,8 +915,8 @@ export function summarizeAccountPageHealth(result: {
     accountWorkflowFootprint: storefrontSummary
       ? `surface:public|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`
       : "surface:public|storefront:missing",
-    accountStorefrontSupportFootprint: storefrontSummary
-      ? summarizeStorefrontSupportFootprint(storefrontSummary)
+    accountStorefrontContextFootprint: storefrontSummary
+      ? summarizeStorefrontContextFootprint(storefrontSummary)
       : "storefront:missing",
   };
 }
@@ -936,8 +936,8 @@ export function summarizeProtectedMemberEntryHealth(result: {
     memberEntryWorkflowFootprint: storefrontSummary
       ? `session:${sessionState}|cart:${storefrontSummary.cartStatus}|lanes:${storefrontSummary.promotionLaneFootprint}`
       : `session:${sessionState}|storefront:missing`,
-    memberEntryStorefrontSupportFootprint: storefrontSummary
-      ? summarizeStorefrontSupportFootprint(storefrontSummary)
+    memberEntryStorefrontContextFootprint: storefrontSummary
+      ? summarizeStorefrontContextFootprint(storefrontSummary)
       : "storefront:missing",
   };
 }

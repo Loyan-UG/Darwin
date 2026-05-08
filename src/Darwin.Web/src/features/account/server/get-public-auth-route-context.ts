@@ -7,12 +7,12 @@ import {
   summarizePublicStorefrontHealth,
 } from "@/lib/route-health";
 
-type PublicAuthStorefrontSupportSource = {
+type PublicAuthStorefrontFootprintSource = {
   storefrontContext: Parameters<typeof summarizePublicStorefrontHealth>[0];
 };
 
-export function summarizePublicAuthStorefrontSupport(
-  result: PublicAuthStorefrontSupportSource,
+export function summarizePublicAuthStorefrontFootprint(
+  result: PublicAuthStorefrontFootprintSource,
 ) {
   const storefront = result.storefrontContext;
 
@@ -30,8 +30,8 @@ const getCachedPublicAuthRouteContext = createCachedObservedLoader({
   }),
   getSuccessContext: (result) => ({
     ...summarizePublicAuthRouteHealth(result),
-    publicAuthStorefrontSupportFootprint:
-      summarizePublicAuthStorefrontSupport(result),
+    publicAuthStorefrontFootprint:
+      summarizePublicAuthStorefrontFootprint(result),
   }),
   load: async (culture: string) => ({
     storefrontContext: await getPublicAuthStorefrontContext(culture),

@@ -68,11 +68,22 @@ export async function writeCartDisplaySnapshots(
   snapshots: CartDisplaySnapshot[],
 ) {
   const cookieStore = await cookies();
-  cookieStore.set(
-    CART_DISPLAY_COOKIE,
-    JSON.stringify(snapshots.slice(0, 50)),
-    getCookieBaseOptions(),
-  );
+  try {
+    cookieStore.set(
+      CART_DISPLAY_COOKIE,
+      JSON.stringify(snapshots.slice(0, 50)),
+      getCookieBaseOptions(),
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Cookies can only be modified")
+    ) {
+      return;
+    }
+
+    throw error;
+  }
 }
 
 export async function upsertCartDisplaySnapshot(snapshot: CartDisplaySnapshot) {
@@ -87,6 +98,10 @@ export async function upsertCartDisplaySnapshot(snapshot: CartDisplaySnapshot) {
 export async function pruneCartDisplaySnapshots(activeVariantIds: string[]) {
   const current = await readCartDisplaySnapshots();
   const next = current.filter((item) => activeVariantIds.includes(item.variantId));
+  if (next.length === current.length) {
+    return;
+  }
+
   await writeCartDisplaySnapshots(next);
 }
 

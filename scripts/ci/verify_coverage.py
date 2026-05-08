@@ -22,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--contracts-threshold", type=float, required=True)
     parser.add_argument("--infrastructure-threshold", type=float, required=True)
     parser.add_argument("--webapi-threshold", type=float, required=True)
+    parser.add_argument("--webadmin-threshold", type=float, required=True)
     parser.add_argument("--integration-threshold", type=float, required=True)
     parser.add_argument("--mobile-shared-threshold", type=float, required=True)
     return parser.parse_args()
@@ -65,6 +66,7 @@ def main() -> int:
         ("contracts", "TestResults/contracts", args.contracts_threshold),
         ("infrastructure", "TestResults/infrastructure", args.infrastructure_threshold),
         ("webapi", "TestResults/webapi", args.webapi_threshold),
+        ("webadmin", "TestResults/webadmin", args.webadmin_threshold),
         ("integration", "TestResults/integration", args.integration_threshold),
         ("mobile-shared", "TestResults/mobile-shared", args.mobile_shared_threshold),
     ]

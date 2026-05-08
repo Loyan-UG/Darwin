@@ -1618,8 +1618,10 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
 
         handlerSource.Should().Contain("public sealed class ApplyShipmentCarrierEventHandler");
         handlerSource.Should().Contain("FirstOrDefaultAsync(");
-        handlerSource.Should().Contain("x.ProviderShipmentReference == dto.ProviderShipmentReference");
-        handlerSource.Should().Contain("x.Carrier == dto.Carrier");
+        handlerSource.Should().Contain("var normalizedCarrier = dto.Carrier.Trim();");
+        handlerSource.Should().Contain("var normalizedReference = dto.ProviderShipmentReference.Trim();");
+        handlerSource.Should().Contain("x.ProviderShipmentReference == normalizedReference");
+        handlerSource.Should().Contain("x.Carrier == normalizedCarrier");
         handlerSource.Should().Contain("var normalizedEventKey = dto.CarrierEventKey.Trim();");
         handlerSource.Should().Contain("shipment.LastCarrierEventKey = normalizedEventKey;");
         handlerSource.Should().Contain("ResolveStatus(dto.ProviderStatus, dto.CarrierEventKey)");

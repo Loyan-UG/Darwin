@@ -1,3 +1,31 @@
+## Dashboard Information Architecture
+
+Reviewed: 2026-05-08.
+
+`/Home/Index` is the compact operational command center, not a diagnostics workspace.
+
+Dashboard rules:
+
+- Header shows the title and business selector only.
+- Top row shows high-level KPI cards for business, order, billing, communication, mobile, and selected-business loyalty attention.
+- The Needs Attention panel shows a prioritized list capped at eight items. Each item has severity, module, count, and one action.
+- Selected-business context appears only when a business is selected.
+- Operations Overview cards show up to three metrics and one primary workspace action per module.
+- Quick links are a compact action strip and should not duplicate every module-specific queue link.
+
+Detailed diagnostics belong in module workspaces:
+
+- Communication retry chains, provider review, phone verification, failed invitation/activation/password-reset/admin-test emails: `BusinessCommunications`.
+- Business setup, invitations, member activation, suspended/reactivated businesses: `Businesses/SupportQueue` and `Businesses/MerchantReadiness`.
+- Tax compliance filters and finance review: `Billing/TaxCompliance` and Billing workspaces.
+- DHL shipment provider operations: `Orders/ShipmentProviderOperations`.
+- Mobile stale-device and missing-push details: `MobileOperations`.
+
+HTMX conventions:
+
+- Dashboard fragments must remain small and replace only their card root.
+- Existing fragment endpoints must remain stable: `Home/CommunicationOpsFragment` and `Home/BusinessSupportQueueFragment`.
+- Avoid rendering large detail panels on first paint when a workspace link or lazy fragment is enough.
 ## 2026-04-28 - WebAdmin PostgreSQL default persistence update
 Done:
 - WebAdmin now uses configuration-driven persistence through `Persistence:Provider`.

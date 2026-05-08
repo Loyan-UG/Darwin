@@ -7,10 +7,7 @@ import {
 import { OrdersPage } from "@/components/member/orders-page";
 import { getMemberOrdersPageContext } from "@/features/member-portal/server/get-member-protected-page-context";
 import { getOrdersSeoMetadata } from "@/features/member-portal/server/get-member-route-seo-metadata";
-import {
-  createStorefrontContinuationProps,
-  createStorefrontContinuationWithCartProps,
-} from "@/features/storefront/route-projections";
+import { createStorefrontCartProps } from "@/features/storefront/route-projections";
 import { getMemberResource } from "@/localization";
 import { getRequestCulture } from "@/lib/request-culture";
 
@@ -42,8 +39,7 @@ export default async function OrdersRoute({ searchParams }: OrdersRouteProps) {
   const { session, storefrontContext: authStorefrontContext } = entryContext;
 
   if (!session) {
-    const storefrontProps =
-      createStorefrontContinuationWithCartProps(authStorefrontContext!);
+    const storefrontProps = createStorefrontCartProps(authStorefrontContext!);
     return (
       <MemberAuthRequired
         culture={culture}
@@ -55,8 +51,7 @@ export default async function OrdersRoute({ searchParams }: OrdersRouteProps) {
     );
   }
 
-  const { ordersResult, storefrontContext } = routeContext!;
-  const storefrontProps = createStorefrontContinuationProps(storefrontContext);
+  const { ordersResult } = routeContext!;
 
   return (
     <OrdersPage
@@ -67,10 +62,6 @@ export default async function OrdersRoute({ searchParams }: OrdersRouteProps) {
       totalPages={Math.max(1, Math.ceil((ordersResult.data?.total ?? 0) / (ordersResult.data?.request.pageSize ?? 12)))}
       visibleQuery={visibleQuery}
       visibleState={visibleState ?? "all"}
-      {...storefrontProps}
-      cartLinkedProductSlugs={storefrontContext.cartLinkedProductSlugs}
-      storefrontCart={storefrontContext.storefrontCart}
-      storefrontCartStatus={storefrontContext.storefrontCartStatus}
     />
   );
 }

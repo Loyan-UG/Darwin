@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  createStorefrontCartProps,
   createStorefrontCartSummary,
   createStorefrontContinuationSlice,
   createStorefrontContinuationProps,
@@ -159,6 +160,13 @@ test("createStorefrontContinuationWithCartProps preserves raw cart state for aut
 
   assert.equal(props.products.length, 1);
   assert.equal(props.storefrontCartStatus, "ok");
+  assert.equal(props.storefrontCart?.items.length, 1);
+});
+
+test("createStorefrontCartProps keeps account surfaces cart-only", () => {
+  const props = createStorefrontCartProps(createContext());
+
+  assert.deepEqual(Object.keys(props), ["storefrontCart"]);
   assert.equal(props.storefrontCart?.items.length, 1);
 });
 

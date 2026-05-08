@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeHomeDiscoveryStorefrontSupport } from "@/features/home/server/get-home-discovery-context";
+import { summarizeHomeDiscoveryStorefrontFootprint } from "@/features/home/server/get-home-discovery-context";
 
-test("summarizeHomeDiscoveryStorefrontSupport keeps storefront continuity readable for home discovery", () => {
+test("summarizeHomeDiscoveryStorefrontFootprint keeps home discovery state compact", () => {
   assert.equal(
-    summarizeHomeDiscoveryStorefrontSupport({
+    summarizeHomeDiscoveryStorefrontFootprint({
       storefrontContext: {
         cmsPagesResult: { status: "ok", data: { items: [{ slug: "about" }] } },
         cmsPagesStatus: "ok",

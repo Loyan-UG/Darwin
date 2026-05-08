@@ -237,7 +237,7 @@ public sealed class ProviderCallbackBackgroundServiceTests
             new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
 
         await service.StartAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await Task.Delay(900, TestContext.Current.CancellationToken);
         await service.StopAsync(TestContext.Current.CancellationToken);
 
         var item = await db.Set<ProviderCallbackInboxMessage>()
@@ -6815,7 +6815,7 @@ public sealed class ProviderCallbackBackgroundServiceTests
             new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
 
         await service.StartAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await Task.Delay(900, TestContext.Current.CancellationToken);
         await service.StopAsync(TestContext.Current.CancellationToken);
 
         var item = await db.Set<ProviderCallbackInboxMessage>()

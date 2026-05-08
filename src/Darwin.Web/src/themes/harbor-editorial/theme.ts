@@ -4,6 +4,6 @@ export const harborEditorialTheme = {
   metadata: {
     title: "Darwin Storefront",
     description:
-      "Darwin.Web public storefront and member portal foundation with a theme-isolated, CMS-aware shell.",
+      "Customer storefront and member portal for shopping, loyalty, orders, and account access.",
   },
 } as const;

@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { StatusBanner } from "@/components/feedback/status-banner";
-import type { PublicCategorySummary } from "@/features/catalog/types";
-import type { PublicPageSummary } from "@/features/cms/types";
 import { joinMemberLoyaltyBusinessAction } from "@/features/member-portal/actions";
 import type {
   BusinessDetail,
   BusinessLocation,
   LoyaltyRewardTierPublic,
 } from "@/features/businesses/types";
-import { buildCmsPagePath, buildLoyaltyBusinessPath } from "@/lib/entity-paths";
-import { buildAppQueryPath, buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
+import { buildLoyaltyBusinessPath } from "@/lib/entity-paths";
+import { buildLocalizedAuthHref, localizeHref } from "@/lib/locale-routing";
 import {
   getSafeExternalLinkProps,
   toSafeHttpUrl,
@@ -31,10 +29,6 @@ type LoyaltyPublicBusinessPageProps = {
   isAuthenticated: boolean;
   joinStatus?: string;
   joinError?: string;
-  cmsPages: PublicPageSummary[];
-  cmsPagesStatus: string;
-  categories: PublicCategorySummary[];
-  categoriesStatus: string;
 };
 
 function formatLocation(location: BusinessLocation) {
@@ -66,15 +60,9 @@ export function LoyaltyPublicBusinessPage({
   isAuthenticated,
   joinStatus,
   joinError,
-  cmsPages,
-  cmsPagesStatus,
-  categories,
-  categoriesStatus,
 }: LoyaltyPublicBusinessPageProps) {
   const copy = getMemberResource(culture);
   const detailStatusLabel = resolveApiStatusLabel(detailStatus, copy);
-  const cmsPagesStatusLabel = resolveApiStatusLabel(cmsPagesStatus, copy);
-  const categoriesStatusLabel = resolveApiStatusLabel(categoriesStatus, copy);
   const resolvedJoinError = resolveLocalizedQueryMessage(joinError, copy);
   const locations = detail?.locations ?? [];
   const rewardTiers = detail?.loyaltyProgramPublic?.rewardTiers ?? [];
@@ -334,19 +322,6 @@ export function LoyaltyPublicBusinessPage({
           <div className="flex flex-col gap-5">
             <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                {copy.loyaltyPublicRouteSummaryTitle}
-              </p>
-              <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.loyaltyPublicRouteSummaryMessage, {
-                  detailStatus,
-                  rewardCount: rewardTiers.length,
-                  locationCount: locations.length,
-                })}
-              </p>
-            </aside>
-
-            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
                 {copy.branchesTitle}
               </p>
               {locations.length > 0 ? (
@@ -379,127 +354,15 @@ export function LoyaltyPublicBusinessPage({
 
             <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                {copy.joinReadinessTitle}
+                {copy.joinGuidanceTitle}
               </p>
               <div className="mt-5 space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
                 <p>
                   {isAuthenticated
-                    ? copy.joinReadinessAuthenticated
-                    : copy.joinReadinessAnonymous}
+                    ? copy.joinGuidanceAuthenticated
+                    : copy.joinGuidanceAnonymous}
                 </p>
-                <p>{copy.joinReadinessContractNote}</p>
-              </div>
-            </aside>
-
-            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-brand)]">
-                {copy.loyaltyPublicStorefrontWindowTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {formatResource(copy.loyaltyPublicStorefrontWindowMessage, {
-                  cmsStatus: cmsPagesStatusLabel ?? cmsPagesStatus,
-                  categoriesStatus: categoriesStatusLabel ?? categoriesStatus,
-                  pageCount: cmsPages.length,
-                  categoryCount: categories.length,
-                })}
-              </p>
-              <div className="mt-5 grid gap-4">
-                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {copy.loyaltyPublicStorefrontCmsTitle}
-                    </p>
-                    <Link
-                      href={localizeHref("/cms", culture)}
-                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                    >
-                      {copy.loyaltyPublicStorefrontCmsCta}
-                    </Link>
-                  </div>
-                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                    {copy.loyaltyPublicStorefrontCmsFallbackDescription}
-                  </p>
-                  {cmsPages.length > 0 ? (
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      {cmsPages.map((page) => (
-                        <Link
-                          key={page.id}
-                    href={localizeHref(buildCmsPagePath(page.slug), culture)}
-                          className="inline-flex rounded-full border border-[var(--color-border-soft)] px-3 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                        >
-                          {page.title}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {formatResource(copy.loyaltyPublicStorefrontCmsEmptyMessage, {
-                        status: cmsPagesStatusLabel ?? cmsPagesStatus,
-                      })}
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-[1rem] bg-[var(--color-surface-panel-strong)] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {copy.loyaltyPublicStorefrontCatalogTitle}
-                    </p>
-                    <Link
-                      href={localizeHref("/catalog", culture)}
-                      className="text-sm font-semibold text-[var(--color-brand)] transition hover:text-[var(--color-brand-strong)]"
-                    >
-                      {copy.loyaltyPublicStorefrontCatalogCta}
-                    </Link>
-                  </div>
-                  <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                    {copy.loyaltyPublicStorefrontCatalogFallbackDescription}
-                  </p>
-                  {categories.length > 0 ? (
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      {categories.map((category) => (
-                        <Link
-                          key={category.id}
-                          href={localizeHref(
-                            buildAppQueryPath("/catalog", {
-                              category: category.slug,
-                            }),
-                            culture,
-                          )}
-                          className="inline-flex rounded-full border border-[var(--color-border-soft)] px-3 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel)]"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-                      {formatResource(copy.loyaltyPublicStorefrontCatalogEmptyMessage, {
-                        status: categoriesStatusLabel ?? categoriesStatus,
-                      })}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </aside>
-
-            <aside className="rounded-[1rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-6 shadow-[var(--shadow-panel)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
-                {copy.memberCrossSurfaceTitle}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-text-secondary)]">
-                {copy.memberCrossSurfaceMessage}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link href={localizeHref("/", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceHomeCta}
-                </Link>
-                <Link href={localizeHref("/catalog", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceCatalogCta}
-                </Link>
-                <Link href={localizeHref("/account", culture)} className="inline-flex rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]">
-                  {copy.memberCrossSurfaceAccountCta}
-                </Link>
+                <p>{copy.joinGuidanceAccountNote}</p>
               </div>
             </aside>
           </div>

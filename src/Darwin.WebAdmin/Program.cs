@@ -18,6 +18,15 @@ if (builder.Environment.IsEnvironment("Testing") &&
     });
 }
 
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+    {
+        ["DataProtection:RequireKeyEncryption"] = "false",
+        ["Email:Provider"] = "SMTP"
+    });
+}
+
 // Serilog bootstrap (read from appsettings)
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Warning()
