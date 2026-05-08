@@ -60,6 +60,147 @@ public sealed class BillingWebhookQueryHandlersTests
         result.RetryPendingCount.Should().Be(1);
     }
 
+    // ─── GetBillingWebhookSubscriptionsPageHandler ───────────────────────────
+
+    [Fact]
+    public async Task GetBillingWebhookSubscriptionsPage_Should_ReturnAllNonDeleted()
+    {
+        await using var db = BillingWebhookTestDbContext.Create();
+        db.Set<WebhookSubscription>().AddRange(
+            new WebhookSubscription
+            {
+                EventType = "billing.payment.succeeded",
+                CallbackUrl = "https://hooks.example/payment",
+                Secret = "secret-a",
+                IsActive = true
+            },
+            new WebhookSubscription
+            {
+                EventType = "billing.invoice.created",
+                CallbackUrl = "https://hooks.example/invoice",
+                Secret = "secret-b",
+                IsActive = false
+            },
+            new WebhookSubscription
+            {
+                EventType = "billing.deleted.event",
+                CallbackUrl = "https://hooks.example/deleted",
+                Secret = "secret-c",
+                IsDeleted = true
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBillingWebhookSubscriptionsPageHandler(db);
+        var result = await handler.HandleAsync(1, 20, ct: TestContext.Current.CancellationToken);
+
+        result.Total.Should().Be(2);
+        result.Items.Should().HaveCount(2);
+        result.Items.Should().NotContain(x => x.EventType == "billing.deleted.event");
+    }
+
+    [Fact]
+    public async Task GetBillingWebhookSubscriptionsPage_Should_ReturnEmpty_WhenNoSubscriptions()
+    {
+        await using var db = BillingWebhookTestDbContext.Create();
+        var handler = new GetBillingWebhookSubscriptionsPageHandler(db);
+
+        var result = await handler.HandleAsync(1, 20, ct: TestContext.Current.CancellationToken);
+
+        result.Total.Should().Be(0);
+        result.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetBillingWebhookSubscriptionsPage_Should_ApplySearchQuery_OnEventType()
+    {
+        await using var db = BillingWebhookTestDbContext.Create();
+        db.Set<WebhookSubscription>().AddRange(
+            new WebhookSubscription
+            {
+                EventType = "billing.payment.succeeded",
+                CallbackUrl = "https://hooks.example/payment",
+                Secret = "secret-pay"
+            },
+            new WebhookSubscription
+            {
+                EventType = "billing.invoice.created",
+                CallbackUrl = "https://hooks.example/invoice",
+                Secret = "secret-inv"
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBillingWebhookSubscriptionsPageHandler(db);
+        var result = await handler.HandleAsync(1, 20, query: "payment", ct: TestContext.Current.CancellationToken);
+
+        result.Total.Should().Be(1);
+        result.Items.Should().ContainSingle(x => x.EventType == "billing.payment.succeeded");
+    }
+
+    [Fact]
+    public async Task GetBillingWebhookSubscriptionsPage_Should_ApplySearchQuery_OnCallbackUrl()
+    {
+        await using var db = BillingWebhookTestDbContext.Create();
+        db.Set<WebhookSubscription>().AddRange(
+            new WebhookSubscription
+            {
+                EventType = "billing.payment.succeeded",
+                CallbackUrl = "https://hooks.alpha.example/pay",
+                Secret = "secret-alpha"
+            },
+            new WebhookSubscription
+            {
+                EventType = "billing.invoice.created",
+                CallbackUrl = "https://hooks.beta.example/inv",
+                Secret = "secret-beta"
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBillingWebhookSubscriptionsPageHandler(db);
+        var result = await handler.HandleAsync(1, 20, query: "alpha", ct: TestContext.Current.CancellationToken);
+
+        result.Total.Should().Be(1);
+        result.Items.Should().ContainSingle(x => x.CallbackUrl.Contains("alpha"));
+    }
+
+    [Fact]
+    public async Task GetBillingWebhookSubscriptionsPage_Should_NormalizeInvalidPageParams()
+    {
+        await using var db = BillingWebhookTestDbContext.Create();
+        var handler = new GetBillingWebhookSubscriptionsPageHandler(db);
+
+        // page < 1 and pageSize < 1 should not throw
+        var result = await handler.HandleAsync(0, 0, ct: TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result.Total.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetBillingWebhookSubscriptionsPage_Should_ExposeMappedFields()
+    {
+        await using var db = BillingWebhookTestDbContext.Create();
+        var subId = Guid.NewGuid();
+        db.Set<WebhookSubscription>().Add(new WebhookSubscription
+        {
+            Id = subId,
+            EventType = "billing.subscription.updated",
+            CallbackUrl = "https://hooks.example/sub",
+            Secret = "secret-sub",
+            IsActive = true
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBillingWebhookSubscriptionsPageHandler(db);
+        var result = await handler.HandleAsync(1, 20, ct: TestContext.Current.CancellationToken);
+
+        result.Items.Should().ContainSingle();
+        var item = result.Items[0];
+        item.Id.Should().Be(subId);
+        item.EventType.Should().Be("billing.subscription.updated");
+        item.CallbackUrl.Should().Be("https://hooks.example/sub");
+        item.IsActive.Should().BeTrue();
+    }
+
     [Fact]
     public async Task GetBillingWebhookDeliveriesPage_Should_FilterFailedRows()
     {

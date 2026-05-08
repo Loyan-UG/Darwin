@@ -229,6 +229,12 @@ Latest known-good signal for the recently expanded Webhook/reader/writer tests i
 `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ApplyShipmentCarrierEvent_Should"`  
   - 36 passed (including required max-length and optional-field boundary validation coverage)
 
+`dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingPlanAdminHandlerTests"`
+  - 22 passed (verified 2026-05-08; covers GetBillingPlansAdminPageHandler pagination/filtering/search, GetBillingPlanOpsSummaryHandler empty and counted state, GetBillingPlanForEditHandler found/not-found/soft-deleted, CreateBillingPlanHandler validation and duplicate-code rejection and code/currency normalization, UpdateBillingPlanHandler not-found, concurrency, duplicate-code, and successful update with normalization)
+
+`dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingWebhookQueryHandlersTests"`
+  - 12 passed (verified 2026-05-08; adds GetBillingWebhookSubscriptionsPageHandler coverage: returns non-deleted items, empty state, search by EventType and CallbackUrl, normalizes invalid page params, maps fields correctly)
+
 Running the full `Darwin.WebApi.Tests` suite in the current branch still shows failures in pre-existing suites (mostly `Security` / `Loyalty` areas), so the newly added webhook-focused coverage remains green as an isolated subset.
 
 When adding or refactoring Webhook-related behavior, prefer adding/adjusting tests in this subset before widening to broader suites.
