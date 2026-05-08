@@ -69,6 +69,12 @@
   <data name="StorefrontStripeCheckoutBaseUrlNotConfigured" xml:space="preserve">
     <value>Storefront Stripe checkout base URL is not configured.</value>
   </data>
+  <data name="StorefrontStripeCheckoutNotConfigured" xml:space="preserve">
+    <value>Stripe checkout is not enabled or the server-side Stripe key is missing.</value>
+  </data>
+  <data name="StorefrontStripeCheckoutUrlsRequired" xml:space="preserve">
+    <value>Stripe checkout return and cancellation URLs are required.</value>
+  </data>
   <data name="StorefrontPaymentProviderNotSupported" xml:space="preserve">
     <value>Only Stripe storefront payments are supported.</value>
   </data>
@@ -1423,6 +1429,15 @@
   </data>
   <data name="ShipmentCarrierMustBeDhlForLabelGeneration" xml:space="preserve">
     <value>Only DHL shipments can generate carrier labels in the current phase.</value>
+  </data>
+  <data name="DhlLabelGenerationRequiresProviderShipmentReference" xml:space="preserve">
+    <value>DHL label generation requires a provider shipment reference.</value>
+  </data>
+  <data name="DhlLabelGenerationResponseInvalid" xml:space="preserve">
+    <value>DHL label generation response was invalid.</value>
+  </data>
+  <data name="DhlShipmentShippingAddressRequired" xml:space="preserve">
+    <value>DHL shipment creation requires a complete shipping address.</value>
   </data>
   <data name="CommunicationDispatchOperationNotFound" xml:space="preserve">
     <value>Communication dispatch operation was not found.</value>

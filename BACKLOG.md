@@ -15,11 +15,11 @@ Status terms used below:
 
 ## Current Go-Live Blockers and Near-Term Tasks
 
-Reviewed: 2026-05-08. See `docs/go-live-status.md` for the code-backed status summary.
+Reviewed: 2026-05-09. See `docs/go-live-status.md` and `docs/module-audit.md` for the code-backed status summary.
 
 Go-live blockers:
 
-- `Stripe`: replace the local Stripe-like storefront payment intent/session placeholders with real Stripe PaymentIntent or Checkout Session creation, then make verified Stripe webhooks the final payment state authority.
+- `Stripe`: live-smoke the new Stripe Checkout Session creation path, verify webhook-only finalization with real `checkout.session.completed` and `payment_intent.*` events, then complete subscription checkout/refund/dispute live-provider validation.
 - `DHL`: replace phase-one DHL provider-reference, tracking-number, and label-url generation with real DHL shipment/label API calls and persisted label storage.
 - `Tax/VAT/E-Invoice`: turn Billing/TaxCompliance from visibility into an operator workflow for VAT ID validation, reverse-charge decisions, immutable issued-invoice snapshots, invoice export/archive, and e-invoice generation.
 - `Production readiness`: verify Brevo sender domain/DKIM/DMARC, Stripe/DHL provider secrets, worker deployment, provider callback processing, and restricted PostgreSQL runtime grants in the target environment.

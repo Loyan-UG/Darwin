@@ -7,7 +7,7 @@
 
 ## Current Route and Provider Callback Status
 
-Reviewed: 2026-05-08. See `docs/go-live-status.md` for implementation/gap detail.
+Reviewed: 2026-05-09. See `docs/go-live-status.md` for implementation/gap detail.
 
 Canonical route roots:
 
@@ -26,7 +26,7 @@ Provider callbacks:
 
 Current production gaps:
 
-- Stripe webhooks and reconciliation are implemented, but storefront Stripe PaymentIntent/Checkout Session creation is still local placeholder behavior.
+- Stripe webhooks, reconciliation, and storefront Checkout Session creation are implemented; live-provider smoke and subscription/refund/dispute verification remain go-live tasks.
 - DHL callbacks and provider-operation queueing are implemented, but live DHL shipment/label API calls are still a go-live blocker.
 - Brevo callback and delivery plumbing are implemented; production readiness depends on provider account/domain/webhook setup and Worker deployment.
 
@@ -185,8 +185,8 @@ Current public delivery ownership:
 - public checkout intent: authoritative cart totals, derived shipment mass, and validated shipping options for the current address context
 - public checkout: order placement from the authoritative cart summary with saved member addresses or inline address snapshots and automatic cart finalization
 - public payment intent: pending storefront payment-session creation or reuse for already placed orders so front-office clients can hand off to a PSP without duplicating pending payment rows
-- public PSP handoff: payment-intent responses now include `checkoutUrl`, `returnUrl`, and `cancelUrl` generated from `StorefrontCheckout` configuration so `Darwin.Web` can redirect to a hosted checkout flow without hard-coding URLs
-- public payment completion: `POST /api/v1/public/checkout/orders/{orderId}/payments/{paymentId}/complete` finalizes the linked payment and order for `Succeeded`, `Cancelled`, or `Failed` outcomes while preserving the same safe access rules used by storefront confirmation
+- public PSP handoff: payment-intent responses now include `checkoutUrl`, `returnUrl`, and `cancelUrl`; when Stripe is enabled in Site Settings, WebApi creates a real Stripe Checkout Session and returns Stripe's hosted URL
+- public payment completion: `POST /api/v1/public/checkout/orders/{orderId}/payments/{paymentId}/complete` validates the safe return context; for Stripe, it does not capture, void, or fail the payment because verified Stripe webhooks are the final payment-state authority
 - public confirmation: safe post-order confirmation delivery for member-owned or anonymous orders without exposing member-owned orders to anonymous callers
 - selected checkout shipping method is now persisted on the `Order` aggregate together with method-name/carrier/service snapshots so storefront confirmation, member order history, and admin views are not coupled to future shipping-method edits
 - legacy `/api/v1/cms/*`, `/api/v1/catalog/*`, `/api/v1/cart*`, `/api/v1/shipping/rates`, `/api/v1/checkout/intent`, `/api/v1/checkout/orders*`, and `/api/v1/businesses/map` aliases remain only for compatibility and should not be used for new development
@@ -194,9 +194,9 @@ Current public delivery ownership:
 Current storefront checkout configuration:
 
 - `StorefrontCheckout:FrontOfficeBaseUrl` defines where return/cancel flows land in `Darwin.Web`
-- `StorefrontCheckout:PaymentGatewayBaseUrl` defines the current hosted-checkout handoff base URL
+- `StorefrontCheckout:StripeCheckoutBaseUrl` is retained as a development/fallback handoff URL when no provider-hosted URL is returned
 - development defaults point to `http://localhost:3000` and `http://localhost:3000/mock-checkout`
-- this is intentionally provider-agnostic infrastructure; provider-specific callback/webhook verification still belongs to a later PSP integration slice
+- Stripe provider references are stored on `Payment.ProviderCheckoutSessionRef`, `Payment.ProviderPaymentIntentRef`, and `Payment.ProviderTransactionRef`; secrets stay in Site Settings/configuration and must not be returned to clients
 
 ### Required member groups
 

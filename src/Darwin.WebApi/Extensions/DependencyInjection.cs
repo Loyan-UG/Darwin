@@ -10,6 +10,7 @@
 //
 // Comments are descriptive and intended to document why each registration exists.
 using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Payments;
 using Darwin.Application.Abstractions.Security;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Catalog.Services;             // IAddOnPricingService, AddOnPricingService
@@ -155,6 +156,7 @@ namespace Darwin.WebApi.Extensions
             });
 
             services.AddSingleton<StorefrontCheckoutUrlBuilder>();
+            services.AddHttpClient<IStorefrontPaymentSessionClient, StripeCheckoutSessionClient>();
             services.TryAddSingleton<StripeWebhookSignatureVerifier>();
             services.AddScoped<ProviderCallbackInboxWriter>();
 

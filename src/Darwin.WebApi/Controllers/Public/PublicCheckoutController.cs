@@ -207,17 +207,22 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 return BadRequestProblem(_validationLocalizer["StorefrontCheckoutReferenceTooLong"]);
             }
 
+            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, normalizedOrderNumber, cancelled: false);
+            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, normalizedOrderNumber, cancelled: true);
+
             var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto
             {
                 OrderId = orderId,
                 UserId = GetCurrentUserId(),
                 OrderNumber = normalizedOrderNumber,
-                Provider = normalizedProvider
+                Provider = normalizedProvider,
+                ReturnUrl = returnUrl,
+                CancelUrl = cancelUrl
             }, ct).ConfigureAwait(false);
 
-            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, normalizedOrderNumber, cancelled: false);
-            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, normalizedOrderNumber, cancelled: true);
-            var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);
+            var checkoutUrl = string.IsNullOrWhiteSpace(result.CheckoutUrl)
+                ? _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl)
+                : result.CheckoutUrl;
 
             return Ok(new CreateStorefrontPaymentIntentResponse
             {

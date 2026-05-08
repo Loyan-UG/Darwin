@@ -1,6 +1,6 @@
 # Darwin Go-Live Status
 
-Last reviewed: 2026-05-08
+Last reviewed: 2026-05-09
 
 This status is code-backed. It intentionally distinguishes implemented plumbing from production-complete provider behavior.
 
@@ -16,19 +16,23 @@ Status: compact operational command center implemented.
 
 ## Stripe / Payments
 
-Status: webhook boundary and internal payment reconciliation are implemented; live Stripe Checkout/PaymentIntent creation is not production-complete.
+Status: webhook boundary, internal reconciliation, and real Stripe Checkout Session creation path are implemented; live-provider validation remains pending.
 
 Verified implementation:
 
 - `StripeWebhooksController` validates `Stripe-Signature`, enforces bounded payload reads, extracts Stripe event id/type, and writes idempotent inbox entries.
 - `ProcessStripeWebhookHandler` handles checkout session, payment intent, refund, invoice, and subscription events, logs Stripe event ids in `EventLog`, and updates matched payments/orders/invoices when provider references match.
+- `CreateStorefrontPaymentIntentHandler` can now create a real Stripe Checkout Session through the WebApi `StripeCheckoutSessionClient` when `SiteSetting.StripeEnabled=true`, `StripeSecretKey` is configured, and return/cancel URLs are provided.
+- Storefront return handling no longer captures or voids Stripe payments; verified Stripe webhooks remain the source of truth for captured/failed/cancelled provider state.
 - WebAdmin billing views expose payments, refunds, disputes, webhook deliveries, failed/pending/unlinked queues, and dispute review actions.
 
 Gaps:
 
-- `CreateStorefrontPaymentIntentHandler` currently creates local Stripe-like references (`pi_*`, `cs_*`) instead of calling Stripe to create a real PaymentIntent or Checkout Session.
-- Storefront payment return handling can mark local payment state, but a production Stripe flow should rely on verified provider webhooks as the final source of truth.
+- The real Checkout Session path still needs a live Stripe smoke against a restricted test account before go-live.
+- Subscription checkout creation and refund/dispute operator actions still need a separate live-provider verification pass.
 - Keep Stripe secrets only in configuration/environment; no committed secrets were found by `scripts/check-secrets.ps1` in the latest pass.
+
+See `docs/module-audit.md` for the cross-module audit matrix.
 
 ## DHL / Shipping
 

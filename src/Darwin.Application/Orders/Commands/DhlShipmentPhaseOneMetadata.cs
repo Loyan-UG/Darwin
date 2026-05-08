@@ -1,6 +1,9 @@
 using System;
+using System.Text.Json;
+using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Settings;
+using Microsoft.Extensions.Localization;
 
 namespace Darwin.Application.Orders.Commands
 {
@@ -26,37 +29,41 @@ namespace Darwin.Application.Orders.Commands
                    !string.IsNullOrWhiteSpace(settings.DhlShipperCountry);
         }
 
-        public static string BuildProviderShipmentReference(Shipment shipment)
+        public static CheckoutAddressDto ParseShippingAddress(string? shippingAddressJson, IStringLocalizer<ValidationResource> localizer)
         {
-            if (shipment.Id == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(shippingAddressJson))
             {
-                shipment.Id = Guid.NewGuid();
+                throw new InvalidOperationException(localizer["DhlShipmentShippingAddressRequired"]);
             }
 
-            return $"dhl-ship-{shipment.Id:N}";
-        }
-
-        public static string BuildTrackingNumber(SiteSetting settings, Shipment shipment)
-        {
-            var account = string.IsNullOrWhiteSpace(settings.DhlAccountNumber)
-                ? "DHL"
-                : settings.DhlAccountNumber.Trim().ToUpperInvariant();
-
-            if (shipment.Id == Guid.Empty)
+            try
             {
-                shipment.Id = Guid.NewGuid();
+                var address = JsonSerializer.Deserialize<CheckoutAddressDto>(shippingAddressJson);
+                if (address is null ||
+                    string.IsNullOrWhiteSpace(address.FullName) ||
+                    string.IsNullOrWhiteSpace(address.Street1) ||
+                    string.IsNullOrWhiteSpace(address.PostalCode) ||
+                    string.IsNullOrWhiteSpace(address.City) ||
+                    string.IsNullOrWhiteSpace(address.CountryCode))
+                {
+                    throw new InvalidOperationException(localizer["DhlShipmentShippingAddressRequired"]);
+                }
+
+                address.FullName = address.FullName.Trim();
+                address.Company = string.IsNullOrWhiteSpace(address.Company) ? null : address.Company.Trim();
+                address.Street1 = address.Street1.Trim();
+                address.Street2 = string.IsNullOrWhiteSpace(address.Street2) ? null : address.Street2.Trim();
+                address.PostalCode = address.PostalCode.Trim();
+                address.City = address.City.Trim();
+                address.State = string.IsNullOrWhiteSpace(address.State) ? null : address.State.Trim();
+                address.CountryCode = address.CountryCode.Trim().ToUpperInvariant();
+                address.PhoneE164 = string.IsNullOrWhiteSpace(address.PhoneE164) ? null : address.PhoneE164.Trim();
+                return address;
             }
-
-            var suffix = shipment.Id.ToString("N")[..12].ToUpperInvariant();
-            return $"{account}-{suffix}";
-        }
-
-        public static string BuildLabelUrl(string baseUrl, string providerShipmentReference)
-        {
-            var normalizedBaseUrl = baseUrl.Trim().TrimEnd('/') + "/";
-            var baseUri = new Uri(normalizedBaseUrl, UriKind.Absolute);
-            var relative = $"shipments/{Uri.EscapeDataString(providerShipmentReference)}/label";
-            return new Uri(baseUri, relative).ToString();
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException(localizer["DhlShipmentShippingAddressRequired"], ex);
+            }
         }
     }
 }

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Darwin.Application;
+using Darwin.Application.Abstractions.Shipping;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Commands;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
@@ -47,7 +49,9 @@ public sealed class ApplyDhlShipmentCreateOperationHandlerTests
             Id = orderId,
             OrderNumber = "ORD-DHL-CREATE-APPLY-1",
             Currency = "EUR",
-            Status = OrderStatus.Paid
+            Status = OrderStatus.Paid,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = """{"FullName":"Ada Lovelace","Street1":"Teststrasse 12","PostalCode":"10115","City":"Berlin","CountryCode":"DE"}"""
         });
 
         db.Set<Shipment>().Add(new Shipment
@@ -61,14 +65,14 @@ public sealed class ApplyDhlShipmentCreateOperationHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new ApplyDhlShipmentCreateOperationHandler(db, new TestStringLocalizer());
+        var handler = new ApplyDhlShipmentCreateOperationHandler(db, new FakeDhlShipmentProviderClient(), new FakeShipmentLabelStorage(), new TestStringLocalizer());
 
         var result = await handler.HandleAsync(shipmentId, TestContext.Current.CancellationToken);
 
         result.Status.Should().Be(ShipmentStatus.Pending);
-        result.ProviderShipmentReference.Should().StartWith("dhl-ship-");
-        result.TrackingNumber.Should().StartWith("22222222220101-");
-        result.LabelUrl.Should().BeNull();
+        result.ProviderShipmentReference.Should().Be("00340434292135100100");
+        result.TrackingNumber.Should().Be("00340434292135100100");
+        result.LabelUrl.Should().Be("/uploads/dhl-label.pdf");
         result.LastCarrierEventKey.Should().Be("shipment.provider_created");
         result.TrackingUrl.Should().NotBeNull();
 
@@ -76,7 +80,7 @@ public sealed class ApplyDhlShipmentCreateOperationHandlerTests
         shipment.Status.Should().Be(ShipmentStatus.Pending);
         shipment.ProviderShipmentReference.Should().Be(result.ProviderShipmentReference);
         shipment.TrackingNumber.Should().Be(result.TrackingNumber);
-        shipment.LabelUrl.Should().BeNull();
+        shipment.LabelUrl.Should().Be("/uploads/dhl-label.pdf");
         shipment.LastCarrierEventKey.Should().Be("shipment.provider_created");
 
         var carrierEvent = await db.Set<ShipmentCarrierEvent>().SingleAsync(TestContext.Current.CancellationToken);
@@ -85,13 +89,13 @@ public sealed class ApplyDhlShipmentCreateOperationHandlerTests
         carrierEvent.ProviderStatus.Should().Be("Created");
         carrierEvent.ProviderShipmentReference.Should().Be(result.ProviderShipmentReference);
 
-        var pendingLabelOperation = await db.Set<ShipmentProviderOperation>()
-            .SingleAsync(
+        var pendingLabelOperationCount = await db.Set<ShipmentProviderOperation>()
+            .CountAsync(
                 x => x.ShipmentId == shipmentId &&
                      x.Provider == "DHL" &&
                      x.OperationType == "GenerateLabel",
                 TestContext.Current.CancellationToken);
-        pendingLabelOperation.Status.Should().Be("Pending");
+        pendingLabelOperationCount.Should().Be(0);
     }
 
     [Fact]
@@ -124,7 +128,9 @@ public sealed class ApplyDhlShipmentCreateOperationHandlerTests
             Id = orderId,
             OrderNumber = "ORD-DHL-CREATE-APPLY-2",
             Currency = "EUR",
-            Status = OrderStatus.Paid
+            Status = OrderStatus.Paid,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = """{"FullName":"Ada Lovelace","Street1":"Teststrasse 12","PostalCode":"10115","City":"Berlin","CountryCode":"DE"}"""
         });
 
         db.Set<Shipment>().Add(new Shipment
@@ -138,7 +144,7 @@ public sealed class ApplyDhlShipmentCreateOperationHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new ApplyDhlShipmentCreateOperationHandler(db, new TestStringLocalizer());
+        var handler = new ApplyDhlShipmentCreateOperationHandler(db, new FakeDhlShipmentProviderClient(), new FakeShipmentLabelStorage(), new TestStringLocalizer());
 
         var act = () => handler.HandleAsync(shipmentId, TestContext.Current.CancellationToken);
 
@@ -222,5 +228,32 @@ public sealed class ApplyDhlShipmentCreateOperationHandlerTests
             Array.Empty<LocalizedString>();
 
         public IStringLocalizer WithCulture(System.Globalization.CultureInfo culture) => this;
+    }
+
+    private sealed class FakeDhlShipmentProviderClient : IDhlShipmentProviderClient
+    {
+        public Task<DhlShipmentCreateResult> CreateShipmentAsync(SiteSetting settings, Order order, Shipment shipment, CheckoutAddressDto receiver, CancellationToken ct = default)
+        {
+            receiver.City.Should().Be("Berlin");
+            return Task.FromResult(new DhlShipmentCreateResult
+            {
+                ProviderShipmentReference = "00340434292135100100",
+                TrackingNumber = "00340434292135100100",
+                LabelPdfBytes = [1, 2, 3]
+            });
+        }
+
+        public Task<DhlShipmentLabelResult> GetLabelAsync(SiteSetting settings, Shipment shipment, CancellationToken ct = default)
+            => Task.FromResult(new DhlShipmentLabelResult());
+    }
+
+    private sealed class FakeShipmentLabelStorage : IShipmentLabelStorage
+    {
+        public Task<string> SaveLabelAsync(Guid shipmentId, string provider, byte[] content, string contentType, CancellationToken ct = default)
+        {
+            provider.Should().Be("DHL");
+            content.Should().NotBeEmpty();
+            return Task.FromResult("/uploads/dhl-label.pdf");
+        }
     }
 }

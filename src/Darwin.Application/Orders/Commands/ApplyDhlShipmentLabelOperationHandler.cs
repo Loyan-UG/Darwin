@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Shipping;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Orders;
@@ -22,12 +23,19 @@ namespace Darwin.Application.Orders.Commands
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
         private readonly IStringLocalizer<ValidationResource> _localizer;
+        private readonly IDhlShipmentProviderClient _dhlClient;
+        private readonly IShipmentLabelStorage _labelStorage;
 
         public ApplyDhlShipmentLabelOperationHandler(
             IAppDbContext db,
-            IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
+            IDhlShipmentProviderClient dhlClient,
+            IShipmentLabelStorage labelStorage,
+            IStringLocalizer<ValidationResource>? localizer = null,
+            IClock? clock = null)
         {
             _db = db;
+            _dhlClient = dhlClient ?? throw new ArgumentNullException(nameof(dhlClient));
+            _labelStorage = labelStorage ?? throw new ArgumentNullException(nameof(labelStorage));
             _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
             _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
         }
@@ -65,15 +73,28 @@ namespace Darwin.Application.Orders.Commands
                 throw new InvalidOperationException(_localizer["DhlLabelGenerationNotConfigured"]);
             }
 
-            shipment.ProviderShipmentReference = string.IsNullOrWhiteSpace(shipment.ProviderShipmentReference)
-                ? DhlShipmentPhaseOneMetadata.BuildProviderShipmentReference(shipment)
-                : shipment.ProviderShipmentReference.Trim();
+            if (string.IsNullOrWhiteSpace(shipment.ProviderShipmentReference))
+            {
+                throw new InvalidOperationException(_localizer["DhlLabelGenerationRequiresProviderShipmentReference"]);
+            }
 
-            shipment.TrackingNumber = string.IsNullOrWhiteSpace(shipment.TrackingNumber)
-                ? DhlShipmentPhaseOneMetadata.BuildTrackingNumber(settings, shipment)
-                : shipment.TrackingNumber.Trim();
+            shipment.ProviderShipmentReference = shipment.ProviderShipmentReference.Trim();
+            var labelResult = await _dhlClient.GetLabelAsync(settings, shipment, ct).ConfigureAwait(false);
+            if (labelResult.LabelPdfBytes is { Length: > 0 })
+            {
+                shipment.LabelUrl = await _labelStorage
+                    .SaveLabelAsync(shipment.Id, "DHL", labelResult.LabelPdfBytes, "application/pdf", ct)
+                    .ConfigureAwait(false);
+            }
+            else if (!string.IsNullOrWhiteSpace(labelResult.ProviderLabelUrl))
+            {
+                shipment.LabelUrl = labelResult.ProviderLabelUrl.Trim();
+            }
+            else
+            {
+                throw new InvalidOperationException(_localizer["DhlLabelGenerationResponseInvalid"]);
+            }
 
-            shipment.LabelUrl ??= DhlShipmentPhaseOneMetadata.BuildLabelUrl(settings.DhlApiBaseUrl!, shipment.ProviderShipmentReference);
             shipment.LastCarrierEventKey = "shipment.label_created";
 
             if (shipment.Status == ShipmentStatus.Pending)

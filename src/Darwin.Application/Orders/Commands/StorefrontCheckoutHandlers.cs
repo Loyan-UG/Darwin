@@ -1,9 +1,11 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Payments;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -18,15 +20,21 @@ public sealed class CreateStorefrontPaymentIntentHandler
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _localizer;
+    private readonly IStorefrontPaymentSessionClient? _paymentSessionClient;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateStorefrontPaymentIntentHandler"/> class.
     /// </summary>
-    public CreateStorefrontPaymentIntentHandler(IAppDbContext db, IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
+    public CreateStorefrontPaymentIntentHandler(
+        IAppDbContext db,
+        IStringLocalizer<ValidationResource>? localizer = null,
+        IClock? clock = null,
+        IStorefrontPaymentSessionClient? paymentSessionClient = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
+        _paymentSessionClient = paymentSessionClient;
     }
 
     /// <summary>
@@ -83,13 +91,6 @@ public sealed class CreateStorefrontPaymentIntentHandler
                     .ConfigureAwait(false)
                 : null;
 
-            var providerPaymentIntentReference = IsStripeProvider(provider)
-                ? $"pi_{Guid.NewGuid():N}"
-                : null;
-            var providerCheckoutSessionReference = IsStripeProvider(provider)
-                ? $"cs_{Guid.NewGuid():N}"
-                : null;
-
             existing = new Payment
             {
                 OrderId = order.Id,
@@ -98,15 +99,17 @@ public sealed class CreateStorefrontPaymentIntentHandler
                 AmountMinor = order.GrandTotalGrossMinor,
                 Currency = order.Currency,
                 Provider = provider,
-                ProviderTransactionRef = providerCheckoutSessionReference ?? $"chk_{Guid.NewGuid():N}",
-                ProviderPaymentIntentRef = providerPaymentIntentReference,
-                ProviderCheckoutSessionRef = providerCheckoutSessionReference,
+                ProviderTransactionRef = null,
+                ProviderPaymentIntentRef = null,
+                ProviderCheckoutSessionRef = null,
                 Status = PaymentStatus.Pending
             };
 
             _db.Set<Payment>().Add(existing);
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
         }
+
+        var checkoutUrl = await EnsureProviderSessionAsync(order, existing, dto, provider, ct).ConfigureAwait(false);
 
         var nowUtc = _clock.UtcNow;
         return new StorefrontPaymentIntentResultDto
@@ -120,8 +123,68 @@ public sealed class CreateStorefrontPaymentIntentHandler
             AmountMinor = existing.AmountMinor,
             Currency = existing.Currency,
             Status = existing.Status,
-            ExpiresAtUtc = nowUtc.AddMinutes(15)
+            ExpiresAtUtc = nowUtc.AddMinutes(15),
+            CheckoutUrl = checkoutUrl
         };
+    }
+
+    private async Task<string?> EnsureProviderSessionAsync(Order order, Payment payment, CreateStorefrontPaymentIntentDto dto, string provider, CancellationToken ct)
+    {
+        if (!IsStripeProvider(provider))
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(payment.ProviderCheckoutSessionRef) ||
+            !string.IsNullOrWhiteSpace(payment.ProviderTransactionRef))
+        {
+            return null;
+        }
+
+        if (_paymentSessionClient is null)
+        {
+            throw new InvalidOperationException(_localizer["StorefrontStripeCheckoutNotConfigured"]);
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.ReturnUrl) || string.IsNullOrWhiteSpace(dto.CancelUrl))
+        {
+            throw new InvalidOperationException(_localizer["StorefrontStripeCheckoutUrlsRequired"]);
+        }
+
+        var siteSetting = await _db.Set<SiteSetting>()
+            .AsNoTracking()
+            .OrderBy(x => x.CreatedAtUtc)
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false)
+            ?? throw new InvalidOperationException(_localizer["StorefrontStripeCheckoutNotConfigured"]);
+
+        if (!siteSetting.StripeEnabled || string.IsNullOrWhiteSpace(siteSetting.StripeSecretKey))
+        {
+            throw new InvalidOperationException(_localizer["StorefrontStripeCheckoutNotConfigured"]);
+        }
+
+        var session = await _paymentSessionClient.CreateSessionAsync(new StorefrontPaymentSessionRequest
+        {
+            Provider = provider,
+            SecretKey = siteSetting.StripeSecretKey,
+            MerchantDisplayName = string.IsNullOrWhiteSpace(siteSetting.StripeMerchantDisplayName)
+                ? siteSetting.Title
+                : siteSetting.StripeMerchantDisplayName,
+            OrderId = order.Id,
+            OrderNumber = order.OrderNumber,
+            PaymentId = payment.Id,
+            AmountMinor = payment.AmountMinor,
+            Currency = payment.Currency,
+            ReturnUrl = dto.ReturnUrl,
+            CancelUrl = dto.CancelUrl
+        }, ct).ConfigureAwait(false);
+
+        payment.ProviderTransactionRef = session.ProviderReference;
+        payment.ProviderPaymentIntentRef = session.ProviderPaymentIntentReference;
+        payment.ProviderCheckoutSessionRef = session.ProviderCheckoutSessionReference;
+        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+        return session.CheckoutUrl;
     }
 
     private static bool IsStripeProvider(string provider)
@@ -186,16 +249,27 @@ public sealed class CompleteStorefrontPaymentHandler
             throw new InvalidOperationException(_localizer["PaymentNotFoundForOrder"]);
         }
 
-        EnsureProviderReferencesMatch(payment, dto);
-
         if (IsProviderFinalizedStatus(payment.Status))
         {
             return BuildResult(order, payment);
         }
 
+        if (!Enum.IsDefined(dto.Outcome))
+        {
+            throw new InvalidOperationException(_localizer["UnsupportedStorefrontPaymentOutcome"]);
+        }
+
+        EnsureProviderReferencesMatch(payment, dto);
+
         if (!string.IsNullOrWhiteSpace(dto.ProviderReference))
         {
-            payment.ProviderTransactionRef = dto.ProviderReference.Trim();
+            payment.ProviderTransactionRef ??= dto.ProviderReference.Trim();
+        }
+
+        if (RequiresWebhookFinalization(payment.Provider))
+        {
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return BuildResult(order, payment);
         }
 
         switch (dto.Outcome)
@@ -234,6 +308,12 @@ public sealed class CompleteStorefrontPaymentHandler
 
     private void EnsureProviderReferencesMatch(Payment payment, CompleteStorefrontPaymentDto dto)
     {
+        if (!string.IsNullOrWhiteSpace(dto.ProviderReference) &&
+            !ReferenceMatchesAny(dto.ProviderReference, payment.ProviderTransactionRef, payment.ProviderCheckoutSessionRef, payment.ProviderPaymentIntentRef))
+        {
+            throw new InvalidOperationException(_localizer["StorefrontPaymentProviderReferenceMismatch"]);
+        }
+
         if (!string.IsNullOrWhiteSpace(dto.ProviderPaymentIntentReference) &&
             !ReferenceMatches(dto.ProviderPaymentIntentReference, payment.ProviderPaymentIntentRef))
         {
@@ -248,10 +328,19 @@ public sealed class CompleteStorefrontPaymentHandler
 
     }
 
+    private static bool ReferenceMatchesAny(string? provided, params string?[] expectedValues)
+        => string.IsNullOrWhiteSpace(provided) ||
+           expectedValues.Any(expected =>
+               !string.IsNullOrWhiteSpace(expected) &&
+               string.Equals(provided.Trim(), expected.Trim(), StringComparison.Ordinal));
+
     private static bool ReferenceMatches(string? provided, string? expected)
         => string.IsNullOrWhiteSpace(provided) ||
            (!string.IsNullOrWhiteSpace(expected) &&
             string.Equals(provided.Trim(), expected.Trim(), StringComparison.Ordinal));
+
+    private static bool RequiresWebhookFinalization(string? provider)
+        => string.Equals(provider, "Stripe", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsProviderFinalizedStatus(PaymentStatus status)
         => status is PaymentStatus.Captured or PaymentStatus.Completed or PaymentStatus.Refunded or PaymentStatus.Voided;
