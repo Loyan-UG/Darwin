@@ -110,6 +110,30 @@ public sealed class LoyaltyOverviewQueryHandlersTests
     }
 
     [Fact]
+    public async Task GetMyLoyaltyOverview_Should_ReturnEmptyOverview_WhenUserHasNoAccounts()
+    {
+        // Proves members with zero loyalty accounts receive an empty overview with null LastAccrualAtUtc
+        // instead of an aggregate exception (backlog item §7).
+        await using var db = LoyaltyOverviewTestDbContext.Create();
+        var userId = Guid.NewGuid();
+        var handler = new GetMyLoyaltyOverviewHandler(
+            db,
+            new StubCurrentUserService(userId),
+            new TestStringLocalizer<ValidationResource>());
+
+        var result = await handler.HandleAsync(TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.TotalAccounts.Should().Be(0);
+        result.Value.ActiveAccounts.Should().Be(0);
+        result.Value.TotalPointsBalance.Should().Be(0);
+        result.Value.TotalLifetimePoints.Should().Be(0);
+        result.Value.LastAccrualAtUtc.Should().BeNull("no accounts means no accrual, not an aggregate exception");
+        result.Value.Accounts.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetMyLoyaltyBusinessDashboard_Should_ReturnRewardCountsNextRewardAndRecentTransactions()
     {
         await using var db = LoyaltyOverviewTestDbContext.Create();
