@@ -442,3 +442,23 @@ Covers query handlers (26 tests):
 - `GetStockLevelForEditHandler` — found, not-found, soft-deleted returns null.
 - `GetVariantStockHandler` — null when no levels, aggregated totals across warehouses, warehouse-filtered subset.
 - `GetInventoryLedgerHandler` — all transactions, variant filter, Inbound/Outbound/Reservations filters, empty state, ops-summary with correct in/out/reservation counts and empty-state default.
+
+# 2026-05-09 Coverage Extension — Orders Query Handlers and Order Status Handler
+
+Added two new test files covering the previously untested Orders query and status-transition layers:
+
+### `tests/Darwin.Tests.Unit/Orders/OrderQueryHandlerTests.cs`
+Covers admin and member order query handlers (22 tests):
+- `GetOrdersPageHandler` — all non-deleted orders, soft-delete exclusion, page normalization (< 1 clamped), page-size clamp at 200, Open filter (excludes Cancelled/Refunded/Completed), PaymentIssues filter (orders with failed payments), FulfillmentAttention filter (Paid + PartiallyShipped), search by order number, payment and shipment count projection.
+- `GetOrderForViewHandler` — found with lines, not-found returns null, soft-deleted returns null, deleted lines excluded / active lines included.
+- `GetOrderPaymentsPageHandler` — non-deleted payments only, Failed filter, refunded-amount and net-captured-amount computation, empty result when no payments.
+- `GetMyOrdersPageHandler` — current-user scoping (excludes other users), soft-delete exclusion.
+- `GetMyOrderForViewHandler` — empty Guid returns null, other user's order returns null, owner sees detail, soft-deleted returns null.
+
+### `tests/Darwin.Tests.Unit/Orders/UpdateOrderStatusHandlerTests.cs`
+Covers `UpdateOrderStatusHandler` (19 tests):
+- Guards: empty OrderId, empty RowVersion, order not found, stale RowVersion, invalid state-machine transition (Created → Shipped).
+- Evidence validation: Paid with insufficient captured payment, PartiallyShipped with no shipment, Shipped with incomplete shipment, Delivered with no delivered shipments, PartiallyRefunded with no completed refunds, Refunded with insufficient refund total, Completed with open pending refund.
+- Successful transitions: Created → Confirmed (no evidence), Created → Cancelled (no lines, no inventory), Confirmed → Paid with captured payment and no lines (reserve loop skips), Confirmed → Cancelled with pre-seeded "already released" idempotency record (release loop skips).
+- Inventory side-effects: Paid → stock-reserve (decrements AvailableQuantity, increments ReservedQuantity, writes OrderPaid-Reserve ledger), Paid → Shipped with full shipment evidence and pre-seeded ShipmentAllocation record (idempotent skip).
+- WarehouseId propagation: when WarehouseId is passed in the DTO, unset order lines receive it.
