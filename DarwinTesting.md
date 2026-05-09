@@ -548,3 +548,40 @@ Covers four consumer/business-facing Billing handlers:
 
 ### `tests/Darwin.Tests.Unit/CMS/CmsMenuHandlerTests.cs` — extended with `GetMenusPageHandler` (7 new tests)
 - Empty state, soft-deleted menus excluded, all non-deleted menus returned, page < 1 normalized to 1, oversized pageSize clamped to MaxPageSize (200), `ItemsCount` projects only non-deleted items, menus ordered alphabetically by name.
+
+# 2026-05-09 Coverage Extension — Admin Lookup Queries, OperatorDisplayTextSanitizer, and CMS Page Windowed Filters
+
+Added two new test files and extended one existing file covering previously untested areas:
+
+### `tests/Darwin.Tests.Unit/Common/AdminLookupQueriesTests.cs` (40 tests)
+Covers all eight admin lookup query handlers in `Darwin.Application.Common.Queries`:
+- `GetBusinessLookupHandler` — empty state, excludes deleted, excludes inactive, ordered by Name, field mapping (Id/Label=Name/SecondaryLabel=DefaultCurrency).
+- `GetUserLookupHandler` — empty state, excludes deleted, excludes inactive, uses full name as Label when available, falls back to Email when name is blank, ordered by Email.
+- `GetCustomerLookupHandler` — empty state, excludes deleted, uses Customer name/Email when no UserId linked, uses linked User identity name/email when UserId is set.
+- `GetCustomerSegmentLookupHandler` — empty state, excludes deleted, maps Name and Description, ordered by Name.
+- `GetProductVariantLookupHandler` — empty state, excludes deleted variants, Label includes SKU and ProductTranslation Name, falls back to "Unnamed product" when no translation, ordered by SKU.
+- `GetSupplierLookupHandler` — empty state, excludes deleted, scoped by BusinessId (other businesses excluded), ordered by Name, maps Name and Email.
+- `GetFinancialAccountLookupHandler` — empty state, excludes deleted, scoped by BusinessId, Label format "Code - Name" when code present, just Name when Code is null, SecondaryLabel maps AccountType.
+- `GetPaymentLookupHandler` — empty state, excludes deleted, Label format "Provider - Currency amount", SecondaryLabel maps PaymentStatus, returns all non-deleted payments.
+
+### `tests/Darwin.Tests.Unit/Common/OperatorDisplayTextSanitizerTests.cs` (17 tests)
+Covers `OperatorDisplayTextSanitizer.SanitizeFailureText()` (internal, accessed via InternalsVisibleTo):
+- Null/empty/whitespace input → `null`.
+- Sensitive-marker redaction (case-insensitive): `secret`, `token`, `password`, `authorization`, `signature`, `api_key`, `apikey` → fixed redaction message.
+- Email masking: original email replaced, domain kept, 2-char local prefix retained (`al***@example.org`).
+- Short local-part email masking.
+- Phone number masking: last four digits retained (`***6789`).
+- Plain safe text returned unchanged.
+- Leading/trailing whitespace trimmed.
+- Long text truncated at maxLength (default 220) with `...` suffix.
+- Text at exactly maxLength is not truncated.
+- Custom `maxLength` parameter respected.
+
+### `tests/Darwin.Tests.Unit/CMS/CmsPageHandlerTests.cs` — extended with windowed/live-window filter tests (6 new tests)
+Covers the previously untested `"windowed"` and `"live-window"` filter branches of `GetPagesPageHandler`:
+- `"windowed"` filter returns only pages with `PublishStartUtc` set.
+- `"windowed"` filter returns only pages with `PublishEndUtc` set (when paired with start).
+- `"live-window"` filter returns a Published page when the current time is within its publish window.
+- `"live-window"` filter excludes a Published page when the current time is before `PublishStartUtc`.
+- `"live-window"` filter excludes a Published page when the current time is after `PublishEndUtc`.
+- `"live-window"` filter excludes Draft pages even when they have an active publish window.
