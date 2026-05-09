@@ -447,4 +447,117 @@ public sealed class CmsMenuHandlerTests
 
         dto!.RowVersion.Should().NotBeNull("RowVersion is required for optimistic concurrency control");
     }
+
+    // ─── GetMenusPageHandler ──────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetMenusPage_Should_Return_Empty_State()
+    {
+        var db = TestDbFactory.Create();
+        var handler = new GetMenusPageHandler(db);
+
+        var (items, total) = await handler.HandleAsync(1, 20, TestContext.Current.CancellationToken);
+
+        items.Should().BeEmpty();
+        total.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetMenusPage_Should_Exclude_SoftDeleted_Menus()
+    {
+        var db = TestDbFactory.Create();
+        var createHandler = new CreateMenuHandler(db, CreateLocalizer());
+        await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+
+        // Soft-delete the created menu
+        var menu = await db.Set<Menu>().SingleAsync(TestContext.Current.CancellationToken);
+        menu.IsDeleted = true;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetMenusPageHandler(db);
+        var (items, total) = await handler.HandleAsync(1, 20, TestContext.Current.CancellationToken);
+
+        items.Should().BeEmpty("soft-deleted menus must not appear in the list");
+        total.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetMenusPage_Should_Return_All_NonDeleted_Menus()
+    {
+        var db = TestDbFactory.Create();
+        var createHandler = new CreateMenuHandler(db, CreateLocalizer());
+        await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+        await createHandler.HandleAsync(new MenuCreateDto { Name = "footer", Items = new List<MenuItemDto>() }, TestContext.Current.CancellationToken);
+
+        var handler = new GetMenusPageHandler(db);
+        var (items, total) = await handler.HandleAsync(1, 20, TestContext.Current.CancellationToken);
+
+        total.Should().Be(2);
+        items.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetMenusPage_Should_Normalize_Page_Below_One_To_One()
+    {
+        var db = TestDbFactory.Create();
+        var createHandler = new CreateMenuHandler(db, CreateLocalizer());
+        await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+
+        var handler = new GetMenusPageHandler(db);
+        var (items, total) = await handler.HandleAsync(-5, 20, TestContext.Current.CancellationToken);
+
+        // Should still return results, treating page < 1 as page 1
+        total.Should().BeGreaterThan(0);
+        items.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetMenusPage_Should_Clamp_PageSize_To_MaxPageSize()
+    {
+        var db = TestDbFactory.Create();
+        var createHandler = new CreateMenuHandler(db, CreateLocalizer());
+        for (var i = 0; i < 5; i++)
+        {
+            await createHandler.HandleAsync(new MenuCreateDto { Name = $"menu-{i}", Items = new List<MenuItemDto>() }, TestContext.Current.CancellationToken);
+        }
+
+        var handler = new GetMenusPageHandler(db);
+        // Request a page size of 9999, which should be clamped to MaxPageSize (200)
+        var (items, total) = await handler.HandleAsync(1, 9999, TestContext.Current.CancellationToken);
+
+        total.Should().Be(5);
+        items.Should().HaveCount(5, "all 5 menus fit within MaxPageSize so all should be returned");
+    }
+
+    [Fact]
+    public async Task GetMenusPage_Should_Project_ItemsCount_Excluding_Deleted_Items()
+    {
+        var db = TestDbFactory.Create();
+        var createHandler = new CreateMenuHandler(db, CreateLocalizer());
+        await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+
+        var handler = new GetMenusPageHandler(db);
+        var (items, _) = await handler.HandleAsync(1, 20, TestContext.Current.CancellationToken);
+
+        var item = items.Should().ContainSingle().Subject;
+        item.Name.Should().Be("main-navigation");
+        item.ItemsCount.Should().Be(1, "one non-deleted item was created");
+    }
+
+    [Fact]
+    public async Task GetMenusPage_Should_Order_Menus_Alphabetically_By_Name()
+    {
+        var db = TestDbFactory.Create();
+        var createHandler = new CreateMenuHandler(db, CreateLocalizer());
+        await createHandler.HandleAsync(new MenuCreateDto { Name = "z-menu", Items = new List<MenuItemDto>() }, TestContext.Current.CancellationToken);
+        await createHandler.HandleAsync(new MenuCreateDto { Name = "a-menu", Items = new List<MenuItemDto>() }, TestContext.Current.CancellationToken);
+        await createHandler.HandleAsync(new MenuCreateDto { Name = "m-menu", Items = new List<MenuItemDto>() }, TestContext.Current.CancellationToken);
+
+        var handler = new GetMenusPageHandler(db);
+        var (items, _) = await handler.HandleAsync(1, 20, TestContext.Current.CancellationToken);
+
+        items[0].Name.Should().Be("a-menu");
+        items[1].Name.Should().Be("m-menu");
+        items[2].Name.Should().Be("z-menu");
+    }
 }
