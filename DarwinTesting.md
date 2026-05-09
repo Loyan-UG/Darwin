@@ -204,7 +204,7 @@ python scripts/ci/verify_coverage.py \
   --mobile-shared-threshold 20
 ```
 
-### 5.4 Current execution snapshot (2026-05-08)
+### 5.4 Current execution snapshot (2026-05-09)
 
 Latest known-good signal for the recently expanded Webhook/reader/writer tests is:
 
@@ -240,6 +240,12 @@ Latest known-good signal for the recently expanded Webhook/reader/writer tests i
 
 `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingWebhookQueryHandlersTests"`
   - 12 passed (verified 2026-05-08; adds GetBillingWebhookSubscriptionsPageHandler coverage: returns non-deleted items, empty state, search by EventType and CallbackUrl, normalizes invalid page params, maps fields correctly)
+
+`dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GetOrderShipmentsPageHandlerTests"`
+  - 14 passed (verified 2026-05-09; covers empty state, soft-delete exclusion, order scoping, page/pageSize normalization, OrderNumber enrichment, and all eight ShipmentQueueFilter variants including clock-controlled AwaitingHandoff and TrackingOverdue branches)
+
+`dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GetShipmentProviderOperationsPageHandlerTests"`
+  - 12 passed (verified 2026-05-09; covers empty state, summary counts with StalePending/Cancelled, soft-delete exclusion, provider/operationType/status/failedOnly/stalePendingOnly filters, Succeeded→Processed normalization, providers/operationTypes list ordering, and OrderNumber enrichment via Shipment→Order join)
 
 Running the full `Darwin.WebApi.Tests` suite in the current branch still shows failures in pre-existing suites (mostly `Security` / `Loyalty` areas), so the newly added webhook-focused coverage remains green as an isolated subset.
 
@@ -585,3 +591,41 @@ Covers the previously untested `"windowed"` and `"live-window"` filter branches 
 - `"live-window"` filter excludes a Published page when the current time is before `PublishStartUtc`.
 - `"live-window"` filter excludes a Published page when the current time is after `PublishEndUtc`.
 - `"live-window"` filter excludes Draft pages even when they have an active publish window.
+
+# 2026-05-09 Coverage Extension — GetOrderShipmentsPageHandler and GetShipmentProviderOperationsPageHandler
+
+Added one new test file covering the previously untested order-scoped shipment query handler and global shipment-provider-operations query handler:
+
+### `tests/Darwin.Tests.Unit/Orders/OrderShipmentQueryHandlerTests.cs`
+
+#### `GetOrderShipmentsPageHandlerTests` (14 tests)
+Covers `GetOrderShipmentsPageHandler`:
+- Empty state — returns empty result when no shipments exist for the order.
+- Soft-delete exclusion — `IsDeleted=true` shipments are excluded from all results and counts.
+- Order scoping — shipments belonging to other orders are excluded; only the target order's shipments are returned.
+- Page normalization — `page < 1` is clamped to 1, still returning available items.
+- PageSize clamp — oversized `pageSize` (e.g. 9999) is clamped to 200; all items are returned when count is below cap.
+- OrderNumber enrichment — the `OrderNumber` field on each result is populated from the linked `Order` entity.
+- Filter `Pending` — returns only `Pending` and `Packed` shipments; `Shipped` is excluded.
+- Filter `Shipped` — returns only `Shipped` and `Delivered` shipments; `Pending` is excluded.
+- Filter `MissingTracking` — returns `Shipped`/`Delivered` shipments with a null or empty `TrackingNumber`; Pending with no tracking is excluded.
+- Filter `Returned` — returns only `Returned` shipments.
+- Filter `Dhl` — returns only shipments whose `Carrier` is `"DHL"`.
+- Filter `MissingService` — returns only shipments with an empty `Service` string.
+- Filter `AwaitingHandoff` — with a controlled clock, returns only `Pending`/`Packed` shipments created before the `attentionDelayHours` threshold.
+- Filter `TrackingOverdue` — with a controlled clock, returns only DHL `Shipped`/`Delivered` shipments with no tracking number older than `trackingGraceHours`.
+
+#### `GetShipmentProviderOperationsPageHandlerTests` (12 tests)
+Covers `GetShipmentProviderOperationsPageHandler`:
+- Empty state — returns empty items/providers/operationTypes and zero summary when no operations exist.
+- Summary counts — `TotalCount`, `PendingCount`, `FailedCount`, `ProcessedCount` (includes `Succeeded`), `StalePendingCount` (pending rows older than 30 min), and `CancelledCount` (soft-deleted rows) are computed correctly.
+- Soft-delete exclusion — `IsDeleted=true` operations are excluded from the active item list and counts, but contribute to `CancelledCount` in the summary.
+- Filter by `Provider` — only operations matching the exact provider string are returned.
+- Filter by `OperationType` — only operations matching the exact operation type are returned.
+- Filter by `Status` — exact status match returns matching rows only.
+- Filter `Processed` includes `Succeeded` — when `Status="Processed"` filter is applied both `"Processed"` and `"Succeeded"` database rows are returned; both are normalized to `"Processed"` in the DTO.
+- Filter `FailedOnly` — only `Failed` operations are returned.
+- Filter `StalePendingOnly` — with a controlled clock, only `Pending` operations created before the 30-minute stale threshold are returned.
+- Providers list — distinct, alphabetically ordered list of non-deleted provider values is returned.
+- OperationTypes list — distinct, alphabetically ordered list of non-deleted operation type values is returned.
+- OrderNumber enrichment — `OrderNumber` on each result is resolved by joining `ShipmentProviderOperation → Shipment → Order`.
