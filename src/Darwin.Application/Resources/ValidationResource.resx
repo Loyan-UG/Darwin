@@ -147,6 +147,9 @@
   <data name="CustomerBusinessRequiresCompanyName" xml:space="preserve">
     <value>Business customers should include a company name.</value>
   </data>
+  <data name="CustomerBusinessRequiresVatIdForTaxCompliance" xml:space="preserve">
+    <value>Business customers must include a VAT ID before tax compliance follow-up can be resolved.</value>
+  </data>
   <data name="InteractionSingleTargetRequired" xml:space="preserve">
     <value>Exactly one CRM target must be selected for an interaction.</value>
   </data>
@@ -471,6 +474,15 @@
   <data name="UnsupportedInvoiceStatusTransition" xml:space="preserve">
     <value>Unsupported invoice status transition.</value>
   </data>
+  <data name="InvoiceIssuerDataRequiredBeforeIssuing" xml:space="preserve">
+    <value>Invoice issuer legal name, tax id, address, postal code, city, and country must be configured before issuing an invoice.</value>
+  </data>
+  <data name="BusinessCustomerVatIdRequiredBeforeIssuingInvoice" xml:space="preserve">
+    <value>Business customer VAT ID is required before issuing an invoice.</value>
+  </data>
+  <data name="IssuedInvoiceFinancialFieldsCannotBeEdited" xml:space="preserve">
+    <value>Issued invoice financial and tax identity fields cannot be edited. Use payment, refund, or status workflows for later lifecycle changes.</value>
+  </data>
   <data name="UnsupportedPaymentStatusTransition" xml:space="preserve">
     <value>Unsupported payment status transition.</value>
   </data>
@@ -605,6 +617,9 @@
   </data>
   <data name="AcceptedInvitationsCannotBeRevoked" xml:space="preserve">
     <value>Accepted invitations cannot be revoked.</value>
+  </data>
+  <data name="RevokedInvitationsCannotBeRevoked" xml:space="preserve">
+    <value>Revoked invitations have already been closed.</value>
   </data>
   <data name="UserNotFound" xml:space="preserve">
     <value>User not found.</value>
@@ -1469,6 +1484,9 @@
   <data name="BusinessOnboardingProvisioningBlocked" xml:space="preserve">
     <value>Business onboarding cannot be finalized yet. Missing: {0}.</value>
   </data>
+  <data name="BusinessApprovalPrerequisitesMissing" xml:space="preserve">
+    <value>Business approval requires an active owner, primary location, contact email, and legal name.</value>
+  </data>
   <data name="BusinessOnboardingMissingOwner" xml:space="preserve">
     <value>active owner</value>
   </data>
@@ -1513,5 +1531,20 @@
   </data>
   <data name="ProviderWebhookPayloadTooLarge" xml:space="preserve">
     <value>Provider webhook payload is too large.</value>
+  </data>
+  <data name="ReverseChargeReviewNoteTooLong" xml:space="preserve">
+    <value>Reverse-charge review note is too long.</value>
+  </data>
+  <data name="CustomerVatValidationStatusRequired" xml:space="preserve">
+    <value>VAT validation status is required.</value>
+  </data>
+  <data name="CustomerVatValidationSourceTooLong" xml:space="preserve">
+    <value>VAT validation source is too long.</value>
+  </data>
+  <data name="CustomerVatValidationMessageTooLong" xml:space="preserve">
+    <value>VAT validation message is too long.</value>
+  </data>
+  <data name="SiteSettingInvoiceArchiveRetentionYearsRange" xml:space="preserve">
+    <value>Invoice archive retention must be between 1 and 30 years.</value>
   </data>
 </root>

@@ -35,9 +35,13 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.Property(x => x.CompanyName).HasMaxLength(200);
             builder.Property(x => x.TaxProfileType).IsRequired();
             builder.Property(x => x.VatId).HasMaxLength(64);
+            builder.Property(x => x.VatValidationStatus).IsRequired();
+            builder.Property(x => x.VatValidationSource).HasMaxLength(80);
+            builder.Property(x => x.VatValidationMessage).HasMaxLength(512);
             builder.Property(x => x.Notes).HasMaxLength(4000);
 
             builder.HasIndex(x => x.Email);
+            builder.HasIndex(x => x.VatValidationStatus);
             builder.HasIndex(x => x.UserId)
                 .IsUnique()
                 .HasFilter("[UserId] IS NOT NULL AND [IsDeleted] = 0");
@@ -252,11 +256,20 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
 
             builder.Property(x => x.Currency).IsRequired().HasMaxLength(3);
             builder.Property(x => x.Status).IsRequired();
+            builder.Property(x => x.IssuedSnapshotJson).HasMaxLength(16000);
+            builder.Property(x => x.IssuedSnapshotHashSha256).HasMaxLength(64);
+            builder.Property(x => x.ArchiveRetentionPolicyVersion).HasMaxLength(80);
+            builder.Property(x => x.ArchivePurgeReason).HasMaxLength(160);
+            builder.Property(x => x.ReverseChargeReviewNote).HasMaxLength(512);
 
             builder.HasIndex(x => x.BusinessId);
             builder.HasIndex(x => x.CustomerId);
             builder.HasIndex(x => x.OrderId);
             builder.HasIndex(x => x.PaymentId);
+            builder.HasIndex(x => x.IssuedAtUtc);
+            builder.HasIndex(x => x.ArchiveRetainUntilUtc);
+            builder.HasIndex(x => x.ArchivePurgedAtUtc);
+            builder.HasIndex(x => x.ReverseChargeApplied);
 
             builder.HasOne<Payment>()
                 .WithMany()

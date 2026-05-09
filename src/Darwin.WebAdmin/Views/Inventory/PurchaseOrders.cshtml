@@ -343,6 +343,7 @@
                                       hx-post="@UpdatePurchaseOrderLifecycleUrl(item.Id)"
                                       hx-target="#inventory-purchase-orders-workspace-shell"
                                       hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="rowVersion" value="@rowVersion" />
                                     <input type="hidden" name="action" value="Issue" />
                                     <input type="hidden" name="businessId" value="@Model.BusinessId" />
@@ -356,6 +357,7 @@
                                       hx-post="@UpdatePurchaseOrderLifecycleUrl(item.Id)"
                                       hx-target="#inventory-purchase-orders-workspace-shell"
                                       hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="rowVersion" value="@rowVersion" />
                                     <input type="hidden" name="action" value="Cancel" />
                                     <input type="hidden" name="businessId" value="@Model.BusinessId" />
@@ -372,6 +374,7 @@
                                       hx-post="@UpdatePurchaseOrderLifecycleUrl(item.Id)"
                                       hx-target="#inventory-purchase-orders-workspace-shell"
                                       hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="rowVersion" value="@rowVersion" />
                                     <input type="hidden" name="action" value="Receive" />
                                     <input type="hidden" name="businessId" value="@Model.BusinessId" />
@@ -385,6 +388,7 @@
                                       hx-post="@UpdatePurchaseOrderLifecycleUrl(item.Id)"
                                       hx-target="#inventory-purchase-orders-workspace-shell"
                                       hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="rowVersion" value="@rowVersion" />
                                     <input type="hidden" name="action" value="Cancel" />
                                     <input type="hidden" name="businessId" value="@Model.BusinessId" />

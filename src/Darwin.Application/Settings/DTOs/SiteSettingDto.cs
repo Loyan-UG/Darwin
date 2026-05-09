@@ -155,6 +155,7 @@ namespace Darwin.Application.Settings.DTOs
         public string? InvoiceIssuerPostalCode { get; set; }
         public string? InvoiceIssuerCity { get; set; }
         public string? InvoiceIssuerCountry { get; set; }
+        public int InvoiceArchiveRetentionYears { get; set; } = 10;
 
         // -------- Shipping (DHL-first) --------
         public bool DhlEnabled { get; set; } = false;

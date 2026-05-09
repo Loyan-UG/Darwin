@@ -3353,8 +3353,9 @@ public sealed class SecurityAndPerformanceBusinessCommunicationsAndSupportSource
     {
         var supportQueueSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "SupportQueue.cshtml"));
 
-        supportQueueSource.Should().Contain("<div class=\"card mb-3\">");
-        supportQueueSource.Should().Contain("<div class=\"card-header\">@T.T(\"BusinessesOperationsPlaybooksTitle\")</div>");
+        supportQueueSource.Should().Contain("<details class=\"admin-playbook mb-3\">");
+        supportQueueSource.Should().Contain("<summary>@T.T(\"BusinessesOperationsPlaybooksTitle\")</summary>");
+        supportQueueSource.Should().Contain("<div class=\"admin-playbook-body\">");
         supportQueueSource.Should().Contain("@foreach (var playbook in Model.Playbooks)");
         supportQueueSource.Should().Contain("<th>@T.T(\"Playbook\")</th>");
         supportQueueSource.Should().Contain("<th>@T.T(\"TaxComplianceScopeColumn\")</th>");

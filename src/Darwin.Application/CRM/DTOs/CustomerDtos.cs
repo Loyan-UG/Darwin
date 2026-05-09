@@ -102,6 +102,30 @@ namespace Darwin.Application.CRM.DTOs
         public IdentityAddressSummaryDto? DefaultShippingAddress { get; set; }
     }
 
+    public sealed class CustomerTaxProfileUpdateDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public CustomerTaxProfileType TaxProfileType { get; set; } = CustomerTaxProfileType.Business;
+        public string? CompanyName { get; set; }
+        public string? VatId { get; set; }
+    }
+
+    public sealed class CustomerVatValidationDecisionDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public CustomerVatValidationStatus Status { get; set; } = CustomerVatValidationStatus.Unknown;
+        public string? Source { get; set; }
+        public string? Message { get; set; }
+    }
+
+    public sealed class CustomerVatValidationLookupDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
     public sealed class LeadListItemDto
     {
         public Guid Id { get; set; }

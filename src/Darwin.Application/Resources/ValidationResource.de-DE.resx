@@ -147,6 +147,9 @@
   <data name="CustomerBusinessRequiresCompanyName" xml:space="preserve">
     <value>Geschaeftskunden sollten einen Firmennamen angeben.</value>
   </data>
+  <data name="CustomerBusinessRequiresVatIdForTaxCompliance" xml:space="preserve">
+    <value>Geschaeftskunden muessen eine USt-ID enthalten, bevor die Steuer-Compliance-Nachverfolgung abgeschlossen werden kann.</value>
+  </data>
   <data name="InteractionSingleTargetRequired" xml:space="preserve">
     <value>Genau ein CRM-Ziel muss fuer eine Interaktion ausgewaehlt werden.</value>
   </data>
@@ -471,6 +474,15 @@
   <data name="UnsupportedInvoiceStatusTransition" xml:space="preserve">
     <value>Ungueltiger Rechnungsstatuswechsel.</value>
   </data>
+  <data name="InvoiceIssuerDataRequiredBeforeIssuing" xml:space="preserve">
+    <value>Rechnungsaussteller, Steuernummer, Adresse, Postleitzahl, Stadt und Land muessen vor dem Ausstellen einer Rechnung konfiguriert sein.</value>
+  </data>
+  <data name="BusinessCustomerVatIdRequiredBeforeIssuingInvoice" xml:space="preserve">
+    <value>Die USt-IdNr. des Geschaeftskunden ist vor dem Ausstellen einer Rechnung erforderlich.</value>
+  </data>
+  <data name="IssuedInvoiceFinancialFieldsCannotBeEdited" xml:space="preserve">
+    <value>Finanz- und Steueridentitaetsfelder ausgestellter Rechnungen koennen nicht bearbeitet werden. Verwenden Sie Zahlungs-, Erstattungs- oder Statusablaeufe fuer spaetere Lebenszyklusaenderungen.</value>
+  </data>
   <data name="UnsupportedPaymentStatusTransition" xml:space="preserve">
     <value>Ungueltiger Zahlungsstatuswechsel.</value>
   </data>
@@ -605,6 +617,9 @@
   </data>
   <data name="AcceptedInvitationsCannotBeRevoked" xml:space="preserve">
     <value>Angenommene Einladungen koennen nicht widerrufen werden.</value>
+  </data>
+  <data name="RevokedInvitationsCannotBeRevoked" xml:space="preserve">
+    <value>Widerrufene Einladungen sind bereits geschlossen.</value>
   </data>
   <data name="UserNotFound" xml:space="preserve">
     <value>Benutzer nicht gefunden.</value>
@@ -1469,6 +1484,9 @@
   <data name="BusinessOnboardingProvisioningBlocked" xml:space="preserve">
     <value>Business-Onboarding kann noch nicht finalisiert werden. Fehlt: {0}.</value>
   </data>
+  <data name="BusinessApprovalPrerequisitesMissing" xml:space="preserve">
+    <value>Die Freigabe eines Geschaefts erfordert einen aktiven Owner, einen Hauptstandort, eine Kontakt-E-Mail und einen rechtlichen Namen.</value>
+  </data>
   <data name="BusinessOnboardingMissingOwner" xml:space="preserve">
     <value>aktiver Owner</value>
   </data>
@@ -1513,5 +1531,20 @@
   </data>
   <data name="ProviderWebhookPayloadTooLarge" xml:space="preserve">
     <value>Die Provider-Webhook-Nutzlast ist zu gross.</value>
+  </data>
+  <data name="ReverseChargeReviewNoteTooLong" xml:space="preserve">
+    <value>Die Reverse-Charge-Pruefnotiz ist zu lang.</value>
+  </data>
+  <data name="CustomerVatValidationStatusRequired" xml:space="preserve">
+    <value>Der Status der USt-IdNr.-Pruefung ist erforderlich.</value>
+  </data>
+  <data name="CustomerVatValidationSourceTooLong" xml:space="preserve">
+    <value>Die Quelle der USt-IdNr.-Pruefung ist zu lang.</value>
+  </data>
+  <data name="CustomerVatValidationMessageTooLong" xml:space="preserve">
+    <value>Die Meldung der USt-IdNr.-Pruefung ist zu lang.</value>
+  </data>
+  <data name="SiteSettingInvoiceArchiveRetentionYearsRange" xml:space="preserve">
+    <value>Die Aufbewahrung fuer Rechnungsarchive muss zwischen 1 und 30 Jahren liegen.</value>
   </data>
 </root>

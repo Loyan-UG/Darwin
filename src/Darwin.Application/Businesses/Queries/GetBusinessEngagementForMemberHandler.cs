@@ -8,6 +8,7 @@ using Darwin.Application.Businesses.DTOs;
 using Darwin.Application;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -39,7 +40,7 @@ namespace Darwin.Application.Businesses.Queries
 
             var exists = await _db.Set<Business>()
                 .AsNoTracking()
-                .AnyAsync(b => b.Id == businessId && !b.IsDeleted && b.IsActive, ct)
+                .AnyAsync(b => b.Id == businessId && !b.IsDeleted && b.IsActive && b.OperationalStatus == BusinessOperationalStatus.Approved, ct)
                 .ConfigureAwait(false);
 
             if (!exists)

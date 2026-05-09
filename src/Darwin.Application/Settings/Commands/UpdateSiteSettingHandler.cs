@@ -111,6 +111,7 @@ namespace Darwin.Application.Settings.Commands
             s.InvoiceIssuerPostalCode = dto.InvoiceIssuerPostalCode;
             s.InvoiceIssuerCity = dto.InvoiceIssuerCity;
             s.InvoiceIssuerCountry = dto.InvoiceIssuerCountry;
+            s.InvoiceArchiveRetentionYears = dto.InvoiceArchiveRetentionYears;
             s.DhlEnabled = dto.DhlEnabled;
             s.DhlEnvironment = dto.DhlEnvironment;
             s.DhlApiBaseUrl = dto.DhlApiBaseUrl;

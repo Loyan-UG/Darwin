@@ -47,6 +47,9 @@ namespace Darwin.Application.Businesses.Commands
             if (invitation.Status == BusinessInvitationStatus.Accepted)
                 throw new InvalidOperationException(_localizer["AcceptedInvitationsCannotBeRevoked"]);
 
+            if (invitation.Status == BusinessInvitationStatus.Revoked)
+                throw new InvalidOperationException(_localizer["RevokedInvitationsCannotBeRevoked"]);
+
             var currentVersion = invitation.RowVersion ?? Array.Empty<byte>();
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
             if (requestVersion.Length == 0 || !currentVersion.SequenceEqual(requestVersion))

@@ -12,6 +12,8 @@
     string EditPaymentUrl(Guid id) => Url.Action("EditPayment", "Billing", new { id }) ?? string.Empty;
     string CrmInvoicesUrl(object? q = null) => Url.Action("Invoices", "Crm", new { q }) ?? string.Empty;
     string PaymentsUrl(PaymentQueueFilter? queue = null) => Url.Action("Payments", "Billing", new { queue }) ?? string.Empty;
+    string DownloadInvoiceArchiveSnapshotUrl(Guid id) => Url.Action("DownloadInvoiceArchiveSnapshot", "Crm", new { id }) ?? string.Empty;
+    string DownloadInvoiceArchiveDocumentUrl(Guid id) => Url.Action("DownloadInvoiceArchiveDocument", "Crm", new { id }) ?? string.Empty;
     string LocalizeCrmInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
     var invoiceStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
@@ -47,6 +49,10 @@
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                         <span class="badge @CrmInvoiceEditorOpsHealthBadgeClass(crmInvoiceEditorComplianceAttention == 0)">@CrmInvoiceEditorOpsHealthBadgeText(crmInvoiceEditorComplianceAttention == 0)</span>
                         <span class="badge @CrmInvoiceEditorOpsHealthBadgeClass(Model.TaxPolicy.ArchiveReadinessComplete && Model.TaxPolicy.EInvoiceBaselineReady)">@CrmInvoiceEditorOpsHealthBadgeText(Model.TaxPolicy.ArchiveReadinessComplete && Model.TaxPolicy.EInvoiceBaselineReady)</span>
+                        @if (Model.HasIssuedSnapshot)
+                        {
+                            <span class="badge text-bg-success">@T.T("ArchiveSnapshotAvailable")</span>
+                        }
                     </div>
                     <h2 class="h5 mb-1">@T.T("EditInvoice")</h2>
                     <p class="text-muted mb-0">@T.T("InvoiceFollowUpWorkspaceNote")</p>
@@ -248,10 +254,10 @@
             <div class="d-flex flex-wrap gap-2 align-items-center">
                 <span class="small text-uppercase text-muted fw-semibold">@T.T("QuickStatus")</span>
 
-                <form asp-action="TransitionInvoiceStatus"
-                      method="post"
-                      hx-post="@Url.Action("TransitionInvoiceStatus", "Crm")"
-                      hx-target="#crm-invoice-editor-shell"
+                    <form asp-action="TransitionInvoiceStatus"
+                          method="post"
+                          hx-post="@Url.Action("TransitionInvoiceStatus", "Crm")"
+                          hx-target="#crm-invoice-editor-shell"
                       hx-swap="outerHTML"
                       class="d-inline-flex">
                     @Html.AntiForgeryToken()
@@ -289,11 +295,31 @@
                     <button type="submit" class="btn btn-outline-danger btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Cancelled ? "disabled" : null)>@T.T("VoidInvoice")</button>
                 </form>
 
-                <span class="badge text-bg-primary-subtle border border-primary-subtle text-primary-emphasis ms-auto">
-                    @T.T("Current"): @LocalizeCrmInvoiceStatus(Model.Status)
-                </span>
+                    <span class="badge text-bg-primary-subtle border border-primary-subtle text-primary-emphasis ms-auto">
+                        @T.T("Current"): @LocalizeCrmInvoiceStatus(Model.Status)
+                    </span>
+                    @if (Model.ArchivePurgedAtUtc.HasValue)
+                    {
+                        <span class="badge text-bg-secondary">
+                            @T.T("ArchivePurgedAt"): @Model.ArchivePurgedAtUtc.Value.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture)
+                        </span>
+                    }
+                    else if (Model.HasIssuedSnapshot)
+                    {
+                        <span class="badge text-bg-info-subtle border border-info-subtle text-info-emphasis">
+                            @T.T("ArchiveRetainUntil"): @(Model.ArchiveRetainUntilUtc.HasValue ? Model.ArchiveRetainUntilUtc.Value.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture) : T.T("Missing"))
+                        </span>
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="@DownloadInvoiceArchiveDocumentUrl(Model.Id)">
+                            <i class="fa fa-file-lines"></i> @T.T("DownloadArchiveDocument")
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="@DownloadInvoiceArchiveSnapshotUrl(Model.Id)">
+                            <i class="fa fa-download"></i> @T.T("DownloadArchiveSnapshot")
+                        </a>
+                    }
+                </div>
             </div>
-        </div>
     </div>
 
     <div class="card border-0 bg-light mb-3">
@@ -483,6 +509,18 @@
                             <div class="text-muted">@T.T("ArchiveReadiness")</div>
                             <div class="fw-semibold">@(Model.TaxPolicy.ArchiveReadinessComplete ? T.T("Ready") : T.T("MissingData"))</div>
                             <div class="small text-muted mt-1">@Model.TaxPolicy.ArchiveReadinessLabel</div>
+                            @if (Model.ArchiveGeneratedAtUtc.HasValue)
+                            {
+                                <div class="small text-muted mt-1">@T.T("ArchiveGeneratedAt"): @Model.ArchiveGeneratedAtUtc.Value.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture)</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.IssuedSnapshotHashSha256))
+                            {
+                                <div class="small text-muted mt-1">@T.T("ArchiveSnapshotHash"): @Model.IssuedSnapshotHashSha256[..Math.Min(12, Model.IssuedSnapshotHashSha256.Length)]</div>
+                            }
+                            @if (Model.ArchivePurgedAtUtc.HasValue)
+                            {
+                                <div class="small text-muted mt-1">@T.T("ArchivePurgedAt"): @Model.ArchivePurgedAtUtc.Value.ToLocalTime().ToString(System.Globalization.CultureInfo.CurrentCulture)</div>
+                            }
                         </div>
                         <div class="col-md-2">
                             <div class="text-muted">@T.T("EInvoiceBaseline")</div>

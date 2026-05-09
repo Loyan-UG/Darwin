@@ -58,6 +58,26 @@ namespace Darwin.Domain.Entities.CRM
         public string? VatId { get; set; }
 
         /// <summary>
+        /// Gets or sets the latest VAT validation status for business tax compliance review.
+        /// </summary>
+        public CustomerVatValidationStatus VatValidationStatus { get; set; } = CustomerVatValidationStatus.Unknown;
+
+        /// <summary>
+        /// Gets or sets when the VAT validation status was last reviewed.
+        /// </summary>
+        public DateTime? VatValidationCheckedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the operator or provider source that produced the VAT validation status.
+        /// </summary>
+        public string? VatValidationSource { get; set; }
+
+        /// <summary>
+        /// Gets or sets an optional operator-facing VAT validation note.
+        /// </summary>
+        public string? VatValidationMessage { get; set; }
+
+        /// <summary>
         /// Gets or sets internal notes visible to operators.
         /// Do not store credentials, payment secrets, or regulated personal data beyond approved policy.
         /// </summary>
@@ -437,7 +457,7 @@ namespace Darwin.Domain.Entities.CRM
         /// <summary>
         /// Gets or sets the ISO 4217 currency code.
         /// </summary>
-    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
 
         /// <summary>
         /// Gets or sets the total net amount in minor units.
@@ -463,6 +483,61 @@ namespace Darwin.Domain.Entities.CRM
         /// Gets or sets the UTC timestamp when the invoice was paid.
         /// </summary>
         public DateTime? PaidAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the UTC timestamp when the invoice was first issued.
+        /// </summary>
+        public DateTime? IssuedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the final operator reverse-charge decision for this invoice.
+        /// </summary>
+        public bool? ReverseChargeApplied { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the reverse-charge decision was reviewed.
+        /// </summary>
+        public DateTime? ReverseChargeReviewedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets an optional operator note for the reverse-charge decision.
+        /// </summary>
+        public string? ReverseChargeReviewNote { get; set; }
+
+        /// <summary>
+        /// Gets or sets the immutable JSON invoice snapshot captured when the invoice is issued.
+        /// </summary>
+        public string? IssuedSnapshotJson { get; set; }
+
+        /// <summary>
+        /// Gets or sets the SHA-256 hash of the immutable issued invoice snapshot.
+        /// </summary>
+        public string? IssuedSnapshotHashSha256 { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the archive metadata was generated from the issued snapshot.
+        /// </summary>
+        public DateTime? ArchiveGeneratedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the issued invoice archive may be eligible for retention cleanup.
+        /// </summary>
+        public DateTime? ArchiveRetainUntilUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the retention policy version used when archive metadata was generated.
+        /// </summary>
+        public string? ArchiveRetentionPolicyVersion { get; set; }
+
+        /// <summary>
+        /// Gets or sets when the issued invoice archive payload was purged after the retention period.
+        /// </summary>
+        public DateTime? ArchivePurgedAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the reason recorded for archive payload purge.
+        /// </summary>
+        public string? ArchivePurgeReason { get; set; }
 
         /// <summary>
         /// Gets or sets invoice lines.

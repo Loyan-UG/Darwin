@@ -1830,6 +1830,20 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<DateTime?>("VatValidationCheckedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VatValidationMessage")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("VatValidationSource")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<int>("VatValidationStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email");
@@ -1837,6 +1851,8 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasFilter("\"UserId\" IS NOT NULL AND \"IsDeleted\" = FALSE");
+
+                    b.HasIndex("VatValidationStatus");
 
                     b.ToTable("Customers", "CRM");
                 });
@@ -2074,6 +2090,23 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("ArchiveGeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ArchivePurgeReason")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTime?>("ArchivePurgedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ArchiveRetainUntilUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ArchiveRetentionPolicyVersion")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
                     b.Property<Guid?>("BusinessId")
                         .HasColumnType("uuid");
 
@@ -2097,6 +2130,17 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("IssuedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IssuedSnapshotHashSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("IssuedSnapshotJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("character varying(16000)");
+
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -2111,6 +2155,16 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.Property<Guid?>("PaymentId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool?>("ReverseChargeApplied")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ReverseChargeReviewNote")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("ReverseChargeReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -2131,13 +2185,21 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ArchivePurgedAtUtc");
+
+                    b.HasIndex("ArchiveRetainUntilUtc");
+
                     b.HasIndex("BusinessId");
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("IssuedAtUtc");
+
                     b.HasIndex("OrderId");
 
                     b.HasIndex("PaymentId");
+
+                    b.HasIndex("ReverseChargeApplied");
 
                     b.ToTable("Invoices", "CRM");
                 });
@@ -7324,6 +7386,9 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<string>("ImpressumUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<int>("InvoiceArchiveRetentionYears")
+                        .HasColumnType("integer");
 
                     b.Property<string>("InvoiceIssuerAddressLine1")
                         .HasMaxLength(300)

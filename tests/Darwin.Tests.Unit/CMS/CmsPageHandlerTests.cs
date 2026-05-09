@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,7 +25,7 @@ namespace Darwin.Tests.Unit.CMS;
 /// </summary>
 public sealed class CmsPageHandlerTests
 {
-    // â”€â”€â”€ Shared helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── Shared helpers ──────────────────────────────────────────────────────
 
     private static IStringLocalizer<ValidationResource> CreateLocalizer()
     {
@@ -46,13 +46,13 @@ public sealed class CmsPageHandlerTests
             {
                 Culture = culture,
                 Title = "Test Page",
-                Slug = "/test-page",
+                Slug = "test-page",
                 ContentHtml = "<p>Hello</p>"
             }
         }
     };
 
-    // â”€â”€â”€ CreatePageHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── CreatePageHandler ────────────────────────────────────────────────────
 
     [Fact]
     public async Task CreatePage_Should_Persist_Page_With_Translations()
@@ -67,7 +67,7 @@ public sealed class CmsPageHandlerTests
         var saved = await db.Set<Page>().Include(p => p.Translations).SingleAsync(TestContext.Current.CancellationToken);
         saved.Status.Should().Be(PageStatus.Draft);
         saved.Translations.Should().HaveCount(1);
-        saved.Translations[0].Slug.Should().Be("/test-page");
+        saved.Translations[0].Slug.Should().Be("test-page");
     }
 
     [Fact]
@@ -99,8 +99,8 @@ public sealed class CmsPageHandlerTests
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "Seite", Slug = "/seite", ContentHtml = "<p>DE</p>" },
-                new() { Culture = "en-US", Title = "Page", Slug = "/page", ContentHtml = "<p>EN</p>" }
+                new() { Culture = "de-DE", Title = "Seite", Slug = "seite", ContentHtml = "<p>DE</p>" },
+                new() { Culture = "en-US", Title = "Page", Slug = "page", ContentHtml = "<p>EN</p>" }
             }
         };
 
@@ -176,7 +176,7 @@ public sealed class CmsPageHandlerTests
         await act.Should().ThrowAsync<ValidationException>("end before start should be invalid");
     }
 
-    // â”€â”€â”€ UpdatePageHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── UpdatePageHandler ────────────────────────────────────────────────────
 
     [Fact]
     public async Task UpdatePage_Should_Persist_Changed_Status_And_Translations()
@@ -201,7 +201,7 @@ public sealed class CmsPageHandlerTests
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "Updated", Slug = "/updated", ContentHtml = "<p>Updated</p>" }
+                new() { Culture = "de-DE", Title = "Updated", Slug = "updated", ContentHtml = "<p>Updated</p>" }
             }
         }, TestContext.Current.CancellationToken);
 
@@ -224,7 +224,7 @@ public sealed class CmsPageHandlerTests
             RowVersion = new byte[] { 1 },
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "X", Slug = "/x", ContentHtml = "" }
+                new() { Culture = "de-DE", Title = "X", Slug = "x", ContentHtml = "" }
             }
         }, TestContext.Current.CancellationToken);
 
@@ -249,7 +249,7 @@ public sealed class CmsPageHandlerTests
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "X", Slug = "/x", ContentHtml = "" }
+                new() { Culture = "de-DE", Title = "X", Slug = "x", ContentHtml = "" }
             }
         }, TestContext.Current.CancellationToken);
 
@@ -279,7 +279,7 @@ public sealed class CmsPageHandlerTests
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "Updated", Slug = "/updated", ContentHtml = "<script>bad()</script><p>ok</p>" }
+                new() { Culture = "de-DE", Title = "Updated", Slug = "updated", ContentHtml = "<script>bad()</script><p>ok</p>" }
             }
         }, TestContext.Current.CancellationToken);
 
@@ -288,7 +288,7 @@ public sealed class CmsPageHandlerTests
         updated.Translations[0].ContentHtml.Should().Contain("<p>");
     }
 
-    // â”€â”€â”€ SoftDeletePageHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── SoftDeletePageHandler ────────────────────────────────────────────────
 
     [Fact]
     public async Task SoftDeletePage_Should_Set_IsDeleted_Flag()
@@ -357,7 +357,7 @@ public sealed class CmsPageHandlerTests
         page!.IsDeleted.Should().BeTrue();
     }
 
-    // â”€â”€â”€ GetPageForEditHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── GetPageForEditHandler ────────────────────────────────────────────────
 
     [Fact]
     public async Task GetPageForEdit_Should_Return_Dto_With_Translations()
@@ -374,7 +374,7 @@ public sealed class CmsPageHandlerTests
         dto!.Id.Should().Be(id);
         dto.Translations.Should().HaveCount(1);
         dto.Translations[0].Culture.Should().Be("de-DE");
-        dto.Translations[0].Slug.Should().Be("/test-page");
+        dto.Translations[0].Slug.Should().Be("test-page");
     }
 
     [Fact]
@@ -402,7 +402,7 @@ public sealed class CmsPageHandlerTests
         dto!.RowVersion.Should().NotBeNull("RowVersion is needed for optimistic concurrency");
     }
 
-    // â”€â”€â”€ GetPagesPageHandler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── GetPagesPageHandler ──────────────────────────────────────────────────
 
     [Fact]
     public async Task GetPagesPage_Should_Return_Empty_When_No_Pages()
@@ -429,7 +429,7 @@ public sealed class CmsPageHandlerTests
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "Published Page", Slug = "/published", ContentHtml = "" }
+                new() { Culture = "de-DE", Title = "Published Page", Slug = "published", ContentHtml = "" }
             }
         }, TestContext.Current.CancellationToken);
 
@@ -453,7 +453,7 @@ public sealed class CmsPageHandlerTests
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "Published", Slug = "/pub", ContentHtml = "" }
+                new() { Culture = "de-DE", Title = "Published", Slug = "pub", ContentHtml = "" }
             }
         }, TestContext.Current.CancellationToken);
 
@@ -476,7 +476,7 @@ public sealed class CmsPageHandlerTests
         {
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "Datenschutz", Slug = "/datenschutz", ContentHtml = "" }
+                new() { Culture = "de-DE", Title = "Datenschutz", Slug = "datenschutz", ContentHtml = "" }
             }
         }, TestContext.Current.CancellationToken);
 
@@ -500,7 +500,7 @@ public sealed class CmsPageHandlerTests
             {
                 Translations = new List<PageTranslationDto>
                 {
-                    new() { Culture = "de-DE", Title = $"Page {i}", Slug = $"/page-{i}", ContentHtml = "" }
+                    new() { Culture = "de-DE", Title = $"Page {i}", Slug = $"page-{i}", ContentHtml = "" }
                 }
             }, TestContext.Current.CancellationToken);
         }
@@ -540,7 +540,7 @@ public sealed class CmsPageHandlerTests
             Status = PageStatus.Published,
             Translations = new List<PageTranslationDto>
             {
-                new() { Culture = "de-DE", Title = "Published", Slug = "/pub", ContentHtml = "" }
+                new() { Culture = "de-DE", Title = "Published", Slug = "pub", ContentHtml = "" }
             }
         }, TestContext.Current.CancellationToken);
 

@@ -24,6 +24,14 @@ namespace Darwin.Application.CRM.DTOs
         public long BalanceMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+        public DateTime? IssuedAtUtc { get; set; }
+        public bool HasIssuedSnapshot { get; set; }
+        public string? IssuedSnapshotHashSha256 { get; set; }
+        public DateTime? ArchiveGeneratedAtUtc { get; set; }
+        public DateTime? ArchiveRetainUntilUtc { get; set; }
+        public string? ArchiveRetentionPolicyVersion { get; set; }
+        public DateTime? ArchivePurgedAtUtc { get; set; }
+        public string? ArchivePurgeReason { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -50,6 +58,37 @@ namespace Darwin.Application.CRM.DTOs
         public long BalanceMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+        public DateTime? IssuedAtUtc { get; set; }
+        public bool HasIssuedSnapshot { get; set; }
+        public string? IssuedSnapshotHashSha256 { get; set; }
+        public DateTime? ArchiveGeneratedAtUtc { get; set; }
+        public DateTime? ArchiveRetainUntilUtc { get; set; }
+        public string? ArchiveRetentionPolicyVersion { get; set; }
+        public DateTime? ArchivePurgedAtUtc { get; set; }
+        public string? ArchivePurgeReason { get; set; }
+    }
+
+    public sealed class PurgeExpiredInvoiceArchivesResultDto
+    {
+        public int EvaluatedCount { get; init; }
+        public int PurgedCount { get; init; }
+        public IReadOnlyList<Guid> PurgedInvoiceIds { get; init; } = Array.Empty<Guid>();
+    }
+
+    public sealed class InvoiceArchiveSnapshotDto
+    {
+        public Guid InvoiceId { get; set; }
+        public DateTime IssuedAtUtc { get; set; }
+        public string FileName { get; set; } = string.Empty;
+        public string SnapshotJson { get; set; } = string.Empty;
+    }
+
+    public sealed class InvoiceArchiveDocumentDto
+    {
+        public Guid InvoiceId { get; set; }
+        public DateTime IssuedAtUtc { get; set; }
+        public string FileName { get; set; } = string.Empty;
+        public string Html { get; set; } = string.Empty;
     }
 
     public sealed class InvoiceStatusTransitionDto
@@ -58,6 +97,14 @@ namespace Darwin.Application.CRM.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public InvoiceStatus TargetStatus { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+    }
+
+    public sealed class InvoiceReverseChargeDecisionDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public bool Applies { get; set; }
+        public string? Note { get; set; }
     }
 
     public sealed class InvoiceRefundCreateDto

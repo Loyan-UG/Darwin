@@ -146,8 +146,8 @@ jobs:
           name: webapi-test-results
           path: TestResults/webapi
 
-  webadmin-tests:
-    name: WebAdmin tests + coverage
+  webadmin-security-tests:
+    name: WebAdmin security unit tests + coverage
     runs-on: ubuntu-latest
     continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     steps:
@@ -159,17 +159,148 @@ jobs:
           dotnet-version: 10.0.x
       - name: Restore WebAdmin test project
         run: dotnet restore tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
-      - name: Execute WebAdmin tests with coverage
+      - name: Execute WebAdmin security unit tests with coverage
         run: >
           dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
           --configuration Release
+          --filter "FullyQualifiedName~ProtectedAuthAntiBotChallengeServiceTests|FullyQualifiedName~PermissionAuthorizeAttributeTests|FullyQualifiedName~PermissionAuthorizationTests"
           --collect:"XPlat Code Coverage"
-          --results-directory TestResults/webadmin
-      - name: Upload WebAdmin test artifacts
+          --results-directory TestResults/webadmin/security
+      - name: Upload WebAdmin security test artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: webadmin-test-results
-          path: TestResults/webadmin
+          name: webadmin-security-test-results
+          path: TestResults/webadmin/security
+
+  webadmin-smoke-public-tests:
+    name: WebAdmin public/auth smoke tests + coverage
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore WebAdmin test project
+        run: dotnet restore tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+      - name: Execute WebAdmin public/auth smoke tests with coverage
+        run: >
+          dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+          --configuration Release
+          --filter "FullyQualifiedName~UnauthenticatedAdminRoot|FullyQualifiedName~ForwardedHttpsRequest|FullyQualifiedName~LoginPage|FullyQualifiedName~RegisterPage|FullyQualifiedName~AuthPage|FullyQualifiedName~Culture|FullyQualifiedName~LoginTwoFactor|FullyQualifiedName~AccountPostEndpointsWithoutAntiForgeryToken|FullyQualifiedName~AuthenticatedLogoutPost|FullyQualifiedName~UnauthenticatedAdminFragment|FullyQualifiedName~AuthenticatedAlertsFragment|FullyQualifiedName~StaticAdminAssets|FullyQualifiedName~NonLocalHttpsRequest|FullyQualifiedName~NotFoundResponses"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/webadmin/public-smoke
+      - name: Upload WebAdmin public/auth smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webadmin-public-smoke-test-results
+          path: TestResults/webadmin/public-smoke
+
+  webadmin-smoke-render-tests:
+    name: WebAdmin DB render smoke tests + coverage
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore WebAdmin test project
+        run: dotnet restore tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+      - name: Execute WebAdmin DB render smoke tests with coverage
+        run: >
+          dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+          --configuration Release
+          --filter "FullyQualifiedName~AuthenticatedDashboard|FullyQualifiedName~AuthenticatedAdminListPages|FullyQualifiedName~AuthenticatedAdminCreateEditors|FullyQualifiedName~AuthenticatedSeededEntityPages|FullyQualifiedName~AuthenticatedHtmxListAndDetailPartials|FullyQualifiedName~AuthenticatedHtmxEditorPartials|FullyQualifiedName~AuthenticatedAdminFragmentWithoutRequiredPermission"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/webadmin/render-smoke
+      - name: Upload WebAdmin DB render smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webadmin-render-smoke-test-results
+          path: TestResults/webadmin/render-smoke
+
+  webadmin-smoke-csrf-tokenless-tests:
+    name: WebAdmin tokenless CSRF smoke tests + coverage
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore WebAdmin test project
+        run: dotnet restore tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+      - name: Execute WebAdmin tokenless CSRF smoke tests with coverage
+        run: >
+          dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+          --configuration Release
+          --filter "FullyQualifiedName~AuthenticatedAdminPostEndpointsWithoutAntiForgeryToken"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/webadmin/csrf-tokenless
+      - name: Upload WebAdmin tokenless CSRF smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webadmin-csrf-tokenless-test-results
+          path: TestResults/webadmin/csrf-tokenless
+
+  webadmin-smoke-csrf-valid-tests:
+    name: WebAdmin valid-token CSRF smoke tests + coverage
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore WebAdmin test project
+        run: dotnet restore tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+      - name: Execute WebAdmin valid-token CSRF smoke tests with coverage
+        run: >
+          dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+          --configuration Release
+          --filter "FullyQualifiedName~AuthenticatedAdminPostEndpointsWithValidAntiForgeryToken"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/webadmin/csrf-valid
+      - name: Upload WebAdmin valid-token CSRF smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webadmin-csrf-valid-test-results
+          path: TestResults/webadmin/csrf-valid
+
+  webadmin-smoke-mutation-positive-tests:
+    name: WebAdmin positive mutation smoke tests + coverage
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore WebAdmin test project
+        run: dotnet restore tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+      - name: Execute WebAdmin positive mutation smoke tests with coverage
+        run: >
+          dotnet test tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj
+          --configuration Release
+          --filter "FullyQualifiedName~AuthenticatedAdminCreatesWithValidAntiForgeryToken"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/webadmin/mutation-positive
+      - name: Upload WebAdmin positive mutation smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webadmin-mutation-positive-test-results
+          path: TestResults/webadmin/mutation-positive
 
   integration-tests:
     name: Integration tests + coverage
@@ -248,7 +379,12 @@ jobs:
       - contracts-tests
       - infrastructure-tests
       - webapi-tests
-      - webadmin-tests
+      - webadmin-security-tests
+      - webadmin-smoke-public-tests
+      - webadmin-smoke-render-tests
+      - webadmin-smoke-csrf-tokenless-tests
+      - webadmin-smoke-csrf-valid-tests
+      - webadmin-smoke-mutation-positive-tests
       - integration-tests
       - mobile-shared-tests
     runs-on: ubuntu-latest
@@ -276,11 +412,36 @@ jobs:
         with:
           name: webapi-test-results
           path: TestResults/webapi
-      - name: Download WebAdmin artifacts
+      - name: Download WebAdmin security artifacts
         uses: actions/download-artifact@v4
         with:
-          name: webadmin-test-results
-          path: TestResults/webadmin
+          name: webadmin-security-test-results
+          path: TestResults/webadmin/security
+      - name: Download WebAdmin public/auth smoke artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webadmin-public-smoke-test-results
+          path: TestResults/webadmin/public-smoke
+      - name: Download WebAdmin DB render smoke artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webadmin-render-smoke-test-results
+          path: TestResults/webadmin/render-smoke
+      - name: Download WebAdmin tokenless CSRF smoke artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webadmin-csrf-tokenless-test-results
+          path: TestResults/webadmin/csrf-tokenless
+      - name: Download WebAdmin valid-token CSRF smoke artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webadmin-csrf-valid-test-results
+          path: TestResults/webadmin/csrf-valid
+      - name: Download WebAdmin positive mutation smoke artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webadmin-mutation-positive-test-results
+          path: TestResults/webadmin/mutation-positive
       - name: Download integration artifacts
         uses: actions/download-artifact@v4
         with:

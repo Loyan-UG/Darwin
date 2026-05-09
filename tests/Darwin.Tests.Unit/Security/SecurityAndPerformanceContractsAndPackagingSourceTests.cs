@@ -3963,7 +3963,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionSupportQueueActionText()")
         memberShellSource.Should().Contain("@Html.AntiForgeryToken()");
         memberShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"BusinessId\" />");
         memberShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"UserId\" />");
-        memberShellSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        memberShellSource.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         memberShellSource.Should().Contain("<partial name=\"_BusinessMemberForm\" model=\"Model\" />");
     }
 
@@ -5433,7 +5433,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         var source = ReadApplicationFile(Path.Combine("Shipping", "Queries", "RateShipmentHandler.cs"));
 
         source.Should().Contain("public sealed class RateShipmentHandler");
-        source.Should().Contain("var q = _db.Set<ShippingMethod>().AsNoTracking()");
+        source.Should().Contain("var methods = await _db.Set<ShippingMethod>().AsNoTracking()");
         source.Should().Contain(".Include(m => m.Rates)");
         source.Should().Contain(".Where(m => m.IsActive)");
         source.Should().Contain(".Where(m => m.Carrier == \"DHL\")");
@@ -5509,7 +5509,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         serviceSource.Should().Contain("_optionsMonitor = optionsMonitor ?? throw new ArgumentNullException(nameof(optionsMonitor));");
         serviceSource.Should().Contain("_logger = logger ?? throw new ArgumentNullException(nameof(logger));");
         serviceSource.Should().Contain("protected override async Task ExecuteAsync(CancellationToken stoppingToken)");
-        serviceSource.Should().Contain("_logger.LogInformation(\"Inactive reminder worker started.\");");
+        serviceSource.Should().Contain("_logger.LogInformation(\"Inactive reminder worker is disabled.\");");
+        serviceSource.Should().Contain("_logger.LogInformation(\"Inactive reminder worker enabled.\");");
         serviceSource.Should().Contain("while (!stoppingToken.IsCancellationRequested)");
         serviceSource.Should().Contain("var options = _optionsMonitor.CurrentValue;");
         serviceSource.Should().Contain("if (!options.Enabled)");
@@ -5802,6 +5803,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         signingProviderSource.Should().Contain("public sealed class JwtSigningParametersProvider");
         signingProviderSource.Should().Contain("private static readonly TimeSpan DefaultCacheDuration = TimeSpan.FromMinutes(1);");
         signingProviderSource.Should().Contain("private readonly IServiceScopeFactory _scopeFactory;");
+        signingProviderSource.Should().Contain("private readonly IClock _clock;");
         signingProviderSource.Should().Contain("private readonly ILogger<JwtSigningParametersProvider> _logger;");
         signingProviderSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
         signingProviderSource.Should().Contain("private readonly object _sync = new();");
@@ -5809,18 +5811,21 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         signingProviderSource.Should().Contain("private CachedSigningParameters? _cache;");
         signingProviderSource.Should().Contain("public JwtSigningParametersProvider(");
         signingProviderSource.Should().Contain("IServiceScopeFactory scopeFactory,");
+        signingProviderSource.Should().Contain("IClock clock,");
         signingProviderSource.Should().Contain("ILogger<JwtSigningParametersProvider> logger,");
         signingProviderSource.Should().Contain("IStringLocalizer<ValidationResource> validationLocalizer)");
         signingProviderSource.Should().Contain("_scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));");
+        signingProviderSource.Should().Contain("_clock = clock ?? throw new ArgumentNullException(nameof(clock));");
         signingProviderSource.Should().Contain("_logger = logger ?? throw new ArgumentNullException(nameof(logger));");
         signingProviderSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
         signingProviderSource.Should().Contain("public CachedSigningParameters GetParameters()");
         signingProviderSource.Should().Contain("lock (_sync)");
-        signingProviderSource.Should().Contain("var nowUtc = DateTime.UtcNow;");
+        signingProviderSource.Should().Contain("var nowUtc = _clock.UtcNow;");
         signingProviderSource.Should().Contain("if (_cache is not null && (nowUtc - _lastReadUtc) <= DefaultCacheDuration)");
         signingProviderSource.Should().Contain("using var scope = _scopeFactory.CreateScope();");
         signingProviderSource.Should().Contain("var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();");
-        signingProviderSource.Should().Contain("var s = db.Set<SiteSetting>().AsNoTracking().FirstOrDefault();");
+        signingProviderSource.Should().Contain("var s = db.Set<SiteSetting>()");
+        signingProviderSource.Should().Contain(".FirstOrDefault(x => !x.IsDeleted);");
         signingProviderSource.Should().Contain("if (s is null)");
         signingProviderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"JwtValidationSiteSettingsMissing\"]);");
         signingProviderSource.Should().Contain("if (s.JwtEnabled == false)");
@@ -7516,19 +7521,22 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         var applyDhlShipmentCreateOperationSource = ReadApplicationFile(Path.Combine("Orders", "Commands", "ApplyDhlShipmentCreateOperationHandler.cs"));
 
         programSource.Should().Contain("builder.Services.AddApplication();");
-        programSource.Should().Contain("builder.Services.AddPersistence(builder.Configuration);");
+        programSource.Should().Contain("builder.Services.AddConfiguredPersistence(builder.Configuration);");
         programSource.Should().Contain("builder.Services.AddNotificationsInfrastructure(builder.Configuration);");
         programSource.Should().Contain("builder.Services.AddHttpClient();");
         programSource.Should().Contain("builder.Services.Configure<InactiveReminderWorkerOptions>(builder.Configuration.GetSection(\"InactiveReminderWorker\"));");
         programSource.Should().Contain("builder.Services.Configure<ProviderCallbackWorkerOptions>(builder.Configuration.GetSection(\"ProviderCallbackWorker\"));");
         programSource.Should().Contain("builder.Services.Configure<ShipmentProviderOperationWorkerOptions>(builder.Configuration.GetSection(\"ShipmentProviderOperationWorker\"));");
         programSource.Should().Contain("builder.Services.Configure<WebhookDeliveryWorkerOptions>(builder.Configuration.GetSection(\"WebhookDeliveryWorker\"));");
+        programSource.Should().Contain("builder.Services.Configure<InvoiceArchiveMaintenanceWorkerOptions>(builder.Configuration.GetSection(\"InvoiceArchiveMaintenanceWorker\"));");
         programSource.Should().Contain("builder.Services.AddScoped<ApplyDhlShipmentCreateOperationHandler>();");
         programSource.Should().Contain("builder.Services.AddScoped<ApplyDhlShipmentLabelOperationHandler>();");
+        programSource.Should().Contain("builder.Services.AddScoped<PurgeExpiredInvoiceArchivesHandler>();");
         programSource.Should().Contain("builder.Services.AddHostedService<InactiveReminderBackgroundService>();");
         programSource.Should().Contain("builder.Services.AddHostedService<ProviderCallbackBackgroundService>();");
         programSource.Should().Contain("builder.Services.AddHostedService<ShipmentProviderOperationBackgroundService>();");
         programSource.Should().Contain("builder.Services.AddHostedService<WebhookDeliveryBackgroundService>();");
+        programSource.Should().Contain("builder.Services.AddHostedService<InvoiceArchiveMaintenanceBackgroundService>();");
 
         optionsSource.Should().Contain("public sealed class WebhookDeliveryWorkerOptions");
         optionsSource.Should().Contain("public bool Enabled { get; set; } = true;");
@@ -7584,7 +7592,8 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         providerCallbackConfigSource.Should().Contain("builder.ToTable(\"ProviderCallbackInboxMessages\", schema: \"Integration\");");
         providerCallbackConfigSource.Should().Contain("builder.Property(x => x.IdempotencyKey).HasMaxLength(256);");
         providerCallbackConfigSource.Should().Contain("builder.HasIndex(x => new { x.Provider, x.Status, x.CreatedAtUtc });");
-        providerCallbackConfigSource.Should().Contain("builder.HasIndex(x => x.IdempotencyKey);");
+        providerCallbackConfigSource.Should().Contain("builder.HasIndex(x => new { x.Provider, x.IdempotencyKey })");
+        providerCallbackConfigSource.Should().Contain("UX_ProviderCallbackInboxMessages_Provider_IdempotencyKey");
         shipmentProviderOperationConfigSource.Should().Contain("public sealed class ShipmentProviderOperationConfiguration : IEntityTypeConfiguration<ShipmentProviderOperation>");
         shipmentProviderOperationConfigSource.Should().Contain("builder.ToTable(\"ShipmentProviderOperations\", schema: \"Integration\");");
         shipmentProviderOperationConfigSource.Should().Contain("builder.HasIndex(x => new { x.ShipmentId, x.Provider, x.OperationType, x.Status, x.CreatedAtUtc });");
@@ -7598,7 +7607,7 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         providerCallbackWorkerSource.Should().Contain("GetRequiredService<ProcessStripeWebhookHandler>()");
         providerCallbackWorkerSource.Should().Contain("if (string.Equals(item.Provider, \"DHL\", StringComparison.OrdinalIgnoreCase))");
         providerCallbackWorkerSource.Should().Contain("GetRequiredService<ApplyShipmentCarrierEventHandler>()");
-        providerCallbackWorkerSource.Should().Contain("item.Status = \"Succeeded\";");
+        providerCallbackWorkerSource.Should().Contain("item.Status = \"Processed\";");
         providerCallbackWorkerSource.Should().Contain("item.Status = \"Failed\";");
         shipmentProviderOperationWorkerSource.Should().Contain("public sealed class ShipmentProviderOperationBackgroundService : BackgroundService");
         shipmentProviderOperationWorkerSource.Should().Contain("db.Set<ShipmentProviderOperation>()");
@@ -7606,12 +7615,13 @@ subscriptionViewSource.Should().Contain("@SubscriptionConfigureWebsiteActionText
         shipmentProviderOperationWorkerSource.Should().Contain("x.AttemptCount < options.MaxAttempts");
         shipmentProviderOperationWorkerSource.Should().Contain("GetRequiredService<ApplyDhlShipmentCreateOperationHandler>()");
         shipmentProviderOperationWorkerSource.Should().Contain("GetRequiredService<ApplyDhlShipmentLabelOperationHandler>()");
-        shipmentProviderOperationWorkerSource.Should().Contain("item.Status = \"Succeeded\";");
+        shipmentProviderOperationWorkerSource.Should().Contain("item.Status = \"Processed\";");
         shipmentProviderOperationWorkerSource.Should().Contain("item.Status = \"Failed\";");
         applyDhlShipmentCreateOperationSource.Should().Contain("public sealed class ApplyDhlShipmentCreateOperationHandler");
         applyDhlShipmentCreateOperationSource.Should().Contain("shipment.LastCarrierEventKey = \"shipment.provider_created\";");
         applyDhlShipmentCreateOperationSource.Should().Contain("OperationType == \"GenerateLabel\"");
-        applyDhlShipmentCreateOperationSource.Should().Contain("_db.Set<ShipmentProviderOperation>().Add(new ShipmentProviderOperation");
+        applyDhlShipmentCreateOperationSource.Should().Contain("queuedLabelOperationEntry = new ShipmentProviderOperation");
+        applyDhlShipmentCreateOperationSource.Should().Contain("_db.Set<ShipmentProviderOperation>().Add(queuedLabelOperationEntry);");
     }
 
 

@@ -27,7 +27,7 @@ Provider callbacks:
 Current production gaps:
 
 - Stripe webhooks, reconciliation, and storefront Checkout Session creation are implemented; live-provider smoke and subscription/refund/dispute verification remain go-live tasks.
-- DHL callbacks and provider-operation queueing are implemented, but live DHL shipment/label API calls are still a go-live blocker.
+- DHL callbacks, provider-operation queueing, and Worker-side shipment/label client plumbing are implemented; live DHL account smoke and returns/RMA automation remain go-live blockers.
 - Brevo callback and delivery plumbing are implemented; production readiness depends on provider account/domain/webhook setup and Worker deployment.
 
 ## Purpose

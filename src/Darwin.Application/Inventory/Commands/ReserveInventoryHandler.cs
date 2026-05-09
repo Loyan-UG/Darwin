@@ -28,6 +28,18 @@ namespace Darwin.Application.Inventory.Commands
             if (!v.IsValid) throw new FluentValidation.ValidationException(v.Errors);
 
             var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, _localizer, ct);
+
+            if (dto.ReferenceId.HasValue)
+            {
+                var exists = await _db.Set<InventoryTransaction>()
+                    .AsNoTracking()
+                    .AnyAsync(t => t.ReferenceId == dto.ReferenceId
+                                   && t.Reason == dto.Reason
+                                   && t.ProductVariantId == dto.VariantId
+                                   && t.WarehouseId == warehouseId, ct);
+                if (exists) return;
+            }
+
             var stockLevel = await _db.Set<StockLevel>()
                 .FirstOrDefaultAsync(
                     x => x.WarehouseId == warehouseId && x.ProductVariantId == dto.VariantId,

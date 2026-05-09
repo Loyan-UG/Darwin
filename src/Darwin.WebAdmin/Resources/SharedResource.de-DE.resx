@@ -2454,6 +2454,9 @@
   <data name="FixVatId" xml:space="preserve">
     <value>USt-ID korrigieren</value>
   </data>
+  <data name="SaveVatId" xml:space="preserve">
+    <value>USt-ID speichern</value>
+  </data>
   <data name="Post" xml:space="preserve">
     <value>Buchen</value>
   </data>
@@ -9022,6 +9025,9 @@
   <data name="TaxComplianceOpenOrderAction" xml:space="preserve">
     <value>Bestellung öffnen</value>
   </data>
+  <data name="ExportTaxComplianceCsv" xml:space="preserve">
+    <value>CSV exportieren</value>
+  </data>
   <data name="TaxCompliancePlaybookVatCleanupTitle" xml:space="preserve">
     <value>B2B-USt-Bereinigung</value>
   </data>
@@ -13254,5 +13260,98 @@
   </data>
   <data name="SiteSettingsJwtRequireDeviceBindingHelp" xml:space="preserve">
     <value>Erfordert, dass Refresh Tokens an eine bekannte Gerätekennung gebunden sind. Für Mobile-Sicherheit aktiviert lassen.</value>
+  </data>
+  <data name="ArchiveSnapshotAvailable" xml:space="preserve">
+    <value>Archiv-Snapshot verfügbar</value>
+  </data>
+  <data name="DownloadArchiveSnapshot" xml:space="preserve">
+    <value>Archiv-Snapshot herunterladen</value>
+  </data>
+  <data name="DownloadArchiveDocument" xml:space="preserve">
+    <value>Archivdokument herunterladen</value>
+  </data>
+  <data name="InvoiceArchiveUnavailableMessage" xml:space="preserve">
+    <value>Der Archiv-Snapshot der Rechnung ist noch nicht verfügbar. Stellen Sie die Rechnung aus, bevor ein Archivartefakt heruntergeladen wird.</value>
+  </data>
+  <data name="ReverseChargeReview" xml:space="preserve">
+    <value>Reverse-Charge-Prüfung</value>
+  </data>
+  <data name="ReverseChargeApplies" xml:space="preserve">
+    <value>Reverse Charge anwenden</value>
+  </data>
+  <data name="ReverseChargeNotApplicable" xml:space="preserve">
+    <value>Nicht anwendbar</value>
+  </data>
+  <data name="ReverseChargeAppliedStatus" xml:space="preserve">
+    <value>Reverse Charge angewendet</value>
+  </data>
+  <data name="ReverseChargeNotApplicableStatus" xml:space="preserve">
+    <value>Reverse Charge nicht anwendbar</value>
+  </data>
+  <data name="InvoiceReverseChargeDecisionUpdatedMessage" xml:space="preserve">
+    <value>Reverse-Charge-Entscheidung aktualisiert.</value>
+  </data>
+  <data name="InvoiceReverseChargeDecisionUpdateFailedMessage" xml:space="preserve">
+    <value>Reverse-Charge-Entscheidung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="BusinessVatValidationReview" xml:space="preserve">
+    <value>USt-IdNr.-Prüfung</value>
+  </data>
+  <data name="VatValidationValid" xml:space="preserve">
+    <value>USt-IdNr. gültig markieren</value>
+  </data>
+  <data name="VatValidationInvalid" xml:space="preserve">
+    <value>USt-IdNr. ungültig markieren</value>
+  </data>
+  <data name="VatValidationNotApplicable" xml:space="preserve">
+    <value>Nicht anwendbar</value>
+  </data>
+  <data name="CustomerVatValidationStatusUnknown" xml:space="preserve">
+    <value>USt-IdNr. noch nicht geprüft</value>
+  </data>
+  <data name="CustomerVatValidationStatusValid" xml:space="preserve">
+    <value>USt-IdNr. gültig</value>
+  </data>
+  <data name="CustomerVatValidationStatusInvalid" xml:space="preserve">
+    <value>USt-IdNr. ungültig</value>
+  </data>
+  <data name="CustomerVatValidationStatusNotApplicable" xml:space="preserve">
+    <value>USt-IdNr.-Prüfung nicht anwendbar</value>
+  </data>
+  <data name="CustomerVatValidationUpdatedMessage" xml:space="preserve">
+    <value>USt-IdNr.-Prüfentscheidung aktualisiert.</value>
+  </data>
+  <data name="CustomerVatValidationUpdateFailedMessage" xml:space="preserve">
+    <value>USt-IdNr.-Prüfentscheidung konnte nicht aktualisiert werden.</value>
+  </data>
+  <data name="SiteSettingInvoiceArchiveRetentionYears" xml:space="preserve">
+    <value>Aufbewahrungsjahre für Rechnungsarchive</value>
+  </data>
+  <data name="SiteSettingsInvoiceArchiveRetentionYearsHelp" xml:space="preserve">
+    <value>Steuert, wie lange Archivmetadaten ausgestellter Rechnungen nach Ausstellung aufbewahrt werden. Der Wert wird beim erstmaligen Ausstellen in den Rechnungsarchivsatz geschrieben.</value>
+  </data>
+  <data name="ArchiveRetainUntil" xml:space="preserve">
+    <value>Aufbewahren bis</value>
+  </data>
+  <data name="ArchiveGeneratedAt" xml:space="preserve">
+    <value>Archiv erzeugt</value>
+  </data>
+  <data name="ArchiveSnapshotHash" xml:space="preserve">
+    <value>Snapshot-Hash</value>
+  </data>
+  <data name="ArchivePurgedAt" xml:space="preserve">
+    <value>Archiv bereinigt</value>
+  </data>
+  <data name="VatValidationLookup" xml:space="preserve">
+    <value>USt-IdNr. prüfen</value>
+  </data>
+  <data name="CustomerVatValidationLookupUpdatedMessage" xml:space="preserve">
+    <value>USt-IdNr.-Prüfung hat den Steuerstatus des Kunden aktualisiert.</value>
+  </data>
+  <data name="CustomerVatValidationLookupCompletedWithReviewMessage" xml:space="preserve">
+    <value>USt-IdNr.-Prüfung abgeschlossen, das Ergebnis benötigt weiterhin eine Betreiberprüfung.</value>
+  </data>
+  <data name="CustomerVatValidationLookupFailedMessage" xml:space="preserve">
+    <value>USt-IdNr.-Prüfung konnte nicht abgeschlossen werden.</value>
   </data>
 </root>

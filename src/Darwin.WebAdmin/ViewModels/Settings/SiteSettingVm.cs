@@ -165,6 +165,9 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "SiteSettingInvoiceIssuerCountry")]
         public string? InvoiceIssuerCountry { get; set; }
 
+        [Display(Name = "SiteSettingInvoiceArchiveRetentionYears")]
+        public int InvoiceArchiveRetentionYears { get; set; } = 10;
+
         // ---------- Shipping (DHL-first) ----------
         [Display(Name = "SiteSettingDhlEnabled")]
         public bool DhlEnabled { get; set; }

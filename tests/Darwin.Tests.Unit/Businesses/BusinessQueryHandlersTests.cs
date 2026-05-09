@@ -191,6 +191,21 @@ public sealed class BusinessQueryHandlersTests
     }
 
     [Fact]
+    public async Task GetBusinessPublicDetail_Should_ReturnNull_WhenBusinessIsActiveButNotApproved()
+    {
+        await using var db = BusinessQueryTestDbContext.Create();
+        var business = CreateBusiness("Pending Active", BusinessOperationalStatus.PendingApproval);
+        business.IsActive = true;
+        db.Set<Business>().Add(business);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessPublicDetailHandler(db);
+        var result = await handler.HandleAsync(business.Id, TestContext.Current.CancellationToken);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetBusinessPublicDetail_Should_ReturnNull_ForEmptyGuid()
     {
         await using var db = BusinessQueryTestDbContext.Create();
@@ -217,6 +232,7 @@ public sealed class BusinessQueryHandlersTests
             DefaultTimeZoneId = "Europe/Berlin",
             RowVersion = [1, 2, 3]
         };
+        business.OperationalStatus = BusinessOperationalStatus.Approved;
         db.Set<Business>().Add(business);
         db.Set<BusinessLocation>().Add(new BusinessLocation
         {
@@ -273,6 +289,23 @@ public sealed class BusinessQueryHandlersTests
         var result = await handler.HandleAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetBusinessesForDiscovery_Should_FilterOutActiveButUnapprovedBusinesses()
+    {
+        await using var db = BusinessQueryTestDbContext.Create();
+        var approved = CreateBusiness("Approved Public", BusinessOperationalStatus.Approved);
+        var pending = CreateBusiness("Pending Public", BusinessOperationalStatus.PendingApproval);
+        pending.IsActive = true;
+        db.Set<Business>().AddRange(approved, pending);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessesForDiscoveryHandler(db);
+        var (items, total) = await handler.HandleAsync(new BusinessDiscoveryRequestDto(), TestContext.Current.CancellationToken);
+
+        total.Should().Be(1);
+        items.Single().Name.Should().Be("Approved Public");
     }
 
     // ─── GetBusinessMembersPageHandler ────────────────────────────────────────
@@ -447,6 +480,13 @@ public sealed class BusinessQueryHandlersTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.BusinessId).IsRequired();
                 builder.Property(x => x.Url).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<BusinessEngagementStats>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.BusinessId).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
 

@@ -137,13 +137,13 @@ Before live payments:
 
 DHL webhook ingress is implemented at `api/v1/public/shipping/dhl/webhooks` and validates API key plus HMAC signature before writing idempotent provider callback inbox messages.
 
-Production setup still needs real DHL shipment and label API calls. Current provider-operation handlers create phase-one provider shipment references, tracking numbers, and label operations without calling DHL.
+Shipment creation and label retrieval now run through the Worker `IDhlShipmentProviderClient` path. Labels returned as PDF bytes are stored in the configured shared media root and exposed through the configured public media URL base. Production setup still needs a live DHL smoke with the target account because DHL account contracts can differ in base URL, authentication, product codes, payload fields, and label response shape.
 
 Before live DHL shipping:
 
 1. Store DHL API key/secret and account settings in environment/platform secrets or secured site settings.
-2. Replace phase-one shipment/label generation with real DHL API calls.
-3. Persist carrier labels in the configured media/document store and expose durable download URLs.
+2. Configure `MediaStorage:RootPath` and `MediaStorage:PublicBaseUrl` so WebAdmin, Worker, WebApi, and Darwin.Web resolve the same label/media URLs.
+3. Confirm the live DHL create-shipment and label-retrieval request/response contract against the target account.
 4. Confirm `ShipmentProviderOperationBackgroundService` is enabled and failed/stuck operations are recoverable from WebAdmin.
 5. Smoke shipment creation, label generation, tracking update callback, exception callback, and return/RMA handling.
 - Brevo sends through `POST /v3/smtp/email`.
@@ -202,6 +202,26 @@ Use SMTP only for local development, emergency fallback, or customer environment
 
 ## Worker Processes
 
+## VAT Validation
+
+The TaxCompliance workspace can check B2B customer VAT IDs through the EU VIES provider when enabled:
+
+```json
+{
+  "Compliance": {
+    "VatValidation": {
+      "Vies": {
+        "Enabled": true,
+        "EndpointUrl": "https://ec.europa.eu/taxation_customs/vies/services/checkVatService",
+        "TimeoutSeconds": 15
+      }
+    }
+  }
+}
+```
+
+Keep the provider disabled until outbound connectivity and VIES availability handling have been smoke-tested in the target deployment. Disabled or unavailable checks are stored as `Unknown` with an operator-visible source/message; they do not mark a VAT ID valid.
+
 Production worker switches should be explicit:
 
 ```json
@@ -210,11 +230,12 @@ Production worker switches should be explicit:
   "ProviderCallbackWorker": { "Enabled": true },
   "ShipmentProviderOperationWorker": { "Enabled": true },
   "EmailDispatchOperationWorker": { "Enabled": true },
-  "ChannelDispatchOperationWorker": { "Enabled": true }
+  "ChannelDispatchOperationWorker": { "Enabled": true },
+  "InvoiceArchiveMaintenanceWorker": { "Enabled": true, "PollIntervalMinutes": 1440, "BatchSize": 100 }
 }
 ```
 
-For development machines, keep outbound/side-effecting workers disabled unless validating that specific integration.
+Enable `InvoiceArchiveMaintenanceWorker` only after legal retention settings are confirmed. It purges expired issued-invoice snapshot payloads after `ArchiveRetainUntilUtc` while retaining invoice purge metadata and an audit event. For development machines, keep outbound/side-effecting workers disabled unless validating that specific integration.
 
 ## Production Smoke Checks
 

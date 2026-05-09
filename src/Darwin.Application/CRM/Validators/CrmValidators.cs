@@ -58,6 +58,28 @@ namespace Darwin.Application.CRM.Validators
         }
     }
 
+    public sealed class CustomerTaxProfileUpdateValidator : AbstractValidator<CustomerTaxProfileUpdateDto>
+    {
+        public CustomerTaxProfileUpdateValidator(IStringLocalizer<ValidationResource> localizer)
+        {
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+            RuleFor(x => x.TaxProfileType).IsInEnum();
+            RuleFor(x => x.CompanyName).MaximumLength(200);
+            RuleFor(x => x.VatId).MaximumLength(64);
+
+            When(x => x.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business, () =>
+            {
+                RuleFor(x => x.CompanyName)
+                    .NotEmpty()
+                    .WithMessage(localizer["CustomerBusinessRequiresCompanyName"]);
+                RuleFor(x => x.VatId)
+                    .NotEmpty()
+                    .WithMessage(localizer["CustomerBusinessRequiresVatIdForTaxCompliance"]);
+            });
+        }
+    }
+
     public sealed class LeadCreateValidator : AbstractValidator<LeadCreateDto>
     {
         public LeadCreateValidator()

@@ -351,7 +351,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     [Theory]
     [InlineData("/Users")]
     [InlineData("/Roles")]
-    [InlineData("/Admin/Permissions/Index")]
+    [InlineData("/Permissions")]
     [InlineData("/Brands")]
     [InlineData("/Categories")]
     [InlineData("/Products")]
@@ -1323,9 +1323,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
 
         await PostValidEditorMutationAndAssertListedAsync(
             client,
-            "/Admin/Permissions/Create",
-            "/Admin/Permissions/Create",
-            $"/Admin/Permissions/Index?q={Uri.EscapeDataString(permissionKey)}",
+            "/Permissions/Create",
+            "/Permissions/Create",
+            $"/Permissions?q={Uri.EscapeDataString(permissionKey)}",
             permissionDisplayName,
             new Dictionary<string, string>
             {
@@ -1364,7 +1364,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
 
         await PostValidEditorMutationAndAssertListedAsync(
             client,
-            $"/Users/ChangeEmail?currentEmail={Uri.EscapeDataString(lifecycleCurrentEmail)}",
+            $"/Users/ChangeEmail/{WebAdminTestFactory.TestLifecycleUserId}?currentEmail={Uri.EscapeDataString(lifecycleCurrentEmail)}",
             "/Users/ChangeEmail",
             $"/Users?q={Uri.EscapeDataString(lifecycleNewEmail)}",
             lifecycleNewEmail,
@@ -1944,6 +1944,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
             ["shipmentId"] = WebAdminTestFactory.TestDhlLabelShipmentId.ToString(),
             ["orderId"] = WebAdminTestFactory.TestOrderId.ToString(),
+            ["rowVersion"] = ExtractHiddenInputValue(tokenHtml, "rowVersion"),
             ["returnToQueue"] = "true",
             ["filter"] = "Dhl",
             ["query"] = shipmentQuery,
@@ -2072,7 +2073,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         using var deleteResponse = await SendHtmxPostAsync(client, "/Media/Delete", new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
-            ["id"] = WebAdminTestFactory.TestMediaAssetId.ToString()
+            ["id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
+            ["rowVersion"] = ExtractHiddenInputValue(tokenHtml, "RowVersion")
         });
         var deleteHtml = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var deletePreview = deleteHtml.Length > 600 ? deleteHtml[..600] : deleteHtml;
@@ -2240,6 +2242,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
             ["id"] = WebAdminTestFactory.TestBusinessInvitationLifecycleId.ToString(),
             ["businessId"] = "44444444-4444-4444-4444-444444444444",
+            ["rowVersion"] = ExtractHiddenInputValue(tokenHtml, "rowVersion"),
             ["page"] = "1",
             ["pageSize"] = "20",
             ["query"] = invitationEmail,
@@ -2265,6 +2268,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             ["__RequestVerificationToken"] = ExtractAntiForgeryToken(resentListHtml),
             ["id"] = WebAdminTestFactory.TestBusinessInvitationLifecycleId.ToString(),
             ["businessId"] = "44444444-4444-4444-4444-444444444444",
+            ["rowVersion"] = ExtractHiddenInputValue(resentListHtml, "rowVersion"),
             ["page"] = "1",
             ["pageSize"] = "20",
             ["query"] = invitationEmail,

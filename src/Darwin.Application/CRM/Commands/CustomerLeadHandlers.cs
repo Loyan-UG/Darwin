@@ -1,4 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Abstractions.Compliance;
 using Darwin.Application;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
@@ -133,7 +135,16 @@ namespace Darwin.Application.CRM.Commands
             customer.Phone = dto.Phone?.Trim() ?? string.Empty;
             customer.CompanyName = NormalizeOptional(dto.CompanyName);
             customer.TaxProfileType = dto.TaxProfileType;
-            customer.VatId = NormalizeOptional(dto.VatId);
+            var normalizedVatId = NormalizeOptional(dto.VatId);
+            var vatChanged = !string.Equals(customer.VatId, normalizedVatId, StringComparison.OrdinalIgnoreCase);
+            customer.VatId = normalizedVatId;
+            if (vatChanged)
+            {
+                customer.VatValidationStatus = CustomerVatValidationStatus.Unknown;
+                customer.VatValidationCheckedAtUtc = null;
+                customer.VatValidationSource = null;
+                customer.VatValidationMessage = null;
+            }
             customer.Notes = NormalizeOptional(dto.Notes);
 
             var requestedAddressIds = dto.Addresses
@@ -201,6 +212,233 @@ namespace Darwin.Application.CRM.Commands
 
         private static string? NormalizeOptional(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    public sealed class UpdateCustomerTaxProfileHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IValidator<CustomerTaxProfileUpdateDto> _validator;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public UpdateCustomerTaxProfileHandler(
+            IAppDbContext db,
+            IValidator<CustomerTaxProfileUpdateDto> validator,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
+
+        public async Task HandleAsync(CustomerTaxProfileUpdateDto dto, CancellationToken ct = default)
+        {
+            await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
+
+            var customer = await _db.Set<Customer>()
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (customer is null)
+            {
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = customer.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            var normalizedVatId = NormalizeOptional(dto.VatId);
+            var vatChanged = !string.Equals(customer.VatId, normalizedVatId, StringComparison.OrdinalIgnoreCase);
+
+            customer.TaxProfileType = dto.TaxProfileType;
+            customer.CompanyName = NormalizeOptional(dto.CompanyName);
+            customer.VatId = normalizedVatId;
+            if (vatChanged)
+            {
+                ResetVatValidation(customer);
+            }
+
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+        }
+
+        private static string? NormalizeOptional(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        private static void ResetVatValidation(Customer customer)
+        {
+            customer.VatValidationStatus = CustomerVatValidationStatus.Unknown;
+            customer.VatValidationCheckedAtUtc = null;
+            customer.VatValidationSource = null;
+            customer.VatValidationMessage = null;
+        }
+    }
+
+    public sealed class UpdateCustomerVatValidationDecisionHandler
+    {
+        private const int MaxSourceLength = 80;
+        private const int MaxMessageLength = 512;
+
+        private readonly IAppDbContext _db;
+        private readonly IClock _clock;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public UpdateCustomerVatValidationDecisionHandler(
+            IAppDbContext db,
+            IClock clock,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
+
+        public async Task HandleAsync(CustomerVatValidationDecisionDto dto, CancellationToken ct = default)
+        {
+            if (dto.Id == Guid.Empty)
+            {
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
+            }
+
+            if (!Enum.IsDefined(dto.Status) || dto.Status == CustomerVatValidationStatus.Unknown)
+            {
+                throw new ValidationException(_localizer["CustomerVatValidationStatusRequired"]);
+            }
+
+            var source = NormalizeOptional(dto.Source);
+            var message = NormalizeOptional(dto.Message);
+            if (source?.Length > MaxSourceLength)
+            {
+                throw new ValidationException(_localizer["CustomerVatValidationSourceTooLong"]);
+            }
+
+            if (message?.Length > MaxMessageLength)
+            {
+                throw new ValidationException(_localizer["CustomerVatValidationMessageTooLong"]);
+            }
+
+            var customer = await _db.Set<Customer>()
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (customer is null)
+            {
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = customer.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            if (customer.TaxProfileType != CustomerTaxProfileType.Business || string.IsNullOrWhiteSpace(customer.VatId))
+            {
+                throw new ValidationException(_localizer["CustomerBusinessRequiresVatIdForTaxCompliance"]);
+            }
+
+            customer.VatValidationStatus = dto.Status;
+            customer.VatValidationCheckedAtUtc = _clock.UtcNow;
+            customer.VatValidationSource = source ?? "operator";
+            customer.VatValidationMessage = message;
+
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+        }
+
+        private static string? NormalizeOptional(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    public sealed class ValidateCustomerVatIdHandler
+    {
+        private const int MaxSourceLength = 80;
+        private const int MaxMessageLength = 512;
+
+        private readonly IAppDbContext _db;
+        private readonly IClock _clock;
+        private readonly IVatValidationProvider _provider;
+        private readonly IStringLocalizer<ValidationResource> _localizer;
+
+        public ValidateCustomerVatIdHandler(
+            IAppDbContext db,
+            IClock clock,
+            IVatValidationProvider provider,
+            IStringLocalizer<ValidationResource> localizer)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
+        }
+
+        public async Task<CustomerVatValidationStatus> HandleAsync(CustomerVatValidationLookupDto dto, CancellationToken ct = default)
+        {
+            if (dto.Id == Guid.Empty)
+            {
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
+            }
+
+            var customer = await _db.Set<Customer>()
+                .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (customer is null)
+            {
+                throw new InvalidOperationException(_localizer["CustomerNotFound"]);
+            }
+
+            var rowVersion = dto.RowVersion ?? Array.Empty<byte>();
+            var currentVersion = customer.RowVersion ?? Array.Empty<byte>();
+            if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            if (customer.TaxProfileType != CustomerTaxProfileType.Business || string.IsNullOrWhiteSpace(customer.VatId))
+            {
+                throw new ValidationException(_localizer["CustomerBusinessRequiresVatIdForTaxCompliance"]);
+            }
+
+            var result = await _provider.ValidateAsync(customer.VatId, ct).ConfigureAwait(false);
+            customer.VatValidationStatus = result.Status;
+            customer.VatValidationCheckedAtUtc = _clock.UtcNow;
+            customer.VatValidationSource = Truncate(NormalizeOptional(result.Source) ?? "provider", MaxSourceLength);
+            customer.VatValidationMessage = Truncate(NormalizeOptional(result.Message), MaxMessageLength);
+
+            try
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
+            }
+
+            return customer.VatValidationStatus;
+        }
+
+        private static string? NormalizeOptional(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        private static string? Truncate(string? value, int maxLength) =>
+            value is null || value.Length <= maxLength ? value : value[..maxLength];
     }
 
     public sealed class CreateLeadHandler
