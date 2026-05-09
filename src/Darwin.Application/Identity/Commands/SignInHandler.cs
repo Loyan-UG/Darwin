@@ -94,6 +94,11 @@ namespace Darwin.Application.Identity.Auth.Commands
                 return new SignInResultDto { Succeeded = false, FailureReason = _localizer["InvalidCredentials"] };
             }
 
+            if (!user.EmailConfirmed)
+            {
+                return new SignInResultDto { Succeeded = false, FailureReason = _localizer["EmailAddressNotConfirmed"] };
+            }
+
             var twoFactorEnabled = user.TwoFactorEnabled;
             if (twoFactorEnabled)
             {

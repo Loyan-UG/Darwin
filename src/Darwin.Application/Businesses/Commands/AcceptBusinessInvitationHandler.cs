@@ -88,7 +88,7 @@ namespace Darwin.Application.Businesses.Commands
                 .FirstOrDefaultAsync(x => x.Id == invitation.BusinessId && !x.IsDeleted, ct)
                 .ConfigureAwait(false);
 
-            if (business is null || !business.IsActive)
+            if (business is null || !IsInvitationAcceptanceAllowed(business))
             {
                 return Result<BusinessInvitationAcceptanceDto>.Fail(_localizer["InvitedBusinessUnavailable"]);
             }
@@ -241,5 +241,9 @@ namespace Darwin.Application.Businesses.Commands
                 IsNewUser = isNewUser
             });
         }
+
+        private static bool IsInvitationAcceptanceAllowed(Business business)
+            => business.OperationalStatus == BusinessOperationalStatus.PendingApproval ||
+               (business.OperationalStatus == BusinessOperationalStatus.Approved && business.IsActive);
     }
 }

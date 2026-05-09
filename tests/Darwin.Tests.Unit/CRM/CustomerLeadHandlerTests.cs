@@ -1,4 +1,6 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Abstractions.Compliance;
 using Darwin.Application;
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
@@ -800,6 +802,244 @@ public sealed class CustomerLeadHandlerTests
 
     // ─── Shared helpers ───────────────────────────────────────────────────────
 
+    [Fact]
+    public async Task UpdateCustomerTaxProfile_Should_UpdateBusinessVatId_WhenRowVersionMatches()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var rowVersion = new byte[] { 2, 4, 6, 8 };
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Tax",
+            LastName = "Customer",
+            Email = "tax.customer@example.de",
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "Old GmbH",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerTaxProfileHandler(
+            db,
+            new CustomerTaxProfileUpdateValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new CustomerTaxProfileUpdateDto
+        {
+            Id = customerId,
+            RowVersion = rowVersion,
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "  New GmbH  ",
+            VatId = "  DE123456789  "
+        }, TestContext.Current.CancellationToken);
+
+        var customer = await db.Set<Customer>().SingleAsync(x => x.Id == customerId, TestContext.Current.CancellationToken);
+        customer.TaxProfileType.Should().Be(CustomerTaxProfileType.Business);
+        customer.CompanyName.Should().Be("New GmbH");
+        customer.VatId.Should().Be("DE123456789");
+    }
+
+    [Fact]
+    public async Task UpdateCustomerTaxProfile_Should_Throw_WhenBusinessVatIdMissing()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var rowVersion = new byte[] { 2, 4, 6, 8 };
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Tax",
+            LastName = "Customer",
+            Email = "tax.customer@example.de",
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "Existing GmbH",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerTaxProfileHandler(
+            db,
+            new CustomerTaxProfileUpdateValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new CustomerTaxProfileUpdateDto
+        {
+            Id = customerId,
+            RowVersion = rowVersion,
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "Existing GmbH"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>()
+            .WithMessage("*CustomerBusinessRequiresVatIdForTaxCompliance*");
+    }
+
+    [Fact]
+    public async Task UpdateCustomerTaxProfile_Should_Throw_WhenRowVersionMismatches()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Tax",
+            LastName = "Customer",
+            Email = "tax.customer@example.de",
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "Existing GmbH",
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerTaxProfileHandler(
+            db,
+            new CustomerTaxProfileUpdateValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new CustomerTaxProfileUpdateDto
+        {
+            Id = customerId,
+            RowVersion = new byte[] { 9, 9, 9, 9 },
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "Existing GmbH",
+            VatId = "DE123456789"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+    }
+
+    [Fact]
+    public async Task UpdateCustomerVatValidationDecision_Should_PersistStatus_WhenRowVersionMatches()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var rowVersion = new byte[] { 6, 6, 6, 6 };
+        var checkedAtUtc = new DateTime(2026, 5, 9, 11, 0, 0, DateTimeKind.Utc);
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Tax",
+            LastName = "Customer",
+            Email = "tax.customer@example.de",
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "Existing GmbH",
+            VatId = "DE123456789",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerVatValidationDecisionHandler(
+            db,
+            new FixedClock(checkedAtUtc),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new CustomerVatValidationDecisionDto
+        {
+            Id = customerId,
+            RowVersion = rowVersion,
+            Status = CustomerVatValidationStatus.Valid,
+            Source = "  operator  ",
+            Message = "  VIES check confirmed.  "
+        }, TestContext.Current.CancellationToken);
+
+        var customer = await db.Set<Customer>().SingleAsync(x => x.Id == customerId, TestContext.Current.CancellationToken);
+        customer.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Valid);
+        customer.VatValidationCheckedAtUtc.Should().Be(checkedAtUtc);
+        customer.VatValidationSource.Should().Be("operator");
+        customer.VatValidationMessage.Should().Be("VIES check confirmed.");
+    }
+
+    [Fact]
+    public async Task UpdateCustomerTaxProfile_Should_ResetVatValidation_WhenVatIdChanges()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var rowVersion = new byte[] { 7, 7, 7, 7 };
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Tax",
+            LastName = "Customer",
+            Email = "tax.customer@example.de",
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "Existing GmbH",
+            VatId = "DE123456789",
+            VatValidationStatus = CustomerVatValidationStatus.Valid,
+            VatValidationCheckedAtUtc = new DateTime(2026, 5, 8, 11, 0, 0, DateTimeKind.Utc),
+            VatValidationSource = "operator",
+            VatValidationMessage = "Confirmed",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerTaxProfileHandler(
+            db,
+            new CustomerTaxProfileUpdateValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new CustomerTaxProfileUpdateDto
+        {
+            Id = customerId,
+            RowVersion = rowVersion,
+            TaxProfileType = CustomerTaxProfileType.Business,
+            CompanyName = "Existing GmbH",
+            VatId = "DE987654321"
+        }, TestContext.Current.CancellationToken);
+
+        var customer = await db.Set<Customer>().SingleAsync(x => x.Id == customerId, TestContext.Current.CancellationToken);
+        customer.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Unknown);
+        customer.VatValidationCheckedAtUtc.Should().BeNull();
+        customer.VatValidationSource.Should().BeNull();
+        customer.VatValidationMessage.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ValidateCustomerVatIdHandler_Should_PersistProviderResult()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var rowVersion = new byte[] { 7, 7, 7, 7 };
+        var checkedAtUtc = new DateTime(2026, 5, 9, 13, 15, 0, DateTimeKind.Utc);
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Ada",
+            LastName = "Lovelace",
+            Email = "ada@example.test",
+            Phone = "+491234567",
+            TaxProfileType = CustomerTaxProfileType.Business,
+            VatId = "DE123456789",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ValidateCustomerVatIdHandler(
+            db,
+            new FixedClock(checkedAtUtc),
+            new FixedVatValidationProvider(CustomerVatValidationStatus.Valid, "vies", "VIES confirmed the VAT ID."),
+            new TestStringLocalizer());
+
+        var status = await handler.HandleAsync(new CustomerVatValidationLookupDto
+        {
+            Id = customerId,
+            RowVersion = rowVersion
+        }, TestContext.Current.CancellationToken);
+
+        status.Should().Be(CustomerVatValidationStatus.Valid);
+        var customer = await db.Set<Customer>().SingleAsync(x => x.Id == customerId, TestContext.Current.CancellationToken);
+        customer.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Valid);
+        customer.VatValidationCheckedAtUtc.Should().Be(checkedAtUtc);
+        customer.VatValidationSource.Should().Be("vies");
+        customer.VatValidationMessage.Should().Be("VIES confirmed the VAT ID.");
+    }
+
     private static User MakeUser(Guid userId) =>
         new("user@example.com", "hashed-password", "security-stamp")
         {
@@ -884,6 +1124,38 @@ public sealed class CustomerLeadHandlerTests
                 b.Property(x => x.Phone).IsRequired();
                 b.Property(x => x.RowVersion).IsRequired();
                 b.Ignore(x => x.Interactions);
+            });
+        }
+    }
+
+    private sealed class FixedClock : IClock
+    {
+        public FixedClock(DateTime utcNow) => UtcNow = utcNow;
+
+        public DateTime UtcNow { get; }
+    }
+
+    private sealed class FixedVatValidationProvider : IVatValidationProvider
+    {
+        private readonly CustomerVatValidationStatus _status;
+        private readonly string _source;
+        private readonly string _message;
+
+        public FixedVatValidationProvider(CustomerVatValidationStatus status, string source, string message)
+        {
+            _status = status;
+            _source = source;
+            _message = message;
+        }
+
+        public Task<VatValidationProviderResult> ValidateAsync(string vatId, CancellationToken ct = default)
+        {
+            vatId.Should().Be("DE123456789");
+            return Task.FromResult(new VatValidationProviderResult
+            {
+                Status = _status,
+                Source = _source,
+                Message = _message
             });
         }
     }

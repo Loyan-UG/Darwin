@@ -2,13 +2,17 @@ using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Application.Billing.Queries;
+using Darwin.Application.CRM.Commands;
+using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Enums;
 using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Services.Admin;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Billing;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Billing
 {
@@ -20,6 +24,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         private readonly GetPaymentsPageHandler _getPaymentsPage;
         private readonly GetPaymentOpsSummaryHandler _getPaymentOpsSummary;
         private readonly GetTaxComplianceOverviewHandler _getTaxComplianceOverview;
+        private readonly GetTaxComplianceInvoiceExportHandler _getTaxComplianceInvoiceExport;
+        private readonly UpdateCustomerTaxProfileHandler _updateCustomerTaxProfile;
+        private readonly UpdateCustomerVatValidationDecisionHandler _updateCustomerVatValidationDecision;
+        private readonly ValidateCustomerVatIdHandler _validateCustomerVatId;
+        private readonly UpdateInvoiceReverseChargeDecisionHandler _updateInvoiceReverseChargeDecision;
         private readonly GetBillingPlansAdminPageHandler _getBillingPlansAdminPage;
         private readonly GetBillingPlanOpsSummaryHandler _getBillingPlanOpsSummary;
         private readonly GetBillingPlanForEditHandler _getBillingPlanForEdit;
@@ -55,6 +64,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             GetPaymentsPageHandler getPaymentsPage,
             GetPaymentOpsSummaryHandler getPaymentOpsSummary,
             GetTaxComplianceOverviewHandler getTaxComplianceOverview,
+            GetTaxComplianceInvoiceExportHandler getTaxComplianceInvoiceExport,
+            UpdateCustomerTaxProfileHandler updateCustomerTaxProfile,
+            UpdateCustomerVatValidationDecisionHandler updateCustomerVatValidationDecision,
+            ValidateCustomerVatIdHandler validateCustomerVatId,
+            UpdateInvoiceReverseChargeDecisionHandler updateInvoiceReverseChargeDecision,
             GetBillingPlansAdminPageHandler getBillingPlansAdminPage,
             GetBillingPlanOpsSummaryHandler getBillingPlanOpsSummary,
             GetBillingPlanForEditHandler getBillingPlanForEdit,
@@ -89,6 +103,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             _getPaymentsPage = getPaymentsPage ?? throw new ArgumentNullException(nameof(getPaymentsPage));
             _getPaymentOpsSummary = getPaymentOpsSummary ?? throw new ArgumentNullException(nameof(getPaymentOpsSummary));
             _getTaxComplianceOverview = getTaxComplianceOverview ?? throw new ArgumentNullException(nameof(getTaxComplianceOverview));
+            _getTaxComplianceInvoiceExport = getTaxComplianceInvoiceExport ?? throw new ArgumentNullException(nameof(getTaxComplianceInvoiceExport));
+            _updateCustomerTaxProfile = updateCustomerTaxProfile ?? throw new ArgumentNullException(nameof(updateCustomerTaxProfile));
+            _updateCustomerVatValidationDecision = updateCustomerVatValidationDecision ?? throw new ArgumentNullException(nameof(updateCustomerVatValidationDecision));
+            _validateCustomerVatId = validateCustomerVatId ?? throw new ArgumentNullException(nameof(validateCustomerVatId));
+            _updateInvoiceReverseChargeDecision = updateInvoiceReverseChargeDecision ?? throw new ArgumentNullException(nameof(updateInvoiceReverseChargeDecision));
             _getBillingPlansAdminPage = getBillingPlansAdminPage ?? throw new ArgumentNullException(nameof(getBillingPlansAdminPage));
             _getBillingPlanOpsSummary = getBillingPlanOpsSummary ?? throw new ArgumentNullException(nameof(getBillingPlanOpsSummary));
             _getBillingPlanForEdit = getBillingPlanForEdit ?? throw new ArgumentNullException(nameof(getBillingPlanForEdit));
@@ -434,7 +453,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Summary = new TaxComplianceOpsSummaryVm
                 {
                     BusinessCustomersMissingVatIdCount = overview.Summary.BusinessCustomersMissingVatIdCount,
+                    BusinessCustomersVatValidationReviewCount = overview.Summary.BusinessCustomersVatValidationReviewCount,
                     BusinessInvoicesMissingVatIdCount = overview.Summary.BusinessInvoicesMissingVatIdCount,
+                    ReverseChargeCandidateInvoiceCount = overview.Summary.ReverseChargeCandidateInvoiceCount,
                     DraftInvoiceCount = overview.Summary.DraftInvoiceCount,
                     DueSoonInvoiceCount = overview.Summary.DueSoonInvoiceCount,
                     OverdueInvoiceCount = overview.Summary.OverdueInvoiceCount
@@ -443,6 +464,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 InvoiceItems = overview.InvoiceItems.Select(x => new TaxComplianceInvoiceReviewItemVm
                 {
                     Id = x.Id,
+                    RowVersion = x.RowVersion,
                     CustomerId = x.CustomerId,
                     CustomerDisplayName = x.CustomerDisplayName,
                     CompanyName = x.CompanyName,
@@ -455,6 +477,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     Currency = x.Currency,
                     TotalGrossMinor = x.TotalGrossMinor,
                     DueDateUtc = x.DueDateUtc,
+                    RequiresVatId = x.RequiresVatId,
+                    IsReverseChargeCandidate = x.IsReverseChargeCandidate,
+                    ReverseChargeApplied = x.ReverseChargeApplied,
+                    ReverseChargeReviewedAtUtc = x.ReverseChargeReviewedAtUtc,
+                    IsDueSoon = x.IsDueSoon,
+                    IsOverdue = x.IsOverdue,
                     CreatedAtUtc = x.CreatedAtUtc,
                     ModifiedAtUtc = x.ModifiedAtUtc
                 }).ToList(),
@@ -466,6 +494,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     Email = x.Email,
                     CompanyName = x.CompanyName,
                     VatId = x.VatId,
+                    RowVersion = x.RowVersion,
+                    RequiresVatId = x.RequiresVatId,
+                    RequiresVatValidation = x.RequiresVatValidation,
+                    VatValidationStatus = x.VatValidationStatus,
+                    VatValidationCheckedAtUtc = x.VatValidationCheckedAtUtc,
+                    VatValidationSource = x.VatValidationSource,
+                    VatValidationMessage = x.VatValidationMessage,
                     OpportunityCount = x.OpportunityCount,
                     CreatedAtUtc = x.CreatedAtUtc,
                     ModifiedAtUtc = x.ModifiedAtUtc
@@ -473,6 +508,232 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
 
             return RenderTaxComplianceWorkspace(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportTaxComplianceInvoices(CancellationToken ct = default)
+        {
+            var rows = await _getTaxComplianceInvoiceExport.HandleAsync(ct: ct).ConfigureAwait(false);
+            var csv = new StringBuilder();
+            csv.AppendLine(string.Join(",", new[]
+            {
+                "InvoiceId",
+                "BusinessId",
+                "CustomerId",
+                "Customer",
+                "Company",
+                "TaxProfile",
+                "VatId",
+                "OrderId",
+                "OrderNumber",
+                "PaymentId",
+                "Status",
+                "Currency",
+                "TotalNetMinor",
+                "TotalTaxMinor",
+                "TotalGrossMinor",
+                "DueDateUtc",
+                "RequiresVatId",
+                "IsReverseChargeCandidate",
+                "ReverseChargeApplied",
+                "ReverseChargeReviewedAtUtc",
+                "IsDueSoon",
+                "IsOverdue",
+                "CreatedAtUtc",
+                "ModifiedAtUtc"
+            }));
+
+            foreach (var row in rows)
+            {
+                csv.AppendLine(string.Join(",", new[]
+                {
+                    Csv(row.InvoiceId),
+                    Csv(row.BusinessId),
+                    Csv(row.CustomerId),
+                    Csv(row.CustomerDisplayName),
+                    Csv(row.CompanyName),
+                    Csv(row.CustomerTaxProfileType?.ToString()),
+                    Csv(row.CustomerVatId),
+                    Csv(row.OrderId),
+                    Csv(row.OrderNumber),
+                    Csv(row.PaymentId),
+                    Csv(row.Status.ToString()),
+                    Csv(row.Currency),
+                    Csv(row.TotalNetMinor),
+                    Csv(row.TotalTaxMinor),
+                    Csv(row.TotalGrossMinor),
+                    Csv(row.DueDateUtc),
+                    Csv(row.RequiresVatId),
+                    Csv(row.IsReverseChargeCandidate),
+                    Csv(row.ReverseChargeApplied),
+                    Csv(row.ReverseChargeReviewedAtUtc),
+                    Csv(row.IsDueSoon),
+                    Csv(row.IsOverdue),
+                    Csv(row.CreatedAtUtc),
+                    Csv(row.ModifiedAtUtc)
+                }));
+            }
+
+            var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray();
+            var fileName = $"darwin-tax-compliance-invoices-{_clock.UtcNow:yyyyMMdd-HHmmss}.csv";
+            return File(bytes, "text/csv; charset=utf-8", fileName);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateCustomerTaxProfile(TaxComplianceCustomerTaxProfileUpdateVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("CustomerUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(TaxCompliance), new { });
+            }
+
+            var dto = new CustomerTaxProfileUpdateDto
+            {
+                Id = vm.Id,
+                RowVersion = vm.RowVersion,
+                TaxProfileType = vm.TaxProfileType,
+                CompanyName = vm.CompanyName,
+                VatId = vm.VatId
+            };
+
+            try
+            {
+                await _updateCustomerTaxProfile.HandleAsync(dto, ct).ConfigureAwait(false);
+                SetSuccessMessage("CustomerUpdatedMessage");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                SetErrorMessage("CustomerConcurrencyMessage");
+            }
+            catch (ValidationException ex)
+            {
+                SetValidationErrorMessage(ex, "CustomerUpdateFailedMessage");
+            }
+            catch (Exception)
+            {
+                SetErrorMessage("CustomerUpdateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(TaxCompliance), new { });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateCustomerVatValidationDecision(CustomerVatValidationDecisionVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("CustomerVatValidationUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(TaxCompliance), new { });
+            }
+
+            var dto = new CustomerVatValidationDecisionDto
+            {
+                Id = vm.Id,
+                RowVersion = vm.RowVersion,
+                Status = vm.Status,
+                Source = vm.Source,
+                Message = vm.Message
+            };
+
+            try
+            {
+                await _updateCustomerVatValidationDecision.HandleAsync(dto, ct).ConfigureAwait(false);
+                SetSuccessMessage("CustomerVatValidationUpdatedMessage");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                SetErrorMessage("CustomerConcurrencyMessage");
+            }
+            catch (ValidationException ex)
+            {
+                SetValidationErrorMessage(ex, "CustomerVatValidationUpdateFailedMessage");
+            }
+            catch (Exception)
+            {
+                SetErrorMessage("CustomerVatValidationUpdateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(TaxCompliance), new { });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ValidateCustomerVatId(CustomerVatValidationLookupVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("CustomerVatValidationLookupFailedMessage");
+                return RedirectOrHtmx(nameof(TaxCompliance), new { });
+            }
+
+            try
+            {
+                var status = await _validateCustomerVatId.HandleAsync(new CustomerVatValidationLookupDto
+                {
+                    Id = vm.Id,
+                    RowVersion = vm.RowVersion
+                }, ct).ConfigureAwait(false);
+
+                SetSuccessMessage(status == CustomerVatValidationStatus.Unknown
+                    ? "CustomerVatValidationLookupCompletedWithReviewMessage"
+                    : "CustomerVatValidationLookupUpdatedMessage");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                SetErrorMessage("ConcurrencyConflictDetected");
+            }
+            catch (ValidationException ex)
+            {
+                SetValidationErrorMessage(ex, "CustomerVatValidationLookupFailedMessage");
+            }
+            catch (Exception)
+            {
+                SetErrorMessage("CustomerVatValidationLookupFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(TaxCompliance), new { });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateInvoiceReverseChargeDecision(InvoiceReverseChargeDecisionVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                SetErrorMessage("InvoiceReverseChargeDecisionUpdateFailedMessage");
+                return RedirectOrHtmx(nameof(TaxCompliance), new { });
+            }
+
+            var dto = new InvoiceReverseChargeDecisionDto
+            {
+                Id = vm.Id,
+                RowVersion = vm.RowVersion,
+                Applies = vm.Applies,
+                Note = vm.Note
+            };
+
+            try
+            {
+                await _updateInvoiceReverseChargeDecision.HandleAsync(dto, ct).ConfigureAwait(false);
+                SetSuccessMessage("InvoiceReverseChargeDecisionUpdatedMessage");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                SetErrorMessage("CustomerConcurrencyMessage");
+            }
+            catch (ValidationException ex)
+            {
+                SetValidationErrorMessage(ex, "InvoiceReverseChargeDecisionUpdateFailedMessage");
+            }
+            catch (Exception)
+            {
+                SetErrorMessage("InvoiceReverseChargeDecisionUpdateFailedMessage");
+            }
+
+            return RedirectOrHtmx(nameof(TaxCompliance), new { });
         }
 
         [HttpGet]
@@ -708,6 +969,25 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 StructuredExportBaselineLabel = structuredExportBaselineReady ? T("TaxPolicyStructuredExportReady") : T("TaxPolicyStructuredExportIncomplete"),
                 ComplianceScopeNote = T("TaxPolicyComplianceScopeNote")
             };
+        }
+
+        private static string Csv(object? value)
+        {
+            var text = value switch
+            {
+                null => string.Empty,
+                DateTime dateTime => dateTime.ToUniversalTime().ToString("O"),
+                Guid guid => guid.ToString("D"),
+                bool boolean => boolean ? "true" : "false",
+                _ => Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty
+            };
+
+            if (text.Length > 0 && (text[0] == '=' || text[0] == '+' || text[0] == '-' || text[0] == '@'))
+            {
+                text = "'" + text;
+            }
+
+            return "\"" + text.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
         }
 
         private async Task<RefundOpsSummaryVm> BuildRefundOpsSummaryVmAsync(Guid businessId, CancellationToken ct)

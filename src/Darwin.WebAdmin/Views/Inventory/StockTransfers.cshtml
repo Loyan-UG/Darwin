@@ -345,6 +345,7 @@
                                       hx-post="@UpdateStockTransferLifecycleUrl(item.Id)"
                                       hx-target="#inventory-stock-transfers-workspace-shell"
                                       hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="rowVersion" value="@rowVersion" />
                                     <input type="hidden" name="action" value="MarkInTransit" />
                                     <input type="hidden" name="businessId" value="@businessId" />
@@ -359,6 +360,7 @@
                                       hx-post="@UpdateStockTransferLifecycleUrl(item.Id)"
                                       hx-target="#inventory-stock-transfers-workspace-shell"
                                       hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="rowVersion" value="@rowVersion" />
                                     <input type="hidden" name="action" value="Cancel" />
                                     <input type="hidden" name="businessId" value="@businessId" />
@@ -376,6 +378,7 @@
                                       hx-post="@UpdateStockTransferLifecycleUrl(item.Id)"
                                       hx-target="#inventory-stock-transfers-workspace-shell"
                                       hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="rowVersion" value="@rowVersion" />
                                     <input type="hidden" name="action" value="Complete" />
                                     <input type="hidden" name="businessId" value="@businessId" />
@@ -390,6 +393,7 @@
                                       hx-post="@UpdateStockTransferLifecycleUrl(item.Id)"
                                       hx-target="#inventory-stock-transfers-workspace-shell"
                                       hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="rowVersion" value="@rowVersion" />
                                     <input type="hidden" name="action" value="Cancel" />
                                     <input type="hidden" name="businessId" value="@businessId" />

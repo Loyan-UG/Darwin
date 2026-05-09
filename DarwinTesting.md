@@ -42,7 +42,7 @@ The repository currently contains these test projects:
 7. `tests/Darwin.WebAdmin.Tests`
    - WebAdmin-focused smoke and security tests for the admin panel (e.g., security header checks, authentication flows, anti-forgery token validation).
    - Uses `Microsoft.AspNetCore.Mvc.Testing` with an in-process `WebAdminTestFactory`.
-   - Wired into `tests-quality-gates.yml` as the `webadmin` coverage lane.
+   - Wired into `tests-quality-gates.yml` as split `webadmin` coverage lanes so slow hosted smoke matrices remain diagnosable.
 8. `tests/Darwin.Tests.Common`
    - Shared test infrastructure/helpers consumed by other suites.
 
@@ -55,7 +55,12 @@ CI treats the main suites as independent lanes:
 - infrastructure
 - webapi
 - integration
-- webadmin
+- webadmin-security
+- webadmin-public-smoke
+- webadmin-render-smoke
+- webadmin-csrf-tokenless
+- webadmin-csrf-valid
+- webadmin-mutation-positive
 - mobile-shared
 
 
@@ -126,6 +131,7 @@ Use for the WebAdmin panel's HTTP-level correctness:
 - Authentication/redirect boundaries for admin-only routes.
 - Anti-forgery token and form rendering sanity checks.
 - Forwarded-header handling and HTTPS redirection behavior.
+- Hosted smoke flows that exercise real Razor/HTMX forms, including row-version protected mutations.
 
 ---
 
@@ -376,9 +382,9 @@ Current direction for stronger confidence:
 
 ### Current local verification notes
 
-- `Darwin.WebAdmin.Tests` compiles and targeted security tests pass locally. The full local smoke suite timed out after 5 minutes in the current desktop environment and should be re-run in CI or with a longer timeout before raising the `webadmin` lane threshold.
+- `Darwin.WebAdmin.Tests` compiles locally with an isolated output path. The WebAdmin security, public/auth smoke (`27` passed), render smoke (`105` passed), tokenless CSRF (`115` passed), valid-token CSRF (`8` passed), and positive mutation (`1` passed) subsets pass locally when run as split lanes. The tokenless CSRF matrix is slow locally (about 4 minutes), so it remains a separate CI job.
 - The focused WebApi provider-callback run now passes 280 of 280 tests when built into isolated artifacts. Two provider-callback worker assertions had their short local waits lengthened so the first background-service iteration can complete consistently.
-- The focused unit run for Shipment/Stripe/Billing/Communication source-contract coverage now passes 459 of 459 tests after realigning dashboard, communication-provider, billing, DHL, and route-boundary contracts with the current implementation.
+- The focused unit run for Shipment/Stripe/Billing/Communication/Inventory/Tax/SignIn source-contract and handler coverage now passes 602 of 602 tests after realigning dashboard, communication-provider, billing, DHL, inventory, JWT, and support-queue contracts with the current implementation.
 
 ---
 

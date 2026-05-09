@@ -103,7 +103,9 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     public sealed class TaxComplianceOpsSummaryVm
     {
         public int BusinessCustomersMissingVatIdCount { get; set; }
+        public int BusinessCustomersVatValidationReviewCount { get; set; }
         public int BusinessInvoicesMissingVatIdCount { get; set; }
+        public int ReverseChargeCandidateInvoiceCount { get; set; }
         public int DraftInvoiceCount { get; set; }
         public int DueSoonInvoiceCount { get; set; }
         public int OverdueInvoiceCount { get; set; }
@@ -112,6 +114,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     public sealed class TaxComplianceInvoiceReviewItemVm
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string? CompanyName { get; set; }
@@ -124,6 +127,12 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string Currency { get; set; } = string.Empty;
         public long TotalGrossMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
+        public bool RequiresVatId { get; set; }
+        public bool IsReverseChargeCandidate { get; set; }
+        public bool? ReverseChargeApplied { get; set; }
+        public DateTime? ReverseChargeReviewedAtUtc { get; set; }
+        public bool IsDueSoon { get; set; }
+        public bool IsOverdue { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
     }
@@ -131,14 +140,81 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     public sealed class TaxComplianceCustomerReviewItemVm
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid? UserId { get; set; }
         public string DisplayName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? CompanyName { get; set; }
         public string? VatId { get; set; }
+        public bool RequiresVatId { get; set; }
+        public bool RequiresVatValidation { get; set; }
+        public CustomerVatValidationStatus VatValidationStatus { get; set; }
+        public DateTime? VatValidationCheckedAtUtc { get; set; }
+        public string? VatValidationSource { get; set; }
+        public string? VatValidationMessage { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
+    }
+
+    public sealed class InvoiceReverseChargeDecisionVm
+    {
+        [Required]
+        public Guid Id { get; set; }
+
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        public bool Applies { get; set; }
+
+        [StringLength(512)]
+        public string? Note { get; set; }
+    }
+
+    public sealed class TaxComplianceCustomerTaxProfileUpdateVm
+    {
+        [Required]
+        public Guid Id { get; set; }
+
+        [Required]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Required]
+        public CustomerTaxProfileType TaxProfileType { get; set; } = CustomerTaxProfileType.Business;
+
+        [Required]
+        [StringLength(200)]
+        public string CompanyName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(64)]
+        public string VatId { get; set; } = string.Empty;
+    }
+
+    public sealed class CustomerVatValidationDecisionVm
+    {
+        [Required]
+        public Guid Id { get; set; }
+
+        [Required]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Required]
+        public CustomerVatValidationStatus Status { get; set; }
+
+        [StringLength(80)]
+        public string? Source { get; set; }
+
+        [StringLength(512)]
+        public string? Message { get; set; }
+    }
+
+    public sealed class CustomerVatValidationLookupVm
+    {
+        [Required]
+        public Guid Id { get; set; }
+
+        [Required]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     public sealed class PaymentOpsSummaryVm

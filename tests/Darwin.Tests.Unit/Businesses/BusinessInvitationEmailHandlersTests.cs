@@ -178,6 +178,45 @@ public sealed class BusinessInvitationEmailHandlersTests
         emailSender.LastContext.BusinessId.Should().Be(businessId);
     }
 
+    [Fact]
+    public async Task RevokeBusinessInvitation_Should_RejectAlreadyRevokedInvitation()
+    {
+        await using var db = BusinessInvitationEmailTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var invitationId = Guid.NewGuid();
+
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = invitationId,
+            BusinessId = businessId,
+            InvitedByUserId = Guid.NewGuid(),
+            Email = "manager@revoked.de",
+            NormalizedEmail = "MANAGER@REVOKED.DE",
+            Role = BusinessMemberRole.Manager,
+            Token = "closed-token",
+            ExpiresAtUtc = new DateTime(2030, 2, 3, 8, 0, 0, DateTimeKind.Utc),
+            Status = BusinessInvitationStatus.Revoked,
+            RowVersion = [1]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new RevokeBusinessInvitationHandler(
+            db,
+            new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
+            new BusinessInvitationRevokeDtoValidator(),
+            new TestValidationStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessInvitationRevokeDto
+        {
+            Id = invitationId,
+            RowVersion = [1]
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("RevokedInvitationsCannotBeRevoked");
+    }
+
     private sealed class CapturingEmailSender : IEmailSender
     {
         public string LastSubject { get; private set; } = string.Empty;

@@ -152,6 +152,8 @@ namespace Darwin.Domain.Entities.Settings
         public string? InvoiceIssuerCity { get; set; }
         /// <summary>Issuer country code used in phase-1 invoice/compliance support surfaces.</summary>
         public string? InvoiceIssuerCountry { get; set; }
+        /// <summary>Number of years issued invoice archive metadata must be retained.</summary>
+        public int InvoiceArchiveRetentionYears { get; set; } = 10;
 
         // Phase-1 shipping provider (DHL-first)
         /// <summary>Enable DHL-backed shipment operations as the primary phase-1 carrier.</summary>

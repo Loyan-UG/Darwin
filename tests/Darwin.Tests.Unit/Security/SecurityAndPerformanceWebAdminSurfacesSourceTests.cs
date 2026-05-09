@@ -105,12 +105,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         ignoreExceptions
             .Select(action => $"{action.Path}: {action.Signature}")
             .Should()
-            .BeEquivalentTo(
-                new[] { $"{Path.Combine("Admin", "Media", "MediaController.cs")}: public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)" },
-                "UploadQuill is the only intentional WebAdmin anti-forgery exception");
-
-        ignoreExceptions.Single().Block.Should().Contain("Quill sends multipart uploads through fetch without the admin form token");
-        ignoreExceptions.Single().Block.Should().Contain("strict file validation");
+            .BeEmpty("WebAdmin upload and mutation actions should validate anti-forgery tokens, including Quill uploads");
     }
 
     [Fact]
@@ -5012,9 +5007,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         taxComplianceSource.Should().Contain("string TaxComplianceOpsHealthBadgeClass(bool healthy) => healthy ? \"text-bg-success\" : \"text-bg-warning\";");
         taxComplianceSource.Should().Contain("var taxComplianceAttentionCount = Model.Summary.BusinessCustomersMissingVatIdCount");
         taxComplianceSource.Should().Contain("var taxCollectionAttentionCount = Model.Summary.OverdueInvoiceCount + Model.Summary.DueSoonInvoiceCount;");
-        taxComplianceSource.Should().Contain("var taxInvoicePreparationCount = Model.Summary.DraftInvoiceCount + Model.Summary.BusinessInvoicesMissingVatIdCount;");
+        taxComplianceSource.Should().Contain("var taxInvoicePreparationCount = Model.Summary.DraftInvoiceCount + Model.Summary.BusinessInvoicesMissingVatIdCount + Model.Summary.ReverseChargeCandidateInvoiceCount;");
         taxComplianceSource.Should().Contain("@T.T(\"NeedsAttention\")");
         taxComplianceSource.Should().Contain("@T.T(\"ReverseCharge\")");
+        taxComplianceSource.Should().Contain("@T.T(\"ReverseChargeReview\")");
         taxComplianceSource.Should().Contain("@T.T(\"Issuer\")");
         taxComplianceSource.Should().Contain("@T.T(\"SiteSettingInvoiceIssuerCountry\")");
         taxComplianceSource.Should().Contain("@T.T(\"ArchiveReadiness\")");
@@ -5035,7 +5031,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         taxComplianceSource.Should().Contain("Model.Tax.StructuredExportBaselineLabel");
         taxComplianceSource.Should().Contain("@LocalizeTaxInvoiceStatus(item.Status)");
         taxComplianceSource.Should().Contain("@T.T(\"VatIdMissing\")");
-        taxComplianceSource.Should().Contain("var taxInvoiceNeedsCollectionFollowUp =");
+        taxComplianceSource.Should().Contain("var taxInvoiceNeedsVatRemediation = item.RequiresVatId;");
+        taxComplianceSource.Should().Contain("var taxInvoiceNeedsReverseChargeReview = item.IsReverseChargeCandidate;");
+        taxComplianceSource.Should().Contain("var taxInvoiceNeedsCollectionFollowUp = item.IsOverdue || item.IsDueSoon;");
+        taxComplianceSource.Should().Contain("@if (item.IsOverdue)");
+        taxComplianceSource.Should().Contain("else if (item.IsDueSoon)");
+        taxComplianceSource.Should().Contain("<details class=\"card mb-3\">");
         taxComplianceSource.Should().Contain("string EditPaymentUrl(Guid? id) => Url.Action(\"EditPayment\", \"Billing\", new { id }) ?? string.Empty;");
         taxComplianceSource.Should().Contain("hx-get=\"@EditPaymentUrl(item.PaymentId)\"");
         taxComplianceSource.Should().Contain("string GlobalPaymentsUrl() => Url.Action(\"Payments\", \"Billing\") ?? string.Empty;");
@@ -5054,6 +5055,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         billingControllerSource.Should().Contain("EInvoiceBaselineReady = eInvoiceBaselineReady,");
         billingControllerSource.Should().Contain("StructuredExportBaselineReady = structuredExportBaselineReady,");
         billingControllerSource.Should().Contain("StructuredExportBaselineLabel = structuredExportBaselineReady ? T(\"TaxPolicyStructuredExportReady\") : T(\"TaxPolicyStructuredExportIncomplete\"),");
+        billingControllerSource.Should().Contain("RequiresVatId = x.RequiresVatId,");
+        billingControllerSource.Should().Contain("IsReverseChargeCandidate = x.IsReverseChargeCandidate,");
+        billingControllerSource.Should().Contain("IsDueSoon = x.IsDueSoon,");
+        billingControllerSource.Should().Contain("IsOverdue = x.IsOverdue,");
 
         var crmVmsSource = ReadWebAdminFile(Path.Combine("ViewModels", "CRM", "CrmVms.cs"));
         var crmControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
@@ -5061,6 +5066,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
         billingVmsSource.Should().Contain("public bool AllowReverseCharge { get; set; }");
         billingVmsSource.Should().Contain("public string InvoiceIssuerCountry { get; set; } = string.Empty;");
+        billingVmsSource.Should().Contain("public bool RequiresVatId { get; set; }");
+        billingVmsSource.Should().Contain("public bool IsReverseChargeCandidate { get; set; }");
+        billingVmsSource.Should().Contain("public bool IsDueSoon { get; set; }");
+        billingVmsSource.Should().Contain("public bool IsOverdue { get; set; }");
         billingVmsSource.Should().Contain("public bool ArchiveReadinessComplete { get; set; }");
         billingVmsSource.Should().Contain("public string ArchiveReadinessLabel { get; set; } = string.Empty;");
         billingVmsSource.Should().Contain("public bool EInvoiceBaselineReady { get; set; }");
@@ -5266,7 +5275,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("var result = await _getStockLevelsPage.HandleAsync(warehouseId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);");
         source.Should().Contain("FilterItems = BuildStockLevelFilterItems(filter),");
         source.Should().Contain("WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(warehouseId, businessId, ct).ConfigureAwait(false),");
-        source.Should().Contain("ViewBag.BusinessId = businessId;");
+        source.Should().Contain("BusinessId = businessId,");
         source.Should().Contain("return RenderStockLevelsWorkspace(vm);");
         source.Should().Contain("await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);");
         source.Should().Contain("await _adjustInventory.HandleAsync(new InventoryAdjustDto");
@@ -5498,10 +5507,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("private IActionResult RenderInvoiceEditor(InvoiceEditVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/Crm/_InvoiceEditorShell.cshtml\", vm);");
         source.Should().Contain("return View(\"EditInvoice\", vm);");
-        source.Should().Contain("private InvoiceOpsSummaryVm BuildInvoiceOpsSummary(List<InvoiceListItemVm> items)");
+        source.Should().Contain("private InvoiceOpsSummaryVm BuildInvoiceOpsSummary(List<InvoiceListItemVm> items, DateTime todayUtc)");
         source.Should().Contain("DraftCount = items.Count(x => x.Status == Darwin.Domain.Enums.InvoiceStatus.Draft),");
-        source.Should().Contain("DueSoonCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date >= now && x.DueDateUtc.Date <= now.AddDays(7)),");
-        source.Should().Contain("OverdueCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date < now),");
+        source.Should().Contain("DueSoonCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date >= todayUtc && x.DueDateUtc.Date <= todayUtc.AddDays(7)),");
+        source.Should().Contain("OverdueCount = items.Count(x => x.BalanceMinor > 0 && x.DueDateUtc.Date < todayUtc),");
         source.Should().Contain("MissingVatIdCount = items.Count(x => x.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(x.CustomerVatId)),");
         source.Should().Contain("RefundedCount = items.Count(x => x.RefundedAmountMinor > 0)");
         source.Should().Contain("private List<CrmPlaybookVm> BuildInvoicePlaybooks()");
@@ -6972,7 +6981,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<form asp-action=\"EditInvoice\"");
         source.Should().Contain("hx-post=\"@Url.Action(\"EditInvoice\", \"Crm\")\"");
         source.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
-        source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        source.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         source.Should().Contain("<label asp-for=\"BusinessId\" class=\"form-label\"></label>");
         source.Should().Contain("<select asp-for=\"BusinessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\" disabled=\"@(Model.IsFinancialContentLocked ? \"disabled\" : null)\"></select>");
         source.Should().Contain("<label asp-for=\"CustomerId\" class=\"form-label\"></label>");
@@ -11386,14 +11395,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         ordersSource.Should().Contain("var (items, total) = await _getMyOrdersPageHandler");
         ordersSource.Should().Contain("return Ok(new PagedResponse<MemberOrderSummary>");
         ordersSource.Should().Contain("Items = items.Select(MapSummary).ToList(),");
-        ordersSource.Should().Contain("public async Task<IActionResult> GetMyOrderAsync(Guid id, CancellationToken ct = default)");
+        ordersSource.Should().Contain("public async Task<IActionResult> GetMyOrderAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)");
         ordersSource.Should().Contain("if (id == Guid.Empty)");
         ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"IdentifierMustNotBeEmpty\"]);");
-        ordersSource.Should().Contain("var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);");
+        ordersSource.Should().Contain("var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);");
+        ordersSource.Should().Contain("var dto = await _getMyOrderForViewHandler.HandleAsync(id, normalizedCulture, ct).ConfigureAwait(false);");
         ordersSource.Should().Contain("if (dto is null)");
         ordersSource.Should().Contain("return NotFoundProblem(_validationLocalizer[\"OrderNotFound\"]);");
         ordersSource.Should().Contain("return Ok(MapDetail(dto));");
-        ordersSource.Should().Contain("public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromBody] CreateStorefrontPaymentIntentRequest? request, CancellationToken ct = default)");
+        ordersSource.Should().Contain("public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromQuery] string? culture = null, [FromBody] CreateStorefrontPaymentIntentRequest? request = null, CancellationToken ct = default)");
         ordersSource.Should().Contain("if (!CanRetryPayment(dto))");
         ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"OrderCannotAcceptNewPaymentAttempt\"]);");
         ordersSource.Should().Contain("var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto");
@@ -11402,10 +11412,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         ordersSource.Should().Contain("var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: false);");
         ordersSource.Should().Contain("var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: true);");
         ordersSource.Should().Contain("var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);");
-        ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PaymentIntentCreationFailed\"], ex.Message);");
-        ordersSource.Should().Contain("public async Task<IActionResult> DownloadDocumentAsync(Guid id, CancellationToken ct = default)");
+        ordersSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PaymentIntentCreationFailed\"]);");
+        ordersSource.Should().Contain("public async Task<IActionResult> DownloadDocumentAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)");
         ordersSource.Should().Contain("var fileName = $\"order-{SanitizeFileToken(dto.OrderNumber)}.txt\";");
-        ordersSource.Should().Contain("var bytes = Encoding.UTF8.GetBytes(RenderOrderDocument(dto));");
+        ordersSource.Should().Contain("var bytes = Encoding.UTF8.GetBytes(RenderOrderDocument(dto, normalizedCulture));");
         ordersSource.Should().Contain("return File(bytes, \"text/plain; charset=utf-8\", fileName);");
         ordersSource.Should().Contain("private static MemberOrderActions BuildActions(MemberOrderDetailDto dto)");
         ordersSource.Should().Contain("CanRetryPayment = canRetryPayment,");
@@ -11418,7 +11428,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         ordersSource.Should().Contain("private static string GetDocumentPath(Guid id) => $\"/api/v1/member/orders/{id:D}/document\";");
         ordersSource.Should().Contain("private static string SanitizeFileToken(string value)");
         ordersSource.Should().Contain("invalidChars.Contains(ch) ? '-' : ch");
-        ordersSource.Should().Contain("private static string RenderOrderDocument(MemberOrderDetailDto dto)");
+        ordersSource.Should().Contain("private static string RenderOrderDocument(MemberOrderDetailDto dto, string? culture)");
         ordersSource.Should().Contain("builder.AppendLine(\"Lines:\");");
         ordersSource.Should().Contain("builder.AppendLine(\"Payments:\");");
         ordersSource.Should().Contain("builder.AppendLine(\"Shipments:\");");
@@ -11435,16 +11445,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         invoicesSource.Should().Contain("_createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));");
         invoicesSource.Should().Contain("_checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));");
         invoicesSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
-        invoicesSource.Should().Contain("public async Task<IActionResult> GetMyInvoicesAsync([FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct = default)");
+        invoicesSource.Should().Contain("public async Task<IActionResult> GetMyInvoicesAsync([FromQuery] int? page, [FromQuery] int? pageSize, [FromQuery] string? culture = null, CancellationToken ct = default)");
         invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PageMustBePositiveInteger\"]);");
         invoicesSource.Should().Contain("var normalizedPageSize = pageSize.GetValueOrDefault(20);");
         invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PageSizeMustBeBetween1And200\"]);");
         invoicesSource.Should().Contain("var (items, total) = await _getMyInvoicesPageHandler");
         invoicesSource.Should().Contain("Items = items.Select(MapSummary).ToList(),");
-        invoicesSource.Should().Contain("public async Task<IActionResult> GetMyInvoiceAsync(Guid id, CancellationToken ct = default)");
+        invoicesSource.Should().Contain("public async Task<IActionResult> GetMyInvoiceAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)");
         invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"IdentifierMustNotBeEmpty\"]);");
         invoicesSource.Should().Contain("return NotFoundProblem(_validationLocalizer[\"InvoiceNotFound\"]);");
-        invoicesSource.Should().Contain("public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromBody] CreateStorefrontPaymentIntentRequest? request, CancellationToken ct = default)");
+        invoicesSource.Should().Contain("public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromQuery] string? culture = null, [FromBody] CreateStorefrontPaymentIntentRequest? request = null, CancellationToken ct = default)");
         invoicesSource.Should().Contain("if (!dto.OrderId.HasValue)");
         invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"InvoiceNotLinkedToOrderPaymentFlow\"]);");
         invoicesSource.Should().Contain("if (!CanRetryPayment(dto))");
@@ -11452,8 +11462,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         invoicesSource.Should().Contain("OrderId = dto.OrderId.Value,");
         invoicesSource.Should().Contain("var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: false);");
         invoicesSource.Should().Contain("var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: true);");
-        invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PaymentIntentCreationFailed\"], ex.Message);");
-        invoicesSource.Should().Contain("public async Task<IActionResult> DownloadDocumentAsync(Guid id, CancellationToken ct = default)");
+        invoicesSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"PaymentIntentCreationFailed\"]);");
+        invoicesSource.Should().Contain("public async Task<IActionResult> DownloadDocumentAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)");
         invoicesSource.Should().Contain("var fileName = $\"invoice-{SanitizeFileToken(dto.OrderNumber ?? dto.Id.ToString(\"D\"))}.txt\";");
         invoicesSource.Should().Contain("var bytes = Encoding.UTF8.GetBytes(RenderInvoiceDocument(dto));");
         invoicesSource.Should().Contain("private static MemberInvoiceActions BuildActions(MemberInvoiceDetailDto dto)");
@@ -12706,10 +12716,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         handlerSource.Should().Contain("failedOperation.Status = \"Pending\";");
 
         applyHandlerSource.Should().Contain("public sealed class ApplyDhlShipmentLabelOperationHandler");
+        applyHandlerSource.Should().Contain("IDhlShipmentProviderClient");
+        applyHandlerSource.Should().Contain("IShipmentLabelStorage");
+        applyHandlerSource.Should().Contain("_dhlClient.GetLabelAsync(settings, shipment, ct)");
+        applyHandlerSource.Should().Contain("_labelStorage");
         applyHandlerSource.Should().Contain("shipment.LastCarrierEventKey = \"shipment.label_created\";");
         applyHandlerSource.Should().Contain("shipment.Status = ShipmentStatus.Packed;");
-        applyHandlerSource.Should().Contain("shipment.LabelUrl ??= DhlShipmentPhaseOneMetadata.BuildLabelUrl(settings.DhlApiBaseUrl!, shipment.ProviderShipmentReference);");
-        applyHandlerSource.Should().Contain("DhlShipmentPhaseOneMetadata.BuildProviderShipmentReference(shipment)");
+        applyHandlerSource.Should().Contain("DhlLabelGenerationRequiresProviderShipmentReference");
+        applyHandlerSource.Should().Contain("DhlLabelGenerationResponseInvalid");
         applyHandlerSource.Should().Contain("await ShipmentCarrierEventRecorder.AddIfMissingAsync(");
 
         diSource.Should().Contain("services.AddScoped<GenerateDhlShipmentLabelHandler>();");
@@ -12735,7 +12749,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         handlerSource.Should().Contain("OperationType = \"CreateShipment\"");
 
         createHandlerSource.Should().Contain("public sealed class ApplyDhlShipmentCreateOperationHandler");
-        createHandlerSource.Should().Contain("shipment.ProviderShipmentReference = string.IsNullOrWhiteSpace(shipment.ProviderShipmentReference)");
+        createHandlerSource.Should().Contain("IDhlShipmentProviderClient");
+        createHandlerSource.Should().Contain("IShipmentLabelStorage");
+        createHandlerSource.Should().Contain("DhlShipmentPhaseOneMetadata.ParseShippingAddress(order.ShippingAddressJson, _localizer)");
+        createHandlerSource.Should().Contain("_dhlClient.CreateShipmentAsync(settings, order, shipment, receiver, ct)");
+        createHandlerSource.Should().Contain("_labelStorage");
+        createHandlerSource.Should().Contain("shipment.ProviderShipmentReference = providerResult.ProviderShipmentReference.Trim();");
         createHandlerSource.Should().Contain("shipment.LastCarrierEventKey = \"shipment.provider_created\";");
         createHandlerSource.Should().Contain("await ShipmentCarrierEventRecorder.AddIfMissingAsync(");
         createHandlerSource.Should().Contain("OperationType == \"GenerateLabel\"");
@@ -12743,8 +12762,9 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createHandlerSource.Should().Contain("_db.Set<ShipmentProviderOperation>().Add(queuedLabelOperationEntry);");
 
         helperSource.Should().Contain("internal static class DhlShipmentPhaseOneMetadata");
-        helperSource.Should().Contain("return $\"dhl-ship-{shipment.Id:N}\";");
-        helperSource.Should().Contain("return new Uri(baseUri, relative).ToString();");
+        helperSource.Should().Contain("ParseShippingAddress");
+        helperSource.Should().NotContain("BuildProviderShipmentReference");
+        helperSource.Should().NotContain("BuildLabelUrl");
     }
 
     [Fact]

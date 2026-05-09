@@ -88,7 +88,9 @@ namespace Darwin.Application.Billing.DTOs
     public sealed class TaxComplianceOpsSummaryDto
     {
         public int BusinessCustomersMissingVatIdCount { get; set; }
+        public int BusinessCustomersVatValidationReviewCount { get; set; }
         public int BusinessInvoicesMissingVatIdCount { get; set; }
+        public int ReverseChargeCandidateInvoiceCount { get; set; }
         public int DraftInvoiceCount { get; set; }
         public int DueSoonInvoiceCount { get; set; }
         public int OverdueInvoiceCount { get; set; }
@@ -97,6 +99,7 @@ namespace Darwin.Application.Billing.DTOs
     public sealed class TaxComplianceInvoiceReviewItemDto
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string? CompanyName { get; set; }
@@ -109,6 +112,12 @@ namespace Darwin.Application.Billing.DTOs
         public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
         public long TotalGrossMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
+        public bool RequiresVatId { get; set; }
+        public bool IsReverseChargeCandidate { get; set; }
+        public bool? ReverseChargeApplied { get; set; }
+        public DateTime? ReverseChargeReviewedAtUtc { get; set; }
+        public bool IsDueSoon { get; set; }
+        public bool IsOverdue { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
     }
@@ -116,11 +125,18 @@ namespace Darwin.Application.Billing.DTOs
     public sealed class TaxComplianceCustomerReviewItemDto
     {
         public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid? UserId { get; set; }
         public string DisplayName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? CompanyName { get; set; }
         public string? VatId { get; set; }
+        public bool RequiresVatId { get; set; }
+        public bool RequiresVatValidation { get; set; }
+        public CustomerVatValidationStatus VatValidationStatus { get; set; }
+        public DateTime? VatValidationCheckedAtUtc { get; set; }
+        public string? VatValidationSource { get; set; }
+        public string? VatValidationMessage { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
@@ -131,6 +147,34 @@ namespace Darwin.Application.Billing.DTOs
         public TaxComplianceOpsSummaryDto Summary { get; set; } = new();
         public List<TaxComplianceInvoiceReviewItemDto> InvoiceItems { get; set; } = new();
         public List<TaxComplianceCustomerReviewItemDto> CustomerItems { get; set; } = new();
+    }
+
+    public sealed class TaxComplianceInvoiceExportRowDto
+    {
+        public Guid InvoiceId { get; set; }
+        public Guid? BusinessId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CompanyName { get; set; }
+        public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
+        public string? CustomerVatId { get; set; }
+        public Guid? OrderId { get; set; }
+        public string? OrderNumber { get; set; }
+        public Guid? PaymentId { get; set; }
+        public InvoiceStatus Status { get; set; }
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
+        public long TotalNetMinor { get; set; }
+        public long TotalTaxMinor { get; set; }
+        public long TotalGrossMinor { get; set; }
+        public DateTime DueDateUtc { get; set; }
+        public bool RequiresVatId { get; set; }
+        public bool IsReverseChargeCandidate { get; set; }
+        public bool? ReverseChargeApplied { get; set; }
+        public DateTime? ReverseChargeReviewedAtUtc { get; set; }
+        public bool IsDueSoon { get; set; }
+        public bool IsOverdue { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
     }
 
     public sealed class BillingRefundListItemDto

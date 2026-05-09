@@ -1855,6 +1855,20 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<DateTime?>("VatValidationCheckedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("VatValidationMessage")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("VatValidationSource")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<int>("VatValidationStatus")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email");
@@ -1862,6 +1876,8 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("VatValidationStatus");
 
                     b.ToTable("Customers", "CRM");
                 });
@@ -2103,6 +2119,23 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ArchiveGeneratedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ArchivePurgeReason")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<DateTime?>("ArchivePurgedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ArchiveRetainUntilUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ArchiveRetentionPolicyVersion")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
                     b.Property<Guid?>("BusinessId")
                         .HasColumnType("uniqueidentifier");
 
@@ -2126,6 +2159,17 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("IssuedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IssuedSnapshotHashSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("IssuedSnapshotJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -2140,6 +2184,16 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.Property<Guid?>("PaymentId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool?>("ReverseChargeApplied")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ReverseChargeReviewNote")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime?>("ReverseChargeReviewedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -2161,13 +2215,21 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ArchivePurgedAtUtc");
+
+                    b.HasIndex("ArchiveRetainUntilUtc");
+
                     b.HasIndex("BusinessId");
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("IssuedAtUtc");
+
                     b.HasIndex("OrderId");
 
                     b.HasIndex("PaymentId");
+
+                    b.HasIndex("ReverseChargeApplied");
 
                     b.ToTable("Invoices", "CRM");
                 });
@@ -7432,6 +7494,9 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<string>("ImpressumUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("InvoiceArchiveRetentionYears")
+                        .HasColumnType("int");
 
                     b.Property<string>("InvoiceIssuerAddressLine1")
                         .HasMaxLength(300)

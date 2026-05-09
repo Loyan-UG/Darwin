@@ -85,8 +85,6 @@ namespace Darwin.WebAdmin.Extensions
         /// </summary>
         public static IServiceCollection AddWebComposition(this IServiceCollection services, IConfiguration config)
         {
-            var cookieSecurePolicy = ResolveCookieSecurePolicy(config);
-
             services.AddSingleton<IClock, SystemClock>();
             services.Configure<MediaStorageOptions>(config.GetSection(MediaStorageOptions.SectionName));
 
@@ -162,7 +160,7 @@ namespace Darwin.WebAdmin.Extensions
                     options.Cookie.Name = "Darwin.Auth";
                     options.Cookie.HttpOnly = true;
                     options.Cookie.SameSite = SameSiteMode.Lax;
-                    options.Cookie.SecurePolicy = cookieSecurePolicy;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                     options.SlidingExpiration = true;
                     options.ExpireTimeSpan = TimeSpan.FromDays(30);
 
@@ -173,6 +171,7 @@ namespace Darwin.WebAdmin.Extensions
 
             // Transactional email infrastructure; provider selection is configuration-driven.
             services.AddNotificationsInfrastructure(config);
+            services.AddComplianceInfrastructure(config);
 
 
             // Register handlers — Products
@@ -398,6 +397,8 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetCustomerSegmentMembershipsHandler>();
             services.AddScoped<CreateCustomerHandler>();
             services.AddScoped<UpdateCustomerHandler>();
+            services.AddScoped<UpdateCustomerTaxProfileHandler>();
+            services.AddScoped<ValidateCustomerVatIdHandler>();
             services.AddScoped<GetLeadsPageHandler>();
             services.AddScoped<GetLeadForEditHandler>();
             services.AddScoped<CreateLeadHandler>();
@@ -417,12 +418,17 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<RemoveCustomerSegmentMembershipHandler>();
             services.AddScoped<GetInvoicesPageHandler>();
             services.AddScoped<GetInvoiceForEditHandler>();
+            services.AddScoped<GetInvoiceArchiveSnapshotHandler>();
+            services.AddScoped<GetInvoiceArchiveDocumentHandler>();
             services.AddScoped<CreateInvoiceRefundHandler>();
             services.AddScoped<UpdateInvoiceHandler>();
             services.AddScoped<TransitionInvoiceStatusHandler>();
+            services.AddScoped<UpdateInvoiceReverseChargeDecisionHandler>();
+            services.AddScoped<UpdateCustomerVatValidationDecisionHandler>();
             services.AddScoped<GetPaymentsPageHandler>();
             services.AddScoped<GetPaymentOpsSummaryHandler>();
             services.AddScoped<GetTaxComplianceOverviewHandler>();
+            services.AddScoped<GetTaxComplianceInvoiceExportHandler>();
             services.AddScoped<GetBillingPlansAdminPageHandler>();
             services.AddScoped<GetBillingPlanOpsSummaryHandler>();
             services.AddScoped<GetBillingPlanForEditHandler>();
@@ -543,7 +549,7 @@ namespace Darwin.WebAdmin.Extensions
                 options.Cookie.Name = "Darwin.AntiForgery";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
-                options.Cookie.SecurePolicy = cookieSecurePolicy;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
 
             // HTML Sanitizer using our factory (singleton across the app)
@@ -658,14 +664,6 @@ namespace Darwin.WebAdmin.Extensions
             services.AddValidatorsFromAssembly(Assembly.Load("Darwin.Application"), includeInternalTypes: true);
 
             return services;
-        }
-
-        private static CookieSecurePolicy ResolveCookieSecurePolicy(IConfiguration config)
-        {
-            var configured = config["Security:CookieSecurePolicy"];
-            return Enum.TryParse<CookieSecurePolicy>(configured, ignoreCase: true, out var policy)
-                ? policy
-                : CookieSecurePolicy.Always;
         }
 
         /// <summary>

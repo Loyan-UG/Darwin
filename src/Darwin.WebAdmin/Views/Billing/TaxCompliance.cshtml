@@ -1,5 +1,6 @@
 @using System.Globalization
 @using Darwin.Application.CRM.DTOs
+@using Darwin.Domain.Enums
 @model Darwin.WebAdmin.ViewModels.Billing.TaxComplianceListVm
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
 @{
@@ -8,6 +9,7 @@
     string GlobalRefundsUrl() => Url.Action("Refunds", "Billing") ?? string.Empty;
     string GlobalInvoicesUrl() => Url.Action("Invoices", "Crm") ?? string.Empty;
     string TaxSettingsUrl() => Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" }) ?? string.Empty;
+    string TaxComplianceExportUrl() => Url.Action("ExportTaxComplianceInvoices", "Billing") ?? string.Empty;
     string CrmCustomersUrl(CustomerQueueFilter filter) => Url.Action("Customers", "Crm", new { filter }) ?? string.Empty;
     string CrmInvoicesUrl(string filter) => Url.Action("Invoices", "Crm", new { filter }) ?? string.Empty;
     string CrmInvoicesByQueryUrl(string q) => Url.Action("Invoices", "Crm", new { q }) ?? string.Empty;
@@ -20,13 +22,16 @@
     string LocalizeTaxInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string TaxComplianceOpsHealthBadgeClass(bool healthy) => healthy ? "text-bg-success" : "text-bg-warning";
     string TaxComplianceOpsHealthBadgeText(bool healthy) => healthy ? T.T("Ready") : T.T("NeedsAttention");
+    string LocalizeVatValidationStatus(CustomerVatValidationStatus status) => T.T($"CustomerVatValidationStatus{status}");
     var taxComplianceAttentionCount = Model.Summary.BusinessCustomersMissingVatIdCount
+        + Model.Summary.BusinessCustomersVatValidationReviewCount
         + Model.Summary.BusinessInvoicesMissingVatIdCount
+        + Model.Summary.ReverseChargeCandidateInvoiceCount
         + Model.Summary.OverdueInvoiceCount
         + (!Model.Tax.ArchiveReadinessComplete ? 1 : 0)
         + (!Model.Tax.EInvoiceBaselineReady ? 1 : 0);
     var taxCollectionAttentionCount = Model.Summary.OverdueInvoiceCount + Model.Summary.DueSoonInvoiceCount;
-    var taxInvoicePreparationCount = Model.Summary.DraftInvoiceCount + Model.Summary.BusinessInvoicesMissingVatIdCount;
+    var taxInvoicePreparationCount = Model.Summary.DraftInvoiceCount + Model.Summary.BusinessInvoicesMissingVatIdCount + Model.Summary.ReverseChargeCandidateInvoiceCount;
 }
 
 <div id="billing-tax-compliance-workspace-shell">
@@ -185,14 +190,16 @@
                hx-target="#billing-tax-compliance-workspace-shell"
                hx-swap="outerHTML"
                hx-push-url="true">@T.T("Payments")</a>
-            <a asp-controller="SiteSettings"
-               asp-action="Edit"
-               asp-fragment="site-settings-tax"
-               class="btn btn-sm btn-outline-secondary"
-               hx-get="@TaxSettingsUrl()"
-               hx-target="#billing-tax-compliance-workspace-shell"
-               hx-swap="outerHTML"
-               hx-push-url="true">@T.T("OpenTaxSettings")</a>
+                <a asp-controller="SiteSettings"
+                   asp-action="Edit"
+                   asp-fragment="site-settings-tax"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@TaxSettingsUrl()"
+                   hx-target="#billing-tax-compliance-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">@T.T("OpenTaxSettings")</a>
+            <a class="btn btn-sm btn-outline-primary"
+               href="@TaxComplianceExportUrl()">@T.T("ExportTaxComplianceCsv")</a>
         </div>
     </div>
     <div class="card-body">
@@ -236,15 +243,17 @@
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BusinessCustomersMissingVatId")</div><div class="fs-4 fw-semibold">@Model.Summary.BusinessCustomersMissingVatIdCount</div></div></div>
-    <div class="col-md-3"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BusinessInvoicesMissingVatId")</div><div class="fs-4 fw-semibold">@Model.Summary.BusinessInvoicesMissingVatIdCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BusinessCustomersMissingVatId")</div><div class="fs-4 fw-semibold">@Model.Summary.BusinessCustomersMissingVatIdCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BusinessVatValidationReview")</div><div class="fs-4 fw-semibold">@Model.Summary.BusinessCustomersVatValidationReviewCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("BusinessInvoicesMissingVatId")</div><div class="fs-4 fw-semibold">@Model.Summary.BusinessInvoicesMissingVatIdCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("ReverseChargeReview")</div><div class="fs-4 fw-semibold">@Model.Summary.ReverseChargeCandidateInvoiceCount</div></div></div>
     <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("DraftInvoices")</div><div class="fs-4 fw-semibold">@Model.Summary.DraftInvoiceCount</div></div></div>
     <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("DueSoonInvoices")</div><div class="fs-4 fw-semibold">@Model.Summary.DueSoonInvoiceCount</div></div></div>
     <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">@T.T("OverdueInvoices")</div><div class="fs-4 fw-semibold">@Model.Summary.OverdueInvoiceCount</div></div></div>
 </div>
 
-<div class="card mb-3">
-    <div class="card-header">@T.T("TaxCompliancePlaybooksTitle")</div>
+<details class="card mb-3">
+    <summary class="card-header">@T.T("TaxCompliancePlaybooksTitle")</summary>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
@@ -270,7 +279,7 @@
             </table>
         </div>
     </div>
-</div>
+</details>
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -305,11 +314,9 @@
                     <tbody>
                     @foreach (var item in Model.InvoiceItems)
                     {
-                        var taxInvoiceNeedsVatRemediation =
-                            item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business &&
-                            string.IsNullOrWhiteSpace(item.CustomerVatId);
-                        var taxInvoiceNeedsCollectionFollowUp =
-                            item.Status.ToString() == "Overdue" || item.Status.ToString() == "DueSoon";
+                        var taxInvoiceNeedsVatRemediation = item.RequiresVatId;
+                        var taxInvoiceNeedsReverseChargeReview = item.IsReverseChargeCandidate;
+                        var taxInvoiceNeedsCollectionFollowUp = item.IsOverdue || item.IsDueSoon;
                         <tr>
                             <td>
                                 <div class="fw-semibold">@item.CustomerDisplayName</div>
@@ -317,13 +324,37 @@
                                 {
                                     <div class="small text-muted">@item.CompanyName</div>
                                 }
-                                @if (item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(item.CustomerVatId))
+                                @if (item.RequiresVatId)
                                 {
                                     <div class="small text-danger">@T.T("VatIdMissing")</div>
                                 }
+                                @if (item.IsReverseChargeCandidate)
+                                {
+                                    <div class="small text-warning">@T.T("ReverseChargeReview")</div>
+                                }
+                                @if (item.ReverseChargeApplied.HasValue)
+                                {
+                                    <div class="small text-muted">
+                                        @(item.ReverseChargeApplied.Value ? T.T("ReverseChargeAppliedStatus") : T.T("ReverseChargeNotApplicableStatus"))
+                                        @if (item.ReverseChargeReviewedAtUtc.HasValue)
+                                        {
+                                            <span>@string.Format(T.T("CreatedUtcValue"), item.ReverseChargeReviewedAtUtc.Value.ToLocalTime().ToString(CultureInfo.CurrentCulture))</span>
+                                        }
+                                    </div>
+                                }
                             </td>
                             <td>@(item.OrderNumber ?? "-")</td>
-                            <td>@LocalizeTaxInvoiceStatus(item.Status)</td>
+                            <td>
+                                <div>@LocalizeTaxInvoiceStatus(item.Status)</div>
+                                @if (item.IsOverdue)
+                                {
+                                    <span class="badge text-bg-danger">@T.T("OverdueInvoices")</span>
+                                }
+                                else if (item.IsDueSoon)
+                                {
+                                    <span class="badge text-bg-warning">@T.T("DueSoonInvoices")</span>
+                                }
+                            </td>
                             <td>@item.Currency @((item.TotalGrossMinor / 100.0m).ToString("0.00"))</td>
                             <td>@string.Format(T.T("CreatedUtcValue"), item.DueDateUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture))</td>
                             <td>
@@ -394,6 +425,33 @@
                                            hx-swap="outerHTML"
                                            hx-push-url="true">@T.T("FixVatId")</a>
                                     }
+                                    @if (taxInvoiceNeedsReverseChargeReview)
+                                    {
+                                        <form asp-action="UpdateInvoiceReverseChargeDecision"
+                                              method="post"
+                                              class="d-inline"
+                                              hx-post="@Url.Action("UpdateInvoiceReverseChargeDecision", "Billing")"
+                                              hx-target="#billing-tax-compliance-workspace-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@item.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                            <input type="hidden" name="Applies" value="true" />
+                                            <button type="submit" class="btn btn-sm btn-warning">@T.T("ReverseChargeApplies")</button>
+                                        </form>
+                                        <form asp-action="UpdateInvoiceReverseChargeDecision"
+                                              method="post"
+                                              class="d-inline"
+                                              hx-post="@Url.Action("UpdateInvoiceReverseChargeDecision", "Billing")"
+                                              hx-target="#billing-tax-compliance-workspace-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@item.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                            <input type="hidden" name="Applies" value="false" />
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">@T.T("ReverseChargeNotApplicable")</button>
+                                        </form>
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -446,13 +504,25 @@
                                 {
                                     <div class="small text-muted">@item.CompanyName</div>
                                 }
-                                <div class="small text-danger">@T.T("VatIdMissing")</div>
+                                @if (item.RequiresVatId)
+                                {
+                                    <div class="small text-danger">@T.T("VatIdMissing")</div>
+                                }
+                                else if (item.RequiresVatValidation)
+                                {
+                                    <div class="small text-warning">@T.T("BusinessVatValidationReview")</div>
+                                    <div class="small text-muted">@LocalizeVatValidationStatus(item.VatValidationStatus)</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.VatValidationMessage))
+                                    {
+                                        <div class="small text-muted">@item.VatValidationMessage</div>
+                                    }
+                                }
                             </td>
                             <td>@item.Email</td>
                             <td>@item.OpportunityCount</td>
                             <td>@string.Format(T.T("CreatedUtcValue"), (item.ModifiedAtUtc ?? item.CreatedAtUtc).ToLocalTime().ToString(CultureInfo.CurrentCulture))</td>
                             <td>
-                                <div class="d-flex gap-2 flex-wrap">
+                                <div class="d-flex gap-2 flex-wrap mb-2">
                                     <a asp-controller="CRM"
                                        asp-action="EditCustomer"
                                        asp-route-id="@item.Id"
@@ -481,6 +551,94 @@
                                            hx-push-url="true">@T.T("Opportunities")</a>
                                     }
                                 </div>
+                                @if (item.RequiresVatId)
+                                {
+                                    <form asp-action="UpdateCustomerTaxProfile"
+                                          method="post"
+                                          class="d-flex flex-wrap align-items-end gap-2"
+                                          hx-post="@Url.Action("UpdateCustomerTaxProfile", "Billing")"
+                                          hx-target="#billing-tax-compliance-workspace-shell"
+                                          hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="Id" value="@item.Id" />
+                                        <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                        <input type="hidden" name="TaxProfileType" value="@CustomerTaxProfileType.Business" />
+                                        <div>
+                                            <label class="form-label small mb-1" for="tax-company-@item.Id">@T.T("CompanyName")</label>
+                                            <input id="tax-company-@item.Id"
+                                                   name="CompanyName"
+                                                   value="@item.CompanyName"
+                                                   class="form-control form-control-sm"
+                                                   maxlength="200"
+                                                   required />
+                                        </div>
+                                        <div>
+                                            <label class="form-label small mb-1" for="tax-vat-@item.Id">@T.T("CustomerVatId")</label>
+                                            <input id="tax-vat-@item.Id"
+                                                   name="VatId"
+                                                   value="@item.VatId"
+                                                   class="form-control form-control-sm"
+                                                   maxlength="64"
+                                                   required />
+                                        </div>
+                                        <button type="submit" class="btn btn-sm btn-warning">@T.T("SaveVatId")</button>
+                                    </form>
+                                }
+                                else if (item.RequiresVatValidation)
+                                {
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <form asp-action="ValidateCustomerVatId"
+                                              method="post"
+                                              class="d-inline"
+                                              hx-post="@Url.Action("ValidateCustomerVatId", "Billing")"
+                                              hx-target="#billing-tax-compliance-workspace-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@item.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                            <button type="submit" class="btn btn-sm btn-primary">@T.T("VatValidationLookup")</button>
+                                        </form>
+                                        <form asp-action="UpdateCustomerVatValidationDecision"
+                                              method="post"
+                                              class="d-inline"
+                                              hx-post="@Url.Action("UpdateCustomerVatValidationDecision", "Billing")"
+                                              hx-target="#billing-tax-compliance-workspace-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@item.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                            <input type="hidden" name="Status" value="@CustomerVatValidationStatus.Valid" />
+                                            <input type="hidden" name="Source" value="operator" />
+                                            <button type="submit" class="btn btn-sm btn-success">@T.T("VatValidationValid")</button>
+                                        </form>
+                                        <form asp-action="UpdateCustomerVatValidationDecision"
+                                              method="post"
+                                              class="d-inline"
+                                              hx-post="@Url.Action("UpdateCustomerVatValidationDecision", "Billing")"
+                                              hx-target="#billing-tax-compliance-workspace-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@item.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                            <input type="hidden" name="Status" value="@CustomerVatValidationStatus.Invalid" />
+                                            <input type="hidden" name="Source" value="operator" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">@T.T("VatValidationInvalid")</button>
+                                        </form>
+                                        <form asp-action="UpdateCustomerVatValidationDecision"
+                                              method="post"
+                                              class="d-inline"
+                                              hx-post="@Url.Action("UpdateCustomerVatValidationDecision", "Billing")"
+                                              hx-target="#billing-tax-compliance-workspace-shell"
+                                              hx-swap="outerHTML">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="Id" value="@item.Id" />
+                                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                            <input type="hidden" name="Status" value="@CustomerVatValidationStatus.NotApplicable" />
+                                            <input type="hidden" name="Source" value="operator" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">@T.T("VatValidationNotApplicable")</button>
+                                        </form>
+                                    </div>
+                                }
                             </td>
                         </tr>
                     }

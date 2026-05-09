@@ -91,6 +91,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.InvoiceIssuerPostalCode).HasMaxLength(32);
             builder.Property(x => x.InvoiceIssuerCity).HasMaxLength(120);
             builder.Property(x => x.InvoiceIssuerCountry).HasMaxLength(2);
+            builder.Property(x => x.InvoiceArchiveRetentionYears).IsRequired();
             builder.Property(x => x.DhlEnabled).IsRequired();
             builder.Property(x => x.DhlEnvironment).HasMaxLength(50);
             builder.Property(x => x.DhlApiBaseUrl).HasMaxLength(500);

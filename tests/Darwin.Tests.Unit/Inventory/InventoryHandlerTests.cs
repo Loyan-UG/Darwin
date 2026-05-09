@@ -282,6 +282,39 @@ public sealed class InventoryHandlerTests
         stockLevel.ReservedQuantity.Should().Be(3);
     }
 
+    [Fact]
+    public async Task ReserveInventory_Should_BeIdempotent_When_ReferenceAlreadyLedgered()
+    {
+        var db = TestDbFactory.Create();
+        var handler = new ReserveInventoryHandler(db, CreateLocalizer());
+
+        var variantId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var referenceId = Guid.NewGuid();
+
+        await db.Set<Warehouse>().AddAsync(new Warehouse { Id = warehouseId, Name = "WH", IsDefault = true }, TestContext.Current.CancellationToken);
+        await db.Set<ProductVariant>().AddAsync(new ProductVariant { Id = variantId, Sku = "SKU6-IDEMP", StockOnHand = 0 }, TestContext.Current.CancellationToken);
+        await db.Set<StockLevel>().AddAsync(new StockLevel { Id = Guid.NewGuid(), WarehouseId = warehouseId, ProductVariantId = variantId, AvailableQuantity = 10, ReservedQuantity = 0 }, TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var dto = new InventoryReserveDto
+        {
+            VariantId = variantId,
+            WarehouseId = warehouseId,
+            Quantity = 3,
+            Reason = "CartReservation",
+            ReferenceId = referenceId
+        };
+
+        await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+        await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        var stockLevel = db.Set<StockLevel>().Single(s => s.ProductVariantId == variantId);
+        stockLevel.AvailableQuantity.Should().Be(7);
+        stockLevel.ReservedQuantity.Should().Be(3);
+        db.Set<InventoryTransaction>().Count(t => t.ReferenceId == referenceId && t.Reason == "CartReservation").Should().Be(1);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // ReleaseInventoryReservationHandler
     // ─────────────────────────────────────────────────────────────────────────
@@ -352,5 +385,38 @@ public sealed class InventoryHandlerTests
         var stockLevel = db.Set<StockLevel>().Single(s => s.ProductVariantId == variantId);
         stockLevel.ReservedQuantity.Should().Be(0, "all reserved stock was released");
         stockLevel.AvailableQuantity.Should().Be(10, "4 units returned to available pool");
+    }
+
+    [Fact]
+    public async Task ReleaseInventoryReservation_Should_BeIdempotent_When_ReferenceAlreadyLedgered()
+    {
+        var db = TestDbFactory.Create();
+        var handler = new ReleaseInventoryReservationHandler(db, CreateLocalizer());
+
+        var variantId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var referenceId = Guid.NewGuid();
+
+        await db.Set<Warehouse>().AddAsync(new Warehouse { Id = warehouseId, Name = "WH", IsDefault = true }, TestContext.Current.CancellationToken);
+        await db.Set<ProductVariant>().AddAsync(new ProductVariant { Id = variantId, Sku = "SKU8-IDEMP", StockOnHand = 0, StockReserved = 4 }, TestContext.Current.CancellationToken);
+        await db.Set<StockLevel>().AddAsync(new StockLevel { Id = Guid.NewGuid(), WarehouseId = warehouseId, ProductVariantId = variantId, AvailableQuantity = 6, ReservedQuantity = 4 }, TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var dto = new InventoryReleaseReservationDto
+        {
+            VariantId = variantId,
+            WarehouseId = warehouseId,
+            Quantity = 4,
+            Reason = "CartAbandonment",
+            ReferenceId = referenceId
+        };
+
+        await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+        await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        var stockLevel = db.Set<StockLevel>().Single(s => s.ProductVariantId == variantId);
+        stockLevel.ReservedQuantity.Should().Be(0);
+        stockLevel.AvailableQuantity.Should().Be(10);
+        db.Set<InventoryTransaction>().Count(t => t.ReferenceId == referenceId && t.Reason == "CartAbandonment").Should().Be(1);
     }
 }

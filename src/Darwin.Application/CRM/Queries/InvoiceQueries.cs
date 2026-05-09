@@ -8,6 +8,10 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace Darwin.Application.CRM.Queries
 {
@@ -79,6 +83,14 @@ namespace Darwin.Application.CRM.Queries
                     TotalGrossMinor = x.TotalGrossMinor,
                     DueDateUtc = x.DueDateUtc,
                     PaidAtUtc = x.PaidAtUtc,
+                    IssuedAtUtc = x.IssuedAtUtc,
+                    HasIssuedSnapshot = !string.IsNullOrWhiteSpace(x.IssuedSnapshotJson),
+                    IssuedSnapshotHashSha256 = x.IssuedSnapshotHashSha256,
+                    ArchiveGeneratedAtUtc = x.ArchiveGeneratedAtUtc,
+                    ArchiveRetainUntilUtc = x.ArchiveRetainUntilUtc,
+                    ArchiveRetentionPolicyVersion = x.ArchiveRetentionPolicyVersion,
+                    ArchivePurgedAtUtc = x.ArchivePurgedAtUtc,
+                    ArchivePurgeReason = x.ArchivePurgeReason,
                     RowVersion = x.RowVersion
                 })
                 .ToListAsync(ct)
@@ -254,8 +266,245 @@ namespace Darwin.Application.CRM.Queries
                 SettledAmountMinor = settledAmountMinor,
                 BalanceMinor = balanceMinor,
                 DueDateUtc = invoice.DueDateUtc,
-                PaidAtUtc = invoice.PaidAtUtc
+                PaidAtUtc = invoice.PaidAtUtc,
+                IssuedAtUtc = invoice.IssuedAtUtc,
+                HasIssuedSnapshot = !string.IsNullOrWhiteSpace(invoice.IssuedSnapshotJson),
+                IssuedSnapshotHashSha256 = invoice.IssuedSnapshotHashSha256,
+                ArchiveGeneratedAtUtc = invoice.ArchiveGeneratedAtUtc,
+                ArchiveRetainUntilUtc = invoice.ArchiveRetainUntilUtc,
+                ArchiveRetentionPolicyVersion = invoice.ArchiveRetentionPolicyVersion,
+                ArchivePurgedAtUtc = invoice.ArchivePurgedAtUtc,
+                ArchivePurgeReason = invoice.ArchivePurgeReason
             };
+        }
+    }
+
+    public sealed class GetInvoiceArchiveSnapshotHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetInvoiceArchiveSnapshotHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+        public async Task<InvoiceArchiveSnapshotDto?> HandleAsync(Guid id, CancellationToken ct = default)
+        {
+            if (id == Guid.Empty)
+            {
+                return null;
+            }
+
+            var invoice = await _db.Set<Invoice>()
+                .AsNoTracking()
+                .Where(x => x.Id == id && !x.IsDeleted && !x.ArchivePurgedAtUtc.HasValue)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.IssuedAtUtc,
+                    x.IssuedSnapshotJson
+                })
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false);
+
+            if (invoice is null ||
+                !invoice.IssuedAtUtc.HasValue ||
+                string.IsNullOrWhiteSpace(invoice.IssuedSnapshotJson))
+            {
+                return null;
+            }
+
+            return new InvoiceArchiveSnapshotDto
+            {
+                InvoiceId = invoice.Id,
+                IssuedAtUtc = invoice.IssuedAtUtc.Value,
+                FileName = $"invoice-{invoice.Id:N}-issued-snapshot.json",
+                SnapshotJson = invoice.IssuedSnapshotJson
+            };
+        }
+    }
+
+    public sealed class GetInvoiceArchiveDocumentHandler
+    {
+        private readonly GetInvoiceArchiveSnapshotHandler _snapshots;
+
+        public GetInvoiceArchiveDocumentHandler(GetInvoiceArchiveSnapshotHandler snapshots)
+        {
+            _snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
+        }
+
+        public async Task<InvoiceArchiveDocumentDto?> HandleAsync(Guid id, CancellationToken ct = default)
+        {
+            var snapshot = await _snapshots.HandleAsync(id, ct).ConfigureAwait(false);
+            if (snapshot is null)
+            {
+                return null;
+            }
+
+            return new InvoiceArchiveDocumentDto
+            {
+                InvoiceId = snapshot.InvoiceId,
+                IssuedAtUtc = snapshot.IssuedAtUtc,
+                FileName = $"invoice-{snapshot.InvoiceId:N}-archive.html",
+                Html = BuildHtml(snapshot.SnapshotJson)
+            };
+        }
+
+        private static string BuildHtml(string snapshotJson)
+        {
+            using var document = JsonDocument.Parse(snapshotJson);
+            var root = document.RootElement;
+            var currency = GetString(root, "currency") ?? "EUR";
+            var invoiceId = GetString(root, "invoiceId") ?? string.Empty;
+            var issuedAtUtc = GetDateTime(root, "issuedAtUtc");
+            var dueDateUtc = GetDateTime(root, "dueDateUtc");
+            var issuer = TryGet(root, "issuer");
+            var customer = TryGet(root, "customer");
+            var business = TryGet(root, "business");
+            var encoder = HtmlEncoder.Default;
+            var html = new StringBuilder();
+
+            html.AppendLine("<!doctype html>");
+            html.AppendLine("<html lang=\"en\">");
+            html.AppendLine("<head>");
+            html.AppendLine("<meta charset=\"utf-8\">");
+            html.AppendLine("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+            html.Append("<title>Invoice ").Append(encoder.Encode(invoiceId)).AppendLine("</title>");
+            html.AppendLine("<style>body{font-family:Arial,sans-serif;margin:2rem;color:#1f2937}.header{display:flex;justify-content:space-between;gap:2rem;border-bottom:1px solid #d1d5db;padding-bottom:1rem;margin-bottom:1.5rem}.muted{color:#6b7280}.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}.box{border:1px solid #d1d5db;border-radius:8px;padding:1rem}table{width:100%;border-collapse:collapse;margin-top:1rem}th,td{border-bottom:1px solid #e5e7eb;padding:.6rem;text-align:left}th{background:#f9fafb}.amount{text-align:right}.totals{margin-left:auto;width:20rem}.small{font-size:.875rem}@media print{body{margin:1rem}.no-print{display:none}}</style>");
+            html.AppendLine("</head>");
+            html.AppendLine("<body>");
+            html.AppendLine("<div class=\"header\">");
+            html.AppendLine("<div>");
+            html.AppendLine("<h1>Invoice archive document</h1>");
+            html.Append("<div class=\"muted small\">Snapshot invoice ID: ").Append(encoder.Encode(invoiceId)).AppendLine("</div>");
+            html.AppendLine("</div>");
+            html.AppendLine("<div class=\"amount\">");
+            html.Append("<div><strong>Issued:</strong> ").Append(encoder.Encode(FormatDate(issuedAtUtc))).AppendLine("</div>");
+            html.Append("<div><strong>Due:</strong> ").Append(encoder.Encode(FormatDate(dueDateUtc))).AppendLine("</div>");
+            html.AppendLine("</div>");
+            html.AppendLine("</div>");
+
+            html.AppendLine("<div class=\"grid\">");
+            AppendParty(html, "Issuer", issuer, encoder);
+            AppendParty(html, "Customer", customer, encoder);
+            html.AppendLine("</div>");
+
+            if (business.HasValue)
+            {
+                html.AppendLine("<div class=\"box\">");
+                html.AppendLine("<h2>Business context</h2>");
+                AppendLine(html, "Name", GetString(business.Value, "name"), encoder);
+                AppendLine(html, "Legal name", GetString(business.Value, "legalName"), encoder);
+                AppendLine(html, "Tax ID", GetString(business.Value, "taxId"), encoder);
+                html.AppendLine("</div>");
+            }
+
+            html.AppendLine("<table>");
+            html.AppendLine("<thead><tr><th>Description</th><th class=\"amount\">Qty</th><th class=\"amount\">Unit net</th><th class=\"amount\">Tax rate</th><th class=\"amount\">Net</th><th class=\"amount\">Gross</th></tr></thead>");
+            html.AppendLine("<tbody>");
+            if (root.TryGetProperty("lines", out var lines) && lines.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var line in lines.EnumerateArray())
+                {
+                    html.AppendLine("<tr>");
+                    html.Append("<td>").Append(encoder.Encode(GetString(line, "description") ?? string.Empty)).AppendLine("</td>");
+                    html.Append("<td class=\"amount\">").Append(GetInt(line, "quantity").ToString(CultureInfo.InvariantCulture)).AppendLine("</td>");
+                    html.Append("<td class=\"amount\">").Append(encoder.Encode(FormatMoney(GetLong(line, "unitPriceNetMinor"), currency))).AppendLine("</td>");
+                    html.Append("<td class=\"amount\">").Append(encoder.Encode(FormatPercent(GetDecimal(line, "taxRate")))).AppendLine("</td>");
+                    html.Append("<td class=\"amount\">").Append(encoder.Encode(FormatMoney(GetLong(line, "totalNetMinor"), currency))).AppendLine("</td>");
+                    html.Append("<td class=\"amount\">").Append(encoder.Encode(FormatMoney(GetLong(line, "totalGrossMinor"), currency))).AppendLine("</td>");
+                    html.AppendLine("</tr>");
+                }
+            }
+
+            html.AppendLine("</tbody></table>");
+            html.AppendLine("<table class=\"totals\">");
+            AppendTotal(html, "Total net", GetLong(root, "totalNetMinor"), currency, encoder);
+            AppendTotal(html, "Total tax", GetLong(root, "totalTaxMinor"), currency, encoder);
+            AppendTotal(html, "Total gross", GetLong(root, "totalGrossMinor"), currency, encoder);
+            html.AppendLine("</table>");
+            html.AppendLine("<p class=\"muted small\">Generated from the immutable issued invoice snapshot. Keep retention and e-invoice submission rules in the compliance archive policy.</p>");
+            html.AppendLine("</body></html>");
+            return html.ToString();
+        }
+
+        private static JsonElement? TryGet(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Object ? value : null;
+
+        private static string? GetString(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+        private static long GetLong(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.TryGetInt64(out var result) ? result : 0L;
+
+        private static int GetInt(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.TryGetInt32(out var result) ? result : 0;
+
+        private static decimal GetDecimal(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.TryGetDecimal(out var result) ? result : 0m;
+
+        private static DateTime? GetDateTime(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.TryGetDateTime(out var result) ? result : null;
+
+        private static string FormatDate(DateTime? value) =>
+            value.HasValue ? value.Value.ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture) : "-";
+
+        private static string FormatMoney(long minor, string currency) =>
+            string.Create(CultureInfo.InvariantCulture, $"{minor / 100m:0.00} {currency}");
+
+        private static string FormatPercent(decimal value) =>
+            string.Create(CultureInfo.InvariantCulture, $"{value * 100m:0.####}%");
+
+        private static void AppendParty(StringBuilder html, string title, JsonElement? party, HtmlEncoder encoder)
+        {
+            html.AppendLine("<div class=\"box\">");
+            html.Append("<h2>").Append(encoder.Encode(title)).AppendLine("</h2>");
+            if (!party.HasValue)
+            {
+                html.AppendLine("<div class=\"muted\">Not available</div>");
+            }
+            else
+            {
+                AppendLine(html, "Legal/name", GetString(party.Value, "legalName") ?? GetString(party.Value, "companyName") ?? BuildPersonName(party.Value), encoder);
+                AppendLine(html, "Tax/VAT ID", GetString(party.Value, "taxId") ?? GetString(party.Value, "vatId"), encoder);
+                AppendLine(html, "Email", GetString(party.Value, "email"), encoder);
+                AppendLine(html, "Address", BuildAddress(party.Value), encoder);
+            }
+
+            html.AppendLine("</div>");
+        }
+
+        private static string BuildPersonName(JsonElement party)
+        {
+            var firstName = GetString(party, "firstName");
+            var lastName = GetString(party, "lastName");
+            return string.Join(' ', new[] { firstName, lastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        }
+
+        private static string BuildAddress(JsonElement party)
+        {
+            return string.Join(", ", new[]
+            {
+                GetString(party, "addressLine1"),
+                GetString(party, "postalCode"),
+                GetString(party, "city"),
+                GetString(party, "country")
+            }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        }
+
+        private static void AppendLine(StringBuilder html, string label, string? value, HtmlEncoder encoder)
+        {
+            html.Append("<div><span class=\"muted\">")
+                .Append(encoder.Encode(label))
+                .Append(":</span> ")
+                .Append(encoder.Encode(string.IsNullOrWhiteSpace(value) ? "-" : value))
+                .AppendLine("</div>");
+        }
+
+        private static void AppendTotal(StringBuilder html, string label, long amountMinor, string currency, HtmlEncoder encoder)
+        {
+            html.Append("<tr><th>")
+                .Append(encoder.Encode(label))
+                .Append("</th><td class=\"amount\">")
+                .Append(encoder.Encode(FormatMoney(amountMinor, currency)))
+                .AppendLine("</td></tr>");
         }
     }
 }

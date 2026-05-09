@@ -516,6 +516,14 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public long BalanceMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+        public DateTime? IssuedAtUtc { get; set; }
+        public bool HasIssuedSnapshot { get; set; }
+        public string? IssuedSnapshotHashSha256 { get; set; }
+        public DateTime? ArchiveGeneratedAtUtc { get; set; }
+        public DateTime? ArchiveRetainUntilUtc { get; set; }
+        public string? ArchiveRetentionPolicyVersion { get; set; }
+        public DateTime? ArchivePurgedAtUtc { get; set; }
+        public string? ArchivePurgeReason { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -553,6 +561,14 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public long BalanceMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+        public DateTime? IssuedAtUtc { get; set; }
+        public bool HasIssuedSnapshot { get; set; }
+        public string? IssuedSnapshotHashSha256 { get; set; }
+        public DateTime? ArchiveGeneratedAtUtc { get; set; }
+        public DateTime? ArchiveRetainUntilUtc { get; set; }
+        public string? ArchiveRetentionPolicyVersion { get; set; }
+        public DateTime? ArchivePurgedAtUtc { get; set; }
+        public string? ArchivePurgeReason { get; set; }
         public bool IsFinancialContentLocked { get; set; }
         public string FinancialEditLockReason { get; set; } = string.Empty;
         public InvoiceRefundCreateVm Refund { get; set; } = new();

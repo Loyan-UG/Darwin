@@ -45,6 +45,8 @@ namespace Darwin.Application.Businesses.Commands
                 throw new ValidationException(_localizer["BusinessLifecycleUnsupportedAction"]);
             }
 
+            await BusinessApprovalPrerequisites.ValidateAsync(_db, entity, _localizer, ct).ConfigureAwait(false);
+
             entity.OperationalStatus = BusinessOperationalStatus.Approved;
             entity.ApprovedAtUtc ??= _clock.UtcNow;
             entity.SuspendedAtUtc = null;
@@ -78,6 +80,7 @@ namespace Darwin.Application.Businesses.Commands
 
             return entity;
         }
+
     }
 
     /// <summary>
@@ -178,6 +181,8 @@ namespace Darwin.Application.Businesses.Commands
                 throw new ValidationException(_localizer["BusinessLifecycleUnsupportedAction"]);
             }
 
+            await BusinessApprovalPrerequisites.ValidateAsync(_db, entity, _localizer, ct).ConfigureAwait(false);
+
             entity.OperationalStatus = BusinessOperationalStatus.Approved;
             entity.ApprovedAtUtc ??= _clock.UtcNow;
             entity.SuspendedAtUtc = null;
@@ -210,6 +215,48 @@ namespace Darwin.Application.Businesses.Commands
             }
 
             return entity;
+        }
+    }
+
+    internal static class BusinessApprovalPrerequisites
+    {
+        public static async Task ValidateAsync(
+            IAppDbContext db,
+            Business entity,
+            IStringLocalizer<ValidationResource> localizer,
+            CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(entity.ContactEmail) || string.IsNullOrWhiteSpace(entity.LegalName))
+            {
+                throw new ValidationException(localizer["BusinessApprovalPrerequisitesMissing"]);
+            }
+
+            var hasActiveOwner = await db.Set<BusinessMember>()
+                .AsNoTracking()
+                .AnyAsync(x =>
+                    x.BusinessId == entity.Id &&
+                    !x.IsDeleted &&
+                    x.IsActive &&
+                    x.Role == BusinessMemberRole.Owner,
+                    ct)
+                .ConfigureAwait(false);
+            if (!hasActiveOwner)
+            {
+                throw new ValidationException(localizer["BusinessApprovalPrerequisitesMissing"]);
+            }
+
+            var hasPrimaryLocation = await db.Set<BusinessLocation>()
+                .AsNoTracking()
+                .AnyAsync(x =>
+                    x.BusinessId == entity.Id &&
+                    !x.IsDeleted &&
+                    x.IsPrimary,
+                    ct)
+                .ConfigureAwait(false);
+            if (!hasPrimaryLocation)
+            {
+                throw new ValidationException(localizer["BusinessApprovalPrerequisitesMissing"]);
+            }
         }
     }
 }

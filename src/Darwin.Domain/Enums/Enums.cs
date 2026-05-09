@@ -124,6 +124,15 @@ namespace Darwin.Domain.Enums
         Business = 1
     }
 
+    /// <summary>Operator or provider-backed VAT validation state for business customers.</summary>
+    public enum CustomerVatValidationStatus
+    {
+        Unknown = 0,
+        Valid = 1,
+        Invalid = 2,
+        NotApplicable = 3
+    }
+
     /// <summary>Invoice lifecycle status.</summary>
     public enum InvoiceStatus
     {

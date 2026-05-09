@@ -159,6 +159,10 @@ namespace Darwin.Application.Settings.Validators
                 .When(x => !string.IsNullOrWhiteSpace(x.InvoiceIssuerCountry))
                 .WithMessage(localizer["SiteSettingInvoiceIssuerCountryCode"]);
 
+            RuleFor(x => x.InvoiceArchiveRetentionYears)
+                .InclusiveBetween(1, 30)
+                .WithMessage(localizer["SiteSettingInvoiceArchiveRetentionYearsRange"]);
+
             RuleFor(x => x.DhlEnvironment)
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlEnvironment));

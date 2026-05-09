@@ -1007,6 +1007,12 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                     <input asp-for="InvoiceIssuerCountry" class="form-control" />
                     <span asp-validation-for="InvoiceIssuerCountry" class="text-danger"></span>
                 </div>
+                <div class="col-md-2">
+                    <label asp-for="InvoiceArchiveRetentionYears" class="form-label"></label>
+                    <field-help title="@T.T("SiteSettingInvoiceArchiveRetentionYears")" content="@T.T("SiteSettingsInvoiceArchiveRetentionYearsHelp")" placement="right"></field-help>
+                    <input asp-for="InvoiceArchiveRetentionYears" class="form-control" type="number" min="1" max="30" />
+                    <span asp-validation-for="InvoiceArchiveRetentionYears" class="text-danger"></span>
+                </div>
             </div>
         </div>
     </div>

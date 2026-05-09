@@ -2454,6 +2454,9 @@
   <data name="FixVatId" xml:space="preserve">
     <value>Fix VAT ID</value>
   </data>
+  <data name="SaveVatId" xml:space="preserve">
+    <value>Save VAT ID</value>
+  </data>
   <data name="Post" xml:space="preserve">
     <value>Post</value>
   </data>
@@ -9022,6 +9025,9 @@
   <data name="TaxComplianceOpenOrderAction" xml:space="preserve">
     <value>Open Order</value>
   </data>
+  <data name="ExportTaxComplianceCsv" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
   <data name="TaxCompliancePlaybookVatCleanupTitle" xml:space="preserve">
     <value>B2B VAT cleanup</value>
   </data>
@@ -13254,5 +13260,98 @@
   </data>
   <data name="SiteSettingsJwtRequireDeviceBindingHelp" xml:space="preserve">
     <value>Requires refresh tokens to be bound to a known device identifier. Keep enabled for mobile security.</value>
+  </data>
+  <data name="ArchiveSnapshotAvailable" xml:space="preserve">
+    <value>Archive snapshot available</value>
+  </data>
+  <data name="DownloadArchiveSnapshot" xml:space="preserve">
+    <value>Download archive snapshot</value>
+  </data>
+  <data name="DownloadArchiveDocument" xml:space="preserve">
+    <value>Download archive document</value>
+  </data>
+  <data name="InvoiceArchiveUnavailableMessage" xml:space="preserve">
+    <value>The invoice archive snapshot is not available yet. Issue the invoice before downloading an archive artifact.</value>
+  </data>
+  <data name="ReverseChargeReview" xml:space="preserve">
+    <value>Reverse-charge review</value>
+  </data>
+  <data name="ReverseChargeApplies" xml:space="preserve">
+    <value>Reverse charge applies</value>
+  </data>
+  <data name="ReverseChargeNotApplicable" xml:space="preserve">
+    <value>Not applicable</value>
+  </data>
+  <data name="ReverseChargeAppliedStatus" xml:space="preserve">
+    <value>Reverse charge applied</value>
+  </data>
+  <data name="ReverseChargeNotApplicableStatus" xml:space="preserve">
+    <value>Reverse charge not applicable</value>
+  </data>
+  <data name="InvoiceReverseChargeDecisionUpdatedMessage" xml:space="preserve">
+    <value>Reverse-charge decision updated.</value>
+  </data>
+  <data name="InvoiceReverseChargeDecisionUpdateFailedMessage" xml:space="preserve">
+    <value>Reverse-charge decision could not be updated.</value>
+  </data>
+  <data name="BusinessVatValidationReview" xml:space="preserve">
+    <value>VAT validation review</value>
+  </data>
+  <data name="VatValidationValid" xml:space="preserve">
+    <value>Mark VAT valid</value>
+  </data>
+  <data name="VatValidationInvalid" xml:space="preserve">
+    <value>Mark VAT invalid</value>
+  </data>
+  <data name="VatValidationNotApplicable" xml:space="preserve">
+    <value>Not applicable</value>
+  </data>
+  <data name="CustomerVatValidationStatusUnknown" xml:space="preserve">
+    <value>VAT validation not reviewed</value>
+  </data>
+  <data name="CustomerVatValidationStatusValid" xml:space="preserve">
+    <value>VAT valid</value>
+  </data>
+  <data name="CustomerVatValidationStatusInvalid" xml:space="preserve">
+    <value>VAT invalid</value>
+  </data>
+  <data name="CustomerVatValidationStatusNotApplicable" xml:space="preserve">
+    <value>VAT validation not applicable</value>
+  </data>
+  <data name="CustomerVatValidationUpdatedMessage" xml:space="preserve">
+    <value>VAT validation decision updated.</value>
+  </data>
+  <data name="CustomerVatValidationUpdateFailedMessage" xml:space="preserve">
+    <value>VAT validation decision could not be updated.</value>
+  </data>
+  <data name="SiteSettingInvoiceArchiveRetentionYears" xml:space="preserve">
+    <value>Invoice archive retention years</value>
+  </data>
+  <data name="SiteSettingsInvoiceArchiveRetentionYearsHelp" xml:space="preserve">
+    <value>Controls how long issued invoice archive metadata is retained after issue. The value is written into invoice archive records when an invoice is first issued.</value>
+  </data>
+  <data name="ArchiveRetainUntil" xml:space="preserve">
+    <value>Retain until</value>
+  </data>
+  <data name="ArchiveGeneratedAt" xml:space="preserve">
+    <value>Archive generated</value>
+  </data>
+  <data name="ArchiveSnapshotHash" xml:space="preserve">
+    <value>Snapshot hash</value>
+  </data>
+  <data name="ArchivePurgedAt" xml:space="preserve">
+    <value>Archive purged</value>
+  </data>
+  <data name="VatValidationLookup" xml:space="preserve">
+    <value>Check VAT ID</value>
+  </data>
+  <data name="CustomerVatValidationLookupUpdatedMessage" xml:space="preserve">
+    <value>VAT validation lookup updated the customer tax status.</value>
+  </data>
+  <data name="CustomerVatValidationLookupCompletedWithReviewMessage" xml:space="preserve">
+    <value>VAT validation lookup completed, but the result still needs operator review.</value>
+  </data>
+  <data name="CustomerVatValidationLookupFailedMessage" xml:space="preserve">
+    <value>VAT validation lookup could not be completed.</value>
   </data>
 </root>

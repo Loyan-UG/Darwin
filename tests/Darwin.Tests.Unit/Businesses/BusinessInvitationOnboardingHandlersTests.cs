@@ -40,7 +40,8 @@ public sealed class BusinessInvitationOnboardingHandlersTests
             Name = "Bistro Aurora",
             DefaultCulture = "de-DE",
             DefaultCurrency = "EUR",
-            IsActive = true
+            OperationalStatus = BusinessOperationalStatus.PendingApproval,
+            IsActive = false
         });
 
         db.Set<BusinessInvitation>().Add(new BusinessInvitation
@@ -73,6 +74,45 @@ public sealed class BusinessInvitationOnboardingHandlersTests
     }
 
     [Fact]
+    public async Task GetBusinessInvitationPreview_Should_Fail_WhenBusinessIsSuspended()
+    {
+        await using var db = BusinessInvitationTestDbContext.Create();
+        var token = "preview-token-suspended";
+
+        db.Set<Business>().Add(new Business
+        {
+            Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            Name = "Suspended Business",
+            DefaultCulture = "de-DE",
+            DefaultCurrency = "EUR",
+            OperationalStatus = BusinessOperationalStatus.Suspended,
+            IsActive = false
+        });
+
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            InvitedByUserId = Guid.NewGuid(),
+            Email = "owner@suspended.test",
+            NormalizedEmail = "OWNER@SUSPENDED.TEST",
+            Role = BusinessMemberRole.Owner,
+            Token = token,
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(1),
+            Status = BusinessInvitationStatus.Pending
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessInvitationPreviewHandler(db, new TestStringLocalizer<ValidationResource>());
+
+        var result = await handler.HandleAsync(token, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("InvitedBusinessUnavailable");
+    }
+
+    [Fact]
     public async Task AcceptBusinessInvitation_Should_CreateUserMembership_AndIssuePreferredBusinessToken()
     {
         await using var db = BusinessInvitationTestDbContext.Create();
@@ -86,7 +126,8 @@ public sealed class BusinessInvitationOnboardingHandlersTests
             Name = "Cafe Morgenrot",
             DefaultCulture = "de-DE",
             DefaultCurrency = "EUR",
-            IsActive = true
+            OperationalStatus = BusinessOperationalStatus.PendingApproval,
+            IsActive = false
         });
 
         db.Set<Role>().Add(new Role("business", "Business", isSystem: true, description: null)

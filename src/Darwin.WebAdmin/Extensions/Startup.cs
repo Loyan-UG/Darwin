@@ -79,7 +79,7 @@ namespace Darwin.WebAdmin.Extensions
             app.UseHttpsRedirection();
             app.UseWebAdminSecurityHeaders();
             app.UseMediaStaticFiles();
-            app.UseStaticFiles(BuildStaticFileOptions());
+            app.UseStaticFiles();
 
             app.UseRouting();
             app.UseAuthentication();
@@ -154,20 +154,6 @@ namespace Darwin.WebAdmin.Extensions
                    request.ContentType?.StartsWith("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase) == true;
         }
 
-        private static StaticFileOptions BuildStaticFileOptions()
-        {
-            return new StaticFileOptions
-            {
-                OnPrepareResponse = context =>
-                {
-                    if (context.Context.Request.Path.StartsWithSegments("/uploads", StringComparison.OrdinalIgnoreCase))
-                    {
-                        context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
-                    }
-                }
-            };
-        }
-
         private static void UseMediaStaticFiles(this WebApplication app)
         {
             var options = app.Services.GetRequiredService<IOptions<MediaStorageOptions>>().Value;
@@ -190,33 +176,28 @@ namespace Darwin.WebAdmin.Extensions
         private static void UseWebAdminSecurityHeaders(this WebApplication app)
         {
             var mediaImgSource = ResolveMediaImgSource(app.Services);
+            const string imgSrcBase = "img-src 'self' data: blob:";
             app.Use(async (context, next) =>
             {
                 context.Response.OnStarting(() =>
                 {
                     var headers = context.Response.Headers;
-                    var scriptSrc = app.Environment.IsDevelopment()
-                        ? "script-src 'self' 'unsafe-inline'"
-                        : "script-src 'self'";
-                    var connectSrc = app.Environment.IsDevelopment()
-                        ? "connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*"
-                        : "connect-src 'self'";
 
-                    headers.TryAdd("Content-Security-Policy", string.Join("; ",
+                    headers["Content-Security-Policy"] = string.Join("; ",
                         "default-src 'self'",
-                        scriptSrc,
-                        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-                        $"img-src 'self' data: blob:{mediaImgSource}",
-                        "font-src 'self' https://fonts.gstatic.com",
-                        connectSrc,
+                        "script-src 'self'",
+                        "style-src 'self'",
+                        $"{imgSrcBase}{mediaImgSource}",
+                        "font-src 'self'",
+                        "connect-src 'self'",
                         "media-src 'self' blob:",
                         "object-src 'none'",
                         "base-uri 'self'",
                         "form-action 'self'",
-                        "frame-ancestors 'none'"));
-                    headers.TryAdd("X-Content-Type-Options", "nosniff");
-                    headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
-                    headers.TryAdd("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+                        "frame-ancestors 'none'");
+                    headers["X-Content-Type-Options"] = "nosniff";
+                    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+                    headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
                     return Task.CompletedTask;
                 });
 

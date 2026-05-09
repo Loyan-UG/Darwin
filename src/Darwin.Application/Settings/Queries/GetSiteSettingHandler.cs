@@ -90,6 +90,7 @@ namespace Darwin.Application.Settings.Queries
                 InvoiceIssuerPostalCode = s.InvoiceIssuerPostalCode,
                 InvoiceIssuerCity = s.InvoiceIssuerCity,
                 InvoiceIssuerCountry = s.InvoiceIssuerCountry,
+                InvoiceArchiveRetentionYears = s.InvoiceArchiveRetentionYears,
                 DhlEnabled = s.DhlEnabled,
                 DhlEnvironment = s.DhlEnvironment,
                 DhlApiBaseUrl = s.DhlApiBaseUrl,

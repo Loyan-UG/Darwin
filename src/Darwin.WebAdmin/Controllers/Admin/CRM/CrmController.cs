@@ -8,6 +8,7 @@ using Darwin.WebAdmin.ViewModels.CRM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace Darwin.WebAdmin.Controllers.Admin.CRM
 {
@@ -41,6 +42,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly GetCustomerSegmentForEditHandler _getCustomerSegmentForEdit;
         private readonly GetInvoicesPageHandler _getInvoicesPage;
         private readonly GetInvoiceForEditHandler _getInvoiceForEdit;
+        private readonly GetInvoiceArchiveSnapshotHandler _getInvoiceArchiveSnapshot;
+        private readonly GetInvoiceArchiveDocumentHandler _getInvoiceArchiveDocument;
         private readonly CreateCustomerSegmentHandler _createCustomerSegment;
         private readonly UpdateCustomerSegmentHandler _updateCustomerSegment;
         private readonly UpdateInvoiceHandler _updateInvoice;
@@ -80,6 +83,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             GetCustomerSegmentForEditHandler getCustomerSegmentForEdit,
             GetInvoicesPageHandler getInvoicesPage,
             GetInvoiceForEditHandler getInvoiceForEdit,
+            GetInvoiceArchiveSnapshotHandler getInvoiceArchiveSnapshot,
+            GetInvoiceArchiveDocumentHandler getInvoiceArchiveDocument,
             CreateCustomerSegmentHandler createCustomerSegment,
             UpdateCustomerSegmentHandler updateCustomerSegment,
             UpdateInvoiceHandler updateInvoice,
@@ -118,6 +123,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _getCustomerSegmentForEdit = getCustomerSegmentForEdit ?? throw new ArgumentNullException(nameof(getCustomerSegmentForEdit));
             _getInvoicesPage = getInvoicesPage ?? throw new ArgumentNullException(nameof(getInvoicesPage));
             _getInvoiceForEdit = getInvoiceForEdit ?? throw new ArgumentNullException(nameof(getInvoiceForEdit));
+            _getInvoiceArchiveSnapshot = getInvoiceArchiveSnapshot ?? throw new ArgumentNullException(nameof(getInvoiceArchiveSnapshot));
+            _getInvoiceArchiveDocument = getInvoiceArchiveDocument ?? throw new ArgumentNullException(nameof(getInvoiceArchiveDocument));
             _createCustomerSegment = createCustomerSegment ?? throw new ArgumentNullException(nameof(createCustomerSegment));
             _updateCustomerSegment = updateCustomerSegment ?? throw new ArgumentNullException(nameof(updateCustomerSegment));
             _updateInvoice = updateInvoice ?? throw new ArgumentNullException(nameof(updateInvoice));
@@ -401,6 +408,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 BalanceMinor = x.BalanceMinor,
                 DueDateUtc = x.DueDateUtc,
                 PaidAtUtc = x.PaidAtUtc,
+                IssuedAtUtc = x.IssuedAtUtc,
+                HasIssuedSnapshot = x.HasIssuedSnapshot,
+                IssuedSnapshotHashSha256 = x.IssuedSnapshotHashSha256,
+                ArchiveGeneratedAtUtc = x.ArchiveGeneratedAtUtc,
+                ArchiveRetainUntilUtc = x.ArchiveRetainUntilUtc,
+                ArchiveRetentionPolicyVersion = x.ArchiveRetentionPolicyVersion,
+                ArchivePurgedAtUtc = x.ArchivePurgedAtUtc,
+                ArchivePurgeReason = x.ArchivePurgeReason,
                 RowVersion = x.RowVersion
             }).ToList();
             var todayUtc = _clock.UtcNow.Date;
@@ -461,6 +476,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 BalanceMinor = dto.BalanceMinor,
                 DueDateUtc = dto.DueDateUtc,
                 PaidAtUtc = dto.PaidAtUtc,
+                IssuedAtUtc = dto.IssuedAtUtc,
+                HasIssuedSnapshot = dto.HasIssuedSnapshot,
+                IssuedSnapshotHashSha256 = dto.IssuedSnapshotHashSha256,
+                ArchiveGeneratedAtUtc = dto.ArchiveGeneratedAtUtc,
+                ArchiveRetainUntilUtc = dto.ArchiveRetainUntilUtc,
+                ArchiveRetentionPolicyVersion = dto.ArchiveRetentionPolicyVersion,
+                ArchivePurgedAtUtc = dto.ArchivePurgedAtUtc,
+                ArchivePurgeReason = dto.ArchivePurgeReason,
                 IsFinancialContentLocked = IsInvoiceFinancialContentLocked(dto.Status),
                 FinancialEditLockReason = IsInvoiceFinancialContentLocked(dto.Status) ? T("InvoiceFinancialEditLockReason") : string.Empty,
                 Refund = new InvoiceRefundCreateVm
@@ -475,6 +498,38 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
             await PopulateInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderInvoiceEditor(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadInvoiceArchiveSnapshot(Guid id, CancellationToken ct = default)
+        {
+            var snapshot = await _getInvoiceArchiveSnapshot.HandleAsync(id, ct).ConfigureAwait(false);
+            if (snapshot is null)
+            {
+                SetErrorMessage("InvoiceArchiveUnavailableMessage");
+                return RedirectOrHtmx(nameof(EditInvoice), new { id });
+            }
+
+            return File(
+                Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(snapshot.SnapshotJson)).ToArray(),
+                "application/json",
+                snapshot.FileName);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadInvoiceArchiveDocument(Guid id, CancellationToken ct = default)
+        {
+            var document = await _getInvoiceArchiveDocument.HandleAsync(id, ct).ConfigureAwait(false);
+            if (document is null)
+            {
+                SetErrorMessage("InvoiceArchiveUnavailableMessage");
+                return RedirectOrHtmx(nameof(EditInvoice), new { id });
+            }
+
+            return File(
+                Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(document.Html)).ToArray(),
+                "text/html; charset=utf-8",
+                document.FileName);
         }
 
         [HttpPost]

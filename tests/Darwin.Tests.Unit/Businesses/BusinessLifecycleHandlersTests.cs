@@ -10,6 +10,7 @@ using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Enums;
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -31,6 +32,7 @@ public sealed class BusinessLifecycleHandlersTests
         entity.SuspensionReason = "Old note";
 
         db.Set<Business>().Add(entity);
+        SeedApprovalPrerequisites(db, entity.Id);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new ApproveBusinessHandler(
@@ -54,6 +56,35 @@ public sealed class BusinessLifecycleHandlersTests
     }
 
     [Fact]
+    public async Task ApproveBusiness_Should_Reject_WhenApprovalPrerequisitesAreMissing()
+    {
+        await using var db = BusinessLifecycleTestDbContext.Create();
+        var entity = CreateBusiness();
+        entity.OperationalStatus = BusinessOperationalStatus.PendingApproval;
+        entity.IsActive = false;
+        entity.ContactEmail = null;
+
+        db.Set<Business>().Add(entity);
+        SeedApprovalPrerequisites(db, entity.Id);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApproveBusinessHandler(
+            db,
+            new FakeClock(new DateTime(2030, 1, 5, 8, 0, 0, DateTimeKind.Utc)),
+            new BusinessLifecycleActionDtoValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLifecycleActionDto
+        {
+            Id = entity.Id,
+            RowVersion = entity.RowVersion
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("BusinessApprovalPrerequisitesMissing");
+    }
+
+    [Fact]
     public async Task SuspendBusiness_Should_SetSuspendedState_AndDeactivateBusiness()
     {
         await using var db = BusinessLifecycleTestDbContext.Create();
@@ -63,6 +94,7 @@ public sealed class BusinessLifecycleHandlersTests
         entity.ApprovedAtUtc = new DateTime(2030, 1, 2, 8, 0, 0, DateTimeKind.Utc);
 
         db.Set<Business>().Add(entity);
+        SeedApprovalPrerequisites(db, entity.Id);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new SuspendBusinessHandler(
@@ -96,6 +128,7 @@ public sealed class BusinessLifecycleHandlersTests
         entity.SuspensionReason = "Manual hold";
 
         db.Set<Business>().Add(entity);
+        SeedApprovalPrerequisites(db, entity.Id);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new ReactivateBusinessHandler(
@@ -118,18 +151,67 @@ public sealed class BusinessLifecycleHandlersTests
         persisted.ApprovedAtUtc.Should().Be(new DateTime(2030, 1, 7, 12, 0, 0, DateTimeKind.Utc));
     }
 
+    [Fact]
+    public async Task ReactivateBusiness_Should_Reject_WhenApprovalPrerequisitesAreMissing()
+    {
+        await using var db = BusinessLifecycleTestDbContext.Create();
+        var entity = CreateBusiness();
+        entity.OperationalStatus = BusinessOperationalStatus.Suspended;
+        entity.IsActive = false;
+        entity.ContactEmail = null;
+
+        db.Set<Business>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ReactivateBusinessHandler(
+            db,
+            new FakeClock(new DateTime(2030, 1, 7, 12, 0, 0, DateTimeKind.Utc)),
+            new BusinessLifecycleActionDtoValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLifecycleActionDto
+        {
+            Id = entity.Id,
+            RowVersion = entity.RowVersion
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("BusinessApprovalPrerequisitesMissing");
+    }
+
     private static Business CreateBusiness()
     {
         return new Business
         {
             Name = "Konditorei Sonnenschein",
             LegalName = "Sonnenschein GmbH",
+            ContactEmail = "kontakt@sonnenschein.test",
             Category = BusinessCategoryKind.Bakery,
             DefaultCurrency = "EUR",
             DefaultCulture = "de-DE",
             IsActive = true,
             RowVersion = [1, 2, 3]
         };
+    }
+
+    private static void SeedApprovalPrerequisites(IAppDbContext db, Guid businessId)
+    {
+        db.Set<BusinessMember>().Add(new BusinessMember
+        {
+            BusinessId = businessId,
+            UserId = Guid.NewGuid(),
+            Role = BusinessMemberRole.Owner,
+            IsActive = true,
+            RowVersion = [1]
+        });
+
+        db.Set<BusinessLocation>().Add(new BusinessLocation
+        {
+            BusinessId = businessId,
+            Name = "Main",
+            IsPrimary = true,
+            RowVersion = [1]
+        });
     }
 
     private sealed class FakeClock : IClock
@@ -172,6 +254,20 @@ public sealed class BusinessLifecycleHandlersTests
                 builder.Property(x => x.DefaultCurrency).IsRequired();
                 builder.Property(x => x.DefaultCulture).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<BusinessMember>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<BusinessLocation>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.Coordinate);
             });
         }
     }

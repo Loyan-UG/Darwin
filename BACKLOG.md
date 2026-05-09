@@ -20,15 +20,18 @@ Reviewed: 2026-05-09. See `docs/go-live-status.md` and `docs/module-audit.md` fo
 Go-live blockers:
 
 - `Stripe`: live-smoke the new Stripe Checkout Session creation path, verify webhook-only finalization with real `checkout.session.completed` and `payment_intent.*` events, then complete subscription checkout/refund/dispute live-provider validation.
-- `DHL`: replace phase-one DHL provider-reference, tracking-number, and label-url generation with real DHL shipment/label API calls and persisted label storage.
-- `Tax/VAT/E-Invoice`: turn Billing/TaxCompliance from visibility into an operator workflow for VAT ID validation, reverse-charge decisions, immutable issued-invoice snapshots, invoice export/archive, and e-invoice generation.
+- `DHL`: live-smoke the new DHL shipment/label client with the target account, confirm authentication/payload/label response details, then complete carrier-integrated tracking exceptions and returns/RMA automation.
+- `Tax/VAT/E-Invoice`: finish compliance workflow beyond the current invoice issue-readiness guard, VIES-backed VAT ID lookup path, persisted reverse-charge decisioning, operator VAT validation decisions, immutable issued-invoice snapshot with retention metadata, worker-backed expired archive payload purge, downloadable JSON/HTML archive artifacts, CSV invoice export, and inline missing-VAT correction: live VIES smoke/error-policy hardening, external archive storage policy, and e-invoice generation.
 - `Production readiness`: verify Brevo sender domain/DKIM/DMARC, Stripe/DHL provider secrets, worker deployment, provider callback processing, and restricted PostgreSQL runtime grants in the target environment.
 
 Near-term tasks:
 
 - Add focused handler tests for the compact WebAdmin dashboard view model projection and attention-item ordering.
-- Add live-provider abstraction tests before wiring Stripe and DHL SDK/API calls so webhook idempotency and operator visibility remain stable.
+- Add live-provider contract/sandbox tests around Stripe and DHL SDK/API calls so webhook idempotency, label persistence, and operator visibility remain stable.
+- Add hosted smoke coverage for Business onboarding email-confirm enforcement beyond the current handler-level pending-business invitation, invitation resend/revoke status guards, public visibility, approval/reactivation, and sign-in confirmation gates.
+- Add hosted operator-flow smoke coverage for Inventory/returns across order cancel, return receipt, refund coordination, and supplier receiving beyond the current handler-level idempotency coverage.
 - Grow the new WebAdmin CI lane threshold once the hosted smoke suite stabilizes in CI.
+- Refresh the stale source-contract tests that still assert the old over-composed Web/WebAdmin page text and exact Razor snippets; keep the updated contracts focused on security, localization parity, route canonicalization, and mutation safety rather than historical UI copy.
 
 ## 0. Cross-Chat Coordination Ledger
 

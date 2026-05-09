@@ -48,6 +48,24 @@ public sealed class BusinessEngagementQueryHandlerTests
     }
 
     [Fact]
+    public async Task GetBusinessEngagementForMember_Should_Fail_WhenBusinessIsActiveButNotApproved()
+    {
+        await using var db = BusinessEngagementQueryTestDbContext.Create();
+        var userId = Guid.NewGuid();
+        var business = CreateBusiness();
+        business.OperationalStatus = BusinessOperationalStatus.PendingApproval;
+        business.IsActive = true;
+        db.Set<Business>().Add(business);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessEngagementForMemberHandler(db, new FakeCurrentUser(userId), new TestLocalizer());
+        var result = await handler.HandleAsync(business.Id, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("BusinessNotFound");
+    }
+
+    [Fact]
     public async Task GetBusinessEngagementForMember_Should_Fail_WhenUserNotAuthenticated()
     {
         await using var db = BusinessEngagementQueryTestDbContext.Create();

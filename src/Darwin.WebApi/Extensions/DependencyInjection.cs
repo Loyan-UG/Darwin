@@ -140,6 +140,7 @@ namespace Darwin.WebApi.Extensions
             // 6) Notifications, caching, presentation helpers
             // ------------------------------------------------------------
             services.AddNotificationsInfrastructure(configuration);
+            services.AddComplianceInfrastructure(configuration);
             services.AddMemoryCache();
             services.AddHealthChecks()
                 .AddCheck<DarwinDbContextHealthCheck>("database", tags: new[] { "ready" });

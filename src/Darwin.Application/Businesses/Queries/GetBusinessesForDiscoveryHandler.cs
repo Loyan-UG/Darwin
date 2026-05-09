@@ -9,6 +9,7 @@ using Darwin.Application.Common;
 using Darwin.Application.Common.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Loyalty;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Queries
@@ -47,10 +48,10 @@ namespace Darwin.Application.Businesses.Queries
             var page = request.Page < 1 ? 1 : request.Page;
             var pageSize = request.PageSize < 1 ? 20 : request.PageSize;
 
-            // Base business query: discovery shows only active businesses.
+            // Public discovery must only expose businesses that passed operator approval.
             var businessQuery = _db.Set<Business>()
                 .AsNoTracking()
-                .Where(x => x.IsActive);
+                .Where(x => x.IsActive && x.OperationalStatus == BusinessOperationalStatus.Approved);
 
             if (request.Category.HasValue)
             {

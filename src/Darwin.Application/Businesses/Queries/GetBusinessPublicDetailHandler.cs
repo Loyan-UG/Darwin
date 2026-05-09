@@ -8,6 +8,7 @@ using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Loyalty;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Queries
@@ -47,10 +48,10 @@ namespace Darwin.Application.Businesses.Queries
                 return null;
             }
 
-            // Load the business core (discovery only shows active businesses).
+            // Load the public business core. Active alone is not enough; operator approval is required.
             var business = await _db.Set<Business>()
                 .AsNoTracking()
-                .Where(b => b.Id == businessId && b.IsActive)
+                .Where(b => b.Id == businessId && b.IsActive && b.OperationalStatus == BusinessOperationalStatus.Approved)
                 .Select(b => new
                 {
                     b.Id,
