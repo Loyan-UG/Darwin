@@ -468,3 +468,6 @@ Covers `UpdateOrderStatusHandler` (19 tests):
 - Successful transitions: Created → Confirmed (no evidence), Created → Cancelled (no lines, no inventory), Confirmed → Paid with captured payment and no lines (reserve loop skips), Confirmed → Cancelled with pre-seeded "already released" idempotency record (release loop skips).
 - Inventory side-effects: Paid → stock-reserve (decrements AvailableQuantity, increments ReservedQuantity, writes OrderPaid-Reserve ledger), Paid → Shipped with full shipment evidence and pre-seeded ShipmentAllocation record (idempotent skip).
 - WarehouseId propagation: when WarehouseId is passed in the DTO, unset order lines receive it.
+## WebAdmin Source-Contract Cleanup
+
+As of 2026-05-09, `SecurityAndPerformanceWebAdminSurfacesSourceTests` runs green locally with `210` active passing contracts and `47` quarantined stale contracts. The skipped contracts still target pre-simplification exact Razor/layout text and should be rewritten into stable checks for security, localization parity, canonical routes, HTMX mutation safety, and CSP-safe assets before being re-enabled.

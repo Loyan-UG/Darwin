@@ -31,7 +31,7 @@ Near-term tasks:
 - Add hosted smoke coverage for Business onboarding email-confirm enforcement beyond the current handler-level pending-business invitation, invitation resend/revoke status guards, public visibility, approval/reactivation, and sign-in confirmation gates.
 - Add hosted operator-flow smoke coverage for Inventory/returns across order cancel, return receipt, refund coordination, and supplier receiving beyond the current handler-level idempotency coverage.
 - Grow the new WebAdmin CI lane threshold once the hosted smoke suite stabilizes in CI.
-- Refresh the stale source-contract tests that still assert the old over-composed Web/WebAdmin page text and exact Razor snippets; keep the updated contracts focused on security, localization parity, route canonicalization, and mutation safety rather than historical UI copy.
+- Rewrite the quarantined stale WebAdmin source-contract tests (`47` skipped locally on 2026-05-09) into stable security, localization parity, route canonicalization, and mutation-safety assertions rather than historical exact Razor/layout copy.
 
 ## 0. Cross-Chat Coordination Ledger
 
