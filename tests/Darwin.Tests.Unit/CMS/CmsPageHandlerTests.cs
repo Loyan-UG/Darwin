@@ -550,5 +550,186 @@ public sealed class CmsPageHandlerTests
         total.Should().Be(1);
         items.Single().Title.Should().Be("Published");
     }
-}
 
+    // ─── GetPagesPageHandler — windowed / live-window filters ─────────────────
+
+    [Fact]
+    public async Task GetPagesPage_Should_Filter_By_Windowed_When_PublishStartUtc_Set()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+
+        // Page with a publish start window
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Draft,
+            PublishStartUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Windowed Start", Slug = "windowed-start", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        // Page with no window
+        await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+
+        var handler = new GetPagesPageHandler(db);
+        var (items, total) = await handler.HandleAsync(1, 20, "de-DE", null, "windowed", TestContext.Current.CancellationToken);
+
+        total.Should().Be(1, "only the page with PublishStartUtc should appear");
+        items.Single().Title.Should().Be("Windowed Start");
+    }
+
+    [Fact]
+    public async Task GetPagesPage_Should_Filter_By_Windowed_When_PublishEndUtc_Set()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+
+        // Page with a publish end window
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Draft,
+            PublishStartUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            PublishEndUtc = new DateTime(2026, 12, 31, 23, 59, 59, DateTimeKind.Utc),
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Windowed End", Slug = "windowed-end", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        // Page with no window
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Published,
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Always On", Slug = "always-on", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var handler = new GetPagesPageHandler(db);
+        var (items, total) = await handler.HandleAsync(1, 20, "de-DE", null, "windowed", TestContext.Current.CancellationToken);
+
+        total.Should().Be(1, "only the page with a publish window should appear");
+        items.Single().Title.Should().Be("Windowed End");
+    }
+
+    [Fact]
+    public async Task GetPagesPage_Should_Return_Live_Window_Page_When_Within_Active_Period()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+        var fixedNow = new DateTime(2026, 7, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Published,
+            PublishStartUtc = new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            PublishEndUtc = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc),
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Live Window Page", Slug = "live-window-page", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var clock = new FakeClock(fixedNow);
+        var handler = new GetPagesPageHandler(db, clock);
+        var (items, total) = await handler.HandleAsync(1, 20, "de-DE", null, "live-window", TestContext.Current.CancellationToken);
+
+        total.Should().Be(1);
+        items.Single().Title.Should().Be("Live Window Page");
+    }
+
+    [Fact]
+    public async Task GetPagesPage_Should_Exclude_Live_Window_Page_When_Before_StartUtc()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+        var fixedNow = new DateTime(2026, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Published,
+            PublishStartUtc = new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            PublishEndUtc = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc),
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Not Live Yet", Slug = "not-live-yet", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var clock = new FakeClock(fixedNow);
+        var handler = new GetPagesPageHandler(db, clock);
+        var (items, total) = await handler.HandleAsync(1, 20, "de-DE", null, "live-window", TestContext.Current.CancellationToken);
+
+        total.Should().Be(0, "page has not reached its publish window start");
+        items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetPagesPage_Should_Exclude_Live_Window_Page_When_After_EndUtc()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+        var fixedNow = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Published,
+            PublishStartUtc = new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            PublishEndUtc = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc),
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Expired Window", Slug = "expired-window", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var clock = new FakeClock(fixedNow);
+        var handler = new GetPagesPageHandler(db, clock);
+        var (items, total) = await handler.HandleAsync(1, 20, "de-DE", null, "live-window", TestContext.Current.CancellationToken);
+
+        total.Should().Be(0, "page publish window has expired");
+        items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetPagesPage_Should_Exclude_Draft_From_Live_Window_Filter()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+        var fixedNow = new DateTime(2026, 7, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Draft,
+            PublishStartUtc = new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            PublishEndUtc = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc),
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Draft With Window", Slug = "draft-window", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var clock = new FakeClock(fixedNow);
+        var handler = new GetPagesPageHandler(db, clock);
+        var (items, total) = await handler.HandleAsync(1, 20, "de-DE", null, "live-window", TestContext.Current.CancellationToken);
+
+        total.Should().Be(0, "live-window filter requires Published status");
+        items.Should().BeEmpty();
+    }
+
+    // ─── FakeClock helper ─────────────────────────────────────────────────────
+
+    private sealed class FakeClock : Darwin.Application.Abstractions.Services.IClock
+    {
+        public FakeClock(DateTime utcNow) => UtcNow = utcNow;
+        public DateTime UtcNow { get; }
+    }
+}
