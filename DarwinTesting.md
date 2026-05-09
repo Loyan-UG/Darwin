@@ -411,3 +411,34 @@ This file should always describe **what is true now**, not only future intent.
   - Completed in this pass: empty and null idempotency key duplicate-check behavior is now tested for both insert and duplicate paths.
 - Add Worker coverage for Brevo webhook processing against `EmailDispatchAudit`.
   - ✅ Completed in this pass: delivered/open/click keep successful audit state, hard/soft bounce/spam/blocked/invalid/error mark the audit failed with provider reason (including reason trimming and default missing reason), unsupported events do not overwrite successful state, failed audits do not regress to Sent on delivery events, soft-deleted audits are not matched, and correlation keys are matched through mixed-case alias fields.
+
+# 2026-05-09 Coverage Extension — Inventory Management Handlers and Query Handlers
+
+Added two new test files covering the previously untested Inventory management layer:
+
+### `tests/Darwin.Tests.Unit/Inventory/InventoryManagementHandlerTests.cs`
+Covers command handlers (52 tests):
+- `CreateWarehouseHandler` — validation failure, persistence, default-warehouse clearance, whitespace normalization.
+- `UpdateWarehouseHandler` — not-found, row-version mismatch, empty row-version, successful update.
+- `CreateSupplierHandler` — invalid-email validation, persistence, null-address normalization.
+- `UpdateSupplierHandler` — not-found, row-version mismatch, successful update.
+- `CreateStockLevelHandler` — duplicate detection, successful persistence.
+- `UpdateStockLevelHandler` — not-found, row-version mismatch, successful update.
+- `CreateStockTransferHandler` — same-warehouse validation, successful persistence with lines.
+- `UpdateStockTransferHandler` — not-found, row-version mismatch.
+- `UpdateStockTransferLifecycleHandler` — empty-ID/empty-row-version/not-found/stale-row-version guards; MarkInTransit success and insufficient-stock failure; MarkInTransit on non-Draft failure; Cancel on Draft; unknown action rejection.
+- `CreatePurchaseOrderHandler` — empty order number validation, successful persistence with lines.
+- `UpdatePurchaseOrderHandler` — not-found, row-version mismatch.
+- `UpdatePurchaseOrderLifecycleHandler` — empty-ID/row-version/not-found guards; Issue on Draft success; Issue on non-Draft failure; Cancel on Issued success; Cancel on Received failure; unknown action rejection; Receive with warehouse resolution and stock-level / ledger creation.
+
+### `tests/Darwin.Tests.Unit/Inventory/InventoryManagementQueryHandlerTests.cs`
+Covers query handlers (26 tests):
+- `GetWarehouseLookupHandler` — excludes soft-deleted, ordered default-first then alphabetically.
+- `GetWarehousesPageHandler` — business scoping, soft-delete exclusion, Default filter, page-param normalization, ops-summary correct counts and empty-state.
+- `GetWarehouseForEditHandler` — found, not-found, soft-deleted returns null.
+- `GetSuppliersPageHandler` — business scoping, soft-delete exclusion, MissingAddress filter, ops-summary.
+- `GetSupplierForEditHandler` — found, not-found, soft-deleted returns null.
+- `GetStockLevelsPageHandler` — warehouse scoping, soft-delete and cross-warehouse exclusion, LowStock filter, Reserved filter.
+- `GetStockLevelForEditHandler` — found, not-found, soft-deleted returns null.
+- `GetVariantStockHandler` — null when no levels, aggregated totals across warehouses, warehouse-filtered subset.
+- `GetInventoryLedgerHandler` — all transactions, variant filter, Inbound/Outbound/Reservations filters, empty state, ops-summary with correct in/out/reservation counts and empty-state default.
