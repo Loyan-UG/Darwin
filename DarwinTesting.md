@@ -204,7 +204,7 @@ python scripts/ci/verify_coverage.py \
   --mobile-shared-threshold 20
 ```
 
-### 5.4 Current execution snapshot (2026-05-08)
+### 5.4 Current execution snapshot (2026-05-09)
 
 Latest known-good signal for the recently expanded Webhook/reader/writer tests is:
 
@@ -240,6 +240,12 @@ Latest known-good signal for the recently expanded Webhook/reader/writer tests i
 
 `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingWebhookQueryHandlersTests"`
   - 12 passed (verified 2026-05-08; adds GetBillingWebhookSubscriptionsPageHandler coverage: returns non-deleted items, empty state, search by EventType and CallbackUrl, normalizes invalid page params, maps fields correctly)
+
+`dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GetOrderShipmentsPageHandlerTests"`
+  - 14 passed (verified 2026-05-09; covers empty state, soft-delete exclusion, order scoping, page/pageSize normalization, OrderNumber enrichment, and all eight ShipmentQueueFilter variants including clock-controlled AwaitingHandoff and TrackingOverdue branches)
+
+`dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GetShipmentProviderOperationsPageHandlerTests"`
+  - 12 passed (verified 2026-05-09; covers empty state, summary counts with StalePending/Cancelled, soft-delete exclusion, provider/operationType/status/failedOnly/stalePendingOnly filters, Succeeded→Processed normalization, providers/operationTypes list ordering, and OrderNumber enrichment via Shipment→Order join)
 
 Running the full `Darwin.WebApi.Tests` suite in the current branch still shows failures in pre-existing suites (mostly `Security` / `Loyalty` areas), so the newly added webhook-focused coverage remains green as an isolated subset.
 
@@ -489,3 +495,37 @@ Covers `UpdateOrderStatusHandler` (19 tests):
 - Successful transitions: Created → Confirmed (no evidence), Created → Cancelled (no lines, no inventory), Confirmed → Paid with captured payment and no lines (reserve loop skips), Confirmed → Cancelled with pre-seeded "already released" idempotency record (release loop skips).
 - Inventory side-effects: Paid → stock-reserve (decrements AvailableQuantity, increments ReservedQuantity, writes OrderPaid-Reserve ledger), Paid → Shipped with full shipment evidence and pre-seeded ShipmentAllocation record (idempotent skip).
 - WarehouseId propagation: when WarehouseId is passed in the DTO, unset order lines receive it.
+
+# 2026-05-09 Coverage Extension — Catalog Query Handlers and Product/AddOnGroup Command Handlers
+
+Added two new test files covering the previously untested Catalog read-side query handlers and the remaining command handlers for products and add-on groups:
+
+### `tests/Darwin.Tests.Unit/Catalog/CatalogQueryHandlerTests.cs`
+Covers catalog query handlers (40 tests):
+- `GetBrandsPageHandler` — empty state, soft-delete exclusion, unpublished filter, invalid-page clamped to 1, full field mapping (Id/Slug/LogoMediaId/IsPublished/Name).
+- `GetBrandOpsSummaryHandler` — zero counts when empty, correct TotalCount/UnpublishedCount/MissingSlugCount/MissingLogoCount with soft-delete exclusion.
+- `GetBrandForEditHandler` — not-found returns null, soft-deleted returns null, correct projection (Id/Slug/Translations with RowVersion).
+- `GetCategoriesPageHandler` — empty state, soft-delete exclusion, Inactive filter, Root filter (ParentId == null).
+- `GetCategoryOpsSummaryHandler` — zero counts when empty, correct TotalCount/InactiveCount/RootCount/ChildCount with soft-delete exclusion.
+- `GetCategoryForEditHandler` — not-found returns null, correct projection (Id/ParentId/IsActive/SortOrder/Translations).
+- `GetProductsPageHandler` — empty state, soft-delete exclusion, Inactive filter, variant-count projection (excludes deleted variants).
+- `GetProductOpsSummaryHandler` — zero counts when empty, correct TotalCount/InactiveCount/HiddenCount with soft-delete exclusion.
+- `GetProductForEditHandler` — not-found returns null, soft-deleted returns null, correct projection (Id/Kind/Translations/Variants filtering deleted variants).
+- `GetVariantsPageHandler` — empty state, soft-delete exclusion, SKU search.
+- `GetCatalogLookupsHandler` — empty state, active brands/categories/tax-categories included, soft-deleted excluded from all three lists.
+- `GetAddOnGroupsPageHandler` — empty state, soft-delete exclusion, Inactive filter, Global filter.
+- `GetAddOnGroupOpsSummaryHandler` — zero counts when empty, correct TotalCount/InactiveCount/GlobalCount with soft-delete exclusion.
+- `GetAddOnGroupForEditHandler` — not-found returns null, soft-deleted returns null, full aggregate projection (Translations/Options/Values with PriceDeltaMinor).
+- `GetAddOnGroupAttachedBrandIdsHandler` — empty when group not found, returns non-deleted brand IDs only.
+- `GetAddOnGroupAttachedCategoryIdsHandler` — empty when group not found, returns non-deleted category IDs only.
+- `GetAddOnGroupAttachedProductIdsHandler` — returns non-deleted product IDs.
+- `GetAddOnGroupAttachedVariantIdsHandler` — returns non-deleted variant IDs.
+
+### `tests/Darwin.Tests.Unit/Catalog/CatalogProductAndAddOnHandlerTests.cs`
+Covers product and add-on group command handlers (35 tests):
+- `CreateProductHandler` — empty-translations validation failure, empty-variants validation failure, successful persistence (product/translations/variants), currency uppercased (EUR), slug trimmed, Kind defaulted to Simple.
+- `UpdateProductHandler` — not-found throws ValidationException, stale RowVersion throws DbUpdateConcurrencyException, matching RowVersion persists translation changes.
+- `SoftDeleteProductHandler` — empty Id returns failure, null RowVersion returns failure, not-found returns failure, stale RowVersion returns failure, valid request marks IsDeleted=true.
+- `CreateAddOnGroupHandler` — empty-Name validation failure, persistence with Options/Values/Translations, Name trimmed, empty Options list persisted.
+- `UpdateAddOnGroupHandler` — empty-Id validation failure, not-found throws InvalidOperationException, stale RowVersion throws DbUpdateConcurrencyException, matching RowVersion persists Name/Currency/IsGlobal/IsActive changes.
+- `SoftDeleteAddOnGroupHandler` — invalid-Dto returns failure, not-found returns failure, already-deleted is idempotent (returns success), stale RowVersion returns failure, valid request marks IsDeleted=true.
