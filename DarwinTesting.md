@@ -523,3 +523,28 @@ Covers product and add-on group command handlers (35 tests):
 - `CreateAddOnGroupHandler` — empty-Name validation failure, persistence with Options/Values/Translations, Name trimmed, empty Options list persisted.
 - `UpdateAddOnGroupHandler` — empty-Id validation failure, not-found throws InvalidOperationException, stale RowVersion throws DbUpdateConcurrencyException, matching RowVersion persists Name/Currency/IsGlobal/IsActive changes.
 - `SoftDeleteAddOnGroupHandler` — invalid-Dto returns failure, not-found returns failure, already-deleted is idempotent (returns success), stale RowVersion returns failure, valid request marks IsDeleted=true.
+
+# 2026-05-09 Coverage Extension — AdminTextOverrides, Meta Bootstrap, Billing Subscription Handlers, and CMS Menus Page
+
+Added four new/extended test files covering previously untested areas:
+
+### `tests/Darwin.Tests.Unit/Common/AdminTextOverrideJsonCatalogTests.cs` (27 tests)
+Covers `AdminTextOverrideJsonCatalog` static helper in full:
+- `IsValid` — null/empty/whitespace input accepted; empty object accepted; valid culture map accepted; invalid JSON rejected; JSON array root rejected; JSON string root rejected; culture value non-object rejected; whitespace-only culture key rejected; whitespace-only text key rejected; numeric text value rejected; null text value accepted (silently ignored).
+- `Parse` — null returns empty catalog; invalid JSON returns empty catalog; valid JSON returns populated catalog with correct entries; culture key lookup is case-insensitive; text values are trimmed; null text values are skipped; whitespace-only text values are skipped.
+- `TryParse` — empty input returns true with empty catalog; invalid JSON returns false; valid JSON returns true with populated catalog; array root returns false; culture value array returns false; numeric text value returns false.
+
+### `tests/Darwin.Tests.Unit/Settings/MetaQueryHandlerTests.cs` (10 tests)
+Covers `GetAppBootstrapHandler` (Meta module):
+- Failure branches: no settings row in DB, soft-deleted settings row, `JwtEnabled=false`, null `JwtAudience`, whitespace-only `JwtAudience`, `MobileQrTokenRefreshSeconds=0`, `MobileQrTokenRefreshSeconds=-5`, `MobileMaxOutboxItems=0`.
+- Happy path: valid settings returns Ok result with correct `JwtAudience`/`QrTokenRefreshSeconds`/`MaxOutboxItems`; `JwtAudience` is trimmed in the response.
+
+### `tests/Darwin.Tests.Unit/Billing/BillingSubscriptionHandlersTests.cs` (24 tests)
+Covers four consumer/business-facing Billing handlers:
+- `GetBillingPlansHandler` — all non-deleted when `activeOnly=false`, active-only filter, empty state, sort by price then name, full field mapping (Code/Name/PriceMinor/Currency/TrialDays/Interval/IntervalCount).
+- `GetBusinessSubscriptionStatusHandler` — empty `businessId` fails, no subscription returns `HasSubscription=false`/`Status=None`, soft-deleted subscription excluded, deleted plan excluded, valid subscription returns mapped fields, most-recently-started subscription chosen when multiple exist.
+- `SetCancelAtPeriodEndHandler` — empty `businessId` fails, empty `subscriptionId` fails, not-found fails, stale `RowVersion` fails, empty `RowVersion` rejected, `cancelAtPeriodEnd=true` sets flag and records `CanceledAtUtc`, `cancelAtPeriodEnd=false` clears `CanceledAtUtc`.
+- `CreateSubscriptionCheckoutIntentHandler` — empty `businessId` fails, empty `planId` fails, non-existent plan fails, inactive plan fails, missing business fails, valid plan and business succeeds.
+
+### `tests/Darwin.Tests.Unit/CMS/CmsMenuHandlerTests.cs` — extended with `GetMenusPageHandler` (7 new tests)
+- Empty state, soft-deleted menus excluded, all non-deleted menus returned, page < 1 normalized to 1, oversized pageSize clamped to MaxPageSize (200), `ItemsCount` projects only non-deleted items, menus ordered alphabetically by name.
