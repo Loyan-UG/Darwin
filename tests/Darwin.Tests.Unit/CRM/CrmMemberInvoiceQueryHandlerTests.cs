@@ -64,7 +64,7 @@ public sealed class CrmMemberInvoiceQueryHandlerTests
         {
             Id = id ?? Guid.NewGuid(),
             UserId = userId,
-            OrderNumber = $"ORD-{Guid.NewGuid():N}".Substring(0, 12)
+            OrderNumber = $"ORD-{Guid.NewGuid():N}"[..12]
         };
 
     private static Payment MakePayment(Guid? id = null, long amountMinor = 10000)
