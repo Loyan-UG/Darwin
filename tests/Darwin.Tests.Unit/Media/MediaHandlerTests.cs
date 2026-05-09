@@ -644,6 +644,250 @@ public sealed class MediaHandlerTests
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // PurgeUnusedMediaAssetHandler — HandleAsync (single-asset purge)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_Fail_WhenAssetNotFound()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+
+        var result = await handler.HandleAsync(Guid.NewGuid(), new byte[] { 1 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("MediaAssetNotFound");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_Fail_WhenRowVersionIsNull()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("RowVersionRequired");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_Fail_WhenRowVersionIsEmpty()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, Array.Empty<byte>(), TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("RowVersionRequired");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_Fail_WhenRowVersionIsStale()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1, 2, 3 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, new byte[] { 9, 9, 9 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ConcurrencyConflictDetected");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_Fail_WhenAssetIsReferencedByActiveProductMedia()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1 });
+        db.Set<MediaAsset>().Add(asset);
+        db.Set<ProductMedia>().Add(new ProductMedia
+        {
+            Id = Guid.NewGuid(),
+            ProductId = Guid.NewGuid(),
+            MediaAssetId = asset.Id,
+            SortOrder = 0,
+            IsDeleted = false
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, new byte[] { 1 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("MediaAssetStillReferenced");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_NotBeBlockedBy_SoftDeletedProductMediaReference()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1 });
+        db.Set<MediaAsset>().Add(asset);
+        db.Set<ProductMedia>().Add(new ProductMedia
+        {
+            Id = Guid.NewGuid(),
+            ProductId = Guid.NewGuid(),
+            MediaAssetId = asset.Id,
+            SortOrder = 0,
+            IsDeleted = true  // soft-deleted reference should not block purge
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, new byte[] { 1 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue("a soft-deleted ProductMedia link does not count as active reference");
+        db.Set<MediaAsset>().AsNoTracking().Any(m => m.Id == asset.Id).Should().BeFalse("asset must be permanently deleted");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_Succeed_AndRemoveAsset_WhenUnreferenced()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 5 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, new byte[] { 5 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        db.Set<MediaAsset>().AsNoTracking().Any(m => m.Id == asset.Id).Should().BeFalse("asset must be permanently removed");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_LocateAndPurge_SoftDeletedAsset()
+    {
+        // HandleAsync uses IgnoreQueryFilters() so it can purge soft-deleted assets too.
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 7 }, isDeleted: true);
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, new byte[] { 7 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue("IgnoreQueryFilters allows finding and permanently deleting soft-deleted assets");
+        db.Set<MediaAsset>().IgnoreQueryFilters().AsNoTracking().Any(m => m.Id == asset.Id)
+            .Should().BeFalse("asset must be physically removed from the database");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PurgeUnusedMediaAssetHandler — HandleBatchAsync (batch purge)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Batch_Should_ReturnZero_WhenNoUnusedAssetsExist()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(url: "https://cdn.example.com/used.jpg");
+        db.Set<MediaAsset>().Add(asset);
+        db.Set<ProductMedia>().Add(new ProductMedia
+        {
+            Id = Guid.NewGuid(),
+            ProductId = Guid.NewGuid(),
+            MediaAssetId = asset.Id,
+            SortOrder = 0
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleBatchAsync(take: 10, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.PurgedCount.Should().Be(0, "all assets are referenced");
+        result.Value.PurgedUrls.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Batch_Should_PurgeUnusedAssets_AndLeaveReferencedAssetIntact()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var unused = BuildAsset("https://cdn.example.com/orphan.jpg", "orphan.jpg");
+        var used = BuildAsset("https://cdn.example.com/used.jpg", "used.jpg");
+        db.Set<MediaAsset>().AddRange(unused, used);
+        db.Set<ProductMedia>().Add(new ProductMedia
+        {
+            Id = Guid.NewGuid(),
+            ProductId = Guid.NewGuid(),
+            MediaAssetId = used.Id,
+            SortOrder = 0
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleBatchAsync(take: 50, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.PurgedCount.Should().Be(1, "only the unreferenced asset is purged");
+        result.Value.PurgedUrls.Should().ContainSingle()
+            .Which.Should().Be("https://cdn.example.com/orphan.jpg");
+
+        db.Set<MediaAsset>().AsNoTracking().Any(m => m.Id == unused.Id)
+            .Should().BeFalse("unused asset must be permanently removed");
+        db.Set<MediaAsset>().AsNoTracking().Any(m => m.Id == used.Id)
+            .Should().BeTrue("referenced asset must remain in the database");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Batch_Should_RespectTakeLimit()
+    {
+        await using var db = MediaTestDbContext.Create();
+        for (var i = 0; i < 5; i++)
+            db.Set<MediaAsset>().Add(BuildAsset($"https://cdn.example.com/{i}.jpg", $"{i}.jpg"));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleBatchAsync(take: 2, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.PurgedCount.Should().Be(2, "the take parameter limits how many assets are purged per batch");
+        db.Set<MediaAsset>().AsNoTracking().Count().Should().Be(3, "3 of the 5 unreferenced assets remain");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Batch_Should_ClampOversizedTake_ToMaxBulkSize()
+    {
+        // MaxBulkPurgeSize = 100; passing 9999 should be silently clamped.
+        await using var db = MediaTestDbContext.Create();
+        for (var i = 0; i < 3; i++)
+            db.Set<MediaAsset>().Add(BuildAsset($"https://cdn.example.com/c{i}.jpg", $"c{i}.jpg"));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleBatchAsync(take: 9999, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue("oversized take is clamped internally; the handler does not throw");
+        result.Value!.PurgedCount.Should().Be(3, "all 3 unreferenced assets are purged (well within the 100 cap)");
+    }
+
+    [Fact]
+    public async Task PurgeUnusedMediaAsset_Batch_Should_ExcludeAssetUrlsWithEmptyUrls_FromPurgedUrls()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var noUrl = BuildAsset(url: string.Empty);
+        db.Set<MediaAsset>().Add(noUrl);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleBatchAsync(take: 10, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.PurgedCount.Should().Be(1);
+        result.Value.PurgedUrls.Should().BeEmpty("whitespace/empty URLs are excluded from the PurgedUrls list");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // In-memory DbContext for Media tests
     // ─────────────────────────────────────────────────────────────────────────
 
