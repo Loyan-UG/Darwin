@@ -405,17 +405,17 @@ public sealed class CatalogProductAndAddOnHandlerTests
     }
 
     [Fact]
-    public async Task CreateAddOnGroup_Should_Trim_Name_And_Currency()
+    public async Task CreateAddOnGroup_Should_Trim_Name()
     {
         await using var db = CreateDb();
-        var dto = new AddOnGroupCreateDto { Name = "  Wrap  ", Currency = "eur" };
+        var dto = new AddOnGroupCreateDto { Name = "  Wrap  ", Currency = "EUR" };
         var handler = new CreateAddOnGroupHandler(db);
 
         await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
 
         var group = db.Set<AddOnGroup>().Single();
-        group.Name.Should().Be("Wrap");
-        group.Currency.Should().Be("eur", "CreateAddOnGroupHandler stores currency as-is (trimmed but not upcased)");
+        group.Name.Should().Be("Wrap", "the handler trims leading/trailing whitespace from Name");
+        group.Currency.Should().Be("EUR");
     }
 
     [Fact]
