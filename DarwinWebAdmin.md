@@ -1754,3 +1754,27 @@ Use that handoff document when resuming the ongoing core WebAdmin subscription w
 - Extended the same add-on localization path into Darwin.Web: public product detail contracts now include localized applicable add-ons, WebApi maps them with the requested culture, the Web product-detail page renders localized add-on groups/options/values, and the catalog seed now keeps German and English add-on labels distinct for existing data.
 
 - Completed the storefront cart/checkout add-on display path: cart summaries now return localized selected add-on option/value labels by culture, Darwin.Web requests cart data with the active culture, and cart plus checkout pages render the selected add-on names alongside their price delta without touching test projects.
+
+## Planned Admin-Assisted Onboarding Wizard
+
+Phase 1 planning target: a resumable WebAdmin wizard for businesses joining the Loyan loyalty system. This is not implemented in the current provider/compliance slice.
+
+Wizard steps:
+
+1. Business profile: legal name, display name, contact email, phone, website, address, country/city, logo and branding basics.
+2. Commercial plan: billing plan, agreed pricing, trial or activation terms, subscription state, and payment-provider readiness.
+3. Owner and staff accounts: owner user, admin/operator users, invitations, activation emails, resend/revoke support.
+4. Business locations: primary location, optional additional locations, opening hours, and geo data where needed.
+5. Loyalty setup: program, accrual rules, reward tiers, redemption rules, and QR/scan readiness.
+6. Communication setup: support email, sender identity, invitation/activation/password reset templates, and configured test messages.
+7. Storefront/public visibility: active state, approval state, category/kind, discovery visibility, and media/profile completeness.
+8. Review and activate: checklist summary, missing prerequisites, approve/reactivate action, and audit log.
+
+Rules:
+
+- The wizard must be resumable.
+- It must not bypass existing validation or approval prerequisites.
+- It should call existing handlers wherever practical.
+- Approval-sensitive actions must record audit events.
+- Emails must be sent only after an explicit operator action.
+- Later self-service onboarding in `Darwin.Web` is a separate phase.

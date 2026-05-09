@@ -1,4 +1,6 @@
+using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.CRM.Services;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
 using Darwin.Application.CRM.DTOs;
@@ -281,42 +283,30 @@ namespace Darwin.Application.CRM.Queries
 
     public sealed class GetInvoiceArchiveSnapshotHandler
     {
-        private readonly IAppDbContext _db;
+        private readonly IInvoiceArchiveStorage _archiveStorage;
 
-        public GetInvoiceArchiveSnapshotHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+        public GetInvoiceArchiveSnapshotHandler(
+            IAppDbContext db,
+            IInvoiceArchiveStorage? archiveStorage = null)
+        {
+            ArgumentNullException.ThrowIfNull(db);
+            _archiveStorage = archiveStorage ?? new DatabaseInvoiceArchiveStorage(db);
+        }
 
         public async Task<InvoiceArchiveSnapshotDto?> HandleAsync(Guid id, CancellationToken ct = default)
         {
-            if (id == Guid.Empty)
-            {
-                return null;
-            }
-
-            var invoice = await _db.Set<Invoice>()
-                .AsNoTracking()
-                .Where(x => x.Id == id && !x.IsDeleted && !x.ArchivePurgedAtUtc.HasValue)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.IssuedAtUtc,
-                    x.IssuedSnapshotJson
-                })
-                .FirstOrDefaultAsync(ct)
-                .ConfigureAwait(false);
-
-            if (invoice is null ||
-                !invoice.IssuedAtUtc.HasValue ||
-                string.IsNullOrWhiteSpace(invoice.IssuedSnapshotJson))
+            var artifact = await _archiveStorage.ReadAsync(id, ct).ConfigureAwait(false);
+            if (artifact is null)
             {
                 return null;
             }
 
             return new InvoiceArchiveSnapshotDto
             {
-                InvoiceId = invoice.Id,
-                IssuedAtUtc = invoice.IssuedAtUtc.Value,
-                FileName = $"invoice-{invoice.Id:N}-issued-snapshot.json",
-                SnapshotJson = invoice.IssuedSnapshotJson
+                InvoiceId = artifact.InvoiceId,
+                IssuedAtUtc = artifact.IssuedAtUtc,
+                FileName = artifact.FileName,
+                SnapshotJson = artifact.Payload
             };
         }
     }

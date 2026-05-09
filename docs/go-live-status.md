@@ -1,4 +1,4 @@
-# Darwin Go-Live Status
+﻿# Darwin Go-Live Status
 
 Last reviewed: 2026-05-09
 
@@ -16,7 +16,7 @@ Status: compact operational command center implemented.
 
 ## Stripe / Payments
 
-Status: webhook boundary, internal reconciliation, and real Stripe Checkout Session creation path are implemented; live-provider validation remains pending.
+Status: webhook boundary, internal reconciliation, and real Stripe Checkout Session creation path are implemented; test-mode validation is next and live-provider validation remains pending.
 
 Verified implementation:
 
@@ -28,7 +28,7 @@ Verified implementation:
 
 Gaps:
 
-- The real Checkout Session path still needs a live Stripe smoke against a restricted test account before go-live.
+- The real Checkout Session path still needs Stripe test-mode smoke with the configured test keys, followed by a later live-mode smoke before production traffic.
 - Subscription checkout creation and refund/dispute operator actions still need a separate live-provider verification pass.
 - Keep Stripe secrets only in configuration/environment; no committed secrets were found by `scripts/check-secrets.ps1` in the latest pass.
 
@@ -69,7 +69,7 @@ Gaps:
 
 ## Tax / VAT / E-Invoice
 
-Status: operator review exists, VAT/collection/reverse-charge follow-up is data-backed, missing customer VAT IDs can be corrected from the TaxCompliance workspace, VAT IDs can be checked through a VIES-backed provider path, final invoice-level reverse-charge decisions can be recorded with row-version concurrency checks, invoice review data can be exported as CSV for archive/accounting review, draft invoices now have a minimum issue-readiness guard, and CRM invoices capture an immutable issue snapshot with retention metadata when first opened/paid; downloadable JSON and printable HTML archive artifacts are available from the CRM invoice editor for issued invoices. Expired invoice archive payloads can now be purged by the Worker with audit metadata retained on the invoice. Full e-invoicing compliance is not implemented.
+Status: operator review exists, VAT/collection/reverse-charge follow-up is data-backed, missing customer VAT IDs can be corrected from the TaxCompliance workspace, VAT IDs can be checked through a VIES-backed provider path, final invoice-level reverse-charge decisions can be recorded with row-version concurrency checks, invoice review data can be exported as CSV for archive/accounting review, draft invoices now have a minimum issue-readiness guard, and CRM invoices capture an immutable issue snapshot with retention metadata when first opened/paid; downloadable JSON and printable HTML archive artifacts are available from the CRM invoice editor for issued invoices. Expired invoice archive payloads can now be purged by the Worker with audit metadata retained on the invoice. Full e-invoicing compliance is not implemented. The primary planned downloadable e-invoice target is ZUGFeRD/Factur-X; XRechnung is a secondary export backlog item.
 
 Verified implementation:
 
@@ -90,8 +90,8 @@ Verified implementation:
 
 Gaps:
 
-- TaxCompliance still lacks live VIES smoke in the target deployment, external immutable archive storage beyond database-backed JSON/HTML export, final invoice document rendering beyond the current printable archive HTML, and e-invoice generation.
-- VIES production availability/error handling, external archive storage policy, and e-invoice generation require a dedicated compliance implementation slice.
+- TaxCompliance still lacks live VIES smoke in the target deployment, external immutable archive storage beyond the current `IInvoiceArchiveStorage` internal/database provider, final invoice document rendering beyond the current printable archive HTML, and e-invoice generation.
+- VIES production smoke, async retry for Unknown/manual-review results, external object storage with immutable retention/legal hold, and ZUGFeRD/Factur-X generation/validation require dedicated implementation slices. Current JSON/HTML/CSV archive/export is useful operational output, not full e-invoice compliance.
 
 ## Business Onboarding / Public Visibility
 
@@ -109,7 +109,7 @@ Verified implementation:
 
 Gaps:
 
-- Business onboarding still needs final hosted smoke coverage for email-confirm enforcement across owner/member activation flows.
+- Business onboarding still needs hosted smoke coverage for the full admin-assisted lifecycle: creation, invitation onboarding, resend/revoke, email-confirm enforcement, approval prerequisites, reactivation, and public visibility.
 
 ## Inventory / Returns
 
@@ -124,7 +124,7 @@ Verified implementation:
 
 Gaps:
 
-- Inventory/returns still need hosted operator-flow smoke coverage across order cancel, shipment return, refund coordination, and supplier receiving.
+- Inventory/returns still need hosted operator-flow smoke coverage for supplier receiving, stock transfer, order cancel stock release, return receipt idempotency, and refund coordination.
 - Carrier-integrated RMA automation remains under the DHL/shipping go-live slice.
 
 ## Testing / CI
@@ -136,6 +136,14 @@ Status: WebAdmin test project exists and is wired into split CI lanes; provider-
 - Initial WebAdmin coverage threshold is intentionally low (`10`) so the lane can run continuously while coverage grows.
 - The focused WebApi provider boundary run for Stripe, DHL, Brevo, and provider-callback worker tests passed locally on 2026-05-09 with an isolated output path to avoid a running `Darwin.WebApi.exe` file lock (`280` passed).
 - `Darwin.WebAdmin.Tests` builds locally with an isolated output path. The non-hosted security subset, public/auth hosted smoke subset (`27` passed), render hosted smoke subset (`105` passed), tokenless CSRF matrix (`115` passed), valid-token CSRF matrix (`8` passed), and positive mutation smoke flow (`1` passed) passed locally on 2026-05-09 after aligning row-version protected smoke posts with the real Razor forms.
-- The focused unit/source-contract run for Shipment/Stripe/Billing/Communication/Inventory/Tax/SignIn passed locally on 2026-05-09 (`602` passed).
+- The focused unit/source-contract run for Shipment/Stripe/Billing/Communication/Inventory/Tax/SignIn passed locally on 2026-05-09 (`602` passed). The broader Inventory/Business/Invitation/SignIn/Tax/Invoice/VAT filter passed on 2026-05-10 with `1007` active tests and `14` quarantined stale source-contract tests.
 - WebAdmin CSP was tightened back to self-hosted script/style/font/connect sources, and admin/auth/anti-forgery cookies now keep secure defaults instead of relying on environment-specific relaxation.
-- The broad WebAdmin source-contract suite now runs green locally with stale pre-simplification exact-layout contracts explicitly quarantined (`210` active passed, `47` skipped). The skipped contracts should be rewritten into stable security/localization/HTMX/route assertions before raising them back to required CI signals.
+- The broad WebAdmin source-contract suite now runs green locally with stale pre-simplification exact-layout contracts explicitly quarantined (`210` active passed, `47` WebAdmin-surface skipped on 2026-05-09). Source-contract cleanup is partial until those skipped contracts are rewritten into stable security/localization/HTMX/route assertions.
+
+
+## Compliance Decisions
+
+- VIES phase 1 policy is soft `Unknown` plus manual review for disabled, unavailable, rate-limited, timeout, malformed response, or provider-exception outcomes. Only clear valid/invalid provider responses may record `Valid` or `Invalid`.
+- Invoice archive phase 1 uses the internal/database `IInvoiceArchiveStorage` provider. Production requires an external object-storage provider with immutable retention/legal hold before legal archive immutability is claimed.
+- E-invoice phase 1 is planning only. The primary target is ZUGFeRD/Factur-X because SME users need a human-readable PDF plus structured data. XRechnung remains a secondary export backlog item. Current JSON/HTML/CSV exports are not full e-invoice compliance.
+- WebAdmin onboarding wizard is planned as an admin-assisted Loyan business onboarding workflow; it is not implemented in this slice.

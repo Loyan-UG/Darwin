@@ -571,3 +571,9 @@ Rules:
 - CRM operational models must not leak directly into public/member delivery
 - loyalty totals must be query-side projections from loyalty data
 - onboarding, settings, communication, tax, and localization policies should be projected explicitly instead of reconstructed ad hoc in UI code
+
+## Compliance And Archive Decisions
+
+- VAT validation phase 1 records provider failures as `Unknown` with manual review instead of inventing valid or invalid decisions.
+- Issued invoice archive storage now has an application-level `IInvoiceArchiveStorage` boundary with an internal/database provider. Production archive immutability requires a future object-storage provider with immutable retention/legal hold.
+- The primary future e-invoice artifact is ZUGFeRD/Factur-X. It requires structured XML and PDF/A-3 embedding plus validation. XRechnung is a secondary export target. Current JSON/HTML/CSV archive outputs are operational artifacts, not full e-invoice compliance.

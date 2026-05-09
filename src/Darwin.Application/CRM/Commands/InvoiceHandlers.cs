@@ -1,6 +1,8 @@
+using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing.Queries;
+using Darwin.Application.CRM.Services;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Businesses;
@@ -12,8 +14,6 @@ using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 
 namespace Darwin.Application.CRM.Commands
@@ -499,11 +499,21 @@ namespace Darwin.Application.CRM.Commands
         private const string EventType = "InvoiceArchivePurged";
 
         private readonly IAppDbContext _db;
+        private readonly IInvoiceArchiveStorage _archiveStorage;
         private readonly IClock _clock;
 
         public PurgeExpiredInvoiceArchivesHandler(IAppDbContext db, IClock? clock = null)
+            : this(db, null, clock)
+        {
+        }
+
+        public PurgeExpiredInvoiceArchivesHandler(
+            IAppDbContext db,
+            IInvoiceArchiveStorage? archiveStorage = null,
+            IClock? clock = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
+            _archiveStorage = archiveStorage ?? new DatabaseInvoiceArchiveStorage(db);
             _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         }
 
@@ -528,10 +538,7 @@ namespace Darwin.Application.CRM.Commands
                 var retainedUntilUtc = invoice.ArchiveRetainUntilUtc;
                 var policyVersion = invoice.ArchiveRetentionPolicyVersion;
 
-                invoice.IssuedSnapshotJson = null;
-                invoice.IssuedSnapshotHashSha256 = null;
-                invoice.ArchivePurgedAtUtc = nowUtc;
-                invoice.ArchivePurgeReason = "Retention period elapsed";
+                await _archiveStorage.PurgePayloadAsync(invoice, "Retention period elapsed", nowUtc, ct).ConfigureAwait(false);
 
                 _db.Set<EventLog>().Add(new EventLog
                 {
@@ -617,7 +624,8 @@ namespace Darwin.Application.CRM.Commands
             IAppDbContext db,
             Invoice invoice,
             DateTime nowUtc,
-            CancellationToken ct)
+            CancellationToken ct,
+            IInvoiceArchiveStorage? archiveStorage = null)
         {
             if (invoice.IssuedAtUtc.HasValue && !string.IsNullOrWhiteSpace(invoice.IssuedSnapshotJson))
             {
@@ -663,7 +671,7 @@ namespace Darwin.Application.CRM.Commands
 
             var issuedAtUtc = invoice.IssuedAtUtc ?? nowUtc;
             invoice.IssuedAtUtc = issuedAtUtc;
-            invoice.IssuedSnapshotJson ??= JsonSerializer.Serialize(
+            var snapshotJson = invoice.IssuedSnapshotJson ?? JsonSerializer.Serialize(
                 new InvoiceIssueSnapshot(
                     1,
                     invoice.Id,
@@ -709,17 +717,17 @@ namespace Darwin.Application.CRM.Commands
                     lines),
                 SnapshotJsonOptions);
 
-            invoice.IssuedSnapshotHashSha256 ??= ComputeSha256(invoice.IssuedSnapshotJson);
-            invoice.ArchiveGeneratedAtUtc ??= issuedAtUtc;
-            var retentionYears = Math.Clamp(settings?.InvoiceArchiveRetentionYears ?? 10, 1, 30);
-            invoice.ArchiveRetainUntilUtc ??= issuedAtUtc.AddYears(retentionYears);
-            invoice.ArchiveRetentionPolicyVersion ??= $"invoice-archive-retention:v1:{retentionYears}y";
-        }
-
-        private static string ComputeSha256(string value)
-        {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
-            return Convert.ToHexString(bytes).ToLowerInvariant();
+            var storage = archiveStorage ?? new DatabaseInvoiceArchiveStorage(db);
+            await storage.SaveAsync(
+                    invoice,
+                    new InvoiceArchiveStorageArtifact(
+                        invoice.Id,
+                        issuedAtUtc,
+                        "application/json",
+                        $"invoice-{invoice.Id:N}-issued-snapshot.json",
+                        snapshotJson),
+                    ct)
+                .ConfigureAwait(false);
         }
 
         private sealed record InvoiceIssueSnapshot(
