@@ -1,210 +1,111 @@
-# Darwin Production Setup Runbook
+﻿# Darwin Production Setup Runbook
 
-This runbook tracks operational setup that must exist outside the application code before a real server can send live traffic. Keep it updated whenever production-facing configuration changes.
+This runbook lists the production configuration and smoke checks required before live traffic. Do not commit secrets to git; use environment variables, platform secrets, .NET user-secrets for local work, or a server-side secret store.
 
-## Configuration Sources
+## 1. Configuration Sources
 
-Use environment variables, platform secrets, or a server-side secret store for secrets. Do not place real credentials in `appsettings.json`.
+Production `appsettings.json` must keep secrets empty or disabled. Supply provider credentials through secure configuration only.
 
-Production `appsettings.json` intentionally leaves secrets and provider-owned identities empty or disabled. Missing required values should fail fast or keep the integration disabled until the server environment supplies real values.
-
-For local Docker Desktop usage, copy `.env.example` to `.env` and set local-only values there. The `.env` file, `_shared_keys/`, local logs, and build artifacts are intentionally ignored by Git and must not be committed.
-
-Development `appsettings.Development.json` files intentionally keep database connection strings empty. Supply `ConnectionStrings__PostgreSql` or `ConnectionStrings__DefaultConnection` through a local `.env`, process environment, or .NET user-secrets before running WebAdmin, WebApi, or Worker locally.
-
-Before committing infrastructure/configuration changes, run:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-secrets.ps1
-```
-
-Common environment variable shape:
+Common production shape:
 
 ```powershell
 $env:Persistence__Provider = "PostgreSql"
 $env:ConnectionStrings__PostgreSql = "Host=...;Port=5432;Database=darwin;Username=darwin_app;Password=..."
 $env:DatabaseStartup__ApplyMigrations = "false"
 $env:DatabaseStartup__Seed = "false"
-$env:Email__Provider = "Brevo"
-$env:Email__Brevo__ApiKey = "xkeysib-..."
-$env:Email__Brevo__SenderEmail = "no-reply@example.com"
-$env:Email__Brevo__SenderName = "Darwin"
-$env:Email__Brevo__ReplyToEmail = "support@example.com"
-$env:Email__Brevo__ReplyToName = "Darwin Support"
-$env:Email__Brevo__WebhookUsername = "brevo-darwin"
-$env:Email__Brevo__WebhookPassword = "REPLACE_WITH_STRONG_SECRET"
-$env:Email__Brevo__SandboxMode = "false"
 $env:DataProtection__KeysPath = "D:\Darwin\_shared_keys"
 $env:DataProtection__RequireKeyEncryption = "true"
 $env:DataProtection__CertificateThumbprint = "..."
-$env:Jwt__SigningKey = "REPLACE_WITH_32_BYTE_OR_LONGER_SECRET"
+$env:Jwt__SigningKey = "SET_BY_SECRET"
 ```
 
-## Database
+Before committing configuration changes, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-secrets.ps1
+```
+
+## 2. Database
 
 - Preferred provider: `PostgreSql`.
-- Customer-specific SQL Server deployments remain supported by setting `Persistence:Provider=SqlServer`.
-- Apply migrations with the provider-specific migration project that matches the server provider.
-- PostgreSQL production users should not be superusers after initial provisioning. Grant only the rights needed for the app and migration role.
-- For PostgreSQL provider details, extension requirements, and post-migration checks, see `docs/postgresql-migration-runbook.md` and `docs/persistence-providers.md`.
+- SQL Server remains supported for deployments that require it.
+- Apply migrations with the provider-specific migration project and an owner/migration role.
+- Run WebAdmin, WebApi, and Worker with a restricted runtime role.
+- Production/restricted runtime processes must set `DatabaseStartup:ApplyMigrations=false` and `DatabaseStartup:Seed=false`.
+- PostgreSQL extensions required by migrations include `citext` and `pg_trgm`.
 
-Minimum PostgreSQL preflight:
+See `docs/postgresql-migration-runbook.md` and `docs/persistence-providers.md` for provider commands and grant scripts.
 
-```sql
-create database darwin;
-create role darwin_owner login password 'REPLACE_WITH_OWNER_PASSWORD';
-create role darwin_app login password 'REPLACE_WITH_APP_PASSWORD';
-grant connect on database darwin to darwin_owner, darwin_app;
-grant create on database darwin to darwin_owner;
-```
+## 3. Data Protection
 
-Migration-time role must be able to create required extensions:
+- WebAdmin, WebApi, and Worker must share `DataProtection:ApplicationName` and `DataProtection:KeysPath`.
+- Enable `DataProtection:RequireKeyEncryption=true` in production when certificate-backed key encryption is configured.
+- Configure `DataProtection:CertificateThumbprint`; startup should fail if the certificate is missing, lacks a private key, or is outside its validity window.
+- Grant the service identity read access to the certificate private key and read/write access to the key path.
 
-- `citext`
-- `pg_trgm`
+## 4. WebApi Authentication
 
-Run EF migrations with `darwin_owner`. Run WebAdmin, WebApi, and Worker with `darwin_app` after granting runtime access to all Darwin module schemas. See `docs/postgresql-migration-runbook.md` for the grant script.
+- Set `Jwt__SigningKey` to a high-entropy value of at least 32 bytes.
+- Keep issuer/audience aligned with front-office and mobile clients.
+- Rotate JWT keys through Site Settings before production traffic.
+- Never reuse development seeded JWT keys in shared, staging, or production environments.
 
-WebAdmin and WebApi can still self-bootstrap in Development, but production and restricted-role runtime processes must set `DatabaseStartup:ApplyMigrations=false` and `DatabaseStartup:Seed=false`. Apply migrations and seed through a controlled owner-role deployment step before starting runtime services.
+## 5. Transactional Email / Brevo
 
-## Transactional Email: Brevo
+Darwin supports `Email:Provider=Brevo` for production and `SMTP` for local or customer-specific fallback.
 
-Darwin now supports provider selection through `Email:Provider`:
+Brevo readiness checklist:
 
-- `Brevo`: primary production provider.
-- `SMTP`: local/development fallback and customer-specific SMTP fallback.
+- Sender domain verified.
+- DKIM and DMARC configured.
+- API key stored only in secure configuration.
+- `Email:Brevo:SandboxMode=false` for production traffic.
+- Webhook Basic Auth username/password set.
+- Brevo webhook URL configured at `/api/v1/public/notifications/brevo/webhooks`.
+- Transactional events subscribed: request, delivered, deferred, soft_bounce, hard_bounce, spam, blocked, invalid, error, opened, click.
+- `ProviderCallbackWorker:Enabled=true`.
+- `EmailDispatchOperationWorker:Enabled=true`.
 
-Brevo API configuration lives under `Email:Brevo`:
+Implementation note: Darwin currently renders transactional templates internally and sends inline content through Brevo. Provider-managed template IDs remain a backlog item.
 
-```json
-{
-  "Email": {
-    "Provider": "Brevo",
-    "Brevo": {
-      "BaseUrl": "https://api.brevo.com/v3/",
-      "ApiKey": "SET_BY_SECRET",
-      "SenderEmail": "no-reply@example.com",
-      "SenderName": "Darwin",
-      "ReplyToEmail": "support@example.com",
-      "ReplyToName": "Darwin Support",
-      "WebhookUsername": "SET_BY_SECRET",
-      "WebhookPassword": "SET_BY_SECRET",
-      "SandboxMode": false,
-      "TimeoutSeconds": 30,
-      "DefaultTags": [ "darwin", "transactional" ]
-    }
-  }
-}
-```
+## 6. Stripe
 
-Brevo server setup checklist:
+Stripe webhook ingress is `/api/v1/public/billing/stripe/webhooks`. It validates `Stripe-Signature` before writing idempotent provider callback inbox records.
 
-1. Create or upgrade the Brevo account.
-2. Create an API key and store it as `Email__Brevo__ApiKey`.
-3. Configure `Email__Brevo__SenderEmail` with a professional sender domain, not a free mailbox domain.
-4. Authenticate the sender domain in Brevo.
-5. Add/verify Brevo DNS records for domain ownership, DKIM, and DMARC.
-6. Set a monitored reply-to mailbox with `Email__Brevo__ReplyToEmail`.
-7. Set `Email__Brevo__WebhookUsername` and `Email__Brevo__WebhookPassword` to strong values.
-8. In Brevo transactional webhooks, configure the notify URL with Basic Auth:
-   `https://<username>:<password>@<host>/api/v1/public/notifications/brevo/webhooks`
-9. Subscribe the Brevo webhook to transactional email events at least for `request`, `delivered`, `deferred`, `soft_bounce`, `hard_bounce`, `spam`, `blocked`, `invalid`, `error`, `opened`, and `click`.
-10. Keep `Email__Brevo__SandboxMode=true` only for integration validation. Set it to `false` for real delivery.
-11. Confirm `Darwin.Worker` is deployed and `EmailDispatchOperationWorker:Enabled=true` if queued admin test emails should be processed.
-12. Confirm `ProviderCallbackWorker:Enabled=true` so Brevo webhook inbox messages are processed.
+Stripe test-mode smoke checklist:
 
-Current implementation details:
+- Test publishable and server-side key entered in Settings or secure configuration.
+- Stripe enabled in Site Settings.
+- Stripe webhook signing secret (`whsec_...`) entered securely.
+- Checkout Session is created through WebApi.
+- Storefront return URL is reached.
+- Return route alone does not mark the payment successful.
+- Verified webhook updates payment/order state.
+- Failed payment, refund, and dispute states are visible in WebAdmin.
 
-- Direct application sends resolve `IEmailSender` based on `Email:Provider`.
-- Queued admin communication-test emails store the active provider name and `Darwin.Worker` dispatches either `Brevo` or `SMTP`.
-- Startup validation fails fast when `Email:Provider=Brevo` but `Email:Brevo:ApiKey`, `Email:Brevo:SenderEmail`, or a valid timeout are not configured.
+Live keys should be entered only when production smoke is scheduled. Storefront payment finalization must remain verified-webhook-only.
 
-## Payment Provider: Stripe
+## 7. DHL
 
-Stripe webhook ingress is implemented at `api/v1/public/billing/stripe/webhooks` and validates signatures before writing idempotent provider callback inbox messages.
+DHL webhook ingress is `/api/v1/public/shipping/dhl/webhooks`. It validates API key and HMAC signature before writing idempotent provider callback inbox records.
 
-Storefront payment creation now supports real Stripe Checkout Sessions when Stripe is enabled in Site Settings and a server-side Stripe secret key is configured. Storefront return URLs only validate the handoff context; final payment state must come from verified Stripe webhooks.
+DHL live smoke checklist:
 
-Before live payments:
+- Target account credentials entered in Settings or secure configuration.
+- Base URL and product codes confirmed for the account.
+- Shared media storage configured through `MediaStorage:RootPath` and `MediaStorage:PublicBaseUrl`.
+- Create-shipment request succeeds.
+- Label PDF is returned or retrievable.
+- Label is stored in shared media storage.
+- Tracking number/reference is stored.
+- Callback is accepted and processed.
+- Failed/stuck provider operations are recoverable in WebAdmin.
 
-1. Store Stripe secret key and webhook secret in environment/platform secrets.
-2. Enable Stripe in Site Settings only after the server-side secret key and webhook secret are supplied through secure configuration.
-3. Confirm provider references are stored on `Payment.ProviderPaymentIntentRef`, `Payment.ProviderCheckoutSessionRef`, and `Payment.ProviderTransactionRef`.
-4. Confirm `ProviderCallbackWorker:Enabled=true` and Stripe webhook events process successfully.
-5. Smoke Checkout Session creation against a Stripe test account, then smoke `checkout.session.completed`, `payment_intent.succeeded`, failed payment, refund, and dispute visibility in WebAdmin.
+Do not create fake DHL labels, fake references, or local fake tracking URLs.
 
-## Shipping Provider: DHL
+## 8. VAT Validation / VIES
 
-DHL webhook ingress is implemented at `api/v1/public/shipping/dhl/webhooks` and validates API key plus HMAC signature before writing idempotent provider callback inbox messages.
-
-Shipment creation and label retrieval now run through the Worker `IDhlShipmentProviderClient` path. Labels returned as PDF bytes are stored in the configured shared media root and exposed through the configured public media URL base. Production setup still needs a live DHL smoke with the target account because DHL account contracts can differ in base URL, authentication, product codes, payload fields, and label response shape.
-
-Before live DHL shipping:
-
-1. Store DHL API key/secret and account settings in environment/platform secrets or secured site settings.
-2. Configure `MediaStorage:RootPath` and `MediaStorage:PublicBaseUrl` so WebAdmin, Worker, WebApi, and Darwin.Web resolve the same label/media URLs.
-3. Confirm the live DHL create-shipment and label-retrieval request/response contract against the target account.
-4. Confirm `ShipmentProviderOperationBackgroundService` is enabled and failed/stuck operations are recoverable from WebAdmin.
-5. Smoke shipment creation, label generation, tracking update callback, exception callback, and return/RMA handling.
-- Brevo sends through `POST /v3/smtp/email`.
-- Brevo request payload includes sender, reply-to when configured, HTML content, generated text content, tags, and correlation/idempotency headers when the current flow supplies a correlation key.
-- `EmailDispatchAudit.ProviderMessageId` stores the Brevo `messageId` when Brevo returns it.
-- Brevo transactional webhooks are received at `/api/v1/public/notifications/brevo/webhooks`, require configured Basic Auth, are stored idempotently in `ProviderCallbackInboxMessages`, and are processed by `ProviderCallbackWorker`.
-- Brevo webhook idempotency is based on a SHA-256 key derived from event name, provider message id, and provider timestamp, so long provider identifiers are not truncated into collision-prone keys.
-
-Operational gaps intentionally kept in backlog:
-
-- Brevo template IDs are not yet mapped to Darwin template keys; Darwin still renders transactional HTML internally and sends inline content.
-
-## SMTP Fallback
-
-SMTP remains available through:
-
-```json
-{
-  "Email": {
-    "Provider": "SMTP",
-    "Smtp": {
-      "Host": "smtp-relay.example.com",
-      "Port": 587,
-      "EnableSsl": true,
-      "Username": "smtp-user",
-      "Password": "SET_BY_SECRET",
-      "FromAddress": "no-reply@example.com",
-      "FromDisplayName": "Darwin"
-    }
-  }
-}
-```
-
-Use SMTP only for local development, emergency fallback, or customer environments that require their own relay.
-
-## Data Protection
-
-- All entry points must share the same `DataProtection:ApplicationName`.
-- Use a shared `DataProtection:KeysPath` across WebAdmin, WebApi, and Worker on the same deployment.
-- Enable `DataProtection:RequireKeyEncryption=true` in production when certificate-backed key encryption is available.
-- Configure `DataProtection:CertificateThumbprint` before enabling encryption enforcement.
-- If `DataProtection:CertificateThumbprint` is configured, startup fails unless the certificate exists in the configured store, has a private key, and is currently within its validity window.
-- Grant the app/service identity read access to the certificate private key and read/write access to `DataProtection:KeysPath`.
-
-## WebApi Authentication
-
-- Set `Jwt__SigningKey` to a high-entropy secret of at least 32 bytes.
-- Keep `Jwt__Issuer` and `Jwt__Audience` aligned with the mobile/client configuration.
-- Rotate JWT signing keys through Site Settings before go-live; do not rely on the public development-only seeded JWT key for any shared, staging, or production environment.
-
-## Push Providers
-
-- FCM/APNS are disabled in production defaults until real provider credentials are supplied.
-- Enable `PushProviders__Fcm__Enabled` or `PushProviders__Apns__Enabled` only after the server keys, sender/team/key identifiers, APNS auth key path, and bundle identifiers are set.
-- Keep `InactiveReminderWorker:Enabled=false` until push delivery has been smoke-tested against the target gateway/provider.
-
-## Worker Processes
-
-## VAT Validation
-
-The TaxCompliance workspace can check B2B customer VAT IDs through the EU VIES provider when enabled:
+VIES configuration:
 
 ```json
 {
@@ -220,9 +121,40 @@ The TaxCompliance workspace can check B2B customer VAT IDs through the EU VIES p
 }
 ```
 
-Keep the provider disabled until outbound connectivity and VIES availability handling have been smoke-tested in the target deployment. Disabled or unavailable checks are stored as `Unknown` with an operator-visible source/message; they do not mark a VAT ID valid.
+VIES smoke checklist:
 
-Production worker switches should be explicit:
+- VIES enabled in configuration.
+- Valid VAT ID returns Valid.
+- Invalid VAT ID returns Invalid.
+- Disabled, unavailable, timeout, rate-limit, or malformed provider response returns Unknown/manual review.
+- No false Valid/Invalid decision is recorded on provider failure.
+- Operator-visible source/message fields are recorded.
+
+Future work: async retry workflow for Unknown provider results.
+
+## 9. Invoice Archive / Retention
+
+Current provider: internal/database-backed archive storage through `IInvoiceArchiveStorage`.
+
+Production target: external object storage with immutable retention/legal hold. Do not claim production archive immutability until the storage provider and legal-hold behavior are implemented and smoke-tested.
+
+Checklist:
+
+- Internal/database archive enabled for development/internal fallback.
+- Production object-storage provider selected and documented.
+- Legal retention years confirmed before enabling purge.
+- `InvoiceArchiveMaintenanceWorker:Enabled=true` only after retention settings are verified.
+- Purge worker retains metadata/audit event while removing expired payloads.
+
+## 10. Push Providers
+
+- FCM/APNS remain disabled until real provider credentials are supplied.
+- Enable only after server keys, sender/team/key identifiers, APNS key path, and bundle identifiers are configured.
+- Keep `InactiveReminderWorker:Enabled=false` until push delivery is smoke-tested.
+
+## 11. Worker Processes
+
+Enable workers explicitly in production:
 
 ```json
 {
@@ -235,17 +167,16 @@ Production worker switches should be explicit:
 }
 ```
 
-Enable `InvoiceArchiveMaintenanceWorker` only after legal retention settings are confirmed. It purges expired issued-invoice snapshot payloads after `ArchiveRetainUntilUtc` while retaining invoice purge metadata and an audit event. For development machines, keep outbound/side-effecting workers disabled unless validating that specific integration.
+For development machines, keep outbound/side-effecting workers disabled unless validating that specific integration.
 
-## Production Smoke Checks
+## 12. Production Smoke Checks
 
-After deployment:
-
-1. Start WebAdmin, WebApi, and Worker with the same provider and Data Protection settings.
-2. Confirm WebAdmin starts and can read/write the configured database.
-3. Confirm WebApi health/public endpoint returns success.
-4. In Brevo sandbox mode, send a transactional email request and confirm Darwin records a successful `EmailDispatchAudit` without real delivery.
-5. Turn sandbox mode off and send one controlled email to the configured test inbox.
-6. Confirm Brevo shows the message in transactional logs and Darwin stores the provider message id.
-7. Trigger or replay one Brevo webhook event and confirm `ProviderCallbackInboxMessages` records then processes it.
-8. Open WebAdmin business communication monitoring and confirm Brevo provider-callback totals, failed/stale counts, and latest webhook state are visible for operators.
+- Start WebAdmin, WebApi, and Worker with the same provider, database, Data Protection, and media storage configuration.
+- Confirm WebAdmin can read/write the configured database.
+- Confirm WebApi health/public endpoints return success.
+- Send one Brevo sandbox email, then one controlled production email after sandbox is disabled.
+- Replay or trigger one Brevo webhook and confirm provider callback processing.
+- Run Stripe test-mode Checkout Session and webhook finalization smoke.
+- Run DHL live shipment/label/tracking callback smoke.
+- Run VIES Valid, Invalid, and provider-failure smoke.
+- Confirm invoice archive download works and purge is disabled until retention policy is approved.

@@ -2,10 +2,12 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Queries;
+using Darwin.Application.CRM.Services;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -525,6 +527,81 @@ public sealed class CrmInvoiceQueryHandlerTests
         result.Should().BeNull("purged archive must not be returned");
     }
 
+    [Fact]
+    public async Task DatabaseInvoiceArchiveStorage_Should_Save_Read_And_Check_Artifact()
+    {
+        await using var db = InvoiceQueryDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        var issuedAtUtc = new DateTime(2026, 5, 9, 9, 0, 0, DateTimeKind.Utc);
+        var invoice = MakeInvoice(id: invoiceId);
+
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Darwin",
+            DefaultCulture = "en-US",
+            SupportedCulturesCsv = "en-US",
+            DefaultCountry = "DE",
+            DefaultCurrency = "EUR",
+            InvoiceArchiveRetentionYears = 7,
+            RowVersion = new byte[] { 1 }
+        });
+        db.Set<Invoice>().Add(invoice);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var storage = new DatabaseInvoiceArchiveStorage(db);
+        var result = await storage.SaveAsync(
+            invoice,
+            new Darwin.Application.Abstractions.Invoicing.InvoiceArchiveStorageArtifact(
+                invoiceId,
+                issuedAtUtc,
+                "application/json",
+                $"invoice-{invoiceId:N}-issued-snapshot.json",
+                "{\"invoiceNumber\":\"INV-ARCHIVE\"}"),
+            TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        result.HashSha256.Should().HaveLength(64);
+        result.RetainUntilUtc.Should().Be(issuedAtUtc.AddYears(7));
+        result.RetentionPolicyVersion.Should().Be("invoice-archive-retention:v1:7y");
+        (await storage.ExistsAsync(invoiceId, TestContext.Current.CancellationToken)).Should().BeTrue();
+
+        var artifact = await storage.ReadAsync(invoiceId, TestContext.Current.CancellationToken);
+        artifact.Should().NotBeNull();
+        artifact!.Payload.Should().Contain("INV-ARCHIVE");
+        artifact.FileName.Should().Be($"invoice-{invoiceId:N}-issued-snapshot.json");
+    }
+
+    [Fact]
+    public async Task DatabaseInvoiceArchiveStorage_Should_Purge_Payload_And_Preserve_Audit_Metadata()
+    {
+        await using var db = InvoiceQueryDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        var invoice = MakeInvoice(
+            id: invoiceId,
+            issuedSnapshotJson: "{\"invoiceNumber\":\"INV-PURGE\"}",
+            archiveRetainUntilUtc: new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        invoice.IssuedAtUtc = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        invoice.IssuedSnapshotHashSha256 = new string('a', 64);
+        invoice.ArchiveGeneratedAtUtc = invoice.IssuedAtUtc;
+        invoice.ArchiveRetentionPolicyVersion = "invoice-archive-retention:v1:1y";
+        db.Set<Invoice>().Add(invoice);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var purgedAtUtc = new DateTime(2026, 5, 9, 10, 0, 0, DateTimeKind.Utc);
+        var storage = new DatabaseInvoiceArchiveStorage(db);
+        await storage.PurgePayloadAsync(invoice, "Retention elapsed", purgedAtUtc, TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var saved = await db.Set<Invoice>().SingleAsync(x => x.Id == invoiceId, TestContext.Current.CancellationToken);
+        saved.IssuedSnapshotJson.Should().BeNull();
+        saved.IssuedSnapshotHashSha256.Should().BeNull();
+        saved.ArchivePurgedAtUtc.Should().Be(purgedAtUtc);
+        saved.ArchivePurgeReason.Should().Be("Retention elapsed");
+        saved.ArchiveRetentionPolicyVersion.Should().Be("invoice-archive-retention:v1:1y");
+        (await storage.ExistsAsync(invoiceId, TestContext.Current.CancellationToken)).Should().BeFalse();
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Shared test infrastructure
     // ─────────────────────────────────────────────────────────────────────────
@@ -584,6 +661,17 @@ public sealed class CrmInvoiceQueryHandlerTests
             {
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.OrderNumber).IsRequired();
+            });
+
+            modelBuilder.Entity<SiteSetting>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Title).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.SupportedCulturesCsv).IsRequired();
+                builder.Property(x => x.DefaultCountry).IsRequired();
+                builder.Property(x => x.DefaultCurrency).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
             });
         }
     }

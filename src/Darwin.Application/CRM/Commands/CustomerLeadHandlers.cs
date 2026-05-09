@@ -416,7 +416,7 @@ namespace Darwin.Application.CRM.Commands
                 throw new ValidationException(_localizer["CustomerBusinessRequiresVatIdForTaxCompliance"]);
             }
 
-            var result = await _provider.ValidateAsync(customer.VatId, ct).ConfigureAwait(false);
+            var result = await ValidateWithProviderAsync(customer.VatId, ct).ConfigureAwait(false);
             customer.VatValidationStatus = result.Status;
             customer.VatValidationCheckedAtUtc = _clock.UtcNow;
             customer.VatValidationSource = Truncate(NormalizeOptional(result.Source) ?? "provider", MaxSourceLength);
@@ -432,6 +432,27 @@ namespace Darwin.Application.CRM.Commands
             }
 
             return customer.VatValidationStatus;
+        }
+
+        private async Task<VatValidationProviderResult> ValidateWithProviderAsync(string vatId, CancellationToken ct)
+        {
+            try
+            {
+                return await _provider.ValidateAsync(vatId, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                return new VatValidationProviderResult
+                {
+                    Status = CustomerVatValidationStatus.Unknown,
+                    Source = "provider.unavailable",
+                    Message = "VAT validation provider failed; manual review is required."
+                };
+            }
         }
 
         private static string? NormalizeOptional(string? value) =>

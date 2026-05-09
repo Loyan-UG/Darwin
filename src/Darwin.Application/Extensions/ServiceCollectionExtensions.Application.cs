@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Catalog.Services;
+using Darwin.Application.CRM.Services;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -35,6 +37,7 @@ namespace Darwin.Application.Extensions
             // Register FluentValidation validators from the same assembly as the marker type.
             // (This extension method comes from FluentValidation.DependencyInjectionExtensions package.)
             services.AddValidatorsFromAssembly(markerType.Assembly);
+            services.AddScoped<IInvoiceArchiveStorage, DatabaseInvoiceArchiveStorage>();
 
             
 

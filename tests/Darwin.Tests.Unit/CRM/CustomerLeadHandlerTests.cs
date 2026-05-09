@@ -12,6 +12,7 @@ using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using System.Net.Http;
 
 namespace Darwin.Tests.Unit.CRM;
 
@@ -1040,6 +1041,47 @@ public sealed class CustomerLeadHandlerTests
         customer.VatValidationMessage.Should().Be("VIES confirmed the VAT ID.");
     }
 
+    [Fact]
+    public async Task ValidateCustomerVatIdHandler_Should_PersistUnknown_WhenProviderFails()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var rowVersion = new byte[] { 8, 8, 8, 8 };
+        var checkedAtUtc = new DateTime(2026, 5, 9, 14, 0, 0, DateTimeKind.Utc);
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Ada",
+            LastName = "Lovelace",
+            Email = "ada@example.test",
+            Phone = "+491234567",
+            TaxProfileType = CustomerTaxProfileType.Business,
+            VatId = "DE123456789",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ValidateCustomerVatIdHandler(
+            db,
+            new FixedClock(checkedAtUtc),
+            new ThrowingVatValidationProvider(),
+            new TestStringLocalizer());
+
+        var status = await handler.HandleAsync(new CustomerVatValidationLookupDto
+        {
+            Id = customerId,
+            RowVersion = rowVersion
+        }, TestContext.Current.CancellationToken);
+
+        status.Should().Be(CustomerVatValidationStatus.Unknown);
+        var customer = await db.Set<Customer>().SingleAsync(x => x.Id == customerId, TestContext.Current.CancellationToken);
+        customer.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Unknown);
+        customer.VatValidationCheckedAtUtc.Should().Be(checkedAtUtc);
+        customer.VatValidationSource.Should().Be("provider.unavailable");
+        customer.VatValidationMessage.Should().Be("VAT validation provider failed; manual review is required.");
+    }
+
     private static User MakeUser(Guid userId) =>
         new("user@example.com", "hashed-password", "security-stamp")
         {
@@ -1158,6 +1200,12 @@ public sealed class CustomerLeadHandlerTests
                 Message = _message
             });
         }
+    }
+
+    private sealed class ThrowingVatValidationProvider : IVatValidationProvider
+    {
+        public Task<VatValidationProviderResult> ValidateAsync(string vatId, CancellationToken ct = default) =>
+            throw new HttpRequestException("Simulated VIES outage");
     }
 
     private sealed class TestStringLocalizer : IStringLocalizer<ValidationResource>

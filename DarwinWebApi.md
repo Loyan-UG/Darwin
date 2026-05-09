@@ -359,3 +359,13 @@ When adding or changing an endpoint, update these together:
 3. `Darwin.WebApi`
 4. this document
 5. any affected consumer docs (`DarwinFrontEnd.md`, `DarwinMobile.md`, `DarwinWebAdmin.md`)
+
+## Payment Completion Rule
+
+Storefront payment completion is provider-webhook authoritative. Public return/callback routes may validate the handoff context and render the customer-facing continuation state, but they must not capture, void, or mark Stripe provider payments as successful without a verified Stripe webhook event.
+
+## Provider Smoke Status
+
+- Stripe: real Checkout Session creation exists. Test keys are used first; live keys are entered later through Settings or secure configuration. Remaining work is test-mode smoke, then live-mode smoke before production traffic.
+- DHL: real client-backed shipment/label operation path exists. Remaining work is live smoke against the target DHL account and later carrier-integrated RMA automation.
+- Brevo: webhook and dispatch plumbing exists. Remaining work is production DNS, sender, sandbox, webhook, and worker verification.
