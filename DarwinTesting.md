@@ -449,7 +449,28 @@ Covers query handlers (26 tests):
 - `GetVariantStockHandler` — null when no levels, aggregated totals across warehouses, warehouse-filtered subset.
 - `GetInventoryLedgerHandler` — all transactions, variant filter, Inbound/Outbound/Reservations filters, empty state, ops-summary with correct in/out/reservation counts and empty-state default.
 
-# 2026-05-09 Coverage Extension — Orders Query Handlers and Order Status Handler
+# 2026-05-09 Coverage Extension — CRM Invoice Query Handlers, Member Invoice Queries, and Invoice Refund/Archive Handlers
+
+Added three new test files covering the previously untested CRM invoice management layer:
+
+### `tests/Darwin.Tests.Unit/CRM/CrmInvoiceQueryHandlerTests.cs`
+Covers admin-facing invoice query handlers (21 tests):
+- `GetInvoicesPageHandler` — empty state, soft-delete exclusion, page/page-size normalization (< 1 clamped, > 200 clamped), Draft filter (only Draft invoices), DueSoon filter (unpaid within 7 days; excludes Paid and Overdue), Overdue filter (unpaid past due; excludes Paid and future-due), Refunded filter (invoices with completed refunds), field mapping (Currency/Status/TotalNetMinor/TotalGrossMinor/DueDateUtc).
+- `GetInvoiceForEditHandler` — not-found returns null, basic field projection, payment summary enrichment when payment linked, balance computation for non-paid invoice without payment, zero-balance computation for Paid invoice without payment record, customer display name enrichment.
+- `GetInvoiceArchiveSnapshotHandler` — empty Guid returns null, non-existent invoice returns null, soft-deleted invoice returns null, no snapshot JSON returns null, valid snapshot returned with correct InvoiceId/FileName/SnapshotJson, purged archive returns null.
+
+### `tests/Darwin.Tests.Unit/CRM/CrmMemberInvoiceQueryHandlerTests.cs`
+Covers member-facing invoice query handlers (18 tests):
+- `GetMyInvoicesPageHandler` — empty state, invoices linked via Order (user-scoped), invoices linked via Customer (user-scoped), other-user isolation (returns 0), soft-deleted exclusion, page < 1 clamped, order-number enrichment, balance computation without payment (full balance outstanding for Draft), zero-balance for Paid without payment record.
+- `GetMyInvoiceDetailHandler` — empty Guid returns null, not-found returns null, other-user invoice returns null, soft-deleted returns null, detail returned when linked via Order (with order-number enrichment), detail returned when linked via Customer, balance for unpaid without payment, zero-balance for Paid without payment record, payment summary enrichment with full settlement when fully captured.
+
+### `tests/Darwin.Tests.Unit/CRM/CreateInvoiceRefundHandlerTests.cs`
+Covers invoice refund and archive-purge command handlers (22 tests):
+- `CreateInvoiceRefundHandler` (validator guards) — empty InvoiceId, empty RowVersion, zero AmountMinor, empty Currency, empty Reason.
+- `CreateInvoiceRefundHandler` (business logic guards) — invoice not found, stale RowVersion, invoice has no payment, payment status Pending rejected, currency mismatch, no refundable amount remaining (Cancelled invoice, fully refunded), refund amount exceeds refundable amount.
+- `CreateInvoiceRefundHandler` (success) — partial refund created and returned with trimmed Reason; invoice and payment NOT cancelled/refunded; full refund cancels invoice, marks payment Refunded, clears PaidAtUtc.
+- `PurgeExpiredInvoiceArchivesHandler` — empty state returns zero, expired invoice purged (snapshot cleared, ArchivePurgedAtUtc set), already-purged invoice skipped, future-retention invoice skipped, no-snapshot invoice skipped, batch-size=2 limits to 2 purged from 5 eligible, batchSize=9999 clamped to max but still processes all matching rows, one EventLog written per purged invoice with correct Type and OccurredAtUtc.
+
 
 Added two new test files covering the previously untested Orders query and status-transition layers:
 
