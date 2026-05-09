@@ -629,3 +629,58 @@ Covers `GetShipmentProviderOperationsPageHandler`:
 - Providers list — distinct, alphabetically ordered list of non-deleted provider values is returned.
 - OperationTypes list — distinct, alphabetically ordered list of non-deleted operation type values is returned.
 - OrderNumber enrichment — `OrderNumber` on each result is resolved by joining `ShipmentProviderOperation → Shipment → Order`.
+
+# 2026-05-09 Coverage Extension — GetShipmentsPageHandler, GetShipmentOpsSummaryHandler, and PurgeUnusedMediaAssetHandler
+
+### `tests/Darwin.Tests.Unit/Orders/ShipmentOpsQueryHandlersTests.cs` — expanded from 2 → 22 tests
+
+Covers `GetShipmentsPageHandler` and `GetShipmentOpsSummaryHandler` comprehensively:
+
+#### `GetShipmentsPageHandler` (15 tests)
+- Empty state — returns zero items and total when no shipments exist.
+- Soft-delete exclusion — `IsDeleted=true` shipments are excluded from results and total.
+- Filter `All` — returns every non-deleted shipment regardless of status.
+- Filter `Pending` — returns only `Pending` and `Packed` shipments; `Shipped` is excluded.
+- Filter `Shipped` — returns only `Shipped` and `Delivered` shipments; `Pending` is excluded.
+- Filter `MissingTracking` — returns `Shipped`/`Delivered` shipments with null or empty `TrackingNumber`; `Pending` with no tracking is excluded.
+- Filter `Returned` — returns only `Returned` shipments.
+- Filter `Dhl` — returns only shipments with `Carrier="DHL"`; non-DHL carriers excluded.
+- Filter `MissingService` — returns only shipments with an empty `Service` string.
+- Filter `AwaitingHandoff` (clock-controlled) — returns only `Pending`/`Packed` shipments created before the `attentionDelayHours` threshold; fresh shipments excluded.
+- Filter `TrackingOverdue` (clock-controlled) — returns DHL `Shipped`/`Delivered` shipments with no tracking number past the `trackingGraceHours` window; within-grace and non-DHL excluded.
+- Filter `CarrierReview` — returns DHL shipments with missing service, `Returned` status, or `Shipped`/`Delivered` without tracking; non-DHL and clean DHL excluded.
+- Filter `ReturnFollowUp` — returns only `Returned` shipments (functionally equivalent to `Returned` filter).
+- Query search on `Carrier` — only the shipment whose carrier matches the query term is returned.
+- Query search on `TrackingNumber` — only the shipment whose tracking number contains the search term is returned.
+- Pagination — `pageSize` limits items returned while `total` reflects all matching rows.
+- Page normalization — `page < 1` is clamped to 1.
+- OrderNumber enrichment — `OrderNumber` is populated from the linked `Order` entity.
+
+#### `GetShipmentOpsSummaryHandler` (7 tests)
+- Empty state — all count fields return 0 when no shipments exist.
+- Soft-delete exclusion — soft-deleted shipments contribute to no count (including `DhlCount` and `ShippedCount`).
+- Full counts — verifies `PendingCount`, `ShippedCount`, `MissingTrackingCount`, `ReturnedCount`, `DhlCount`, `MissingServiceCount`, `AwaitingHandoffCount`, `TrackingOverdueCount`, `CarrierReviewCount`, and `ReturnFollowUpCount` are all computed correctly from a representative dataset with a fixed clock.
+- Tracking-overdue grace threshold — DHL `Shipped` without tracking older than `trackingGraceHours` is overdue; within the grace window it is not.
+
+The `ShipmentOpsTestDbContext` was extended to include `Payment` and `ShipmentCarrierEvent` entity mappings (required for `ShipmentListItemEnrichment.PopulateOrderPaymentStateAsync` and `ShipmentCarrierEventProjection.PopulateRecentEventsAsync`). Navigation collections `Lines` and `CarrierEvents` on `Shipment` are ignored for the in-memory provider.
+
+### `tests/Darwin.Tests.Unit/Media/MediaHandlerTests.cs` — extended with 13 new tests for `PurgeUnusedMediaAssetHandler`
+
+Covers `PurgeUnusedMediaAssetHandler.HandleAsync` (single-asset purge) and `HandleBatchAsync` (batch purge):
+
+#### `HandleAsync` (7 tests)
+- Not found — returns `MediaAssetNotFound` failure when no asset with the given ID exists.
+- Null row version — returns `RowVersionRequired` failure.
+- Empty row version — returns `RowVersionRequired` failure.
+- Stale row version — returns `ConcurrencyConflictDetected` failure when submitted row version does not match the stored value.
+- Referenced by active `ProductMedia` — returns `MediaAssetStillReferenced` failure when a non-deleted `ProductMedia` link exists.
+- Soft-deleted reference does not block purge — `ProductMedia` with `IsDeleted=true` is treated as inactive; asset is purged successfully.
+- Successful purge — matching row version and no active references: asset is permanently deleted from the database.
+- Soft-deleted asset located via `IgnoreQueryFilters` — `HandleAsync` can find and permanently delete assets even when `IsDeleted=true`, exercising the `IgnoreQueryFilters()` branch.
+
+#### `HandleBatchAsync` (6 tests)
+- Empty state — returns `PurgedCount=0` and empty `PurgedUrls` when all assets are actively referenced.
+- Purges unused, leaves referenced intact — unreferenced asset is removed; referenced asset remains.
+- Respects `take` limit — only `take` assets are purged per call, leaving the rest.
+- Clamps oversized `take` to `MaxBulkPurgeSize` (100) — passing 9999 does not throw; all eligible assets within the cap are purged.
+- Excludes empty/whitespace URLs from `PurgedUrls` — assets with blank `Url` are purged but not included in the URL list.
