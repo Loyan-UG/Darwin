@@ -1,5 +1,6 @@
 using System.IO;
 using Darwin.Infrastructure.Persistence.Db;
+using Darwin.Infrastructure.SqlServer.Persistence.Db;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,9 @@ namespace Darwin.Infrastructure.Tests.Persistence;
 /// </summary>
 public sealed class DesignTimeDbContextFactoryTests
 {
+    private const string ProviderConnectionEnvName = "ConnectionStrings__SqlServer";
+    private const string DefaultConnectionEnvName = "ConnectionStrings__DefaultConnection";
+
     /// <summary>
     ///     Ensures explicit environment connection string has highest precedence
     ///     and is used when creating the design-time DbContext.
@@ -18,14 +22,15 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_UseConnectionStringFromEnvironment_WhenProvided()
     {
         // Arrange
-        const string envName = "ConnectionStrings__DefaultConnection";
-        const string expected = "Server=127.0.0.1;Database=DarwinDesignTime;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
-        var previous = Environment.GetEnvironmentVariable(envName);
+        const string expected = "Server=127.0.0.1;Database=DarwinDesignTime;Integrated Security=True;TrustServerCertificate=True;";
+        var previousProviderConnection = Environment.GetEnvironmentVariable(ProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
 
         try
         {
-            Environment.SetEnvironmentVariable(envName, expected);
-            var factory = new DesignTimeDbContextFactory();
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, expected);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, null);
+            var factory = new SqlServerDesignTimeDbContextFactory();
 
             // Act
             using var context = factory.CreateDbContext([]);
@@ -35,12 +40,12 @@ public sealed class DesignTimeDbContextFactoryTests
             connectionString.Should().NotBeNullOrWhiteSpace();
             connectionString!.Should().ContainEquivalentOf("127.0.0.1");
             connectionString.Should().ContainEquivalentOf("DarwinDesignTime");
-            connectionString.Should().ContainEquivalentOf("User ID=sa");
             connectionString.Should().ContainEquivalentOf("Trust Server Certificate=True");
         }
         finally
         {
-            Environment.SetEnvironmentVariable(envName, previous);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
         }
     }
 
@@ -52,13 +57,14 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_ReturnConfiguredContext_WhenEnvironmentConnectionMissing()
     {
         // Arrange
-        const string envName = "ConnectionStrings__DefaultConnection";
-        var previous = Environment.GetEnvironmentVariable(envName);
+        var previousProviderConnection = Environment.GetEnvironmentVariable(ProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
 
         try
         {
-            Environment.SetEnvironmentVariable(envName, null);
-            var factory = new DesignTimeDbContextFactory();
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, null);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, null);
+            var factory = new SqlServerDesignTimeDbContextFactory();
 
             // Act
             using var context = factory.CreateDbContext([]);
@@ -69,7 +75,8 @@ public sealed class DesignTimeDbContextFactoryTests
         }
         finally
         {
-            Environment.SetEnvironmentVariable(envName, previous);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
         }
     }
 
@@ -81,7 +88,7 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_UseSqlServerProvider()
     {
         // Arrange
-        var factory = new DesignTimeDbContextFactory();
+        var factory = new SqlServerDesignTimeDbContextFactory();
 
         // Act
         using var context = factory.CreateDbContext([]);
@@ -100,17 +107,18 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_FallbackToLocalDb_WhenNoEnvironmentAndNoConfigFilesExist()
     {
         // Arrange
-        const string envName = "ConnectionStrings__DefaultConnection";
-        var previousEnv = Environment.GetEnvironmentVariable(envName);
+        var previousProviderConnection = Environment.GetEnvironmentVariable(ProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
         var previousCwd = Directory.GetCurrentDirectory();
         var isolatedDir = Directory.CreateTempSubdirectory("darwin-design-time-no-config-");
 
         try
         {
-            Environment.SetEnvironmentVariable(envName, null);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, null);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, null);
             Directory.SetCurrentDirectory(isolatedDir.FullName);
 
-            var factory = new DesignTimeDbContextFactory();
+            var factory = new SqlServerDesignTimeDbContextFactory();
 
             // Act
             using var context = factory.CreateDbContext([]);
@@ -124,7 +132,8 @@ public sealed class DesignTimeDbContextFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(previousCwd);
-            Environment.SetEnvironmentVariable(envName, previousEnv);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
             isolatedDir.Delete(recursive: true);
         }
     }
@@ -137,14 +146,14 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_PreferEnvironmentSpecificAppsettings_WhenBothFilesExist()
     {
         // Arrange
-        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
         const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
-        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousProviderConnection = Environment.GetEnvironmentVariable(ProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
         var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
         var previousCwd = Directory.GetCurrentDirectory();
         var isolatedDir = Directory.CreateTempSubdirectory("darwin-design-time-env-specific-");
-        var baseConnection = "Server=127.0.0.1;Database=DarwinBaseConfig;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
-        var envConnection = "Server=127.0.0.1;Database=DarwinTestingConfig;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var baseConnection = "Server=127.0.0.1;Database=DarwinBaseConfig;Integrated Security=True;TrustServerCertificate=True;";
+        var envConnection = "Server=127.0.0.1;Database=DarwinTestingConfig;Integrated Security=True;TrustServerCertificate=True;";
 
         try
         {
@@ -168,10 +177,11 @@ public sealed class DesignTimeDbContextFactoryTests
                   }
                   """);
 
-            Environment.SetEnvironmentVariable(connectionEnvName, null);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, null);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, null);
             Environment.SetEnvironmentVariable(aspnetEnvName, "Testing");
             Directory.SetCurrentDirectory(isolatedDir.FullName);
-            var factory = new DesignTimeDbContextFactory();
+            var factory = new SqlServerDesignTimeDbContextFactory();
 
             // Act
             using var context = factory.CreateDbContext([]);
@@ -185,7 +195,8 @@ public sealed class DesignTimeDbContextFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(previousCwd);
-            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
             Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
             isolatedDir.Delete(recursive: true);
         }
@@ -198,13 +209,13 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_IgnoreWhitespaceEnvironmentConnectionString_AndUseConfig()
     {
         // Arrange
-        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
         const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
-        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousProviderConnection = Environment.GetEnvironmentVariable(ProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
         var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
         var previousCwd = Directory.GetCurrentDirectory();
         var isolatedDir = Directory.CreateTempSubdirectory("darwin-design-time-whitespace-env-");
-        var expected = "Server=127.0.0.1;Database=DarwinConfigFallback;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var expected = "Server=127.0.0.1;Database=DarwinConfigFallback;Integrated Security=True;TrustServerCertificate=True;";
 
         try
         {
@@ -218,10 +229,11 @@ public sealed class DesignTimeDbContextFactoryTests
                   }
                   """);
 
-            Environment.SetEnvironmentVariable(connectionEnvName, "   ");
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, "   ");
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, "   ");
             Environment.SetEnvironmentVariable(aspnetEnvName, "Development");
             Directory.SetCurrentDirectory(isolatedDir.FullName);
-            var factory = new DesignTimeDbContextFactory();
+            var factory = new SqlServerDesignTimeDbContextFactory();
 
             // Act
             using var context = factory.CreateDbContext([]);
@@ -234,7 +246,8 @@ public sealed class DesignTimeDbContextFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(previousCwd);
-            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
             Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
             isolatedDir.Delete(recursive: true);
         }
@@ -248,15 +261,15 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_ReadConnectionStringFromSiblingWebAdminProbePath()
     {
         // Arrange
-        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
         const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
-        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousProviderConnection = Environment.GetEnvironmentVariable(ProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
         var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
         var previousCwd = Directory.GetCurrentDirectory();
         var rootDir = Directory.CreateTempSubdirectory("darwin-design-time-probe-root-");
         var runDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "runner"));
         var webAdminDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "Darwin.WebAdmin"));
-        var expected = "Server=127.0.0.1;Database=DarwinProbeFromWebAdmin;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var expected = "Server=127.0.0.1;Database=DarwinProbeFromWebAdmin;Integrated Security=True;TrustServerCertificate=True;";
 
         try
         {
@@ -270,10 +283,11 @@ public sealed class DesignTimeDbContextFactoryTests
                   }
                   """);
 
-            Environment.SetEnvironmentVariable(connectionEnvName, null);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, null);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, null);
             Environment.SetEnvironmentVariable(aspnetEnvName, "Development");
             Directory.SetCurrentDirectory(runDir.FullName);
-            var factory = new DesignTimeDbContextFactory();
+            var factory = new SqlServerDesignTimeDbContextFactory();
 
             // Act
             using var context = factory.CreateDbContext([]);
@@ -286,7 +300,8 @@ public sealed class DesignTimeDbContextFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(previousCwd);
-            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
             Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
             rootDir.Delete(recursive: true);
         }
@@ -300,16 +315,16 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_PreferEnvironmentVariableOverDiscoveredConfigFiles()
     {
         // Arrange
-        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
         const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
-        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousProviderConnection = Environment.GetEnvironmentVariable(ProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
         var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
         var previousCwd = Directory.GetCurrentDirectory();
         var rootDir = Directory.CreateTempSubdirectory("darwin-design-time-env-precedence-");
         var runDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "runner"));
         var webAdminDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "Darwin.WebAdmin"));
-        var fromEnvironment = "Server=127.0.0.1;Database=DarwinEnvWins;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
-        var fromConfig = "Server=127.0.0.1;Database=DarwinConfigLoses;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var fromEnvironment = "Server=127.0.0.1;Database=DarwinEnvWins;Integrated Security=True;TrustServerCertificate=True;";
+        var fromConfig = "Server=127.0.0.1;Database=DarwinConfigLoses;Integrated Security=True;TrustServerCertificate=True;";
 
         try
         {
@@ -323,10 +338,11 @@ public sealed class DesignTimeDbContextFactoryTests
                   }
                   """);
 
-            Environment.SetEnvironmentVariable(connectionEnvName, fromEnvironment);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, fromEnvironment);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, null);
             Environment.SetEnvironmentVariable(aspnetEnvName, "Development");
             Directory.SetCurrentDirectory(runDir.FullName);
-            var factory = new DesignTimeDbContextFactory();
+            var factory = new SqlServerDesignTimeDbContextFactory();
 
             // Act
             using var context = factory.CreateDbContext([]);
@@ -340,7 +356,8 @@ public sealed class DesignTimeDbContextFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(previousCwd);
-            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
             Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
             rootDir.Delete(recursive: true);
         }
@@ -354,16 +371,16 @@ public sealed class DesignTimeDbContextFactoryTests
     public void CreateDbContext_Should_ApplyEnvironmentOverlay_FromSiblingWebAdminProbePath()
     {
         // Arrange
-        const string connectionEnvName = "ConnectionStrings__DefaultConnection";
         const string aspnetEnvName = "ASPNETCORE_ENVIRONMENT";
-        var previousConnection = Environment.GetEnvironmentVariable(connectionEnvName);
+        var previousProviderConnection = Environment.GetEnvironmentVariable(ProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
         var previousAspNetEnvironment = Environment.GetEnvironmentVariable(aspnetEnvName);
         var previousCwd = Directory.GetCurrentDirectory();
         var rootDir = Directory.CreateTempSubdirectory("darwin-design-time-probe-overlay-");
         var runDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "runner"));
         var webAdminDir = Directory.CreateDirectory(Path.Combine(rootDir.FullName, "Darwin.WebAdmin"));
-        var baseConnection = "Server=127.0.0.1;Database=DarwinProbeBase;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
-        var envConnection = "Server=127.0.0.1;Database=DarwinProbeStaging;User Id=sa;Password=Passw0rd!;TrustServerCertificate=True;";
+        var baseConnection = "Server=127.0.0.1;Database=DarwinProbeBase;Integrated Security=True;TrustServerCertificate=True;";
+        var envConnection = "Server=127.0.0.1;Database=DarwinProbeStaging;Integrated Security=True;TrustServerCertificate=True;";
 
         try
         {
@@ -387,10 +404,11 @@ public sealed class DesignTimeDbContextFactoryTests
                   }
                   """);
 
-            Environment.SetEnvironmentVariable(connectionEnvName, null);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, null);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, null);
             Environment.SetEnvironmentVariable(aspnetEnvName, "Staging");
             Directory.SetCurrentDirectory(runDir.FullName);
-            var factory = new DesignTimeDbContextFactory();
+            var factory = new SqlServerDesignTimeDbContextFactory();
 
             // Act
             using var context = factory.CreateDbContext([]);
@@ -404,7 +422,8 @@ public sealed class DesignTimeDbContextFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(previousCwd);
-            Environment.SetEnvironmentVariable(connectionEnvName, previousConnection);
+            Environment.SetEnvironmentVariable(ProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
             Environment.SetEnvironmentVariable(aspnetEnvName, previousAspNetEnvironment);
             rootDir.Delete(recursive: true);
         }

@@ -432,7 +432,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("PaymentDisputeReviewUpdateFailedMessage");
+                SetErrorMessage("PaymentDisputeReviewUpdateFailedMessage");
             }
 
             if (returnToEdit)
@@ -825,7 +825,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("WebhookDeliveryUpdateFailedMessage");
+                SetErrorMessage("WebhookDeliveryUpdateFailedMessage");
             }
 
             return RedirectOrHtmx(nameof(Webhooks), new { page, pageSize, q, queue });

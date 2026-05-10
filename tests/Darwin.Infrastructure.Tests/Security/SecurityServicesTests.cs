@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Infrastructure.Security;
+using Darwin.Infrastructure.Security.LoginRateLimiter;
 using Darwin.Infrastructure.Security.Secrets;
 using FluentAssertions;
 using Microsoft.AspNetCore.DataProtection;
@@ -159,11 +161,12 @@ public sealed class SecurityStampServiceTests
 public sealed class TotpServiceTests
 {
     private const string SampleSecret = "JBSWY3DPEHPK3PXP";
+    private static readonly DateTime FixedUtc = new(2026, 5, 10, 12, 0, 0, DateTimeKind.Utc);
 
     [Fact]
     public void GenerateCode_Should_ReturnSixDigitCode()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
 
         var code = service.GenerateCode(SampleSecret);
 
@@ -174,7 +177,7 @@ public sealed class TotpServiceTests
     [Fact]
     public void VerifyCode_Should_ReturnTrue_ForCurrentCode()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
         var code = service.GenerateCode(SampleSecret);
 
         service.VerifyCode(SampleSecret, code).Should().BeTrue();
@@ -183,7 +186,7 @@ public sealed class TotpServiceTests
     [Fact]
     public void VerifyCode_Should_ReturnFalse_ForWhitespaceInput()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
 
         service.VerifyCode("   ", "123456").Should().BeFalse();
         service.VerifyCode(SampleSecret, "   ").Should().BeFalse();
@@ -193,7 +196,7 @@ public sealed class TotpServiceTests
     [Fact]
     public void VerifyCode_Should_ReturnFalse_ForWrongCode()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
 
         service.VerifyCode(SampleSecret, "000000").Should().BeFalse();
     }
@@ -201,7 +204,7 @@ public sealed class TotpServiceTests
     [Fact]
     public void VerifyCode_Should_ReturnFalse_ForNonNumericCode()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
 
         service.VerifyCode(SampleSecret, "12a456").Should().BeFalse();
     }
@@ -209,7 +212,7 @@ public sealed class TotpServiceTests
     [Fact]
     public void VerifyCode_Should_PropagateInvalidSecretFormat()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
 
         Action act = () => service.VerifyCode("invalid-base32!", "123456");
 
@@ -217,19 +220,19 @@ public sealed class TotpServiceTests
     }
 
     [Fact]
-    public void VerifyCode_Should_HandleLowercaseSecretAndNegativeWindow()
+    public void VerifyCode_Should_HandleLowercaseSecretAndClampNegativeWindowToCurrentStep()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
         var code = service.GenerateCode(SampleSecret.ToLowerInvariant());
 
         service.VerifyCode(SampleSecret.ToUpperInvariant(), code).Should().BeTrue();
-        service.VerifyCode(SampleSecret.ToUpperInvariant(), code, window: -1).Should().BeFalse();
+        service.VerifyCode(SampleSecret.ToUpperInvariant(), code, window: -1).Should().BeTrue();
     }
 
     [Fact]
     public void GenerateCode_Should_HandlePaddedBase32Secret()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
 
         var padded = $"{SampleSecret}====";
         var code = service.GenerateCode(padded);
@@ -242,12 +245,17 @@ public sealed class TotpServiceTests
     [Fact]
     public void GenerateCode_Should_AcceptLowercaseSecret()
     {
-        var service = new TotpService();
+        var service = CreateTotpService();
 
         var code = service.GenerateCode(SampleSecret.ToLowerInvariant());
 
         code.Should().HaveLength(6);
         code.Should().MatchRegex(@"^\d{6}$");
+    }
+
+    private static TotpService CreateTotpService()
+    {
+        return new TotpService(new TestClock(FixedUtc));
     }
 }
 
@@ -256,9 +264,10 @@ public sealed class MemoryLoginRateLimiterTests
     [Fact]
     public async System.Threading.Tasks.Task IsAllowedAsync_Should_AllowInitially()
     {
-        var limiter = new MemoryLoginRateLimiter();
+        var clock = new TestClock(new DateTime(2026, 5, 10, 12, 0, 0, DateTimeKind.Utc));
+        var limiter = new MemoryLoginRateLimiter(clock);
 
-        var allowed = await limiter.IsAllowedAsync("ip:127.0.0.1", maxAttempts: 3, windowSeconds: 60);
+        var allowed = await limiter.IsAllowedAsync("ip:127.0.0.1", maxAttempts: 3, windowSeconds: 60, TestContext.Current.CancellationToken);
 
         allowed.Should().BeTrue();
     }
@@ -266,52 +275,71 @@ public sealed class MemoryLoginRateLimiterTests
     [Fact]
     public async System.Threading.Tasks.Task IsAllowedAsync_Should_RespectRecordedAttemptLimit()
     {
-        var limiter = new MemoryLoginRateLimiter();
+        var clock = new TestClock(new DateTime(2026, 5, 10, 12, 0, 0, DateTimeKind.Utc));
+        var limiter = new MemoryLoginRateLimiter(clock);
         var key = "ip:192.168.1.1";
 
-        await limiter.RecordAsync(key);
-        (await limiter.IsAllowedAsync(key, maxAttempts: 2, windowSeconds: 60)).Should().BeTrue();
+        await limiter.RecordAsync(key, TestContext.Current.CancellationToken);
+        (await limiter.IsAllowedAsync(key, maxAttempts: 2, windowSeconds: 60, TestContext.Current.CancellationToken)).Should().BeTrue();
 
-        await limiter.RecordAsync(key);
-        (await limiter.IsAllowedAsync(key, maxAttempts: 2, windowSeconds: 60)).Should().BeFalse();
+        await limiter.RecordAsync(key, TestContext.Current.CancellationToken);
+        (await limiter.IsAllowedAsync(key, maxAttempts: 2, windowSeconds: 60, TestContext.Current.CancellationToken)).Should().BeFalse();
 
-        await limiter.RecordAsync(key);
-        (await limiter.IsAllowedAsync(key, maxAttempts: 2, windowSeconds: 60)).Should().BeFalse();
+        await limiter.RecordAsync(key, TestContext.Current.CancellationToken);
+        (await limiter.IsAllowedAsync(key, maxAttempts: 2, windowSeconds: 60, TestContext.Current.CancellationToken)).Should().BeFalse();
     }
 
     [Fact]
     public async System.Threading.Tasks.Task IsAllowedAsync_Should_UseMinimumWindowOfOneSecond()
     {
-        var limiter = new MemoryLoginRateLimiter();
+        var clock = new TestClock(new DateTime(2026, 5, 10, 12, 0, 0, DateTimeKind.Utc));
+        var limiter = new MemoryLoginRateLimiter(clock);
         var key = "ip:127.0.0.100";
 
-        await limiter.RecordAsync(key);
-        (await limiter.IsAllowedAsync(key, maxAttempts: 1, windowSeconds: 0)).Should().BeFalse();
-        await System.Threading.Tasks.Task.Delay(TimeSpan.FromMilliseconds(1100));
-        (await limiter.IsAllowedAsync(key, maxAttempts: 1, windowSeconds: 0)).Should().BeTrue();
+        await limiter.RecordAsync(key, TestContext.Current.CancellationToken);
+        (await limiter.IsAllowedAsync(key, maxAttempts: 1, windowSeconds: 0, TestContext.Current.CancellationToken)).Should().BeFalse();
+        clock.Advance(TimeSpan.FromMilliseconds(1100));
+        (await limiter.IsAllowedAsync(key, maxAttempts: 1, windowSeconds: 0, TestContext.Current.CancellationToken)).Should().BeTrue();
     }
 
     [Fact]
     public async System.Threading.Tasks.Task IsAllowedAsync_Should_ResetWindowAfterConfiguredWindowSeconds()
     {
-        var limiter = new MemoryLoginRateLimiter();
+        var clock = new TestClock(new DateTime(2026, 5, 10, 12, 0, 0, DateTimeKind.Utc));
+        var limiter = new MemoryLoginRateLimiter(clock);
         var key = "ip:10.0.0.1";
 
-        await limiter.RecordAsync(key);
-        (await limiter.IsAllowedAsync(key, maxAttempts: 0, windowSeconds: 1)).Should().BeFalse();
+        await limiter.RecordAsync(key, TestContext.Current.CancellationToken);
+        (await limiter.IsAllowedAsync(key, maxAttempts: 0, windowSeconds: 1, TestContext.Current.CancellationToken)).Should().BeFalse();
 
-        await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(1.2));
-        (await limiter.IsAllowedAsync(key, maxAttempts: 0, windowSeconds: 1)).Should().BeTrue();
+        clock.Advance(TimeSpan.FromSeconds(1.2));
+        (await limiter.IsAllowedAsync(key, maxAttempts: 0, windowSeconds: 1, TestContext.Current.CancellationToken)).Should().BeTrue();
     }
 
     [Fact]
     public async System.Threading.Tasks.Task IsAllowedAsync_Should_RespectZeroOrNegativeMaxAttempts()
     {
-        var limiter = new MemoryLoginRateLimiter();
+        var clock = new TestClock(new DateTime(2026, 5, 10, 12, 0, 0, DateTimeKind.Utc));
+        var limiter = new MemoryLoginRateLimiter(clock);
         var key = "ip:127.0.0.2";
 
-        (await limiter.IsAllowedAsync(key, maxAttempts: 0, windowSeconds: 60)).Should().BeFalse();
-        (await limiter.IsAllowedAsync(key, maxAttempts: -1, windowSeconds: 60)).Should().BeFalse();
+        (await limiter.IsAllowedAsync(key, maxAttempts: 0, windowSeconds: 60, TestContext.Current.CancellationToken)).Should().BeFalse();
+        (await limiter.IsAllowedAsync(key, maxAttempts: -1, windowSeconds: 60, TestContext.Current.CancellationToken)).Should().BeFalse();
+    }
+}
+
+internal sealed class TestClock : IClock
+{
+    public TestClock(DateTime utcNow)
+    {
+        UtcNow = DateTime.SpecifyKind(utcNow, DateTimeKind.Utc);
+    }
+
+    public DateTime UtcNow { get; private set; }
+
+    public void Advance(TimeSpan value)
+    {
+        UtcNow = UtcNow.Add(value);
     }
 }
 

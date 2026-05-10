@@ -206,6 +206,13 @@ python scripts/ci/verify_coverage.py \
 
 ### 5.4 Current execution snapshot (2026-05-09)
 
+Infrastructure lane health was refreshed on 2026-05-10 after aligning security tests with injected clocks/rate limiter namespaces and provider-specific SQL Server design-time factory behavior:
+
+- `dotnet test tests/Darwin.Infrastructure.Tests/Darwin.Infrastructure.Tests.csproj /m:1 /nr:false /p:UseSharedCompilation=false`
+- 45 passed, 0 skipped
+
+The design-time factory tests now clear provider-specific connection-string environment variables during config-precedence checks, and the SQL Server/PostgreSQL design-time factories ignore whitespace-only connection-string values.
+
 Latest known-good signal for the recently expanded Webhook/reader/writer tests is:
 
 - `dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~StripeWebhooksControllerTests"`
@@ -271,6 +278,7 @@ This separation improves diagnosability and keeps regressions localized to a spe
 ### Integration tests
 
 - Integration lane in CI currently expects SQL Server service availability and testing environment configuration unless a lane explicitly opts into PostgreSQL.
+- The CI integration lane sets `Persistence__Provider=SqlServer`, disables Data Protection certificate encryption only for the `Testing` host, and forces `Email__Provider=SMTP` with a no-op test sender so hosted API tests never require production certificates or real email delivery.
 - PostgreSQL is now the preferred local/default provider for application startup validation. Use `docker-compose.postgres.yml` for local PostgreSQL and pgAdmin.
 - Keep tests resettable/deterministic and avoid hidden shared mutable state.
 
@@ -388,8 +396,8 @@ Current direction for stronger confidence:
 
 ### Current local verification notes
 
-- `Darwin.WebAdmin.Tests` compiles locally with an isolated output path. The WebAdmin security, public/auth smoke (`27` passed), render smoke (`105` passed), tokenless CSRF (`115` passed), valid-token CSRF (`8` passed), and positive mutation (`1` passed) subsets pass locally when run as split lanes. The tokenless CSRF matrix is slow locally (about 4 minutes), so it remains a separate CI job.
-- The focused WebApi provider-callback run now passes 280 of 280 tests when built into isolated artifacts. Two provider-callback worker assertions had their short local waits lengthened so the first background-service iteration can complete consistently.
+- `Darwin.WebAdmin.Tests` compiles locally with an isolated output path. The WebAdmin security, public/auth smoke (`27` passed), render smoke (`105` passed), tokenless CSRF (`115` passed), valid-token CSRF (`8` passed), and positive mutation (`1` passed) subsets pass locally when run as split lanes. The positive mutation smoke was re-run on 2026-05-10 after adding hosted stock reserve/release/return receipt, stock-transfer lifecycle, purchase-order lifecycle, and row-version delete-post hardening coverage. The tokenless CSRF matrix is slow locally (about 4 minutes), so it remains a separate CI job.
+- The focused WebApi provider-callback run passed again on 2026-05-10 with `280` passed and `0` skipped when built into isolated artifacts. Two provider-callback worker assertions had their short local waits lengthened so the first background-service iteration can complete consistently.
 - The focused unit run for Shipment/Stripe/Billing/Communication/Inventory/Tax/SignIn source-contract and handler coverage now passes 602 of 602 tests after realigning dashboard, communication-provider, billing, DHL, inventory, JWT, and support-queue contracts with the current implementation.
 
 ---
@@ -530,23 +538,96 @@ Covers product and add-on group command handlers (35 tests):
 - `UpdateAddOnGroupHandler` — empty-Id validation failure, not-found throws InvalidOperationException, stale RowVersion throws DbUpdateConcurrencyException, matching RowVersion persists Name/Currency/IsGlobal/IsActive changes.
 - `SoftDeleteAddOnGroupHandler` — invalid-Dto returns failure, not-found returns failure, already-deleted is idempotent (returns success), stale RowVersion returns failure, valid request marks IsDeleted=true.
 
-## 2026-05-09 Source-Contract Cleanup Status
+## 2026-05-10 Source-Contract Cleanup Status
 
-The WebAdmin source-contract cleanup is partial, not complete. The focused run below passes with the stale exact-layout contracts quarantined:
+The broader focused unit filter now passes without skipped tests after converting stale exact-source assertions into stable contracts for JWT issuing/refresh-token hashing, business discovery culture handling, invitation auth input normalization, row-version hidden inputs, dashboard compactness, and business setup/loyalty wiring:
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~Inventory|FullyQualifiedName~Business|FullyQualifiedName~Invitation|FullyQualifiedName~SignIn|FullyQualifiedName~Tax|FullyQualifiedName~Invoice|FullyQualifiedName~Vat" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\UnitFocused\
+```
+
+Latest local result: `981` passed, `0` skipped, `981` total.
+
+The focused WebAdmin source-contract lane also passes without skipped tests after converting stale exact Razor/controller layout assertions into stable security, localization, HTMX, route, row-version, and mutation-safety contracts for media/dashboard/settings/mobile/orders/page-editor, CMS/media, role/permission, catalog, product, add-on group, CRM, shipping, shared view-model, and users surfaces:
 
 ```powershell
 dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~SecurityAndPerformanceWebAdminSurfacesSourceTests" /p:UseSharedCompilation=false
 ```
 
-Latest local result: `210` passed, `47` WebAdmin-surface skipped, `257` total. The skipped tests target pre-simplification exact Razor/layout text and must be rewritten into stable security, localization, HTMX, route, and mutation-safety contracts before this lane is a complete go/no-go signal.
+Latest local result: `257` passed, `0` skipped, `257` total.
 
-
-## 2026-05-10 Broader Source-Contract Cleanup Status
-
-The broader focused unit filter now passes after quarantining additional stale exact-source assertions that were still tied to old Razor/controller/mobile text shapes:
+Additional hardening on 2026-05-10 made the shared source-test file resolver output-path independent and converted WebAdmin/Business row-version delete and lifecycle assertions from old `byte[]` model-binding assumptions to stable Base64 form-post contracts:
 
 ```powershell
-dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~Inventory|FullyQualifiedName~Business|FullyQualifiedName~Invitation|FullyQualifiedName~SignIn|FullyQualifiedName~Tax|FullyQualifiedName~Invoice|FullyQualifiedName~Vat" /p:UseSharedCompilation=false
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~SecurityAndPerformanceWebAdminSurfacesSourceTests" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\UnitTests\
 ```
 
-Latest local result: `1007` passed, `14` skipped, `1021` total. The skipped tests are not deleted; they must be rewritten into stable behavior, security, localization, HTMX, route, or mutation contracts.
+Latest local result: `257` passed, `0` skipped, `257` total.
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~SecurityAndPerformanceBusinessesSourceTests" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\UnitTests\
+```
+
+Latest local result: `87` passed, `0` skipped, `87` total.
+
+The all-source `SecurityAndPerformance` filter is now clean after converting the remaining stale contracts/packaging and Darwin.Web storefront exact-layout assertions into stable security, route, localization, contract-shape, and public-storefront assertions:
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~SecurityAndPerformance" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\UnitTests\
+```
+
+Latest local result: `599` passed, `0` skipped, `599` total.
+
+## 2026-05-10 WebAdmin Inventory/Returns Hosted Smoke
+
+The WebAdmin positive mutation smoke now posts `ReturnReceipt` twice with the same reference through the real Razor/HTMX form and verifies that the second post is idempotent by comparing the stock-level quantities after the duplicate receipt.
+
+```powershell
+dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj --filter "FullyQualifiedName~AuthenticatedAdminCreatesWithValidAntiForgeryToken_ShouldPersistAndReturnHtmxRedirect" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\WebAdminTests\
+```
+
+Latest local result: `1` passed, `0` skipped, `1` total.
+
+## 2026-05-10 WebAdmin Business Onboarding Hosted Smoke
+
+The WebAdmin hosted onboarding smoke now exercises real Razor/HTMX forms for business creation into inactive `PendingApproval`, approval prerequisite failure, and the approve/suspend/reactivate lifecycle with row-version protected posts and a no-op email sender:
+
+```powershell
+dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj --filter "FullyQualifiedName~AuthenticatedBusinessCreation_ShouldStartInactiveAndPendingApproval|FullyQualifiedName~AuthenticatedBusinessLifecycle_ShouldApproveSuspendAndReactivateWithHostedForms|FullyQualifiedName~AuthenticatedBusinessApproval_ShouldRemainPendingWhenPrerequisitesAreMissing" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\WebAdminTests\
+```
+
+Latest local result: `3` passed, `0` skipped, `3` total.
+
+WebApi-hosted onboarding smoke coverage was added for email-confirm enforcement and public discovery/detail visibility:
+
+```powershell
+dotnet test tests\Darwin.Tests.Integration\Darwin.Tests.Integration.csproj --filter "FullyQualifiedName~BusinessOnboardingApiSmokeTests" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\IntegrationTests\
+```
+
+Latest local result against the local PostgreSQL `darwin_integration_tests` database: `2` passed, `0` skipped, `2` total.
+
+## 2026-05-10 VIES Provider Policy Coverage
+
+The VIES provider phase-one policy is covered without external network calls. The tests exercise disabled provider behavior, provider HTTP failure, malformed XML, valid/invalid SOAP responses, and VAT ID normalization:
+
+```powershell
+dotnet test tests\Darwin.WebApi.Tests\Darwin.WebApi.Tests.csproj --filter "FullyQualifiedName~ViesVatValidationProviderTests" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\WebApiVies\
+```
+
+Latest local result: `7` passed, `0` skipped, `7` total.
+
+The order-cancel hosted smoke posts an order status change to `Cancelled` through the real WebAdmin details form with a selected warehouse and verifies that reserved stock is released exactly once:
+
+```powershell
+dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj --filter "FullyQualifiedName~AuthenticatedOrderCancellation_ShouldReleaseReservedStockThroughHostedWebAdminFlow" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\WebAdminTests\
+```
+
+Latest local result: `1` passed, `0` skipped, `1` total.
+
+The refund-coordination hosted smoke creates a tracked stock level, posts a partial refund through the real WebAdmin refund form, verifies the payment grid shows refunded and net captured values, and confirms inventory quantities did not move:
+
+```powershell
+dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj --filter "FullyQualifiedName~AuthenticatedRefundCoordination_ShouldRecordRefundWithoutMovingStock" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\WebAdminTests\
+```
+
+Latest local result: `1` passed, `0` skipped, `1` total.

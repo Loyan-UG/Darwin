@@ -2,6 +2,7 @@ using Darwin.WebAdmin.Tests.TestInfrastructure;
 using FluentAssertions;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 
 namespace Darwin.WebAdmin.Tests.Smoke;
 
@@ -1174,7 +1175,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             });
         var supplierId = ExtractQueryGuid(supplierRedirect, "id");
 
-        await PostValidEditorMutationAndAssertListedAsync(
+        var stockLevelRedirect = await PostValidEditorMutationAndAssertListedAsync(
             client,
             $"/Inventory/CreateStockLevel?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseFromId}",
             "/Inventory/CreateStockLevel",
@@ -1190,8 +1191,44 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
                 ["ReorderQuantity"] = "20",
                 ["InTransitQuantity"] = "3"
             });
+        var stockLevelId = ExtractQueryGuid(stockLevelRedirect, "id");
 
-        await PostValidEditorMutationAndAssertListedAsync(
+        await PostValidInventoryStockActionAndAssertStockLevelAsync(
+            client,
+            stockLevelId,
+            warehouseFromId,
+            "ReserveStock",
+            "Inventory reserved for smoke order.",
+            Guid.NewGuid(),
+            "Reserved");
+
+        await PostValidInventoryStockActionAndAssertStockLevelAsync(
+            client,
+            stockLevelId,
+            warehouseFromId,
+            "ReleaseReservation",
+            "Released smoke reservation.",
+            Guid.NewGuid(),
+            "Reserved");
+
+        var returnReferenceId = Guid.NewGuid();
+        var returnReceiptListHtml = await PostValidInventoryStockActionAndAssertStockLevelAsync(
+            client,
+            stockLevelId,
+            warehouseFromId,
+            "ReturnReceipt",
+            "Received smoke return.",
+            returnReferenceId,
+            "WEBADMIN-SMOKE-VARIANT");
+
+        await PostDuplicateReturnReceiptAndAssertIdempotentAsync(
+            client,
+            stockLevelId,
+            warehouseFromId,
+            returnReferenceId,
+            returnReceiptListHtml);
+
+        var stockTransferRedirect = await PostValidEditorMutationAndAssertListedAsync(
             client,
             $"/Inventory/CreateStockTransfer?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseFromId}",
             "/Inventory/CreateStockTransfer",
@@ -1205,8 +1242,25 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
                 ["Lines[0].ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
                 ["Lines[0].Quantity"] = "4"
             });
+        var stockTransferId = ExtractQueryGuid(stockTransferRedirect, "id");
 
-        await PostValidEditorMutationAndAssertListedAsync(
+        await PostValidStockTransferLifecycleActionAndAssertStatusAsync(
+            client,
+            stockTransferId,
+            warehouseFromId,
+            warehouseToName,
+            "MarkInTransit",
+            "InTransit");
+
+        await PostValidStockTransferLifecycleActionAndAssertStatusAsync(
+            client,
+            stockTransferId,
+            warehouseFromId,
+            warehouseToName,
+            "Complete",
+            "Completed");
+
+        var purchaseOrderRedirect = await PostValidEditorMutationAndAssertListedAsync(
             client,
             "/Inventory/CreatePurchaseOrder?businessId=44444444-4444-4444-4444-444444444444",
             "/Inventory/CreatePurchaseOrder",
@@ -1224,6 +1278,21 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
                 ["Lines[0].UnitCostMinor"] = "700",
                 ["Lines[0].TotalCostMinor"] = "4200"
             });
+        var purchaseOrderId = ExtractQueryGuid(purchaseOrderRedirect, "id");
+
+        await PostValidPurchaseOrderLifecycleActionAndAssertStatusAsync(
+            client,
+            purchaseOrderId,
+            purchaseOrderNumber,
+            "Issue",
+            "Issued");
+
+        await PostValidPurchaseOrderLifecycleActionAndAssertStatusAsync(
+            client,
+            purchaseOrderId,
+            purchaseOrderNumber,
+            "Receive",
+            "Received");
 
         var crmCustomerRedirect = await PostValidEditorMutationAndAssertListedAsync(
             client,
@@ -1600,6 +1669,224 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     }
 
     [Fact]
+    public async Task AuthenticatedOrderCancellation_ShouldReleaseReservedStockThroughHostedWebAdminFlow()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var warehouseName = $"Cancel Release Warehouse {suffix}";
+
+        var warehouseRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Inventory/CreateWarehouse?businessId=44444444-4444-4444-4444-444444444444",
+            "/Inventory/CreateWarehouse",
+            $"/Inventory/Warehouses?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(warehouseName)}",
+            warehouseName,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["Name"] = warehouseName,
+                ["Location"] = "Berlin Cancel Release",
+                ["Description"] = "Smoke-created order cancellation release warehouse.",
+                ["IsDefault"] = "true"
+            });
+        var warehouseId = ExtractQueryGuid(warehouseRedirect, "id");
+
+        await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            $"/Inventory/CreateStockLevel?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}",
+            "/Inventory/CreateStockLevel",
+            $"/Inventory/StockLevels?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}&q=WEBADMIN-SMOKE-VARIANT",
+            "WEBADMIN-SMOKE-VARIANT",
+            new Dictionary<string, string>
+            {
+                ["WarehouseId"] = warehouseId.ToString(),
+                ["ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["AvailableQuantity"] = "10",
+                ["ReservedQuantity"] = "1",
+                ["ReorderPoint"] = "2",
+                ["ReorderQuantity"] = "5",
+                ["InTransitQuantity"] = "0"
+            });
+
+        await PostValidOrderStatusMutationAndAssertDetailsAsync(
+            client,
+            WebAdminTestFactory.TestOrderId,
+            "Cancelled",
+            warehouseId);
+
+        using var stockResponse = await SendHtmxGetAsync(
+            client,
+            $"/Inventory/StockLevels?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}&q=WEBADMIN-SMOKE-VARIANT");
+        var stockHtml = await stockResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        stockResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        ExtractStockQuantities(stockHtml, "WEBADMIN-SMOKE-VARIANT")
+            .Should()
+            .Be((11, 0), "cancelling an order with reserved stock should release the reservation exactly once");
+    }
+
+    [Fact]
+    public async Task AuthenticatedRefundCoordination_ShouldRecordRefundWithoutMovingStock()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var warehouseName = $"Refund Coordination Warehouse {suffix}";
+        var refundReason = $"Refund coordination smoke {suffix}";
+
+        var warehouseRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Inventory/CreateWarehouse?businessId=44444444-4444-4444-4444-444444444444",
+            "/Inventory/CreateWarehouse",
+            $"/Inventory/Warehouses?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(warehouseName)}",
+            warehouseName,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["Name"] = warehouseName,
+                ["Location"] = "Berlin Refund Coordination",
+                ["Description"] = "Smoke-created refund coordination warehouse.",
+                ["IsDefault"] = "false"
+            });
+        var warehouseId = ExtractQueryGuid(warehouseRedirect, "id");
+
+        await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            $"/Inventory/CreateStockLevel?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}",
+            "/Inventory/CreateStockLevel",
+            $"/Inventory/StockLevels?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}&q=WEBADMIN-SMOKE-VARIANT",
+            "WEBADMIN-SMOKE-VARIANT",
+            new Dictionary<string, string>
+            {
+                ["WarehouseId"] = warehouseId.ToString(),
+                ["ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["AvailableQuantity"] = "12",
+                ["ReservedQuantity"] = "3",
+                ["ReorderPoint"] = "2",
+                ["ReorderQuantity"] = "5",
+                ["InTransitQuantity"] = "0"
+            });
+
+        await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            $"/Orders/AddRefund?orderId={WebAdminTestFactory.TestOrderId}&paymentId={WebAdminTestFactory.TestOrderPaymentId}",
+            "/Orders/AddRefund",
+            $"/Orders/Refunds?orderId={WebAdminTestFactory.TestOrderId}",
+            refundReason,
+            new Dictionary<string, string>
+            {
+                ["OrderId"] = WebAdminTestFactory.TestOrderId.ToString(),
+                ["PaymentId"] = WebAdminTestFactory.TestOrderPaymentId.ToString(),
+                ["AmountMinor"] = "500",
+                ["Currency"] = "EUR",
+                ["Reason"] = refundReason
+            });
+
+        using var paymentsResponse = await SendHtmxGetAsync(
+            client,
+            $"/Orders/Payments?orderId={WebAdminTestFactory.TestOrderId}");
+        var paymentsHtml = await paymentsResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        paymentsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        paymentsHtml.Should().Contain("WebAdminSeedPay");
+        paymentsHtml.Should().Contain("seed-order-payment");
+        paymentsHtml.Should().ContainAny("EUR 5.00", "EUR 5,00");
+        paymentsHtml.Should().ContainAny("EUR 20.99", "EUR 20,99");
+
+        using var stockResponse = await SendHtmxGetAsync(
+            client,
+            $"/Inventory/StockLevels?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}&q=WEBADMIN-SMOKE-VARIANT");
+        var stockHtml = await stockResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        stockResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        ExtractStockQuantities(stockHtml, "WEBADMIN-SMOKE-VARIANT")
+            .Should()
+            .Be((12, 3), "creating a payment refund should not move inventory; stock movement belongs to return receipt and cancellation flows");
+    }
+
+    [Fact]
+    public async Task AuthenticatedBusinessCreation_ShouldStartInactiveAndPendingApproval()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var businessName = $"Hosted Pending Business {suffix}";
+        var businessEmail = $"pending-{suffix}@example.test";
+
+        var businessId = await CreateHostedBusinessAsync(
+            client,
+            businessName,
+            businessEmail,
+            ownerUserId: null,
+            legalName: string.Empty,
+            isActive: true);
+
+        using var setupResponse = await SendHtmxGetAsync(client, $"/Businesses/Setup?id={businessId}");
+        var setupHtml = await setupResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        setupResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        setupHtml.Should().Contain("name=\"OperationalStatus\" value=\"PendingApproval\"");
+        setupHtml.Should().Contain("0 Owner, 0 Primary Locations");
+        setupHtml.Should().Contain("disabled=\"disabled\"");
+    }
+
+    [Fact]
+    public async Task AuthenticatedBusinessLifecycle_ShouldApproveSuspendAndReactivateWithHostedForms()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var businessName = $"Hosted Lifecycle Business {suffix}";
+        var businessEmail = $"lifecycle-{suffix}@example.test";
+        var locationName = $"Lifecycle Primary Location {suffix}";
+
+        var businessId = await CreateHostedBusinessAsync(
+            client,
+            businessName,
+            businessEmail,
+            WebAdminTestFactory.TestMemberUserId,
+            legalName: $"{businessName} GmbH",
+            isActive: false);
+
+        await CreateHostedBusinessLocationAsync(client, businessId, locationName, isPrimary: true);
+
+        var approvedHtml = await PostHostedBusinessLifecycleActionAsync(client, businessId, "Approve");
+        approvedHtml.Should().Contain("name=\"OperationalStatus\" value=\"Approved\"");
+        approvedHtml.Should().Contain("checked=\"checked\"");
+
+        var suspendedHtml = await PostHostedBusinessLifecycleActionAsync(
+            client,
+            businessId,
+            "Suspend",
+            new Dictionary<string, string> { ["note"] = "Hosted suspension smoke" });
+        suspendedHtml.Should().Contain("name=\"OperationalStatus\" value=\"Suspended\"");
+        suspendedHtml.Should().Contain("Hosted suspension smoke");
+
+        var reactivatedHtml = await PostHostedBusinessLifecycleActionAsync(client, businessId, "Reactivate");
+        reactivatedHtml.Should().Contain("name=\"OperationalStatus\" value=\"Approved\"");
+        reactivatedHtml.Should().Contain("checked=\"checked\"");
+    }
+
+    [Fact]
+    public async Task AuthenticatedBusinessApproval_ShouldRemainPendingWhenPrerequisitesAreMissing()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var businessName = $"Hosted Blocked Business {suffix}";
+        var businessEmail = $"blocked-{suffix}@example.test";
+
+        var businessId = await CreateHostedBusinessAsync(
+            client,
+            businessName,
+            businessEmail,
+            ownerUserId: null,
+            legalName: string.Empty,
+            isActive: false);
+
+        var blockedHtml = await PostHostedBusinessLifecycleActionAsync(client, businessId, "Approve");
+
+        blockedHtml.Should().Contain("name=\"OperationalStatus\" value=\"PendingApproval\"");
+        blockedHtml.Should().Contain("0 Owner, 0 Primary Locations");
+    }
+
+    [Fact]
     public async Task AuthenticatedAdminFragmentWithoutRequiredPermission_ShouldBeForbidden()
     {
         using var client = _factory.CreateAuthenticatedNoRedirectClient(allowPermissions: false);
@@ -1696,7 +1983,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var valueStart = valueIndex + valueMarker.Length;
         var valueEnd = input.IndexOf('"', valueStart);
         valueEnd.Should().BeGreaterThan(valueStart);
-        return input[valueStart..valueEnd];
+        return WebUtility.HtmlDecode(input[valueStart..valueEnd]);
     }
 
     private static async Task<HttpResponseMessage> SendHtmxGetAsync(HttpClient client, string path)
@@ -1717,6 +2004,178 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         };
         request.Headers.TryAddWithoutValidation("HX-Request", "true");
         return await client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
+    private static async Task<string> PostValidInventoryStockActionAndAssertStockLevelAsync(
+        HttpClient client,
+        Guid stockLevelId,
+        Guid warehouseId,
+        string actionName,
+        string reason,
+        Guid referenceId,
+        string expectedListText)
+    {
+        var editorPath = $"/Inventory/{actionName}?stockLevelId={stockLevelId}&businessId=44444444-4444-4444-4444-444444444444";
+        using var tokenResponse = await SendHtmxGetAsync(client, editorPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var token = ExtractAntiForgeryToken(tokenHtml);
+
+        using var postResponse = await SendHtmxPostAsync(client, $"/Inventory/{actionName}", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["StockLevelId"] = stockLevelId.ToString(),
+            ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+            ["WarehouseId"] = warehouseId.ToString(),
+            ["ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+            ["AvailableQuantity"] = ExtractHiddenInputValue(tokenHtml, "AvailableQuantity"),
+            ["ReservedQuantity"] = ExtractHiddenInputValue(tokenHtml, "ReservedQuantity"),
+            ["Quantity"] = "1",
+            ["Reason"] = reason,
+            ["ReferenceId"] = referenceId.ToString()
+        });
+        var postHtml = await postResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var postPreview = postHtml.Length > 600 ? postHtml[..600] : postHtml;
+
+        postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        postResponse.Headers.TryGetValues("HX-Redirect", out var redirectValues)
+            .Should().BeTrue("a valid inventory stock action should redirect; response preview: {0}", postPreview);
+        redirectValues!.Single().Should().Contain("/Inventory/StockLevels");
+        postResponse.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var listResponse = await SendHtmxGetAsync(
+            client,
+            $"/Inventory/StockLevels?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}&q=WEBADMIN-SMOKE-VARIANT");
+        var listHtml = await listResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        listHtml.Should().Contain(expectedListText);
+        listHtml.Should().Contain(WebAdminTestFactory.TestProductVariantId.ToString());
+        return listHtml;
+    }
+
+    private static async Task PostDuplicateReturnReceiptAndAssertIdempotentAsync(
+        HttpClient client,
+        Guid stockLevelId,
+        Guid warehouseId,
+        Guid referenceId,
+        string listHtmlAfterFirstReceipt)
+    {
+        var quantitiesAfterFirstReceipt = ExtractStockQuantities(listHtmlAfterFirstReceipt, "WEBADMIN-SMOKE-VARIANT");
+
+        var duplicateListHtml = await PostValidInventoryStockActionAndAssertStockLevelAsync(
+            client,
+            stockLevelId,
+            warehouseId,
+            "ReturnReceipt",
+            "Received smoke return.",
+            referenceId,
+            "WEBADMIN-SMOKE-VARIANT");
+
+        ExtractStockQuantities(duplicateListHtml, "WEBADMIN-SMOKE-VARIANT")
+            .Should()
+            .Be(quantitiesAfterFirstReceipt, "duplicate return receipts with the same reference should be idempotent");
+    }
+
+    private static (int Available, int Reserved) ExtractStockQuantities(string html, string sku)
+    {
+        var pattern = $@"<tr>\s*<td>{Regex.Escape(sku)}</td>\s*<td>(?<available>-?\d+)</td>\s*<td>(?<reserved>-?\d+)</td>";
+        var match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.CultureInvariant);
+
+        match.Success.Should().BeTrue("stock-level row for {0} should be present in the list HTML", sku);
+
+        return (
+            int.Parse(match.Groups["available"].Value, System.Globalization.CultureInfo.InvariantCulture),
+            int.Parse(match.Groups["reserved"].Value, System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    private static async Task PostValidStockTransferLifecycleActionAndAssertStatusAsync(
+        HttpClient client,
+        Guid transferId,
+        Guid warehouseId,
+        string query,
+        string action,
+        string expectedStatus)
+    {
+        var listPath = $"/Inventory/StockTransfers?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}&q={Uri.EscapeDataString(query)}";
+        using var tokenResponse = await SendHtmxGetAsync(client, listPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        tokenHtml.Should().Contain(transferId.ToString());
+
+        using var postResponse = await SendHtmxPostAsync(client, $"/Inventory/UpdateStockTransferLifecycle?id={transferId}", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["id"] = transferId.ToString(),
+            ["rowVersion"] = ExtractHiddenInputValue(tokenHtml, "rowVersion"),
+            ["action"] = action,
+            ["businessId"] = "44444444-4444-4444-4444-444444444444",
+            ["warehouseId"] = warehouseId.ToString(),
+            ["page"] = "1",
+            ["pageSize"] = "20",
+            ["q"] = query,
+            ["filter"] = "All"
+        });
+        var postHtml = await postResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var postPreview = postHtml.Length > 600 ? postHtml[..600] : postHtml;
+
+        postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        postResponse.Headers.TryGetValues("HX-Redirect", out var redirectValues)
+            .Should().BeTrue("a valid stock-transfer lifecycle action should redirect; response preview: {0}", postPreview);
+        redirectValues!.Single().Should().Contain("/Inventory/StockTransfers");
+        postResponse.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var updatedResponse = await SendHtmxGetAsync(client, $"{listPath}&filter={expectedStatus}");
+        var updatedHtml = await updatedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        updatedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        updatedHtml.Should().Contain(transferId.ToString());
+        updatedHtml.Should().Contain(expectedStatus);
+    }
+
+    private static async Task PostValidPurchaseOrderLifecycleActionAndAssertStatusAsync(
+        HttpClient client,
+        Guid purchaseOrderId,
+        string orderNumber,
+        string action,
+        string expectedStatus)
+    {
+        var listPath = $"/Inventory/PurchaseOrders?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(orderNumber)}";
+        using var tokenResponse = await SendHtmxGetAsync(client, listPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        tokenHtml.Should().Contain(purchaseOrderId.ToString());
+
+        using var postResponse = await SendHtmxPostAsync(client, $"/Inventory/UpdatePurchaseOrderLifecycle?id={purchaseOrderId}", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["id"] = purchaseOrderId.ToString(),
+            ["rowVersion"] = ExtractHiddenInputValue(tokenHtml, "rowVersion"),
+            ["action"] = action,
+            ["businessId"] = "44444444-4444-4444-4444-444444444444",
+            ["page"] = "1",
+            ["pageSize"] = "20",
+            ["q"] = orderNumber,
+            ["filter"] = "All"
+        });
+        var postHtml = await postResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var postPreview = postHtml.Length > 600 ? postHtml[..600] : postHtml;
+
+        postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        postResponse.Headers.TryGetValues("HX-Redirect", out var redirectValues)
+            .Should().BeTrue("a valid purchase-order lifecycle action should redirect; response preview: {0}", postPreview);
+        redirectValues!.Single().Should().Contain("/Inventory/PurchaseOrders");
+        postResponse.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var updatedResponse = await SendHtmxGetAsync(client, $"{listPath}&filter={expectedStatus}");
+        var updatedHtml = await updatedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        updatedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        updatedHtml.Should().Contain(purchaseOrderId.ToString());
+        updatedHtml.Should().Contain(expectedStatus);
     }
 
     private static async Task PostValidSiteSettingsMutationAndAssertUpdatedAsync(
@@ -2049,6 +2508,11 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
             ["Id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
             ["RowVersion"] = ExtractHiddenInputValue(tokenHtml, "RowVersion"),
+            ["Url"] = ExtractHiddenInputValue(tokenHtml, "Url"),
+            ["OriginalFileName"] = ExtractHiddenInputValue(tokenHtml, "OriginalFileName"),
+            ["SizeBytes"] = ExtractHiddenInputValue(tokenHtml, "SizeBytes"),
+            ["Width"] = ExtractHiddenInputValue(tokenHtml, "Width"),
+            ["Height"] = ExtractHiddenInputValue(tokenHtml, "Height"),
             ["Alt"] = $"Alt for {updatedTitle}",
             ["Title"] = updatedTitle,
             ["Role"] = "LibraryAssetReviewed"
@@ -2070,11 +2534,15 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         updatedListHtml.Should().Contain(updatedTitle);
         updatedListHtml.Should().Contain("LibraryAssetReviewed");
 
+        using var deleteTokenResponse = await SendHtmxGetAsync(client, editPath);
+        deleteTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var deleteTokenHtml = await deleteTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
         using var deleteResponse = await SendHtmxPostAsync(client, "/Media/Delete", new Dictionary<string, string>
         {
-            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(deleteTokenHtml),
             ["id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
-            ["rowVersion"] = ExtractHiddenInputValue(tokenHtml, "RowVersion")
+            ["rowVersion"] = ExtractHiddenInputValue(deleteTokenHtml, "RowVersion")
         });
         var deleteHtml = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var deletePreview = deleteHtml.Length > 600 ? deleteHtml[..600] : deleteHtml;
@@ -2200,12 +2668,18 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         listHtml.Should().Contain("Hamburg");
         listHtml.Should().Contain(WebAdminTestFactory.TestBusinessLocationLifecycleId.ToString());
 
+        using var deleteTokenResponse = await SendHtmxGetAsync(
+            client,
+            $"/Businesses/EditLocation?id={WebAdminTestFactory.TestBusinessLocationLifecycleId}");
+        deleteTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var deleteTokenHtml = await deleteTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
         using var deleteResponse = await SendHtmxPostAsync(client, "/Businesses/DeleteLocation", new Dictionary<string, string>
         {
-            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(listHtml),
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(deleteTokenHtml),
             ["id"] = WebAdminTestFactory.TestBusinessLocationLifecycleId.ToString(),
             ["userId"] = "44444444-4444-4444-4444-444444444444",
-            ["rowVersion"] = rowVersion
+            ["rowVersion"] = ExtractHiddenInputValue(deleteTokenHtml, "RowVersion")
         });
         var deleteHtml = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var deletePreview = deleteHtml.Length > 600 ? deleteHtml[..600] : deleteHtml;
@@ -2338,11 +2812,15 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         listHtml.Should().Contain(updatedName);
         listHtml.Should().Contain(WebAdminTestFactory.TestBrandLifecycleId.ToString());
 
+        using var deleteTokenResponse = await SendHtmxGetAsync(client, editPath);
+        deleteTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var deleteTokenHtml = await deleteTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
         using var deleteResponse = await SendHtmxPostAsync(client, "/Brands/Delete", new Dictionary<string, string>
         {
-            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(listHtml),
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(deleteTokenHtml),
             ["id"] = WebAdminTestFactory.TestBrandLifecycleId.ToString(),
-            ["rowVersion"] = rowVersion
+            ["rowVersion"] = ExtractHiddenInputValue(deleteTokenHtml, "RowVersion")
         });
         var deleteHtml = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var deletePreview = deleteHtml.Length > 600 ? deleteHtml[..600] : deleteHtml;
@@ -2475,6 +2953,124 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         return redirectPath;
     }
 
+    private static async Task<Guid> CreateHostedBusinessAsync(
+        HttpClient client,
+        string businessName,
+        string contactEmail,
+        Guid? ownerUserId,
+        string legalName,
+        bool isActive)
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var redirectPath = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Businesses/Create",
+            "/Businesses/Create",
+            $"/Businesses?query={Uri.EscapeDataString(businessName)}",
+            businessName,
+            new Dictionary<string, string>
+            {
+                ["Name"] = businessName,
+                ["LegalName"] = legalName,
+                ["Category"] = "Cafe",
+                ["DefaultCurrency"] = "EUR",
+                ["DefaultCulture"] = "de-DE",
+                ["DefaultTimeZoneId"] = "Europe/Berlin",
+                ["TaxId"] = string.IsNullOrWhiteSpace(legalName) ? string.Empty : $"DE{suffix}",
+                ["WebsiteUrl"] = $"https://{businessName.Replace(" ", "-", StringComparison.Ordinal).ToLowerInvariant()}.example.test",
+                ["ContactEmail"] = contactEmail,
+                ["ContactPhoneE164"] = "+4915112345678",
+                ["ShortDescription"] = "Hosted business smoke.",
+                ["OwnerUserId"] = ownerUserId?.ToString() ?? string.Empty,
+                ["OwnerInviteEmail"] = string.Empty,
+                ["BrandDisplayName"] = businessName,
+                ["SupportEmail"] = contactEmail,
+                ["CommunicationSenderName"] = businessName,
+                ["CommunicationReplyToEmail"] = contactEmail,
+                ["CustomerEmailNotificationsEnabled"] = "true",
+                ["CustomerMarketingEmailsEnabled"] = "false",
+                ["OperationalAlertEmailsEnabled"] = "true",
+                ["IsActive"] = isActive.ToString().ToLowerInvariant()
+            });
+
+        return ExtractQueryGuid(redirectPath, "id");
+    }
+
+    private static async Task CreateHostedBusinessLocationAsync(
+        HttpClient client,
+        Guid businessId,
+        string locationName,
+        bool isPrimary)
+    {
+        await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            $"/Businesses/CreateLocation?businessId={businessId}",
+            "/Businesses/CreateLocation",
+            $"/Businesses/Locations?businessId={businessId}&query={Uri.EscapeDataString(locationName)}",
+            locationName,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = businessId.ToString(),
+                ["Page"] = "1",
+                ["PageSize"] = "20",
+                ["Query"] = string.Empty,
+                ["Filter"] = "All",
+                ["Name"] = locationName,
+                ["AddressLine1"] = "Hosted Street 1",
+                ["AddressLine2"] = string.Empty,
+                ["City"] = "Berlin",
+                ["Region"] = "Berlin",
+                ["CountryCode"] = "DE",
+                ["PostalCode"] = "10115",
+                ["OpeningHoursJson"] = "{\"mon\":\"09:00-17:00\"}",
+                ["InternalNote"] = "Hosted business lifecycle smoke location.",
+                ["IsPrimary"] = isPrimary.ToString().ToLowerInvariant()
+            });
+    }
+
+    private static async Task<string> PostHostedBusinessLifecycleActionAsync(
+        HttpClient client,
+        Guid businessId,
+        string action,
+        Dictionary<string, string>? additionalFormValues = null)
+    {
+        var setupPath = $"/Businesses/Setup?id={businessId}";
+        using var tokenResponse = await SendHtmxGetAsync(client, setupPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        var form = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["id"] = businessId.ToString(),
+            ["rowVersion"] = ExtractHiddenInputValue(tokenHtml, "rowVersion"),
+            ["returnToSetup"] = "true"
+        };
+
+        if (additionalFormValues is not null)
+        {
+            foreach (var pair in additionalFormValues)
+            {
+                form[pair.Key] = pair.Value;
+            }
+        }
+
+        using var postResponse = await SendHtmxPostAsync(client, $"/Businesses/{action}", form);
+        var postHtml = await postResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var postPreview = postHtml.Length > 600 ? postHtml[..600] : postHtml;
+
+        postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        postResponse.Headers.TryGetValues("HX-Redirect", out var redirectValues)
+            .Should().BeTrue("business lifecycle action should return an HTMX redirect; response preview: {0}", postPreview);
+        redirectValues!.Single().Should().Contain("/Businesses/Setup");
+        postResponse.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var updatedResponse = await SendHtmxGetAsync(client, setupPath);
+        updatedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        return await updatedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+    }
+
     private static async Task PostValidRolePermissionMutationAndAssertSelectedAsync(
         HttpClient client,
         Guid roleId,
@@ -2512,7 +3108,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     private static async Task PostValidOrderStatusMutationAndAssertDetailsAsync(
         HttpClient client,
         Guid orderId,
-        string newStatus)
+        string newStatus,
+        Guid? warehouseId = null)
     {
         var detailsPath = $"/Orders/Details?id={orderId}";
         using var tokenResponse = await SendHtmxGetAsync(client, detailsPath);
@@ -2527,7 +3124,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             ["OrderId"] = orderId.ToString(),
             ["RowVersion"] = rowVersion,
             ["NewStatus"] = newStatus,
-            ["WarehouseId"] = string.Empty
+            ["WarehouseId"] = warehouseId?.ToString() ?? string.Empty
         });
 
         postResponse.StatusCode.Should().Be(HttpStatusCode.OK);

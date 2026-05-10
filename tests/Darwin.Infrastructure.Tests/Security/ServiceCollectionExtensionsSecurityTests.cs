@@ -46,7 +46,10 @@ public sealed class ServiceCollectionExtensionsSecurityTests
     {
         var configuration = new ConfigurationBuilder().Build();
         var services = new ServiceCollection();
-        var fallbackPath = Path.Combine(AppContext.BaseDirectory, "dpkeys");
+        var fallbackPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Darwin",
+            "DataProtectionKeys");
 
         services.AddSharedHostingDataProtection(configuration);
 

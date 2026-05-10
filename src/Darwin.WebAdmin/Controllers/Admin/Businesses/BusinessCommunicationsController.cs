@@ -402,7 +402,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("ProviderCallbackUpdateFailedMessage");
+                SetErrorMessage("ProviderCallbackUpdateFailedMessage");
             }
 
             return RedirectOrHtmx(nameof(ProviderCallbacks), new
@@ -1038,7 +1038,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelEmailDispatchOperation(
             Guid id,
-            byte[] rowVersion,
+            string? rowVersion,
             int page = 1,
             int pageSize = 20,
             string? query = null,
@@ -1087,7 +1087,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 .HandleAsync(new CancelCommunicationDispatchOperationDto
                 {
                     Id = id,
-                    RowVersion = rowVersion ?? Array.Empty<byte>(),
+                    RowVersion = DecodeBase64RowVersion(rowVersion),
                     Channel = "Email"
                 }, ct)
                 .ConfigureAwait(false);
@@ -1128,7 +1128,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelChannelDispatchOperation(
             Guid id,
-            byte[] rowVersion,
+            string? rowVersion,
             int page = 1,
             int pageSize = 20,
             string? query = null,
@@ -1187,7 +1187,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 .HandleAsync(new CancelCommunicationDispatchOperationDto
                 {
                     Id = id,
-                    RowVersion = rowVersion ?? Array.Empty<byte>(),
+                    RowVersion = DecodeBase64RowVersion(rowVersion),
                     Channel = channel ?? string.Empty
                 }, ct)
                 .ConfigureAwait(false);

@@ -10,7 +10,7 @@ Common production shape:
 
 ```powershell
 $env:Persistence__Provider = "PostgreSql"
-$env:ConnectionStrings__PostgreSql = "Host=...;Port=5432;Database=darwin;Username=darwin_app;Password=..."
+$env:ConnectionStrings__PostgreSql = "SET_BY_SECRET"
 $env:DatabaseStartup__ApplyMigrations = "false"
 $env:DatabaseStartup__Seed = "false"
 $env:DataProtection__KeysPath = "D:\Darwin\_shared_keys"
@@ -76,7 +76,7 @@ Stripe test-mode smoke checklist:
 
 - Test publishable and server-side key entered in Settings or secure configuration.
 - Stripe enabled in Site Settings.
-- Stripe webhook signing secret (`whsec_...`) entered securely.
+- Stripe webhook signing secret entered securely.
 - Checkout Session is created through WebApi.
 - Storefront return URL is reached.
 - Return route alone does not mark the payment successful.

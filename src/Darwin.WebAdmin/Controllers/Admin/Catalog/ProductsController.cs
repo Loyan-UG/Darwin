@@ -353,7 +353,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -361,11 +361,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var result = await _softDeleteProduct.HandleAsync(id, rowVersion, ct);
+            var result = await _softDeleteProduct.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct);
             if (result.Succeeded)
                 SetSuccessMessage("ProductDeleted");
             else
-                TempData["Error"] = result.Error ?? T("ProductDeleteFailed");
+                SetErrorMessage("ProductDeleteFailed");
 
             return RedirectOrHtmx(nameof(Index), new { });
         }

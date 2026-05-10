@@ -25,6 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Darwin.Infrastructure\Darwin.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Darwin.Infrastructure.PostgreSql\Darwin.Infrastructure.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\src\Darwin.Infrastructure.SqlServer\Darwin.Infrastructure.SqlServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -136,7 +136,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
+        public async Task<IActionResult> ClearPushToken(Guid id, string? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -144,14 +144,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                 return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
             }
 
-            var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
+            var result = await _clearDevicePushToken.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct).ConfigureAwait(false);
             if (result.Succeeded)
             {
                 SetSuccessMessage("MobilePushTokenCleared");
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("MobilePushTokenClearFailed");
+                SetErrorMessage("MobilePushTokenClearFailed");
             }
 
             return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
@@ -159,7 +159,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
+        public async Task<IActionResult> DeactivateDevice(Guid id, string? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -167,14 +167,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                 return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
             }
 
-            var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
+            var result = await _deactivateDevice.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct).ConfigureAwait(false);
             if (result.Succeeded)
             {
                 SetSuccessMessage("MobileDeviceDeactivated");
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("MobileDeviceDeactivateFailed");
+                SetErrorMessage("MobileDeviceDeactivateFailed");
             }
 
             return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });
