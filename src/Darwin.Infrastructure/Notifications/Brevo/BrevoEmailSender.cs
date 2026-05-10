@@ -154,11 +154,21 @@ public sealed class BrevoEmailSender : IEmailSender
         {
             ["sender"] = new { email = _options.SenderEmail.Trim(), name = TrimToNull(_options.SenderName) },
             ["to"] = new[] { new { email = toEmail.Trim() } },
-            ["subject"] = subject ?? string.Empty,
-            ["htmlContent"] = htmlBody ?? string.Empty,
-            ["textContent"] = HtmlToText(htmlBody),
             ["tags"] = BuildTags(context)
         };
+
+        var templateId = ResolveTemplateId(context);
+        if (templateId.HasValue)
+        {
+            payload["templateId"] = templateId.Value;
+            payload["params"] = BuildTemplateParameters(context);
+        }
+        else
+        {
+            payload["subject"] = subject ?? string.Empty;
+            payload["htmlContent"] = htmlBody ?? string.Empty;
+            payload["textContent"] = HtmlToText(htmlBody);
+        }
 
         var replyToEmail = TrimToNull(_options.ReplyToEmail);
         if (replyToEmail is not null)
@@ -172,6 +182,42 @@ public sealed class BrevoEmailSender : IEmailSender
         }
 
         return payload;
+    }
+
+    private int? ResolveTemplateId(EmailDispatchContext? context)
+    {
+        if (_options.TemplateIds.Count == 0 || context is null)
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(context.TemplateKey) &&
+            _options.TemplateIds.TryGetValue(context.TemplateKey.Trim(), out var byTemplateKey))
+        {
+            return byTemplateKey;
+        }
+
+        if (!string.IsNullOrWhiteSpace(context.FlowKey) &&
+            _options.TemplateIds.TryGetValue(context.FlowKey.Trim(), out var byFlowKey))
+        {
+            return byFlowKey;
+        }
+
+        return null;
+    }
+
+    private static Dictionary<string, string> BuildTemplateParameters(EmailDispatchContext? context)
+    {
+        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in context?.TemplateParameters ?? new Dictionary<string, string?>())
+        {
+            if (!string.IsNullOrWhiteSpace(pair.Key))
+            {
+                values[pair.Key.Trim()] = pair.Value ?? string.Empty;
+            }
+        }
+
+        return values;
     }
 
     private string[] BuildTags(EmailDispatchContext? context)

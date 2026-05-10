@@ -14,13 +14,18 @@ Phase 1 policy:
 - Customer, invoice, and operator workflows must not be blocked only because VIES is unavailable.
 - Manual operator decisions remain auditable and must preserve source/message context.
 
-Future async retry workflow:
+Current async retry workflow:
 
 - Store `Unknown` VIES outcomes with provider source, message, timestamp, customer id, and attempted VAT id.
-- Add a bounded retry worker or scheduled operation that only retries provider-failure outcomes, not operator decisions.
-- Use exponential backoff with a maximum attempt count and clear terminal manual-review state.
+- `RetryUnknownCustomerVatValidationBatchHandler` and the disabled-by-default `VatValidationRetryWorker` retry only provider-failure outcomes (`provider.unavailable`, `vies.disabled`, `vies.unavailable`), not operator decisions.
+- Use the configured minimum retry age and batch size to keep retries bounded.
 - Keep operator override higher priority than automatic retry results.
 - Surface stale `Unknown` results in `Billing/TaxCompliance` without turning the dashboard into a diagnostics workspace.
+
+Future hardening:
+
+- Add explicit attempt counters and exponential backoff if VIES instability creates repeated retry churn in production.
+- Add a terminal manual-review state only if operations need a maximum automatic-attempt policy beyond the current operator-visible `Unknown` queue.
 
 ## E-Invoice Direction
 
@@ -39,15 +44,20 @@ Current state:
 - Issued invoice snapshot exists.
 - JSON archive download exists.
 - Printable HTML archive download exists.
+- Structured invoice source-model JSON download exists and includes document, seller, buyer, business, line, tax-summary, and total sections.
+- `IEInvoiceGenerationService` exists as the future compliant-artifact boundary, with a default `NotConfigured` implementation that does not create fake artifacts.
+- `GenerateInvoiceEInvoiceArtifactHandler` owns the shared preconditions for future artifact generation and rejects missing source snapshots, unknown formats, invoice-id mismatches, and incomplete generated metadata.
+- WebAdmin download routing is guarded and ready for generated artifacts, but no e-invoice compliance download button is exposed until a real generator and validation path are selected.
 - CSV invoice export exists.
 - Retention and purge metadata exists.
 
-These outputs are useful operational artifacts, but they are not full e-invoice compliance.
+These outputs are useful operational artifacts, but they are not full e-invoice compliance. The structured source-model export is explicitly marked `NotZugferdFacturX` until a generator and validator produce a compliant artifact.
 
 Near-term implementation design:
 
 - Choose library/tooling for ZUGFeRD/Factur-X XML generation, PDF/A-3 embedding, and validation.
-- Map immutable issued invoice snapshots to a structured invoice model.
+- Extend the existing immutable issued-snapshot to structured source-model mapping into the selected e-invoice format model.
+- Replace the default `NotConfigured` e-invoice generator with a selected, validated generator implementation.
 - Validate structured data before exposing the artifact.
 - Generate a downloadable PDF/A-3 artifact with embedded XML where required.
 - Add WebAdmin download action and tests.
@@ -56,6 +66,7 @@ Near-term implementation design:
 Open decision:
 
 - The ZUGFeRD/Factur-X library/tooling decision is still open.
+- See `docs/e-invoice-tooling-decision.md` for the selection criteria and implementation requirements.
 
 ## Invoice Archive Storage
 
@@ -73,6 +84,10 @@ Open deployment decision:
 - AWS S3 Object Lock.
 - MinIO or S3-compatible object lock if supported by the deployment.
 - Data-center object storage with retention/legal hold support.
+
+Selection checklist:
+
+- See `docs/archive-storage-provider-decision.md`.
 
 Rules:
 

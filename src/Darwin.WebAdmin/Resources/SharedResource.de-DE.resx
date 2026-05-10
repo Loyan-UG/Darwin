@@ -13270,8 +13270,26 @@
   <data name="DownloadArchiveDocument" xml:space="preserve">
     <value>Archivdokument herunterladen</value>
   </data>
+  <data name="DownloadStructuredInvoiceData" xml:space="preserve">
+    <value>Strukturierte Rechnungsdaten herunterladen</value>
+  </data>
   <data name="InvoiceArchiveUnavailableMessage" xml:space="preserve">
     <value>Der Archiv-Snapshot der Rechnung ist noch nicht verfügbar. Stellen Sie die Rechnung aus, bevor ein Archivartefakt heruntergeladen wird.</value>
+  </data>
+  <data name="EInvoiceGeneratorNotConfiguredMessage" xml:space="preserve">
+    <value>Ein konformer E-Rechnungs-Generator ist noch nicht konfiguriert. Nutzen Sie den strukturierten Rechnungsdatenexport nur zur Prüfung.</value>
+  </data>
+  <data name="EInvoiceSourceSnapshotUnavailableMessage" xml:space="preserve">
+    <value>Der ausgestellte Rechnungs-Snapshot ist nicht verfügbar, daher kann kein E-Rechnungsartefakt erzeugt werden.</value>
+  </data>
+  <data name="EInvoiceUnsupportedFormatMessage" xml:space="preserve">
+    <value>Das angeforderte E-Rechnungsformat wird nicht unterstützt.</value>
+  </data>
+  <data name="EInvoiceValidationFailedMessage" xml:space="preserve">
+    <value>Das erzeugte E-Rechnungsartefakt hat die Validierung nicht bestanden.</value>
+  </data>
+  <data name="EInvoiceArtifactUnavailableMessage" xml:space="preserve">
+    <value>Das E-Rechnungsartefakt ist nicht verfügbar.</value>
   </data>
   <data name="ReverseChargeReview" xml:space="preserve">
     <value>Reverse-Charge-Prüfung</value>
@@ -13353,5 +13371,95 @@
   </data>
   <data name="CustomerVatValidationLookupFailedMessage" xml:space="preserve">
     <value>USt-IdNr.-Prüfung konnte nicht abgeschlossen werden.</value>
+  </data>
+  <data name="BusinessOnboardingWizardTitle" xml:space="preserve">
+    <value>Onboarding-Assistent</value>
+  </data>
+  <data name="BusinessOnboardingWizardSubtitle" xml:space="preserve">
+    <value>Admin-gestützter Onboarding-Pfad</value>
+  </data>
+  <data name="BusinessOnboardingWizardIntro" xml:space="preserve">
+    <value>Bearbeiten Sie die erforderlichen Unternehmensvoraussetzungen und optionalen Go-Live-Arbeitsbereiche, ohne bestehende Validierungen zu umgehen.</value>
+  </data>
+  <data name="BusinessOnboardingWizardRequiredProgress" xml:space="preserve">
+    <value>Erforderliche Schritte abgeschlossen</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepNumber" xml:space="preserve">
+    <value>Schritt {0}</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepBusinessProfile" xml:space="preserve">
+    <value>Unternehmensprofil</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepCommercialPlan" xml:space="preserve">
+    <value>Kommerzieller Plan</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepOwnerStaff" xml:space="preserve">
+    <value>Owner und Mitarbeitende</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepLocations" xml:space="preserve">
+    <value>Standorte</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepLoyalty" xml:space="preserve">
+    <value>Loyalty-Einrichtung</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepCommunication" xml:space="preserve">
+    <value>Kommunikation einrichten</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepStorefrontVisibility" xml:space="preserve">
+    <value>Storefront-Sichtbarkeit</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepReviewActivate" xml:space="preserve">
+    <value>Prüfen und aktivieren</value>
+  </data>
+  <data name="BusinessOnboardingWizardBusinessProfileComplete" xml:space="preserve">
+    <value>Rechtlicher Name, Anzeigename und Kontakt-E-Mail sind vorhanden.</value>
+  </data>
+  <data name="BusinessOnboardingWizardBusinessProfileMissing" xml:space="preserve">
+    <value>Ergänzen Sie rechtlichen Namen, Anzeigenamen und Kontakt-E-Mail vor der Freigabe.</value>
+  </data>
+  <data name="BusinessOnboardingWizardCommercialPlanComplete" xml:space="preserve">
+    <value>Ein Abonnement oder kommerzieller Plan ist verknüpft.</value>
+  </data>
+  <data name="BusinessOnboardingWizardCommercialPlanMissing" xml:space="preserve">
+    <value>Öffnen Sie den Abonnement-Arbeitsbereich, um den kommerziellen Plan zu wählen oder zu prüfen.</value>
+  </data>
+  <data name="BusinessOnboardingWizardOwnerStaffComplete" xml:space="preserve">
+    <value>Mindestens ein aktiver Owner ist zugewiesen.</value>
+  </data>
+  <data name="BusinessOnboardingWizardOwnerStaffMissing" xml:space="preserve">
+    <value>Fügen Sie vor der Freigabe einen Owner hinzu oder aktivieren Sie ihn.</value>
+  </data>
+  <data name="BusinessOnboardingWizardLocationsComplete" xml:space="preserve">
+    <value>Ein primärer Standort ist konfiguriert.</value>
+  </data>
+  <data name="BusinessOnboardingWizardLocationsMissing" xml:space="preserve">
+    <value>Fügen Sie vor der Freigabe einen primären Standort hinzu.</value>
+  </data>
+  <data name="BusinessOnboardingWizardLoyaltySummary" xml:space="preserve">
+    <value>Prüfen Sie Loyalty-Programm, Sammelregeln, Prämien und Einlösung im Loyalty-Arbeitsbereich.</value>
+  </data>
+  <data name="BusinessOnboardingWizardCommunicationComplete" xml:space="preserve">
+    <value>Transaktions-E-Mail und geschäftliche Absenderidentität sind konfiguriert.</value>
+  </data>
+  <data name="BusinessOnboardingWizardCommunicationMissing" xml:space="preserve">
+    <value>Prüfen Sie Absenderidentität, Support-E-Mail und Transaktions-E-Mail-Bereitschaft.</value>
+  </data>
+  <data name="BusinessOnboardingWizardStorefrontComplete" xml:space="preserve">
+    <value>Das Unternehmen ist freigegeben und für öffentliche Sichtbarkeit aktiv.</value>
+  </data>
+  <data name="BusinessOnboardingWizardStorefrontMissing" xml:space="preserve">
+    <value>Öffentliche Sichtbarkeit beginnt erst nach Freigabe und Aktivierung.</value>
+  </data>
+  <data name="BusinessOnboardingWizardReviewReady" xml:space="preserve">
+    <value>Die erforderlichen Freigabevoraussetzungen sind bereit für die finale Prüfung.</value>
+  </data>
+  <data name="BusinessOnboardingWizardFinalActionTitle" xml:space="preserve">
+    <value>Finale Aktivierung</value>
+  </data>
+  <data name="BusinessOnboardingWizardFinalActionReady" xml:space="preserve">
+    <value>Die erforderlichen Voraussetzungen sind vollständig. Die Finalisierung nutzt den bestehenden Onboarding-Handler und die Row-Version-Prüfung.</value>
+  </data>
+  <data name="Optional" xml:space="preserve">
+    <value>Optional</value>
   </data>
 </root>

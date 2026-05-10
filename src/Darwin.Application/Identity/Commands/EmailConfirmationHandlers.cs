@@ -106,25 +106,27 @@ namespace Darwin.Application.Identity.Commands
                 siteSettings?.AccountActivationEmailBodyTemplate,
                 CommunicationTemplateDefaults.LegacyAccountActivationBodyTemplate,
                 "AccountActivationBodyTemplateDefault");
+            var subjectParameters = new Dictionary<string, string?>
+            {
+                ["email"] = user.Email,
+                ["expires_at_utc"] = expiresAtUtc.ToString("u")
+            };
+            var bodyParameters = new Dictionary<string, string?>
+            {
+                ["email"] = user.Email,
+                ["token"] = tokenValue,
+                ["expires_at_utc"] = expiresAtUtc.ToString("u")
+            };
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
                 TransactionalEmailTemplateRenderer.Render(
                     subjectTemplate,
                     subjectTemplate,
-                    new Dictionary<string, string?>
-                    {
-                        ["email"] = user.Email,
-                        ["expires_at_utc"] = expiresAtUtc.ToString("u")
-                    }));
+                    subjectParameters));
             var body = TransactionalEmailTemplateRenderer.Render(
                 bodyTemplate,
                 bodyTemplate,
-                new Dictionary<string, string?>
-                {
-                    ["email"] = user.Email,
-                    ["token"] = tokenValue,
-                    ["expires_at_utc"] = expiresAtUtc.ToString("u")
-                });
+                bodyParameters);
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, user.Email, recipient, body);
 
@@ -138,7 +140,8 @@ namespace Darwin.Application.Identity.Commands
                     FlowKey = "AccountActivation",
                     TemplateKey = "AccountActivationEmail",
                     CorrelationKey = tokenEntity.Id.ToString("N"),
-                    IntendedRecipientEmail = user.Email
+                    IntendedRecipientEmail = user.Email,
+                    TemplateParameters = bodyParameters
                 });
             _logger.LogInformation("Email confirmation token issued for {Email}.", MaskEmail(user.Email));
             return Result.Ok();

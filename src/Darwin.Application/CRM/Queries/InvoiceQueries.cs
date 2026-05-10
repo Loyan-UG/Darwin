@@ -497,4 +497,252 @@ namespace Darwin.Application.CRM.Queries
                 .AppendLine("</td></tr>");
         }
     }
+
+    public sealed class GetInvoiceStructuredDataExportHandler
+    {
+        private static readonly JsonSerializerOptions ExportJsonOptions = new(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true
+        };
+
+        private readonly GetInvoiceArchiveSnapshotHandler _snapshots;
+
+        public GetInvoiceStructuredDataExportHandler(GetInvoiceArchiveSnapshotHandler snapshots)
+        {
+            _snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
+        }
+
+        public async Task<InvoiceStructuredDataExportDto?> HandleAsync(Guid id, CancellationToken ct = default)
+        {
+            var snapshot = await _snapshots.HandleAsync(id, ct).ConfigureAwait(false);
+            if (snapshot is null)
+            {
+                return null;
+            }
+
+            var structured = BuildStructuredInvoice(snapshot.SnapshotJson);
+            return new InvoiceStructuredDataExportDto
+            {
+                InvoiceId = snapshot.InvoiceId,
+                IssuedAtUtc = snapshot.IssuedAtUtc,
+                FileName = $"invoice-{snapshot.InvoiceId:N}-structured-invoice.json",
+                Json = JsonSerializer.Serialize(structured, ExportJsonOptions)
+            };
+        }
+
+        private static StructuredInvoiceExport BuildStructuredInvoice(string snapshotJson)
+        {
+            using var document = JsonDocument.Parse(snapshotJson);
+            var root = document.RootElement;
+            var currency = GetString(root, "currency") ?? "EUR";
+            var lines = ReadLines(root, currency);
+
+            return new StructuredInvoiceExport(
+                "darwin.structured-invoice.v1",
+                "NotZugferdFacturX",
+                "This artifact is a structured source model for future e-invoice generation. It is not a ZUGFeRD/Factur-X or XRechnung compliant artifact.",
+                new StructuredInvoiceDocument(
+                    GetGuid(root, "invoiceId"),
+                    GetGuidOrNull(root, "businessId"),
+                    GetGuidOrNull(root, "customerId"),
+                    GetGuidOrNull(root, "orderId"),
+                    GetGuidOrNull(root, "paymentId"),
+                    GetString(root, "status") ?? string.Empty,
+                    currency,
+                    GetDateTime(root, "issuedAtUtc"),
+                    GetDateTimeOrNull(root, "dueDateUtc"),
+                    GetDateTimeOrNull(root, "paidAtUtc")),
+                ReadParty(root, "issuer"),
+                ReadParty(root, "customer"),
+                ReadBusiness(root),
+                lines,
+                ReadTaxSummary(lines, currency),
+                new StructuredInvoiceTotals(
+                    GetLong(root, "totalNetMinor"),
+                    GetLong(root, "totalTaxMinor"),
+                    GetLong(root, "totalGrossMinor"),
+                    currency));
+        }
+
+        private static IReadOnlyList<StructuredInvoiceLine> ReadLines(JsonElement root, string currency)
+        {
+            if (!root.TryGetProperty("lines", out var linesElement) || linesElement.ValueKind != JsonValueKind.Array)
+            {
+                return Array.Empty<StructuredInvoiceLine>();
+            }
+
+            return linesElement
+                .EnumerateArray()
+                .Select((line, index) => new StructuredInvoiceLine(
+                    index + 1,
+                    GetGuid(line, "id"),
+                    GetString(line, "description") ?? string.Empty,
+                    GetInt(line, "quantity"),
+                    GetLong(line, "unitPriceNetMinor"),
+                    GetDecimal(line, "taxRate"),
+                    GetLong(line, "totalNetMinor"),
+                    GetLong(line, "totalGrossMinor"),
+                    GetLong(line, "totalGrossMinor") - GetLong(line, "totalNetMinor"),
+                    currency))
+                .ToList();
+        }
+
+        private static IReadOnlyList<StructuredInvoiceTaxSummary> ReadTaxSummary(IReadOnlyList<StructuredInvoiceLine> lines, string currency)
+        {
+            return lines
+                .GroupBy(line => line.TaxRate)
+                .OrderBy(group => group.Key)
+                .Select(group =>
+                {
+                    var net = group.Sum(line => line.TotalNetMinor);
+                    var gross = group.Sum(line => line.TotalGrossMinor);
+                    return new StructuredInvoiceTaxSummary(group.Key, net, gross - net, gross, currency);
+                })
+                .ToList();
+        }
+
+        private static StructuredInvoiceParty? ReadParty(JsonElement root, string propertyName)
+        {
+            if (!root.TryGetProperty(propertyName, out var party) || party.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            return new StructuredInvoiceParty(
+                GetGuidOrNull(party, "id"),
+                GetString(party, "legalName") ?? GetString(party, "companyName") ?? BuildPersonName(party),
+                GetString(party, "taxId"),
+                GetString(party, "vatId"),
+                GetString(party, "email"),
+                GetString(party, "phone"),
+                GetString(party, "addressLine1"),
+                GetString(party, "postalCode"),
+                GetString(party, "city"),
+                GetString(party, "country"));
+        }
+
+        private static StructuredInvoiceBusiness? ReadBusiness(JsonElement root)
+        {
+            if (!root.TryGetProperty("business", out var business) || business.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            return new StructuredInvoiceBusiness(
+                GetGuid(business, "id"),
+                GetString(business, "name") ?? string.Empty,
+                GetString(business, "legalName"),
+                GetString(business, "taxId"),
+                GetString(business, "defaultCurrency"),
+                GetString(business, "defaultCulture"));
+        }
+
+        private static string BuildPersonName(JsonElement party)
+        {
+            var firstName = GetString(party, "firstName");
+            var lastName = GetString(party, "lastName");
+            return string.Join(' ', new[] { firstName, lastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        }
+
+        private static string? GetString(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+        private static Guid GetGuid(JsonElement element, string propertyName) =>
+            Guid.TryParse(GetString(element, propertyName), out var result) ? result : Guid.Empty;
+
+        private static Guid? GetGuidOrNull(JsonElement element, string propertyName) =>
+            Guid.TryParse(GetString(element, propertyName), out var result) ? result : null;
+
+        private static long GetLong(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.TryGetInt64(out var result) ? result : 0L;
+
+        private static int GetInt(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.TryGetInt32(out var result) ? result : 0;
+
+        private static decimal GetDecimal(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.TryGetDecimal(out var result) ? result : 0m;
+
+        private static DateTime GetDateTime(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) &&
+            value.ValueKind == JsonValueKind.String &&
+            value.TryGetDateTime(out var result)
+                ? result
+                : default;
+
+        private static DateTime? GetDateTimeOrNull(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) &&
+            value.ValueKind == JsonValueKind.String &&
+            value.TryGetDateTime(out var result)
+                ? result
+                : null;
+
+        private sealed record StructuredInvoiceExport(
+            string SchemaVersion,
+            string ComplianceStatus,
+            string ComplianceNote,
+            StructuredInvoiceDocument Document,
+            StructuredInvoiceParty? Seller,
+            StructuredInvoiceParty? Buyer,
+            StructuredInvoiceBusiness? Business,
+            IReadOnlyList<StructuredInvoiceLine> Lines,
+            IReadOnlyList<StructuredInvoiceTaxSummary> TaxSummary,
+            StructuredInvoiceTotals Totals);
+
+        private sealed record StructuredInvoiceDocument(
+            Guid InvoiceId,
+            Guid? BusinessId,
+            Guid? CustomerId,
+            Guid? OrderId,
+            Guid? PaymentId,
+            string Status,
+            string Currency,
+            DateTime IssuedAtUtc,
+            DateTime? DueDateUtc,
+            DateTime? PaidAtUtc);
+
+        private sealed record StructuredInvoiceParty(
+            Guid? Id,
+            string DisplayName,
+            string? TaxId,
+            string? VatId,
+            string? Email,
+            string? Phone,
+            string? AddressLine1,
+            string? PostalCode,
+            string? City,
+            string? Country);
+
+        private sealed record StructuredInvoiceBusiness(
+            Guid Id,
+            string Name,
+            string? LegalName,
+            string? TaxId,
+            string? DefaultCurrency,
+            string? DefaultCulture);
+
+        private sealed record StructuredInvoiceLine(
+            int LineNumber,
+            Guid LineId,
+            string Description,
+            int Quantity,
+            long UnitPriceNetMinor,
+            decimal TaxRate,
+            long TotalNetMinor,
+            long TotalGrossMinor,
+            long TotalTaxMinor,
+            string Currency);
+
+        private sealed record StructuredInvoiceTaxSummary(
+            decimal TaxRate,
+            long TotalNetMinor,
+            long TotalTaxMinor,
+            long TotalGrossMinor,
+            string Currency);
+
+        private sealed record StructuredInvoiceTotals(
+            long TotalNetMinor,
+            long TotalTaxMinor,
+            long TotalGrossMinor,
+            string Currency);
+    }
 }

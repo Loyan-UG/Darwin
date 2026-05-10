@@ -11,7 +11,7 @@ namespace Darwin.Application.CRM.Services;
 /// <summary>
 /// Stores issued invoice archive artifacts on the invoice row.
 /// </summary>
-public sealed class DatabaseInvoiceArchiveStorage : IInvoiceArchiveStorage
+public sealed class DatabaseInvoiceArchiveStorage : IInvoiceArchiveStorageProvider
 {
     private const string DefaultRetentionPolicyPrefix = "invoice-archive-retention:v1";
     private readonly IAppDbContext _db;
@@ -20,6 +20,8 @@ public sealed class DatabaseInvoiceArchiveStorage : IInvoiceArchiveStorage
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
     }
+
+    public string ProviderName => InvoiceArchiveStorageProviderNames.InternalDatabase;
 
     public async Task<InvoiceArchiveStorageResult> SaveAsync(
         Invoice invoice,

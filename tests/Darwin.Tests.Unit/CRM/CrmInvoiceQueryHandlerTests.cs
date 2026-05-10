@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Queries;
@@ -12,6 +13,9 @@ using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace Darwin.Tests.Unit.CRM;
 
@@ -528,6 +532,129 @@ public sealed class CrmInvoiceQueryHandlerTests
     }
 
     [Fact]
+    public async Task GetInvoiceStructuredDataExport_Should_Return_Null_When_Snapshot_Is_Not_Available()
+    {
+        await using var db = InvoiceQueryDbContext.Create();
+        var invoice = MakeInvoice(id: Guid.NewGuid());
+        db.Set<Invoice>().Add(invoice);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetInvoiceStructuredDataExportHandler(new GetInvoiceArchiveSnapshotHandler(db));
+
+        var result = await handler.HandleAsync(invoice.Id, TestContext.Current.CancellationToken);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetInvoiceStructuredDataExport_Should_Map_Issued_Snapshot_To_Structured_Source_Model()
+    {
+        await using var db = InvoiceQueryDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        var businessId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var lineId = Guid.NewGuid();
+        var issuedAtUtc = new DateTime(2026, 5, 10, 12, 30, 0, DateTimeKind.Utc);
+        var dueAtUtc = new DateTime(2026, 6, 10, 0, 0, 0, DateTimeKind.Utc);
+        var snapshotJson = JsonSerializer.Serialize(
+            new
+            {
+                schemaVersion = 1,
+                invoiceId,
+                businessId,
+                customerId,
+                orderId = (Guid?)null,
+                paymentId = (Guid?)null,
+                status = "Open",
+                currency = "EUR",
+                totalNetMinor = 10000L,
+                totalTaxMinor = 1900L,
+                totalGrossMinor = 11900L,
+                dueDateUtc = dueAtUtc,
+                paidAtUtc = (DateTime?)null,
+                issuedAtUtc,
+                issuer = new
+                {
+                    legalName = "Darwin GmbH",
+                    taxId = "DE-ISSUER",
+                    addressLine1 = "Issuer Str. 1",
+                    postalCode = "10115",
+                    city = "Berlin",
+                    country = "DE"
+                },
+                customer = new
+                {
+                    id = customerId,
+                    firstName = "Ada",
+                    lastName = "Buyer",
+                    companyName = "Buyer GmbH",
+                    email = "buyer@example.test",
+                    phone = "+491234567",
+                    taxProfileType = "Business",
+                    vatId = "DE123456789"
+                },
+                business = new
+                {
+                    id = businessId,
+                    name = "Merchant",
+                    legalName = "Merchant GmbH",
+                    taxId = "DE-MERCHANT",
+                    defaultCurrency = "EUR",
+                    defaultCulture = "de-DE"
+                },
+                lines = new[]
+                {
+                    new
+                    {
+                        id = lineId,
+                        description = "Consulting",
+                        quantity = 1,
+                        unitPriceNetMinor = 10000L,
+                        taxRate = 0.19m,
+                        totalNetMinor = 10000L,
+                        totalGrossMinor = 11900L
+                    }
+                }
+            },
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        var invoice = MakeInvoice(
+            id: invoiceId,
+            status: InvoiceStatus.Open,
+            issuedSnapshotJson: snapshotJson,
+            archiveRetainUntilUtc: issuedAtUtc.AddYears(10));
+        invoice.IssuedAtUtc = issuedAtUtc;
+        db.Set<Invoice>().Add(invoice);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetInvoiceStructuredDataExportHandler(new GetInvoiceArchiveSnapshotHandler(db));
+
+        var result = await handler.HandleAsync(invoiceId, TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.InvoiceId.Should().Be(invoiceId);
+        result.FileName.Should().Be($"invoice-{invoiceId:N}-structured-invoice.json");
+
+        using var document = JsonDocument.Parse(result.Json);
+        var root = document.RootElement;
+        root.GetProperty("schemaVersion").GetString().Should().Be("darwin.structured-invoice.v1");
+        root.GetProperty("complianceStatus").GetString().Should().Be("NotZugferdFacturX");
+        root.GetProperty("complianceNote").GetString().Should().Contain("not a ZUGFeRD/Factur-X");
+        root.GetProperty("document").GetProperty("invoiceId").GetGuid().Should().Be(invoiceId);
+        root.GetProperty("document").GetProperty("currency").GetString().Should().Be("EUR");
+        root.GetProperty("seller").GetProperty("displayName").GetString().Should().Be("Darwin GmbH");
+        root.GetProperty("seller").GetProperty("taxId").GetString().Should().Be("DE-ISSUER");
+        root.GetProperty("buyer").GetProperty("displayName").GetString().Should().Be("Buyer GmbH");
+        root.GetProperty("buyer").GetProperty("vatId").GetString().Should().Be("DE123456789");
+        root.GetProperty("business").GetProperty("id").GetGuid().Should().Be(businessId);
+        root.GetProperty("lines")[0].GetProperty("lineId").GetGuid().Should().Be(lineId);
+        root.GetProperty("lines")[0].GetProperty("totalTaxMinor").GetInt64().Should().Be(1900L);
+        root.GetProperty("taxSummary")[0].GetProperty("taxRate").GetDecimal().Should().Be(0.19m);
+        root.GetProperty("taxSummary")[0].GetProperty("totalTaxMinor").GetInt64().Should().Be(1900L);
+        root.GetProperty("totals").GetProperty("totalGrossMinor").GetInt64().Should().Be(11900L);
+    }
+
+    [Fact]
     public async Task DatabaseInvoiceArchiveStorage_Should_Save_Read_And_Check_Artifact()
     {
         await using var db = InvoiceQueryDbContext.Create();
@@ -549,19 +676,20 @@ public sealed class CrmInvoiceQueryHandlerTests
         db.Set<Invoice>().Add(invoice);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
+        var payload = "{\"invoiceNumber\":\"INV-ARCHIVE\"}";
         var storage = new DatabaseInvoiceArchiveStorage(db);
         var result = await storage.SaveAsync(
             invoice,
-            new Darwin.Application.Abstractions.Invoicing.InvoiceArchiveStorageArtifact(
+            new InvoiceArchiveStorageArtifact(
                 invoiceId,
                 issuedAtUtc,
                 "application/json",
                 $"invoice-{invoiceId:N}-issued-snapshot.json",
-                "{\"invoiceNumber\":\"INV-ARCHIVE\"}"),
+                payload),
             TestContext.Current.CancellationToken);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        result.HashSha256.Should().HaveLength(64);
+        result.HashSha256.Should().Be(ComputeSha256(payload));
         result.RetainUntilUtc.Should().Be(issuedAtUtc.AddYears(7));
         result.RetentionPolicyVersion.Should().Be("invoice-archive-retention:v1:7y");
         (await storage.ExistsAsync(invoiceId, TestContext.Current.CancellationToken)).Should().BeTrue();
@@ -600,6 +728,53 @@ public sealed class CrmInvoiceQueryHandlerTests
         saved.ArchivePurgeReason.Should().Be("Retention elapsed");
         saved.ArchiveRetentionPolicyVersion.Should().Be("invoice-archive-retention:v1:1y");
         (await storage.ExistsAsync(invoiceId, TestContext.Current.CancellationToken)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task DatabaseInvoiceArchiveStorage_Should_Reject_Mismatched_Invoice_Id()
+    {
+        await using var db = InvoiceQueryDbContext.Create();
+        var invoice = MakeInvoice(id: Guid.NewGuid());
+        var storage = new DatabaseInvoiceArchiveStorage(db);
+
+        var action = () => storage.SaveAsync(
+            invoice,
+            new InvoiceArchiveStorageArtifact(
+                Guid.NewGuid(),
+                new DateTime(2026, 5, 9, 9, 0, 0, DateTimeKind.Utc),
+                "application/json",
+                "invoice.json",
+                "{\"invoiceNumber\":\"INV-MISMATCH\"}"),
+            TestContext.Current.CancellationToken);
+
+        await action.Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("Archive artifact invoice id does not match the target invoice.");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task DatabaseInvoiceArchiveStorage_Should_Reject_Empty_Payload(string payload)
+    {
+        await using var db = InvoiceQueryDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        var invoice = MakeInvoice(id: invoiceId);
+        var storage = new DatabaseInvoiceArchiveStorage(db);
+
+        var action = () => storage.SaveAsync(
+            invoice,
+            new InvoiceArchiveStorageArtifact(
+                invoiceId,
+                new DateTime(2026, 5, 9, 9, 0, 0, DateTimeKind.Utc),
+                "application/json",
+                "invoice.json",
+                payload),
+            TestContext.Current.CancellationToken);
+
+        await action.Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("Archive artifact payload is required.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -680,6 +855,12 @@ public sealed class CrmInvoiceQueryHandlerTests
     {
         public FixedClock(DateTime utcNow) => UtcNow = utcNow;
         public DateTime UtcNow { get; }
+    }
+
+    private static string ComputeSha256(string value)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     private sealed class TestStringLocalizer : IStringLocalizer<Darwin.Application.ValidationResource>

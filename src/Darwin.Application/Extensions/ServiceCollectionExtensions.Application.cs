@@ -3,6 +3,7 @@ using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Catalog.Services;
 using Darwin.Application.CRM.Services;
 using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -20,7 +21,7 @@ namespace Darwin.Application.Extensions
     /// </summary>
     public static class ServiceCollectionExtensionsApplication
     {
-        public static IServiceCollection AddApplication(this IServiceCollection services)
+        public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration? configuration = null)
         {
             // Choose a *marker type* that lives in the Darwin.Application assembly where your Profiles are.
             // Here we use CatalogProfile as the marker. Replace/add more markers if you split profiles across assemblies.
@@ -37,11 +38,40 @@ namespace Darwin.Application.Extensions
             // Register FluentValidation validators from the same assembly as the marker type.
             // (This extension method comes from FluentValidation.DependencyInjectionExtensions package.)
             services.AddValidatorsFromAssembly(markerType.Assembly);
-            services.AddScoped<IInvoiceArchiveStorage, DatabaseInvoiceArchiveStorage>();
+            services.AddSingleton(_ =>
+            {
+                var selection = new InvoiceArchiveStorageSelection();
+                configuration?.GetSection("InvoiceArchiveStorage").Bind(selection);
+                return selection;
+            });
+            services.AddSingleton(_ =>
+            {
+                var options = new FileSystemInvoiceArchiveStorageOptions();
+                configuration?.GetSection("InvoiceArchiveStorage:FileSystem").Bind(options);
+                return options;
+            });
+            services.AddScoped<DatabaseInvoiceArchiveStorage>();
+            services.AddScoped<FileSystemInvoiceArchiveStorage>();
+            services.AddScoped<IInvoiceArchiveStorageProvider>(provider => provider.GetRequiredService<DatabaseInvoiceArchiveStorage>());
+            services.AddScoped<IInvoiceArchiveStorageProvider>(provider => provider.GetRequiredService<FileSystemInvoiceArchiveStorage>());
+            if (IsExternalObjectStorageProviderSelected(configuration))
+            {
+                services.AddScoped<ObjectStorageInvoiceArchiveStorage>();
+                services.AddScoped<IInvoiceArchiveStorageProvider>(provider => provider.GetRequiredService<ObjectStorageInvoiceArchiveStorage>());
+            }
 
-            
+            services.AddScoped<IInvoiceArchiveStorage, InvoiceArchiveStorageRouter>();
+            services.AddScoped<IEInvoiceGenerationService, NotConfiguredEInvoiceGenerationService>();
 
             return services;
+        }
+
+        private static bool IsExternalObjectStorageProviderSelected(IConfiguration? configuration)
+        {
+            var providerName = configuration?["InvoiceArchiveStorage:ProviderName"];
+            return string.Equals(providerName, InvoiceArchiveStorageProviderNames.S3Compatible, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(providerName, InvoiceArchiveStorageProviderNames.Minio, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(providerName, InvoiceArchiveStorageProviderNames.AwsS3, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

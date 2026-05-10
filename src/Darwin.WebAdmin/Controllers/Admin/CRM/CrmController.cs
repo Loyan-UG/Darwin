@@ -1,3 +1,4 @@
+using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
@@ -44,10 +45,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly GetInvoiceForEditHandler _getInvoiceForEdit;
         private readonly GetInvoiceArchiveSnapshotHandler _getInvoiceArchiveSnapshot;
         private readonly GetInvoiceArchiveDocumentHandler _getInvoiceArchiveDocument;
+        private readonly GetInvoiceStructuredDataExportHandler _getInvoiceStructuredDataExport;
         private readonly CreateCustomerSegmentHandler _createCustomerSegment;
         private readonly UpdateCustomerSegmentHandler _updateCustomerSegment;
         private readonly UpdateInvoiceHandler _updateInvoice;
         private readonly TransitionInvoiceStatusHandler _transitionInvoiceStatus;
+        private readonly GenerateInvoiceEInvoiceArtifactHandler _generateInvoiceEInvoiceArtifact;
         private readonly CreateInvoiceRefundHandler _createInvoiceRefund;
         private readonly CreateInteractionHandler _createInteraction;
         private readonly CreateConsentHandler _createConsent;
@@ -85,10 +88,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             GetInvoiceForEditHandler getInvoiceForEdit,
             GetInvoiceArchiveSnapshotHandler getInvoiceArchiveSnapshot,
             GetInvoiceArchiveDocumentHandler getInvoiceArchiveDocument,
+            GetInvoiceStructuredDataExportHandler getInvoiceStructuredDataExport,
             CreateCustomerSegmentHandler createCustomerSegment,
             UpdateCustomerSegmentHandler updateCustomerSegment,
             UpdateInvoiceHandler updateInvoice,
             TransitionInvoiceStatusHandler transitionInvoiceStatus,
+            GenerateInvoiceEInvoiceArtifactHandler generateInvoiceEInvoiceArtifact,
             CreateInvoiceRefundHandler createInvoiceRefund,
             CreateInteractionHandler createInteraction,
             CreateConsentHandler createConsent,
@@ -125,10 +130,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _getInvoiceForEdit = getInvoiceForEdit ?? throw new ArgumentNullException(nameof(getInvoiceForEdit));
             _getInvoiceArchiveSnapshot = getInvoiceArchiveSnapshot ?? throw new ArgumentNullException(nameof(getInvoiceArchiveSnapshot));
             _getInvoiceArchiveDocument = getInvoiceArchiveDocument ?? throw new ArgumentNullException(nameof(getInvoiceArchiveDocument));
+            _getInvoiceStructuredDataExport = getInvoiceStructuredDataExport ?? throw new ArgumentNullException(nameof(getInvoiceStructuredDataExport));
             _createCustomerSegment = createCustomerSegment ?? throw new ArgumentNullException(nameof(createCustomerSegment));
             _updateCustomerSegment = updateCustomerSegment ?? throw new ArgumentNullException(nameof(updateCustomerSegment));
             _updateInvoice = updateInvoice ?? throw new ArgumentNullException(nameof(updateInvoice));
             _transitionInvoiceStatus = transitionInvoiceStatus ?? throw new ArgumentNullException(nameof(transitionInvoiceStatus));
+            _generateInvoiceEInvoiceArtifact = generateInvoiceEInvoiceArtifact ?? throw new ArgumentNullException(nameof(generateInvoiceEInvoiceArtifact));
             _createInvoiceRefund = createInvoiceRefund ?? throw new ArgumentNullException(nameof(createInvoiceRefund));
             _createInteraction = createInteraction ?? throw new ArgumentNullException(nameof(createInteraction));
             _createConsent = createConsent ?? throw new ArgumentNullException(nameof(createConsent));
@@ -530,6 +537,42 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(document.Html)).ToArray(),
                 "text/html; charset=utf-8",
                 document.FileName);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadInvoiceStructuredData(Guid id, CancellationToken ct = default)
+        {
+            var export = await _getInvoiceStructuredDataExport.HandleAsync(id, ct).ConfigureAwait(false);
+            if (export is null)
+            {
+                SetErrorMessage("InvoiceArchiveUnavailableMessage");
+                return RedirectOrHtmx(nameof(EditInvoice), new { id });
+            }
+
+            return File(
+                Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(export.Json)).ToArray(),
+                "application/json",
+                export.FileName);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadInvoiceEInvoiceArtifact(
+            Guid id,
+            EInvoiceArtifactFormat format = EInvoiceArtifactFormat.ZugferdFacturX,
+            CancellationToken ct = default)
+        {
+            var result = await _generateInvoiceEInvoiceArtifact
+                .HandleAsync(id, format, ct)
+                .ConfigureAwait(false);
+
+            if (!result.IsGenerated)
+            {
+                SetErrorMessage(GetEInvoiceArtifactErrorMessageKey(result.Status));
+                return RedirectOrHtmx(nameof(EditInvoice), new { id });
+            }
+
+            var artifact = result.Artifact!;
+            return File(artifact.Content, artifact.ContentType, artifact.FileName);
         }
 
         [HttpPost]
@@ -2089,6 +2132,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
             return actionName == nameof(CreateSegment) ? View("CreateSegment", vm) : View("EditSegment", vm);
         }
+
+        private static string GetEInvoiceArtifactErrorMessageKey(EInvoiceGenerationStatus status)
+            => status switch
+            {
+                EInvoiceGenerationStatus.NotConfigured => "EInvoiceGeneratorNotConfiguredMessage",
+                EInvoiceGenerationStatus.SourceSnapshotUnavailable => "EInvoiceSourceSnapshotUnavailableMessage",
+                EInvoiceGenerationStatus.UnsupportedFormat => "EInvoiceUnsupportedFormatMessage",
+                EInvoiceGenerationStatus.InvoiceUnavailable => "InvoiceNotFoundMessage",
+                EInvoiceGenerationStatus.ValidationFailed => "EInvoiceValidationFailedMessage",
+                _ => "EInvoiceArtifactUnavailableMessage"
+            };
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)
         {

@@ -744,7 +744,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         dependencyInjectionSource.Should().Contain(".AddViewLocalization()");
         dependencyInjectionSource.Should().Contain(".AddDataAnnotationsLocalization(options =>");
         dependencyInjectionSource.Should().Contain("factory.Create(typeof(SharedResource));");
-        dependencyInjectionSource.Should().Contain("services.AddApplication();");
+        dependencyInjectionSource.Should().Contain("services.AddApplication(config);");
         dependencyInjectionSource.Should().Contain("services.AddSharedHostingDataProtection(config);");
         dependencyInjectionSource.Should().Contain("services.AddConfiguredPersistence(config);");
         dependencyInjectionSource.Should().Contain("services.AddAntiforgery(options =>");
@@ -1843,6 +1843,63 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
     }
 
     [Fact]
+    public void BrevoEmailSender_Should_KeepProviderManagedTemplateMappingOptionalAndParameterized()
+    {
+        var senderSource = ReadInfrastructureFile(Path.Combine("Notifications", "Brevo", "BrevoEmailSender.cs"));
+        var optionsSource = ReadInfrastructureFile(Path.Combine("Notifications", "Brevo", "BrevoEmailOptions.cs"));
+        var validatorSource = ReadInfrastructureFile(Path.Combine("Notifications", "Brevo", "BrevoEmailOptionsValidator.cs"));
+        var deliveryValidatorSource = ReadInfrastructureFile(Path.Combine("Notifications", "EmailDeliveryOptionsValidator.cs"));
+        var smtpValidatorSource = ReadInfrastructureFile(Path.Combine("Notifications", "Smtp", "SmtpEmailOptionsValidator.cs"));
+        var notificationsCompositionSource = ReadInfrastructureFile(Path.Combine("Extensions", "ServiceCollectionExtensions.Notifications.cs"));
+        var dispatchContextSource = ReadApplicationFile(Path.Combine("Abstractions", "Notifications", "EmailDispatchContext.cs"));
+        var invitationCreateSource = ReadApplicationFile(Path.Combine("Businesses", "Commands", "CreateBusinessInvitationHandler.cs"));
+        var invitationResendSource = ReadApplicationFile(Path.Combine("Businesses", "Commands", "ResendBusinessInvitationHandler.cs"));
+        var emailConfirmationSource = ReadApplicationFile(Path.Combine("Identity", "Commands", "EmailConfirmationHandlers.cs"));
+        var passwordResetSource = ReadApplicationFile(Path.Combine("Identity", "Commands", "RequestPasswordResetHandler.cs"));
+
+        optionsSource.Should().Contain("public Dictionary<string, int> TemplateIds { get; set; } = new(StringComparer.OrdinalIgnoreCase);");
+        deliveryValidatorSource.Should().Contain("public sealed class EmailDeliveryOptionsValidator : IValidateOptions<EmailDeliveryOptions>");
+        deliveryValidatorSource.Should().Contain("Email:Provider '{provider}' is not supported.");
+        deliveryValidatorSource.Should().Contain("EmailProviderNames.Smtp or EmailProviderNames.Brevo");
+        notificationsCompositionSource.Should().Contain("services.AddSingleton<IValidateOptions<EmailDeliveryOptions>, EmailDeliveryOptionsValidator>();");
+        notificationsCompositionSource.Should().Contain("services.AddOptions<EmailDeliveryOptions>()");
+        notificationsCompositionSource.Should().Contain("services.AddSingleton<IValidateOptions<SmtpEmailOptions>, SmtpEmailOptionsValidator>();");
+        notificationsCompositionSource.Should().Contain("services.AddOptions<SmtpEmailOptions>()");
+        notificationsCompositionSource.Should().Contain(".ValidateOnStart();");
+        smtpValidatorSource.Should().Contain("public sealed class SmtpEmailOptionsValidator : IValidateOptions<SmtpEmailOptions>");
+        smtpValidatorSource.Should().Contain("Email:Smtp:Host is required when Email:Provider is SMTP.");
+        smtpValidatorSource.Should().Contain("Email:Smtp:Port must be between 1 and 65535.");
+        smtpValidatorSource.Should().Contain("Email:Smtp:FromAddress must be a valid email address.");
+        smtpValidatorSource.Should().Contain("Email:Smtp:Password is required when Email:Smtp:Username is configured.");
+        validatorSource.Should().Contain("Email:Brevo:BaseUrl must be an absolute HTTPS URL when Email:Provider is Brevo.");
+        validatorSource.Should().Contain("Email:Brevo:SenderEmail must be a valid email address.");
+        validatorSource.Should().Contain("Email:Brevo:ReplyToEmail must be a valid email address.");
+        validatorSource.Should().Contain("Email:Brevo:WebhookUsername is required when Email:Provider is Brevo.");
+        validatorSource.Should().Contain("Email:Brevo:WebhookPassword is required when Email:Provider is Brevo.");
+        validatorSource.Should().Contain("Email:Brevo:TemplateIds keys must not be empty.");
+        validatorSource.Should().Contain("Email:Brevo:TemplateIds:{pair.Key} must be a positive Brevo template id.");
+        validatorSource.Should().Contain("private static bool IsHttpsAbsoluteUrl");
+        validatorSource.Should().Contain("private static bool IsEmailAddress");
+        dispatchContextSource.Should().Contain("public IReadOnlyDictionary<string, string?> TemplateParameters { get; set; }");
+
+        senderSource.Should().Contain("var templateId = ResolveTemplateId(context);");
+        senderSource.Should().Contain("payload[\"templateId\"] = templateId.Value;");
+        senderSource.Should().Contain("payload[\"params\"] = BuildTemplateParameters(context);");
+        senderSource.Should().Contain("payload[\"htmlContent\"] = htmlBody ?? string.Empty;");
+        senderSource.Should().Contain("if (!string.IsNullOrWhiteSpace(context.TemplateKey)");
+        senderSource.Should().Contain("if (!string.IsNullOrWhiteSpace(context.FlowKey)");
+
+        invitationCreateSource.Should().Contain("TemplateKey = \"BusinessInvitationEmail\"");
+        invitationCreateSource.Should().Contain("TemplateParameters = bodyParameters");
+        invitationResendSource.Should().Contain("TemplateKey = \"BusinessInvitationEmail\"");
+        invitationResendSource.Should().Contain("TemplateParameters = bodyParameters");
+        emailConfirmationSource.Should().Contain("TemplateKey = \"AccountActivationEmail\"");
+        emailConfirmationSource.Should().Contain("TemplateParameters = bodyParameters");
+        passwordResetSource.Should().Contain("TemplateKey = \"PasswordResetEmail\"");
+        passwordResetSource.Should().Contain("TemplateParameters = bodyParameters");
+    }
+
+    [Fact]
     public void ValidationResources_Should_KeepBrevoWebhookMessagesLocalized()
     {
         var resourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.resx"));
@@ -1855,6 +1912,41 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         resourceGermanSource.Should().Contain("<data name=\"BrevoWebhookAuthenticationInvalid\" ");
         resourceGermanSource.Should().Contain("<data name=\"BrevoWebhookPayloadInvalid\" ");
         resourceSource.Should().Contain("<value>Brevo webhook authentication is not configured.</value>");
+    }
+
+    [Fact]
+    public void SiteSettingValidator_Should_KeepProviderBackedSmsAndWhatsAppReadinessRules()
+    {
+        var validatorSource = ReadApplicationFile(Path.Combine("Settings", "Validators", "SiteSettingEditValidator.cs"));
+        var resourceSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.resx"));
+        var resourceGermanSource = ReadApplicationFile(Path.Combine("Resources", "ValidationResource.de-DE.resx"));
+
+        validatorSource.Should().Contain("RuleFor(x => x.SmsProvider)");
+        validatorSource.Should().Contain(".When(x => x.SmsEnabled)");
+        validatorSource.Should().Contain("string.Equals(provider, \"Twilio\", StringComparison.OrdinalIgnoreCase)");
+        validatorSource.Should().Contain("SiteSettingSmsProviderUnsupported");
+        validatorSource.Should().Contain("RuleFor(x => x.SmsFromPhoneE164)");
+        validatorSource.Should().Contain("RuleFor(x => x.SmsApiKey)");
+        validatorSource.Should().Contain("RuleFor(x => x.SmsApiSecret)");
+        validatorSource.Should().Contain("RuleFor(x => x.WhatsAppBusinessPhoneId)");
+        validatorSource.Should().Contain("RuleFor(x => x.WhatsAppAccessToken)");
+        validatorSource.Should().Contain("RuleFor(x => x.WhatsAppFromPhoneE164)");
+        validatorSource.Should().Contain("RuleFor(x => x.SmtpHost)");
+        validatorSource.Should().Contain("RuleFor(x => x.SmtpPort)");
+        validatorSource.Should().Contain("RuleFor(x => x.SmtpPassword)");
+        validatorSource.Should().Contain("RuleFor(x => x.SmtpFromAddress)");
+        validatorSource.Should().Contain("RuleFor(x => x.SmtpFromDisplayName)");
+        validatorSource.Should().Contain("SiteSettingSmtpHostRequiredWhenEnabled");
+        validatorSource.Should().Contain("SiteSettingSmtpPasswordRequiredWhenUsernameConfigured");
+
+        resourceSource.Should().Contain("<data name=\"SiteSettingSmsProviderUnsupported\"");
+        resourceSource.Should().Contain("<data name=\"SiteSettingWhatsAppAccessTokenRequiredWhenEnabled\"");
+        resourceSource.Should().Contain("<data name=\"SiteSettingSmtpHostRequiredWhenEnabled\"");
+        resourceSource.Should().Contain("<data name=\"SiteSettingSmtpPasswordRequiredWhenUsernameConfigured\"");
+        resourceGermanSource.Should().Contain("<data name=\"SiteSettingSmsProviderUnsupported\"");
+        resourceGermanSource.Should().Contain("<data name=\"SiteSettingWhatsAppAccessTokenRequiredWhenEnabled\"");
+        resourceGermanSource.Should().Contain("<data name=\"SiteSettingSmtpHostRequiredWhenEnabled\"");
+        resourceGermanSource.Should().Contain("<data name=\"SiteSettingSmtpPasswordRequiredWhenUsernameConfigured\"");
     }
 }
 

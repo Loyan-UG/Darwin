@@ -17,6 +17,7 @@
     string BusinessIndexUrl(Darwin.Domain.Enums.BusinessOperationalStatus? operationalStatus = null) => Url.Action("Index", "Businesses", new { operationalStatus }) ?? string.Empty;
     string BusinessEditUrl(Guid id) => Url.Action("Edit", "Businesses", new { id }) ?? string.Empty;
     string BusinessSetupUrl(Guid id) => Url.Action("Setup", "Businesses", new { id }) ?? string.Empty;
+    string BusinessOnboardingWizardUrl(Guid id) => Url.Action("OnboardingWizard", "Businesses", new { id }) ?? string.Empty;
     string BusinessLocationsUrl(Guid businessId) => Url.Action("Locations", "Businesses", new { businessId }) ?? string.Empty;
     string BusinessInvitationsUrl(Guid businessId, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter? filter = null) => Url.Action("Invitations", "Businesses", new { businessId, filter }) ?? string.Empty;
     string BusinessMembersUrl(Guid businessId, Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter? filter = null) => Url.Action("Members", "Businesses", new { businessId, filter }) ?? string.Empty;
@@ -147,6 +148,15 @@
                hx-swap="outerHTML"
                hx-push-url="true">
                 <i class="fa-solid fa-pen"></i> @T.T("EditBusiness")
+            </a>
+            <a asp-action="OnboardingWizard"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-primary"
+               hx-get="@BusinessOnboardingWizardUrl(Model.Id)"
+               hx-target="#business-setup-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">
+                <i class="fa-solid fa-list-check"></i> @T.T("BusinessOnboardingWizardTitle")
             </a>
             <a asp-action="Members"
                asp-route-businessId="@Model.Id"

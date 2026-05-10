@@ -685,4 +685,24 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public string FollowUpLabel { get; set; } = string.Empty;
         public string FollowUpUrl { get; set; } = string.Empty;
     }
+
+    public sealed class BusinessOnboardingWizardVm
+    {
+        public BusinessEditVm Business { get; set; } = new();
+        public List<BusinessOnboardingWizardStepVm> Steps { get; set; } = new();
+        public int RequiredStepCount { get; set; }
+        public int CompletedRequiredStepCount { get; set; }
+        public bool CanFinalize { get; set; }
+    }
+
+    public sealed class BusinessOnboardingWizardStepVm
+    {
+        public int Number { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Summary { get; set; } = string.Empty;
+        public bool IsRequired { get; set; } = true;
+        public bool IsComplete { get; set; }
+        public string ActionLabel { get; set; } = string.Empty;
+        public string ActionUrl { get; set; } = string.Empty;
+    }
 }

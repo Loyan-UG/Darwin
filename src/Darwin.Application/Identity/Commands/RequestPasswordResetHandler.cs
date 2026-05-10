@@ -105,7 +105,6 @@ namespace Darwin.Application.Identity.Commands
             _db.Set<UserToken>().Add(tokenEntity);
             await _db.SaveChangesAsync(ct);
 
-            // NOTE: For production, switch this to a templating engine and a branded reset URL.
             var siteSettings = await _db.Set<SiteSetting>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => !x.IsDeleted, ct)
@@ -123,25 +122,27 @@ namespace Darwin.Application.Identity.Commands
                 siteSettings?.PasswordResetEmailBodyTemplate,
                 CommunicationTemplateDefaults.LegacyPasswordResetBodyTemplate,
                 "PasswordResetBodyTemplateDefault");
+            var subjectParameters = new Dictionary<string, string?>
+            {
+                ["email"] = user.Email,
+                ["expires_at_utc"] = expires.ToString("u")
+            };
+            var bodyParameters = new Dictionary<string, string?>
+            {
+                ["email"] = user.Email,
+                ["token"] = token,
+                ["expires_at_utc"] = expires.ToString("u")
+            };
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
                 TransactionalEmailTemplateRenderer.Render(
                     subjectTemplate,
                     subjectTemplate,
-                    new Dictionary<string, string?>
-                    {
-                        ["email"] = user.Email,
-                        ["expires_at_utc"] = expires.ToString("u")
-                    }));
+                    subjectParameters));
             var body = TransactionalEmailTemplateRenderer.Render(
                 bodyTemplate,
                 bodyTemplate,
-                new Dictionary<string, string?>
-                {
-                    ["email"] = user.Email,
-                    ["token"] = token,
-                    ["expires_at_utc"] = expires.ToString("u")
-                });
+                bodyParameters);
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, user.Email, recipient, body);
 
@@ -164,7 +165,8 @@ namespace Darwin.Application.Identity.Commands
                         FlowKey = "PasswordReset",
                         TemplateKey = "PasswordResetEmail",
                         CorrelationKey = tokenEntity.Id.ToString("N"),
-                        IntendedRecipientEmail = user.Email
+                        IntendedRecipientEmail = user.Email,
+                        TemplateParameters = bodyParameters
                     });
             }
             catch (Exception ex)

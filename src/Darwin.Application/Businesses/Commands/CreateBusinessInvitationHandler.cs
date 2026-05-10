@@ -127,40 +127,38 @@ namespace Darwin.Application.Businesses.Commands
                 "BusinessInvitationBodyTemplateDefault");
             var acceptanceLinkTemplate = CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "BusinessInvitationAcceptanceLinkHtml");
             var invitedIntroTemplate = CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "BusinessInvitationIntroInvitedHtml");
+            var subjectParameters = new Dictionary<string, string?>
+            {
+                ["business_name"] = business.Name,
+                ["role"] = dto.Role.ToString(),
+                ["invitation_action"] = "invited"
+            };
+            var bodyParameters = new Dictionary<string, string?>
+            {
+                ["business_name"] = business.Name,
+                ["role"] = dto.Role.ToString(),
+                ["token"] = token,
+                ["expires_at_utc"] = expiresAtUtc.ToString("u"),
+                ["acceptance_link"] = acceptanceLink,
+                ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
+                    ? string.Empty
+                    : TransactionalEmailTemplateRenderer.Render(acceptanceLinkTemplate, acceptanceLinkTemplate, new Dictionary<string, string?> { ["acceptance_link"] = acceptanceLink }),
+                ["invitation_action"] = "invited",
+                ["invitation_intro_html"] = TransactionalEmailTemplateRenderer.Render(
+                    invitedIntroTemplate,
+                    invitedIntroTemplate,
+                    subjectParameters)
+            };
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
                 TransactionalEmailTemplateRenderer.Render(
                     subjectTemplate,
                     subjectTemplate,
-                    new Dictionary<string, string?>
-                    {
-                        ["business_name"] = business.Name,
-                        ["role"] = dto.Role.ToString(),
-                        ["invitation_action"] = "invited"
-                    }));
+                    subjectParameters));
             var body = TransactionalEmailTemplateRenderer.Render(
                 bodyTemplate,
                 bodyTemplate,
-                new Dictionary<string, string?>
-                {
-                    ["business_name"] = business.Name,
-                    ["role"] = dto.Role.ToString(),
-                    ["token"] = token,
-                    ["expires_at_utc"] = expiresAtUtc.ToString("u"),
-                    ["acceptance_link"] = acceptanceLink,
-                    ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
-                        ? string.Empty
-                        : TransactionalEmailTemplateRenderer.Render(acceptanceLinkTemplate, acceptanceLinkTemplate, new Dictionary<string, string?> { ["acceptance_link"] = acceptanceLink }),
-                    ["invitation_action"] = "invited",
-                    ["invitation_intro_html"] = TransactionalEmailTemplateRenderer.Render(
-                        invitedIntroTemplate,
-                        invitedIntroTemplate,
-                        new Dictionary<string, string?>
-                        {
-                            ["business_name"] = business.Name,
-                            ["role"] = dto.Role.ToString()
-                        })
-                });
+                bodyParameters);
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? entity.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, entity.Email, recipient, body);
 
@@ -175,7 +173,8 @@ namespace Darwin.Application.Businesses.Commands
                     TemplateKey = "BusinessInvitationEmail",
                     CorrelationKey = entity.Id.ToString("N"),
                     BusinessId = business.Id,
-                    IntendedRecipientEmail = entity.Email
+                    IntendedRecipientEmail = entity.Email,
+                    TemplateParameters = bodyParameters
                 });
             return entity.Id;
         }

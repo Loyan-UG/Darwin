@@ -13270,8 +13270,26 @@
   <data name="DownloadArchiveDocument" xml:space="preserve">
     <value>Download archive document</value>
   </data>
+  <data name="DownloadStructuredInvoiceData" xml:space="preserve">
+    <value>Download structured invoice data</value>
+  </data>
   <data name="InvoiceArchiveUnavailableMessage" xml:space="preserve">
     <value>The invoice archive snapshot is not available yet. Issue the invoice before downloading an archive artifact.</value>
+  </data>
+  <data name="EInvoiceGeneratorNotConfiguredMessage" xml:space="preserve">
+    <value>A compliant e-invoice generator is not configured yet. Use the structured invoice data export for review only.</value>
+  </data>
+  <data name="EInvoiceSourceSnapshotUnavailableMessage" xml:space="preserve">
+    <value>The issued invoice snapshot is not available, so an e-invoice artifact cannot be generated.</value>
+  </data>
+  <data name="EInvoiceUnsupportedFormatMessage" xml:space="preserve">
+    <value>The requested e-invoice format is not supported.</value>
+  </data>
+  <data name="EInvoiceValidationFailedMessage" xml:space="preserve">
+    <value>The generated e-invoice artifact did not pass validation.</value>
+  </data>
+  <data name="EInvoiceArtifactUnavailableMessage" xml:space="preserve">
+    <value>The e-invoice artifact is not available.</value>
   </data>
   <data name="ReverseChargeReview" xml:space="preserve">
     <value>Reverse-charge review</value>
@@ -13353,5 +13371,95 @@
   </data>
   <data name="CustomerVatValidationLookupFailedMessage" xml:space="preserve">
     <value>VAT validation lookup could not be completed.</value>
+  </data>
+  <data name="BusinessOnboardingWizardTitle" xml:space="preserve">
+    <value>Onboarding Wizard</value>
+  </data>
+  <data name="BusinessOnboardingWizardSubtitle" xml:space="preserve">
+    <value>Admin-assisted onboarding path</value>
+  </data>
+  <data name="BusinessOnboardingWizardIntro" xml:space="preserve">
+    <value>Work through the required business prerequisites and optional go-live workspaces without bypassing existing validations.</value>
+  </data>
+  <data name="BusinessOnboardingWizardRequiredProgress" xml:space="preserve">
+    <value>Required steps complete</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepNumber" xml:space="preserve">
+    <value>Step {0}</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepBusinessProfile" xml:space="preserve">
+    <value>Business profile</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepCommercialPlan" xml:space="preserve">
+    <value>Commercial plan</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepOwnerStaff" xml:space="preserve">
+    <value>Owner and staff</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepLocations" xml:space="preserve">
+    <value>Business locations</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepLoyalty" xml:space="preserve">
+    <value>Loyalty setup</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepCommunication" xml:space="preserve">
+    <value>Communication setup</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepStorefrontVisibility" xml:space="preserve">
+    <value>Storefront visibility</value>
+  </data>
+  <data name="BusinessOnboardingWizardStepReviewActivate" xml:space="preserve">
+    <value>Review and activate</value>
+  </data>
+  <data name="BusinessOnboardingWizardBusinessProfileComplete" xml:space="preserve">
+    <value>Legal name, display name, and contact email are present.</value>
+  </data>
+  <data name="BusinessOnboardingWizardBusinessProfileMissing" xml:space="preserve">
+    <value>Add legal name, display name, and contact email before approval.</value>
+  </data>
+  <data name="BusinessOnboardingWizardCommercialPlanComplete" xml:space="preserve">
+    <value>A subscription or commercial plan is linked.</value>
+  </data>
+  <data name="BusinessOnboardingWizardCommercialPlanMissing" xml:space="preserve">
+    <value>Open the subscription workspace to choose or review the commercial plan.</value>
+  </data>
+  <data name="BusinessOnboardingWizardOwnerStaffComplete" xml:space="preserve">
+    <value>At least one active owner is assigned.</value>
+  </data>
+  <data name="BusinessOnboardingWizardOwnerStaffMissing" xml:space="preserve">
+    <value>Add or activate an owner before approval.</value>
+  </data>
+  <data name="BusinessOnboardingWizardLocationsComplete" xml:space="preserve">
+    <value>A primary location is configured.</value>
+  </data>
+  <data name="BusinessOnboardingWizardLocationsMissing" xml:space="preserve">
+    <value>Add a primary location before approval.</value>
+  </data>
+  <data name="BusinessOnboardingWizardLoyaltySummary" xml:space="preserve">
+    <value>Review loyalty program, accrual, reward, and redemption readiness in the loyalty workspace.</value>
+  </data>
+  <data name="BusinessOnboardingWizardCommunicationComplete" xml:space="preserve">
+    <value>Transactional email and business sender identity are configured.</value>
+  </data>
+  <data name="BusinessOnboardingWizardCommunicationMissing" xml:space="preserve">
+    <value>Review sender identity, support email, and transactional email readiness.</value>
+  </data>
+  <data name="BusinessOnboardingWizardStorefrontComplete" xml:space="preserve">
+    <value>The business is approved and active for public visibility.</value>
+  </data>
+  <data name="BusinessOnboardingWizardStorefrontMissing" xml:space="preserve">
+    <value>Public visibility starts only after approval and activation.</value>
+  </data>
+  <data name="BusinessOnboardingWizardReviewReady" xml:space="preserve">
+    <value>Required approval prerequisites are ready for final review.</value>
+  </data>
+  <data name="BusinessOnboardingWizardFinalActionTitle" xml:space="preserve">
+    <value>Final activation</value>
+  </data>
+  <data name="BusinessOnboardingWizardFinalActionReady" xml:space="preserve">
+    <value>Required prerequisites are complete. Finalization will use the existing onboarding handler and row-version check.</value>
+  </data>
+  <data name="Optional" xml:space="preserve">
+    <value>Optional</value>
   </data>
 </root>

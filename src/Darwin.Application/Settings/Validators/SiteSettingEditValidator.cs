@@ -117,13 +117,28 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.StripePublishableKey));
 
+            RuleFor(x => x.StripePublishableKey)
+                .NotEmpty()
+                .When(x => x.StripeEnabled)
+                .WithMessage(localizer["SiteSettingStripePublishableKeyRequiredWhenEnabled"]);
+
             RuleFor(x => x.StripeSecretKey)
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.StripeSecretKey));
 
+            RuleFor(x => x.StripeSecretKey)
+                .NotEmpty()
+                .When(x => x.StripeEnabled)
+                .WithMessage(localizer["SiteSettingStripeSecretKeyRequiredWhenEnabled"]);
+
             RuleFor(x => x.StripeWebhookSecret)
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.StripeWebhookSecret));
+
+            RuleFor(x => x.StripeWebhookSecret)
+                .NotEmpty()
+                .When(x => x.StripeEnabled)
+                .WithMessage(localizer["SiteSettingStripeWebhookSecretRequiredWhenEnabled"]);
 
             RuleFor(x => x.StripeMerchantDisplayName)
                 .MaximumLength(200)
@@ -168,6 +183,12 @@ namespace Darwin.Application.Settings.Validators
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlEnvironment));
 
             RuleFor(x => x.DhlApiBaseUrl)
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlApiBaseUrlRequiredWhenEnabled"]);
+
+            RuleFor(x => x.DhlApiBaseUrl)
                 .MaximumLength(500)
                 .Must(BeHttpsAbsoluteUrl)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlApiBaseUrl))
@@ -177,22 +198,47 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlApiKey));
 
+            RuleFor(x => x.DhlApiKey)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlApiKeyRequiredWhenEnabled"]);
+
             RuleFor(x => x.DhlApiSecret)
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlApiSecret));
+
+            RuleFor(x => x.DhlApiSecret)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlApiSecretRequiredWhenEnabled"]);
 
             RuleFor(x => x.DhlAccountNumber)
                 .MaximumLength(128)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlAccountNumber));
 
+            RuleFor(x => x.DhlAccountNumber)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlAccountNumberRequiredWhenEnabled"]);
+
             RuleFor(x => x.DhlShipperName)
                 .MaximumLength(200)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperName));
+
+            RuleFor(x => x.DhlShipperName)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlShipperNameRequiredWhenEnabled"]);
 
             RuleFor(x => x.DhlShipperEmail)
                 .EmailAddress()
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperEmail));
+
+            RuleFor(x => x.DhlShipperEmail)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlShipperEmailRequiredWhenEnabled"]);
 
             RuleFor(x => x.DhlShipperPhoneE164)
                 .MaximumLength(32)
@@ -202,18 +248,38 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(300)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperStreet));
 
+            RuleFor(x => x.DhlShipperStreet)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlShipperStreetRequiredWhenEnabled"]);
+
             RuleFor(x => x.DhlShipperPostalCode)
                 .MaximumLength(32)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperPostalCode));
+
+            RuleFor(x => x.DhlShipperPostalCode)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlShipperPostalCodeRequiredWhenEnabled"]);
 
             RuleFor(x => x.DhlShipperCity)
                 .MaximumLength(120)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperCity));
 
+            RuleFor(x => x.DhlShipperCity)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlShipperCityRequiredWhenEnabled"]);
+
             RuleFor(x => x.DhlShipperCountry)
                 .Matches("^[A-Z]{2}$")
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperCountry))
                 .WithMessage(localizer["SiteSettingDhlShipperCountryCode"]);
+
+            RuleFor(x => x.DhlShipperCountry)
+                .NotEmpty()
+                .When(x => x.DhlEnabled)
+                .WithMessage(localizer["SiteSettingDhlShipperCountryRequiredWhenEnabled"]);
 
             RuleFor(x => x.ShipmentAttentionDelayHours)
                 .GreaterThanOrEqualTo(1)
@@ -319,13 +385,28 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppBusinessPhoneId));
 
+            RuleFor(x => x.WhatsAppBusinessPhoneId)
+                .NotEmpty()
+                .When(x => x.WhatsAppEnabled)
+                .WithMessage(localizer["SiteSettingWhatsAppBusinessPhoneIdRequiredWhenEnabled"]);
+
             RuleFor(x => x.WhatsAppAccessToken)
                 .MaximumLength(200)
                 .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppAccessToken));
 
+            RuleFor(x => x.WhatsAppAccessToken)
+                .NotEmpty()
+                .When(x => x.WhatsAppEnabled)
+                .WithMessage(localizer["SiteSettingWhatsAppAccessTokenRequiredWhenEnabled"]);
+
             RuleFor(x => x.WhatsAppFromPhoneE164)
                 .MaximumLength(32)
                 .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppFromPhoneE164));
+
+            RuleFor(x => x.WhatsAppFromPhoneE164)
+                .NotEmpty()
+                .When(x => x.WhatsAppEnabled)
+                .WithMessage(localizer["SiteSettingWhatsAppFromPhoneRequiredWhenEnabled"]);
 
             RuleFor(x => x.WhatsAppAdminRecipientsCsv)
                 .MaximumLength(1000)
@@ -349,10 +430,20 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(255)
                 .When(x => !string.IsNullOrWhiteSpace(x.SmtpHost));
 
+            RuleFor(x => x.SmtpHost)
+                .NotEmpty()
+                .When(x => x.SmtpEnabled)
+                .WithMessage(localizer["SiteSettingSmtpHostRequiredWhenEnabled"]);
+
             RuleFor(x => x.SmtpPort)
                 .GreaterThan(0)
                 .LessThanOrEqualTo(65535)
                 .When(x => x.SmtpPort.HasValue);
+
+            RuleFor(x => x.SmtpPort)
+                .NotNull()
+                .When(x => x.SmtpEnabled)
+                .WithMessage(localizer["SiteSettingSmtpPortRequiredWhenEnabled"]);
 
             RuleFor(x => x.SmtpUsername)
                 .MaximumLength(256)
@@ -362,31 +453,71 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(512)
                 .When(x => !string.IsNullOrWhiteSpace(x.SmtpPassword));
 
+            RuleFor(x => x.SmtpPassword)
+                .NotEmpty()
+                .When(x => x.SmtpEnabled && !string.IsNullOrWhiteSpace(x.SmtpUsername))
+                .WithMessage(localizer["SiteSettingSmtpPasswordRequiredWhenUsernameConfigured"]);
+
             RuleFor(x => x.SmtpFromAddress)
                 .EmailAddress()
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.SmtpFromAddress));
 
+            RuleFor(x => x.SmtpFromAddress)
+                .NotEmpty()
+                .When(x => x.SmtpEnabled)
+                .WithMessage(localizer["SiteSettingSmtpFromAddressRequiredWhenEnabled"]);
+
             RuleFor(x => x.SmtpFromDisplayName)
                 .MaximumLength(200)
                 .When(x => !string.IsNullOrWhiteSpace(x.SmtpFromDisplayName));
+
+            RuleFor(x => x.SmtpFromDisplayName)
+                .NotEmpty()
+                .When(x => x.SmtpEnabled)
+                .WithMessage(localizer["SiteSettingSmtpFromDisplayNameRequiredWhenEnabled"]);
 
             // -------- SMS --------
             RuleFor(x => x.SmsProvider)
                 .MaximumLength(100)
                 .When(x => !string.IsNullOrWhiteSpace(x.SmsProvider));
 
+            RuleFor(x => x.SmsProvider)
+                .NotEmpty()
+                .When(x => x.SmsEnabled)
+                .WithMessage(localizer["SiteSettingSmsProviderRequiredWhenEnabled"]);
+
+            RuleFor(x => x.SmsProvider)
+                .Must(provider => string.Equals(provider, "Twilio", StringComparison.OrdinalIgnoreCase))
+                .When(x => x.SmsEnabled && !string.IsNullOrWhiteSpace(x.SmsProvider))
+                .WithMessage(localizer["SiteSettingSmsProviderUnsupported"]);
+
             RuleFor(x => x.SmsFromPhoneE164)
                 .MaximumLength(32)
                 .When(x => !string.IsNullOrWhiteSpace(x.SmsFromPhoneE164));
+
+            RuleFor(x => x.SmsFromPhoneE164)
+                .NotEmpty()
+                .When(x => x.SmsEnabled)
+                .WithMessage(localizer["SiteSettingSmsFromPhoneRequiredWhenEnabled"]);
 
             RuleFor(x => x.SmsApiKey)
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.SmsApiKey));
 
+            RuleFor(x => x.SmsApiKey)
+                .NotEmpty()
+                .When(x => x.SmsEnabled)
+                .WithMessage(localizer["SiteSettingSmsApiKeyRequiredWhenEnabled"]);
+
             RuleFor(x => x.SmsApiSecret)
                 .MaximumLength(512)
                 .When(x => !string.IsNullOrWhiteSpace(x.SmsApiSecret));
+
+            RuleFor(x => x.SmsApiSecret)
+                .NotEmpty()
+                .When(x => x.SmsEnabled)
+                .WithMessage(localizer["SiteSettingSmsApiSecretRequiredWhenEnabled"]);
 
             RuleFor(x => x.SmsExtraSettingsJson)
                 .MaximumLength(2000)

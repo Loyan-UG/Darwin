@@ -170,6 +170,7 @@ namespace Darwin.WebAdmin.Extensions
 
 
             // Transactional email infrastructure; provider selection is configuration-driven.
+            services.AddObjectStorageInfrastructure(config);
             services.AddNotificationsInfrastructure(config);
             services.AddComplianceInfrastructure(config);
 
@@ -420,9 +421,11 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetInvoiceForEditHandler>();
             services.AddScoped<GetInvoiceArchiveSnapshotHandler>();
             services.AddScoped<GetInvoiceArchiveDocumentHandler>();
+            services.AddScoped<GetInvoiceStructuredDataExportHandler>();
             services.AddScoped<CreateInvoiceRefundHandler>();
             services.AddScoped<UpdateInvoiceHandler>();
             services.AddScoped<TransitionInvoiceStatusHandler>();
+            services.AddScoped<GenerateInvoiceEInvoiceArtifactHandler>();
             services.AddScoped<UpdateInvoiceReverseChargeDecisionHandler>();
             services.AddScoped<UpdateCustomerVatValidationDecisionHandler>();
             services.AddScoped<GetPaymentsPageHandler>();
@@ -529,7 +532,7 @@ namespace Darwin.WebAdmin.Extensions
                 ;
 
             // Application layer (includes AutoMapper + validators scanning)
-            services.AddApplication();
+            services.AddApplication(config);
 
             // Register Application services with concrete types
             services.AddScoped<IAddOnPricingService, AddOnPricingService>();

@@ -61,6 +61,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.23" />
     <PackageReference Include="Fido2" Version="4.0.1" />
     <PackageReference Include="Fido2.AspNet" Version="4.0.1" />
     <PackageReference Include="Fido2.Models" Version="4.0.1" />

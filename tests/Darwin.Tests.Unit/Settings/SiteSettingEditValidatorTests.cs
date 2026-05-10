@@ -418,6 +418,37 @@ public sealed class SiteSettingEditValidatorTests
     }
 
     [Fact]
+    public void SiteSetting_Should_Fail_When_Stripe_Is_Enabled_Without_Required_Secrets()
+    {
+        var dto = CreateValidDto();
+        dto.StripeEnabled = true;
+        dto.StripePublishableKey = null;
+        dto.StripeSecretKey = null;
+        dto.StripeWebhookSecret = null;
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("Stripe cannot be enabled without publishable, secret, and webhook signing keys");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.StripePublishableKey));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.StripeSecretKey));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.StripeWebhookSecret));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Pass_When_Stripe_Is_Enabled_With_Required_Secrets()
+    {
+        var dto = CreateValidDto();
+        dto.StripeEnabled = true;
+        dto.StripePublishableKey = "stripe-publishable-configured";
+        dto.StripeSecretKey = "stripe-secret-configured";
+        dto.StripeWebhookSecret = "stripe-webhook-configured";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("Stripe is complete enough for test-mode smoke when all required keys are configured");
+    }
+
+    [Fact]
     public void SiteSetting_Should_Fail_When_InvoiceIssuerCountry_Not_Two_Uppercase_Letters()
     {
         var dto = CreateValidDto();
@@ -453,6 +484,139 @@ public sealed class SiteSettingEditValidatorTests
 
         result.IsValid.Should().BeFalse("DhlApiBaseUrl must use HTTPS");
         result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlApiBaseUrl));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Fail_When_Dhl_Is_Enabled_Without_Required_Provider_Settings()
+    {
+        var dto = CreateValidDto();
+        dto.DhlEnabled = true;
+        dto.DhlApiBaseUrl = null;
+        dto.DhlApiKey = null;
+        dto.DhlApiSecret = null;
+        dto.DhlAccountNumber = null;
+        dto.DhlShipperName = null;
+        dto.DhlShipperEmail = null;
+        dto.DhlShipperStreet = null;
+        dto.DhlShipperPostalCode = null;
+        dto.DhlShipperCity = null;
+        dto.DhlShipperCountry = null;
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("DHL cannot be enabled without account, credential, and shipper identity settings");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlApiBaseUrl));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlApiKey));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlApiSecret));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlAccountNumber));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlShipperName));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlShipperEmail));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlShipperStreet));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlShipperPostalCode));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlShipperCity));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.DhlShipperCountry));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Pass_When_Dhl_Is_Enabled_With_Required_Provider_Settings()
+    {
+        var dto = CreateValidDto();
+        dto.DhlEnabled = true;
+        dto.DhlApiBaseUrl = "https://api-sandbox.dhl.example";
+        dto.DhlApiKey = "dhl-key";
+        dto.DhlApiSecret = "dhl-secret";
+        dto.DhlAccountNumber = "1234567890";
+        dto.DhlShipperName = "Darwin GmbH";
+        dto.DhlShipperEmail = "shipping@example.test";
+        dto.DhlShipperStreet = "Main Street 1";
+        dto.DhlShipperPostalCode = "10115";
+        dto.DhlShipperCity = "Berlin";
+        dto.DhlShipperCountry = "DE";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("DHL is complete enough for live smoke when account, credential, and shipper identity settings are configured");
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Fail_When_Sms_Is_Enabled_Without_Required_Twilio_Settings()
+    {
+        var dto = CreateValidDto();
+        dto.SmsEnabled = true;
+        dto.SmsProvider = null;
+        dto.SmsFromPhoneE164 = null;
+        dto.SmsApiKey = null;
+        dto.SmsApiSecret = null;
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("SMS cannot be enabled without a supported provider and Twilio credentials");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmsProvider));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmsFromPhoneE164));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmsApiKey));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmsApiSecret));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Fail_When_Sms_Is_Enabled_With_Unsupported_Provider()
+    {
+        var dto = CreateValidDto();
+        dto.SmsEnabled = true;
+        dto.SmsProvider = "OtherProvider";
+        dto.SmsFromPhoneE164 = "+4915700000000";
+        dto.SmsApiKey = "sms-key";
+        dto.SmsApiSecret = "sms-secret";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("only Twilio is currently implemented for provider-backed SMS");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmsProvider));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Pass_When_Sms_Is_Enabled_With_Twilio_Settings()
+    {
+        var dto = CreateValidDto();
+        dto.SmsEnabled = true;
+        dto.SmsProvider = "Twilio";
+        dto.SmsFromPhoneE164 = "+4915700000000";
+        dto.SmsApiKey = "sms-key";
+        dto.SmsApiSecret = "sms-secret";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("SMS is complete enough for provider-backed dispatch when Twilio settings are configured");
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Fail_When_WhatsApp_Is_Enabled_Without_Required_Meta_Settings()
+    {
+        var dto = CreateValidDto();
+        dto.WhatsAppEnabled = true;
+        dto.WhatsAppBusinessPhoneId = null;
+        dto.WhatsAppAccessToken = null;
+        dto.WhatsAppFromPhoneE164 = null;
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("WhatsApp cannot be enabled without Meta phone id, access token, and sender phone");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.WhatsAppBusinessPhoneId));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.WhatsAppAccessToken));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.WhatsAppFromPhoneE164));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Pass_When_WhatsApp_Is_Enabled_With_Meta_Settings()
+    {
+        var dto = CreateValidDto();
+        dto.WhatsAppEnabled = true;
+        dto.WhatsAppBusinessPhoneId = "wa-phone";
+        dto.WhatsAppAccessToken = "wa-token";
+        dto.WhatsAppFromPhoneE164 = "+4915700000002";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("WhatsApp is complete enough for provider-backed dispatch when Meta settings are configured");
     }
 
     [Fact]
@@ -635,5 +799,57 @@ public sealed class SiteSettingEditValidatorTests
         var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeTrue("null AdminTextOverridesJson is allowed");
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Fail_When_Smtp_Is_Enabled_Without_Required_Settings()
+    {
+        var dto = CreateValidDto();
+        dto.SmtpEnabled = true;
+        dto.SmtpHost = null;
+        dto.SmtpPort = null;
+        dto.SmtpFromAddress = null;
+        dto.SmtpFromDisplayName = null;
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("SMTP cannot be enabled without host, port, from address, and display name");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmtpHost));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmtpPort));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmtpFromAddress));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmtpFromDisplayName));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Fail_When_Smtp_Username_Is_Configured_Without_Password()
+    {
+        var dto = CreateValidDto();
+        dto.SmtpEnabled = true;
+        dto.SmtpHost = "smtp.example.test";
+        dto.SmtpPort = 587;
+        dto.SmtpUsername = "smtp-user";
+        dto.SmtpPassword = null;
+        dto.SmtpFromAddress = "noreply@example.test";
+        dto.SmtpFromDisplayName = "Darwin";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("SMTP password is required when username authentication is configured");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.SmtpPassword));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Pass_When_Smtp_Is_Enabled_With_Required_Settings()
+    {
+        var dto = CreateValidDto();
+        dto.SmtpEnabled = true;
+        dto.SmtpHost = "smtp.example.test";
+        dto.SmtpPort = 587;
+        dto.SmtpFromAddress = "noreply@example.test";
+        dto.SmtpFromDisplayName = "Darwin";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("SMTP is complete enough for dispatch when relay and sender settings are configured");
     }
 }

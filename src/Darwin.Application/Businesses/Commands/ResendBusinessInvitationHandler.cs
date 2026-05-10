@@ -111,40 +111,38 @@ namespace Darwin.Application.Businesses.Commands
                 "BusinessInvitationBodyTemplateDefault");
             var acceptanceLinkTemplate = CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "BusinessInvitationAcceptanceLinkHtml");
             var reissuedIntroTemplate = CommunicationTemplateDefaults.ResolveText(_communicationLocalizer, communicationCulture, "BusinessInvitationIntroReissuedHtml");
+            var subjectParameters = new Dictionary<string, string?>
+            {
+                ["business_name"] = business.Name,
+                ["role"] = invitation.Role.ToString(),
+                ["invitation_action"] = "reissued"
+            };
+            var bodyParameters = new Dictionary<string, string?>
+            {
+                ["business_name"] = business.Name,
+                ["role"] = invitation.Role.ToString(),
+                ["token"] = invitation.Token,
+                ["expires_at_utc"] = invitation.ExpiresAtUtc.ToString("u"),
+                ["acceptance_link"] = acceptanceLink,
+                ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
+                    ? string.Empty
+                    : TransactionalEmailTemplateRenderer.Render(acceptanceLinkTemplate, acceptanceLinkTemplate, new Dictionary<string, string?> { ["acceptance_link"] = acceptanceLink }),
+                ["invitation_action"] = "reissued",
+                ["invitation_intro_html"] = TransactionalEmailTemplateRenderer.Render(
+                    reissuedIntroTemplate,
+                    reissuedIntroTemplate,
+                    subjectParameters)
+            };
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
                 TransactionalEmailTemplateRenderer.Render(
                     subjectTemplate,
                     subjectTemplate,
-                    new Dictionary<string, string?>
-                    {
-                        ["business_name"] = business.Name,
-                        ["role"] = invitation.Role.ToString(),
-                        ["invitation_action"] = "reissued"
-                    }));
+                    subjectParameters));
             var body = TransactionalEmailTemplateRenderer.Render(
                 bodyTemplate,
                 bodyTemplate,
-                new Dictionary<string, string?>
-                {
-                    ["business_name"] = business.Name,
-                    ["role"] = invitation.Role.ToString(),
-                    ["token"] = invitation.Token,
-                    ["expires_at_utc"] = invitation.ExpiresAtUtc.ToString("u"),
-                    ["acceptance_link"] = acceptanceLink,
-                    ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
-                        ? string.Empty
-                        : TransactionalEmailTemplateRenderer.Render(acceptanceLinkTemplate, acceptanceLinkTemplate, new Dictionary<string, string?> { ["acceptance_link"] = acceptanceLink }),
-                    ["invitation_action"] = "reissued",
-                    ["invitation_intro_html"] = TransactionalEmailTemplateRenderer.Render(
-                        reissuedIntroTemplate,
-                        reissuedIntroTemplate,
-                        new Dictionary<string, string?>
-                        {
-                            ["business_name"] = business.Name,
-                            ["role"] = invitation.Role.ToString()
-                        })
-                });
+                bodyParameters);
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? invitation.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, invitation.Email, recipient, body);
 
@@ -159,7 +157,8 @@ namespace Darwin.Application.Businesses.Commands
                     TemplateKey = "BusinessInvitationEmail",
                     CorrelationKey = invitation.Id.ToString("N"),
                     BusinessId = invitation.BusinessId,
-                    IntendedRecipientEmail = invitation.Email
+                    IntendedRecipientEmail = invitation.Email,
+                    TemplateParameters = bodyParameters
                 });
         }
 

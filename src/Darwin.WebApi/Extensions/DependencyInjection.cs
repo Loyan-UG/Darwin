@@ -71,7 +71,7 @@ namespace Darwin.WebApi.Extensions
             // 1) Application baseline (AutoMapper + FluentValidation)
             // ------------------------------------------------------------
             // Registers AutoMapper profiles and validators found in Darwin.Application.
-            services.AddApplication();
+            services.AddApplication(configuration);
 
             // ------------------------------------------------------------
             // 2) Small per-request helpers
@@ -139,7 +139,9 @@ namespace Darwin.WebApi.Extensions
             // ------------------------------------------------------------
             // 6) Notifications, caching, presentation helpers
             // ------------------------------------------------------------
+            services.AddObjectStorageInfrastructure(configuration);
             services.AddNotificationsInfrastructure(configuration);
+            services.AddShippingProviderInfrastructure();
             services.AddComplianceInfrastructure(configuration);
             services.AddMemoryCache();
             services.AddHealthChecks()
