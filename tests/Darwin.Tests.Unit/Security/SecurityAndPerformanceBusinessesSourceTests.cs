@@ -813,14 +813,15 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] string? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)");
         controllerSource.Should().Contain("await _approveBusiness.HandleAsync(new BusinessLifecycleActionDto");
+        controllerSource.Should().Contain("RowVersion = DecodeBase64RowVersion(rowVersion)");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessApproved\")");
-        controllerSource.Should().Contain("public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] string? note, [FromForm] bool returnToSetup = false, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] string? rowVersion, [FromForm] string? note, [FromForm] bool returnToSetup = false, CancellationToken ct = default)");
         controllerSource.Should().Contain("await _suspendBusiness.HandleAsync(new BusinessLifecycleActionDto");
         controllerSource.Should().Contain("Note = note");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessSuspended\")");
-        controllerSource.Should().Contain("public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] string? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)");
         controllerSource.Should().Contain("await _reactivateBusiness.HandleAsync(new BusinessLifecycleActionDto");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessReactivated\")");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessApproveFailed\");");
@@ -835,17 +836,17 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
 
-        controllerSource.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
         controllerSource.Should().Contain("Result result = await _deleteBusiness.HandleAsync(new BusinessDeleteDto");
         controllerSource.Should().Contain("T(\"BusinessArchived\")");
         controllerSource.Should().Contain("T(\"BusinessArchiveFailed\")");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Index), new { });");
-        controllerSource.Should().Contain("public async Task<IActionResult> DeleteLocation([FromForm] Guid id, [FromForm(Name = \"userId\")] Guid businessId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> DeleteLocation([FromForm] Guid id, [FromForm(Name = \"userId\")] Guid businessId, [FromForm] string? rowVersion, CancellationToken ct = default)");
         controllerSource.Should().Contain("var result = await _deleteBusinessLocation.HandleAsync(new BusinessLocationDeleteDto");
         controllerSource.Should().Contain("T(\"BusinessLocationArchived\")");
         controllerSource.Should().Contain("T(\"BusinessLocationArchiveFailed\")");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Locations), new { businessId });");
-        controllerSource.Should().Contain("public async Task<IActionResult> DeleteMember([FromForm] Guid id, [FromForm(Name = \"userId\")] Guid businessId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
+        controllerSource.Should().Contain("public async Task<IActionResult> DeleteMember([FromForm] Guid id, [FromForm(Name = \"userId\")] Guid businessId, [FromForm] string? rowVersion, CancellationToken ct = default)");
         controllerSource.Should().Contain("await _deleteBusinessMember.HandleAsync(new BusinessMemberDeleteDto");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessMemberRemoved\")");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Members), new { businessId });");
@@ -1443,7 +1444,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during source-contract cleanup: this assertion targets stale exact source text rather than a stable behavior, security, localization, HTMX, route, or mutation contract.")]
+    [Fact]
     public void BusinessesController_Should_KeepStaffAccessBadgeWorkspaceContractWired()
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
@@ -1453,7 +1454,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessMemberNotFound\");");
         controllerSource.Should().Contain("var business = await LoadBusinessContextAsync(dto.BusinessId, ct);");
         controllerSource.Should().Contain("SetErrorMessage(\"BusinessNotFound\");");
-        controllerSource.Should().Contain("var issuedAtUtc = DateTime.UtcNow;");
+        controllerSource.Should().Contain("var issuedAtUtc = _clock.UtcNow;");
         controllerSource.Should().Contain("var expiresAtUtc = issuedAtUtc.AddMinutes(2);");
         controllerSource.Should().Contain("var payload = BuildStaffAccessBadgePayload(dto, business, issuedAtUtc, expiresAtUtc);");
         controllerSource.Should().Contain("var vm = new BusinessStaffAccessBadgeVm");
@@ -1516,7 +1517,7 @@ public sealed class SecurityAndPerformanceBusinessesSourceTests : SecurityAndPer
         controllerSource.Should().Contain("AllowLastOwnerOverride = true,");
         controllerSource.Should().Contain("OverrideReason = overrideReason,");
         controllerSource.Should().Contain("OverrideActorDisplayName = GetCurrentActorDisplayName()");
-        controllerSource.Should().Contain("RowVersion = rowVersion ?? Array.Empty<byte>(),");
+        controllerSource.Should().Contain("RowVersion = DecodeBase64RowVersion(rowVersion),");
         controllerSource.Should().Contain("SetSuccessMessage(\"BusinessMemberRemovedOverride\");");
         controllerSource.Should().Contain("return RedirectOrHtmx(nameof(Members), new { businessId });");
         controllerSource.Should().Contain("AddModelErrorMessage(\"BusinessMemberForceDeleteFailed\");");

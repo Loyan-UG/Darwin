@@ -278,7 +278,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteProgram(Guid id, Guid businessId, byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> DeleteProgram(Guid id, Guid businessId, string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty || businessId == Guid.Empty)
             {
@@ -289,7 +289,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var result = await _deleteProgram.HandleAsync(new LoyaltyProgramDeleteDto
             {
                 Id = id,
-                RowVersion = rowVersion
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyProgramDeleted") : T("LoyaltyProgramDeleteFailed");
@@ -508,7 +508,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteRewardTier(Guid id, Guid loyaltyProgramId, byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> DeleteRewardTier(Guid id, Guid loyaltyProgramId, string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty || loyaltyProgramId == Guid.Empty)
             {
@@ -521,7 +521,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var result = await _deleteRewardTier.HandleAsync(new LoyaltyRewardTierDeleteDto
             {
                 Id = id,
-                RowVersion = rowVersion
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? T("LoyaltyRewardTierDeleted") : T("LoyaltyRewardTierDeleteFailed");
@@ -821,7 +821,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetCampaignActivation(Guid id, Guid businessId, bool isActive, byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> SetCampaignActivation(Guid id, Guid businessId, bool isActive, string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty || businessId == Guid.Empty)
             {
@@ -834,7 +834,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 Id = id,
                 BusinessId = businessId,
                 IsActive = isActive,
-                RowVersion = rowVersion ?? Array.Empty<byte>()
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             SetLocalizedResultMessage(
@@ -917,7 +917,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             Guid? businessId,
             Guid? campaignId,
             CampaignDeliveryStatus status,
-            byte[]? rowVersion,
+            string? rowVersion,
             int page = 1,
             int pageSize = 20,
             LoyaltyCampaignDeliveryQueueFilter filter = LoyaltyCampaignDeliveryQueueFilter.All,
@@ -941,7 +941,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 BusinessId = businessId,
                 Status = (short)status,
                 OperatorNote = T("CampaignDeliveryUpdatedByOperator"),
-                RowVersion = rowVersion ?? Array.Empty<byte>()
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             SetLocalizedResultMessage(result.Succeeded, "CampaignDeliveryStatusUpdated", "CampaignDeliveryStatusUpdateFailed", result.Error);
@@ -1013,7 +1013,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ExpireScanSession(Guid id, Guid businessId, byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> ExpireScanSession(Guid id, Guid businessId, string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty || businessId == Guid.Empty)
             {
@@ -1025,7 +1025,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             {
                 Id = id,
                 BusinessId = businessId,
-                RowVersion = rowVersion ?? Array.Empty<byte>()
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             SetLocalizedResultMessage(result.Succeeded, "LoyaltyScanSessionExpired", "LoyaltyScanSessionExpireFailed", result.Error);
@@ -1241,7 +1241,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SuspendAccount(Guid id, byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> SuspendAccount(Guid id, string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -1252,7 +1252,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var result = await _suspendAccount.HandleAsync(new SuspendLoyaltyAccountDto
             {
                 Id = id,
-                RowVersion = rowVersion
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             SetLocalizedResultMessage(result.Succeeded, "LoyaltyAccountSuspended", "LoyaltyAccountSuspendFailed", result.Error);
@@ -1261,7 +1261,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ActivateAccount(Guid id, byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> ActivateAccount(Guid id, string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -1272,7 +1272,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var result = await _activateAccount.HandleAsync(new ActivateLoyaltyAccountDto
             {
                 Id = id,
-                RowVersion = rowVersion
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             SetLocalizedResultMessage(result.Succeeded, "LoyaltyAccountActivated", "LoyaltyAccountActivateFailed", result.Error);
@@ -1281,7 +1281,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmRedemption(Guid redemptionId, Guid businessId, Guid loyaltyAccountId, byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> ConfirmRedemption(Guid redemptionId, Guid businessId, Guid loyaltyAccountId, string? rowVersion, CancellationToken ct = default)
         {
             if (redemptionId == Guid.Empty || businessId == Guid.Empty || loyaltyAccountId == Guid.Empty)
             {
@@ -1295,7 +1295,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             {
                 RedemptionId = redemptionId,
                 BusinessId = businessId,
-                RowVersion = rowVersion
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             SetLocalizedResultMessage(result.Succeeded, "LoyaltyRedemptionConfirmed", "LoyaltyRedemptionConfirmFailed", result.Error);

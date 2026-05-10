@@ -1090,7 +1090,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("ShipmentCarrierExceptionResolveFailedMessage");
+                SetErrorMessage("ShipmentCarrierExceptionResolveFailedMessage");
             }
 
             if (returnToReturnsQueue)
@@ -1174,7 +1174,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("ShipmentProviderOperationUpdateFailedMessage");
+                SetErrorMessage("ShipmentProviderOperationUpdateFailedMessage");
             }
 
             return RedirectOrHtmx(nameof(ShipmentProviderOperations), new

@@ -257,7 +257,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -267,7 +267,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
 
             try
             {
-                await _softDeletePage.HandleAsync(id, rowVersion, ct);
+                await _softDeletePage.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct);
                 SetSuccessMessage("PageDeleted");
             }
             catch

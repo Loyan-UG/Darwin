@@ -8,6 +8,8 @@ namespace Darwin.Tests.Unit.WebApi;
 /// </summary>
 public sealed class WebApiRouteAliasSourceTests
 {
+    private static readonly Lazy<string> RepositoryRoot = new(FindRepositoryRoot);
+
     [Fact]
     public void MetaController_Should_ContainCanonicalRoute_AndExpectedMetaEndpoints()
     {
@@ -307,11 +309,29 @@ public sealed class WebApiRouteAliasSourceTests
     private static string ReadControllerSource(string relativeControllerPath)
     {
         var path = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..",
+            RepositoryRoot.Value,
             "src", "Darwin.WebApi", "Controllers", relativeControllerPath));
 
         File.Exists(path).Should().BeTrue($"controller source should exist at {path}");
         return File.ReadAllText(path);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "Darwin.sln"))
+                && Directory.Exists(Path.Combine(directory.FullName, "src", "Darwin.WebApi")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException(
+            $"Could not locate the Darwin repository root from '{AppContext.BaseDirectory}'.");
     }
 }

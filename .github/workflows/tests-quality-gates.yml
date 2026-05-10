@@ -320,8 +320,11 @@ jobs:
           --health-timeout 5s
           --health-retries 20
     env:
+      Persistence__Provider: "SqlServer"
       ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=DarwinIntegrationTestDb;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=True;Encrypt=False;"
       ASPNETCORE_ENVIRONMENT: Testing
+      DataProtection__RequireKeyEncryption: "false"
+      Email__Provider: "SMTP"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

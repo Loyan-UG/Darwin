@@ -1,6 +1,6 @@
 ﻿# Darwin Go-Live Status
 
-Last reviewed: 2026-05-09
+Last reviewed: 2026-05-10
 
 This status is code-backed. It intentionally distinguishes implemented plumbing from production-complete provider behavior.
 
@@ -32,7 +32,7 @@ Gaps:
 - Subscription checkout creation and refund/dispute operator actions still need a separate live-provider verification pass.
 - Keep Stripe secrets only in configuration/environment; no committed secrets were found by `scripts/check-secrets.ps1` in the latest pass.
 
-See `docs/module-audit.md` for the cross-module audit matrix.
+See `docs/module-audit.md` for the cross-module audit matrix and `docs/compliance-decisions.md` for compliance planning decisions.
 
 ## DHL / Shipping
 
@@ -76,6 +76,7 @@ Verified implementation:
 - WebAdmin `Billing/TaxCompliance` summarizes invoice/customer/business tax signals, links operators to relevant billing/CRM workspaces, and lets operators correct missing B2B customer company/VAT profile data with row-version concurrency checks.
 - WebAdmin `Billing/TaxCompliance` now also surfaces B2B customers whose VAT ID exists but still needs validation review. Operators can mark the VAT ID as valid, invalid, or not applicable; the decision is stored on the customer with source, optional note, timestamp, and row-version concurrency protection.
 - `ValidateCustomerVatIdHandler` can validate B2B customer VAT IDs through `IVatValidationProvider`. The infrastructure implementation calls the EU VIES SOAP endpoint when `Compliance:VatValidation:Vies:Enabled=true`; disabled or unavailable providers leave the customer in `Unknown` with an operator-visible source/message instead of creating a false valid/invalid decision.
+- VIES provider policy coverage now exercises disabled provider, failed HTTP status, malformed XML, valid response, invalid response, and VAT ID request normalization without making external network calls.
 - WebAdmin `Billing/TaxCompliance` now exposes a CSV invoice export with invoice/customer/order/payment/status/tax totals and VAT/reverse-charge follow-up flags. The export is UTF-8 with formula-injection protection for spreadsheet safety.
 - Invoice review rows now receive explicit `RequiresVatId`, `IsReverseChargeCandidate`, `IsDueSoon`, and `IsOverdue` flags from `GetTaxComplianceOverviewHandler` instead of deriving collection or compliance follow-up from display status text.
 - Reverse-charge review candidates are surfaced when VAT and reverse-charge settings are enabled, the customer is B2B, a VAT ID exists, and the CRM default billing country differs from the invoice issuer country.
@@ -92,6 +93,7 @@ Gaps:
 
 - TaxCompliance still lacks live VIES smoke in the target deployment, external immutable archive storage beyond the current `IInvoiceArchiveStorage` internal/database provider, final invoice document rendering beyond the current printable archive HTML, and e-invoice generation.
 - VIES production smoke, async retry for Unknown/manual-review results, external object storage with immutable retention/legal hold, and ZUGFeRD/Factur-X generation/validation require dedicated implementation slices. Current JSON/HTML/CSV archive/export is useful operational output, not full e-invoice compliance.
+- The async VIES retry workflow, e-invoice generation direction, and archive storage provider decision are documented in `docs/compliance-decisions.md`.
 
 ## Business Onboarding / Public Visibility
 
@@ -107,9 +109,10 @@ Verified implementation:
 - Both API password login and WebAdmin sign-in now require confirmed email addresses before issuing tokens or admin cookies.
 - Public discovery, map discovery, public detail, and member engagement queries now require `OperationalStatus=Approved` and `IsActive=true`.
 
-Gaps:
+Coverage:
 
-- Business onboarding still needs hosted smoke coverage for the full admin-assisted lifecycle: creation, invitation onboarding, resend/revoke, email-confirm enforcement, approval prerequisites, reactivation, and public visibility.
+- WebAdmin hosted smoke covers creation into inactive `PendingApproval`, approval prerequisite failure, approve/suspend/reactivate lifecycle forms, invitation resend/revoke, and business-location row-version mutation.
+- WebApi-hosted smoke tests for email-confirm enforcement and public discovery/detail visibility now pass against the local PostgreSQL `darwin_integration_tests` database with `2` passed and `0` skipped.
 
 ## Inventory / Returns
 
@@ -121,10 +124,11 @@ Verified implementation:
 - Reservation moves stock from available to reserved and release moves reserved stock back to available.
 - Return receipt increases available stock and is idempotent when a return/reference id is supplied.
 - Reservation and release are now also idempotent when a `ReferenceId` is supplied, preventing retried order/cart workflows from double-moving stock.
+- WebAdmin hosted positive mutation smoke coverage now posts the real Razor/HTMX forms for reserve stock, release reservation, return receipt, stock-transfer MarkInTransit/Complete, and purchase-order Issue/Receive. The same pass hardened row-version handling for EF InMemory smoke tests and base64 row-version delete posts on Media, Brands, and Business Locations.
 
 Gaps:
 
-- Inventory/returns still need hosted operator-flow smoke coverage for supplier receiving, stock transfer, order cancel stock release, return receipt idempotency, and refund coordination.
+- Inventory/returns hosted operator-flow smoke now covers stock reserve/release, order cancel stock release, explicit return receipt idempotency, refund coordination without unintended stock movement, stock-transfer lifecycle, and purchase-order receiving through WebAdmin forms.
 - Carrier-integrated RMA automation remains under the DHL/shipping go-live slice.
 
 ## Testing / CI
@@ -134,11 +138,14 @@ Status: WebAdmin test project exists and is wired into split CI lanes; provider-
 - `.github/workflows/tests-quality-gates.yml` now restores and runs `tests/Darwin.WebAdmin.Tests/Darwin.WebAdmin.Tests.csproj` as separate security, public/auth smoke, render smoke, tokenless CSRF, valid-token CSRF, and positive mutation coverage lanes.
 - `scripts/ci/verify_coverage.py` now accepts `--webadmin-threshold`.
 - Initial WebAdmin coverage threshold is intentionally low (`10`) so the lane can run continuously while coverage grows.
-- The focused WebApi provider boundary run for Stripe, DHL, Brevo, and provider-callback worker tests passed locally on 2026-05-09 with an isolated output path to avoid a running `Darwin.WebApi.exe` file lock (`280` passed).
-- `Darwin.WebAdmin.Tests` builds locally with an isolated output path. The non-hosted security subset, public/auth hosted smoke subset (`27` passed), render hosted smoke subset (`105` passed), tokenless CSRF matrix (`115` passed), valid-token CSRF matrix (`8` passed), and positive mutation smoke flow (`1` passed) passed locally on 2026-05-09 after aligning row-version protected smoke posts with the real Razor forms.
-- The focused unit/source-contract run for Shipment/Stripe/Billing/Communication/Inventory/Tax/SignIn passed locally on 2026-05-09 (`602` passed). The broader Inventory/Business/Invitation/SignIn/Tax/Invoice/VAT filter passed on 2026-05-10 with `1007` active tests and `14` quarantined stale source-contract tests.
+- `Darwin.Infrastructure.Tests` passed locally on 2026-05-10 with `45` passed and `0` skipped after restoring compatibility with injected clock services, provider-specific design-time factories, and whitespace-safe connection-string precedence.
+- The focused WebApi provider boundary run for Stripe, DHL, Brevo, and provider-callback worker tests passed locally on 2026-05-10 with an isolated output path to avoid running-binary file locks (`280` passed, `0` skipped).
+- `Darwin.WebAdmin.Tests` builds locally with an isolated output path. The non-hosted security subset, public/auth hosted smoke subset (`27` passed), render hosted smoke subset (`105` passed), tokenless CSRF matrix (`115` passed), valid-token CSRF matrix (`8` passed), and positive mutation smoke flow (`1` passed) passed locally. The positive mutation flow was re-run on 2026-05-10 after adding hosted inventory lifecycle coverage and hardening base64 row-version delete posts. The focused hosted business onboarding smoke for creation, approval prerequisite failure, and approve/suspend/reactivate lifecycle forms passed locally on 2026-05-10 with `3` passed, `0` skipped.
+- `BusinessOnboardingApiSmokeTests` under `Darwin.Tests.Integration` passed locally against PostgreSQL on 2026-05-10 with `2` passed and `0` skipped after the Testing host was isolated from production Data Protection certificate requirements and real email delivery.
+- `ViesVatValidationProviderTests` under `Darwin.WebApi.Tests` passed locally on 2026-05-10 with `7` passed and `0` skipped, covering the phase-one soft `Unknown`/manual-review policy without external VIES calls.
+- The focused unit/source-contract run for Shipment/Stripe/Billing/Communication/Inventory/Tax/SignIn passed locally on 2026-05-09 (`602` passed). The broader Inventory/Business/Invitation/SignIn/Tax/Invoice/VAT filter passed on 2026-05-10 with `981` passed, `0` skipped after replacing stale exact-source assertions with stable contracts for JWT, business discovery, invitation auth, row-version forms, dashboard compactness, and business setup/loyalty API wiring.
+- The focused WebAdmin source-contract lane passed locally on 2026-05-10 with `257` passed, `0` skipped after converting stale media/dashboard/settings/mobile/orders/page-editor, CMS/media, role/permission, catalog, product, add-on group, CRM, shipping, shared view-model, and users contracts into stable security, localization, HTMX, route, row-version, and mutation-safety assertions. The dedicated business source-contract lane also passes with `87` passed, `0` skipped after Base64 row-version lifecycle/delete assertions were aligned with the current WebAdmin form-post contract. The all-source `SecurityAndPerformance` filter now passes with `599` passed, `0` skipped after converting stale contracts/packaging and Darwin.Web exact-layout assertions into stable security, route, localization, contract-shape, and public-storefront contracts.
 - WebAdmin CSP was tightened back to self-hosted script/style/font/connect sources, and admin/auth/anti-forgery cookies now keep secure defaults instead of relying on environment-specific relaxation.
-- The broad WebAdmin source-contract suite now runs green locally with stale pre-simplification exact-layout contracts explicitly quarantined (`210` active passed, `47` WebAdmin-surface skipped on 2026-05-09). Source-contract cleanup is partial until those skipped contracts are rewritten into stable security/localization/HTMX/route assertions.
 
 
 ## Compliance Decisions
@@ -147,3 +154,4 @@ Status: WebAdmin test project exists and is wired into split CI lanes; provider-
 - Invoice archive phase 1 uses the internal/database `IInvoiceArchiveStorage` provider. Production requires an external object-storage provider with immutable retention/legal hold before legal archive immutability is claimed.
 - E-invoice phase 1 is planning only. The primary target is ZUGFeRD/Factur-X because SME users need a human-readable PDF plus structured data. XRechnung remains a secondary export backlog item. Current JSON/HTML/CSV exports are not full e-invoice compliance.
 - WebAdmin onboarding wizard is planned as an admin-assisted Loyan business onboarding workflow; it is not implemented in this slice.
+- Detailed compliance planning is in `docs/compliance-decisions.md`.

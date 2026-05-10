@@ -241,7 +241,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -249,12 +249,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
+            var dto = new PermissionDeleteDto { Id = id, RowVersion = DecodeBase64RowVersion(rowVersion) };
             var result = await _softDelete.HandleAsync(dto, ct);
             if (result.Succeeded)
                 SetSuccessMessage("PermissionDeleted");
             else
-                TempData["Error"] = result.Error ?? T("PermissionDeleteFailed");
+                SetErrorMessage("PermissionDeleteFailed");
 
             return RedirectOrHtmx(nameof(Index), new { });
         }

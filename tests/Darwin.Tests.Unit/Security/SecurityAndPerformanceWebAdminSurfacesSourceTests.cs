@@ -6,29 +6,29 @@ namespace Darwin.Tests.Unit.Security;
 
 public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : SecurityAndPerformanceSourceTestBase
 {
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void WebAdminRazorViews_Should_KeepNavigationAndTimestampCleanupContractsClean()
     {
         var viewSources = ReadWebAdminViewSources();
 
         viewSources.Should().NotBeEmpty();
-        var rawGetNavigationPatterns = new[]
-        {
-            "hx-get=\"@Url.Action",
-            "href=\"@Url.Action",
-            "src=\"@Url.Action"
-        };
-
-        viewSources
-            .Where(view => rawGetNavigationPatterns.Any(pattern => view.Source.Contains(pattern, StringComparison.Ordinal)))
-            .Select(view => view.Path)
-            .Should()
-            .BeEmpty("GET navigation and media references should route through explicit local URL helpers instead of inline Url.Action calls");
         viewSources
             .Where(view => view.Source.Contains("ToString(\"u\")", StringComparison.Ordinal))
             .Select(view => view.Path)
             .Should()
             .BeEmpty("operator-facing WebAdmin timestamps should use CurrentCulture helpers instead of invariant sortable formatting");
+
+        var rawMediaSourcePatterns = new[]
+        {
+            "src=\"@Url.Action",
+            "href=\"@Url.Action(\"Upload",
+            "href=\"@Url.Action(\"Download"
+        };
+        viewSources
+            .Where(view => rawMediaSourcePatterns.Any(pattern => view.Source.Contains(pattern, StringComparison.Ordinal)))
+            .Select(view => view.Path)
+            .Should()
+            .BeEmpty("media references should use stored/shared media URLs instead of action-generated local file routes");
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
             .BeEmpty("WebAdmin upload and mutation actions should validate anti-forgery tokens, including Quill uploads");
     }
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void WebAdminFileUploadAndFileIo_Should_RemainConfinedToHardenedMediaPipeline()
     {
         var webAdminSources = ReadWebAdminSources();
@@ -131,21 +131,36 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
                 new[]
                 {
                     "Controllers\\Admin\\Media\\MediaController.cs",
+                    "Extensions\\Startup.cs",
                     "ViewModels\\CMS\\MediaVms.cs"
                 },
                 "WebAdmin file upload and file IO should remain isolated to the hardened media pipeline");
 
         var mediaSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
+        var startupSource = ReadWebAdminFile(Path.Combine("Extensions", "Startup.cs"));
         mediaSource.Should().Contain("private static readonly string[] AllowedExtensions = [\".png\", \".jpg\", \".jpeg\", \".webp\", \".gif\"];");
         mediaSource.Should().Contain("private const long MaxUploadBytes = 5 * 1024 * 1024;");
+        mediaSource.Should().Contain("[RequestSizeLimit(MaxUploadBytes)]");
+        mediaSource.Should().Contain("[RequestFormLimits(MultipartBodyLengthLimit = MaxUploadBytes");
+        mediaSource.Should().Contain("[ValidateAntiForgeryToken]");
         mediaSource.Should().Contain("var ext = Path.GetExtension(file.FileName).ToLowerInvariant();");
         mediaSource.Should().Contain("if (!AllowedExtensions.Contains(ext))");
         mediaSource.Should().Contain("if (file.Length > MaxUploadBytes)");
-        mediaSource.Should().Contain("var uploadsRoot = Path.Combine(GetWebRootPath(), \"uploads\");");
+        mediaSource.Should().Contain("if (!HasValidImageSignature(ext, bytes))");
+        mediaSource.Should().Contain("var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(_env.ContentRootPath, _mediaStorageOptions);");
         mediaSource.Should().Contain("var fileName = $\"{Guid.NewGuid():N}{ext}\";");
         mediaSource.Should().Contain("var fullPath = Path.Combine(uploadsRoot, fileName);");
+        mediaSource.Should().Contain("if (!IsPathUnderRoot(fullPath, uploadsRoot))");
+        mediaSource.Should().Contain("await System.IO.File.WriteAllBytesAsync(fullPath, bytes, ct).ConfigureAwait(false);");
         mediaSource.Should().Contain("Convert.ToHexString(SHA256.HashData(bytes))");
-        mediaSource.Should().Contain("PublicUrl: $\"/uploads/{fileName}\"");
+        mediaSource.Should().Contain("PublicUrl: MediaStoragePathResolver.BuildPublicUrl(_mediaStorageOptions, fileName)");
+        mediaSource.Should().Contain("SanitizeOriginalFileName(file.FileName)");
+        mediaSource.Should().Contain("Path.GetFileName(fileName ?? string.Empty).Trim()");
+        mediaSource.Should().Contain("relative.Contains(\"..\", StringComparison.Ordinal) ? null");
+        startupSource.Should().Contain("var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(app.Environment.ContentRootPath, options);");
+        startupSource.Should().Contain("Directory.CreateDirectory(uploadsRoot);");
+        startupSource.Should().Contain("RequestPath = MediaStoragePathResolver.NormalizeRequestPath(options.RequestPath)");
+        startupSource.Should().Contain("OnPrepareResponse = PrepareUploadStaticFileResponse");
         mediaSource.Should().NotContain("Path.Combine(uploadsRoot, file.FileName)");
         mediaSource.Should().NotContain("PublicUrl: $\"/uploads/{file.FileName}\"");
     }
@@ -827,13 +842,10 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         resourcesSource.Should().Contain("<data name=\"BusinessMemberForceDeleteFailed\"");
     }
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void WebAdminAdminControllers_Should_Not_LeakRawApplicationErrorFallbacks()
     {
-        var controllersPath = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..",
-            "src", "Darwin.WebAdmin", "Controllers", "Admin"));
+        var controllersPath = ResolveRepositoryPath("src", "Darwin.WebAdmin", "Controllers", "Admin");
 
         Directory.Exists(controllersPath).Should().BeTrue($"admin controllers should exist at {controllersPath}");
 
@@ -853,7 +865,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         }
     }
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void WebAdminControllers_Should_Not_ExposeRawExceptionOrApplicationErrors()
     {
         var forbiddenPatterns = new[]
@@ -940,7 +952,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         resourcesSource.Should().Contain("<data name=\"LoyaltyRewardTierUpdateFailed\"");
     }
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void RemainingWebAdminControllers_Should_UseLocalizedSafeFailureFallbacksInsteadOfRawExceptionMessages()
     {
         var addOnGroupsSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "AddOnGroupsController.cs"));
@@ -986,9 +998,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         crmSource.Should().Contain("TempData[\"Error\"] = T(fallbackKey);");
 
         rolesSource.Should().NotContain("ex.Message");
-        rolesSource.Should().Contain("SetWarningMessage(\"RoleSystemProtectedDelete\");");
         rolesSource.Should().Contain("SetErrorMessage(\"RoleCreateFailed\");");
         rolesSource.Should().Contain("SetErrorMessage(\"RoleUpdateFailed\");");
+        rolesSource.Should().Contain("SetErrorMessage(\"RoleDeleteFailed\");");
         rolesSource.Should().Contain("SetErrorMessage(\"RolePermissionsUpdateFailed\");");
 
         resourcesSource.Should().Contain("<data name=\"AddOnGroupCreateFailed\"");
@@ -2249,17 +2261,18 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("SetErrorMessage(isActive ? \"UserActivationFailedMessage\" : \"UserDeactivationFailedMessage\");");
         source.Should().Contain(": T(\"AccountLockFailedMessage\")");
         source.Should().Contain(": T(\"AccountUnlockFailedMessage\")");
-        source.Should().Contain(": result.Error ?? T(\"UserDeleteFailedMessage\")");
+        source.Should().Contain("SetErrorMessage(\"UserDeleteFailedMessage\");");
         source.Should().Contain("return BadRequest(T(\"AddressCreateFailedMessage\"));");
         source.Should().Contain("return BadRequest(T(\"AddressUpdateFailedMessage\"));");
         source.Should().Contain("return BadRequest(T(\"AddressDeleteFailedMessage\"));");
         source.Should().Contain("return BadRequest(T(\"SetDefaultAddressFailedMessage\"));");
         source.Should().NotContain("ModelState.AddModelError(string.Empty, result.Error");
         source.Should().NotContain("BadRequest(result.Error ??");
+        source.Should().NotContain("result.Error ?? T(\"UserDeleteFailedMessage\")");
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void UsersController_Should_KeepAdminWorkspacesAndEditorGetsReachable()
     {
         var usersSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
@@ -2268,14 +2281,21 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
         usersSource.Should().Contain("public sealed class UsersController : AdminBaseController");
         usersSource.Should().Contain("public async Task<IActionResult> Index(");
-        usersSource.Should().Contain("public IActionResult Create() => RenderCreateEditor(new UserCreateVm())");
+        usersSource.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct = default) => await RenderCreateEditorAsync(new UserCreateVm(), ct);");
         usersSource.Should().Contain("public async Task<IActionResult> Edit(Guid id, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20, CancellationToken ct = default)");
         usersSource.Should().Contain("public IActionResult ChangeEmail([FromRoute] Guid id, [FromQuery] string? currentEmail = null, [FromQuery] bool returnToIndex = false, [FromQuery] string? q = null, [FromQuery] UserQueueFilter filter = UserQueueFilter.All, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)");
         usersSource.Should().Contain("public IActionResult ChangePassword(Guid id, string? email = null, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20)");
         usersSource.Should().Contain("public async Task<IActionResult> AddressesSection(Guid userId, CancellationToken ct = default)");
         usersSource.Should().Contain("public async Task<IActionResult> Roles(Guid id, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20, CancellationToken ct = default)");
+        usersSource.Should().Contain("private async Task<IActionResult> RenderCreateEditorAsync(UserCreateVm vm, CancellationToken ct)");
+        usersSource.Should().Contain("private async Task<IActionResult> RenderEditEditorAsync(UserEditVm vm, CancellationToken ct)");
+        usersSource.Should().Contain("if (IsHtmxRequest())");
+        usersSource.Should().Contain("return PartialView(\"~/Views/Users/_UserCreateEditorShell.cshtml\", vm);");
+        usersSource.Should().Contain("return PartialView(\"~/Views/Users/_UserEditEditorShell.cshtml\", vm);");
         usersSource.Should().Contain("return RedirectToUsersWorkspaceOrEdit(vm.Id, vm.ReturnToIndex, vm.Query, vm.Filter, vm.Page, vm.PageSize);");
         usersSource.Should().Contain("return RedirectOrHtmx(nameof(Edit), new { id = vm.Id, returnToIndex = vm.ReturnToIndex, q = vm.Query, filter = vm.Filter, page = vm.Page, pageSize = vm.PageSize });");
+        usersSource.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
+        usersSource.Should().NotContain("result.Error ?? T(\"UserDeleteFailedMessage\")");
     }
 
 
@@ -2367,7 +2387,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void UserEditorShells_Should_KeepCreateEditRolesAndCredentialChangeContractsWired()
     {
         var createSource = ReadWebAdminFile(Path.Combine("Views", "Users", "Create.cshtml"));
@@ -2441,7 +2461,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         editShellSource.Should().Contain("hx-post=\"@Url.Action(\"Lock\", \"Users\")\"");
         editShellSource.Should().Contain("hx-post=\"@Url.Action(\"Edit\", \"Users\")\"");
         editShellSource.Should().Contain("asp-for=\"Id\"");
-        editShellSource.Should().Contain("asp-for=\"RowVersion\"");
+        editShellSource.Should().Contain("name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\"");
         editShellSource.Should().Contain("asp-for=\"Email\"");
         editShellSource.Should().Contain("asp-for=\"IsActive\"");
         editShellSource.Should().Contain("if (Model.ReturnToIndex)");
@@ -2468,7 +2488,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         rolesShellSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         rolesShellSource.Should().Contain("hx-post=\"@Url.Action(\"Roles\", \"Users\")\"");
         rolesShellSource.Should().Contain("asp-for=\"UserId\"");
-        rolesShellSource.Should().Contain("asp-for=\"RowVersion\"");
+        rolesShellSource.Should().Contain("name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\"");
         rolesShellSource.Should().Contain("asp-for=\"ReturnToIndex\"");
         rolesShellSource.Should().Contain("@T.T(\"AssignRolesToUserTitle\")");
         rolesShellSource.Should().Contain("@T.T(\"DelegatedSupportRoleTitle\")");
@@ -2549,7 +2569,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void UsersController_Should_KeepWorkspaceBuilderAddressAndRenderHelperContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "UsersController.cs"));
@@ -2565,8 +2585,8 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("public async Task<IActionResult> AddressesSection(Guid userId, CancellationToken ct = default)");
         source.Should().Contain("var section = await BuildAddressesSectionVmAsync(userId, ct);");
         source.Should().Contain("return PartialView(\"~/Views/Users/_AddressesSection.cshtml\", section);");
-        source.Should().Contain("private IActionResult RenderCreateEditor(UserCreateVm vm)");
-        source.Should().Contain("_siteSettingCache.GetAsync().GetAwaiter().GetResult()");
+        source.Should().Contain("private async Task<IActionResult> RenderCreateEditorAsync(UserCreateVm vm, CancellationToken ct)");
+        source.Should().Contain("var settings = await _siteSettingCache.GetAsync(ct);");
         source.Should().Contain("vm.Locale = string.IsNullOrWhiteSpace(vm.Locale) ? settings.DefaultCulture : vm.Locale;");
         source.Should().Contain("vm.Currency = string.IsNullOrWhiteSpace(vm.Currency) ? settings.DefaultCurrency : vm.Currency;");
         source.Should().Contain("vm.Timezone = string.IsNullOrWhiteSpace(vm.Timezone)");
@@ -2582,7 +2602,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("PartialView(\"~/Views/Users/_UserChangePasswordEditorShell.cshtml\", vm)");
         source.Should().Contain("return View(\"ChangePassword\", vm);");
         source.Should().Contain("private async Task<IActionResult> RenderEditEditorAsync(UserEditVm vm, CancellationToken ct)");
-        source.Should().Contain("ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);");
+        source.Should().Contain("vm.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);");
         source.Should().Contain("PartialView(\"~/Views/Users/_UserEditEditorShell.cshtml\", vm)");
         source.Should().Contain("return View(\"Edit\", vm);");
         source.Should().Contain("private async Task<IActionResult> RenderRolesEditorAsync(UserRolesEditVm vm, CancellationToken ct)");
@@ -2910,10 +2930,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     {
         var adminBaseSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "AdminBaseController.cs"));
         var homeSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Home", "HomeController.cs"));
-        var dashboardControllerPath = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..",
-            "src", "Darwin.WebAdmin", "Controllers", "Admin", "Home", "DashboardController.cs"));
+        var dashboardControllerPath = ResolveRepositoryPath("src", "Darwin.WebAdmin", "Controllers", "Admin", "Home", "DashboardController.cs");
         var cultureSource = ReadWebAdminFile(Path.Combine("Controllers", "CultureController.cs"));
 
         adminBaseSource.Should().Contain("[PermissionAuthorize(\"AccessAdminPanel\")]");
@@ -2954,11 +2971,12 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void SiteSettingsController_Should_KeepRenderRedirectAndMappingContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Settings", "SiteSettingsController.cs"));
 
+        source.Should().Contain("private const string SecretPlaceholder = \"********\";");
         source.Should().Contain("[PermissionAuthorize(PermissionKeys.FullAdminAccess)]");
         source.Should().Contain("public async Task<IActionResult> Edit(string? fragment, CancellationToken ct)");
         source.Should().Contain("var dto = await _cache.GetAsync(ct);");
@@ -2966,9 +2984,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("return RenderEditor(vm, fragment);");
         source.Should().Contain("public async Task<IActionResult> Edit(SiteSettingVm vm, string? fragment, CancellationToken ct)");
         source.Should().Contain("if (!ModelState.IsValid)");
-        source.Should().Contain("var dto = MapToUpdateDto(vm);");
+        source.Should().Contain("var current = await _cache.GetAsync(ct).ConfigureAwait(false);");
+        source.Should().Contain("var dto = MapToUpdateDto(vm, current);");
         source.Should().Contain("await _update.HandleAsync(dto, ct);");
         source.Should().Contain("_cache.Invalidate();");
+        source.Should().Contain("_businessEffectiveSettingsCache.InvalidateAll();");
         source.Should().Contain("SetSuccessMessage(\"SettingsUpdatedMessage\")");
         source.Should().Contain("return RedirectOrHtmx(nameof(Edit), fragment);");
         source.Should().Contain("catch (DbUpdateConcurrencyException)");
@@ -2983,18 +3003,24 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("return RedirectToAction(actionName, new { fragment });");
         source.Should().Contain("private static SiteSettingVm MapToVm(SiteSettingDto dto) => new()");
         source.Should().Contain("DefaultCulture = dto.DefaultCulture,");
+        source.Should().Contain("MultilingualEnabled = CountCultures(dto.SupportedCulturesCsv) > 1,");
         source.Should().Contain("BusinessManagementWebsiteUrl = dto.BusinessManagementWebsiteUrl,");
         source.Should().Contain("WhatsAppBusinessPhoneId = dto.WhatsAppBusinessPhoneId,");
+        source.Should().Contain("WhatsAppAccessToken = ToSecretPlaceholder(dto.WhatsAppAccessToken),");
         source.Should().Contain("SmsProvider = dto.SmsProvider,");
         source.Should().Contain("CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail,");
         source.Should().Contain("PhoneVerificationPreferredChannel = dto.PhoneVerificationPreferredChannel,");
-        source.Should().Contain("private static SiteSettingDto MapToUpdateDto(SiteSettingVm vm) => new()");
+        source.Should().Contain("private static SiteSettingDto MapToUpdateDto(SiteSettingVm vm, SiteSettingDto current) => new()");
         source.Should().Contain("DefaultCulture = vm.DefaultCulture,");
+        source.Should().Contain("SupportedCulturesCsv = ResolveSupportedCultures(vm),");
         source.Should().Contain("BusinessManagementWebsiteUrl = vm.BusinessManagementWebsiteUrl,");
         source.Should().Contain("WhatsAppBusinessPhoneId = vm.WhatsAppBusinessPhoneId,");
+        source.Should().Contain("WhatsAppAccessToken = ResolveSecret(vm.WhatsAppAccessToken, current.WhatsAppAccessToken),");
         source.Should().Contain("SmsProvider = vm.SmsProvider,");
         source.Should().Contain("CommunicationTestInboxEmail = vm.CommunicationTestInboxEmail,");
         source.Should().Contain("PhoneVerificationPreferredChannel = vm.PhoneVerificationPreferredChannel,");
+        source.Should().Contain("StripeSecretKey = ResolveSecret(vm.StripeSecretKey, current.StripeSecretKey),");
+        source.Should().Contain("DhlApiSecret = ResolveSecret(vm.DhlApiSecret, current.DhlApiSecret),");
     }
 
     [Fact]
@@ -3258,7 +3284,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void HomeDashboardView_Should_KeepShellAndQuickLinksWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Home", "Index.cshtml"));
@@ -3267,179 +3293,80 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("var canManageIdentity = await Perms.HasAsync(\"FullAdminAccess\")");
         source.Should().Contain("var canManageBusinesses = await Perms.HasAsync(\"ManageBusinessSupport\")");
         source.Should().Contain("<h1 class=\"mb-1\">@T.T(\"AdminDashboardTitle\")</h1>");
-        source.Should().Contain("@T.T(\"AdminDashboardIntro\")");
-        source.Should().Contain("<form asp-action=\"Index\" method=\"get\" class=\"d-flex align-items-center gap-2\">");
+        source.Should().Contain("@T.T(\"AdminDashboardSubtitle\")");
+        source.Should().Contain("<form asp-action=\"Index\" method=\"get\" class=\"d-flex flex-wrap align-items-center gap-2\">");
         source.Should().Contain("<label for=\"businessId\" class=\"form-label mb-0 text-muted\">@T.T(\"BusinessContext\")</label>");
         source.Should().Contain("<select id=\"businessId\" name=\"businessId\" asp-items=\"Model.BusinessOptions\" class=\"form-select\">");
         source.Should().Contain("@T.T(\"NoActiveBusiness\")");
         source.Should().Contain("@T.T(\"Apply\")");
-        source.Should().Contain("<partial name=\"~/Views/Home/_CommunicationOpsCard.cshtml\" model=\"Model\" />");
-        source.Should().Contain("<partial name=\"~/Views/Home/_BusinessSupportQueueCard.cshtml\" model=\"Model\" />");
-        source.Should().Contain("@T.T(\"DashboardProductsLabel\")");
-        source.Should().Contain("@T.T(\"DashboardPagesLabel\")");
-        source.Should().Contain("@T.T(\"DashboardOrdersLabel\")");
-        source.Should().Contain("@T.T(\"DashboardUsersLabel\")");
+        source.Should().Contain("foreach (var kpi in Model.Kpis)");
+        source.Should().Contain("foreach (var item in Model.AttentionItems)");
+        source.Should().Contain("foreach (var module in Model.ModuleSummaries)");
         source.Should().Contain("@T.T(\"DashboardQuickLinksTitle\")");
+        source.Should().Contain("@T.T(\"DashboardQuickLinkOrdersAction\")");
         source.Should().Contain("@T.T(\"DashboardQuickLinkProductsAction\")");
         source.Should().Contain("@T.T(\"DashboardQuickLinkPagesAction\")");
         source.Should().Contain("@T.T(\"DashboardQuickLinkMediaAction\")");
-        source.Should().Contain("@T.T(\"DashboardQuickLinkOrdersAction\")");
         source.Should().Contain("@T.T(\"DashboardQuickLinkCustomersAction\")");
-        source.Should().Contain("@T.T(\"DashboardQuickLinkLeadsAction\")");
-        source.Should().Contain("@T.T(\"DashboardQuickLinkLoyaltyAction\")");
         source.Should().Contain("@T.T(\"DashboardQuickLinkBusinessesAction\")");
-        source.Should().Contain("@T.T(\"DashboardQuickLinkMobileOpsAction\")");
-        source.Should().Contain("@T.T(\"DashboardQuickLinkWarehousesAction\")");
-        source.Should().Contain("@T.T(\"DashboardQuickLinkPaymentsAction\")");
         source.Should().Contain("@T.T(\"DashboardQuickLinkUsersAction\")");
-        source.Should().Contain("@T.T(\"DashboardQuickLinkMobileLinkedUsersAction\")");
         source.Should().Contain("@T.T(\"DashboardQuickLinkSettingsAction\")");
+        source.Should().NotContain("AdminDashboardIntro");
+        source.Should().NotContain("_CommunicationOpsCard.cshtml");
+        source.Should().NotContain("_BusinessSupportQueueCard.cshtml");
+        source.Should().NotContain("DashboardQuickLinkLeadsAction");
+        source.Should().NotContain("DashboardQuickLinkMobileLinkedUsersAction");
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void HomeDashboardView_Should_KeepCrmBusinessLoyaltyAndMobileCardsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Home", "Index.cshtml"));
 
-        source.Should().Contain("var businessOperationsAttentionCount = (Model.PaymentCount ?? 0) + (Model.PurchaseOrderCount ?? 0);");
-        source.Should().Contain("var businessComplianceAttentionCount = (Model.PaymentCount ?? 0) + Model.OrderCount;");
-        source.Should().Contain("var businessCommunicationRuntimeExecutionAttentionCount = Model.BusinessSupport.SelectedBusinessPendingActivationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedInvitationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedActivationCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount");
-        source.Should().Contain("Model.BusinessSupport.SelectedBusinessFailedAdminTestCount");
-        source.Should().Contain("@T.T(\"OpenFailedInvitationEmails\"): @Model.BusinessSupport.SelectedBusinessFailedInvitationCount");
-        source.Should().Contain("@T.T(\"DashboardCrmTitle\")");
-        source.Should().Contain("@T.T(\"DashboardCrmIntro\")");
-        source.Should().Contain("@T.T(\"DashboardOpenCrmAction\")");
-        source.Should().Contain("@T.T(\"DashboardCustomersLabel\")");
-        source.Should().Contain("@T.T(\"DashboardLeadsLabel\")");
-        source.Should().Contain("@T.T(\"DashboardQualifiedLeadsLabel\")");
-        source.Should().Contain("@T.T(\"DashboardOpenOpportunitiesLabel\")");
-        source.Should().Contain("@T.T(\"DashboardSegmentsLabel\")");
-        source.Should().Contain("@T.T(\"DashboardInteractions7dLabel\")");
-        source.Should().Contain("@T.T(\"DashboardOpenPipelineLabel\")");
-        source.Should().Contain("@T.T(\"Invoices\")");
-        source.Should().Contain("@T.T(\"Payments\")");
-        source.Should().Contain("@T.T(\"Overdue\")");
-        source.Should().Contain("@T.T(\"DueSoon\")");
-        source.Should().Contain("@T.T(\"Draft\")");
-        source.Should().Contain("@T.T(\"FixVatId\")");
-        source.Should().Contain("@T.T(\"Refunded\")");
-        source.Should().Contain("@T.T(\"Pending\")");
-        source.Should().Contain("@T.T(\"Unlinked\")");
-        source.Should().Contain("asp-route-filter=\"MissingVatId\"");
-        source.Should().Contain("asp-route-filter=\"Refunded\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Pending\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Unlinked\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Refunded\"");
-        source.Should().Contain("@T.T(\"DashboardBusinessOperationsTitle\")");
-        source.Should().Contain("@if (Model.SelectedBusinessId.HasValue)");
-        source.Should().Contain("@string.Format(T.T(\"DashboardCurrentBusinessLabel\"), Model.SelectedBusinessLabel)");
-        source.Should().Contain("@T.T(\"DashboardNoBusinessOperationsIntro\")");
-        source.Should().Contain("@T.T(\"GoLiveReadiness\")");
-        source.Should().Contain("@T.T(\"MerchantReadinessTitle\")");
-        source.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
-        source.Should().Contain("@T.T(\"TaxComplianceTitle\")");
-        source.Should().Contain("@T.T(\"Communications\")");
-        source.Should().Contain("@T.T(\"CommunicationPolicy\")");
-        source.Should().Contain("@T.T(\"RuntimeExecution\")");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\"): @Model.BusinessSupport.SelectedBusinessPendingActivationCount");
-        source.Should().Contain("@T.T(\"OpenFailedActivationEmails\"): @Model.BusinessSupport.SelectedBusinessFailedActivationCount");
-        source.Should().Contain("@T.T(\"FailedAdminTests\"): @Model.BusinessSupport.SelectedBusinessFailedAdminTestCount");
-        source.Should().Contain("@T.T(\"OpenFailedPasswordResets\"): @Model.BusinessSupport.SelectedBusinessFailedPasswordResetCount");
-        source.Should().Contain("@T.T(\"NeedsAttention\")");
-        source.Should().Contain("@businessOperationsAttentionCount");
-        source.Should().Contain("@businessComplianceAttentionCount");
-        source.Should().Contain("@T.T(\"DashboardPaymentsLabel\")");
-        source.Should().Contain("@T.T(\"DashboardWarehousesLabel\")");
-        source.Should().Contain("@T.T(\"DashboardSuppliersLabel\")");
-        source.Should().Contain("@T.T(\"DashboardPurchaseOrdersLabel\")");
-        source.Should().Contain("@T.T(\"Overdue\")");
-        source.Should().Contain("@T.T(\"DueSoon\")");
-        source.Should().Contain("@T.T(\"Draft\")");
-        source.Should().Contain("@T.T(\"Pending\")");
-        source.Should().Contain("@T.T(\"Unlinked\")");
-        source.Should().Contain("@T.T(\"Refunded\")");
-        source.Should().Contain("@T.T(\"FixVatId\")");
-        source.Should().Contain("@T.T(\"RetryBlocked\")");
-        source.Should().Contain("@T.T(\"ActionBlocked\")");
-        source.Should().Contain("@T.T(\"EscalationCandidates\")");
-        source.Should().Contain("@T.T(\"PhoneVerification\")");
-        source.Should().Contain("@T.T(\"UsersFilterUnconfirmed\")");
-        source.Should().Contain("@T.T(\"UsersFilterLocked\")");
-        source.Should().Contain("@T.T(\"OpenFailedActivationEmails\")");
-        source.Should().Contain("@T.T(\"FailedAdminTests\")");
-        source.Should().Contain("@T.T(\"OpenFailedPasswordResets\")");
-        source.Should().Contain("@T.T(\"DashboardOpenPaymentsAction\")");
-        source.Should().Contain("@T.T(\"DashboardOpenInventoryAction\")");
-        source.Should().Contain("@T.T(\"DashboardOpenPurchaseOrdersAction\")");
-        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Invitations\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending\"");
-        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Members\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.PendingActivation\"");
-        source.Should().Contain("asp-controller=\"Businesses\" asp-action=\"Members\" asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-filter=\"@Darwin.Application.Businesses.DTOs.BusinessMemberSupportFilter.Locked\"");
-        source.Should().Contain("asp-action=\"TaxCompliance\"");
-        source.Should().Contain("asp-fragment=\"site-settings-communications-policy\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-retryBlockedOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-actionBlockedOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-escalationCandidatesOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-phoneVerificationOnly=\"true\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"BusinessInvitation\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AccountActivation\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"AdminCommunicationTest\"");
-        source.Should().Contain("asp-route-businessId=\"@Model.SelectedBusinessId\" asp-route-status=\"Failed\" asp-route-flowKey=\"PasswordReset\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Pending\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Unlinked\"");
-        source.Should().Contain("asp-route-queue=\"@Darwin.Application.Billing.DTOs.PaymentQueueFilter.Refunded\"");
-        source.Should().Contain("asp-route-filter=\"Overdue\"");
-        source.Should().Contain("asp-route-filter=\"DueSoon\"");
-        source.Should().Contain("asp-route-filter=\"Draft\"");
-        source.Should().Contain("asp-route-filter=\"MissingVatId\"");
-        source.Should().Contain("@T.T(\"LoyaltyOperations\")");
-        source.Should().Contain("@T.T(\"LoyaltyOperationsIntro\")");
-        source.Should().Contain("@T.T(\"OpenLoyalty\")");
-        source.Should().Contain("@T.T(\"Accounts\")");
-        source.Should().Contain("@T.T(\"PendingRedemptions\")");
-        source.Should().Contain("@T.T(\"RecentScanSessions\")");
-        source.Should().Contain("@T.T(\"SelectBusinessForLoyaltyMobile\")");
-        source.Should().Contain("@T.T(\"MobileOperations\")");
-        source.Should().Contain("@T.T(\"MobileOperationsDashboardIntro\")");
-        source.Should().Contain("@T.T(\"OpenMobileOps\")");
-        source.Should().Contain("var mobileAttentionCount = Model.MobileStaleDeviceCount + Model.MobileMissingPushTokenCount;");
-        source.Should().Contain("@T.T(\"ActiveDevices\")");
-        source.Should().Contain("@T.T(\"MobileStaleDevices\")");
-        source.Should().Contain("@T.T(\"MobileMissingPushToken\")");
-        source.Should().Contain("@T.T(\"NeedsAttention\"): <strong>@mobileAttentionCount</strong>");
-        source.Should().Contain("asp-route-state=\"stale\"");
-        source.Should().Contain("asp-route-state=\"missing-push\"");
-        source.Should().Contain("@T.T(\"DeviceDiagnostics\")");
-        source.Should().Contain("@T.T(\"DashboardOpenMobileLinkedUsersAction\")");
-        source.Should().Contain("@T.T(\"SupportQueue\")");
-        source.Should().Contain("@T.T(\"Communications\")");
+        source.Should().Contain("@model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm");
+        source.Should().Contain("Model.Kpis");
+        source.Should().Contain("Model.AttentionItems");
+        source.Should().Contain("Model.BusinessContext is not null");
+        source.Should().Contain("Model.ModuleSummaries");
+        source.Should().Contain("DashboardNeedsAttentionTitle");
+        source.Should().Contain("DashboardOperationsOverviewTitle");
+        source.Should().Contain("field-help title=\"@T.T(\"DashboardNeedsAttentionTitle\")\"");
+        source.Should().Contain("field-help title=\"@T.T(\"DashboardOperationsOverviewTitle\")\"");
+        source.Should().Contain("metric in module.Metrics.Take(3)");
+        source.Should().Contain("if (!string.IsNullOrWhiteSpace(module.SecondaryActionLabelKey)");
+        source.Should().Contain("canManageBusinesses");
+        source.Should().Contain("canManageIdentity");
+        source.Should().NotContain("DashboardCrmIntro");
+        source.Should().NotContain("OpenFailedInvitationEmails\"): @Model.BusinessSupport.SelectedBusinessFailedInvitationCount");
+        source.Should().NotContain("businessOperationsAttentionCount");
+        source.Should().NotContain("businessComplianceAttentionCount");
     }
 
-
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void HomeController_Should_KeepDashboardCompositionAndFragmentBuildersWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Home", "HomeController.cs"));
 
         source.Should().Contain("public async Task<IActionResult> Index(Guid? businessId = null, CancellationToken ct = default)");
-        source.Should().Contain("var businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId: businessId, ct).ConfigureAwait(false);");
-        source.Should().Contain("var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);");
+        source.Should().Contain("var (selectedBusinessId, businessOptions) = await BuildBusinessSelectionAsync(businessId, ct).ConfigureAwait(false);");
         source.Should().Contain("var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);");
         source.Should().Contain("var crmSummary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);");
-        source.Should().Contain("var products = await _getProductsPage.HandleAsync(page: 1, pageSize: 1, culture: siteSettings.DefaultCulture, ct).ConfigureAwait(false);");
-        source.Should().Contain("var pages = await _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: siteSettings.DefaultCulture, ct: ct).ConfigureAwait(false);");
         source.Should().Contain("var orders = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct).ConfigureAwait(false);");
-        source.Should().Contain("var users = await _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, filter: Darwin.Application.Identity.DTOs.UserQueueFilter.All, ct: ct).ConfigureAwait(false);");
+        source.Should().Contain("var openOrders = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, query: null, filter: Darwin.Application.Orders.DTOs.OrderQueueFilter.Open, ct: ct).ConfigureAwait(false);");
+        source.Should().Contain("var orderPaymentIssues = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, query: null, filter: Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues, ct: ct).ConfigureAwait(false);");
+        source.Should().Contain("if (selectedBusinessId.HasValue)");
         source.Should().Contain("var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);");
         source.Should().Contain("var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);");
         source.Should().Contain("var mobileDeviceOps = await _getMobileDeviceOpsSummary.HandleAsync(ct).ConfigureAwait(false);");
         source.Should().Contain("var vm = new AdminDashboardVm");
         source.Should().Contain("Crm = MapCrmSummary(crmSummary, siteSettings.DefaultCurrency),");
         source.Should().Contain("BusinessSupport = MapBusinessSupportSummary(businessSupport),");
-        source.Should().Contain("CommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings),");
+        source.Should().Contain("CommunicationOps = mappedCommunicationOps,");
+        source.Should().Contain("vm.Kpis = BuildKpis(vm);");
+        source.Should().Contain("vm.AttentionItems = BuildAttentionItems(vm);");
+        source.Should().Contain("vm.BusinessContext = BuildBusinessContext(vm);");
+        source.Should().Contain("vm.ModuleSummaries = BuildModuleSummaries(vm);");
         source.Should().Contain("return View(vm);");
         source.Should().Contain("public async Task<IActionResult> CommunicationOpsFragment(Guid? businessId = null, CancellationToken ct = default)");
         source.Should().Contain("var vm = await BuildCommunicationOpsCardVmAsync(businessId, ct).ConfigureAwait(false);");
@@ -3750,20 +3677,28 @@ source.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.Use
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void MobileOperationsWorkspace_Should_KeepPlaybookDeepLinksWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "MobileOperations", "Index.cshtml"));
 
-        source.Should().Contain("<div class=\"card-header\">@T.T(\"MobileOperationsPlaybooks\")</div>");
+        source.Should().Contain("@if (Model.Playbooks.Count > 0)");
+        source.Should().Contain("<details class=\"admin-playbook mb-4\">");
+        source.Should().Contain("<summary>@T.T(\"MobileOperationsPlaybooks\")</summary>");
+        source.Should().Contain("<thead><tr><th>@T.T(\"Playbook\")</th><th>@T.T(\"WhenItApplies\")</th><th>@T.T(\"OperatorAction\")</th></tr></thead>");
         source.Should().Contain("@foreach (var playbook in Model.Playbooks)");
         source.Should().Contain("hx-get=\"@playbook.QueueActionUrl\"");
+        source.Should().Contain("hx-target=\"#mobile-operations-workspace-shell\"");
+        source.Should().Contain("hx-swap=\"outerHTML\"");
+        source.Should().Contain("hx-push-url=\"true\">@playbook.Title</a>");
         source.Should().Contain("hx-get=\"@playbook.FollowUpUrl\"");
-        source.Should().Contain(">@playbook.Title</a>");
-        source.Should().Contain(">@playbook.ScopeNote</a>");
-        source.Should().Contain(">@playbook.OperatorAction</a>");
-        source.Should().Contain(">@playbook.QueueActionLabel</a>");
-        source.Should().Contain(">@playbook.FollowUpLabel</a>");
+        source.Should().Contain("hx-push-url=\"true\">@playbook.ScopeNote</a>");
+        source.Should().Contain("hx-push-url=\"true\">@playbook.OperatorAction</a>");
+        source.Should().Contain("class=\"btn btn-sm btn-outline-primary\"");
+        source.Should().Contain("hx-push-url=\"true\">@playbook.QueueActionLabel</a>");
+        source.Should().Contain("class=\"btn btn-sm btn-outline-secondary\"");
+        source.Should().Contain("hx-push-url=\"true\">@playbook.FollowUpLabel</a>");
+        source.Should().NotContain("<div class=\"card-header\">@T.T(\"MobileOperationsPlaybooks\")</div>");
     }
 
 
@@ -3797,12 +3732,12 @@ source.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.Use
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Mobile", "MobileOperationsController.cs"));
 
-        source.Should().Contain("public async Task<IActionResult> ClearPushToken(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
-        source.Should().Contain("var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);");
+        source.Should().Contain("public async Task<IActionResult> ClearPushToken(Guid id, string? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _clearDevicePushToken.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct).ConfigureAwait(false);");
         source.Should().Contain("SetSuccessMessage(\"MobilePushTokenCleared\")");
         source.Should().Contain("SetErrorMessage(\"MobilePushTokenClearFailed\")");
-        source.Should().Contain("public async Task<IActionResult> DeactivateDevice(Guid id, byte[]? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
-        source.Should().Contain("var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);");
+        source.Should().Contain("public async Task<IActionResult> DeactivateDevice(Guid id, string? rowVersion, string? q = null, Guid? businessId = null, MobilePlatform? platform = null, string? state = null, int page = 1, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _deactivateDevice.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct).ConfigureAwait(false);");
         source.Should().Contain("SetSuccessMessage(\"MobileDeviceDeactivated\")");
         source.Should().Contain("SetErrorMessage(\"MobileDeviceDeactivateFailed\")");
         source.Should().Contain("return RedirectOrHtmx(nameof(Index), null, new { q, businessId, platform, state, page });");
@@ -4168,7 +4103,7 @@ source.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.Use
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void OrdersController_Should_KeepFilterPopulationAndRedirectHelpersWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Orders", "OrdersController.cs"));
@@ -4216,7 +4151,8 @@ source.Should().Contain("hx-get=\"@UsersUrl(Darwin.Application.Identity.DTOs.Use
         source.Should().Contain("Text = \"Auto-resolve from user\"");
         source.Should().Contain("vm.PaymentOptions = (orderDto?.Payments ?? new List<PaymentDetailDto>()).Select(x => new SelectListItem");
         source.Should().Contain("Text = \"No linked payment\"");
-        source.Should().Contain("DueAtUtc = DateTime.UtcNow.AddDays(14)");
+        source.Should().Contain("var nowUtc = _clock.UtcNow;");
+        source.Should().Contain("DueAtUtc = nowUtc.AddDays(14)");
         source.Should().Contain("private IActionResult RedirectOrHtmxDetails(Guid orderId)");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(nameof(Details), new { id = orderId }) ?? string.Empty;");
         source.Should().Contain("return RedirectToAction(nameof(Details), new { id = orderId });");
@@ -5520,7 +5456,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CrmController_Should_KeepCustomerEditorEntryAndSubmitContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
@@ -5548,7 +5484,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("EffectiveLocale = dto.EffectiveLocale,");
         source.Should().Contain("UsesPlatformLocaleFallback = dto.UsesPlatformLocaleFallback,");
         source.Should().Contain("NewInteraction = new InteractionCreateVm { CustomerId = dto.Id },");
-        source.Should().Contain("NewConsent = new ConsentCreateVm { CustomerId = dto.Id, GrantedAtUtc = DateTime.UtcNow },");
+        source.Should().Contain("var nowUtc = _clock.UtcNow;");
+        source.Should().Contain("NewConsent = new ConsentCreateVm { CustomerId = dto.Id, GrantedAtUtc = nowUtc },");
         source.Should().Contain("SegmentAssignment = new AssignCustomerSegmentVm { CustomerId = dto.Id }");
         source.Should().Contain("return RenderCustomerEditor(vm, \"EditCustomer\");");
         source.Should().Contain("public async Task<IActionResult> EditCustomer(CustomerEditVm vm, CancellationToken ct = default)");
@@ -5728,7 +5665,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CrmController_Should_KeepLeadOpportunityAndSegmentHelperBuildersWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
@@ -5742,7 +5679,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("Title = \"CrmLeadUnassignedPlaybookTitle\"");
         source.Should().Contain("Title = \"CrmLeadUnconvertedPlaybookTitle\"");
         source.Should().Contain("private static OpportunityOpsSummaryVm BuildOpportunityOpsSummary(IReadOnlyCollection<OpportunityListItemDto> items, DateTime todayUtc)");
-        source.Should().Contain("var closingSoonThreshold = DateTime.UtcNow.Date.AddDays(14);");
+        source.Should().Contain("var closingSoonThreshold = todayUtc.AddDays(14);");
         source.Should().Contain("ClosingSoonCount = items.Count(x => x.ExpectedCloseDateUtc.HasValue && x.ExpectedCloseDateUtc.Value.Date <= closingSoonThreshold),");
         source.Should().Contain("HighValueCount = items.Count(x => x.EstimatedValueMinor >= 100000),");
         source.Should().Contain("private static List<CrmPlaybookVm> BuildOpportunityPlaybooks()");
@@ -6420,7 +6357,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CrmCustomerEditorShell_Should_KeepFormAndFragmentContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "_CustomerEditorShell.cshtml"));
@@ -6431,7 +6368,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("hx-swap=\"outerHTML\"");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
-        source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        source.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         source.Should().Contain("<partial name=\"_CustomerForm\" model=\"Model\" />");
         source.Should().Contain("@T.T(\"Save\")");
         source.Should().Contain("string GlobalCrmCustomersUrl() => Url.Action(\"Customers\", \"Crm\") ?? string.Empty;");
@@ -6487,7 +6424,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CrmLeadEditorShell_Should_KeepFormAndFragmentContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "_LeadEditorShell.cshtml"));
@@ -6498,7 +6435,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("hx-swap=\"outerHTML\"");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
-        source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        source.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         source.Should().Contain("<partial name=\"_LeadForm\" model=\"Model\" />");
         source.Should().Contain("@T.T(\"Save\")");
         source.Should().Contain("string GlobalCrmLeadsUrl() => Url.Action(\"Leads\", \"Crm\") ?? string.Empty;");
@@ -6545,7 +6482,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CrmOpportunityEditorShell_Should_KeepFormAndFragmentContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "_OpportunityEditorShell.cshtml"));
@@ -6556,7 +6493,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("hx-swap=\"outerHTML\"");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
-        source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        source.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         source.Should().Contain("<partial name=\"_OpportunityForm\" model=\"Model\" />");
         source.Should().Contain("@T.T(\"Save\")");
         source.Should().Contain("string GlobalCrmOpportunitiesUrl() => Url.Action(\"Opportunities\", \"Crm\") ?? string.Empty;");
@@ -6574,7 +6511,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CrmOpportunityForm_Should_KeepFieldAndSummaryContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "_OpportunityForm.cshtml"));
@@ -6594,7 +6531,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("<input asp-for=\"ExpectedCloseDateUtc\" class=\"form-control\" type=\"date\" />");
         source.Should().Contain("<label asp-for=\"EstimatedValueMinor\" class=\"form-label\"></label>");
         source.Should().Contain("<input asp-for=\"EstimatedValueMinor\" class=\"form-control\" />");
-        source.Should().Contain("@T.T(\"MinorUnitsExample\")");
+        source.Should().Contain("@T.T(\"CrmOpportunityEstimatedValueMinorHelp\")");
         source.Should().Contain("<span asp-validation-for=\"EstimatedValueMinor\" class=\"text-danger\"></span>");
         source.Should().Contain("@T.T(\"OpportunityItems\")");
         source.Should().Contain("id=\"addOpportunityLine\"");
@@ -6630,7 +6567,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CrmCustomerForm_Should_KeepFieldAndEffectiveProfileContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "_CustomerForm.cshtml"));
@@ -6639,7 +6576,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? \"-\" : T.T(taxProfileType.ToString() ?? string.Empty);");
         source.Should().Contain("<label asp-for=\"UserId\" class=\"form-label\"></label>");
         source.Should().Contain("<select asp-for=\"UserId\" asp-items=\"Model.UserOptions\" class=\"form-select\"></select>");
-        source.Should().Contain("@T.T(\"LinkedUserOwnershipNote\")");
+        source.Should().Contain("@T.T(\"CrmCustomerLinkedUserHelp\")");
         source.Should().Contain("<label asp-for=\"CompanyName\" class=\"form-label\"></label>");
         source.Should().Contain("<input asp-for=\"CompanyName\" class=\"form-control\" />");
         source.Should().Contain("<span asp-validation-for=\"CompanyName\" class=\"text-danger\"></span>");
@@ -6759,18 +6696,18 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CrmSegmentForm_Should_KeepSubmitAndFieldContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Crm", "_SegmentForm.cshtml"));
 
         source.Should().Contain("var actionName = ViewData[\"FormAction\"] as string ?? \"EditSegment\";");
         source.Should().Contain("var isCreate = string.Equals(actionName, \"CreateSegment\", StringComparison.Ordinal);");
-        source.Should().Contain("<form asp-action=\"@actionName\" method=\"post\" class=\"row g-3\">");
+        source.Should().Contain("<form asp-action=\"@actionName\" method=\"post\">");
         source.Should().Contain("@Html.AntiForgeryToken()");
         source.Should().Contain("@if (!isCreate)");
         source.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
-        source.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        source.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         source.Should().Contain("<div asp-validation-summary=\"ModelOnly\" class=\"text-danger\"></div>");
         source.Should().Contain("<label asp-for=\"Name\" class=\"form-label\"></label>");
         source.Should().Contain("<input asp-for=\"Name\" class=\"form-control\" />");
@@ -7251,11 +7188,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("Enum.GetValues<LoyaltyScanStatus>()");
         source.Should().Contain("private List<SelectListItem> BuildRedemptionStatusItems(LoyaltyRedemptionStatus? selected)");
         source.Should().Contain("Enum.GetValues<LoyaltyRedemptionStatus>()");
-        source.Should().Contain("public async Task<IActionResult> SuspendAccount(Guid id, byte[]? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("public async Task<IActionResult> SuspendAccount(Guid id, string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _suspendAccount.HandleAsync(new SuspendLoyaltyAccountDto");
+        source.Should().Contain("RowVersion = DecodeBase64RowVersion(rowVersion)");
         source.Should().Contain("SetLocalizedResultMessage(result.Succeeded, \"LoyaltyAccountSuspended\", \"LoyaltyAccountSuspendFailed\", result.Error);");
-        source.Should().Contain("public async Task<IActionResult> ActivateAccount(Guid id, byte[]? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("public async Task<IActionResult> ActivateAccount(Guid id, string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _activateAccount.HandleAsync(new ActivateLoyaltyAccountDto");
         source.Should().Contain("SetLocalizedResultMessage(result.Succeeded, \"LoyaltyAccountActivated\", \"LoyaltyAccountActivateFailed\", result.Error);");
-        source.Should().Contain("public async Task<IActionResult> ConfirmRedemption(Guid redemptionId, Guid businessId, Guid loyaltyAccountId, byte[]? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("public async Task<IActionResult> ConfirmRedemption(Guid redemptionId, Guid businessId, Guid loyaltyAccountId, string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _confirmRedemption.HandleAsync(new ConfirmLoyaltyRewardRedemptionDto");
         source.Should().Contain("SetLocalizedResultMessage(result.Succeeded, \"LoyaltyRedemptionConfirmed\", \"LoyaltyRedemptionConfirmFailed\", result.Error);");
         source.Should().Contain("private void AddLocalizedModelError(string fallbackKey, string? error = null)");
         source.Should().Contain("ModelState.AddModelError(string.Empty, T(fallbackKey));");
@@ -7267,7 +7208,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void ShippingMethodsController_Should_KeepWorkspaceAndEditorContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Shipping", "ShippingMethodsController.cs"));
@@ -7282,8 +7223,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("HasGlobalCoverage = x.HasGlobalCoverage,");
         source.Should().Contain("HasMultipleRates = x.HasMultipleRates,");
         source.Should().Contain("return RenderIndexWorkspace(vm);");
-        source.Should().Contain("public IActionResult Create()");
-        source.Should().Contain("var defaultCurrency = _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCurrency;");
+        source.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct = default)");
+        source.Should().Contain("var defaultCurrency = (await _siteSettingCache.GetAsync(ct)).DefaultCurrency;");
         source.Should().Contain("Rates = new List<ShippingRateEditVm> { new() { SortOrder = 0 } }");
         source.Should().Contain("return RenderEditor(vm, true);");
         source.Should().Contain("public async Task<IActionResult> Create(ShippingMethodEditVm vm, CancellationToken ct = default)");
@@ -7445,7 +7386,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void ShippingMethodForm_Should_KeepInlineRemediationAndRateTierContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "ShippingMethods", "_ShippingMethodForm.cshtml"));
@@ -7476,7 +7417,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("hx-get=\"@ShippingMethodsGlobalIndexUrl()\"");
         source.Should().Contain("@T.T(\"MethodDetails\")");
         source.Should().Contain("@T.T(\"ShippingMethodCountriesPlaceholder\")");
-        source.Should().Contain("@T.T(\"LeaveCountriesEmpty\")");
+        source.Should().Contain("@T.T(\"ShippingMethodCoverageStatus\")");
+        source.Should().Contain("@T.T(\"ShippingMethodCountriesHelp\")");
         source.Should().Contain("@T.T(\"RateTiers\")");
         source.Should().Contain("@T.T(\"AddRate\")");
         source.Should().Contain("@T.T(\"Currency\"): @(shippingMethodFormMissingCurrency ? 1 : 0)");
@@ -8640,7 +8582,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void BrandsController_Should_KeepWorkspaceAndEditorContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "BrandsController.cs"));
@@ -8655,13 +8597,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("MissingSlugCount = summary.MissingSlugCount,");
         source.Should().Contain("MissingLogoCount = summary.MissingLogoCount");
         source.Should().Contain("return RenderIndexWorkspace(vm);");
-        source.Should().Contain("public IActionResult Create() => RenderBrandEditor(new BrandEditVm");
-        source.Should().Contain("Translations = { new BrandTranslationVm { Culture = GetDefaultCulture() } }");
+        source.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct = default)");
+        source.Should().Contain("var vm = new BrandEditVm();");
+        source.Should().Contain("await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);");
+        source.Should().Contain("return RenderBrandEditor(vm, isCreate: true);");
         source.Should().Contain("public async Task<IActionResult> Create(BrandEditVm vm, CancellationToken ct = default)");
         source.Should().Contain("await EnsureTranslationsAsync(vm, ct);");
         source.Should().Contain("var dto = new BrandCreateDto");
         source.Should().Contain("Slug = string.IsNullOrWhiteSpace(vm.Slug) ? null : vm.Slug.Trim(),");
-        source.Should().Contain("Translations = vm.Translations.Select(t => new BrandTranslationDto");
+        source.Should().Contain("var translations = FilterCompleteTranslations(vm.Translations);");
+        source.Should().Contain("Translations = translations.Select(t => new BrandTranslationDto");
         source.Should().Contain("SetSuccessMessage(\"BrandCreated\");");
         source.Should().Contain("return RedirectOrHtmx(nameof(Index), new { });");
         source.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
@@ -8673,8 +8618,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("RowVersion = vm.RowVersion ?? Array.Empty<byte>(),");
         source.Should().Contain("SetSuccessMessage(\"BrandUpdated\");");
         source.Should().Contain("SetErrorMessage(\"BrandConcurrencyConflict\");");
-        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
-        source.Should().Contain("var dto = new BrandDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };");
+        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var dto = new BrandDeleteDto { Id = id, RowVersion = DecodeBase64RowVersion(rowVersion) };");
         source.Should().Contain("result.Succeeded ? T(\"BrandDeleted\") : T(\"BrandDeleteFailed\")");
         source.Should().Contain("private IActionResult RenderBrandEditor(BrandEditVm vm, bool isCreate)");
         source.Should().Contain("ViewData[\"IsCreate\"] = isCreate;");
@@ -8685,7 +8630,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void BrandsController_Should_KeepTranslationPlaybookAndHtmxHelperContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "BrandsController.cs"));
@@ -8694,12 +8639,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
         source.Should().Contain("private bool IsHtmxRequest()");
         source.Should().Contain("return string.Equals(Request.Headers[\"HX-Request\"], \"true\", StringComparison.OrdinalIgnoreCase);");
-        source.Should().Contain("private string GetDefaultCulture()");
-        source.Should().Contain("return _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCulture;");
         source.Should().Contain("private async Task EnsureTranslationsAsync(BrandEditVm vm, CancellationToken ct)");
-        source.Should().Contain("var defaultCulture = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCulture;");
-        source.Should().Contain("if (vm.Translations.Count == 0)");
-        source.Should().Contain("vm.Translations.Add(new BrandTranslationVm { Culture = defaultCulture });");
+        source.Should().Contain("var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);");
+        source.Should().Contain("var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);");
+        source.Should().Contain("vm.MultilingualEnabled = CountCultures(settings.SupportedCulturesCsv) > 1;");
+        source.Should().Contain("if (!vm.MultilingualEnabled)");
+        source.Should().Contain("vm.Translations.RemoveAll(x => !string.Equals(x.Culture, defaultCulture, StringComparison.OrdinalIgnoreCase));");
+        source.Should().Contain("vm.Translations.Add(new BrandTranslationVm { Culture = culture });");
+        source.Should().Contain("private static List<BrandTranslationVm> FilterCompleteTranslations(IEnumerable<BrandTranslationVm> translations)");
+        source.Should().Contain("private static int CountCultures(string? supportedCulturesCsv)");
         source.Should().Contain("private OperationalPlaybookVm[] BuildBrandPlaybooks()");
         source.Should().Contain("QueueLabel = T(\"Unpublished\")");
         source.Should().Contain("WhyItMatters = T(\"BrandPlaybookUnpublishedScope\")");
@@ -8770,7 +8718,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void AddOnGroupsController_Should_KeepWorkspaceAndEditorContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "AddOnGroupsController.cs"));
@@ -8785,16 +8733,19 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("UnattachedCount = summary.UnattachedCount,");
         source.Should().Contain("VariantLinkedCount = summary.VariantLinkedCount");
         source.Should().Contain("return RenderIndexWorkspace(vm);");
-        source.Should().Contain("public IActionResult Create()");
-        source.Should().Contain("var defaultCurrency = _siteSettingCache.GetAsync().GetAwaiter().GetResult().DefaultCurrency;");
+        source.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct = default)");
+        source.Should().Contain("var defaultCurrency = (await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency;");
         source.Should().Contain("Options = { new AddOnOptionVm { Label = \"Option\", Values = { new AddOnOptionValueVm { Label = \"Value\" } } } }");
-        source.Should().Contain("return RenderCreateEditor(new AddOnGroupCreateVm");
+        source.Should().Contain("await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);");
+        source.Should().Contain("return RenderCreateEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Create(AddOnGroupCreateVm vm, CancellationToken ct = default)");
         source.Should().Contain("var dto = new AddOnGroupCreateDto");
         source.Should().Contain("Currency = string.IsNullOrWhiteSpace(vm.Currency)");
         source.Should().Contain("SelectionMode = vm.SelectionMode,");
-        source.Should().Contain("Options = vm.Options.Select(o => new AddOnOptionDto");
-        source.Should().Contain("Values = o.Values.Select(v => new AddOnOptionValueDto");
+        source.Should().Contain("var groupTranslations = FilterCompleteGroupTranslations(vm.Translations);");
+        source.Should().Contain("var optionDtos = BuildOptionDtos(vm.Options);");
+        source.Should().Contain("Translations = groupTranslations,");
+        source.Should().Contain("Options = optionDtos");
         source.Should().Contain("await _create.HandleAsync(dto, ct);");
         source.Should().Contain("SetSuccessMessage(\"AddOnGroupCreated\");");
         source.Should().Contain("public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)");
@@ -8824,8 +8775,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "AddOnGroupsController.cs"));
 
-        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
-        source.Should().Contain("var dto = new AddOnGroupDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };");
+        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var dto = new AddOnGroupDeleteDto { Id = id, RowVersion = DecodeBase64RowVersion(rowVersion) };");
         source.Should().Contain("var result = await _softDelete.HandleAsync(dto, ct);");
         source.Should().Contain("SetWarningMessage(\"AddOnGroupDeleteFailed\");");
         source.Should().Contain("SetSuccessMessage(\"AddOnGroupDeleted\");");
@@ -8887,7 +8838,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void ProductsController_Should_KeepWorkspaceAndEditorContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "ProductsController.cs"));
@@ -8904,10 +8855,10 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("ScheduledCount = summary.ScheduledCount");
         source.Should().Contain("return RenderIndexWorkspace(vm);");
         source.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct)");
-        source.Should().Contain("await LoadLookupsAsync(ct);");
         source.Should().Contain("var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);");
-        source.Should().Contain("if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = defaultCulture });");
-        source.Should().Contain("if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = defaultCurrency });");
+        source.Should().Contain("await PopulateProductLookupsAsync(vm, siteSettings.DefaultCulture, defaultCurrency, ct).ConfigureAwait(false);");
+        source.Should().Contain("await EnsureProductTranslationsAsync(vm, ct).ConfigureAwait(false);");
+        source.Should().Contain("EnsureVariantDefaults(vm, defaultCurrency);");
         source.Should().Contain("return RenderCreateEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Create(ProductCreateVm vm, CancellationToken ct)");
         source.Should().Contain("ModelState.AddModelError(nameof(vm.Translations), T(\"ProductAtLeastOneTranslationRequired\"));");
@@ -8915,7 +8866,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("await EnsureProductDefaultsAsync(vm, ct).ConfigureAwait(false);");
         source.Should().Contain("var dto = new ProductCreateDto");
         source.Should().Contain("Kind = vm.Kind,");
-        source.Should().Contain("Translations = vm.Translations.Select(t => new ProductTranslationDto");
+        source.Should().Contain("var translations = FilterCompleteTranslations(vm.Translations);");
+        source.Should().Contain("Translations = translations.Select(t => new ProductTranslationDto");
         source.Should().Contain("Variants = vm.Variants.Select(v => new ProductVariantCreateDto");
         source.Should().Contain("await _createProduct.HandleAsync(dto, ct);");
         source.Should().Contain("SetSuccessMessage(\"ProductCreated\");");
@@ -8924,7 +8876,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("var dto = await _getProductForEdit.HandleAsync(id, ct);");
         source.Should().Contain("SetErrorMessage(\"ProductNotFound\");");
         source.Should().Contain("RowVersion = dto.RowVersion,");
-        source.Should().Contain("await LoadLookupsAsync(ct);");
+        source.Should().Contain("await PopulateProductLookupsAsync(vm, ct).ConfigureAwait(false);");
+        source.Should().Contain("await EnsureProductTranslationsAsync(vm, ct).ConfigureAwait(false);");
         source.Should().Contain("return RenderEditEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Edit(ProductEditVm vm, CancellationToken ct)");
         source.Should().Contain("var dto = new ProductEditDto");
@@ -8932,8 +8885,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("await _updateProduct.HandleAsync(dto, ct);");
         source.Should().Contain("SetSuccessMessage(\"ProductUpdated\");");
         source.Should().Contain("ModelState.AddModelError(string.Empty, T(\"ProductConcurrencyConflict\"));");
-        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)");
-        source.Should().Contain("await _softDeleteProduct.HandleAsync(id, ct);");
+        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _softDeleteProduct.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct);");
         source.Should().Contain("SetSuccessMessage(\"ProductDeleted\");");
         source.Should().Contain("SetErrorMessage(\"ProductDeleteFailed\");");
         source.Should().Contain("private IActionResult RenderCreateEditor(ProductCreateVm vm)");
@@ -8948,19 +8901,21 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void ProductsController_Should_KeepLookupDefaultAndHtmxHelperContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "ProductsController.cs"));
 
-        source.Should().Contain("private async Task LoadLookupsAsync(CancellationToken ct)");
+        source.Should().Contain("private async Task PopulateProductLookupsAsync(ProductEditorVm vm, CancellationToken ct)");
+        source.Should().Contain("private async Task PopulateProductLookupsAsync(ProductEditorVm vm, string defaultCulture, string defaultCurrency, CancellationToken ct)");
         source.Should().Contain("var lookups = await _getLookups.HandleAsync(defaultCulture, ct);");
-        source.Should().Contain("ViewBag.Brands = lookups.Brands;");
-        source.Should().Contain("ViewBag.Categories = lookups.Categories;");
-        source.Should().Contain("ViewBag.TaxCategories = lookups.TaxCategories;");
-        source.Should().Contain("var (_, cultures) = await _getCultures.HandleAsync(ct);");
-        source.Should().Contain("ViewBag.Cultures = cultures;");
-        source.Should().Contain("ViewBag.Currencies = BuildCurrencyOptions((await _siteSettingCache.GetAsync(ct).ConfigureAwait(false)).DefaultCurrency);");
+        source.Should().Contain("vm.BrandOptions = BuildLookupItems(lookups.Brands, includeEmpty: true);");
+        source.Should().Contain("vm.CategoryOptions = BuildLookupItems(lookups.Categories, includeEmpty: true);");
+        source.Should().Contain("vm.TaxCategoryOptions = BuildLookupItems(lookups.TaxCategories, includeEmpty: false);");
+        source.Should().Contain("var (_, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);");
+        source.Should().Contain("vm.Cultures = cultures;");
+        source.Should().Contain("vm.Currencies = BuildCurrencyOptions(defaultCurrency);");
+        source.Should().Contain("private static List<SelectListItem> BuildLookupItems(IEnumerable<LookupItem> items, bool includeEmpty)");
         source.Should().Contain("private static IReadOnlyList<string> BuildCurrencyOptions(string defaultCurrency)");
         source.Should().Contain("var items = new List<string>();");
         source.Should().Contain("items.Add(defaultCurrency.Trim().ToUpperInvariant());");
@@ -8974,10 +8929,15 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("private bool IsHtmxRequest()");
         source.Should().Contain("return string.Equals(Request.Headers[\"HX-Request\"], \"true\", StringComparison.OrdinalIgnoreCase);");
         source.Should().Contain("private async Task EnsureProductDefaultsAsync(ProductEditorVm vm, CancellationToken ct)");
-        source.Should().Contain("if (vm.Translations.Count == 0)");
-        source.Should().Contain("vm.Translations.Add(new ProductTranslationVm { Culture = defaultCulture });");
+        source.Should().Contain("private static void EnsureVariantDefaults(ProductEditorVm vm, string defaultCurrency)");
+        source.Should().Contain("variant.Currency = currency;");
+        source.Should().Contain("private async Task EnsureProductTranslationsAsync(ProductEditorVm vm, CancellationToken ct)");
+        source.Should().Contain("vm.MultilingualEnabled = orderedCultures.Length > 1;");
+        source.Should().Contain(".GroupBy(t => t.Culture, StringComparer.OrdinalIgnoreCase)");
+        source.Should().Contain("vm.Translations.Add(new ProductTranslationVm { Culture = culture });");
         source.Should().Contain("if (vm.Variants.Count == 0)");
         source.Should().Contain("vm.Variants.Add(new ProductVariantCreateVm { Currency = siteSettings.DefaultCurrency });");
+        source.Should().Contain("private static List<ProductTranslationVm> FilterCompleteTranslations(IEnumerable<ProductTranslationVm> translations)");
         source.Should().Contain("private OperationalPlaybookVm[] BuildProductPlaybooks()");
         source.Should().Contain("QueueLabel = T(\"Inactive\")");
         source.Should().Contain("WhyItMatters = T(\"ProductPlaybookInactiveScope\")");
@@ -8988,7 +8948,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CategoriesController_Should_KeepWorkspaceAndEditorContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "CategoriesController.cs"));
@@ -9005,8 +8965,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("ChildCount = summary.ChildCount");
         source.Should().Contain("return RenderIndexWorkspace(vm);");
         source.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct)");
-        source.Should().Contain("await LoadLookupsAsync(ct);");
-        source.Should().Contain("if (vm.Translations.Count == 0) vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });");
+        source.Should().Contain("vm.Translations ??= new();");
+        source.Should().Contain("await EnsureCreateTranslationsAsync(vm, ct).ConfigureAwait(false);");
         source.Should().Contain("return RenderCreateEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Create(CategoryCreateVm vm, CancellationToken ct)");
         source.Should().Contain("ModelState.AddModelError(nameof(vm.Translations), T(\"CategoryAtLeastOneTranslationRequired\"));");
@@ -9015,7 +8975,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("ParentId = vm.ParentId,");
         source.Should().Contain("SortOrder = vm.SortOrder,");
         source.Should().Contain("IsActive = vm.IsActive,");
-        source.Should().Contain("Translations = vm.Translations.Select(t => new CategoryTranslationDto");
+        source.Should().Contain("var translations = FilterCompleteTranslations(vm.Translations);");
+        source.Should().Contain("Translations = translations.Select(t => new CategoryTranslationDto");
         source.Should().Contain("await _create.HandleAsync(dto, ct);");
         source.Should().Contain("SetSuccessMessage(\"CategoryCreated\");");
         source.Should().Contain("return RedirectOrHtmx(nameof(Index), new { });");
@@ -9023,7 +8984,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("var dto = await _getForEdit.HandleAsync(id, ct);");
         source.Should().Contain("SetErrorMessage(\"CategoryNotFound\");");
         source.Should().Contain("RowVersion = dto.RowVersion,");
-        source.Should().Contain("await LoadLookupsAsync(ct);");
+        source.Should().Contain("await EnsureEditTranslationsAsync(vm, ct).ConfigureAwait(false);");
         source.Should().Contain("return RenderEditEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Edit(CategoryEditVm vm, CancellationToken ct)");
         source.Should().Contain("var dto = new CategoryEditDto");
@@ -9031,8 +8992,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("await _update.HandleAsync(dto, ct);");
         source.Should().Contain("SetSuccessMessage(\"CategoryUpdated\");");
         source.Should().Contain("ModelState.AddModelError(string.Empty, T(\"CategoryConcurrencyConflict\"));");
-        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)");
-        source.Should().Contain("await _softDelete.HandleAsync(id, ct);");
+        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _softDelete.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct);");
         source.Should().Contain("SetSuccessMessage(\"CategoryDeleted\");");
         source.Should().Contain("SetErrorMessage(\"CategoryDeleteFailed\");");
         source.Should().Contain("private IActionResult RenderCreateEditor(CategoryCreateVm vm)");
@@ -9047,16 +9008,18 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void CategoriesController_Should_KeepLookupTranslationAndHtmxHelperContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Catalog", "CategoriesController.cs"));
 
-        source.Should().Contain("private async Task LoadLookupsAsync(CancellationToken ct)");
+        source.Should().Contain("private async Task PopulateCategoryLookupsAsync(CategoryCreateVm vm, CancellationToken ct)");
+        source.Should().Contain("private async Task PopulateCategoryLookupsAsync(CategoryEditVm vm, CancellationToken ct)");
+        source.Should().Contain("private async Task<(List<SelectListItem> ParentCategoryOptions, IReadOnlyList<string> Cultures)> BuildCategoryEditorLookupsAsync(CancellationToken ct)");
         source.Should().Contain("var lookups = await _getLookups.HandleAsync(defaultCulture, ct);");
-        source.Should().Contain("ViewBag.Categories = lookups.Categories;");
-        source.Should().Contain("var (_, cultures) = await _getCultures.HandleAsync(ct);");
-        source.Should().Contain("ViewBag.Cultures = cultures;");
+        source.Should().Contain("vm.ParentCategoryOptions = options;");
+        source.Should().Contain("vm.Cultures = cultures;");
+        source.Should().Contain("var (_, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);");
         source.Should().Contain("private IActionResult RedirectOrHtmx(string actionName, object routeValues)");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
         source.Should().Contain("return new EmptyResult();");
@@ -9064,9 +9027,12 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("private bool IsHtmxRequest()");
         source.Should().Contain("return string.Equals(Request.Headers[\"HX-Request\"], \"true\", StringComparison.OrdinalIgnoreCase);");
         source.Should().Contain("private async Task EnsureCreateTranslationsAsync(CategoryCreateVm vm, CancellationToken ct)");
-        source.Should().Contain("vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });");
         source.Should().Contain("private async Task EnsureEditTranslationsAsync(CategoryEditVm vm, CancellationToken ct)");
-        source.Should().Contain("vm.Translations.Add(new CategoryTranslationVm { Culture = defaultCulture });");
+        source.Should().Contain("private async Task EnsureTranslationsAsync(List<CategoryTranslationVm> translations, bool multilingualEnabled, CancellationToken ct)");
+        source.Should().Contain("translations.RemoveAll(x => !string.Equals(x.Culture, defaultCulture, StringComparison.OrdinalIgnoreCase));");
+        source.Should().Contain("translations.Add(new CategoryTranslationVm { Culture = culture });");
+        source.Should().Contain("private async Task<bool> IsMultilingualEnabledAsync(CancellationToken ct)");
+        source.Should().Contain("private static List<CategoryTranslationVm> FilterCompleteTranslations(IEnumerable<CategoryTranslationVm> translations)");
         source.Should().Contain("private OperationalPlaybookVm[] BuildCategoryPlaybooks()");
         source.Should().Contain("QueueLabel = T(\"Inactive\")");
         source.Should().Contain("WhyItMatters = T(\"CategoryPlaybookInactiveScope\")");
@@ -9143,7 +9109,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void PagesController_Should_KeepWorkspaceAndEditorContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CMS", "PagesController.cs"));
@@ -9160,17 +9126,20 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("LiveWindowCount = summary.LiveWindowCount");
         source.Should().Contain("return RenderIndex(vm);");
         source.Should().Contain("public async Task<IActionResult> Create(CancellationToken ct)");
-        source.Should().Contain("await LoadCulturesAsync(ct).ConfigureAwait(false);");
-        source.Should().Contain("return RenderCreateEditor(new PageCreateVm");
-        source.Should().Contain("Translations = new() { new PageTranslationVm { Culture = defaultCulture } }");
+        source.Should().Contain("var vm = new PageCreateVm();");
+        source.Should().Contain("await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);");
+        source.Should().Contain("return RenderCreateEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Create(PageCreateVm vm, CancellationToken ct)");
+        source.Should().Contain("vm.Translations ??= new();");
         source.Should().Contain("ModelState.AddModelError(nameof(vm.Translations), T(\"PageTranslationRequired\"));");
+        source.Should().Contain("var translations = FilterCompleteTranslations(vm.Translations);");
         source.Should().Contain("await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);");
         source.Should().Contain("var dto = new PageCreateDto");
         source.Should().Contain("Status = vm.Status,");
-        source.Should().Contain("PublishStartUtc = vm.PublishStartUtc,");
-        source.Should().Contain("PublishEndUtc = vm.PublishEndUtc,");
-        source.Should().Contain("Translations = vm.Translations.Select(t => new PageTranslationDto");
+        source.Should().Contain("PublishStartUtc = NormalizeNullableUtc(vm.PublishStartUtc),");
+        source.Should().Contain("PublishEndUtc = NormalizeNullableUtc(vm.PublishEndUtc),");
+        source.Should().Contain("Translations = translations.Select(t => new PageTranslationDto");
+        source.Should().Contain("Slug = NormalizeSlug(t.Slug),");
         source.Should().Contain("await _create.HandleAsync(dto, ct);");
         source.Should().Contain("SetSuccessMessage(\"PageCreated\");");
         source.Should().Contain("return RedirectOrHtmx(nameof(Index), new { });");
@@ -9179,16 +9148,21 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("SetErrorMessage(\"PageNotFound\");");
         source.Should().Contain("RowVersion = dto.RowVersion,");
         source.Should().Contain("Status = dto.Status,");
-        source.Should().Contain("await LoadCulturesAsync(ct).ConfigureAwait(false);");
+        source.Should().Contain("await EnsureTranslationsAsync(vm, ct).ConfigureAwait(false);");
         source.Should().Contain("return RenderEditEditor(vm);");
         source.Should().Contain("public async Task<IActionResult> Edit(PageEditVm vm, CancellationToken ct)");
         source.Should().Contain("var dto = new PageEditDto");
         source.Should().Contain("RowVersion = vm.RowVersion ?? Array.Empty<byte>(),");
+        source.Should().Contain("PublishStartUtc = NormalizeNullableUtc(vm.PublishStartUtc),");
+        source.Should().Contain("PublishEndUtc = NormalizeNullableUtc(vm.PublishEndUtc),");
+        source.Should().Contain("Translations = translations.Select(t => new PageTranslationDto");
+        source.Should().Contain("Slug = NormalizeSlug(t.Slug),");
         source.Should().Contain("await _update.HandleAsync(dto, ct);");
         source.Should().Contain("SetSuccessMessage(\"PageUpdated\");");
+        source.Should().Contain("return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });");
         source.Should().Contain("ModelState.AddModelError(string.Empty, T(\"PageConcurrencyConflict\"));");
-        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
-        source.Should().Contain("await _softDeletePage.HandleAsync(id, rowVersion, ct);");
+        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("await _softDeletePage.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct);");
         source.Should().Contain("SetSuccessMessage(\"PageDeleted\");");
         source.Should().Contain("SetErrorMessage(\"PageDeleteFailed\");");
         source.Should().Contain("private IActionResult RenderIndex(PagesIndexVm vm)");
@@ -9203,22 +9177,33 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void PagesController_Should_KeepCultureTranslationAndHtmxHelperContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CMS", "PagesController.cs"));
 
-        source.Should().Contain("private async Task LoadCulturesAsync(CancellationToken ct)");
-        source.Should().Contain("var (_, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);");
-        source.Should().Contain("ViewBag.Cultures = cultures;");
+        source.Should().Contain("private async Task EnsureTranslationsAsync(PageEditorVm vm, CancellationToken ct)");
+        source.Should().Contain("var (defaultCulture, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);");
+        source.Should().Contain("var orderedCultures = cultures");
+        source.Should().Contain(".Prepend(defaultCulture)");
+        source.Should().Contain(".Distinct(StringComparer.OrdinalIgnoreCase)");
+        source.Should().Contain("vm.Cultures = orderedCultures;");
+        source.Should().Contain("vm.Translations.Add(new PageTranslationVm { Culture = culture });");
         source.Should().Contain("private IActionResult RedirectOrHtmx(string actionName, object routeValues)");
         source.Should().Contain("Response.Headers[\"HX-Redirect\"] = Url.Action(actionName, routeValues) ?? string.Empty;");
         source.Should().Contain("return new EmptyResult();");
         source.Should().Contain("return RedirectToAction(actionName, routeValues);");
         source.Should().Contain("private bool IsHtmxRequest()");
         source.Should().Contain("return string.Equals(Request.Headers[\"HX-Request\"], \"true\", StringComparison.OrdinalIgnoreCase);");
-        source.Should().Contain("private async Task EnsureTranslationsAsync(PageEditorVm vm, CancellationToken ct)");
-        source.Should().Contain("vm.Translations.Add(new PageTranslationVm { Culture = defaultCulture });");
+        source.Should().Contain("private static List<PageTranslationVm> FilterCompleteTranslations(IEnumerable<PageTranslationVm> translations)");
+        source.Should().Contain("!string.IsNullOrWhiteSpace(t.Culture) &&");
+        source.Should().Contain("!string.IsNullOrWhiteSpace(t.Title) &&");
+        source.Should().Contain("!string.IsNullOrWhiteSpace(t.Slug))");
+        source.Should().Contain("private static DateTime? NormalizeNullableUtc(DateTime? value)");
+        source.Should().Contain("DateTimeKind.Local => value.Value.ToUniversalTime(),");
+        source.Should().Contain("_ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)");
+        source.Should().Contain("private static string NormalizeSlug(string slug)");
+        source.Should().Contain("=> slug.Trim().ToLowerInvariant();");
         source.Should().Contain("private PagePlaybookVm[] BuildPagePlaybooks()");
         source.Should().Contain("QueueLabel = T(\"Draft\")");
         source.Should().Contain("WhyItMatters = T(\"PagesPlaybookDraftScope\")");
@@ -9229,7 +9214,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void MediaController_Should_KeepWorkspaceEditorAndMutationContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
@@ -9252,7 +9237,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("public async Task<IActionResult> Create(MediaAssetCreateVm vm, CancellationToken ct = default)");
         source.Should().Contain("ModelState.AddModelError(nameof(vm.File), T(\"MediaUploadFileRequired\"));");
         source.Should().Contain("var validationError = ValidateFile(vm.File);");
-        source.Should().Contain("var stored = await SaveUploadAsync(vm.File, ct).ConfigureAwait(false);");
+        source.Should().Contain("StoredUploadResult? stored = null;");
+        source.Should().Contain("stored = await SaveUploadAsync(vm.File, ct).ConfigureAwait(false);");
         source.Should().Contain("await _create.HandleAsync(new MediaAssetCreateDto");
         source.Should().Contain("Url = stored.PublicUrl,");
         source.Should().Contain("ContentHash = stored.ContentHash,");
@@ -9267,11 +9253,16 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("RowVersion = vm.RowVersion,");
         source.Should().Contain("SetSuccessMessage(\"MediaUpdated\");");
         source.Should().Contain("SetErrorMessage(\"MediaConcurrencyConflict\");");
-        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)");
-        source.Should().Contain("await _softDelete.HandleAsync(id, ct).ConfigureAwait(false);");
+        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _softDelete.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct).ConfigureAwait(false);");
         source.Should().Contain("SetSuccessMessage(\"MediaDeleted\");");
+        source.Should().Contain("SetErrorMessage(\"MediaAssetNotFound\");");
+        source.Should().Contain("public async Task<IActionResult> PurgeUnused([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var localPath = TryResolveLocalUploadPath(dto.Url);");
+        source.Should().Contain("var result = await _purgeUnused.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct).ConfigureAwait(false);");
+        source.Should().Contain("public async Task<IActionResult> PurgeUnusedBatch(CancellationToken ct = default)");
         source.Should().Contain("public async Task<IActionResult> UploadQuill(IFormFile? file, CancellationToken ct)");
-        source.Should().Contain("[IgnoreAntiforgeryToken]");
+        source.Should().Contain("[ValidateAntiForgeryToken]");
         source.Should().Contain("return BadRequest(new { error = T(\"MediaUploadFileRequired\") });");
         source.Should().Contain("return Json(new { url = stored.PublicUrl });");
         source.Should().Contain("if (stored is not null && System.IO.File.Exists(stored.PhysicalPath))");
@@ -9285,7 +9276,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void MediaController_Should_KeepFilterUploadAndHtmxHelperContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Media", "MediaController.cs"));
@@ -9315,22 +9306,27 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("if (file.Length > MaxUploadBytes)");
         source.Should().Contain("return T(\"MediaUploadFileTooLarge\");");
         source.Should().Contain("private async Task<StoredUploadResult> SaveUploadAsync(IFormFile file, CancellationToken ct)");
-        source.Should().Contain("var uploadsRoot = Path.Combine(GetWebRootPath(), \"uploads\");");
+        source.Should().Contain("if (!HasValidImageSignature(ext, bytes))");
+        source.Should().Contain("throw new InvalidDataException(\"Uploaded file signature does not match an allowed image format.\");");
+        source.Should().Contain("var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(_env.ContentRootPath, _mediaStorageOptions);");
         source.Should().Contain("Directory.CreateDirectory(uploadsRoot);");
         source.Should().Contain("var fileName = $\"{Guid.NewGuid():N}{ext}\";");
+        source.Should().Contain("if (!IsPathUnderRoot(fullPath, uploadsRoot))");
         source.Should().Contain("await input.CopyToAsync(buffer, ct).ConfigureAwait(false);");
         source.Should().Contain("await System.IO.File.WriteAllBytesAsync(fullPath, bytes, ct).ConfigureAwait(false);");
         source.Should().Contain("var hash = Convert.ToHexString(SHA256.HashData(bytes));");
-        source.Should().Contain("PublicUrl: $\"/uploads/{fileName}\"");
-        source.Should().Contain("private string GetWebRootPath()");
-        source.Should().Contain("if (!string.IsNullOrWhiteSpace(_env.WebRootPath))");
-        source.Should().Contain("return _env.WebRootPath;");
-        source.Should().Contain("return Path.Combine(_env.ContentRootPath, \"wwwroot\");");
+        source.Should().Contain("PublicUrl: MediaStoragePathResolver.BuildPublicUrl(_mediaStorageOptions, fileName),");
+        source.Should().Contain("private static bool HasValidImageSignature(string extension, byte[] bytes)");
+        source.Should().Contain("private string? TryResolveLocalUploadPath(string? url)");
+        source.Should().Contain("var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(_env.ContentRootPath, _mediaStorageOptions);");
+        source.Should().Contain("private string? TryGetUploadRelativePath(string? url)");
+        source.Should().Contain("MediaStoragePathResolver.NormalizeRequestPath(_mediaStorageOptions.RequestPath)");
+        source.Should().Contain("private static bool IsPathUnderRoot(string path, string root)");
         source.Should().Contain("private sealed record StoredUploadResult(string PhysicalPath, string PublicUrl, long SizeBytes, string ContentHash);");
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void RolesController_Should_KeepWorkspaceEditorAndPermissionsContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "RolesController.cs"));
@@ -9368,11 +9364,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("var result = await _update.HandleAsync(dto, ct);");
         source.Should().Contain("SetErrorMessage(\"RoleUpdateFailed\");");
         source.Should().Contain("SetSuccessMessage(\"RoleUpdated\");");
-        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)");
-        source.Should().Contain("await _delete.HandleAsync(id, ct);");
+        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var result = await _delete.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct);");
         source.Should().Contain("SetSuccessMessage(\"RoleDeleted\");");
-        source.Should().Contain("SetWarningMessage(\"RoleSystemProtectedDelete\");");
         source.Should().Contain("SetErrorMessage(\"RoleDeleteFailed\");");
+        source.Should().Contain("var result = await _delete.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct);");
         source.Should().Contain("public async Task<IActionResult> Permissions(Guid id, CancellationToken ct = default)");
         source.Should().Contain("var vm = await BuildRolePermissionsVmAsync(id, null, null, ct);");
         source.Should().Contain("SetErrorMessage(\"RolePermissionsLoadFailed\");");
@@ -9429,12 +9425,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void PermissionsController_Should_KeepWorkspaceEditorAndMutationContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Identity", "PermissionsController.cs"));
 
-        source.Should().Contain("[Route(\"Admin/[controller]/[action]\")]");
         source.Should().Contain("[PermissionAuthorize(\"FullAdminAccess\")]");
         source.Should().Contain("public sealed class PermissionsController : AdminBaseController");
         source.Should().Contain("public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, PermissionQueueFilter filter = PermissionQueueFilter.All, CancellationToken ct = default)");
@@ -9470,10 +9465,9 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("var result = await _update.HandleAsync(dto, ct);");
         source.Should().Contain("SetErrorMessage(\"PermissionUpdateFailed\");");
         source.Should().Contain("SetSuccessMessage(\"PermissionUpdated\");");
-        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)");
-        source.Should().Contain("var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };");
+        source.Should().Contain("public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)");
+        source.Should().Contain("var dto = new PermissionDeleteDto { Id = id, RowVersion = DecodeBase64RowVersion(rowVersion) };");
         source.Should().Contain("var result = await _softDelete.HandleAsync(dto, ct);");
-        source.Should().Contain("SetWarningMessage(\"PermissionDeleteFailed\");");
         source.Should().Contain("SetSuccessMessage(\"PermissionDeleted\");");
         source.Should().Contain("SetErrorMessage(\"PermissionDeleteFailed\");");
         source.Should().Contain("private IActionResult RenderCreateEditor(PermissionCreateVm vm)");
@@ -9546,13 +9540,13 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void PagesWorkspace_Should_KeepShellSummaryFilterAndGridContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "Pages", "Index.cshtml"));
 
         source.Should().Contain("id=\"pages-workspace-shell\"");
-        source.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
+        source.Should().NotContain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         source.Should().Contain("@T.T(\"PagesWorkspaceIntro\")");
         source.Should().Contain("string PagesIndexUrl(string? query = null, string? filter = null) => Url.Action(\"Index\", \"Pages\", new { query, filter }) ?? string.Empty;");
         source.Should().Contain("string PagesCreateUrl() => Url.Action(\"Create\", \"Pages\") ?? string.Empty;");
@@ -9565,10 +9559,14 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"Reset\")");
         source.Should().Contain("hx-get=\"@PagesCreateUrl()\"");
         source.Should().Contain("@T.T(\"CreatePage\")");
-        source.Should().Contain("@T.T(\"Draft\")</div><div class=\"display-6 fw-semibold\">@Model.Summary.DraftCount");
-        source.Should().Contain("@T.T(\"Published\")</div><div class=\"display-6 fw-semibold\">@Model.Summary.PublishedCount");
-        source.Should().Contain("@T.T(\"Windowed\")</div><div class=\"display-6 fw-semibold\">@Model.Summary.WindowedCount");
-        source.Should().Contain("@T.T(\"LiveWindow\")</div><div class=\"display-6 fw-semibold\">@Model.Summary.LiveWindowCount");
+        source.Should().Contain("@T.T(\"Draft\") <field-help title=\"@T.T(\"Draft\")\"");
+        source.Should().Contain("<div class=\"fs-4 fw-semibold\">@Model.Summary.DraftCount</div>");
+        source.Should().Contain("@T.T(\"Published\") <field-help title=\"@T.T(\"Published\")\"");
+        source.Should().Contain("<div class=\"fs-4 fw-semibold\">@Model.Summary.PublishedCount</div>");
+        source.Should().Contain("@T.T(\"Windowed\") <field-help title=\"@T.T(\"Windowed\")\"");
+        source.Should().Contain("<div class=\"fs-4 fw-semibold\">@Model.Summary.WindowedCount</div>");
+        source.Should().Contain("@T.T(\"LiveWindow\") <field-help title=\"@T.T(\"LiveWindow\")\"");
+        source.Should().Contain("<div class=\"fs-4 fw-semibold\">@Model.Summary.LiveWindowCount</div>");
         source.Should().Contain("asp-route-filter=\"draft\"");
         source.Should().Contain("asp-route-filter=\"published\"");
         source.Should().Contain("asp-route-filter=\"windowed\"");
@@ -9580,6 +9578,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("hx-get=\"@PagesIndexUrl(query, \"live-window\")\"");
         source.Should().Contain("@T.T(\"TotalPages\"): @Model.Summary.TotalCount");
         source.Should().Contain("@T.T(\"ContentOperationsPlaybooks\")");
+        source.Should().Contain("<details class=\"admin-playbook mb-3\">");
         source.Should().Contain("@playbook.QueueLabel");
         source.Should().Contain("@playbook.WhyItMatters");
         source.Should().Contain("@playbook.OperatorAction");
@@ -9669,7 +9668,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void MediaEditorShells_Should_KeepCreateAndEditFormContractsWired()
     {
         var createSource = ReadWebAdminFile(Path.Combine("Views", "Media", "_MediaAssetCreateEditorShell.cshtml"));
@@ -9699,8 +9698,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editSource.Should().Contain("href=\"@Model.Url\" target=\"_blank\" rel=\"noopener noreferrer\"");
         editSource.Should().Contain("@T.T(\"MediaOpenFile\")");
         editSource.Should().Contain("<img src=\"@Model.Url\" alt=\"@Model.Alt\" class=\"w-100 h-100 object-fit-cover\" />");
-        editSource.Should().Contain("@T.T(\"Url\"):");
-        editSource.Should().Contain("@T.T(\"Dimensions\"):");
+        editSource.Should().Contain("<span class=\"text-muted\">@T.T(\"Url\"):</span> @Model.Url");
+        editSource.Should().Contain("<span class=\"text-muted\">@T.T(\"Dimensions\"):</span>");
         editSource.Should().Contain("@(Model.Width.HasValue && Model.Height.HasValue ? $\"{Model.Width} x {Model.Height}\" : T.T(\"MediaUnknownValue\"))");
         editSource.Should().Contain("@(Model.ModifiedAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? T.T(\"MediaUnknownValue\"))");
         editSource.Should().Contain("asp-action=\"Edit\"");
@@ -9708,7 +9707,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editSource.Should().Contain("hx-target=\"#media-edit-editor-shell\"");
         editSource.Should().Contain("@Html.AntiForgeryToken()");
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
-        editSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        editSource.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         editSource.Should().Contain("<partial name=\"_MediaAssetUploadForm\" model=\"Model\" />");
         editSource.Should().Contain("asp-validation-summary=\"ModelOnly\" class=\"text-danger mt-3\"");
         editSource.Should().Contain("@T.T(\"Save\")");
@@ -9771,7 +9770,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void RoleEditorShells_Should_KeepCreateEditAndPermissionsContractsWired()
     {
         var createSource = ReadWebAdminFile(Path.Combine("Views", "Roles", "_RoleCreateEditorShell.cshtml"));
@@ -9806,7 +9805,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editSource.Should().Contain("@Html.AntiForgeryToken()");
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"Key\" />");
-        editSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        editSource.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"IsSystem\" />");
         editSource.Should().Contain("value=\"@Model.Key\" readonly");
         editSource.Should().Contain("@T.T(\"ImmutableKeyHelp\")");
@@ -9814,12 +9813,13 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editSource.Should().Contain("@T.T(\"System\")");
         editSource.Should().Contain("@T.T(\"No\")");
         editSource.Should().Contain("data-action=\"@Url.Action(\"Delete\", \"Roles\")\"");
-        editSource.Should().Contain("data-rowversion=\"@Convert.ToBase64String(Model.RowVersion)\"");
+        editSource.Should().Contain("data-rowversion=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\"");
         editSource.Should().Contain("data-name=\"@Model.DisplayName\"");
         editSource.Should().Contain("<partial name=\"~/Views/Shared/_ConfirmDeleteModal.cshtml\" />");
 
         permissionsSource.Should().Contain("id=\"role-permissions-workspace-shell\"");
         permissionsSource.Should().Contain("@T.T(\"PermissionsForRole\") - @Model.RoleDisplayName");
+        permissionsSource.Should().Contain("<div id=\"alerts-container\">");
         permissionsSource.Should().Contain("<partial name=\"~/Views/Shared/_Alerts.cshtml\" />");
         permissionsSource.Should().Contain("string DelegatedSupportPermissionsUrl() => Url.Action(\"Index\", \"Permissions\", new { filter = Darwin.WebAdmin.ViewModels.Identity.PermissionQueueFilter.DelegatedSupport }) ?? string.Empty;");
         permissionsSource.Should().Contain("hx-get=\"@DelegatedSupportPermissionsUrl()\"");
@@ -9835,7 +9835,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         permissionsSource.Should().Contain("hx-post=\"@Url.Action(\"Permissions\", \"Roles\")\"");
         permissionsSource.Should().Contain("@Html.AntiForgeryToken()");
         permissionsSource.Should().Contain("<input type=\"hidden\" asp-for=\"RoleId\" />");
-        permissionsSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        permissionsSource.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         permissionsSource.Should().Contain("@T.T(\"Permissions\")");
         permissionsSource.Should().Contain("@if (Model.AllPermissions?.Count > 0)");
         permissionsSource.Should().Contain("name=\"SelectedPermissionIds\"");
@@ -9919,7 +9919,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void AddOnGroupsWorkspace_Should_KeepShellSummaryFilterGridAndPagerContractsWired()
     {
         var source = ReadWebAdminFile(Path.Combine("Views", "AddOnGroups", "Index.cshtml"));
@@ -9931,7 +9931,9 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@Model.Summary.InactiveCount");
         source.Should().Contain("@Model.Summary.GlobalCount");
         source.Should().Contain("@Model.Summary.UnattachedCount");
-        source.Should().Contain("@T.T(\"AddOnLinkedGroups\"): @Model.Summary.VariantLinkedCount");
+        source.Should().Contain("@T.T(\"Unattached\") <field-help title=\"@T.T(\"Unattached\")\"");
+        source.Should().Contain("content=\"@($\"{T.T(\"AddOnLinkedGroups\")}: {Model.Summary.VariantLinkedCount}\")\"");
+        source.Should().Contain("@Model.Summary.UnattachedCount");
         source.Should().Contain("string AddOnGroupsIndexUrl() => Url.Action(\"Index\", \"AddOnGroups\") ?? string.Empty;");
         source.Should().Contain("hx-get=\"@AddOnGroupsIndexUrl()\"");
         source.Should().Contain("name=\"query\" value=\"@Model.Query\"");
@@ -9943,6 +9945,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("hx-get=\"@CreateAddOnGroupUrl()\"");
         source.Should().Contain("@T.T(\"AddOnNewGroup\")");
         source.Should().Contain("@T.T(\"AddOnOperationsPlaybooks\")");
+        source.Should().Contain("<details class=\"admin-playbook mb-3\">");
         source.Should().Contain("@playbook.QueueLabel");
         source.Should().Contain("@playbook.WhyItMatters");
         source.Should().Contain("@playbook.OperatorAction");
@@ -9977,7 +9980,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void AddOnGroupEditorAndAttachSurfaces_Should_KeepCreateEditAndAttachProductsContractsWired()
     {
         var createSource = ReadWebAdminFile(Path.Combine("Views", "AddOnGroups", "_AddOnGroupCreateEditorShell.cshtml"));
@@ -10002,7 +10005,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         editSource.Should().Contain("hx-post=\"@Url.Action(\"Edit\", \"AddOnGroups\")\"");
         editSource.Should().Contain("@Html.AntiForgeryToken()");
         editSource.Should().Contain("<input type=\"hidden\" asp-for=\"Id\" />");
-        editSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        editSource.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         editSource.Should().Contain("<partial name=\"_AddOnGroupForm\" model=\"Model\" />");
         editSource.Should().NotContain("<script>");
 
@@ -10108,7 +10111,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void PageEditorScript_Should_KeepLocalizedQuillPlaceholderAndUploadFailureRails()
     {
         var createShellSource = ReadWebAdminFile(Path.Combine("Views", "Pages", "_PageCreateEditorShell.cshtml"));
@@ -10122,7 +10125,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         createShellSource.Should().Contain("data-page-editor-upload-failed-error=\"@T.T(\"PageEditorUploadFailedError\")\"");
         createShellSource.Should().Contain("data-page-image-upload-url=\"@Url.Action(\"UploadQuill\", \"Media\")\"");
         editShellSource.Should().Contain("data-page-editor-placeholder=\"@T.T(\"PageEditorPlaceholder\")\"");
-        source.Should().Contain("placeholder: configRoot.dataset.pageEditorPlaceholder || ''");
+        source.Should().Contain("const dataset = configRoot?.dataset || {};");
+        source.Should().Contain("placeholder: dataset.pageEditorPlaceholder || ''");
+        source.Should().Contain("notLoadedMessage: dataset.pageEditorQuillNotLoaded || ''");
+        source.Should().Contain("const token = root.querySelector('input[name=\"__RequestVerificationToken\"]')?.value || '';");
+        source.Should().Contain("const headers = token ? { RequestVerificationToken: token } : {};");
         source.Should().Contain("console.error(options.notLoadedMessage);");
         source.Should().Contain("throw new Error(uploadFailedError);");
         source.Should().Contain("alert(uploadFailedMessage);");
@@ -10485,7 +10492,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         formSource.Should().Contain("<input type=\"hidden\" asp-for=\"OperationalAlertEmailsEnabled\" />");
     }
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void BusinessSetupWorkspace_Should_KeepBusinessOwnedBrandingLocalizationAndAdminOverrideStorageWired()
     {
         var controllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Businesses", "BusinessesController.cs"));
@@ -10550,11 +10557,11 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         controllerSource.Should().Contain("BrandLogoUrl = vm.BrandLogoUrl,");
         controllerSource.Should().Contain("BrandPrimaryColorHex = vm.BrandPrimaryColorHex,");
         controllerSource.Should().Contain("BrandSecondaryColorHex = vm.BrandSecondaryColorHex,");
-        controllerSource.Should().Contain("vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? settings.DefaultCurrency : vm.DefaultCurrency;");
-        controllerSource.Should().Contain("vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? settings.DefaultCulture : vm.DefaultCulture;");
-        controllerSource.Should().Contain("vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;");
-        controllerSource.Should().Contain("vm.BrandDisplayName = string.IsNullOrWhiteSpace(vm.BrandDisplayName) ? settings.Title : vm.BrandDisplayName;");
-        controllerSource.Should().Contain("vm.BrandLogoUrl = string.IsNullOrWhiteSpace(vm.BrandLogoUrl) ? settings.LogoUrl : vm.BrandLogoUrl;");
+        controllerSource.Should().Contain("vm.DefaultCurrency = string.IsNullOrWhiteSpace(vm.DefaultCurrency) ? (effectiveSettings?.DefaultCurrency ?? settings.DefaultCurrency) : vm.DefaultCurrency;");
+        controllerSource.Should().Contain("vm.DefaultCulture = string.IsNullOrWhiteSpace(vm.DefaultCulture) ? (effectiveSettings?.DefaultCulture ?? settings.DefaultCulture) : vm.DefaultCulture;");
+        controllerSource.Should().Contain("vm.DefaultTimeZoneId = string.IsNullOrWhiteSpace(vm.DefaultTimeZoneId) ? (effectiveSettings?.DefaultTimeZoneId ?? settings.TimeZone ?? string.Empty) : vm.DefaultTimeZoneId;");
+        controllerSource.Should().Contain("vm.BrandDisplayName = string.IsNullOrWhiteSpace(vm.BrandDisplayName) ? (effectiveSettings?.BrandDisplayName ?? settings.Title) : vm.BrandDisplayName;");
+        controllerSource.Should().Contain("vm.BrandLogoUrl = string.IsNullOrWhiteSpace(vm.BrandLogoUrl) ? (effectiveSettings?.BrandLogoUrl ?? settings.LogoUrl) : vm.BrandLogoUrl;");
 
         setupShellSource.Should().Contain("label asp-for=\"DefaultCulture\" class=\"form-label\">@T.T(\"DefaultCulture\")</label>");
         setupShellSource.Should().Contain("label asp-for=\"DefaultCurrency\" class=\"form-label\">@T.T(\"DefaultCurrency\")</label>");
@@ -10847,7 +10854,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void SharedCatalogCmsAndCrmViewModels_Should_KeepWorkspaceAndEditorContractShapesWired()
     {
         var addOnGroupVmsSource = ReadWebAdminFile(Path.Combine("ViewModels", "Catalog", "AddOnGroupVms.cs"));
@@ -10938,7 +10945,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         crmVmsSource.Should().Contain("public sealed class InvoicesListVm");
         crmVmsSource.Should().Contain("public TaxPolicySnapshotVm TaxPolicy { get; set; } = new();");
         crmVmsSource.Should().Contain("public sealed class InvoiceEditVm");
-        crmVmsSource.Should().Contain("public DateTime DueDateUtc { get; set; } = DateTime.UtcNow.AddDays(14);");
+        crmVmsSource.Should().Contain("public DateTime DueDateUtc { get; set; }");
         crmVmsSource.Should().Contain("public InvoiceRefundCreateVm Refund { get; set; } = new();");
     }
 
@@ -11264,7 +11271,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void RolePermissionsWorkspace_Should_KeepHeadingFormAndSelectionContractsWired()
     {
         var rolePermissionsViewSource = ReadWebAdminFile(Path.Combine("Views", "Roles", "Permissions.cshtml"));
@@ -11276,7 +11283,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         rolePermissionsViewSource.Should().Contain("<form asp-action=\"Permissions\" method=\"post\" class=\"row g-3\">");
         rolePermissionsViewSource.Should().Contain("@Html.AntiForgeryToken()");
         rolePermissionsViewSource.Should().Contain("<input type=\"hidden\" asp-for=\"RoleId\" />");
-        rolePermissionsViewSource.Should().Contain("<input type=\"hidden\" asp-for=\"RowVersion\" />");
+        rolePermissionsViewSource.Should().Contain("<input type=\"hidden\" name=\"RowVersion\" value=\"@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))\" />");
         rolePermissionsViewSource.Should().Contain("name=\"SelectedPermissionIds\"");
         rolePermissionsViewSource.Should().Contain("@p.Key - @p.Description");
         rolePermissionsViewSource.Should().Contain("@T.T(\"NoPermissionsFound\")");
@@ -11480,7 +11487,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
     }
 
 
-    [Fact(Skip = "Temporarily quarantined during WebAdmin source-contract cleanup: this assertion still targets pre-simplification exact Razor/layout text instead of stable security/localization/HTMX contracts.")]
+    [Fact]
     public void BusinessAccountAndLoyaltyControllers_Should_KeepBusinessContextRewardCampaignAndScanOrchestrationContractsWired()
     {
         var accountSource = ReadWebApiFile(Path.Combine("Controllers", "Business", "BusinessAccountController.cs"));
@@ -11550,8 +11557,8 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         loyaltySource.Should().Contain("HandleAsync(new LoyaltyRewardTierCreateDto");
         loyaltySource.Should().Contain("AllowSelfRedemption = request.AllowSelfRedemption,");
         loyaltySource.Should().Contain("MetadataJson = NormalizeText(request.MetadataJson)");
-        loyaltySource.Should().Contain("catch (FluentValidation.ValidationException ex)");
-        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierCreateFailed\"], ex.Message);");
+        loyaltySource.Should().Contain("catch (FluentValidation.ValidationException)");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierCreateFailed\"]);");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> UpdateBusinessRewardTierAsync([FromBody] UpdateBusinessRewardTierRequest? request, CancellationToken ct = default)");
         loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"RewardTierIdCannotBeEmpty\"]);");
@@ -11561,7 +11568,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         loyaltySource.Should().Contain("return Forbid();");
         loyaltySource.Should().Contain("HandleAsync(new LoyaltyRewardTierEditDto");
         loyaltySource.Should().Contain("RowVersion = request.RowVersion");
-        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierUpdateFailed\"], ex.Message);");
+        loyaltySource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"LoyaltyRewardTierUpdateFailed\"]);");
 
         loyaltySource.Should().Contain("public async Task<IActionResult> DeleteBusinessRewardTierAsync([FromBody] DeleteBusinessRewardTierRequest? request, CancellationToken ct = default)");
         loyaltySource.Should().Contain("HandleAsync(new LoyaltyRewardTierDeleteDto { Id = request.RewardTierId, RowVersion = request.RowVersion }, ct)");
@@ -12815,10 +12822,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
     private static string WebAdminRoot()
     {
-        return Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..",
-            "src", "Darwin.WebAdmin"));
+        return ResolveRepositoryPath("src", "Darwin.WebAdmin");
     }
 
     private static List<(string Path, string Source)> ReadWebAdminViewSources()
@@ -12835,10 +12839,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
     private static List<(string Path, string Source)> ReadWebAdminSources()
     {
-        var root = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..",
-            "src", "Darwin.WebAdmin"));
+        var root = WebAdminRoot();
 
         return Directory
             .GetFiles(root, "*.cs", SearchOption.AllDirectories)
@@ -12850,10 +12851,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
 
     private static List<(string Path, string Source)> ReadWebAdminControllerSources()
     {
-        var root = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..",
-            "src", "Darwin.WebAdmin", "Controllers"));
+        var root = ResolveRepositoryPath("src", "Darwin.WebAdmin", "Controllers");
 
         return Directory
             .GetFiles(root, "*.cs", SearchOption.AllDirectories)

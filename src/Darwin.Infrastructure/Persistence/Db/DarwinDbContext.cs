@@ -15,6 +15,7 @@ using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Entities.Shipping;
 using Darwin.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
@@ -217,7 +218,10 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// </summary>
         private void ApplyRowVersionConcurrency(ModelBuilder modelBuilder)
         {
-            var isPostgreSql = Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
+            var providerName = Database.ProviderName;
+            var isClientManagedRowVersion =
+                providerName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true ||
+                IsInMemoryProvider();
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
@@ -227,7 +231,7 @@ namespace Darwin.Infrastructure.Persistence.Db
                 // Use the non-generic builder to avoid reflection gymnastics
                 var builder = modelBuilder.Entity(entityType.ClrType);
                 var property = builder.Property<byte[]>("RowVersion");
-                if (isPostgreSql)
+                if (isClientManagedRowVersion)
                 {
                     property.IsConcurrencyToken().ValueGeneratedNever().IsRequired();
                 }
@@ -237,6 +241,13 @@ namespace Darwin.Infrastructure.Persistence.Db
                     // (.IsRowVersion() sets concurrency token and value generation appropriately)
                 }
             }
+        }
+
+        private bool IsInMemoryProvider()
+        {
+            return this.GetService<IDbContextOptions>()
+                .Extensions
+                .Any(extension => extension.GetType().Name.Contains("InMemory", StringComparison.OrdinalIgnoreCase));
         }
 
         private void NormalizeProviderSpecificIndexFilters(ModelBuilder modelBuilder)

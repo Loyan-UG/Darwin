@@ -929,7 +929,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("LeadLifecycleUpdateFailedMessage");
+                SetErrorMessage("LeadLifecycleUpdateFailedMessage");
             }
 
             return RedirectOrHtmx(nameof(Leads), new { page, pageSize, q, filter });
@@ -977,7 +977,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("OpportunityLifecycleUpdateFailedMessage");
+                SetErrorMessage("OpportunityLifecycleUpdateFailedMessage");
             }
 
             return RedirectOrHtmx(nameof(Opportunities), new { page, pageSize, q, filter });

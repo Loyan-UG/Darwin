@@ -980,7 +980,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> ProvisionOnboarding(
             [FromForm] Guid id,
-            [FromForm] byte[]? rowVersion,
+            [FromForm] string? rowVersion,
             [FromForm] bool returnToSetup = false,
             [FromForm] bool returnToReadiness = false,
             CancellationToken ct = default)
@@ -994,7 +994,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var result = await _provisionBusinessOnboarding.HandleAsync(new BusinessLifecycleActionDto
             {
                 Id = id,
-                RowVersion = rowVersion ?? Array.Empty<byte>()
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct).ConfigureAwait(false);
 
             if (result.Succeeded && result.Value is not null)
@@ -1005,7 +1005,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
             else
             {
-                TempData["Error"] = result.Error ?? T("BusinessOnboardingProvisioningFailed");
+                SetErrorMessage("BusinessOnboardingProvisioningFailed");
             }
 
             if (returnToReadiness)
@@ -1018,7 +1018,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -1029,7 +1029,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             Result result = await _deleteBusiness.HandleAsync(new BusinessDeleteDto
             {
                 Id = id,
-                RowVersion = rowVersion ?? Array.Empty<byte>()
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] =
@@ -1040,7 +1040,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
+        public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] string? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -1053,7 +1053,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await _approveBusiness.HandleAsync(new BusinessLifecycleActionDto
                 {
                     Id = id,
-                    RowVersion = rowVersion ?? Array.Empty<byte>()
+                    RowVersion = DecodeBase64RowVersion(rowVersion)
                 }, ct);
 
                 SetSuccessMessage("BusinessApproved");
@@ -1068,7 +1068,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] string? note, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
+        public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] string? rowVersion, [FromForm] string? note, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -1081,7 +1081,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await _suspendBusiness.HandleAsync(new BusinessLifecycleActionDto
                 {
                     Id = id,
-                    RowVersion = rowVersion ?? Array.Empty<byte>(),
+                    RowVersion = DecodeBase64RowVersion(rowVersion),
                     Note = note
                 }, ct);
 
@@ -1097,7 +1097,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
+        public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] string? rowVersion, [FromForm] bool returnToSetup = false, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -1110,7 +1110,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await _reactivateBusiness.HandleAsync(new BusinessLifecycleActionDto
                 {
                     Id = id,
-                    RowVersion = rowVersion ?? Array.Empty<byte>()
+                    RowVersion = DecodeBase64RowVersion(rowVersion)
                 }, ct);
 
                 SetSuccessMessage("BusinessReactivated");
@@ -1347,7 +1347,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> DeleteLocation([FromForm] Guid id, [FromForm(Name = "userId")] Guid businessId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> DeleteLocation([FromForm] Guid id, [FromForm(Name = "userId")] Guid businessId, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty || businessId == Guid.Empty)
             {
@@ -1360,7 +1360,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var result = await _deleteBusinessLocation.HandleAsync(new BusinessLocationDeleteDto
             {
                 Id = id,
-                RowVersion = rowVersion ?? Array.Empty<byte>()
+                RowVersion = DecodeBase64RowVersion(rowVersion)
             }, ct);
 
             TempData[result.Succeeded ? "Success" : "Error"] =
@@ -1875,7 +1875,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> DeleteMember([FromForm] Guid id, [FromForm(Name = "userId")] Guid businessId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> DeleteMember([FromForm] Guid id, [FromForm(Name = "userId")] Guid businessId, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty || businessId == Guid.Empty)
             {
@@ -1890,7 +1890,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await _deleteBusinessMember.HandleAsync(new BusinessMemberDeleteDto
                 {
                     Id = id,
-                    RowVersion = rowVersion ?? Array.Empty<byte>()
+                    RowVersion = DecodeBase64RowVersion(rowVersion)
                 }, ct);
 
                 SetSuccessMessage("BusinessMemberRemoved");
@@ -1908,7 +1908,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         public async Task<IActionResult> ForceDeleteMember(
             [FromForm] Guid id,
             [FromForm] Guid businessId,
-            [FromForm] byte[]? rowVersion,
+            [FromForm] string? rowVersion,
             [FromForm] string? overrideReason,
             CancellationToken ct = default)
         {
@@ -1925,7 +1925,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await _deleteBusinessMember.HandleAsync(new BusinessMemberDeleteDto
                 {
                     Id = id,
-                    RowVersion = rowVersion ?? Array.Empty<byte>(),
+                    RowVersion = DecodeBase64RowVersion(rowVersion),
                     AllowLastOwnerOverride = true,
                     OverrideReason = overrideReason,
                     OverrideActorDisplayName = GetCurrentActorDisplayName()

@@ -41,6 +41,12 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? string.Empty : Convert.ToBase64String(Model.RowVersion))" />
+                <input type="hidden" asp-for="Url" />
+                <input type="hidden" asp-for="OriginalFileName" />
+                <input type="hidden" asp-for="SizeBytes" />
+                <input type="hidden" asp-for="Width" />
+                <input type="hidden" asp-for="Height" />
+                <input type="hidden" asp-for="ModifiedAtUtc" />
 
                 <partial name="_MediaAssetUploadForm" model="Model" />
 

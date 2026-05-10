@@ -601,7 +601,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -609,11 +609,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var dto = new UserDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
+            var dto = new UserDeleteDto { Id = id, RowVersion = DecodeBase64RowVersion(rowVersion) };
             var result = await _softDeleteUser.HandleAsync(dto, ct);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? T(result.Value?.WasDeactivatedDueToReferences == true ? "UserDeactivatedDueToOrderHistoryMessage" : "UserDeletedMessage")
-                : result.Error ?? T("UserDeleteFailedMessage");
+            if (result.Succeeded)
+            {
+                TempData["Success"] = T(result.Value?.WasDeactivatedDueToReferences == true
+                    ? "UserDeactivatedDueToOrderHistoryMessage"
+                    : "UserDeletedMessage");
+            }
+            else
+            {
+                SetErrorMessage("UserDeleteFailedMessage");
+            }
+
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -716,14 +724,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteAddress([FromForm] Guid id, [FromForm] Guid userId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> DeleteAddress([FromForm] Guid id, [FromForm] Guid userId, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty || userId == Guid.Empty)
             {
                 return BadRequest(T("AddressDeleteFailedMessage"));
             }
 
-            var dto = new AddressDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
+            var dto = new AddressDeleteDto { Id = id, RowVersion = DecodeBase64RowVersion(rowVersion) };
             var result = await _softDeleteAddress.HandleAsync(dto, ct);
             if (!result.Succeeded) return BadRequest(T("AddressDeleteFailedMessage"));
 

@@ -46,8 +46,10 @@ namespace Darwin.Infrastructure.Persistence.Db
         private void ApplyAudit()
         {
             var now = (_clock ?? FallbackClock).UtcNow;
+            var providerName = Database.ProviderName;
             var usesClientManagedRowVersion =
-                Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
+                providerName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true ||
+                IsInMemoryProvider();
 
             // Try to obtain the current user id from ICurrentUserService.
             // If the current user service is not available or throws (e.g. when no authenticated user),

@@ -1,7 +1,12 @@
+using Darwin.Application.Abstractions.Notifications;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
 
 namespace Darwin.Tests.Common.TestInfrastructure;
 
@@ -30,11 +35,35 @@ public static class IntegrationTestHostFactory
 
             builder.ConfigureAppConfiguration((context, config) =>
             {
-                // English comments required by your rule
                 config.AddJsonFile("appsettings.Testing.json", optional: true, reloadOnChange: false);
                 config.AddJsonFile("appsettings.Testing.Development.json", optional: true, reloadOnChange: false);
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Email:Provider"] = "SMTP",
+                    ["DataProtection:RequireKeyEncryption"] = "false",
+                    ["DataProtection:KeysPath"] = Path.Combine(Path.GetTempPath(), "Darwin", "IntegrationTests", "DataProtectionKeys")
+                });
                 config.AddEnvironmentVariables();
             });
+
+            builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<IEmailSender>();
+                services.AddSingleton<IEmailSender, NoOpEmailSender>();
+            });
         });
+    }
+
+    private sealed class NoOpEmailSender : IEmailSender
+    {
+        public Task SendAsync(
+            string toEmail,
+            string subject,
+            string htmlBody,
+            CancellationToken ct = default,
+            EmailDispatchContext? context = null)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

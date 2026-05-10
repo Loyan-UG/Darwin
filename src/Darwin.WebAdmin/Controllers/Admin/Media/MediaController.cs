@@ -308,7 +308,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -316,11 +316,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var result = await _softDelete.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
+            var result = await _softDelete.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct).ConfigureAwait(false);
             if (result.Succeeded)
                 SetSuccessMessage("MediaDeleted");
             else
-                TempData["Error"] = result.Error ?? T("MediaAssetNotFound");
+                SetErrorMessage("MediaAssetNotFound");
 
             return RedirectOrHtmx(nameof(Index), new { });
         }
@@ -330,7 +330,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PurgeUnused([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> PurgeUnused([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -346,10 +346,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             }
 
             var localPath = TryResolveLocalUploadPath(dto.Url);
-            var result = await _purgeUnused.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
+            var result = await _purgeUnused.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct).ConfigureAwait(false);
             if (!result.Succeeded)
             {
-                SetErrorMessage(string.IsNullOrWhiteSpace(result.Error) ? "MediaPurgeFailed" : result.Error);
+                SetErrorMessage("MediaPurgeFailed");
                 return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
             }
 
@@ -372,7 +372,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             var result = await _purgeUnused.HandleBatchAsync(ct: ct).ConfigureAwait(false);
             if (!result.Succeeded || result.Value is null)
             {
-                SetErrorMessage(string.IsNullOrWhiteSpace(result.Error) ? "MediaBulkPurgeFailed" : result.Error);
+                SetErrorMessage("MediaBulkPurgeFailed");
                 return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
             }
 

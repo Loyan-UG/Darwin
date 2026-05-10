@@ -252,7 +252,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -260,11 +260,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            var result = await _delete.HandleAsync(id, rowVersion, ct);
+            var result = await _delete.HandleAsync(id, DecodeBase64RowVersion(rowVersion), ct);
             if (result.Succeeded)
                 SetSuccessMessage("RoleDeleted");
             else
-                TempData["Error"] = result.Error ?? T("RoleDeleteFailed");
+                SetErrorMessage("RoleDeleteFailed");
 
             return RedirectOrHtmx(nameof(Index), new { });
         }

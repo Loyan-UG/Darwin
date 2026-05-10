@@ -15,10 +15,11 @@ public sealed class PostgreSqlDesignTimeDbContextFactory : IDesignTimeDbContextF
     {
         var configuration = BuildConfiguration();
         var connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__PostgreSql") ??
-            configuration.GetConnectionString("PostgreSql") ??
-            configuration.GetConnectionString("DefaultConnection") ??
-            "Host=localhost;Port=5432;Database=darwin_dev;Username=darwin;Password=Darwin_Postgres_Dev_123!;Include Error Detail=true";
+            FirstNonWhiteSpace(
+                Environment.GetEnvironmentVariable("ConnectionStrings__PostgreSql"),
+                configuration.GetConnectionString("PostgreSql"),
+                configuration.GetConnectionString("DefaultConnection")) ??
+            "Host=localhost;Port=5432;Database=darwin_dev;Username=darwin;Include Error Detail=true";
 
         var normalizedConnectionString = PostgreSqlConnectionString.Normalize(connectionString);
 
@@ -74,5 +75,18 @@ public sealed class PostgreSqlDesignTimeDbContextFactory : IDesignTimeDbContextF
         }
 
         return builder.Build();
+    }
+
+    private static string? FirstNonWhiteSpace(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
     }
 }

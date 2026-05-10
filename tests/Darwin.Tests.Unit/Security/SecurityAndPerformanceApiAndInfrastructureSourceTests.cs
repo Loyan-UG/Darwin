@@ -737,8 +737,7 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         dependencyInjectionSource.Should().Contain("options.Cookie.Name = \"Darwin.Auth\";");
         dependencyInjectionSource.Should().Contain("options.Cookie.HttpOnly = true;");
         dependencyInjectionSource.Should().Contain("options.Cookie.SameSite = SameSiteMode.Lax;");
-        dependencyInjectionSource.Should().Contain("var cookieSecurePolicy = ResolveCookieSecurePolicy(config);");
-        dependencyInjectionSource.Should().Contain("options.Cookie.SecurePolicy = cookieSecurePolicy;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SecurePolicy = CookieSecurePolicy.Always;");
         dependencyInjectionSource.Should().Contain("options.ExpireTimeSpan = TimeSpan.FromDays(30);");
         dependencyInjectionSource.Should().Contain(".AddControllersWithViews(options =>");
         dependencyInjectionSource.Should().Contain("options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;");
@@ -756,14 +755,15 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
 
 
     [Fact]
-    public void WebAdminDependencyInjection_Should_FallbackCookiePolicyToAlwaysWhenNotConfigured()
+    public void WebAdminDependencyInjection_Should_KeepCookiePolicyStrict()
     {
         var dependencyInjectionSource = ReadWebAdminFile(Path.Combine("Extensions", "DependencyInjection.cs"));
 
-        dependencyInjectionSource.Should().Contain("private static CookieSecurePolicy ResolveCookieSecurePolicy(IConfiguration config)");
-        dependencyInjectionSource.Should().Contain("var configured = config[\"Security:CookieSecurePolicy\"];");
-        dependencyInjectionSource.Should().Contain("Enum.TryParse<CookieSecurePolicy>(configured, ignoreCase: true, out var policy)");
-        dependencyInjectionSource.Should().Contain(": CookieSecurePolicy.Always;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SecurePolicy = CookieSecurePolicy.Always;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.HttpOnly = true;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.SameSite = SameSiteMode.Lax;");
+        dependencyInjectionSource.Should().Contain("options.Cookie.Name = \"Darwin.Auth\";");
+        dependencyInjectionSource.Should().Contain("options.Cookie.Name = \"Darwin.AntiForgery\";");
     }
 
 

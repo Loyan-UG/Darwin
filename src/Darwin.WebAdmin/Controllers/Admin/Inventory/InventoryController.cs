@@ -1056,7 +1056,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 }
                 else
                 {
-                    TempData["Error"] = result.Error ?? T("StockTransferLifecycleUpdateFailedMessage");
+                SetErrorMessage("StockTransferLifecycleUpdateFailedMessage");
                 }
             }
             catch (DbUpdateConcurrencyException)
@@ -1317,7 +1317,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 }
                 else
                 {
-                    TempData["Error"] = result.Error ?? T("PurchaseOrderLifecycleUpdateFailedMessage");
+                SetErrorMessage("PurchaseOrderLifecycleUpdateFailedMessage");
                 }
             }
             catch (DbUpdateConcurrencyException)

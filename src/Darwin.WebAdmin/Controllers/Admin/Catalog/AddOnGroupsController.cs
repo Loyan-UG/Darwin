@@ -343,7 +343,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         // ---------------- Delete (soft) ----------------
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] string? rowVersion, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -353,7 +353,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             try
             {
-                var dto = new AddOnGroupDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
+                var dto = new AddOnGroupDeleteDto { Id = id, RowVersion = DecodeBase64RowVersion(rowVersion) };
                 var result = await _softDelete.HandleAsync(dto, ct);
                 if (!result.Succeeded)
                     SetWarningMessage("AddOnGroupDeleteFailed");

@@ -11,10 +11,11 @@ public sealed class SqlServerDesignTimeDbContextFactory : IDesignTimeDbContextFa
     {
         var configuration = BuildConfiguration();
         var connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__SqlServer") ??
-            Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ??
-            configuration.GetConnectionString("SqlServer") ??
-            configuration.GetConnectionString("DefaultConnection") ??
+            FirstNonWhiteSpace(
+                Environment.GetEnvironmentVariable("ConnectionStrings__SqlServer"),
+                Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection"),
+                configuration.GetConnectionString("SqlServer"),
+                configuration.GetConnectionString("DefaultConnection")) ??
             "Server=(localdb)\\MSSQLLocalDB;Database=Darwin;Trusted_Connection=True;MultipleActiveResultSets=true";
 
         var options = new DbContextOptionsBuilder<DarwinDbContext>()
@@ -65,5 +66,18 @@ public sealed class SqlServerDesignTimeDbContextFactory : IDesignTimeDbContextFa
         }
 
         return builder.Build();
+    }
+
+    private static string? FirstNonWhiteSpace(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
     }
 }

@@ -6,6 +6,8 @@ This is a design document, not a claim that every target aggregate below is alre
 
 Current go-live provider/compliance gaps are tracked in `docs/go-live-status.md`. As of 2026-05-08, Stripe and DHL have strong callback/queue plumbing but still need live provider creation calls; Tax/VAT/E-Invoice has visibility support but still needs a dedicated compliance workflow.
 
+Compliance implementation decisions that are not vendor-specific yet are tracked in `docs/compliance-decisions.md`.
+
 Status terms used below:
 
 - `Completed`
