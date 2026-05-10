@@ -683,7 +683,7 @@ public sealed class WebAdminTestFactory : WebApplicationFactory<Program>
             SmtpFromAddress = "noreply@example.test",
             SmtpFromDisplayName = "Darwin Smoke",
             SmsEnabled = true,
-            SmsProvider = "SmokeSms",
+            SmsProvider = "Twilio",
             SmsFromPhoneE164 = "+4915700000000",
             SmsApiKey = "sms-key",
             SmsApiSecret = "sms-secret",

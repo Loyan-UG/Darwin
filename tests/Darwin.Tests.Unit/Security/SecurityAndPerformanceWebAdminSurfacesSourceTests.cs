@@ -1846,9 +1846,14 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         var supportQueueSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "SupportQueue.cshtml"));
         var readinessSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "MerchantReadiness.cshtml"));
         var setupShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessSetupShell.cshtml"));
+        var onboardingWizardSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "OnboardingWizard.cshtml"));
         var memberShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessMemberEditorShell.cshtml"));
 
         controllerSource.Should().Contain("public async Task<IActionResult> ProvisionSupportCustomer(");
+        controllerSource.Should().Contain("public async Task<IActionResult> OnboardingWizard(Guid id, CancellationToken ct = default)");
+        controllerSource.Should().Contain("return RenderOnboardingWizardWorkspace(BuildOnboardingWizardVm(business));");
+        controllerSource.Should().Contain("private IActionResult RenderOnboardingWizardWorkspace(BusinessOnboardingWizardVm vm)");
+        controllerSource.Should().Contain("private BusinessOnboardingWizardVm BuildOnboardingWizardVm(BusinessEditVm business)");
         controllerSource.Should().Contain("public async Task<IActionResult> SupportQueue(");
         controllerSource.Should().Contain("public async Task<IActionResult> Approve(");
         controllerSource.Should().Contain("public async Task<IActionResult> Suspend(");
@@ -2005,6 +2010,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         setupShellSource.Should().NotContain("@Model.ActiveOwnerCount owner(s), @Model.PrimaryLocationCount primary location(s)");
         setupShellSource.Should().Contain("@BusinessSupportQueueUrl(Model.Id)");
         setupShellSource.Should().Contain("@BusinessMerchantReadinessUrl(Model.Id)");
+        setupShellSource.Should().Contain("string BusinessOnboardingWizardUrl(Guid id) => Url.Action(\"OnboardingWizard\", \"Businesses\", new { id }) ?? string.Empty;");
+        setupShellSource.Should().Contain("hx-get=\"@BusinessOnboardingWizardUrl(Model.Id)\"");
+        setupShellSource.Should().Contain("@T.T(\"BusinessOnboardingWizardTitle\")");
         setupShellSource.Should().Contain("@BusinessInvitationsUrl(Model.Id, Darwin.Application.Businesses.DTOs.BusinessInvitationQueueFilter.Pending)");
         setupShellSource.Should().Contain("bool businessInvitationDefaultsReady = Model.CustomerEmailNotificationsEnabled");
         setupShellSource.Should().Contain("bool businessActivationDefaultsReady = businessTransactionalReady;");
@@ -2031,6 +2039,16 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id, retryBlockedOnly: true)");
         setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id, status: \"Failed\", flowKey: \"AdminCommunicationTest\")");
         setupShellSource.Should().Contain("@EmailAuditsUrl(Model.Id, status: \"Failed\", flowKey: \"AccountActivation\")");
+
+        onboardingWizardSource.Should().Contain("id=\"business-onboarding-wizard-shell\"");
+        onboardingWizardSource.Should().Contain("@T.T(\"BusinessOnboardingWizardTitle\")");
+        onboardingWizardSource.Should().Contain("@T.T(\"BusinessOnboardingWizardRequiredProgress\")");
+        onboardingWizardSource.Should().Contain("hx-target=\"#business-onboarding-wizard-shell\"");
+        onboardingWizardSource.Should().Contain("asp-action=\"ProvisionOnboarding\"");
+        onboardingWizardSource.Should().Contain("@Html.AntiForgeryToken()");
+        onboardingWizardSource.Should().Contain("name=\"rowVersion\" value=\"@Convert.ToBase64String(Model.Business.RowVersion)\"");
+        onboardingWizardSource.Should().Contain("name=\"returnToSetup\" value=\"true\"");
+        onboardingWizardSource.Should().Contain("@T.T(\"FinalizeBusinessOnboarding\")");
 
         memberShellSource.Should().Contain("@T.T(\"BusinessMembersOwnerOverrideAuditAction\")");
         memberShellSource.Should().Contain("@T.T(\"BusinessSupportQueueTitle\")");
@@ -2984,6 +3002,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("return RenderEditor(vm, fragment);");
         source.Should().Contain("public async Task<IActionResult> Edit(SiteSettingVm vm, string? fragment, CancellationToken ct)");
         source.Should().Contain("if (!ModelState.IsValid)");
+        source.Should().Contain("MaskSecretsForRedisplay(vm);");
         source.Should().Contain("var current = await _cache.GetAsync(ct).ConfigureAwait(false);");
         source.Should().Contain("var dto = MapToUpdateDto(vm, current);");
         source.Should().Contain("await _update.HandleAsync(dto, ct);");
@@ -3021,6 +3040,20 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         source.Should().Contain("PhoneVerificationPreferredChannel = vm.PhoneVerificationPreferredChannel,");
         source.Should().Contain("StripeSecretKey = ResolveSecret(vm.StripeSecretKey, current.StripeSecretKey),");
         source.Should().Contain("DhlApiSecret = ResolveSecret(vm.DhlApiSecret, current.DhlApiSecret),");
+        source.Should().Contain("private void MaskSecretsForRedisplay(SiteSettingVm vm)");
+        source.Should().Contain("MaskRequiredSecret(nameof(SiteSettingVm.JwtSigningKey), value => vm.JwtSigningKey = value, vm.JwtSigningKey);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.JwtPreviousSigningKey), value => vm.JwtPreviousSigningKey = value, vm.JwtPreviousSigningKey);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.StripeSecretKey), value => vm.StripeSecretKey = value, vm.StripeSecretKey);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.StripeWebhookSecret), value => vm.StripeWebhookSecret = value, vm.StripeWebhookSecret);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.DhlApiKey), value => vm.DhlApiKey = value, vm.DhlApiKey);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.DhlApiSecret), value => vm.DhlApiSecret = value, vm.DhlApiSecret);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.WhatsAppAccessToken), value => vm.WhatsAppAccessToken = value, vm.WhatsAppAccessToken);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.SmtpPassword), value => vm.SmtpPassword = value, vm.SmtpPassword);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.SmsApiKey), value => vm.SmsApiKey = value, vm.SmsApiKey);");
+        source.Should().Contain("MaskSecret(nameof(SiteSettingVm.SmsApiSecret), value => vm.SmsApiSecret = value, vm.SmsApiSecret);");
+        source.Should().Contain("setValue(string.IsNullOrWhiteSpace(postedValue) ? string.Empty : SecretPlaceholder);");
+        source.Should().Contain("ModelState.Remove(key);");
+        source.Should().Contain("setValue(string.IsNullOrWhiteSpace(postedValue) ? null : SecretPlaceholder);");
     }
 
     [Fact]
@@ -5425,6 +5458,42 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.InvoiceId });");
     }
 
+    [Fact]
+    public void CrmController_Should_KeepEInvoiceArtifactDownloadEndpointSafe()
+    {
+        var source = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "CRM", "CrmController.cs"));
+        var editorSource = ReadWebAdminFile(Path.Combine("Views", "Crm", "_InvoiceEditorShell.cshtml"));
+        var resourcesSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.resx"));
+        var germanResourcesSource = ReadWebAdminFile(Path.Combine("Resources", "SharedResource.de-DE.resx"));
+
+        source.Should().Contain("private readonly GenerateInvoiceEInvoiceArtifactHandler _generateInvoiceEInvoiceArtifact;");
+        source.Should().Contain("public async Task<IActionResult> DownloadInvoiceEInvoiceArtifact(");
+        source.Should().Contain("EInvoiceArtifactFormat format = EInvoiceArtifactFormat.ZugferdFacturX");
+        source.Should().Contain("HandleAsync(id, format, ct)");
+        source.Should().Contain("if (!result.IsGenerated)");
+        source.Should().Contain("SetErrorMessage(GetEInvoiceArtifactErrorMessageKey(result.Status));");
+        source.Should().Contain("return RedirectOrHtmx(nameof(EditInvoice), new { id });");
+        source.Should().Contain("return File(artifact.Content, artifact.ContentType, artifact.FileName);");
+        source.Should().Contain("EInvoiceGenerationStatus.NotConfigured => \"EInvoiceGeneratorNotConfiguredMessage\"");
+        source.Should().Contain("EInvoiceGenerationStatus.SourceSnapshotUnavailable => \"EInvoiceSourceSnapshotUnavailableMessage\"");
+        source.Should().Contain("EInvoiceGenerationStatus.UnsupportedFormat => \"EInvoiceUnsupportedFormatMessage\"");
+        source.Should().Contain("EInvoiceGenerationStatus.ValidationFailed => \"EInvoiceValidationFailedMessage\"");
+
+        editorSource.Should().NotContain("DownloadInvoiceEInvoiceArtifactUrl");
+        editorSource.Should().NotContain("DownloadInvoiceEInvoiceArtifact(");
+
+        resourcesSource.Should().Contain("<data name=\"EInvoiceGeneratorNotConfiguredMessage\"");
+        resourcesSource.Should().Contain("<data name=\"EInvoiceSourceSnapshotUnavailableMessage\"");
+        resourcesSource.Should().Contain("<data name=\"EInvoiceUnsupportedFormatMessage\"");
+        resourcesSource.Should().Contain("<data name=\"EInvoiceValidationFailedMessage\"");
+        resourcesSource.Should().Contain("<data name=\"EInvoiceArtifactUnavailableMessage\"");
+        germanResourcesSource.Should().Contain("<data name=\"EInvoiceGeneratorNotConfiguredMessage\"");
+        germanResourcesSource.Should().Contain("<data name=\"EInvoiceSourceSnapshotUnavailableMessage\"");
+        germanResourcesSource.Should().Contain("<data name=\"EInvoiceUnsupportedFormatMessage\"");
+        germanResourcesSource.Should().Contain("<data name=\"EInvoiceValidationFailedMessage\"");
+        germanResourcesSource.Should().Contain("<data name=\"EInvoiceArtifactUnavailableMessage\"");
+    }
+
 
     [Fact]
     public void CrmController_Should_KeepInvoiceWorkspaceAndRenderHelpersWired()
@@ -6862,6 +6931,9 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("@T.T(\"MarkPaid\")");
         source.Should().Contain("@T.T(\"VoidInvoice\")");
         source.Should().Contain("@T.T(\"Current\"):");
+        source.Should().Contain("string DownloadInvoiceStructuredDataUrl(Guid id) => Url.Action(\"DownloadInvoiceStructuredData\", \"Crm\", new { id }) ?? string.Empty;");
+        source.Should().Contain("href=\"@DownloadInvoiceStructuredDataUrl(Model.Id)\"");
+        source.Should().Contain("@T.T(\"DownloadStructuredInvoiceData\")");
         source.Should().Contain("@T.T(\"InvoiceFollowUpWorkspace\")");
         source.Should().Contain("@T.T(\"InvoiceFollowUpWorkspaceNote\")");
         source.Should().Contain("@T.T(\"OpenCustomer\")");

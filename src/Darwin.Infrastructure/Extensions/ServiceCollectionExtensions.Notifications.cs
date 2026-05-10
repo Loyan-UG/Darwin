@@ -26,8 +26,14 @@ namespace Darwin.Infrastructure.Extensions
         /// <param name="configuration">Application configuration (appsettings).</param>
         public static IServiceCollection AddNotificationsInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<EmailDeliveryOptions>(configuration.GetSection("Email"));
-            services.Configure<SmtpEmailOptions>(configuration.GetSection("Email:Smtp"));
+            services.AddSingleton<IValidateOptions<EmailDeliveryOptions>, EmailDeliveryOptionsValidator>();
+            services.AddOptions<EmailDeliveryOptions>()
+                .Bind(configuration.GetSection("Email"))
+                .ValidateOnStart();
+            services.AddSingleton<IValidateOptions<SmtpEmailOptions>, SmtpEmailOptionsValidator>();
+            services.AddOptions<SmtpEmailOptions>()
+                .Bind(configuration.GetSection("Email:Smtp"))
+                .ValidateOnStart();
             services.AddSingleton<IValidateOptions<BrevoEmailOptions>, BrevoEmailOptionsValidator>();
             services.AddOptions<BrevoEmailOptions>()
                 .Bind(configuration.GetSection("Email:Brevo"))

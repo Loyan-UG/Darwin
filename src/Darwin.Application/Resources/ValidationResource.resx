@@ -105,14 +105,92 @@
   <data name="SiteSettingDefaultVatRatePercentRange" xml:space="preserve">
     <value>DefaultVatRatePercent must be between 0 and 100.</value>
   </data>
+  <data name="SiteSettingStripePublishableKeyRequiredWhenEnabled" xml:space="preserve">
+    <value>Stripe publishable key is required when Stripe is enabled.</value>
+  </data>
+  <data name="SiteSettingStripeSecretKeyRequiredWhenEnabled" xml:space="preserve">
+    <value>Stripe secret key is required when Stripe is enabled.</value>
+  </data>
+  <data name="SiteSettingStripeWebhookSecretRequiredWhenEnabled" xml:space="preserve">
+    <value>Stripe webhook signing secret is required when Stripe is enabled.</value>
+  </data>
   <data name="SiteSettingInvoiceIssuerCountryCode" xml:space="preserve">
     <value>InvoiceIssuerCountry must be a 2-letter uppercase country code.</value>
+  </data>
+  <data name="SiteSettingDhlApiBaseUrlRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL API base URL is required when DHL is enabled.</value>
   </data>
   <data name="SiteSettingDhlApiBaseUrlHttps" xml:space="preserve">
     <value>DhlApiBaseUrl must be an absolute HTTPS URL.</value>
   </data>
+  <data name="SiteSettingDhlApiKeyRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL API key is required when DHL is enabled.</value>
+  </data>
+  <data name="SiteSettingDhlApiSecretRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL API secret is required when DHL is enabled.</value>
+  </data>
+  <data name="SiteSettingDhlAccountNumberRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL account number is required when DHL is enabled.</value>
+  </data>
+  <data name="SiteSettingDhlShipperNameRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL shipper name is required when DHL is enabled.</value>
+  </data>
+  <data name="SiteSettingDhlShipperEmailRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL shipper email is required when DHL is enabled.</value>
+  </data>
+  <data name="SiteSettingDhlShipperStreetRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL shipper street is required when DHL is enabled.</value>
+  </data>
+  <data name="SiteSettingDhlShipperPostalCodeRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL shipper postal code is required when DHL is enabled.</value>
+  </data>
+  <data name="SiteSettingDhlShipperCityRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL shipper city is required when DHL is enabled.</value>
+  </data>
+  <data name="SiteSettingDhlShipperCountryRequiredWhenEnabled" xml:space="preserve">
+    <value>DHL shipper country is required when DHL is enabled.</value>
+  </data>
   <data name="SiteSettingDhlShipperCountryCode" xml:space="preserve">
     <value>DhlShipperCountry must be a 2-letter uppercase country code.</value>
+  </data>
+  <data name="SiteSettingWhatsAppBusinessPhoneIdRequiredWhenEnabled" xml:space="preserve">
+    <value>WhatsApp business phone id is required when WhatsApp is enabled.</value>
+  </data>
+  <data name="SiteSettingWhatsAppAccessTokenRequiredWhenEnabled" xml:space="preserve">
+    <value>WhatsApp access token is required when WhatsApp is enabled.</value>
+  </data>
+  <data name="SiteSettingWhatsAppFromPhoneRequiredWhenEnabled" xml:space="preserve">
+    <value>WhatsApp sender phone number is required when WhatsApp is enabled.</value>
+  </data>
+  <data name="SiteSettingSmtpHostRequiredWhenEnabled" xml:space="preserve">
+    <value>SMTP host is required when SMTP is enabled.</value>
+  </data>
+  <data name="SiteSettingSmtpPortRequiredWhenEnabled" xml:space="preserve">
+    <value>SMTP port is required when SMTP is enabled.</value>
+  </data>
+  <data name="SiteSettingSmtpPasswordRequiredWhenUsernameConfigured" xml:space="preserve">
+    <value>SMTP password is required when SMTP username is configured.</value>
+  </data>
+  <data name="SiteSettingSmtpFromAddressRequiredWhenEnabled" xml:space="preserve">
+    <value>SMTP from address is required when SMTP is enabled.</value>
+  </data>
+  <data name="SiteSettingSmtpFromDisplayNameRequiredWhenEnabled" xml:space="preserve">
+    <value>SMTP from display name is required when SMTP is enabled.</value>
+  </data>
+  <data name="SiteSettingSmsProviderRequiredWhenEnabled" xml:space="preserve">
+    <value>SMS provider is required when SMS is enabled.</value>
+  </data>
+  <data name="SiteSettingSmsProviderUnsupported" xml:space="preserve">
+    <value>Only the Twilio SMS provider is currently implemented.</value>
+  </data>
+  <data name="SiteSettingSmsFromPhoneRequiredWhenEnabled" xml:space="preserve">
+    <value>SMS sender phone number is required when SMS is enabled.</value>
+  </data>
+  <data name="SiteSettingSmsApiKeyRequiredWhenEnabled" xml:space="preserve">
+    <value>SMS API key is required when SMS is enabled.</value>
+  </data>
+  <data name="SiteSettingSmsApiSecretRequiredWhenEnabled" xml:space="preserve">
+    <value>SMS API secret is required when SMS is enabled.</value>
   </data>
   <data name="SiteSettingShipmentAttentionDelayHoursRange" xml:space="preserve">
     <value>ShipmentAttentionDelayHours must be between 1 and 720.</value>

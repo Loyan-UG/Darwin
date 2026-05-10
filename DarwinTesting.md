@@ -78,6 +78,7 @@ Use for business rules and handlers that should run without external dependencie
 - Application handler behavior.
 - Policy resolution and normalization logic.
 - Utility/helper behavior with deterministic inputs.
+- Object-storage contract behavior such as provider-neutral key normalization, traversal rejection, archive key prefixes, hash/retention metadata boundaries, and provider capability reporting.
 
 ### 3.2 Contracts lane (`Darwin.Contracts.Tests`)
 
@@ -239,6 +240,89 @@ Latest known-good signal for the recently expanded Webhook/reader/writer tests i
 `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ShipmentCarrierEventHandlerTests"`  
   - 100 passed (as of 2026-05-08 after adding delivered exception-field merge-on-duplicate dedupe coverage)
 
+Provider smoke harness source-contract coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_StayGuardedAndAvoidSecretOutput" --no-restore /p:UseSharedCompilation=false`
+- 1 passed, 0 skipped
+- This guards the Stripe, DHL, VIES, Brevo, go-live readiness smoke scripts, and `docs/external-smoke-inputs.md` so external calls stay opt-in behind `-Execute`, known secret patterns are not committed, and raw provider response payloads are not printed.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1` was dry-run locally on 2026-05-10. It reported the secret scan as ready, external Stripe, DHL, Brevo, and VIES smoke prerequisites as blocked by missing account/deployment inputs, and archive/e-invoice provider decisions as blocked until selected.
+- `scripts\smoke-stripe-testmode.ps1 -Execute -CheckReturnRoute` passed locally on 2026-05-10 against an isolated WebApi instance after test Stripe settings were entered. It created a Stripe-hosted Checkout Session and confirmed the storefront return route left the payment `Pending`; hosted checkout payment and verified webhook processing remain pending.
+
+Go-live readiness dry-run behavior coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GoLiveReadinessScript_Should_RunDryRunAndAvoidSecretOutput" --no-restore /p:UseSharedCompilation=false`
+- 1 passed, 0 skipped
+- This executes `scripts/check-go-live-readiness.ps1` in dry-run mode, accepts ready or blocked prerequisites, verifies the expected provider prerequisite sections are reported, and guards against printing Stripe/Brevo/DHL/VIES secret patterns.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GoLiveReadinessScript_Should_ReportProviderReadyAndKeepOpenDecisionsBlocked" --no-restore /p:UseSharedCompilation=false`
+- 1 passed, 0 skipped
+- This executes the same readiness aggregator with fake non-secret provider prerequisites present and verifies Stripe, DHL, Brevo, and VIES report `Ready` while the archive object-storage and e-invoice tooling deployment decisions remain `Blocked`.
+
+Provider smoke script dry-run behavior coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing" --no-restore /p:UseSharedCompilation=false`
+- 4 passed, 0 skipped
+- This executes the Stripe, DHL, Brevo, and VIES smoke scripts with `DARWIN_*` inputs cleared in the child process and verifies each one blocks with exit code `2`, reports missing prerequisites, and avoids printing provider secret patterns.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_ReportReadyDryRunWithoutExecutingExternalCalls" --no-restore /p:UseSharedCompilation=false`
+- 4 passed, 0 skipped
+- This executes the same scripts with fake non-secret prerequisite values and no `-Execute` flag, verifies exit code `0`, and confirms the scripts only report readiness for an explicit operator-run execution instead of making external calls.
+
+Repository documentation and operational script source-contract coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~RepositoryDocsAndOperationalScripts_Should_AvoidAssistantMentionsAndCommittedSecretPatterns" --no-restore /p:UseSharedCompilation=false`
+- 1 passed, 0 skipped
+- This guards docs and operational scripts against assistant-tooling mentions and committed provider secret patterns.
+
+Invoice archive storage boundary source-contract coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~InvoiceArchiveStorage_Should_KeepInternalFallbackBoundaryAndAvoidImplicitProviderChoice" --no-restore /p:UseSharedCompilation=false`
+- 1 passed, 0 skipped
+- This guards the current `IInvoiceArchiveStorage` boundary, named provider router, internal/database fallback registration, retention/hash metadata, `docs/archive-storage-provider-decision.md`, and the rule that Azure/S3/MinIO or another object-storage implementation is not chosen implicitly in the Application layer.
+
+Invoice archive storage behavior coverage was refreshed on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~DatabaseInvoiceArchiveStorage" --no-restore /p:UseSharedCompilation=false`
+- 5 passed, 0 skipped
+- This covers internal/database fallback save/read/exists, exact SHA-256 hash metadata, retention policy metadata from `SiteSetting.InvoiceArchiveRetentionYears`, purge audit metadata, mismatched invoice id rejection, and empty payload rejection.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~InvoiceArchiveStorageRouterTests" --no-restore /p:UseSharedCompilation=false`
+- 2 passed, 0 skipped
+- This covers named storage-provider routing to the internal/database fallback and explicit failure when a selected future provider is not registered.
+
+E-invoice planning source-contract coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~EInvoiceDocs_Should_KeepPlanningStatusAndAvoidFalseComplianceClaims" --no-restore /p:UseSharedCompilation=false`
+- 1 passed, 0 skipped
+- This guards the current planning status for ZUGFeRD/Factur-X, XRechnung, PDF/A-3 plus embedded XML, `docs/e-invoice-tooling-decision.md`, and prevents documentation from claiming full e-invoice compliance before generation and validation are implemented.
+
+Structured invoice source-model coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~GetInvoiceStructuredDataExport" /p:UseSharedCompilation=false /m:1 /nr:false`
+- 2 passed, 0 skipped
+- This proves issued invoice snapshots can be mapped to a downloadable structured JSON source model with document, seller, buyer, business, line, tax-summary, and total sections, while keeping the artifact explicitly marked as not ZUGFeRD/Factur-X compliant.
+
+E-invoice generation boundary coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EInvoiceGenerationServiceTests" /p:UseSharedCompilation=false /m:1 /nr:false`
+- 3 passed, 0 skipped
+- This proves the default `IEInvoiceGenerationService` registration is provider-neutral and `NotConfigured`, rejects unknown formats, and does not generate fake legal e-invoice artifacts before tooling is selected.
+
+E-invoice artifact handler coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~GenerateInvoiceEInvoiceArtifactHandlerTests" /p:UseSharedCompilation=false /m:1 /nr:false`
+- 4 passed, 0 skipped
+- This proves the artifact generation handler requires an available issued invoice snapshot, does not call the generator for missing/purged source data, passes valid requests to the configured generator, and rejects generated artifacts whose invoice id or required metadata do not match the request.
+
+WebAdmin e-invoice artifact endpoint source-contract coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~CrmController_Should_KeepEInvoiceArtifactDownloadEndpointSafe|FullyQualifiedName~GenerateInvoiceEInvoiceArtifactHandlerTests" /p:UseSharedCompilation=false /m:1 /nr:false`
+- 5 passed, 0 skipped
+- This proves the CRM controller download endpoint is wired to the generation handler, returns files only when generation succeeds, uses localized failure messages, and does not expose a misleading invoice-editor button while the default generator remains not configured.
+
+DHL RMA/returns source-contract coverage was added on 2026-05-10:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~DhlReturnsRmaDocsAndClient_Should_KeepCarrierAutomationPendingAndAvoidFakeLabels" --no-restore /p:UseSharedCompilation=false`
+- 1 passed, 0 skipped
+- This guards the current boundary: DHL shipment creation and label retrieval are implemented, but carrier-integrated RMA automation remains pending and the DHL client must not generate fake labels, references, or tracking URLs.
+
 `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ApplyShipmentCarrierEvent_Should"`  
   - 36 passed (including required max-length and optional-field boundary validation coverage)
 
@@ -396,8 +480,9 @@ Current direction for stronger confidence:
 
 ### Current local verification notes
 
-- `Darwin.WebAdmin.Tests` compiles locally with an isolated output path. The WebAdmin security, public/auth smoke (`27` passed), render smoke (`105` passed), tokenless CSRF (`115` passed), valid-token CSRF (`8` passed), and positive mutation (`1` passed) subsets pass locally when run as split lanes. The positive mutation smoke was re-run on 2026-05-10 after adding hosted stock reserve/release/return receipt, stock-transfer lifecycle, purchase-order lifecycle, and row-version delete-post hardening coverage. The tokenless CSRF matrix is slow locally (about 4 minutes), so it remains a separate CI job.
+- `Darwin.WebAdmin.Tests` compiles locally with an isolated output path. The WebAdmin security, public/auth smoke (`27` passed), render smoke (`105` passed), tokenless CSRF (`115` passed), valid-token CSRF (`8` passed), and positive mutation (`1` passed) subsets pass locally when run as split lanes. The focused render smoke including the admin-assisted onboarding wizard passed locally on 2026-05-10 with `45` passed and `0` skipped. The positive mutation smoke was re-run on 2026-05-10 after adding hosted stock reserve/release/return receipt, stock-transfer lifecycle, purchase-order lifecycle, and row-version delete-post hardening coverage. The tokenless CSRF matrix is slow locally (about 4 minutes), so it remains a separate CI job.
 - The focused WebApi provider-callback run passed again on 2026-05-10 with `280` passed and `0` skipped when built into isolated artifacts. Two provider-callback worker assertions had their short local waits lengthened so the first background-service iteration can complete consistently.
+- The focused WebApi Stripe webhook/provider-callback run passed on 2026-05-10 with `191` passed and `0` skipped when built into isolated artifacts to avoid default `Darwin.WebApi` output locks from a running local WebApi process.
 - The focused unit run for Shipment/Stripe/Billing/Communication/Inventory/Tax/SignIn source-contract and handler coverage now passes 602 of 602 tests after realigning dashboard, communication-provider, billing, DHL, inventory, JWT, and support-queue contracts with the current implementation.
 
 ---
@@ -576,7 +661,7 @@ The all-source `SecurityAndPerformance` filter is now clean after converting the
 dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~SecurityAndPerformance" /p:UseSharedCompilation=false /p:OutputPath=E:\_Projects\Darwin\artifacts\verify\UnitTests\
 ```
 
-Latest local result: `599` passed, `0` skipped, `599` total.
+Latest local result: `615` passed, `0` skipped, `615` total on 2026-05-10 after adding go-live readiness and provider smoke dry-run behavior coverage.
 
 ## 2026-05-10 WebAdmin Inventory/Returns Hosted Smoke
 
@@ -615,6 +700,18 @@ dotnet test tests\Darwin.WebApi.Tests\Darwin.WebApi.Tests.csproj --filter "Fully
 ```
 
 Latest local result: `7` passed, `0` skipped, `7` total.
+
+The VIES retry batch is covered in `CustomerLeadHandlerTests`. It retries only provider-generated `Unknown` VAT validation results after the configured minimum age, leaves operator/manual decisions untouched, and preserves `Unknown` plus source/message when the provider still fails:
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~RetryUnknownCustomerVatValidationBatchHandler" /p:UseSharedCompilation=false
+```
+
+The invoice archive storage router and file-system provider are covered by focused unit tests. The file-system provider writes deterministic file names under the configured root, keeps the current database snapshot for compatibility, reads through the storage boundary, purges the file plus payload metadata without exposing raw paths, and is selected through `AddApplication(configuration)` from `InvoiceArchiveStorage` settings. The same coverage also proves the default internal provider does not require a file-system root, while an explicitly selected file-system provider fails with a clear configuration error when the root is missing:
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~FileSystemInvoiceArchiveStorageTests|FullyQualifiedName~InvoiceArchiveStorageRouterTests" /p:UseSharedCompilation=false
+```
 
 The order-cancel hosted smoke posts an order status change to `Cancelled` through the real WebAdmin details form with a selected warehouse and verifies that reserved stock is released exactly once:
 

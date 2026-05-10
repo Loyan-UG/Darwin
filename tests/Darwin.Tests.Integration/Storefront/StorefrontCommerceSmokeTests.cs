@@ -117,7 +117,7 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
 
     /// <summary>
     ///     Verifies that the seeded storefront supports the main anonymous commerce
-    ///     path from cart mutation through payment completion and confirmation.
+    ///     path from cart mutation through payment handoff, return validation, and confirmation.
     /// </summary>
     [Fact]
     public async Task AnonymousStorefrontFlow_Should_SupportCartCheckoutPaymentAndConfirmation()
@@ -231,8 +231,8 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
         var completedPayment = await completePaymentResponse.Content.ReadFromJsonAsync<CompleteStorefrontPaymentResponse>(
             cancellationToken: TestContext.Current.CancellationToken);
         completedPayment.Should().NotBeNull();
-        completedPayment!.OrderStatus.Should().Be("Paid");
-        completedPayment.PaymentStatus.Should().Be("Captured");
+        completedPayment!.OrderStatus.Should().Be("Created");
+        completedPayment.PaymentStatus.Should().Be("Pending");
 
         var confirmation = await client.GetFromJsonAsync<StorefrontOrderConfirmationResponse>(
             $"/api/v1/public/checkout/orders/{placedOrder.OrderId:D}/confirmation?orderNumber={Uri.EscapeDataString(placedOrder.OrderNumber)}",
@@ -242,7 +242,7 @@ public sealed class StorefrontCommerceSmokeTests : DeterministicIntegrationTestB
         confirmation!.OrderId.Should().Be(placedOrder.OrderId);
         confirmation.OrderNumber.Should().Be(placedOrder.OrderNumber);
         confirmation.Lines.Should().NotBeEmpty();
-        confirmation.Payments.Should().Contain(payment => payment.Id == paymentIntent.PaymentId && payment.Status == "Captured");
+        confirmation.Payments.Should().Contain(payment => payment.Id == paymentIntent.PaymentId && payment.Status == "Pending");
     }
 
     private static CheckoutAddress CreateCheckoutAddress() => new()

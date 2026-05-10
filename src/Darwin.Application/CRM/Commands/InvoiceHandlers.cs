@@ -565,6 +565,90 @@ namespace Darwin.Application.CRM.Commands
         }
     }
 
+    public sealed class GenerateInvoiceEInvoiceArtifactHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IEInvoiceGenerationService _generator;
+
+        public GenerateInvoiceEInvoiceArtifactHandler(
+            IAppDbContext db,
+            IEInvoiceGenerationService generator)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _generator = generator ?? throw new ArgumentNullException(nameof(generator));
+        }
+
+        public async Task<EInvoiceGenerationResult> HandleAsync(
+            Guid invoiceId,
+            EInvoiceArtifactFormat format,
+            CancellationToken ct = default)
+        {
+            if (invoiceId == Guid.Empty)
+            {
+                return new EInvoiceGenerationResult(
+                    EInvoiceGenerationStatus.InvoiceUnavailable,
+                    "Invoice id is required.");
+            }
+
+            if (!Enum.IsDefined(format))
+            {
+                return new EInvoiceGenerationResult(
+                    EInvoiceGenerationStatus.UnsupportedFormat,
+                    "The requested e-invoice format is not supported.");
+            }
+
+            var invoice = await _db.Set<Invoice>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == invoiceId && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (invoice is null)
+            {
+                return new EInvoiceGenerationResult(
+                    EInvoiceGenerationStatus.InvoiceUnavailable,
+                    "Invoice was not found.");
+            }
+
+            if (invoice.ArchivePurgedAtUtc.HasValue || string.IsNullOrWhiteSpace(invoice.IssuedSnapshotJson))
+            {
+                return new EInvoiceGenerationResult(
+                    EInvoiceGenerationStatus.SourceSnapshotUnavailable,
+                    "Issued invoice snapshot is required before generating an e-invoice artifact.");
+            }
+
+            var result = await _generator.GenerateAsync(
+                    invoice,
+                    new EInvoiceGenerationRequest(format),
+                    ct)
+                .ConfigureAwait(false);
+
+            ValidateGeneratedArtifact(invoiceId, result);
+            return result;
+        }
+
+        private static void ValidateGeneratedArtifact(Guid invoiceId, EInvoiceGenerationResult result)
+        {
+            if (!result.IsGenerated)
+            {
+                return;
+            }
+
+            var artifact = result.Artifact!;
+            if (artifact.InvoiceId != invoiceId)
+            {
+                throw new InvalidOperationException("Generated e-invoice artifact invoice id does not match the requested invoice.");
+            }
+
+            if (artifact.Content.Length == 0 ||
+                string.IsNullOrWhiteSpace(artifact.ContentType) ||
+                string.IsNullOrWhiteSpace(artifact.FileName) ||
+                string.IsNullOrWhiteSpace(artifact.ValidationProfile))
+            {
+                throw new InvalidOperationException("Generated e-invoice artifact metadata is incomplete.");
+            }
+        }
+    }
+
     internal static class InvoiceIssueReadinessGuard
     {
         public static async Task ValidateAsync(

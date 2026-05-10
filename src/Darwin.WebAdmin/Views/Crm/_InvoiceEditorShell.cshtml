@@ -14,6 +14,7 @@
     string PaymentsUrl(PaymentQueueFilter? queue = null) => Url.Action("Payments", "Billing", new { queue }) ?? string.Empty;
     string DownloadInvoiceArchiveSnapshotUrl(Guid id) => Url.Action("DownloadInvoiceArchiveSnapshot", "Crm", new { id }) ?? string.Empty;
     string DownloadInvoiceArchiveDocumentUrl(Guid id) => Url.Action("DownloadInvoiceArchiveDocument", "Crm", new { id }) ?? string.Empty;
+    string DownloadInvoiceStructuredDataUrl(Guid id) => Url.Action("DownloadInvoiceStructuredData", "Crm", new { id }) ?? string.Empty;
     string LocalizeCrmInvoiceStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
     string LocalizeCustomerTaxProfileType(object? taxProfileType) => taxProfileType is null ? "-" : T.T(taxProfileType.ToString() ?? string.Empty);
     var invoiceStatusOptions = Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>().Select(option => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = option.Value, Text = T.T(option.Text) });
@@ -316,6 +317,10 @@
                         <a class="btn btn-outline-primary btn-sm"
                            href="@DownloadInvoiceArchiveSnapshotUrl(Model.Id)">
                             <i class="fa fa-download"></i> @T.T("DownloadArchiveSnapshot")
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="@DownloadInvoiceStructuredDataUrl(Model.Id)">
+                            <i class="fa fa-file-code"></i> @T.T("DownloadStructuredInvoiceData")
                         </a>
                     }
                 </div>

@@ -16,4 +16,5 @@ public sealed class BrevoEmailOptions
     public bool SandboxMode { get; set; }
     public int TimeoutSeconds { get; set; } = 30;
     public string[] DefaultTags { get; set; } = ["darwin", "transactional"];
+    public Dictionary<string, int> TemplateIds { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }

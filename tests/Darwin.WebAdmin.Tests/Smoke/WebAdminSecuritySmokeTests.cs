@@ -434,6 +434,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     [Theory]
     [InlineData("/Businesses/Edit?id=44444444-4444-4444-4444-444444444444")]
     [InlineData("/Businesses/Setup?id=44444444-4444-4444-4444-444444444444")]
+    [InlineData("/Businesses/OnboardingWizard?id=44444444-4444-4444-4444-444444444444")]
     [InlineData("/Businesses/SupportQueue?businessId=44444444-4444-4444-4444-444444444444")]
     [InlineData("/Businesses/MerchantReadiness?businessId=44444444-4444-4444-4444-444444444444")]
     [InlineData("/Businesses/Locations?businessId=44444444-4444-4444-4444-444444444444")]
@@ -474,6 +475,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     [InlineData("/Billing/JournalEntries")]
     [InlineData("/Billing/Plans")]
     [InlineData("/Businesses")]
+    [InlineData("/Businesses/OnboardingWizard?id=44444444-4444-4444-4444-444444444444")]
     [InlineData("/Businesses/SupportQueue?businessId=44444444-4444-4444-4444-444444444444")]
     [InlineData("/BusinessCommunications")]
     [InlineData("/BusinessCommunications/Details?businessId=44444444-4444-4444-4444-444444444444")]
@@ -501,6 +503,37 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         html.Should().NotContain("<!DOCTYPE html>");
+        html.Should().NotContain("/js/admin-core.js");
+        html.Should().NotContain("https://cdn.jsdelivr.net");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("default-src 'self'");
+        response.Headers.TryGetValues("X-Content-Type-Options", out var contentTypeOptions).Should().BeTrue();
+        contentTypeOptions!.Single().Should().Be("nosniff");
+    }
+
+    [Fact]
+    public async Task AuthenticatedBusinessOnboardingWizard_ShouldRenderCompactChecklistAgainstTestDatabaseContext()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        using var response = await SendHtmxGetAsync(
+            client,
+            "/Businesses/OnboardingWizard?id=44444444-4444-4444-4444-444444444444");
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        html.Should().NotContain("<!DOCTYPE html>");
+        html.Should().Contain("id=\"business-onboarding-wizard-shell\"");
+        html.Should().MatchRegex("Onboarding[- ](Wizard|Assistent)");
+        html.Should().Contain("WebAdmin Smoke Business");
+        html.Should().Contain("hx-target=\"#business-onboarding-wizard-shell\"");
+        html.Should().Contain("/Businesses/Edit");
+        html.Should().Contain("/Businesses/Members");
+        html.Should().Contain("/Businesses/Locations");
+        html.Should().Contain("/BusinessCommunications/Details");
+        html.Should().Contain("/Businesses/MerchantReadiness");
+        html.Should().Contain("/Businesses/Setup");
+        html.Should().Contain("/Businesses/SupportQueue");
         html.Should().NotContain("/js/admin-core.js");
         html.Should().NotContain("https://cdn.jsdelivr.net");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
@@ -2323,7 +2356,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             ["SmtpFromAddress"] = "noreply@example.test",
             ["SmtpFromDisplayName"] = "Darwin Smoke",
             ["SmsEnabled"] = "true",
-            ["SmsProvider"] = "SmokeSms",
+            ["SmsProvider"] = "Twilio",
             ["SmsFromPhoneE164"] = "+4915700000000",
             ["SmsApiKey"] = "sms-key",
             ["SmsApiSecret"] = "sms-secret",

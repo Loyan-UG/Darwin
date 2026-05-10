@@ -633,6 +633,29 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> OnboardingWizard(Guid id, CancellationToken ct = default)
+        {
+            if (id == Guid.Empty)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
+            var dto = await _getBusinessForEdit.HandleAsync(id, ct);
+            if (dto is null)
+            {
+                SetErrorMessage("BusinessNotFound");
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
+            var business = MapBusinessEditVm(dto);
+            await PopulateBusinessFormOptionsAsync(business, ct);
+
+            return RenderOnboardingWizardWorkspace(BuildOnboardingWizardVm(business));
+        }
+
+        [HttpGet]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> Subscription(Guid businessId, CancellationToken ct = default)
         {
@@ -2442,6 +2465,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return View("MerchantReadiness", vm);
         }
 
+        private IActionResult RenderOnboardingWizardWorkspace(BusinessOnboardingWizardVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("OnboardingWizard", vm);
+            }
+
+            return View("OnboardingWizard", vm);
+        }
+
         private IActionResult RenderLocationsWorkspace(BusinessLocationsListVm vm)
         {
             if (IsHtmxRequest())
@@ -3037,6 +3070,66 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 HasPdfUrl = dto.HasPdfUrl,
                 IsStripe = dto.IsStripe,
                 IsOverdue = dto.IsOverdue
+            };
+        }
+
+        private BusinessOnboardingWizardVm BuildOnboardingWizardVm(BusinessEditVm business)
+        {
+            var profileComplete = !string.IsNullOrWhiteSpace(business.Name)
+                && !string.IsNullOrWhiteSpace(business.LegalName)
+                && !string.IsNullOrWhiteSpace(business.ContactEmail);
+            var ownerComplete = business.ActiveOwnerCount > 0;
+            var locationComplete = business.PrimaryLocationCount > 0;
+            var commercialComplete = business.Subscription.HasSubscription;
+            var communicationComplete = business.CustomerEmailNotificationsEnabled
+                && business.CommunicationReadiness.EmailTransportConfigured
+                && !string.IsNullOrWhiteSpace(business.SupportEmail)
+                && !string.IsNullOrWhiteSpace(business.CommunicationSenderName)
+                && !string.IsNullOrWhiteSpace(business.CommunicationReplyToEmail);
+            var storefrontComplete = business.OperationalStatus == BusinessOperationalStatus.Approved && business.IsActive;
+            var requiredPrerequisitesComplete = profileComplete && ownerComplete && locationComplete;
+
+            var steps = new List<BusinessOnboardingWizardStepVm>
+            {
+                BuildWizardStep(1, "BusinessOnboardingWizardStepBusinessProfile", profileComplete, true, profileComplete ? "BusinessOnboardingWizardBusinessProfileComplete" : "BusinessOnboardingWizardBusinessProfileMissing", "EditBusiness", Url.Action("Edit", "Businesses", new { id = business.Id })),
+                BuildWizardStep(2, "BusinessOnboardingWizardStepCommercialPlan", commercialComplete, false, commercialComplete ? "BusinessOnboardingWizardCommercialPlanComplete" : "BusinessOnboardingWizardCommercialPlanMissing", "Subscription", Url.Action("Subscription", "Businesses", new { businessId = business.Id })),
+                BuildWizardStep(3, "BusinessOnboardingWizardStepOwnerStaff", ownerComplete, true, ownerComplete ? "BusinessOnboardingWizardOwnerStaffComplete" : "BusinessOnboardingWizardOwnerStaffMissing", "Members", Url.Action("Members", "Businesses", new { businessId = business.Id, filter = BusinessMemberSupportFilter.Attention })),
+                BuildWizardStep(4, "BusinessOnboardingWizardStepLocations", locationComplete, true, locationComplete ? "BusinessOnboardingWizardLocationsComplete" : "BusinessOnboardingWizardLocationsMissing", "Locations", Url.Action("Locations", "Businesses", new { businessId = business.Id })),
+                BuildWizardStep(5, "BusinessOnboardingWizardStepLoyalty", false, false, "BusinessOnboardingWizardLoyaltySummary", "Loyalty", Url.Action("Programs", "Loyalty", new { businessId = business.Id })),
+                BuildWizardStep(6, "BusinessOnboardingWizardStepCommunication", communicationComplete, false, communicationComplete ? "BusinessOnboardingWizardCommunicationComplete" : "BusinessOnboardingWizardCommunicationMissing", "BusinessCommunicationProfileTitle", Url.Action("Details", "BusinessCommunications", new { businessId = business.Id })),
+                BuildWizardStep(7, "BusinessOnboardingWizardStepStorefrontVisibility", storefrontComplete, false, storefrontComplete ? "BusinessOnboardingWizardStorefrontComplete" : "BusinessOnboardingWizardStorefrontMissing", "MerchantReadinessTitle", Url.Action("MerchantReadiness", "Businesses", new { businessId = business.Id })),
+                BuildWizardStep(8, "BusinessOnboardingWizardStepReviewActivate", requiredPrerequisitesComplete && storefrontComplete, true, requiredPrerequisitesComplete ? "BusinessOnboardingWizardReviewReady" : "FinalizeBusinessOnboardingBlocked", "FinalizeBusinessOnboarding", Url.Action("OnboardingWizard", "Businesses", new { id = business.Id }))
+            };
+
+            return new BusinessOnboardingWizardVm
+            {
+                Business = business,
+                Steps = steps,
+                RequiredStepCount = steps.Count(x => x.IsRequired),
+                CompletedRequiredStepCount = steps.Count(x => x.IsRequired && x.IsComplete),
+                CanFinalize = requiredPrerequisitesComplete &&
+                    (business.OperationalStatus != BusinessOperationalStatus.Approved || !business.IsActive)
+            };
+        }
+
+        private BusinessOnboardingWizardStepVm BuildWizardStep(
+            int number,
+            string titleKey,
+            bool isComplete,
+            bool isRequired,
+            string summaryKey,
+            string actionLabelKey,
+            string? actionUrl)
+        {
+            return new BusinessOnboardingWizardStepVm
+            {
+                Number = number,
+                Title = T(titleKey),
+                Summary = T(summaryKey),
+                IsComplete = isComplete,
+                IsRequired = isRequired,
+                ActionLabel = T(actionLabelKey),
+                ActionUrl = actionUrl ?? string.Empty
             };
         }
 

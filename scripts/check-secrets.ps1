@@ -42,7 +42,7 @@ try {
         Where-Object {
             $extension = [System.IO.Path]::GetExtension($_)
             $fileName = [System.IO.Path]::GetFileName($_)
-            $_ -notmatch '(^|/)(bin|obj|node_modules|artifacts|\.codex-runtime|\.codex-build|\.codex-obj|\.vs|TestResults)(/|$)' -and
+            $_ -notmatch '(^|/)(bin|obj|node_modules|artifacts|\.[^.\/]+-(runtime|build|obj)|\.vs|TestResults)(/|$)' -and
             $_ -notmatch '(^|/)\.dotnet(-runtime)?(/|$)' -and
             $_ -notmatch '(^|/)_shared_keys(/|$)' -and
             $_ -notmatch '(^|/)scripts/' -and

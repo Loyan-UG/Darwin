@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FluentAssertions;
@@ -23,9 +24,11 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         compositionSource.Should().Contain("AddAuthentication");
         compositionSource.Should().Contain("AddAuthorization");
         compositionSource.Should().Contain("AddControllers");
+        compositionSource.Should().Contain("services.AddApplication(configuration);");
         compositionSource.Should().Contain("AddConfiguredPersistence");
         compositionSource.Should().Contain("AddSharedHostingDataProtection");
         compositionSource.Should().Contain("AddNotificationsInfrastructure");
+        compositionSource.Should().Contain("AddShippingProviderInfrastructure");
         compositionSource.Should().Contain("AddComplianceInfrastructure");
 
         startupSource.Should().Contain("UseAuthentication");
@@ -224,6 +227,603 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .Contain("Npgsql.EntityFrameworkCore.PostgreSQL");
         webApiProjectSource.Should().Contain("Microsoft.AspNetCore.OpenApi");
         webAdminProjectSource.Should().Contain("Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation");
+    }
+
+    [Fact]
+    public void ProviderSmokeScripts_Should_StayGuardedAndAvoidSecretOutput()
+    {
+        var externalSmokeInputsSource = ReadRepositoryFile(Path.Combine("docs", "external-smoke-inputs.md"));
+        var scripts = new[]
+        {
+            "smoke-stripe-testmode.ps1",
+            "smoke-dhl-live.ps1",
+            "smoke-vies-live.ps1",
+            "smoke-brevo-readiness.ps1",
+            "check-go-live-readiness.ps1"
+        };
+
+        foreach (var script in scripts)
+        {
+            var source = ReadRepositoryFile(Path.Combine("scripts", script));
+
+            source.Should().NotContain("sk_live_");
+            source.Should().NotContain("sk_test_");
+            source.Should().NotContain("rk_live_");
+            source.Should().NotContain("rk_test_");
+            source.Should().NotContain("whsec_");
+            source.Should().NotContain("Write-Host $response");
+            source.Should().NotContain("Write-Host $json");
+        }
+
+        foreach (var script in scripts.Where(script => script.StartsWith("smoke-", StringComparison.Ordinal)))
+        {
+            var source = ReadRepositoryFile(Path.Combine("scripts", script));
+
+            source.Should().Contain("[switch]$Execute");
+            source.Should().Contain("if (-not $Execute)");
+            source.Should().Contain("exit 2");
+        }
+
+        ReadRepositoryFile(Path.Combine("scripts", "check-go-live-readiness.ps1"))
+            .Should()
+            .Contain("ExpectedBlockedExitCode = 2")
+            .And.Contain("Blocked go-live prerequisites")
+            .And.Contain("scripts\\check-secrets.ps1")
+            .And.Contain("scripts\\smoke-stripe-testmode.ps1")
+            .And.Contain("\"-CreateSmokeOrder\"")
+            .And.Contain("scripts\\smoke-dhl-live.ps1")
+            .And.Contain("scripts\\smoke-brevo-readiness.ps1")
+            .And.Contain("scripts\\smoke-vies-live.ps1")
+            .And.Contain("docs\\archive-storage-provider-decision.md")
+            .And.Contain("docs\\e-invoice-tooling-decision.md")
+            .And.Contain("No option is selected yet\\.")
+            .And.Contain("No library or tooling is selected yet\\.");
+
+        externalSmokeInputsSource.Should().Contain("Do not store real secret values");
+        externalSmokeInputsSource.Should().Contain("scripts\\check-go-live-readiness.ps1");
+        externalSmokeInputsSource.Should().Contain("DARWIN_WEBAPI_BASE_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_DHL_API_BASE_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_BREVO_API_KEY");
+        externalSmokeInputsSource.Should().Contain("DARWIN_VIES_VALID_VAT_ID");
+        externalSmokeInputsSource.Should().Contain("Provider failures must remain `Unknown`");
+        externalSmokeInputsSource.Should().NotContain("sk_live_");
+        externalSmokeInputsSource.Should().NotContain("sk_test_");
+        externalSmokeInputsSource.Should().NotContain("rk_live_");
+        externalSmokeInputsSource.Should().NotContain("rk_test_");
+        externalSmokeInputsSource.Should().NotContain("whsec_");
+
+        ReadRepositoryFile(Path.Combine("scripts", "smoke-stripe-testmode.ps1"))
+            .Should()
+            .NotContain("DARWIN_STRIPE_SECRET")
+            .And.NotContain("Write-Host $intent.checkoutUrl")
+            .And.NotContain("Write-Host $checkoutUri")
+            .And.Contain("[switch]$CreateSmokeOrder")
+            .And.Contain("function New-StripeSmokeOrder")
+            .And.Contain("[switch]$OpenCheckout")
+            .And.Contain("[switch]$WaitForWebhookFinalization")
+            .And.Contain("WebhookWaitSeconds")
+            .And.Contain("Creating a public storefront smoke order before Stripe handoff.")
+            .And.Contain("Start-Process -FilePath $checkoutUri.AbsoluteUri | Out-Null")
+            .And.Contain("The checkout URL and provider references were not printed.")
+            .And.Contain("Provider references will not be printed.")
+            .And.Contain("Verified Stripe webhook finalization reached payment status")
+            .And.Contain("Stripe test keys and webhook signing secret must be entered through Settings or secure configuration, not this script.");
+
+        ReadRepositoryFile(Path.Combine("scripts", "smoke-dhl-live.ps1"))
+            .Should()
+            .Contain("No secrets or response payloads will be printed.")
+            .And.Contain("DARWIN_DHL_API_BASE_URL must be an absolute URL.")
+            .And.Contain("DARWIN_DHL_API_BASE_URL must use HTTPS for non-local endpoints.");
+
+        ReadRepositoryFile(Path.Combine("scripts", "smoke-brevo-readiness.ps1"))
+            .Should()
+            .Contain("No secrets or response payloads will be printed.")
+            .And.Contain("DARWIN_BREVO_BASE_URL must be an absolute URL.")
+            .And.Contain("DARWIN_BREVO_BASE_URL must use HTTPS for non-local endpoints.");
+
+        ReadRepositoryFile(Path.Combine("scripts", "smoke-vies-live.ps1"))
+            .Should()
+            .Contain("DARWIN_VIES_ENDPOINT_URL must be an absolute URL.")
+            .And.Contain("DARWIN_VIES_ENDPOINT_URL must use HTTPS for non-local endpoints.")
+            .And.Contain("DARWIN_VIES_TIMEOUT_SECONDS must be between 1 and 120.");
+    }
+
+    [Fact]
+    public async Task GoLiveReadinessScript_Should_RunDryRunAndAvoidSecretOutput()
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-go-live-readiness.ps1"));
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start go-live readiness script.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().BeOneOf(0, 2);
+        output.Should().Contain("Darwin go-live readiness dry-run summary:");
+        output.Should().Contain("Secrets scan: Ready");
+        output.Should().Contain("Stripe test-mode smoke prerequisites");
+        output.Should().Contain("DHL live smoke prerequisites");
+        output.Should().Contain("Brevo readiness smoke prerequisites");
+        output.Should().Contain("VIES live smoke prerequisites");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        secretPattern.IsMatch(output).Should().BeFalse("readiness dry-run output must not print provider secrets");
+    }
+
+    [Fact]
+    public async Task GoLiveReadinessScript_Should_ReportProviderReadyAndKeepOpenDecisionsBlocked()
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "check-go-live-readiness.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>().Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in AllProviderReadyDryRunEnvironment())
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start go-live readiness script.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Stripe test-mode smoke prerequisites: Ready");
+        output.Should().Contain("DHL live smoke prerequisites: Ready");
+        output.Should().Contain("Brevo readiness smoke prerequisites: Ready");
+        output.Should().Contain("VIES live smoke prerequisites: Ready");
+        output.Should().Contain("Invoice archive object-storage provider decision: Blocked");
+        output.Should().Contain("E-invoice tooling decision: Blocked");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        secretPattern.IsMatch(output).Should().BeFalse("readiness dry-run output must not print provider secrets");
+    }
+
+    [Theory]
+    [InlineData("smoke-stripe-testmode.ps1", "Stripe test-mode smoke is blocked.")]
+    [InlineData("smoke-dhl-live.ps1", "DHL live smoke is blocked.")]
+    [InlineData("smoke-brevo-readiness.ps1", "Brevo readiness smoke is blocked.")]
+    [InlineData("smoke-vies-live.ps1", "VIES live smoke is blocked.")]
+    public async Task ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing(
+        string scriptName,
+        string expectedBlockedMessage)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", scriptName));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>().Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start {scriptName}.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain(expectedBlockedMessage);
+        output.Should().Contain("Configure these environment variables first:");
+        output.Should().NotContain("Run with -Execute to call");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        secretPattern.IsMatch(output).Should().BeFalse($"{scriptName} dry-run output must not print provider secrets");
+    }
+
+    [Theory]
+    [MemberData(nameof(ProviderSmokeScriptReadyDryRunCases))]
+    public async Task ProviderSmokeScripts_Should_ReportReadyDryRunWithoutExecutingExternalCalls(
+        string scriptName,
+        string expectedReadyMessage,
+        IReadOnlyDictionary<string, string> environment)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", scriptName));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>().Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        foreach (var item in environment)
+        {
+            startInfo.Environment[item.Key] = item.Value;
+        }
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start {scriptName}.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(0);
+        output.Should().Contain(expectedReadyMessage);
+        output.Should().Contain("Run with -Execute");
+        if (string.Equals(scriptName, "smoke-stripe-testmode.ps1", StringComparison.Ordinal))
+        {
+            output.Should().Contain("Add -CreateSmokeOrder");
+            output.Should().Contain("Add -OpenCheckout");
+            output.Should().Contain("Add -WaitForWebhookFinalization");
+        }
+
+        output.Should().NotContain("blocked");
+        output.Should().NotContain("Invoke-RestMethod");
+        output.Should().NotContain("Invoke-WebRequest");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        secretPattern.IsMatch(output).Should().BeFalse($"{scriptName} ready dry-run output must not print provider secrets");
+    }
+
+    public static IEnumerable<object[]> ProviderSmokeScriptReadyDryRunCases()
+    {
+        yield return new object[]
+        {
+            "smoke-stripe-testmode.ps1",
+            "Stripe test-mode smoke configuration is present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134",
+                ["DARWIN_STRIPE_SMOKE_ORDER_ID"] = "11111111-1111-1111-1111-111111111111",
+                ["DARWIN_STRIPE_SMOKE_ORDER_NUMBER"] = "SMOKE-STRIPE-001"
+            }
+        };
+
+        yield return new object[]
+        {
+            "smoke-dhl-live.ps1",
+            "DHL live smoke configuration is present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_DHL_API_BASE_URL"] = "http://127.0.0.1:5135",
+                ["DARWIN_DHL_API_KEY"] = "local-api-key",
+                ["DARWIN_DHL_API_SECRET"] = "local-api-secret",
+                ["DARWIN_DHL_ACCOUNT_NUMBER"] = "1234567890",
+                ["DARWIN_DHL_SHIPPER_NAME"] = "Darwin Smoke Sender",
+                ["DARWIN_DHL_SHIPPER_STREET"] = "Sender Street 1",
+                ["DARWIN_DHL_SHIPPER_POSTAL_CODE"] = "10115",
+                ["DARWIN_DHL_SHIPPER_CITY"] = "Berlin",
+                ["DARWIN_DHL_SHIPPER_COUNTRY"] = "DE",
+                ["DARWIN_DHL_SHIPPER_EMAIL"] = "sender@example.test",
+                ["DARWIN_DHL_SHIPPER_PHONE_E164"] = "+491234567890",
+                ["DARWIN_DHL_TEST_RECEIVER_NAME"] = "Darwin Smoke Receiver",
+                ["DARWIN_DHL_TEST_RECEIVER_STREET"] = "Receiver Street 2",
+                ["DARWIN_DHL_TEST_RECEIVER_POSTAL_CODE"] = "10115",
+                ["DARWIN_DHL_TEST_RECEIVER_CITY"] = "Berlin",
+                ["DARWIN_DHL_TEST_RECEIVER_COUNTRY"] = "DE"
+            }
+        };
+
+        yield return new object[]
+        {
+            "smoke-brevo-readiness.ps1",
+            "Brevo readiness smoke configuration is present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_BREVO_API_KEY"] = "local-api-key",
+                ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
+                ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test"
+            }
+        };
+
+        yield return new object[]
+        {
+            "smoke-vies-live.ps1",
+            "VIES live smoke configuration is present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_VIES_VALID_VAT_ID"] = "DE123456789",
+                ["DARWIN_VIES_INVALID_VAT_ID"] = "DE000000000",
+                ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies"
+            }
+        };
+    }
+
+    private static IReadOnlyDictionary<string, string> AllProviderReadyDryRunEnvironment() =>
+        new Dictionary<string, string>
+        {
+            ["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134",
+            ["DARWIN_STRIPE_SMOKE_ORDER_ID"] = "11111111-1111-1111-1111-111111111111",
+            ["DARWIN_STRIPE_SMOKE_ORDER_NUMBER"] = "SMOKE-STRIPE-001",
+            ["DARWIN_DHL_API_BASE_URL"] = "http://127.0.0.1:5135",
+            ["DARWIN_DHL_API_KEY"] = "local-api-key",
+            ["DARWIN_DHL_API_SECRET"] = "local-api-secret",
+            ["DARWIN_DHL_ACCOUNT_NUMBER"] = "1234567890",
+            ["DARWIN_DHL_SHIPPER_NAME"] = "Darwin Smoke Sender",
+            ["DARWIN_DHL_SHIPPER_STREET"] = "Sender Street 1",
+            ["DARWIN_DHL_SHIPPER_POSTAL_CODE"] = "10115",
+            ["DARWIN_DHL_SHIPPER_CITY"] = "Berlin",
+            ["DARWIN_DHL_SHIPPER_COUNTRY"] = "DE",
+            ["DARWIN_DHL_SHIPPER_EMAIL"] = "sender@example.test",
+            ["DARWIN_DHL_SHIPPER_PHONE_E164"] = "+491234567890",
+            ["DARWIN_DHL_TEST_RECEIVER_NAME"] = "Darwin Smoke Receiver",
+            ["DARWIN_DHL_TEST_RECEIVER_STREET"] = "Receiver Street 2",
+            ["DARWIN_DHL_TEST_RECEIVER_POSTAL_CODE"] = "10115",
+            ["DARWIN_DHL_TEST_RECEIVER_CITY"] = "Berlin",
+            ["DARWIN_DHL_TEST_RECEIVER_COUNTRY"] = "DE",
+            ["DARWIN_BREVO_API_KEY"] = "local-api-key",
+            ["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test",
+            ["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test",
+            ["DARWIN_VIES_VALID_VAT_ID"] = "DE123456789",
+            ["DARWIN_VIES_INVALID_VAT_ID"] = "DE000000000",
+            ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies"
+        };
+
+    [Fact]
+    public void RepositoryDocsAndOperationalScripts_Should_AvoidAssistantMentionsAndCommittedSecretPatterns()
+    {
+        var root = ResolveRepositoryPath();
+        var docsAndScripts = Directory
+            .GetFiles(Path.Combine(root, "docs"), "*.md", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(Path.Combine(root, "scripts"), "*.ps1", SearchOption.TopDirectoryOnly))
+            .Concat(Directory.GetFiles(root, "*.md", SearchOption.TopDirectoryOnly))
+            .Select(path => new
+            {
+                Path = Path.GetRelativePath(root, path),
+                Source = File.ReadAllText(path)
+            })
+            .ToList();
+
+        docsAndScripts.Should().NotBeEmpty();
+
+        var assistantMentionPattern = new Regex(@"\b(ChatGPT|Codex|OpenAI|AI-generated|AI generated)\b", RegexOptions.IgnoreCase);
+        docsAndScripts
+            .Where(file => assistantMentionPattern.IsMatch(file.Source))
+            .Select(file => file.Path)
+            .Should()
+            .BeEmpty("repository documentation and operational scripts should not mention assistant tooling");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        docsAndScripts
+            .Where(file => secretPattern.IsMatch(file.Source))
+            .Select(file => file.Path)
+            .Should()
+            .BeEmpty("repository documentation and operational scripts must not contain real provider secret values");
+    }
+
+    [Fact]
+    public void InvoiceArchiveStorage_Should_KeepInternalFallbackBoundaryAndAvoidImplicitProviderChoice()
+    {
+        var abstractionSource = ReadApplicationFile(Path.Combine("Abstractions", "Invoicing", "IInvoiceArchiveStorage.cs"));
+        var databaseProviderSource = ReadApplicationFile(Path.Combine("CRM", "Services", "DatabaseInvoiceArchiveStorage.cs"));
+        var fileSystemProviderSource = ReadApplicationFile(Path.Combine("CRM", "Services", "FileSystemInvoiceArchiveStorage.cs"));
+        var routerSource = ReadApplicationFile(Path.Combine("CRM", "Services", "InvoiceArchiveStorageRouter.cs"));
+        var applicationCompositionSource = ReadApplicationFile(Path.Combine("Extensions", "ServiceCollectionExtensions.Application.cs"));
+        var providerDecisionSource = ReadRepositoryFile(Path.Combine("docs", "archive-storage-provider-decision.md"));
+
+        abstractionSource.Should().Contain("public interface IInvoiceArchiveStorage");
+        abstractionSource.Should().Contain("Task<InvoiceArchiveStorageResult> SaveAsync");
+        abstractionSource.Should().Contain("Task<InvoiceArchiveStorageArtifact?> ReadAsync");
+        abstractionSource.Should().Contain("Task<bool> ExistsAsync");
+        abstractionSource.Should().Contain("Task PurgePayloadAsync");
+        abstractionSource.Should().Contain("string HashSha256");
+        abstractionSource.Should().Contain("DateTime RetainUntilUtc");
+        abstractionSource.Should().Contain("string RetentionPolicyVersion");
+        abstractionSource.Should().Contain("public interface IInvoiceArchiveStorageProvider : IInvoiceArchiveStorage");
+        abstractionSource.Should().Contain("string ProviderName");
+        abstractionSource.Should().Contain("InvoiceArchiveStorageProviderNames");
+        abstractionSource.Should().Contain("InternalDatabase");
+        abstractionSource.Should().Contain("AzureBlob");
+        abstractionSource.Should().Contain("AwsS3");
+        abstractionSource.Should().Contain("Minio");
+        abstractionSource.Should().Contain("FileSystem");
+
+        databaseProviderSource.Should().Contain("public sealed class DatabaseInvoiceArchiveStorage : IInvoiceArchiveStorageProvider");
+        databaseProviderSource.Should().Contain("ProviderName => InvoiceArchiveStorageProviderNames.InternalDatabase");
+        databaseProviderSource.Should().Contain("SHA256.HashData");
+        databaseProviderSource.Should().Contain("InvoiceArchiveRetentionYears");
+        databaseProviderSource.Should().Contain("Math.Clamp(settings ?? 10, 1, 30)");
+        databaseProviderSource.Should().Contain("ArchivePurgedAtUtc");
+        databaseProviderSource.Should().Contain("ArchivePurgeReason");
+
+        fileSystemProviderSource.Should().Contain("public sealed class FileSystemInvoiceArchiveStorage : IInvoiceArchiveStorageProvider");
+        fileSystemProviderSource.Should().Contain("ProviderName => InvoiceArchiveStorageProviderNames.FileSystem");
+        fileSystemProviderSource.Should().Contain("Invoice archive file-system root path is not configured.");
+        fileSystemProviderSource.Should().Contain("Path.GetFullPath");
+        fileSystemProviderSource.Should().Contain("File.WriteAllTextAsync");
+        fileSystemProviderSource.Should().Contain("File.ReadAllTextAsync");
+        fileSystemProviderSource.Should().Contain("WriteMetadataAsync");
+        fileSystemProviderSource.Should().Contain("ReadMetadataAsync");
+        fileSystemProviderSource.Should().Contain("StoredArchiveMetadata");
+        fileSystemProviderSource.Should().Contain("JsonException");
+        fileSystemProviderSource.Should().Contain("File.Delete");
+        fileSystemProviderSource.Should().NotContain("Azure.Storage.Blobs");
+        fileSystemProviderSource.Should().NotContain("Amazon.S3");
+        fileSystemProviderSource.Should().NotContain("using Minio");
+
+        routerSource.Should().Contain("public sealed class InvoiceArchiveStorageRouter : IInvoiceArchiveStorage");
+        routerSource.Should().Contain("IEnumerable<IInvoiceArchiveStorageProvider>");
+        routerSource.Should().Contain("InvoiceArchiveStorageSelection");
+        routerSource.Should().Contain("Invoice archive storage provider");
+
+        applicationCompositionSource.Should().Contain("services.AddSingleton(_ =>");
+        applicationCompositionSource.Should().Contain("configuration?.GetSection(\"InvoiceArchiveStorage\").Bind(selection);");
+        applicationCompositionSource.Should().Contain("configuration?.GetSection(\"InvoiceArchiveStorage:FileSystem\").Bind(options);");
+        applicationCompositionSource.Should().Contain("services.AddScoped<DatabaseInvoiceArchiveStorage>();");
+        applicationCompositionSource.Should().Contain("services.AddScoped<FileSystemInvoiceArchiveStorage>();");
+        applicationCompositionSource.Should().Contain("services.AddScoped<IInvoiceArchiveStorageProvider>");
+        applicationCompositionSource.Should().Contain("services.AddScoped<IInvoiceArchiveStorage, InvoiceArchiveStorageRouter>();");
+
+        var applicationSources = Directory
+            .GetFiles(ResolveRepositoryPath("src", "Darwin.Application"), "*.cs", SearchOption.AllDirectories)
+            .Select(File.ReadAllText)
+            .ToArray();
+
+        applicationSources.Should().NotContain(source => source.Contains("Azure.Storage.Blobs", StringComparison.Ordinal));
+        applicationSources.Should().NotContain(source => source.Contains("Amazon.S3", StringComparison.Ordinal));
+        applicationSources.Should().NotContain(source => source.Contains("using Minio", StringComparison.OrdinalIgnoreCase));
+        applicationSources.Should().NotContain(source => source.Contains("new Minio", StringComparison.OrdinalIgnoreCase));
+        applicationSources.Should().NotContain(source => source.Contains("Azure.Storage.Blobs", StringComparison.Ordinal));
+        applicationSources.Should().NotContain(source => source.Contains("AmazonS3", StringComparison.Ordinal));
+
+        providerDecisionSource.Should().Contain("Production provider direction is now selected");
+        providerDecisionSource.Should().Contain("MinIO as the recommended self-hosted production target");
+        providerDecisionSource.Should().Contain("Immutable retention or legal hold support");
+        providerDecisionSource.Should().Contain("Audit logs for create, read, retention-policy change, legal-hold change, and delete/purge attempts.");
+        providerDecisionSource.Should().Contain("Darwin must connect to MinIO through the generic S3-compatible provider.");
+        providerDecisionSource.Should().NotContain("Selected provider:");
+        providerDecisionSource.Should().NotContain("Production immutable archive storage is complete");
+    }
+
+    [Fact]
+    public void EInvoiceDocs_Should_KeepPlanningStatusAndAvoidFalseComplianceClaims()
+    {
+        var complianceDecisionSource = ReadRepositoryFile(Path.Combine("docs", "compliance-decisions.md"));
+        var toolingDecisionSource = ReadRepositoryFile(Path.Combine("docs", "e-invoice-tooling-decision.md"));
+        var goLiveStatusSource = ReadRepositoryFile(Path.Combine("docs", "go-live-status.md"));
+        var backlogSource = ReadRepositoryFile("BACKLOG.md");
+        var abstractionSource = ReadApplicationFile(Path.Combine("Abstractions", "Invoicing", "IEInvoiceGenerationService.cs"));
+        var invoiceHandlersSource = ReadApplicationFile(Path.Combine("CRM", "Commands", "InvoiceHandlers.cs"));
+        var defaultServiceSource = ReadApplicationFile(Path.Combine("CRM", "Services", "NotConfiguredEInvoiceGenerationService.cs"));
+        var applicationCompositionSource = ReadApplicationFile(Path.Combine("Extensions", "ServiceCollectionExtensions.Application.cs"));
+
+        complianceDecisionSource.Should().Contain("Primary target: ZUGFeRD/Factur-X");
+        complianceDecisionSource.Should().Contain("Secondary target: XRechnung export");
+        complianceDecisionSource.Should().Contain("not full e-invoice compliance");
+        complianceDecisionSource.Should().Contain("The ZUGFeRD/Factur-X library/tooling decision is still open.");
+        complianceDecisionSource.Should().Contain("PDF/A-3");
+        complianceDecisionSource.Should().Contain("embedded XML");
+        complianceDecisionSource.Should().Contain("docs/e-invoice-tooling-decision.md");
+
+        toolingDecisionSource.Should().Contain("No library or tooling is selected yet.");
+        toolingDecisionSource.Should().Contain("PDF/A-3 generation or embedding support");
+        toolingDecisionSource.Should().Contain("Structured XML validation before download.");
+        toolingDecisionSource.Should().Contain("Failure modes that keep the invoice in manual review instead of exposing invalid artifacts.");
+        toolingDecisionSource.Should().Contain("Do not claim full e-invoice compliance from JSON, HTML, structured source-model JSON, or CSV outputs.");
+        toolingDecisionSource.Should().Contain("IEInvoiceGenerationService");
+        toolingDecisionSource.Should().Contain("NotConfigured");
+        toolingDecisionSource.Should().NotContain("Selected library:");
+        toolingDecisionSource.Should().NotContain("Full e-invoice compliance is complete");
+
+        goLiveStatusSource.Should().Contain("Full e-invoicing compliance is not implemented.");
+        goLiveStatusSource.Should().Contain("Current JSON/HTML/CSV/source-model exports are not full e-invoice compliance.");
+        goLiveStatusSource.Should().Contain("E-invoice phase 1 now has a structured invoice source-model export from issued snapshots");
+        goLiveStatusSource.Should().Contain("docs/e-invoice-tooling-decision.md");
+
+        backlogSource.Should().Contain("structured invoice source-model JSON and a provider-neutral `IEInvoiceGenerationService` boundary now exist");
+        backlogSource.Should().Contain("E-invoice library/tooling for ZUGFeRD/Factur-X PDF/A-3 embedding and structured XML validation.");
+
+        abstractionSource.Should().Contain("public interface IEInvoiceGenerationService");
+        abstractionSource.Should().Contain("Task<EInvoiceGenerationResult> GenerateAsync");
+        abstractionSource.Should().Contain("EInvoiceArtifactFormat");
+        abstractionSource.Should().Contain("ZugferdFacturX");
+        abstractionSource.Should().Contain("XRechnung");
+        abstractionSource.Should().Contain("EInvoiceGenerationStatus");
+        abstractionSource.Should().Contain("NotConfigured");
+        abstractionSource.Should().Contain("ValidationFailed");
+
+        invoiceHandlersSource.Should().Contain("public sealed class GenerateInvoiceEInvoiceArtifactHandler");
+        invoiceHandlersSource.Should().Contain("EInvoiceGenerationStatus.InvoiceUnavailable");
+        invoiceHandlersSource.Should().Contain("EInvoiceGenerationStatus.SourceSnapshotUnavailable");
+        invoiceHandlersSource.Should().Contain("EInvoiceGenerationStatus.UnsupportedFormat");
+        invoiceHandlersSource.Should().Contain("Generated e-invoice artifact invoice id does not match the requested invoice.");
+        invoiceHandlersSource.Should().Contain("Generated e-invoice artifact metadata is incomplete.");
+
+        defaultServiceSource.Should().Contain("public sealed class NotConfiguredEInvoiceGenerationService : IEInvoiceGenerationService");
+        defaultServiceSource.Should().Contain("EInvoiceGenerationStatus.NotConfigured");
+        defaultServiceSource.Should().Contain("not legal e-invoice artifacts");
+        defaultServiceSource.Should().NotContain("new EInvoiceArtifact");
+        applicationCompositionSource.Should().Contain("services.AddScoped<IEInvoiceGenerationService, NotConfiguredEInvoiceGenerationService>();");
+
+        var guardedSources = new[]
+        {
+            complianceDecisionSource,
+            toolingDecisionSource,
+            goLiveStatusSource,
+            backlogSource
+        };
+
+        guardedSources.Should().NotContain(source => source.Contains("full e-invoice compliance is implemented", StringComparison.OrdinalIgnoreCase));
+        guardedSources.Should().NotContain(source => source.Contains("ZUGFeRD/Factur-X generation is complete", StringComparison.OrdinalIgnoreCase));
+        guardedSources.Should().NotContain(source => source.Contains("XRechnung export is complete", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void DhlReturnsRmaDocsAndClient_Should_KeepCarrierAutomationPendingAndAvoidFakeLabels()
+    {
+        var goLiveStatusSource = ReadRepositoryFile(Path.Combine("docs", "go-live-status.md"));
+        var backlogSource = ReadRepositoryFile("BACKLOG.md");
+        var productionSetupSource = ReadRepositoryFile(Path.Combine("docs", "production-setup.md"));
+        var dhlClientSource = ReadInfrastructureFile(Path.Combine("Shipping", "Dhl", "DhlShipmentProviderClient.cs"));
+        var dhlContractSource = ReadApplicationFile(Path.Combine("Abstractions", "Shipping", "IDhlShipmentProviderClient.cs"));
+
+        goLiveStatusSource.Should().Contain("Returns/RMA flows are visible, but full carrier-integrated RMA automation remains a go-live task.");
+        goLiveStatusSource.Should().Contain("Carrier-integrated RMA automation remains under the DHL/shipping go-live slice.");
+        backlogSource.Should().Contain("Carrier-integrated DHL RMA/returns automation beyond the current returns queue and shipment provider operations.");
+        productionSetupSource.Should().Contain("Do not create fake DHL labels, fake references, or local fake tracking URLs.");
+
+        dhlContractSource.Should().Contain("CreateShipmentAsync");
+        dhlContractSource.Should().Contain("GetLabelAsync");
+        dhlContractSource.Should().NotContain("CreateReturn");
+        dhlContractSource.Should().NotContain("Rma");
+
+        dhlClientSource.Should().Contain("orders?validate=false");
+        dhlClientSource.Should().Contain("orders?shipment=");
+        dhlClientSource.Should().NotContain("fake", "DHL client must not generate fake provider references or labels");
+        dhlClientSource.Should().NotContain("local fake", "DHL client must not generate local fake tracking URLs");
     }
 
     [Fact]

@@ -29,6 +29,46 @@ public interface IInvoiceArchiveStorage
 }
 
 /// <summary>
+/// Provides a named implementation for issued invoice archive storage.
+/// </summary>
+public interface IInvoiceArchiveStorageProvider : IInvoiceArchiveStorage
+{
+    /// <summary>
+    /// Gets the provider name used by the storage router.
+    /// </summary>
+    string ProviderName { get; }
+}
+
+/// <summary>
+/// Known invoice archive storage provider names.
+/// </summary>
+public static class InvoiceArchiveStorageProviderNames
+{
+    public const string InternalDatabase = "InternalDatabase";
+    public const string S3Compatible = "S3Compatible";
+    public const string AzureBlob = "AzureBlob";
+    public const string AwsS3 = "AwsS3";
+    public const string Minio = "Minio";
+    public const string FileSystem = "FileSystem";
+}
+
+/// <summary>
+/// Selects the active invoice archive storage provider.
+/// </summary>
+public sealed class InvoiceArchiveStorageSelection
+{
+    /// <summary>
+    /// Gets or sets the active provider name. Defaults to the internal/database fallback.
+    /// </summary>
+    public string ProviderName { get; set; } = InvoiceArchiveStorageProviderNames.InternalDatabase;
+
+    /// <summary>
+    /// Gets or sets the generic object-storage container used by external archive providers.
+    /// </summary>
+    public string? ObjectStorageContainerName { get; set; }
+}
+
+/// <summary>
 /// Represents a persisted invoice archive artifact payload.
 /// </summary>
 public sealed record InvoiceArchiveStorageArtifact(

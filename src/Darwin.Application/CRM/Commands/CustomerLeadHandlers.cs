@@ -462,6 +462,130 @@ namespace Darwin.Application.CRM.Commands
             value is null || value.Length <= maxLength ? value : value[..maxLength];
     }
 
+    public sealed class RetryUnknownCustomerVatValidationBatchHandler
+    {
+        private const int MaxBatchSize = 100;
+        private const int MaxSourceLength = 80;
+        private const int MaxMessageLength = 512;
+
+        private static readonly string[] RetryableSources =
+        [
+            "provider.unavailable",
+            "vies.disabled",
+            "vies.unavailable"
+        ];
+
+        private readonly IAppDbContext _db;
+        private readonly IClock _clock;
+        private readonly IVatValidationProvider _provider;
+
+        public RetryUnknownCustomerVatValidationBatchHandler(
+            IAppDbContext db,
+            IClock clock,
+            IVatValidationProvider provider)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+        }
+
+        public async Task<RetryUnknownCustomerVatValidationBatchResult> HandleAsync(
+            int batchSize = 50,
+            int minAgeMinutes = 60,
+            CancellationToken ct = default)
+        {
+            var take = Math.Clamp(batchSize, 1, MaxBatchSize);
+            var cutoffUtc = _clock.UtcNow.AddMinutes(-Math.Clamp(minAgeMinutes, 1, 10080));
+
+            var customers = await _db.Set<Customer>()
+                .Where(x =>
+                    !x.IsDeleted &&
+                    x.TaxProfileType == CustomerTaxProfileType.Business &&
+                    x.VatValidationStatus == CustomerVatValidationStatus.Unknown &&
+                    x.VatId != null &&
+                    x.VatId.Trim() != string.Empty &&
+                    x.VatValidationSource != null &&
+                    RetryableSources.Contains(x.VatValidationSource) &&
+                    (!x.VatValidationCheckedAtUtc.HasValue || x.VatValidationCheckedAtUtc <= cutoffUtc))
+                .OrderBy(x => x.VatValidationCheckedAtUtc ?? DateTime.MinValue)
+                .ThenBy(x => x.Id)
+                .Take(take)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            var result = new RetryUnknownCustomerVatValidationBatchResult
+            {
+                EvaluatedCount = customers.Count
+            };
+
+            foreach (var customer in customers)
+            {
+                var providerResult = await ValidateWithProviderAsync(customer.VatId!, ct).ConfigureAwait(false);
+                customer.VatValidationStatus = providerResult.Status;
+                customer.VatValidationCheckedAtUtc = _clock.UtcNow;
+                customer.VatValidationSource = Truncate(NormalizeOptional(providerResult.Source) ?? "provider", MaxSourceLength);
+                customer.VatValidationMessage = Truncate(NormalizeOptional(providerResult.Message), MaxMessageLength);
+
+                result.RetriedCount++;
+                if (providerResult.Status == CustomerVatValidationStatus.Valid)
+                {
+                    result.ValidCount++;
+                }
+                else if (providerResult.Status == CustomerVatValidationStatus.Invalid)
+                {
+                    result.InvalidCount++;
+                }
+                else
+                {
+                    result.UnknownCount++;
+                }
+            }
+
+            if (result.RetriedCount > 0)
+            {
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+
+            return result;
+        }
+
+        private async Task<VatValidationProviderResult> ValidateWithProviderAsync(string vatId, CancellationToken ct)
+        {
+            try
+            {
+                return await _provider.ValidateAsync(vatId, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                return new VatValidationProviderResult
+                {
+                    Status = CustomerVatValidationStatus.Unknown,
+                    Source = "provider.unavailable",
+                    Message = "VAT validation provider failed; manual review is required."
+                };
+            }
+        }
+
+        private static string? NormalizeOptional(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        private static string? Truncate(string? value, int maxLength) =>
+            value is null || value.Length <= maxLength ? value : value[..maxLength];
+    }
+
+    public sealed class RetryUnknownCustomerVatValidationBatchResult
+    {
+        public int EvaluatedCount { get; init; }
+        public int RetriedCount { get; set; }
+        public int ValidCount { get; set; }
+        public int InvalidCount { get; set; }
+        public int UnknownCount { get; set; }
+    }
+
     public sealed class CreateLeadHandler
     {
         private readonly IAppDbContext _db;

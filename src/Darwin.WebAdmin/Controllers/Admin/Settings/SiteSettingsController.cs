@@ -57,7 +57,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
         public async Task<IActionResult> Edit(SiteSettingVm vm, string? fragment, CancellationToken ct)
         {
             if (!ModelState.IsValid)
+            {
+                MaskSecretsForRedisplay(vm);
                 return RenderEditor(vm, fragment);
+            }
 
             var current = await _cache.GetAsync(ct).ConfigureAwait(false);
             var dto = MapToUpdateDto(vm, current);
@@ -73,12 +76,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, T("SettingsConcurrencyMessage"));
+                MaskSecretsForRedisplay(vm);
                 return RenderEditor(vm, fragment);
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
+                MaskSecretsForRedisplay(vm);
                 return RenderEditor(vm, fragment);
             }
         }
@@ -452,6 +457,32 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
 
         private static bool IsSecretPlaceholder(string value)
             => string.Equals(value.Trim(), SecretPlaceholder, StringComparison.Ordinal);
+
+        private void MaskSecretsForRedisplay(SiteSettingVm vm)
+        {
+            MaskRequiredSecret(nameof(SiteSettingVm.JwtSigningKey), value => vm.JwtSigningKey = value, vm.JwtSigningKey);
+            MaskSecret(nameof(SiteSettingVm.JwtPreviousSigningKey), value => vm.JwtPreviousSigningKey = value, vm.JwtPreviousSigningKey);
+            MaskSecret(nameof(SiteSettingVm.StripeSecretKey), value => vm.StripeSecretKey = value, vm.StripeSecretKey);
+            MaskSecret(nameof(SiteSettingVm.StripeWebhookSecret), value => vm.StripeWebhookSecret = value, vm.StripeWebhookSecret);
+            MaskSecret(nameof(SiteSettingVm.DhlApiKey), value => vm.DhlApiKey = value, vm.DhlApiKey);
+            MaskSecret(nameof(SiteSettingVm.DhlApiSecret), value => vm.DhlApiSecret = value, vm.DhlApiSecret);
+            MaskSecret(nameof(SiteSettingVm.WhatsAppAccessToken), value => vm.WhatsAppAccessToken = value, vm.WhatsAppAccessToken);
+            MaskSecret(nameof(SiteSettingVm.SmtpPassword), value => vm.SmtpPassword = value, vm.SmtpPassword);
+            MaskSecret(nameof(SiteSettingVm.SmsApiKey), value => vm.SmsApiKey = value, vm.SmsApiKey);
+            MaskSecret(nameof(SiteSettingVm.SmsApiSecret), value => vm.SmsApiSecret = value, vm.SmsApiSecret);
+        }
+
+        private void MaskRequiredSecret(string key, Action<string> setValue, string postedValue)
+        {
+            ModelState.Remove(key);
+            setValue(string.IsNullOrWhiteSpace(postedValue) ? string.Empty : SecretPlaceholder);
+        }
+
+        private void MaskSecret(string key, Action<string?> setValue, string? postedValue)
+        {
+            ModelState.Remove(key);
+            setValue(string.IsNullOrWhiteSpace(postedValue) ? null : SecretPlaceholder);
+        }
 
         private static int CountCultures(string? supportedCulturesCsv)
             => (supportedCulturesCsv ?? string.Empty)

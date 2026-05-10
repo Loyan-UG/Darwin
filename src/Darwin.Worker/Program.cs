@@ -10,13 +10,14 @@ using Darwin.Infrastructure.Media;
 using Darwin.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddApplication();
+builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddLocalization();
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.Configure<MediaStorageOptions>(builder.Configuration.GetSection(MediaStorageOptions.SectionName));
 builder.Services.AddConfiguredPersistence(builder.Configuration);
 builder.Services.AddSharedHostingDataProtection(builder.Configuration);
 builder.Services.AddIdentityInfrastructure();
+builder.Services.AddObjectStorageInfrastructure(builder.Configuration);
 builder.Services.AddNotificationsInfrastructure(builder.Configuration);
 builder.Services.AddShippingProviderInfrastructure();
 builder.Services.AddComplianceInfrastructure(builder.Configuration);
@@ -28,12 +29,14 @@ builder.Services.Configure<ProviderCallbackWorkerOptions>(builder.Configuration.
 builder.Services.Configure<ShipmentProviderOperationWorkerOptions>(builder.Configuration.GetSection("ShipmentProviderOperationWorker"));
 builder.Services.Configure<WebhookDeliveryWorkerOptions>(builder.Configuration.GetSection("WebhookDeliveryWorker"));
 builder.Services.Configure<InvoiceArchiveMaintenanceWorkerOptions>(builder.Configuration.GetSection("InvoiceArchiveMaintenanceWorker"));
+builder.Services.Configure<VatValidationRetryWorkerOptions>(builder.Configuration.GetSection("VatValidationRetryWorker"));
 builder.Services.AddScoped<ApplyDhlShipmentCreateOperationHandler>();
 builder.Services.AddScoped<ApplyDhlShipmentLabelOperationHandler>();
 builder.Services.AddScoped<ApplyShipmentCarrierEventHandler>();
 builder.Services.AddScoped<ProcessStripeWebhookHandler>();
 builder.Services.AddScoped<ProcessBrevoTransactionalEmailWebhookHandler>();
 builder.Services.AddScoped<PurgeExpiredInvoiceArchivesHandler>();
+builder.Services.AddScoped<RetryUnknownCustomerVatValidationBatchHandler>();
 builder.Services.AddHostedService<EmailDispatchOperationBackgroundService>();
 builder.Services.AddHostedService<ChannelDispatchOperationBackgroundService>();
 builder.Services.AddHostedService<InactiveReminderBackgroundService>();
@@ -41,6 +44,7 @@ builder.Services.AddHostedService<ProviderCallbackBackgroundService>();
 builder.Services.AddHostedService<ShipmentProviderOperationBackgroundService>();
 builder.Services.AddHostedService<WebhookDeliveryBackgroundService>();
 builder.Services.AddHostedService<InvoiceArchiveMaintenanceBackgroundService>();
+builder.Services.AddHostedService<VatValidationRetryBackgroundService>();
 
 var host = builder.Build();
 host.Run();

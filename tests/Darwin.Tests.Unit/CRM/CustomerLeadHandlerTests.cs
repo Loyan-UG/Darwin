@@ -1082,12 +1082,117 @@ public sealed class CustomerLeadHandlerTests
         customer.VatValidationMessage.Should().Be("VAT validation provider failed; manual review is required.");
     }
 
+    [Fact]
+    public async Task RetryUnknownCustomerVatValidationBatchHandler_Should_RetryOnlyEligibleProviderUnknownCustomers()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var now = new DateTime(2026, 5, 10, 10, 0, 0, DateTimeKind.Utc);
+        var eligibleId = Guid.NewGuid();
+        var manualReviewId = Guid.NewGuid();
+        var recentId = Guid.NewGuid();
+        var consumerId = Guid.NewGuid();
+
+        db.Set<Customer>().AddRange(
+            MakeVatCustomer(eligibleId, CustomerTaxProfileType.Business, "DE123456789", CustomerVatValidationStatus.Unknown, "vies.unavailable", now.AddHours(-6)),
+            MakeVatCustomer(manualReviewId, CustomerTaxProfileType.Business, "DE987654321", CustomerVatValidationStatus.Unknown, "operator", now.AddHours(-6)),
+            MakeVatCustomer(recentId, CustomerTaxProfileType.Business, "DE222222222", CustomerVatValidationStatus.Unknown, "provider.unavailable", now.AddMinutes(-10)),
+            MakeVatCustomer(consumerId, CustomerTaxProfileType.Consumer, "DE333333333", CustomerVatValidationStatus.Unknown, "vies.unavailable", now.AddHours(-6)));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new RetryUnknownCustomerVatValidationBatchHandler(
+            db,
+            new FixedClock(now),
+            new FixedVatValidationProvider(CustomerVatValidationStatus.Valid, "vies", "VIES confirmed the VAT ID."));
+
+        var result = await handler.HandleAsync(batchSize: 10, minAgeMinutes: 60, TestContext.Current.CancellationToken);
+
+        result.EvaluatedCount.Should().Be(1);
+        result.RetriedCount.Should().Be(1);
+        result.ValidCount.Should().Be(1);
+        result.InvalidCount.Should().Be(0);
+        result.UnknownCount.Should().Be(0);
+
+        var eligible = await db.Set<Customer>().SingleAsync(x => x.Id == eligibleId, TestContext.Current.CancellationToken);
+        eligible.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Valid);
+        eligible.VatValidationCheckedAtUtc.Should().Be(now);
+        eligible.VatValidationSource.Should().Be("vies");
+
+        var manualReview = await db.Set<Customer>().SingleAsync(x => x.Id == manualReviewId, TestContext.Current.CancellationToken);
+        manualReview.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Unknown);
+        manualReview.VatValidationSource.Should().Be("operator");
+
+        var recent = await db.Set<Customer>().SingleAsync(x => x.Id == recentId, TestContext.Current.CancellationToken);
+        recent.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Unknown);
+        recent.VatValidationCheckedAtUtc.Should().Be(now.AddMinutes(-10));
+
+        var consumer = await db.Set<Customer>().SingleAsync(x => x.Id == consumerId, TestContext.Current.CancellationToken);
+        consumer.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Unknown);
+        consumer.VatValidationSource.Should().Be("vies.unavailable");
+    }
+
+    [Fact]
+    public async Task RetryUnknownCustomerVatValidationBatchHandler_Should_KeepUnknown_WhenProviderStillFails()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var now = new DateTime(2026, 5, 10, 11, 0, 0, DateTimeKind.Utc);
+        var customerId = Guid.NewGuid();
+
+        db.Set<Customer>().Add(MakeVatCustomer(
+            customerId,
+            CustomerTaxProfileType.Business,
+            "DE123456789",
+            CustomerVatValidationStatus.Unknown,
+            "provider.unavailable",
+            now.AddHours(-3)));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new RetryUnknownCustomerVatValidationBatchHandler(
+            db,
+            new FixedClock(now),
+            new ThrowingVatValidationProvider());
+
+        var result = await handler.HandleAsync(batchSize: 10, minAgeMinutes: 60, TestContext.Current.CancellationToken);
+
+        result.EvaluatedCount.Should().Be(1);
+        result.RetriedCount.Should().Be(1);
+        result.UnknownCount.Should().Be(1);
+
+        var customer = await db.Set<Customer>().SingleAsync(x => x.Id == customerId, TestContext.Current.CancellationToken);
+        customer.VatValidationStatus.Should().Be(CustomerVatValidationStatus.Unknown);
+        customer.VatValidationCheckedAtUtc.Should().Be(now);
+        customer.VatValidationSource.Should().Be("provider.unavailable");
+        customer.VatValidationMessage.Should().Be("VAT validation provider failed; manual review is required.");
+    }
+
     private static User MakeUser(Guid userId) =>
         new("user@example.com", "hashed-password", "security-stamp")
         {
             Id = userId,
             FirstName = "User",
             LastName = "Test",
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        };
+
+    private static Customer MakeVatCustomer(
+        Guid id,
+        CustomerTaxProfileType taxProfileType,
+        string vatId,
+        CustomerVatValidationStatus status,
+        string source,
+        DateTime checkedAtUtc) =>
+        new()
+        {
+            Id = id,
+            FirstName = "Tax",
+            LastName = "Customer",
+            Email = $"{id:N}@example.test",
+            Phone = "+491234567",
+            TaxProfileType = taxProfileType,
+            VatId = vatId,
+            VatValidationStatus = status,
+            VatValidationCheckedAtUtc = checkedAtUtc,
+            VatValidationSource = source,
+            VatValidationMessage = "Previous provider result",
             RowVersion = new byte[] { 1, 2, 3, 4 }
         };
 
