@@ -32,6 +32,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         private readonly GetBillingPlansAdminPageHandler _getBillingPlansAdminPage;
         private readonly GetBillingPlanOpsSummaryHandler _getBillingPlanOpsSummary;
         private readonly GetBillingPlanForEditHandler _getBillingPlanForEdit;
+        private readonly GetBusinessSubscriptionsPageHandler _getBusinessSubscriptionsPage;
+        private readonly GetBusinessSubscriptionOpsSummaryHandler _getBusinessSubscriptionOpsSummary;
         private readonly GetBillingWebhookSubscriptionsPageHandler _getBillingWebhookSubscriptionsPage;
         private readonly GetBillingWebhookDeliveriesPageHandler _getBillingWebhookDeliveriesPage;
         private readonly GetBillingWebhookOpsSummaryHandler _getBillingWebhookOpsSummary;
@@ -72,6 +74,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             GetBillingPlansAdminPageHandler getBillingPlansAdminPage,
             GetBillingPlanOpsSummaryHandler getBillingPlanOpsSummary,
             GetBillingPlanForEditHandler getBillingPlanForEdit,
+            GetBusinessSubscriptionsPageHandler getBusinessSubscriptionsPage,
+            GetBusinessSubscriptionOpsSummaryHandler getBusinessSubscriptionOpsSummary,
             GetBillingWebhookSubscriptionsPageHandler getBillingWebhookSubscriptionsPage,
             GetBillingWebhookDeliveriesPageHandler getBillingWebhookDeliveriesPage,
             GetBillingWebhookOpsSummaryHandler getBillingWebhookOpsSummary,
@@ -111,6 +115,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             _getBillingPlansAdminPage = getBillingPlansAdminPage ?? throw new ArgumentNullException(nameof(getBillingPlansAdminPage));
             _getBillingPlanOpsSummary = getBillingPlanOpsSummary ?? throw new ArgumentNullException(nameof(getBillingPlanOpsSummary));
             _getBillingPlanForEdit = getBillingPlanForEdit ?? throw new ArgumentNullException(nameof(getBillingPlanForEdit));
+            _getBusinessSubscriptionsPage = getBusinessSubscriptionsPage ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionsPage));
+            _getBusinessSubscriptionOpsSummary = getBusinessSubscriptionOpsSummary ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionOpsSummary));
             _getBillingWebhookSubscriptionsPage = getBillingWebhookSubscriptionsPage ?? throw new ArgumentNullException(nameof(getBillingWebhookSubscriptionsPage));
             _getBillingWebhookDeliveriesPage = getBillingWebhookDeliveriesPage ?? throw new ArgumentNullException(nameof(getBillingWebhookDeliveriesPage));
             _getBillingWebhookOpsSummary = getBillingWebhookOpsSummary ?? throw new ArgumentNullException(nameof(getBillingWebhookOpsSummary));
@@ -311,6 +317,54 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 PopulateBillingPlanOptions(vm);
                 return RenderBillingPlanEditor(vm, isCreate: false);
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Subscriptions(
+            int page = 1,
+            int pageSize = 20,
+            string? q = null,
+            BusinessSubscriptionQueueFilter queue = BusinessSubscriptionQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            var result = await _getBusinessSubscriptionsPage.HandleAsync(page, pageSize, q, queue, ct).ConfigureAwait(false);
+            var vm = new BusinessSubscriptionsListVm
+            {
+                Query = q ?? string.Empty,
+                QueueFilter = queue,
+                Summary = await BuildBusinessSubscriptionOpsSummaryVmAsync(ct).ConfigureAwait(false),
+                Page = page,
+                PageSize = pageSize,
+                Total = result.Total,
+                Items = result.Items.Select(x => new BusinessSubscriptionListItemVm
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    BusinessName = x.BusinessName,
+                    BusinessContactEmail = x.BusinessContactEmail,
+                    BillingPlanId = x.BillingPlanId,
+                    PlanCode = x.PlanCode,
+                    PlanName = x.PlanName,
+                    Provider = x.Provider,
+                    ProviderCustomerId = x.ProviderCustomerId,
+                    ProviderSubscriptionId = x.ProviderSubscriptionId,
+                    ProviderCheckoutSessionId = x.ProviderCheckoutSessionId,
+                    Status = x.Status,
+                    StartedAtUtc = x.StartedAtUtc,
+                    CurrentPeriodEndUtc = x.CurrentPeriodEndUtc,
+                    TrialEndsAtUtc = x.TrialEndsAtUtc,
+                    CanceledAtUtc = x.CanceledAtUtc,
+                    CancelAtPeriodEnd = x.CancelAtPeriodEnd,
+                    UnitPriceMinor = x.UnitPriceMinor,
+                    Currency = x.Currency,
+                    IsStripe = x.IsStripe,
+                    MissingProviderReference = x.MissingProviderReference,
+                    ProviderReferenceState = x.ProviderReferenceState,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            };
+
+            return RenderSubscriptionsWorkspace(vm);
         }
 
         [HttpGet]
@@ -852,6 +906,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     PaymentProviderPaymentIntentRef = x.PaymentProviderPaymentIntentRef,
                     PaymentProviderCheckoutSessionRef = x.PaymentProviderCheckoutSessionRef,
                     PaymentStatus = x.PaymentStatus,
+                    RefundProvider = x.RefundProvider,
+                    RefundProviderReference = x.RefundProviderReference,
+                    RefundProviderPaymentReference = x.RefundProviderPaymentReference,
+                    RefundProviderStatus = x.RefundProviderStatus,
+                    FailureReason = x.FailureReason,
+                    RequestedAtUtc = x.RequestedAtUtc,
                     CustomerId = x.CustomerId,
                     CustomerDisplayName = x.CustomerDisplayName,
                     CustomerEmail = x.CustomerEmail,
@@ -934,6 +994,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 TrialCount = summary.TrialCount,
                 MissingFeaturesCount = summary.MissingFeaturesCount,
                 InUseCount = summary.InUseCount
+            };
+        }
+
+        private async Task<BusinessSubscriptionOpsSummaryVm> BuildBusinessSubscriptionOpsSummaryVmAsync(CancellationToken ct)
+        {
+            var summary = await _getBusinessSubscriptionOpsSummary.HandleAsync(ct).ConfigureAwait(false);
+            return new BusinessSubscriptionOpsSummaryVm
+            {
+                TotalCount = summary.TotalCount,
+                ActiveCount = summary.ActiveCount,
+                TrialingCount = summary.TrialingCount,
+                PastDueCount = summary.PastDueCount,
+                CanceledCount = summary.CanceledCount,
+                StripeCount = summary.StripeCount,
+                MissingProviderReferenceCount = summary.MissingProviderReferenceCount,
+                CancelAtPeriodEndCount = summary.CancelAtPeriodEndCount
             };
         }
 
@@ -2207,6 +2283,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
 
             return View("Payments", vm);
+        }
+
+        private IActionResult RenderSubscriptionsWorkspace(BusinessSubscriptionsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/Subscriptions.cshtml", vm);
+            }
+
+            return View("Subscriptions", vm);
         }
 
         private IActionResult RenderTaxComplianceWorkspace(TaxComplianceListVm vm)

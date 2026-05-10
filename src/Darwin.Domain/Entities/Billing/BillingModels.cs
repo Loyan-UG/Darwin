@@ -93,6 +93,11 @@ namespace Darwin.Domain.Entities.Billing
         public string? ProviderSubscriptionId { get; set; }
 
         /// <summary>
+        /// Gets or sets the provider-side checkout session id that initiated this subscription.
+        /// </summary>
+        public string? ProviderCheckoutSessionId { get; set; }
+
+        /// <summary>
         /// Gets or sets the subscription lifecycle status.
         /// </summary>
         public SubscriptionStatus Status { get; set; } = SubscriptionStatus.Trialing;

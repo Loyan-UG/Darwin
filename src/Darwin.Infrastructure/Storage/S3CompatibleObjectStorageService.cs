@@ -18,6 +18,8 @@ public sealed class S3CompatibleObjectStorageService : IObjectStorageService
     private readonly IAmazonS3 _client;
     private readonly S3CompatibleObjectStorageOptions _options;
     private readonly ObjectStorageCapabilityReporter _capabilities;
+    private readonly SemaphoreSlim _bucketValidationLock = new(1, 1);
+    private readonly HashSet<string> _validatedBuckets = new(StringComparer.Ordinal);
 
     public S3CompatibleObjectStorageService(
         IOptions<ObjectStorageOptions> options,
@@ -41,6 +43,7 @@ public sealed class S3CompatibleObjectStorageService : IObjectStorageService
         ArgumentNullException.ThrowIfNull(request);
         var bucket = ResolveBucket(request.ContainerName);
         var key = ValidateObjectKey(request.ObjectKey);
+        await EnsureBucketReadyForWriteAsync(bucket, ct).ConfigureAwait(false);
         var content = await BufferAndHashAsync(request.Content, ct).ConfigureAwait(false);
 
         if (!string.IsNullOrWhiteSpace(request.ExpectedSha256Hash) &&
@@ -259,6 +262,92 @@ public sealed class S3CompatibleObjectStorageService : IObjectStorageService
         }
 
         return bucket.Trim();
+    }
+
+    private async Task EnsureBucketReadyForWriteAsync(string bucket, CancellationToken ct)
+    {
+        if (!_options.CreateBucketIfMissing &&
+            (!_options.RequireObjectLock || _options.ObjectLockValidationMode == ObjectStorageValidationMode.Disabled))
+        {
+            return;
+        }
+
+        if (_validatedBuckets.Contains(bucket))
+        {
+            return;
+        }
+
+        await _bucketValidationLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (_validatedBuckets.Contains(bucket))
+            {
+                return;
+            }
+
+            await EnsureBucketExistsAsync(bucket, ct).ConfigureAwait(false);
+            if (_options.RequireObjectLock &&
+                _options.ObjectLockValidationMode == ObjectStorageValidationMode.FailFast)
+            {
+                await ValidateBucketObjectLockAsync(bucket, ct).ConfigureAwait(false);
+            }
+
+            _validatedBuckets.Add(bucket);
+        }
+        finally
+        {
+            _bucketValidationLock.Release();
+        }
+    }
+
+    private async Task EnsureBucketExistsAsync(string bucket, CancellationToken ct)
+    {
+        try
+        {
+            _ = await _client.GetBucketLocationAsync(new GetBucketLocationRequest { BucketName = bucket }, ct).ConfigureAwait(false);
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound && _options.CreateBucketIfMissing)
+        {
+            await _client.PutBucketAsync(new PutBucketRequest
+            {
+                BucketName = bucket,
+                ObjectLockEnabledForBucket = _options.RequireObjectLock
+            }, ct).ConfigureAwait(false);
+
+            if (_options.RequireObjectLock)
+            {
+                await _client.PutBucketVersioningAsync(new PutBucketVersioningRequest
+                {
+                    BucketName = bucket,
+                    VersioningConfig = new S3BucketVersioningConfig
+                    {
+                        Status = VersionStatus.Enabled
+                    }
+                }, ct).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private async Task ValidateBucketObjectLockAsync(string bucket, CancellationToken ct)
+    {
+        var versioning = await _client.GetBucketVersioningAsync(new GetBucketVersioningRequest { BucketName = bucket }, ct).ConfigureAwait(false);
+        if (versioning.VersioningConfig?.Status != VersionStatus.Enabled)
+        {
+            throw new InvalidOperationException("S3-compatible object storage requires bucket versioning before immutable archive writes.");
+        }
+
+        try
+        {
+            var objectLock = await _client.GetObjectLockConfigurationAsync(new GetObjectLockConfigurationRequest { BucketName = bucket }, ct).ConfigureAwait(false);
+            if (objectLock.ObjectLockConfiguration is null)
+            {
+                throw new InvalidOperationException("S3-compatible object storage requires Object Lock configuration before immutable archive writes.");
+            }
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new InvalidOperationException("S3-compatible object storage requires Object Lock configuration before immutable archive writes.", ex);
+        }
     }
 
     private static string ValidateObjectKey(string objectKey)

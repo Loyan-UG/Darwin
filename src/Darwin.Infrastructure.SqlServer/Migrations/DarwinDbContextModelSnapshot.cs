@@ -151,6 +151,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<string>("ProviderCheckoutSessionId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<string>("ProviderCustomerId")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
@@ -184,6 +188,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.HasIndex("BusinessId")
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("Provider", "ProviderCheckoutSessionId")
+                        .IsUnique()
+                        .HasFilter("[ProviderCheckoutSessionId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("Provider", "ProviderSubscriptionId")
                         .IsUnique()
@@ -6816,6 +6824,10 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -6831,9 +6843,29 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("PaymentId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ProviderPaymentReference")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ProviderRefundReference")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ProviderStatus")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RequestedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()

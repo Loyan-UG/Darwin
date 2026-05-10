@@ -46,6 +46,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly GetInvoiceArchiveSnapshotHandler _getInvoiceArchiveSnapshot;
         private readonly GetInvoiceArchiveDocumentHandler _getInvoiceArchiveDocument;
         private readonly GetInvoiceStructuredDataExportHandler _getInvoiceStructuredDataExport;
+        private readonly GetInvoiceStructuredXmlExportHandler _getInvoiceStructuredXmlExport;
         private readonly CreateCustomerSegmentHandler _createCustomerSegment;
         private readonly UpdateCustomerSegmentHandler _updateCustomerSegment;
         private readonly UpdateInvoiceHandler _updateInvoice;
@@ -89,6 +90,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             GetInvoiceArchiveSnapshotHandler getInvoiceArchiveSnapshot,
             GetInvoiceArchiveDocumentHandler getInvoiceArchiveDocument,
             GetInvoiceStructuredDataExportHandler getInvoiceStructuredDataExport,
+            GetInvoiceStructuredXmlExportHandler getInvoiceStructuredXmlExport,
             CreateCustomerSegmentHandler createCustomerSegment,
             UpdateCustomerSegmentHandler updateCustomerSegment,
             UpdateInvoiceHandler updateInvoice,
@@ -131,6 +133,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _getInvoiceArchiveSnapshot = getInvoiceArchiveSnapshot ?? throw new ArgumentNullException(nameof(getInvoiceArchiveSnapshot));
             _getInvoiceArchiveDocument = getInvoiceArchiveDocument ?? throw new ArgumentNullException(nameof(getInvoiceArchiveDocument));
             _getInvoiceStructuredDataExport = getInvoiceStructuredDataExport ?? throw new ArgumentNullException(nameof(getInvoiceStructuredDataExport));
+            _getInvoiceStructuredXmlExport = getInvoiceStructuredXmlExport ?? throw new ArgumentNullException(nameof(getInvoiceStructuredXmlExport));
             _createCustomerSegment = createCustomerSegment ?? throw new ArgumentNullException(nameof(createCustomerSegment));
             _updateCustomerSegment = updateCustomerSegment ?? throw new ArgumentNullException(nameof(updateCustomerSegment));
             _updateInvoice = updateInvoice ?? throw new ArgumentNullException(nameof(updateInvoice));
@@ -552,6 +555,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             return File(
                 Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(export.Json)).ToArray(),
                 "application/json",
+                export.FileName);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadInvoiceStructuredXml(Guid id, CancellationToken ct = default)
+        {
+            var export = await _getInvoiceStructuredXmlExport.HandleAsync(id, ct).ConfigureAwait(false);
+            if (export is null)
+            {
+                SetErrorMessage("InvoiceArchiveUnavailableMessage");
+                return RedirectOrHtmx(nameof(EditInvoice), new { id });
+            }
+
+            return File(
+                Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(export.Xml)).ToArray(),
+                "application/xml",
                 export.FileName);
         }
 

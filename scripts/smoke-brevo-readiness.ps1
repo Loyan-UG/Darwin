@@ -1,9 +1,66 @@
 param(
     [switch]$Execute,
-    [switch]$Sandbox
+    [switch]$Sandbox,
+    [switch]$RequireDeliveryPipeline
 )
 
 $ErrorActionPreference = "Stop"
+
+function Test-Truthy {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $false
+    }
+
+    return @("1", "true", "yes", "y") -contains $Value.Trim().ToLowerInvariant()
+}
+
+function Assert-BrevoDeliveryPipelineReady {
+    $blocked = New-Object System.Collections.Generic.List[string]
+
+    $webhookUrl = [Environment]::GetEnvironmentVariable("DARWIN_BREVO_WEBHOOK_PUBLIC_URL")
+    if ([string]::IsNullOrWhiteSpace($webhookUrl)) {
+        $blocked.Add("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must point to the public Brevo webhook endpoint.")
+    }
+    else {
+        $parsedWebhookUrl = $null
+        if (-not [Uri]::TryCreate($webhookUrl.Trim(), [UriKind]::Absolute, [ref]$parsedWebhookUrl)) {
+            $blocked.Add("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must be an absolute URL.")
+        }
+        elseif ($parsedWebhookUrl.Scheme -ne "https") {
+            $blocked.Add("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must use HTTPS.")
+        }
+        elseif (-not $parsedWebhookUrl.AbsolutePath.EndsWith("/api/v1/public/notifications/brevo/webhooks", [StringComparison]::OrdinalIgnoreCase)) {
+            $blocked.Add("DARWIN_BREVO_WEBHOOK_PUBLIC_URL must end with /api/v1/public/notifications/brevo/webhooks.")
+        }
+    }
+
+    if (-not (Test-Truthy ([Environment]::GetEnvironmentVariable("DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED")))) {
+        $blocked.Add("DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED=true is required after the Brevo webhook subscription is configured.")
+    }
+
+    if (-not (Test-Truthy ([Environment]::GetEnvironmentVariable("DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED")))) {
+        $blocked.Add("DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED=true is required after transactional webhook events are subscribed.")
+    }
+
+    if (-not (Test-Truthy ([Environment]::GetEnvironmentVariable("DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED")))) {
+        $blocked.Add("DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true is required after ProviderCallbackWorker is enabled for the target environment.")
+    }
+
+    if (-not (Test-Truthy ([Environment]::GetEnvironmentVariable("DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED")))) {
+        $blocked.Add("DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true is required after EmailDispatchOperationWorker is enabled for the target environment.")
+    }
+
+    if ($blocked.Count -gt 0) {
+        Write-Host "Brevo delivery pipeline readiness is blocked. Confirm these non-secret deployment prerequisites first:"
+        foreach ($message in $blocked) {
+            Write-Host " - $message"
+        }
+
+        exit 2
+    }
+}
 
 $required = @(
     "DARWIN_BREVO_API_KEY",
@@ -52,8 +109,16 @@ if ($invalid.Count -gt 0) {
     exit 2
 }
 
+if ($RequireDeliveryPipeline -or ($Execute -and -not $Sandbox)) {
+    Assert-BrevoDeliveryPipelineReady
+}
+
 if (-not $Execute) {
     Write-Host "Brevo readiness smoke configuration is present."
+    if ($RequireDeliveryPipeline) {
+        Write-Host "Brevo delivery pipeline readiness is confirmed."
+    }
+
     Write-Host "Run with -Execute -Sandbox to call Brevo in sandbox/drop mode."
     Write-Host "Run with -Execute only after a controlled inbox send is approved. No secrets are printed."
     exit 0

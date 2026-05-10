@@ -2,9 +2,11 @@
 
 Reviewed: 2026-05-10
 
-Production provider direction is now selected: Darwin should use a reusable object-storage architecture with MinIO as the recommended self-hosted production target through an S3-compatible provider. AWS S3 and Azure Blob Storage remain supported alternatives. The current implementation keeps the internal/database-backed provider active, adds a file-system provider for non-vendor local/shared-volume scenarios, and adds a provider-neutral `ObjectStorage` configuration/capability boundary plus an SDK-backed S3-compatible adapter so future invoice archive, media, DHL label, export, and e-invoice artifacts can use the same storage model.
+Production provider direction is now selected: Darwin should use a reusable object-storage architecture with MinIO as the recommended self-hosted production target through an S3-compatible provider. AWS S3 and Azure Blob Storage remain supported alternatives. The current implementation keeps the internal/database-backed provider active, adds a file-system provider for non-vendor local/shared-volume scenarios, and adds a provider-neutral `ObjectStorage` configuration/capability boundary plus SDK-backed S3-compatible and Azure Blob adapters so future invoice archive, media, DHL label, export, and e-invoice artifacts can use the same storage model.
 
-Invoice archive provider selection remains configuration-driven through `InvoiceArchiveStorage:ProviderName` while the reusable object-storage provider selection is configured under `ObjectStorage:Provider`. The file-system invoice archive provider uses `InvoiceArchiveStorage:FileSystem:RootPath`. External object-storage adapters must be wired behind the generic object-storage boundary and then consumed by invoice archive policy code without exposing provider SDK concepts to Application or Domain. The S3-compatible adapter is the first implementation; Azure Blob remains an explicit provider boundary until a deployment selects and validates it.
+Invoice archive provider selection remains configuration-driven through `InvoiceArchiveStorage:ProviderName` while the reusable object-storage provider selection is configured under `ObjectStorage:Provider`. The file-system invoice archive provider uses `InvoiceArchiveStorage:FileSystem:RootPath`. External object-storage adapters must be wired behind the generic object-storage boundary and then consumed by invoice archive policy code without exposing provider SDK concepts to Application or Domain. S3-compatible and Azure Blob adapters are implemented in Infrastructure; provider-level immutability is still deployment-validation work, not a source-code-only claim.
+
+Named `ObjectStorage:Profiles` are the deployment boundary for reusable consumers such as invoice archive, CMS media, DHL labels, exports, and future e-invoice artifacts. Profile `Provider`, `ContainerName`, and `Prefix` values are validated at startup and applied by the object-storage router before the selected provider is called. This keeps container/key rules centralized and avoids duplicating provider-specific storage paths in WebAdmin, WebApi, or Worker code.
 
 ## Decision Criteria
 
@@ -30,6 +32,7 @@ Evaluate each candidate provider against these requirements before implementatio
 - Optional local/on-prem fallback: file-system provider, without legal immutability claims.
 
 Production archive immutability is still not complete until the selected deployment storage is configured and validated with provider-level versioning, object lock, retention, and legal hold or the provider-specific equivalent.
+For Azure Blob deployments, Darwin sends native blob immutability/legal-hold options when retained objects are written and can fail fast when the target container lacks an immutability policy. The storage account/container still must be provisioned with immutable storage with versioning and validated before production archive traffic.
 
 ## Implementation Requirements After Selection
 
@@ -39,6 +42,7 @@ Production archive immutability is still not complete until the selected deploym
 - Store archive artifacts through the selected provider without exposing raw storage paths in WebAdmin.
 - Persist content hash, generated timestamp, retention deadline, retention policy version, and audit correlation.
 - Keep provider-specific configuration validation that fails fast when production archive storage is enabled without required settings.
+- Keep named profile validation for container names and object-key prefixes so unsafe traversal-style paths fail before startup completes.
 - Add target-environment smoke coverage for save, read, existence check, retention metadata, legal-hold behavior, and denied premature deletion.
 - Update `docs/production-setup.md`, `docs/go-live-status.md`, `docs/module-audit.md`, and `BACKLOG.md` after the provider is selected.
 
@@ -48,6 +52,7 @@ Production archive immutability is still not complete until the selected deploym
 - Use TLS and a dedicated least-privilege Darwin access key, not root credentials.
 - Create the invoice archive bucket with Object Lock enabled from the start.
 - Enable versioning before writing production invoice archive objects.
+- If Darwin is allowed to create the bucket (`CreateBucketIfMissing=true`), keep `RequireObjectLock=true` and `ObjectLockValidationMode=FailFast` for invoice archive production so the S3-compatible provider requests Object Lock at creation time and validates versioning/Object Lock before immutable writes.
 - Configure default retention; use COMPLIANCE mode for invoice archive if the legal retention policy is confirmed.
 - Keep MinIO storage separate from the database disk for serious production deployments.
 - Configure backup, replication, offsite restore, and disk-usage monitoring.

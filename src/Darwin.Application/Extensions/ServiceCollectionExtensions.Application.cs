@@ -5,6 +5,7 @@ using Darwin.Application.CRM.Services;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
 namespace Darwin.Application.Extensions
@@ -58,10 +59,17 @@ namespace Darwin.Application.Extensions
             {
                 services.AddScoped<ObjectStorageInvoiceArchiveStorage>();
                 services.AddScoped<IInvoiceArchiveStorageProvider>(provider => provider.GetRequiredService<ObjectStorageInvoiceArchiveStorage>());
+                services.AddScoped<IEInvoiceArtifactStorage, ObjectStorageEInvoiceArtifactStorage>();
+            }
+            else
+            {
+                services.AddScoped<IEInvoiceArtifactStorage, NullEInvoiceArtifactStorage>();
             }
 
             services.AddScoped<IInvoiceArchiveStorage, InvoiceArchiveStorageRouter>();
-            services.AddScoped<IEInvoiceGenerationService, NotConfiguredEInvoiceGenerationService>();
+            services.AddSingleton<EInvoiceSourceReadinessValidator>();
+            // Default fallback contract: services.AddScoped<IEInvoiceGenerationService, NotConfiguredEInvoiceGenerationService>();
+            services.TryAddScoped<IEInvoiceGenerationService, NotConfiguredEInvoiceGenerationService>();
 
             return services;
         }
@@ -71,7 +79,8 @@ namespace Darwin.Application.Extensions
             var providerName = configuration?["InvoiceArchiveStorage:ProviderName"];
             return string.Equals(providerName, InvoiceArchiveStorageProviderNames.S3Compatible, StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(providerName, InvoiceArchiveStorageProviderNames.Minio, StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(providerName, InvoiceArchiveStorageProviderNames.AwsS3, StringComparison.OrdinalIgnoreCase);
+                   string.Equals(providerName, InvoiceArchiveStorageProviderNames.AwsS3, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(providerName, InvoiceArchiveStorageProviderNames.AzureBlob, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

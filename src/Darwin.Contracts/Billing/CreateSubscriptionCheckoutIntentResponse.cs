@@ -21,4 +21,14 @@ public sealed class CreateSubscriptionCheckoutIntentResponse
     /// Gets or sets provider name.
     /// </summary>
     public string Provider { get; set; } = "Stripe";
+
+    /// <summary>
+    /// Gets or sets the provider checkout session reference.
+    /// </summary>
+    public string? ProviderCheckoutSessionReference { get; set; }
+
+    /// <summary>
+    /// Gets or sets the provider subscription reference when it is available immediately.
+    /// </summary>
+    public string? ProviderSubscriptionReference { get; set; }
 }

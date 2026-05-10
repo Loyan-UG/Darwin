@@ -104,6 +104,64 @@ public sealed class ObjectStorageOptionsValidatorTests
     }
 
     [Fact]
+    public void Validate_Should_Reject_Unsafe_Azure_BlobPrefix()
+    {
+        var options = new ObjectStorageOptions
+        {
+            Provider = ObjectStorageProviderKind.AzureBlob,
+            AzureBlob = new AzureBlobObjectStorageOptions
+            {
+                ContainerName = "darwin-archive",
+                ConnectionString = "UseDevelopmentStorage=true",
+                BlobPrefix = "archive/../invoices"
+            }
+        };
+
+        var result = new ObjectStorageOptionsValidator().Validate(null, options);
+
+        result.Succeeded.Should().BeFalse();
+        result.Failures.Should().Contain(x => x.Contains("BlobPrefix", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validate_Should_Require_FileSystem_Root_When_FileSystem_Is_Selected()
+    {
+        var options = new ObjectStorageOptions
+        {
+            Provider = ObjectStorageProviderKind.FileSystem
+        };
+
+        var result = new ObjectStorageOptionsValidator().Validate(null, options);
+
+        result.Succeeded.Should().BeFalse();
+        result.Failures.Should().Contain(x => x.Contains("RootPath", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validate_Should_Reject_Unsafe_Profile_Container_And_Prefix()
+    {
+        var options = new ObjectStorageOptions
+        {
+            Provider = ObjectStorageProviderKind.Database,
+            Profiles =
+            {
+                ["MediaAssets"] = new ObjectStorageProfileOptions
+                {
+                    Provider = ObjectStorageProviderKind.Database,
+                    ContainerName = "../media",
+                    Prefix = "cms/../uploads"
+                }
+            }
+        };
+
+        var result = new ObjectStorageOptionsValidator().Validate(null, options);
+
+        result.Succeeded.Should().BeFalse();
+        result.Failures.Should().Contain(x => x.Contains("ContainerName", StringComparison.Ordinal));
+        result.Failures.Should().Contain(x => x.Contains("Prefix", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void CapabilityReporter_Should_Not_Claim_Native_Immutability_For_Database_Or_FileSystem()
     {
         var reporter = new ObjectStorageCapabilityReporter(

@@ -218,6 +218,9 @@ public sealed class ApplyDhlShipmentLabelOperationHandlerTests
         public Task<DhlShipmentCreateResult> CreateShipmentAsync(SiteSetting settings, Order order, Shipment shipment, Darwin.Application.Orders.DTOs.CheckoutAddressDto receiver, CancellationToken ct = default)
             => Task.FromResult(new DhlShipmentCreateResult());
 
+        public Task<DhlShipmentCreateResult> CreateReturnShipmentAsync(SiteSetting settings, Order order, Shipment shipment, Darwin.Application.Orders.DTOs.CheckoutAddressDto returnSender, CancellationToken ct = default)
+            => Task.FromResult(new DhlShipmentCreateResult());
+
         public Task<DhlShipmentLabelResult> GetLabelAsync(SiteSetting settings, Shipment shipment, CancellationToken ct = default)
         {
             shipment.ProviderShipmentReference.Should().Be("00340434292135100100");

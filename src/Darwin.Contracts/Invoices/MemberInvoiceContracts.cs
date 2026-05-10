@@ -114,4 +114,13 @@ public sealed class MemberInvoiceActions
 
     /// <summary>Gets or sets the canonical API path for downloading an invoice document.</summary>
     public string DocumentPath { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the canonical API path for downloading the printable issued-invoice archive document.</summary>
+    public string? ArchiveDocumentPath { get; set; }
+
+    /// <summary>Gets or sets the canonical API path for downloading the structured source-model JSON export.</summary>
+    public string? StructuredDataPath { get; set; }
+
+    /// <summary>Gets or sets the canonical API path for downloading the structured source-model XML export.</summary>
+    public string? StructuredXmlPath { get; set; }
 }

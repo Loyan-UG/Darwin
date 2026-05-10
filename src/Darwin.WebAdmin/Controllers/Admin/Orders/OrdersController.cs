@@ -36,6 +36,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         private readonly AddPaymentHandler _addPayment;
         private readonly AddShipmentHandler _addShipment;
         private readonly GenerateDhlShipmentLabelHandler _generateDhlShipmentLabel;
+        private readonly QueueDhlReturnShipmentHandler _queueDhlReturnShipment;
         private readonly ResolveShipmentCarrierExceptionHandler _resolveShipmentCarrierException;
         private readonly UpdateShipmentProviderOperationHandler _updateShipmentProviderOperation;
         private readonly AddRefundHandler _addRefund;
@@ -60,6 +61,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             AddPaymentHandler addPayment,
             AddShipmentHandler addShipment,
             GenerateDhlShipmentLabelHandler generateDhlShipmentLabel,
+            QueueDhlReturnShipmentHandler queueDhlReturnShipment,
             ResolveShipmentCarrierExceptionHandler resolveShipmentCarrierException,
             UpdateShipmentProviderOperationHandler updateShipmentProviderOperation,
             AddRefundHandler addRefund,
@@ -83,6 +85,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             _addPayment = addPayment ?? throw new ArgumentNullException(nameof(addPayment));
             _addShipment = addShipment ?? throw new ArgumentNullException(nameof(addShipment));
             _generateDhlShipmentLabel = generateDhlShipmentLabel ?? throw new ArgumentNullException(nameof(generateDhlShipmentLabel));
+            _queueDhlReturnShipment = queueDhlReturnShipment ?? throw new ArgumentNullException(nameof(queueDhlReturnShipment));
             _resolveShipmentCarrierException = resolveShipmentCarrierException ?? throw new ArgumentNullException(nameof(resolveShipmentCarrierException));
             _updateShipmentProviderOperation = updateShipmentProviderOperation ?? throw new ArgumentNullException(nameof(updateShipmentProviderOperation));
             _addRefund = addRefund ?? throw new ArgumentNullException(nameof(addRefund));
@@ -752,6 +755,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     PaymentProvider = x.PaymentProvider,
                     PaymentProviderReference = x.PaymentProviderReference,
                     PaymentStatus = x.PaymentStatus,
+                    RefundProvider = x.RefundProvider,
+                    RefundProviderReference = x.RefundProviderReference,
+                    RefundProviderStatus = x.RefundProviderStatus,
+                    FailureReason = x.FailureReason,
+                    RequestedAtUtc = x.RequestedAtUtc,
+                    CompletedAtUtc = x.CompletedAtUtc,
                     AmountMinor = x.AmountMinor,
                     Currency = x.Currency,
                     Reason = x.Reason,
@@ -1037,6 +1046,54 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             if (returnToQueue)
             {
                 return RedirectOrHtmx(nameof(ShipmentsQueue), new { page, pageSize, query, filter });
+            }
+
+            return RedirectOrHtmx(nameof(Details), new { id = orderId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QueueDhlReturnLabel(
+            Guid shipmentId,
+            Guid orderId,
+            string? rowVersion,
+            bool returnToReturnsQueue = false,
+            ReturnQueueFilter returnFilter = ReturnQueueFilter.All,
+            string? query = null,
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken ct = default)
+        {
+            if (shipmentId == Guid.Empty || orderId == Guid.Empty)
+            {
+                SetErrorMessage("DhlReturnLabelQueueFailed");
+                return returnToReturnsQueue
+                    ? RedirectOrHtmx(nameof(ReturnsQueue), new { page, pageSize, query, filter = returnFilter })
+                    : RedirectOrHtmx(nameof(Index), new { });
+            }
+
+            try
+            {
+                var version = DecodeBase64RowVersion(rowVersion);
+                if (version.Length == 0)
+                {
+                    SetErrorMessage("DhlReturnLabelQueueFailed");
+                    return returnToReturnsQueue
+                        ? RedirectOrHtmx(nameof(ReturnsQueue), new { page, pageSize, query, filter = returnFilter })
+                        : RedirectOrHtmx(nameof(Details), new { id = orderId });
+                }
+
+                await _queueDhlReturnShipment.HandleAsync(shipmentId, version, ct).ConfigureAwait(false);
+                SetSuccessMessage("DhlReturnLabelQueued");
+            }
+            catch (Exception)
+            {
+                SetErrorMessage("DhlReturnLabelQueueFailed");
+            }
+
+            if (returnToReturnsQueue)
+            {
+                return RedirectOrHtmx(nameof(ReturnsQueue), new { page, pageSize, query, filter = returnFilter });
             }
 
             return RedirectOrHtmx(nameof(Details), new { id = orderId });

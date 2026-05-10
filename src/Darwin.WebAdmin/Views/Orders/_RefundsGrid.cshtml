@@ -200,7 +200,25 @@
                             </td>
                             <td>@item.Reason</td>
                             <td class="text-end">@item.Currency @((item.AmountMinor / 100.0M).ToString("0.00"))</td>
-                            <td>@LocalizeRefundStatus(item.Status)</td>
+                            <td>
+                                <div>@LocalizeRefundStatus(item.Status)</div>
+                                @if (!string.IsNullOrWhiteSpace(item.RefundProviderReference) || !string.IsNullOrWhiteSpace(item.RefundProviderStatus))
+                                {
+                                    <div class="small text-muted">@T.T("Provider"): @item.RefundProvider</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.RefundProviderReference))
+                                    {
+                                        <div class="small text-muted">@T.T("ProviderReference"): @item.RefundProviderReference</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.RefundProviderStatus))
+                                    {
+                                        <div class="small text-muted">@T.T("Status"): @item.RefundProviderStatus</div>
+                                    }
+                                }
+                                @if (!string.IsNullOrWhiteSpace(item.FailureReason))
+                                {
+                                    <div class="small text-danger">@T.T("FailureReason"): @item.FailureReason</div>
+                                }
+                            </td>
                             <td>@OrderDateTimeText(item.CreatedAtUtc)</td>
                             <td class="text-end">
                                 <a asp-controller="Billing"

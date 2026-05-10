@@ -32,9 +32,29 @@ public sealed class ObjectStorageOptionsValidator : IValidateOptions<ObjectStora
             {
                 failures.Add($"ObjectStorage:Profiles:{profile.Key}:Provider is not supported.");
             }
+
+            if (!string.IsNullOrWhiteSpace(profile.Value.ContainerName) &&
+                !IsSafeObjectStorageSegment(profile.Value.ContainerName))
+            {
+                failures.Add($"ObjectStorage:Profiles:{profile.Key}:ContainerName must be a safe storage segment.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(profile.Value.Prefix) &&
+                !IsSafeObjectStoragePrefix(profile.Value.Prefix))
+            {
+                failures.Add($"ObjectStorage:Profiles:{profile.Key}:Prefix must be a safe normalized storage prefix.");
+            }
         }
 
-        failures.AddRange(ValidateFileSystem(options.FileSystem));
+        if (options.Provider == ObjectStorageProviderKind.FileSystem ||
+            options.Profiles.Values.Any(x => x.Provider == ObjectStorageProviderKind.FileSystem))
+        {
+            failures.AddRange(ValidateFileSystem(options.FileSystem, requireRootPath: true));
+        }
+        else
+        {
+            failures.AddRange(ValidateFileSystem(options.FileSystem, requireRootPath: false));
+        }
 
         if (options.Provider == ObjectStorageProviderKind.S3Compatible ||
             options.Profiles.Values.Any(x => x.Provider == ObjectStorageProviderKind.S3Compatible))
@@ -53,8 +73,13 @@ public sealed class ObjectStorageOptionsValidator : IValidateOptions<ObjectStora
             : ValidateOptionsResult.Fail(failures);
     }
 
-    private static IEnumerable<string> ValidateFileSystem(FileSystemObjectStorageOptions options)
+    private static IEnumerable<string> ValidateFileSystem(FileSystemObjectStorageOptions options, bool requireRootPath)
     {
+        if (requireRootPath && string.IsNullOrWhiteSpace(options.RootPath))
+        {
+            yield return "ObjectStorage:FileSystem:RootPath is required when the file-system object storage provider is selected.";
+        }
+
         if (options.DefaultRetentionYears is < 1 or > 100)
         {
             yield return "ObjectStorage:FileSystem:DefaultRetentionYears must be between 1 and 100.";
@@ -123,6 +148,12 @@ public sealed class ObjectStorageOptionsValidator : IValidateOptions<ObjectStora
             yield return "ObjectStorage:AzureBlob:ImmutabilityValidationMode must not be Disabled when RequireImmutabilityPolicy is true.";
         }
 
+        if (!string.IsNullOrWhiteSpace(options.BlobPrefix) &&
+            !IsSafeObjectStoragePrefix(options.BlobPrefix))
+        {
+            yield return "ObjectStorage:AzureBlob:BlobPrefix must be a safe normalized storage prefix.";
+        }
+
         if (options.DefaultRetentionYears is < 1 or > 100)
         {
             yield return "ObjectStorage:AzureBlob:DefaultRetentionYears must be between 1 and 100.";
@@ -131,6 +162,41 @@ public sealed class ObjectStorageOptionsValidator : IValidateOptions<ObjectStora
         if (options.PresignedUrlExpiryMinutes is < 1 or > 1440)
         {
             yield return "ObjectStorage:AzureBlob:PresignedUrlExpiryMinutes must be between 1 and 1440.";
+        }
+    }
+
+    private static bool IsSafeObjectStorageSegment(string value)
+    {
+        try
+        {
+            _ = ObjectStorageKeyBuilder.NormalizeSegment(value);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsSafeObjectStoragePrefix(string value)
+    {
+        try
+        {
+            var segments = value
+                .Trim()
+                .Replace('\\', '/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (segments.Length == 0)
+            {
+                return false;
+            }
+
+            _ = ObjectStorageKeyBuilder.Build(segments);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
         }
     }
 }

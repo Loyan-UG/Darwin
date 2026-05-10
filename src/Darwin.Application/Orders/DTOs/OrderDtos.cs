@@ -452,6 +452,12 @@ namespace Darwin.Application.Orders.DTOs
         public string PaymentProvider { get; set; } = string.Empty;
         public string? PaymentProviderReference { get; set; }
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+        public string RefundProvider { get; set; } = string.Empty;
+        public string? RefundProviderReference { get; set; }
+        public string? RefundProviderStatus { get; set; }
+        public string? FailureReason { get; set; }
+        public DateTime? RequestedAtUtc { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
         public long AmountMinor { get; set; }
         public string Currency { get; set; } = Darwin.Application.Settings.DTOs.SiteSettingDto.DefaultCurrencyDefault;
         public string Reason { get; set; } = string.Empty;

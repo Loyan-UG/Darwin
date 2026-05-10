@@ -21,6 +21,16 @@ Detailed diagnostics belong in module workspaces:
 - DHL shipment provider operations: `Orders/ShipmentProviderOperations`.
 - Mobile stale-device and missing-push details: `MobileOperations`.
 
+## Billing Operations Workspaces
+
+Billing diagnostics should stay in billing workspaces instead of expanding the dashboard.
+
+- `Billing/Payments` remains the operator workspace for payment state, provider handoff state, unlinked/pending/failed payment review, and payment status transitions.
+- `Billing/Refunds` remains the operator workspace for provider-backed Stripe refund creation, provider refund references/status/failures, and refund reconciliation review.
+- `Billing/Disputes` remains the operator workspace for dispute visibility and operator review.
+- `Billing/Webhooks` remains the operator workspace for webhook subscription and delivery diagnostics.
+- `Billing/Subscriptions` is the business subscription reconciliation workspace. It shows subscription status, provider checkout/customer/subscription references, period/amount summary, search/filter controls, and business links. It must not display Stripe secret keys, webhook signing secrets, raw provider payloads, or local success actions that bypass verified webhooks.
+
 HTMX conventions:
 
 - Dashboard fragments must remain small and replace only their card root.

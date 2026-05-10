@@ -1,18 +1,22 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Storage;
 using Darwin.Application.CMS.Media.Commands;
 using Darwin.Application.CMS.Media.DTOs;
 using Darwin.Application.CMS.Media.Queries;
 using Darwin.Infrastructure.Media;
+using Darwin.Infrastructure.Storage;
 using Darwin.WebAdmin.ViewModels.CMS;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Media
@@ -32,9 +36,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
     {
         private static readonly string[] AllowedExtensions = [".png", ".jpg", ".jpeg", ".webp", ".gif"];
         private const long MaxUploadBytes = 5 * 1024 * 1024;
+        private const string MediaAssetsProfileName = "MediaAssets";
 
         private readonly IWebHostEnvironment _env;
         private readonly MediaStorageOptions _mediaStorageOptions;
+        private readonly ObjectStorageOptions _objectStorageOptions;
+        private readonly IServiceProvider _serviceProvider;
         private readonly GetMediaAssetsPageHandler _getPage;
         private readonly GetMediaAssetOpsSummaryHandler _getSummary;
         private readonly GetMediaAssetForEditHandler _getForEdit;
@@ -49,6 +56,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         public MediaController(
             IWebHostEnvironment env,
             IOptions<MediaStorageOptions> mediaStorageOptions,
+            IOptions<ObjectStorageOptions> objectStorageOptions,
+            IServiceProvider serviceProvider,
             GetMediaAssetsPageHandler getPage,
             GetMediaAssetOpsSummaryHandler getSummary,
             GetMediaAssetForEditHandler getForEdit,
@@ -59,6 +68,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         {
             _env = env ?? throw new ArgumentNullException(nameof(env));
             _mediaStorageOptions = mediaStorageOptions?.Value ?? throw new ArgumentNullException(nameof(mediaStorageOptions));
+            _objectStorageOptions = objectStorageOptions?.Value ?? throw new ArgumentNullException(nameof(objectStorageOptions));
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _getPage = getPage ?? throw new ArgumentNullException(nameof(getPage));
             _getSummary = getSummary ?? throw new ArgumentNullException(nameof(getSummary));
             _getForEdit = getForEdit ?? throw new ArgumentNullException(nameof(getForEdit));
@@ -214,10 +225,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             }
             catch (Exception)
             {
-                if (stored is not null && System.IO.File.Exists(stored.PhysicalPath))
-                {
-                    System.IO.File.Delete(stored.PhysicalPath);
-                }
+                await DeleteStoredUploadAsync(stored, ct).ConfigureAwait(false);
 
                 AddModelErrorMessage("MediaCreateFailed");
                 return RenderCreateEditor(vm);
@@ -353,10 +361,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
             }
 
-            if (!string.IsNullOrWhiteSpace(localPath) && System.IO.File.Exists(localPath))
-            {
-                System.IO.File.Delete(localPath);
-            }
+            await DeleteMediaUrlAsync(dto.Url, localPath, ct).ConfigureAwait(false);
 
             SetSuccessMessage("MediaPurged");
             return RedirectOrHtmx(nameof(Index), new { filter = MediaAssetQueueFilter.Unused });
@@ -379,10 +384,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             foreach (var url in result.Value.PurgedUrls)
             {
                 var localPath = TryResolveLocalUploadPath(url);
-                if (!string.IsNullOrWhiteSpace(localPath) && System.IO.File.Exists(localPath))
-                {
-                    System.IO.File.Delete(localPath);
-                }
+                await DeleteMediaUrlAsync(url, localPath, ct).ConfigureAwait(false);
             }
 
             TempData["Success"] = string.Format(T("MediaBulkPurged"), result.Value.PurgedCount);
@@ -437,10 +439,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             }
             catch (Exception)
             {
-                if (stored is not null && System.IO.File.Exists(stored.PhysicalPath))
-                {
-                    System.IO.File.Delete(stored.PhysicalPath);
-                }
+                await DeleteStoredUploadAsync(stored, ct).ConfigureAwait(false);
 
                 throw;
             }
@@ -552,6 +551,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 throw new InvalidDataException("Uploaded file signature does not match an allowed image format.");
             }
 
+            if (ShouldUseObjectStorageForMedia())
+            {
+                return await SaveUploadToObjectStorageAsync(file, ext, bytes, ct).ConfigureAwait(false);
+            }
+
             var uploadsRoot = MediaStoragePathResolver.ResolveRootPath(_env.ContentRootPath, _mediaStorageOptions);
             Directory.CreateDirectory(uploadsRoot);
 
@@ -570,6 +574,175 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 PublicUrl: MediaStoragePathResolver.BuildPublicUrl(_mediaStorageOptions, fileName),
                 SizeBytes: bytes.LongLength,
                 ContentHash: hash);
+        }
+
+        private async Task<StoredUploadResult> SaveUploadToObjectStorageAsync(IFormFile file, string extension, byte[] bytes, CancellationToken ct)
+        {
+            var profile = ResolveMediaAssetsProfile()
+                ?? throw new InvalidOperationException("Media object storage profile is not configured.");
+            var storage = _serviceProvider.GetRequiredService<IObjectStorageService>();
+            var now = DateTime.UtcNow;
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var objectKey = ObjectStorageKeyBuilder.Build(
+                "media",
+                now.Year.ToString("0000", System.Globalization.CultureInfo.InvariantCulture),
+                now.Month.ToString("00", System.Globalization.CultureInfo.InvariantCulture),
+                fileName);
+            var hash = Convert.ToHexString(SHA256.HashData(bytes));
+
+            await using var content = new MemoryStream(bytes, writable: false);
+            var originalFileName = SanitizeOriginalFileName(file.FileName);
+            var result = await storage.SaveAsync(new ObjectStorageWriteRequest(
+                ContainerName: profile.ContainerName!,
+                ObjectKey: objectKey,
+                ContentType: string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                FileName: originalFileName,
+                Content: content,
+                ContentLength: bytes.LongLength,
+                ExpectedSha256Hash: hash,
+                Metadata: new Dictionary<string, string>
+                {
+                    ["source"] = "webadmin-media",
+                    ["original-file-name"] = originalFileName
+                },
+                OverwritePolicy: ObjectOverwritePolicy.Disallow,
+                ProfileName: MediaAssetsProfileName), ct).ConfigureAwait(false);
+
+            var publicUrl = TryGetPublicObjectStorageUrl(result)
+                ?? throw new InvalidOperationException("Media object storage requires an HTTP(S) public base URL.");
+            return new StoredUploadResult(
+                PhysicalPath: null,
+                PublicUrl: publicUrl,
+                SizeBytes: result.ContentLength,
+                ContentHash: string.IsNullOrWhiteSpace(result.Sha256Hash) ? hash : result.Sha256Hash,
+                ObjectContainerName: result.ContainerName,
+                ObjectKey: result.ObjectKey);
+        }
+
+        private bool ShouldUseObjectStorageForMedia()
+        {
+            var profile = ResolveMediaAssetsProfile();
+            return profile is not null &&
+                profile.Provider is ObjectStorageProviderKind.S3Compatible or ObjectStorageProviderKind.AzureBlob or ObjectStorageProviderKind.FileSystem;
+        }
+
+        private ObjectStorageProfileOptions? ResolveMediaAssetsProfile()
+        {
+            return _objectStorageOptions.Profiles.TryGetValue(MediaAssetsProfileName, out var profile) &&
+                profile.Provider is ObjectStorageProviderKind.S3Compatible or ObjectStorageProviderKind.AzureBlob or ObjectStorageProviderKind.FileSystem &&
+                !string.IsNullOrWhiteSpace(profile.ContainerName) &&
+                HasPublicBaseUrl(profile.Provider)
+                    ? profile
+                    : null;
+        }
+
+        private string? TryGetPublicObjectStorageUrl(ObjectStorageWriteResult result)
+        {
+            if (result.StorageUri is not null &&
+                (string.Equals(result.StorageUri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(result.StorageUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+            {
+                return result.StorageUri.ToString();
+            }
+
+            return null;
+        }
+
+        private bool HasPublicBaseUrl(ObjectStorageProviderKind provider)
+        {
+            return provider switch
+            {
+                ObjectStorageProviderKind.S3Compatible => !string.IsNullOrWhiteSpace(_objectStorageOptions.S3Compatible.PublicBaseUrl),
+                ObjectStorageProviderKind.AzureBlob => !string.IsNullOrWhiteSpace(_objectStorageOptions.AzureBlob.PublicBaseUrl),
+                ObjectStorageProviderKind.FileSystem => !string.IsNullOrWhiteSpace(_objectStorageOptions.FileSystem.PublicBaseUrl),
+                _ => false
+            };
+        }
+
+        private async Task DeleteStoredUploadAsync(StoredUploadResult? stored, CancellationToken ct)
+        {
+            if (stored is null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(stored.PhysicalPath) && System.IO.File.Exists(stored.PhysicalPath))
+            {
+                System.IO.File.Delete(stored.PhysicalPath);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(stored.ObjectContainerName) && !string.IsNullOrWhiteSpace(stored.ObjectKey))
+            {
+                await DeleteObjectStorageMediaAsync(stored.ObjectContainerName, stored.ObjectKey, ct).ConfigureAwait(false);
+            }
+        }
+
+        private async Task DeleteMediaUrlAsync(string? url, string? localPath, CancellationToken ct)
+        {
+            if (!string.IsNullOrWhiteSpace(localPath) && System.IO.File.Exists(localPath))
+            {
+                System.IO.File.Delete(localPath);
+                return;
+            }
+
+            if (TryResolveObjectStorageMediaReference(url, out var containerName, out var objectKey))
+            {
+                await DeleteObjectStorageMediaAsync(containerName, objectKey, ct).ConfigureAwait(false);
+            }
+        }
+
+        private bool TryResolveObjectStorageMediaReference(string? url, out string containerName, out string objectKey)
+        {
+            containerName = string.Empty;
+            objectKey = string.Empty;
+
+            var profile = ResolveMediaAssetsProfile();
+            if (profile is null || string.IsNullOrWhiteSpace(url))
+            {
+                return false;
+            }
+
+            var configuredBaseUrl = GetPublicBaseUrl(profile.Provider)?.TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(configuredBaseUrl))
+            {
+                return false;
+            }
+
+            var value = url.Trim();
+            if (!value.StartsWith(configuredBaseUrl + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var relative = Uri.UnescapeDataString(value[(configuredBaseUrl.Length + 1)..]).TrimStart('/');
+            if (string.IsNullOrWhiteSpace(relative) || relative.Contains("..", StringComparison.Ordinal) || relative.StartsWith("/", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            containerName = profile.ContainerName!;
+            objectKey = relative;
+            return true;
+        }
+
+        private string? GetPublicBaseUrl(ObjectStorageProviderKind provider)
+        {
+            return provider switch
+            {
+                ObjectStorageProviderKind.S3Compatible => _objectStorageOptions.S3Compatible.PublicBaseUrl,
+                ObjectStorageProviderKind.AzureBlob => _objectStorageOptions.AzureBlob.PublicBaseUrl,
+                ObjectStorageProviderKind.FileSystem => _objectStorageOptions.FileSystem.PublicBaseUrl,
+                _ => null
+            };
+        }
+
+        private async Task DeleteObjectStorageMediaAsync(string containerName, string objectKey, CancellationToken ct)
+        {
+            var storage = _serviceProvider.GetRequiredService<IObjectStorageService>();
+            await storage.DeleteAsync(new ObjectStorageDeleteRequest(
+                new ObjectStorageObjectReference(containerName, objectKey, ProfileName: MediaAssetsProfileName),
+                "WebAdmin media cleanup"), ct).ConfigureAwait(false);
         }
 
         private static bool HasValidImageSignature(string extension, byte[] bytes)
@@ -653,6 +826,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             return normalizedPath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
         }
 
-        private sealed record StoredUploadResult(string PhysicalPath, string PublicUrl, long SizeBytes, string ContentHash);
+        private sealed record StoredUploadResult(
+            string? PhysicalPath,
+            string PublicUrl,
+            long SizeBytes,
+            string ContentHash,
+            string? ObjectContainerName = null,
+            string? ObjectKey = null);
     }
 }

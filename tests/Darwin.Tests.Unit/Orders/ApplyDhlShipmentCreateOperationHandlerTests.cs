@@ -245,6 +245,9 @@ public sealed class ApplyDhlShipmentCreateOperationHandlerTests
 
         public Task<DhlShipmentLabelResult> GetLabelAsync(SiteSetting settings, Shipment shipment, CancellationToken ct = default)
             => Task.FromResult(new DhlShipmentLabelResult());
+
+        public Task<DhlShipmentCreateResult> CreateReturnShipmentAsync(SiteSetting settings, Order order, Shipment shipment, CheckoutAddressDto returnSender, CancellationToken ct = default)
+            => Task.FromResult(new DhlShipmentCreateResult());
     }
 
     private sealed class FakeShipmentLabelStorage : IShipmentLabelStorage

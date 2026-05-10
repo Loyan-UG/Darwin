@@ -9,7 +9,9 @@ public static class ServiceCollectionExtensionsShippingProviders
     public static IServiceCollection AddShippingProviderInfrastructure(this IServiceCollection services)
     {
         services.AddHttpClient<IDhlShipmentProviderClient, DhlShipmentProviderClient>();
-        services.AddScoped<IShipmentLabelStorage, FileSystemShipmentLabelStorage>();
+        services.AddScoped<FileSystemShipmentLabelStorage>();
+        services.AddScoped<ObjectStorageShipmentLabelStorage>();
+        services.AddScoped<IShipmentLabelStorage, ShipmentLabelStorageRouter>();
         return services;
     }
 }

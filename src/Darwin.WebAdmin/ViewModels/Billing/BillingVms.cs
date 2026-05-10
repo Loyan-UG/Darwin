@@ -43,6 +43,17 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int Total { get; set; }
     }
 
+    public sealed class BusinessSubscriptionsListVm
+    {
+        public string Query { get; set; } = string.Empty;
+        public BusinessSubscriptionQueueFilter QueueFilter { get; set; } = BusinessSubscriptionQueueFilter.All;
+        public BusinessSubscriptionOpsSummaryVm Summary { get; set; } = new();
+        public List<BusinessSubscriptionListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
     public sealed class BillingWebhooksListVm
     {
         public string Query { get; set; } = string.Empty;
@@ -252,6 +263,45 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int InUseCount { get; set; }
     }
 
+    public sealed class BusinessSubscriptionOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int TrialingCount { get; set; }
+        public int PastDueCount { get; set; }
+        public int CanceledCount { get; set; }
+        public int StripeCount { get; set; }
+        public int MissingProviderReferenceCount { get; set; }
+        public int CancelAtPeriodEndCount { get; set; }
+    }
+
+    public sealed class BusinessSubscriptionListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid? BusinessId { get; set; }
+        public string BusinessName { get; set; } = string.Empty;
+        public string? BusinessContactEmail { get; set; }
+        public Guid BillingPlanId { get; set; }
+        public string PlanCode { get; set; } = string.Empty;
+        public string PlanName { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string? ProviderCustomerId { get; set; }
+        public string? ProviderSubscriptionId { get; set; }
+        public string? ProviderCheckoutSessionId { get; set; }
+        public SubscriptionStatus Status { get; set; }
+        public DateTime StartedAtUtc { get; set; }
+        public DateTime? CurrentPeriodEndUtc { get; set; }
+        public DateTime? TrialEndsAtUtc { get; set; }
+        public DateTime? CanceledAtUtc { get; set; }
+        public bool CancelAtPeriodEnd { get; set; }
+        public long UnitPriceMinor { get; set; }
+        public string Currency { get; set; } = string.Empty;
+        public bool IsStripe { get; set; }
+        public bool MissingProviderReference { get; set; }
+        public string ProviderReferenceState { get; set; } = string.Empty;
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
     public sealed class BillingPlanListItemVm
     {
         public Guid Id { get; set; }
@@ -366,6 +416,12 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string? PaymentProviderPaymentIntentRef { get; set; }
         public string? PaymentProviderCheckoutSessionRef { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
+        public string RefundProvider { get; set; } = string.Empty;
+        public string? RefundProviderReference { get; set; }
+        public string? RefundProviderPaymentReference { get; set; }
+        public string? RefundProviderStatus { get; set; }
+        public string? FailureReason { get; set; }
+        public DateTime? RequestedAtUtc { get; set; }
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string? CustomerEmail { get; set; }

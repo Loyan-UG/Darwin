@@ -1,11 +1,34 @@
 $ErrorActionPreference = "Stop"
 
+function New-ObjectStorageProfileCommand {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProfileName,
+        [string]$ContainerName,
+        [string]$Prefix
+    )
+
+    $command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-object-storage.ps1", "-ProfileName", $ProfileName)
+    if (-not [string]::IsNullOrWhiteSpace($ContainerName)) {
+        $command += @("-ContainerName", $ContainerName)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Prefix)) {
+        $command += @("-Prefix", $Prefix)
+    }
+
+    return $command
+}
+
 $checks = @(
     @{ Name = "Secrets scan"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-secrets.ps1"); ExpectedBlockedExitCode = $null },
-    @{ Name = "Stripe test-mode smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-stripe-testmode.ps1", "-CreateSmokeOrder"); ExpectedBlockedExitCode = 2 },
-    @{ Name = "DHL live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-dhl-live.ps1"); ExpectedBlockedExitCode = 2 },
-    @{ Name = "Brevo readiness smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-brevo-readiness.ps1"); ExpectedBlockedExitCode = 2 },
-    @{ Name = "VIES live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-vies-live.ps1"); ExpectedBlockedExitCode = 2 }
+    @{ Name = "Stripe test-mode smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-stripe-testmode.ps1", "-CreateSmokeOrder", "-RequireRuntimePipeline"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Stripe webhook forwarding prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-stripe-webhook-forwarding.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "DHL live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-dhl-live.ps1", "-RequireRuntimePipeline"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Brevo readiness smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-brevo-readiness.ps1", "-RequireDeliveryPipeline"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "VIES live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-vies-live.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Object storage smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-object-storage.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Object storage MediaAssets profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "MediaAssets" -ContainerName $env:DARWIN_OBJECT_STORAGE_MEDIA_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_MEDIA_PREFIX; ExpectedBlockedExitCode = 2 },
+    @{ Name = "Object storage ShipmentLabels profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "ShipmentLabels" -ContainerName $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_PREFIX; ExpectedBlockedExitCode = 2 }
 )
 
 $results = New-Object System.Collections.Generic.List[object]
@@ -63,7 +86,7 @@ if (-not (Test-Path $eInvoiceDecisionPath -PathType Leaf)) {
 else {
     $eInvoiceDecision = Get-Content $eInvoiceDecisionPath -Raw
     if ($eInvoiceDecision -match "No library or tooling is selected yet\." -and
-        $eInvoiceDecision -match "Do not claim full e-invoice compliance from JSON, HTML, or CSV outputs\.") {
+        $eInvoiceDecision -match "Do not claim full e-invoice compliance") {
         Add-Result -Name "E-invoice tooling decision" -Status "Blocked" -ExitCode 2 -Detail "Tooling selection is still open. Use docs/e-invoice-tooling-decision.md before implementing ZUGFeRD/Factur-X generation."
     }
     else {
@@ -76,7 +99,7 @@ foreach ($result in $results) {
     Write-Host " - $($result.Name): $($result.Status)"
 }
 
-$failed = $results | Where-Object { $_.Status -eq "Failed" }
+$failed = @($results | Where-Object { $_.Status -eq "Failed" })
 if ($failed.Count -gt 0) {
     Write-Host ""
     Write-Host "Failed checks:"
@@ -88,7 +111,7 @@ if ($failed.Count -gt 0) {
     exit 1
 }
 
-$blocked = $results | Where-Object { $_.Status -eq "Blocked" }
+$blocked = @($results | Where-Object { $_.Status -eq "Blocked" })
 if ($blocked.Count -gt 0) {
     Write-Host ""
     Write-Host "Blocked go-live prerequisites:"

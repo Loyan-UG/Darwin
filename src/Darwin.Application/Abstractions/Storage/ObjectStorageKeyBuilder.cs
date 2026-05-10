@@ -43,6 +43,37 @@ public static class ObjectStorageKeyBuilder
             artifactId.ToString("N"));
     }
 
+    public static string ForInvoiceArtifact(Guid invoiceId, DateTime issuedAtUtc, string artifactType, string artifactFormat, Guid artifactId)
+    {
+        if (invoiceId == Guid.Empty)
+        {
+            throw new ArgumentException("Invoice id is required.", nameof(invoiceId));
+        }
+
+        if (artifactId == Guid.Empty)
+        {
+            throw new ArgumentException("Artifact id is required.", nameof(artifactId));
+        }
+
+        if (string.IsNullOrWhiteSpace(artifactFormat))
+        {
+            throw new ArgumentException("Artifact format is required.", nameof(artifactFormat));
+        }
+
+        var issuedUtc = issuedAtUtc.Kind == DateTimeKind.Utc
+            ? issuedAtUtc
+            : DateTime.SpecifyKind(issuedAtUtc, DateTimeKind.Utc);
+
+        return Build(
+            "invoices",
+            issuedUtc.Year.ToString("0000", CultureInfo.InvariantCulture),
+            issuedUtc.Month.ToString("00", CultureInfo.InvariantCulture),
+            invoiceId.ToString("N"),
+            artifactType,
+            artifactId.ToString("N"),
+            artifactFormat);
+    }
+
     public static string NormalizeSegment(string segment)
     {
         if (string.IsNullOrWhiteSpace(segment))

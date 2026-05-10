@@ -1,4 +1,5 @@
 using Darwin.Application.Abstractions.Compliance;
+using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Infrastructure.Compliance;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,10 @@ public static class ServiceCollectionExtensionsCompliance
 {
     public static IServiceCollection AddComplianceInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<ExternalCommandEInvoiceOptions>(configuration.GetSection(ExternalCommandEInvoiceOptions.SectionName));
+        services.AddScoped<ExternalCommandEInvoiceGenerationService>();
+        services.AddScoped<IEInvoiceGenerationService>(provider => provider.GetRequiredService<ExternalCommandEInvoiceGenerationService>());
+
         services.Configure<ViesVatValidationOptions>(configuration.GetSection("Compliance:VatValidation:Vies"));
         services.AddHttpClient<IVatValidationProvider, ViesVatValidationProvider>((serviceProvider, client) =>
         {

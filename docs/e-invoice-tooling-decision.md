@@ -4,7 +4,9 @@ Reviewed: 2026-05-10
 
 Darwin does not yet implement full e-invoice compliance. Current invoice outputs are issued JSON snapshots, printable HTML archive output, structured invoice source-model JSON, and CSV export. The primary target for the next implementation slice is a downloadable ZUGFeRD/Factur-X invoice artifact. XRechnung remains a secondary export target.
 
-The application now exposes `IEInvoiceGenerationService` as the provider-neutral generation boundary. The registered default is `NotConfiguredEInvoiceGenerationService`, which returns `NotConfigured` and does not produce fake compliant artifacts.
+The application now exposes `IEInvoiceGenerationService` as the provider-neutral generation boundary. The registered default is `NotConfiguredEInvoiceGenerationService`, which returns `NotConfigured` and does not produce fake compliant artifacts. `EInvoiceSourceReadinessValidator` verifies minimum issued-snapshot source fields before any future generator runs; this is a safety gate only and does not validate ZUGFeRD/Factur-X or XRechnung compliance.
+
+Infrastructure also supports a disabled-by-default external command adapter behind `IEInvoiceGenerationService`. It is intended for a deployment-approved generator or validation tool after the tooling decision is made. The command receives `--input <issued-snapshot-json> --output <artifact-path> --format <zugferd-factur-x|xrechnung>` and must create a validated artifact file. The adapter rejects empty output, output larger than the configured `MaxArtifactBytes`, non-PDF ZUGFeRD/Factur-X output, and malformed XRechnung XML output before storage. This adapter does not make Darwin compliant by itself; compliance still depends on the selected tool, its validation behavior, and production smoke.
 
 ## Decision Criteria
 
@@ -33,6 +35,8 @@ No library or tooling is selected yet.
 ## Implementation Requirements After Selection
 
 - Replace the default `NotConfigured` implementation of `IEInvoiceGenerationService` with the selected provider/tooling implementation.
+- If the selected tool is operated out-of-process, configure `Compliance:EInvoice:ExternalCommand` with an absolute executable path, bounded timeout, supported formats, and an approved working/temp directory.
+- Reuse or extend `EInvoiceSourceReadinessValidator` so missing source fields fail before provider-specific generation.
 - Extend the existing issued-snapshot to structured source-model mapping into the selected e-invoice model.
 - Validate the structured XML before artifact exposure.
 - Generate or attach the structured XML to a PDF/A-3 artifact where required by the selected format.

@@ -440,6 +440,22 @@
                     <td>
                         <div>@item.Reason</div>
                         <div class="small text-muted">@LocalizeRefundStatus(item.Status)</div>
+                        @if (!string.IsNullOrWhiteSpace(item.RefundProviderReference) || !string.IsNullOrWhiteSpace(item.RefundProviderStatus))
+                        {
+                            <div class="small text-muted">@T.T("Provider"): @(string.IsNullOrWhiteSpace(item.RefundProvider) ? item.PaymentProvider : item.RefundProvider)</div>
+                            @if (!string.IsNullOrWhiteSpace(item.RefundProviderReference))
+                            {
+                                <div class="small text-muted">@T.T("ProviderRef"): @item.RefundProviderReference</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.RefundProviderStatus))
+                            {
+                                <div class="small text-muted">@T.T("Status"): @item.RefundProviderStatus</div>
+                            }
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.FailureReason))
+                        {
+                            <div class="small text-danger">@T.T("FailureReason"): @item.FailureReason</div>
+                        }
                     </td>
                     <td>
                         <div class="small text-muted">@T.T("Created") @item.CreatedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>

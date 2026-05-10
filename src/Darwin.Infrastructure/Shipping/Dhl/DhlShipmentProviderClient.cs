@@ -72,6 +72,55 @@ public sealed class DhlShipmentProviderClient : IDhlShipmentProviderClient
         };
     }
 
+    public async Task<DhlShipmentCreateResult> CreateReturnShipmentAsync(
+        SiteSetting settings,
+        Order order,
+        Shipment shipment,
+        CheckoutAddressDto returnSender,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(order);
+        ArgumentNullException.ThrowIfNull(shipment);
+        ArgumentNullException.ThrowIfNull(returnSender);
+
+        ConfigureHttpClient(settings);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "orders?validate=false")
+        {
+            Content = new StringContent(BuildCreateReturnShipmentPayload(settings, order, shipment, returnSender), Encoding.UTF8, "application/json")
+        };
+        AddDhlHeaders(request, settings);
+
+        using var response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
+        var responseBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"DHL return shipment creation failed with HTTP {(int)response.StatusCode}.");
+        }
+
+        using var document = JsonDocument.Parse(responseBody);
+        var root = document.RootElement;
+        var item = GetFirstItem(root);
+        var providerShipmentReference =
+            GetString(item, "shipmentNo") ??
+            GetString(item, "shipmentNumber") ??
+            GetString(root, "shipmentNo") ??
+            GetString(root, "shipmentNumber");
+
+        if (string.IsNullOrWhiteSpace(providerShipmentReference))
+        {
+            throw new InvalidOperationException("DHL return shipment creation response did not include a shipment number.");
+        }
+
+        return new DhlShipmentCreateResult
+        {
+            ProviderShipmentReference = providerShipmentReference.Trim(),
+            TrackingNumber = GetString(item, "trackingNumber") ?? providerShipmentReference.Trim(),
+            LabelPdfBytes = TryGetLabelBytes(item) ?? TryGetLabelBytes(root),
+            ProviderLabelUrl = GetLabelUrl(item) ?? GetLabelUrl(root)
+        };
+    }
+
     public async Task<DhlShipmentLabelResult> GetLabelAsync(
         SiteSetting settings,
         Shipment shipment,
@@ -146,6 +195,74 @@ public sealed class DhlShipmentProviderClient : IDhlShipmentProviderClient
                         city = receiver.City.Trim(),
                         country = receiver.CountryCode.Trim().ToUpperInvariant(),
                         phone = receiver.PhoneE164
+                    },
+                    details = new
+                    {
+                        dim = new
+                        {
+                            uom = "mm",
+                            height = 100,
+                            length = 300,
+                            width = 200
+                        },
+                        weight = new
+                        {
+                            uom = "kg",
+                            value = weightKg
+                        }
+                    }
+                }
+            }
+        };
+
+        return JsonSerializer.Serialize(payload, new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+    }
+
+    private static string BuildCreateReturnShipmentPayload(SiteSetting settings, Order order, Shipment shipment, CheckoutAddressDto returnSender)
+    {
+        var product = string.IsNullOrWhiteSpace(shipment.Service) ? "V01PAK" : shipment.Service.Trim();
+        var weightKg = Math.Max(0.1m, (shipment.TotalWeight ?? 1000) / 1000m);
+        var senderStreet = SplitStreet(returnSender.Street1);
+        var receiverStreet = SplitStreet(settings.DhlShipperStreet!.Trim());
+
+        var payload = new
+        {
+            profile = string.Equals(settings.DhlEnvironment, "Production", StringComparison.OrdinalIgnoreCase)
+                ? "STANDARD_GRUPPENPROFIL"
+                : "STANDARD_GRUPPENPROFIL",
+            shipments = new[]
+            {
+                new
+                {
+                    product,
+                    billingNumber = settings.DhlAccountNumber!.Trim(),
+                    refNo = $"RETURN-{order.OrderNumber}",
+                    shipper = new
+                    {
+                        name1 = returnSender.FullName.Trim(),
+                        name2 = returnSender.Company,
+                        addressStreet = senderStreet.Street,
+                        addressHouse = senderStreet.HouseNumber,
+                        additionalAddressInformation1 = returnSender.Street2,
+                        postalCode = returnSender.PostalCode.Trim(),
+                        city = returnSender.City.Trim(),
+                        country = returnSender.CountryCode.Trim().ToUpperInvariant(),
+                        phone = returnSender.PhoneE164
+                    },
+                    consignee = new
+                    {
+                        name1 = settings.DhlShipperName!.Trim(),
+                        addressStreet = receiverStreet.Street,
+                        addressHouse = receiverStreet.HouseNumber,
+                        postalCode = settings.DhlShipperPostalCode!.Trim(),
+                        city = settings.DhlShipperCity!.Trim(),
+                        country = settings.DhlShipperCountry!.Trim().ToUpperInvariant(),
+                        email = settings.DhlShipperEmail!.Trim(),
+                        phone = settings.DhlShipperPhoneE164!.Trim()
                     },
                     details = new
                     {

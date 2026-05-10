@@ -114,6 +114,11 @@ public sealed class ProcessStripeWebhookHandler
             case "charge.refunded":
                 await ApplyChargeRefundedAsync(stripeObject, occurredAtUtc, result, ct).ConfigureAwait(false);
                 break;
+            case "charge.refund.updated":
+            case "refund.created":
+            case "refund.updated":
+                await ApplyRefundObjectAsync(stripeObject, occurredAtUtc, result, ct).ConfigureAwait(false);
+                break;
             case "invoice.paid":
                 await ApplyInvoicePaidAsync(stripeObject, occurredAtUtc, result, ct).ConfigureAwait(false);
                 break;
@@ -162,6 +167,12 @@ public sealed class ProcessStripeWebhookHandler
         StripeWebhookProcessingResultDto result,
         CancellationToken ct)
     {
+        if (string.Equals(GetString(stripeObject, "mode"), "subscription", StringComparison.OrdinalIgnoreCase))
+        {
+            await ApplySubscriptionCheckoutSessionCompletedAsync(stripeObject, occurredAtUtc, result, ct).ConfigureAwait(false);
+            return;
+        }
+
         var sessionId = NormalizeProviderReference(GetString(stripeObject, "id"));
         var paymentIntentId = NormalizeProviderReference(GetString(stripeObject, "payment_intent"));
         var paymentStatus = GetString(stripeObject, "payment_status");
@@ -192,6 +203,78 @@ public sealed class ProcessStripeWebhookHandler
             {
                 await PromoteOrderToPaidAsync(payment.OrderId, ct).ConfigureAwait(false);
             }
+        }
+    }
+
+    private async Task ApplySubscriptionCheckoutSessionCompletedAsync(
+        JsonElement stripeObject,
+        DateTime occurredAtUtc,
+        StripeWebhookProcessingResultDto result,
+        CancellationToken ct)
+    {
+        var sessionId = NormalizeProviderBillingReference(GetString(stripeObject, "id"));
+        var providerSubscriptionId = NormalizeProviderBillingReference(GetString(stripeObject, "subscription"));
+        var providerCustomerId = NormalizeProviderBillingReference(GetString(stripeObject, "customer"));
+        var businessId = GetGuid(stripeObject, "metadata", "businessId");
+        var planId = GetGuid(stripeObject, "metadata", "planId");
+
+        if (sessionId is null || !businessId.HasValue || !planId.HasValue)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+        }
+
+        var plan = await _db.Set<BillingPlan>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == planId.Value, ct)
+            .ConfigureAwait(false);
+        var businessExists = await _db.Set<Domain.Entities.Businesses.Business>()
+            .AsNoTracking()
+            .AnyAsync(x => !x.IsDeleted && x.Id == businessId.Value, ct)
+            .ConfigureAwait(false);
+        if (plan is null || !businessExists)
+        {
+            throw new InvalidOperationException(_localizer["StripeWebhookPayloadInvalid"]);
+        }
+
+        var subscription = await FindBusinessSubscriptionAsync(providerSubscriptionId, ct).ConfigureAwait(false)
+                           ?? await FindBusinessSubscriptionByCheckoutSessionAsync(sessionId, ct).ConfigureAwait(false)
+                           ?? await _db.Set<BusinessSubscription>()
+                               .FirstOrDefaultAsync(x => !x.IsDeleted && x.BusinessId == businessId.Value, ct)
+                               .ConfigureAwait(false);
+
+        if (subscription is null)
+        {
+            subscription = new BusinessSubscription
+            {
+                Id = Guid.NewGuid(),
+                BusinessId = businessId.Value,
+                StartedAtUtc = occurredAtUtc
+            };
+            _db.Set<BusinessSubscription>().Add(subscription);
+        }
+
+        result.MatchedBusinessSubscriptionId = subscription.Id;
+        subscription.BusinessId = businessId.Value;
+        subscription.BillingPlanId = plan.Id;
+        subscription.Provider = "Stripe";
+        subscription.ProviderCheckoutSessionId = sessionId;
+        subscription.ProviderSubscriptionId = providerSubscriptionId ?? subscription.ProviderSubscriptionId;
+        ApplyProviderCustomerId(subscription, providerCustomerId);
+        subscription.Status = ResolveCheckoutSubscriptionStatus(stripeObject, subscription.Status, plan.TrialDays);
+        subscription.StartedAtUtc = subscription.StartedAtUtc == default ? occurredAtUtc : subscription.StartedAtUtc;
+        subscription.UnitPriceMinor = plan.PriceMinor;
+        subscription.Currency = NormalizeCurrency(plan.Currency) ?? subscription.Currency;
+        subscription.TrialEndsAtUtc = GetUnixDateTimeUtc(stripeObject, "subscription", "trial_end") ?? subscription.TrialEndsAtUtc;
+        subscription.CancelAtPeriodEnd = GetBoolean(stripeObject, "subscription", "cancel_at_period_end") ?? subscription.CancelAtPeriodEnd;
+        subscription.CanceledAtUtc = null;
+        subscription.MetadataJson = BuildSubscriptionCheckoutMetadataJson(sessionId, providerSubscriptionId, plan.Code, occurredAtUtc);
+
+        if (TryGetNested(stripeObject, out var subscriptionObject, "subscription") &&
+            subscriptionObject.ValueKind == JsonValueKind.Object)
+        {
+            subscription.Status = MapSubscriptionStatus(GetString(subscriptionObject, "status"), subscription.Status);
+            ApplySubscriptionPeriod(subscriptionObject, subscription);
+            subscription.TrialEndsAtUtc = GetUnixDateTimeUtc(subscriptionObject, "trial_end") ?? subscription.TrialEndsAtUtc;
         }
     }
 
@@ -310,6 +393,87 @@ public sealed class ProcessStripeWebhookHandler
             if (order is not null && amountRefunded.HasValue && amountRefunded.Value > 0)
             {
                 order.Status = amountRefunded.Value >= payment.AmountMinor
+                    ? OrderStatus.Refunded
+                    : OrderStatus.PartiallyRefunded;
+            }
+        }
+    }
+
+    private async Task ApplyRefundObjectAsync(
+        JsonElement stripeObject,
+        DateTime occurredAtUtc,
+        StripeWebhookProcessingResultDto result,
+        CancellationToken ct)
+    {
+        var refundReference = NormalizeProviderReference(GetString(stripeObject, "id"));
+        var paymentIntentId = NormalizeProviderReference(GetString(stripeObject, "payment_intent"));
+        var chargeId = NormalizeProviderReference(GetString(stripeObject, "charge"));
+        var amount = GetInt64(stripeObject, "amount");
+        var currency = GetString(stripeObject, "currency");
+        var status = NormalizeNullable(GetString(stripeObject, "status")) ?? "unknown";
+
+        var payment = await FindPaymentAsync(paymentIntentId, null, chargeId, ct).ConfigureAwait(false);
+        if (payment is null || !amount.HasValue)
+        {
+            return;
+        }
+
+        result.MatchedPaymentId = payment.Id;
+        EnsureRefundAmountMatches(payment, amount, currency);
+        payment.ProviderPaymentIntentRef ??= paymentIntentId;
+        payment.ProviderTransactionRef ??= chargeId ?? paymentIntentId;
+
+        var refund = await FindRefundAsync(refundReference, stripeObject, payment.Id, amount.Value, ct).ConfigureAwait(false);
+        if (refund is null)
+        {
+            refund = new Refund
+            {
+                Id = Guid.NewGuid(),
+                PaymentId = payment.Id,
+                OrderId = payment.OrderId,
+                AmountMinor = amount.Value,
+                Currency = string.IsNullOrWhiteSpace(currency) ? payment.Currency : currency.Trim().ToUpperInvariant(),
+                Reason = "Stripe webhook refund",
+                Provider = "Stripe",
+                RequestedAtUtc = occurredAtUtc
+            };
+            _db.Set<Refund>().Add(refund);
+        }
+
+        result.MatchedRefundId = refund.Id;
+        refund.Provider = "Stripe";
+        refund.ProviderRefundReference = refundReference ?? refund.ProviderRefundReference;
+        refund.ProviderPaymentReference = paymentIntentId ?? chargeId ?? refund.ProviderPaymentReference;
+        refund.ProviderStatus = status;
+        refund.FailureReason = string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase)
+            ? BuildProviderFailureReason(GetString(stripeObject, "failure_reason"), 512)
+            : null;
+        refund.Status = status.ToLowerInvariant() switch
+        {
+            "succeeded" => RefundStatus.Completed,
+            "failed" => RefundStatus.Failed,
+            _ => RefundStatus.Pending
+        };
+        refund.CompletedAtUtc = refund.Status == RefundStatus.Completed
+            ? GetUnixDateTimeUtc(stripeObject, "created") ?? occurredAtUtc
+            : null;
+
+        var completedRefunded = await GetCompletedRefundTotalAsync(payment.Id, refund, ct).ConfigureAwait(false);
+        if (completedRefunded >= payment.AmountMinor)
+        {
+            payment.Status = PaymentStatus.Refunded;
+        }
+
+        payment.FailureReason = null;
+        if (payment.OrderId.HasValue && completedRefunded > 0)
+        {
+            var order = await _db.Set<Order>()
+                .FirstOrDefaultAsync(x => x.Id == payment.OrderId.Value, ct)
+                .ConfigureAwait(false);
+
+            if (order is not null)
+            {
+                order.Status = completedRefunded >= payment.AmountMinor
                     ? OrderStatus.Refunded
                     : OrderStatus.PartiallyRefunded;
             }
@@ -488,6 +652,71 @@ public sealed class ProcessStripeWebhookHandler
         return matches.Count == 0 ? null : matches[0];
     }
 
+    private async Task<Refund?> FindRefundAsync(
+        string? providerRefundReference,
+        JsonElement stripeObject,
+        Guid paymentId,
+        long amountMinor,
+        CancellationToken ct)
+    {
+        var metadataRefundId = NormalizeNullable(GetString(stripeObject, "metadata", "refundId"));
+        if (Guid.TryParse(metadataRefundId, out var refundId))
+        {
+            var refund = await _db.Set<Refund>()
+                .FirstOrDefaultAsync(x => x.Id == refundId && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (refund is not null)
+            {
+                return refund;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(providerRefundReference))
+        {
+            var refund = await _db.Set<Refund>()
+                .FirstOrDefaultAsync(x =>
+                    !x.IsDeleted &&
+                    x.Provider == "Stripe" &&
+                    x.ProviderRefundReference == providerRefundReference,
+                    ct)
+                .ConfigureAwait(false);
+
+            if (refund is not null)
+            {
+                return refund;
+            }
+        }
+
+        return await _db.Set<Refund>()
+            .Where(x =>
+                !x.IsDeleted &&
+                x.PaymentId == paymentId &&
+                x.AmountMinor == amountMinor &&
+                x.Status == RefundStatus.Pending &&
+                x.ProviderRefundReference == null)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false);
+    }
+
+    private async Task<long> GetCompletedRefundTotalAsync(Guid paymentId, Refund currentRefund, CancellationToken ct)
+    {
+        var completed = await _db.Set<Refund>()
+            .AsNoTracking()
+            .Where(x =>
+                !x.IsDeleted &&
+                x.PaymentId == paymentId &&
+                x.Id != currentRefund.Id &&
+                x.Status == RefundStatus.Completed)
+            .SumAsync(x => (long?)x.AmountMinor, ct)
+            .ConfigureAwait(false) ?? 0L;
+
+        return currentRefund.Status == RefundStatus.Completed
+            ? completed + currentRefund.AmountMinor
+            : completed;
+    }
+
     private async Task<SubscriptionInvoice?> FindSubscriptionInvoiceAsync(string? providerInvoiceId, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(providerInvoiceId))
@@ -512,6 +741,20 @@ public sealed class ProcessStripeWebhookHandler
         return await FindUniqueBusinessSubscriptionAsync(
                 _db.Set<BusinessSubscription>()
                     .Where(x => !x.IsDeleted && x.Provider == "Stripe" && x.ProviderSubscriptionId == providerSubscriptionId),
+                ct)
+            .ConfigureAwait(false);
+    }
+
+    private async Task<BusinessSubscription?> FindBusinessSubscriptionByCheckoutSessionAsync(string? providerCheckoutSessionId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(providerCheckoutSessionId))
+        {
+            return null;
+        }
+
+        return await FindUniqueBusinessSubscriptionAsync(
+                _db.Set<BusinessSubscription>()
+                    .Where(x => !x.IsDeleted && x.Provider == "Stripe" && x.ProviderCheckoutSessionId == providerCheckoutSessionId),
                 ct)
             .ConfigureAwait(false);
     }
@@ -667,6 +910,47 @@ public sealed class ProcessStripeWebhookHandler
         subscription.ProviderCustomerId ??= providerCustomerId;
     }
 
+    private static SubscriptionStatus ResolveCheckoutSubscriptionStatus(JsonElement stripeObject, SubscriptionStatus fallback, int? trialDays)
+    {
+        if (TryGetNested(stripeObject, out var subscriptionObject, "subscription") &&
+            subscriptionObject.ValueKind == JsonValueKind.Object)
+        {
+            return MapSubscriptionStatus(GetString(subscriptionObject, "status"), fallback);
+        }
+
+        var paymentStatus = GetString(stripeObject, "payment_status");
+        if (string.Equals(paymentStatus, "paid", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(paymentStatus, "no_payment_required", StringComparison.OrdinalIgnoreCase))
+        {
+            return trialDays is > 0 ? SubscriptionStatus.Trialing : SubscriptionStatus.Active;
+        }
+
+        return SubscriptionStatus.Incomplete;
+    }
+
+    private static string BuildSubscriptionCheckoutMetadataJson(
+        string providerCheckoutSessionId,
+        string? providerSubscriptionId,
+        string planCode,
+        DateTime occurredAtUtc)
+    {
+        return JsonSerializer.Serialize(
+            new
+            {
+                providerCheckoutSessionId,
+                providerSubscriptionId,
+                planCode,
+                source = "stripe.checkout.session.completed",
+                occurredAtUtc
+            });
+    }
+
+    private static string? NormalizeCurrency(string? value)
+    {
+        var normalized = NormalizeNullable(value)?.ToUpperInvariant();
+        return normalized?.Length == 3 ? normalized : null;
+    }
+
     private string? NormalizeEventId(string? value)
     {
         var normalized = NormalizeNullable(value);
@@ -741,6 +1025,7 @@ public sealed class ProcessStripeWebhookHandler
         AddIfNotBlank(properties, "created", GetString(root, "created"));
         AddIfNotBlank(properties, "objectType", GetString(stripeObject, "object"));
         AddIfNotBlank(properties, "objectId", GetString(stripeObject, "id"));
+        AddIfNotBlank(properties, "refund", GetString(stripeObject, "id"));
         AddIfNotBlank(properties, "paymentIntent", GetString(stripeObject, "payment_intent"));
         AddIfNotBlank(properties, "checkoutSession", GetString(stripeObject, "checkout_session"));
         AddIfNotBlank(properties, "latestCharge", GetString(stripeObject, "latest_charge"));
@@ -803,6 +1088,12 @@ public sealed class ProcessStripeWebhookHandler
             JsonValueKind.Number => nested.GetRawText(),
             _ => null
         };
+    }
+
+    private static Guid? GetGuid(JsonElement element, params string[] path)
+    {
+        var value = GetString(element, path);
+        return Guid.TryParse(value, out var guid) ? guid : null;
     }
 
     private static bool? GetBoolean(JsonElement element, params string[] path)
@@ -897,6 +1188,8 @@ public sealed class StripeWebhookProcessingResultDto
     public bool IsDuplicate { get; set; }
 
     public Guid? MatchedPaymentId { get; set; }
+
+    public Guid? MatchedRefundId { get; set; }
 
     public Guid? MatchedSubscriptionInvoiceId { get; set; }
 

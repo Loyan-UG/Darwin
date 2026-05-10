@@ -16,16 +16,9 @@ public static class ServiceCollectionExtensionsStorage
             .ValidateOnStart();
         services.AddSingleton<ObjectStorageCapabilityReporter>();
         services.AddScoped<S3CompatibleObjectStorageService>();
-        services.AddScoped<IObjectStorageService>(serviceProvider =>
-        {
-            var options = serviceProvider.GetRequiredService<IOptions<ObjectStorageOptions>>().Value;
-            return options.Provider switch
-            {
-                ObjectStorageProviderKind.S3Compatible => serviceProvider.GetRequiredService<S3CompatibleObjectStorageService>(),
-                _ => throw new InvalidOperationException(
-                    $"Generic object storage service is not implemented for provider '{options.Provider}'. Use invoice archive fallback providers or configure ObjectStorage:Provider=S3Compatible.")
-            };
-        });
+        services.AddScoped<FileSystemObjectStorageService>();
+        services.AddScoped<AzureBlobObjectStorageService>();
+        services.AddScoped<IObjectStorageService, ObjectStorageServiceRouter>();
         return services;
     }
 }

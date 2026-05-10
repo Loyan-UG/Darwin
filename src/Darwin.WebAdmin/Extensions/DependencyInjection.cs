@@ -172,6 +172,7 @@ namespace Darwin.WebAdmin.Extensions
             // Transactional email infrastructure; provider selection is configuration-driven.
             services.AddObjectStorageInfrastructure(config);
             services.AddNotificationsInfrastructure(config);
+            services.AddPaymentProviderInfrastructure();
             services.AddComplianceInfrastructure(config);
 
 
@@ -381,6 +382,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<AddPaymentHandler>();
             services.AddScoped<AddShipmentHandler>();
             services.AddScoped<GenerateDhlShipmentLabelHandler>();
+            services.AddScoped<QueueDhlReturnShipmentHandler>();
             services.AddScoped<ResolveShipmentCarrierExceptionHandler>();
             services.AddScoped<UpdateShipmentProviderOperationHandler>();
             services.AddScoped<AddRefundHandler>();
@@ -422,6 +424,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetInvoiceArchiveSnapshotHandler>();
             services.AddScoped<GetInvoiceArchiveDocumentHandler>();
             services.AddScoped<GetInvoiceStructuredDataExportHandler>();
+            services.AddScoped<GetInvoiceStructuredXmlExportHandler>();
             services.AddScoped<CreateInvoiceRefundHandler>();
             services.AddScoped<UpdateInvoiceHandler>();
             services.AddScoped<TransitionInvoiceStatusHandler>();
@@ -435,6 +438,8 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetBillingPlansAdminPageHandler>();
             services.AddScoped<GetBillingPlanOpsSummaryHandler>();
             services.AddScoped<GetBillingPlanForEditHandler>();
+            services.AddScoped<GetBusinessSubscriptionsPageHandler>();
+            services.AddScoped<GetBusinessSubscriptionOpsSummaryHandler>();
             services.AddScoped<GetBillingWebhookSubscriptionsPageHandler>();
             services.AddScoped<GetBillingWebhookDeliveriesPageHandler>();
             services.AddScoped<GetBillingWebhookOpsSummaryHandler>();
