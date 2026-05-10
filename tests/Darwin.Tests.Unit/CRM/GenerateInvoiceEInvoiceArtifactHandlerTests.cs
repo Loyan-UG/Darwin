@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CRM.Commands;
+using Darwin.Application.CRM.Services;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Enums;
 using FluentAssertions;
@@ -15,7 +16,7 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
     {
         await using var db = EInvoiceArtifactDbContext.Create();
         var generator = new RecordingGenerator();
-        var handler = new GenerateInvoiceEInvoiceArtifactHandler(db, generator);
+        var handler = CreateHandler(db, generator);
 
         var result = await handler.HandleAsync(
             Guid.NewGuid(),
@@ -42,7 +43,7 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var generator = new RecordingGenerator();
-        var handler = new GenerateInvoiceEInvoiceArtifactHandler(db, generator);
+        var handler = CreateHandler(db, generator);
 
         var result = await handler.HandleAsync(
             invoiceId,
@@ -65,7 +66,7 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
             Currency = "EUR",
             DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
             IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
-            IssuedSnapshotJson = $$"""{"invoiceId":"{{invoiceId}}"}""",
+            IssuedSnapshotJson = BuildReadySnapshot(invoiceId),
             RowVersion = new byte[] { 1 }
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -81,7 +82,7 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
                 new byte[] { 1, 2, 3 },
                 "factur-x-test-profile",
                 new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc))));
-        var handler = new GenerateInvoiceEInvoiceArtifactHandler(db, generator);
+        var handler = CreateHandler(db, generator);
 
         var result = await handler.HandleAsync(
             invoiceId,
@@ -105,7 +106,7 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
             Status = InvoiceStatus.Open,
             Currency = "EUR",
             DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
-            IssuedSnapshotJson = $$"""{"invoiceId":"{{invoiceId}}"}""",
+            IssuedSnapshotJson = BuildReadySnapshot(invoiceId),
             RowVersion = new byte[] { 1 }
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -121,7 +122,7 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
                 new byte[] { 1 },
                 "factur-x-test-profile",
                 new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc))));
-        var handler = new GenerateInvoiceEInvoiceArtifactHandler(db, generator);
+        var handler = CreateHandler(db, generator);
 
         var action = () => handler.HandleAsync(
             invoiceId,
@@ -132,6 +133,76 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
             .ThrowAsync<InvalidOperationException>()
             .WithMessage("Generated e-invoice artifact invoice id does not match the requested invoice.");
     }
+
+    [Fact]
+    public async Task HandleAsync_Should_Return_ValidationFailed_When_Issued_Snapshot_Lacks_EInvoice_Source_Fields()
+    {
+        await using var db = EInvoiceArtifactDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        db.Set<Invoice>().Add(new Invoice
+        {
+            Id = invoiceId,
+            Status = InvoiceStatus.Open,
+            Currency = "EUR",
+            DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedSnapshotJson = $$"""{"invoiceId":"{{invoiceId}}"}""",
+            RowVersion = new byte[] { 1 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var generator = new RecordingGenerator();
+        var handler = CreateHandler(db, generator);
+
+        var result = await handler.HandleAsync(
+            invoiceId,
+            EInvoiceArtifactFormat.ZugferdFacturX,
+            TestContext.Current.CancellationToken);
+
+        result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+        result.Message.Should().Contain("Issued invoice snapshot is missing required e-invoice source fields");
+        generator.Calls.Should().Be(0);
+    }
+
+    private static GenerateInvoiceEInvoiceArtifactHandler CreateHandler(
+        IAppDbContext db,
+        IEInvoiceGenerationService generator)
+        => new(db, generator, new EInvoiceSourceReadinessValidator());
+
+    private static string BuildReadySnapshot(Guid invoiceId)
+        => $$"""
+        {
+          "invoiceId": "{{invoiceId}}",
+          "currency": "EUR",
+          "issuedAtUtc": "2026-05-01T00:00:00Z",
+          "totalGrossMinor": 11900,
+          "issuer": {
+            "legalName": "Darwin GmbH",
+            "taxId": "DE123456789",
+            "addressLine1": "Issuer Street 1",
+            "postalCode": "10115",
+            "city": "Berlin",
+            "country": "DE"
+          },
+          "customer": {
+            "companyName": "Customer GmbH",
+            "addressLine1": "Customer Street 2",
+            "postalCode": "10115",
+            "city": "Berlin",
+            "country": "DE"
+          },
+          "lines": [
+            {
+              "id": "11111111-1111-1111-1111-111111111111",
+              "description": "Invoice line",
+              "quantity": 1,
+              "unitPriceNetMinor": 10000,
+              "totalNetMinor": 10000,
+              "totalGrossMinor": 11900
+            }
+          ]
+        }
+        """;
 
     private sealed class RecordingGenerator : IEInvoiceGenerationService
     {

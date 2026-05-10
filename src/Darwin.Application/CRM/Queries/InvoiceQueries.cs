@@ -14,6 +14,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace Darwin.Application.CRM.Queries
 {
@@ -744,5 +745,105 @@ namespace Darwin.Application.CRM.Queries
             long TotalTaxMinor,
             long TotalGrossMinor,
             string Currency);
+    }
+
+    public sealed class GetInvoiceStructuredXmlExportHandler
+    {
+        private readonly GetInvoiceStructuredDataExportHandler _structuredData;
+
+        public GetInvoiceStructuredXmlExportHandler(GetInvoiceStructuredDataExportHandler structuredData)
+        {
+            _structuredData = structuredData ?? throw new ArgumentNullException(nameof(structuredData));
+        }
+
+        public async Task<InvoiceStructuredXmlExportDto?> HandleAsync(Guid id, CancellationToken ct = default)
+        {
+            var export = await _structuredData.HandleAsync(id, ct).ConfigureAwait(false);
+            if (export is null)
+            {
+                return null;
+            }
+
+            using var document = JsonDocument.Parse(export.Json);
+            return new InvoiceStructuredXmlExportDto
+            {
+                InvoiceId = export.InvoiceId,
+                IssuedAtUtc = export.IssuedAtUtc,
+                FileName = $"invoice-{export.InvoiceId:N}-structured-invoice.xml",
+                Xml = BuildXml(document.RootElement)
+            };
+        }
+
+        private static string BuildXml(JsonElement root)
+        {
+            var xml = new XDocument(
+                new XDeclaration("1.0", "utf-8", null),
+                new XElement(
+                    "DarwinStructuredInvoice",
+                    new XAttribute("schemaVersion", GetString(root, "schemaVersion") ?? "darwin.structured-invoice.v1"),
+                    new XAttribute("complianceStatus", GetString(root, "complianceStatus") ?? "NotZugferdFacturX"),
+                    new XElement("ComplianceNote", GetString(root, "complianceNote") ?? "This artifact is not a ZUGFeRD/Factur-X or XRechnung compliant artifact."),
+                    BuildObjectElement(root, "document", "Document"),
+                    BuildObjectElement(root, "seller", "Seller"),
+                    BuildObjectElement(root, "buyer", "Buyer"),
+                    BuildObjectElement(root, "business", "Business"),
+                    BuildArrayElement(root, "lines", "Lines", "Line"),
+                    BuildArrayElement(root, "taxSummary", "TaxSummary", "Tax"),
+                    BuildObjectElement(root, "totals", "Totals")));
+
+            return xml.ToString(SaveOptions.DisableFormatting);
+        }
+
+        private static XElement BuildObjectElement(JsonElement root, string propertyName, string elementName)
+        {
+            if (!root.TryGetProperty(propertyName, out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            {
+                return new XElement(elementName);
+            }
+
+            return BuildElement(elementName, value);
+        }
+
+        private static XElement BuildArrayElement(JsonElement root, string propertyName, string elementName, string itemName)
+        {
+            var parent = new XElement(elementName);
+            if (!root.TryGetProperty(propertyName, out var value) || value.ValueKind != JsonValueKind.Array)
+            {
+                return parent;
+            }
+
+            foreach (var item in value.EnumerateArray())
+            {
+                parent.Add(BuildElement(itemName, item));
+            }
+
+            return parent;
+        }
+
+        private static XElement BuildElement(string elementName, JsonElement value)
+        {
+            return value.ValueKind switch
+            {
+                JsonValueKind.Object => new XElement(
+                    elementName,
+                    value.EnumerateObject().Select(property => BuildElement(ToPascalCase(property.Name), property.Value))),
+                JsonValueKind.Array => new XElement(
+                    elementName,
+                    value.EnumerateArray().Select(item => BuildElement("Item", item))),
+                JsonValueKind.String => new XElement(elementName, value.GetString()),
+                JsonValueKind.Number => new XElement(elementName, value.GetRawText()),
+                JsonValueKind.True => new XElement(elementName, true),
+                JsonValueKind.False => new XElement(elementName, false),
+                _ => new XElement(elementName)
+            };
+        }
+
+        private static string? GetString(JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+        private static string ToPascalCase(string value) =>
+            string.IsNullOrEmpty(value)
+                ? value
+                : char.ToUpperInvariant(value[0]) + value[1..];
     }
 }

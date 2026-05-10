@@ -16,6 +16,13 @@ public interface IDhlShipmentProviderClient
         CheckoutAddressDto receiver,
         CancellationToken ct = default);
 
+    Task<DhlShipmentCreateResult> CreateReturnShipmentAsync(
+        SiteSetting settings,
+        Order order,
+        Shipment shipment,
+        CheckoutAddressDto returnSender,
+        CancellationToken ct = default);
+
     Task<DhlShipmentLabelResult> GetLabelAsync(
         SiteSetting settings,
         Shipment shipment,

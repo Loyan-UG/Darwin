@@ -66,11 +66,11 @@
   <data name="StorefrontPaymentGatewayBaseUrlNotConfigured" xml:space="preserve">
     <value>Die Payment-Gateway-Basis-URL des Storefront ist nicht konfiguriert.</value>
   </data>
-  <data name="StorefrontStripeCheckoutBaseUrlNotConfigured" xml:space="preserve">
-    <value>Die Stripe-Checkout-Basis-URL des Storefront ist nicht konfiguriert.</value>
-  </data>
   <data name="StorefrontStripeCheckoutNotConfigured" xml:space="preserve">
     <value>Stripe Checkout ist nicht aktiviert oder der serverseitige Stripe-Schluessel fehlt.</value>
+  </data>
+  <data name="StripeRefundProviderNotConfigured" xml:space="preserve">
+    <value>Stripe-Rueckerstattungen sind nicht aktiviert oder der serverseitige Stripe-Schluessel fehlt.</value>
   </data>
   <data name="StorefrontStripeCheckoutUrlsRequired" xml:space="preserve">
     <value>Rueckkehr- und Abbruch-URLs fuer Stripe Checkout sind erforderlich.</value>
@@ -527,6 +527,9 @@
   </data>
   <data name="InvoiceNotFound" xml:space="preserve">
     <value>Rechnung nicht gefunden.</value>
+  </data>
+  <data name="InvoiceArchiveUnavailable" xml:space="preserve">
+    <value>Das ausgestellte Rechnungsarchiv ist nicht verfuegbar.</value>
   </data>
   <data name="InvoiceNotLinkedToOrderPaymentFlow" xml:space="preserve">
     <value>Die Rechnung ist nicht mit einer Bestellung verknuepft und kann keinen Storefront-Zahlungsablauf oeffnen.</value>
@@ -1445,6 +1448,9 @@
   <data name="BillingCheckoutEndpointNotConfigured" xml:space="preserve">
     <value>Der Billing-Checkout-Endpunkt ist nicht konfiguriert.</value>
   </data>
+  <data name="StripeSubscriptionCheckoutProviderNotConfigured" xml:space="preserve">
+    <value>Der Stripe-Subscription-Checkout ist nicht konfiguriert.</value>
+  </data>
   <data name="LoyaltyAccountAlreadyExistsForMemberInBusiness" xml:space="preserve">
     <value>Fuer dieses Mitglied existiert im ausgewaehlten Unternehmen bereits ein Treuekonto.</value>
   </data>
@@ -1531,6 +1537,12 @@
   </data>
   <data name="DhlShipmentShippingAddressRequired" xml:space="preserve">
     <value>Die DHL-Sendungserstellung benoetigt eine vollstaendige Lieferadresse.</value>
+  </data>
+  <data name="DhlReturnShipmentRequiresLines" xml:space="preserve">
+    <value>DHL-Retourensendung benoetigt mindestens eine Sendungsposition.</value>
+  </data>
+  <data name="DhlReturnShipmentOperationRequiresReturnShipment" xml:space="preserve">
+    <value>DHL-Retourensendungsoperation benoetigt eine eingereihte Retourensendung.</value>
   </data>
   <data name="CommunicationDispatchOperationNotFound" xml:space="preserve">
     <value>Der Kommunikationsversand wurde nicht gefunden.</value>

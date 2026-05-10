@@ -99,6 +99,14 @@ namespace Darwin.Application.CRM.DTOs
         public string Json { get; set; } = string.Empty;
     }
 
+    public sealed class InvoiceStructuredXmlExportDto
+    {
+        public Guid InvoiceId { get; set; }
+        public DateTime IssuedAtUtc { get; set; }
+        public string FileName { get; set; } = string.Empty;
+        public string Xml { get; set; } = string.Empty;
+    }
+
     public sealed class InvoiceStatusTransitionDto
     {
         public Guid Id { get; set; }

@@ -2,6 +2,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Integration;
+using Darwin.Domain.Entities.Orders;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -55,7 +56,8 @@ namespace Darwin.Application.Orders.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
-            if (!TryApplyAction(operation, dto, _clock.UtcNow))
+            var nowUtc = _clock.UtcNow;
+            if (!TryApplyAction(operation, dto, nowUtc))
             {
                 return Result.Fail(_localizer["ShipmentProviderOperationUnsupportedAction"]);
             }
@@ -64,6 +66,11 @@ namespace Darwin.Application.Orders.Commands
             if (requeueRequested && await HasPendingSiblingAsync(operation, ct).ConfigureAwait(false))
             {
                 return Result.Fail(_localizer["ShipmentProviderOperationPendingAlreadyExists"]);
+            }
+
+            if (requeueRequested)
+            {
+                await MarkShipmentProviderOperationRequeuedAsync(operation, nowUtc, ct).ConfigureAwait(false);
             }
 
             try
@@ -99,6 +106,41 @@ namespace Darwin.Application.Orders.Commands
                          x.OperationType == operation.OperationType &&
                          x.Status == "Pending",
                     ct);
+        }
+
+        private async Task MarkShipmentProviderOperationRequeuedAsync(
+            ShipmentProviderOperation operation,
+            DateTime nowUtc,
+            CancellationToken ct)
+        {
+            if (!string.Equals(operation.Provider, "DHL", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var eventKey = ResolveDhlRequeuedEventKey(operation.OperationType);
+            if (eventKey is null)
+            {
+                return;
+            }
+
+            var shipment = await _db.Set<Shipment>()
+                .FirstOrDefaultAsync(x => x.Id == operation.ShipmentId && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (shipment is null)
+            {
+                return;
+            }
+
+            shipment.LastCarrierEventKey = eventKey;
+            await ShipmentCarrierEventRecorder.AddIfMissingAsync(
+                _db,
+                shipment,
+                eventKey,
+                nowUtc,
+                "Requeued",
+                ct: ct).ConfigureAwait(false);
         }
 
         private static bool TryApplyAction(ShipmentProviderOperation operation, UpdateShipmentProviderOperationDto dto, DateTime now)
@@ -160,6 +202,17 @@ namespace Darwin.Application.Orders.Commands
             return trimmed.Length > MaxActionLength
                 ? string.Empty
                 : trimmed.ToUpperInvariant();
+        }
+
+        private static string? ResolveDhlRequeuedEventKey(string operationType)
+        {
+            return operationType switch
+            {
+                "CreateShipment" => "shipment.provider_create_queued",
+                "GenerateLabel" => "shipment.label_queued",
+                "CreateReturnShipment" => "return.provider_create_queued",
+                _ => null
+            };
         }
 
         private static string? Truncate(string? value, int maxLength)

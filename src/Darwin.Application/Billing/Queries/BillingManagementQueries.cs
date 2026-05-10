@@ -4,6 +4,7 @@ using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Application.Common;
 using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Integration;
@@ -299,6 +300,194 @@ namespace Darwin.Application.Billing.Queries
                     (!item.OrderId.HasValue && !item.InvoiceId.HasValue);
                 item.FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(item.FailureReason);
             }
+        }
+    }
+
+    public sealed class GetBusinessSubscriptionsPageHandler
+    {
+        private const int MaxPageSize = 200;
+
+        private readonly IAppDbContext _db;
+
+        public GetBusinessSubscriptionsPageHandler(IAppDbContext db)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+        }
+
+        public async Task<(List<BusinessSubscriptionListItemDto> Items, int Total)> HandleAsync(
+            int page,
+            int pageSize,
+            string? query = null,
+            BusinessSubscriptionQueueFilter filter = BusinessSubscriptionQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
+            var subscriptionsQuery = _db.Set<BusinessSubscription>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+            subscriptionsQuery = filter switch
+            {
+                BusinessSubscriptionQueueFilter.Active => subscriptionsQuery.Where(x => x.Status == SubscriptionStatus.Active),
+                BusinessSubscriptionQueueFilter.Trialing => subscriptionsQuery.Where(x => x.Status == SubscriptionStatus.Trialing),
+                BusinessSubscriptionQueueFilter.PastDue => subscriptionsQuery.Where(x => x.Status == SubscriptionStatus.PastDue),
+                BusinessSubscriptionQueueFilter.Canceled => subscriptionsQuery.Where(x => x.Status == SubscriptionStatus.Canceled),
+                BusinessSubscriptionQueueFilter.Stripe => subscriptionsQuery.Where(x => x.Provider == "Stripe"),
+                BusinessSubscriptionQueueFilter.MissingProviderReference => subscriptionsQuery.Where(x =>
+                    (x.ProviderSubscriptionId == null || x.ProviderSubscriptionId == string.Empty) &&
+                    (x.ProviderCheckoutSessionId == null || x.ProviderCheckoutSessionId == string.Empty)),
+                BusinessSubscriptionQueueFilter.CancelAtPeriodEnd => subscriptionsQuery.Where(x => x.CancelAtPeriodEnd),
+                _ => subscriptionsQuery
+            };
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = QueryLikePattern.Contains(query);
+                subscriptionsQuery = subscriptionsQuery.Where(x =>
+                    EF.Functions.Like(x.Provider, term, QueryLikePattern.EscapeCharacter) ||
+                    (x.ProviderCustomerId != null && EF.Functions.Like(x.ProviderCustomerId, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.ProviderSubscriptionId != null && EF.Functions.Like(x.ProviderSubscriptionId, term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.ProviderCheckoutSessionId != null && EF.Functions.Like(x.ProviderCheckoutSessionId, term, QueryLikePattern.EscapeCharacter)) ||
+                    _db.Set<BillingPlan>().Any(p =>
+                        p.Id == x.BillingPlanId &&
+                        !p.IsDeleted &&
+                        (EF.Functions.Like(p.Code, term, QueryLikePattern.EscapeCharacter) ||
+                         EF.Functions.Like(p.Name, term, QueryLikePattern.EscapeCharacter))) ||
+                    (x.BusinessId.HasValue && _db.Set<Business>().Any(b =>
+                        b.Id == x.BusinessId.Value &&
+                        !b.IsDeleted &&
+                        (EF.Functions.Like(b.Name, term, QueryLikePattern.EscapeCharacter) ||
+                         (b.LegalName != null && EF.Functions.Like(b.LegalName, term, QueryLikePattern.EscapeCharacter)) ||
+                         (b.ContactEmail != null && EF.Functions.Like(b.ContactEmail, term, QueryLikePattern.EscapeCharacter))))));
+            }
+
+            var total = await subscriptionsQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await subscriptionsQuery
+                .OrderByDescending(x => x.CurrentPeriodEndUtc ?? x.TrialEndsAtUtc ?? x.StartedAtUtc)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new BusinessSubscriptionListItemDto
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    BusinessName = x.BusinessId.HasValue
+                        ? _db.Set<Business>()
+                            .Where(b => b.Id == x.BusinessId.Value)
+                            .Select(b => b.Name)
+                            .FirstOrDefault() ?? string.Empty
+                        : string.Empty,
+                    BusinessContactEmail = x.BusinessId.HasValue
+                        ? _db.Set<Business>()
+                            .Where(b => b.Id == x.BusinessId.Value)
+                            .Select(b => b.ContactEmail)
+                            .FirstOrDefault()
+                        : null,
+                    BillingPlanId = x.BillingPlanId,
+                    PlanCode = _db.Set<BillingPlan>()
+                        .Where(p => p.Id == x.BillingPlanId)
+                        .Select(p => p.Code)
+                        .FirstOrDefault() ?? string.Empty,
+                    PlanName = _db.Set<BillingPlan>()
+                        .Where(p => p.Id == x.BillingPlanId)
+                        .Select(p => p.Name)
+                        .FirstOrDefault() ?? string.Empty,
+                    Provider = x.Provider,
+                    ProviderCustomerId = x.ProviderCustomerId,
+                    ProviderSubscriptionId = x.ProviderSubscriptionId,
+                    ProviderCheckoutSessionId = x.ProviderCheckoutSessionId,
+                    Status = x.Status,
+                    StartedAtUtc = x.StartedAtUtc,
+                    CurrentPeriodEndUtc = x.CurrentPeriodEndUtc,
+                    TrialEndsAtUtc = x.TrialEndsAtUtc,
+                    CanceledAtUtc = x.CanceledAtUtc,
+                    CancelAtPeriodEnd = x.CancelAtPeriodEnd,
+                    UnitPriceMinor = x.UnitPriceMinor,
+                    Currency = x.Currency,
+                    IsStripe = x.Provider == "Stripe",
+                    MissingProviderReference =
+                        (x.ProviderSubscriptionId == null || x.ProviderSubscriptionId == string.Empty) &&
+                        (x.ProviderCheckoutSessionId == null || x.ProviderCheckoutSessionId == string.Empty),
+                    ProviderReferenceState = ResolveProviderReferenceState(
+                        x.Provider,
+                        x.ProviderSubscriptionId,
+                        x.ProviderCheckoutSessionId,
+                        x.Status,
+                        x.CancelAtPeriodEnd),
+                    RowVersion = x.RowVersion
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            return (items, total);
+        }
+
+        private static string ResolveProviderReferenceState(
+            string? provider,
+            string? providerSubscriptionId,
+            string? providerCheckoutSessionId,
+            SubscriptionStatus status,
+            bool cancelAtPeriodEnd)
+        {
+            if (string.IsNullOrWhiteSpace(providerSubscriptionId) &&
+                string.IsNullOrWhiteSpace(providerCheckoutSessionId))
+            {
+                return string.Equals(provider, "Stripe", StringComparison.OrdinalIgnoreCase)
+                    ? "Stripe subscription ref missing"
+                    : "Reference missing";
+            }
+
+            if (cancelAtPeriodEnd)
+            {
+                return "Cancel at period end";
+            }
+
+            return status switch
+            {
+                SubscriptionStatus.Active => "Active on provider",
+                SubscriptionStatus.Trialing => "Trialing on provider",
+                SubscriptionStatus.PastDue => "Provider payment attention",
+                SubscriptionStatus.Canceled => "Canceled on provider",
+                SubscriptionStatus.Unpaid => "Provider unpaid",
+                SubscriptionStatus.Incomplete => "Provider setup incomplete",
+                SubscriptionStatus.IncompleteExpired => "Provider setup expired",
+                SubscriptionStatus.Paused => "Paused on provider",
+                _ => "Provider reference linked"
+            };
+        }
+    }
+
+    public sealed class GetBusinessSubscriptionOpsSummaryHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetBusinessSubscriptionOpsSummaryHandler(IAppDbContext db)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+        }
+
+        public async Task<BusinessSubscriptionOpsSummaryDto> HandleAsync(CancellationToken ct = default)
+        {
+            var query = _db.Set<BusinessSubscription>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+            return new BusinessSubscriptionOpsSummaryDto
+            {
+                TotalCount = await query.CountAsync(ct).ConfigureAwait(false),
+                ActiveCount = await query.CountAsync(x => x.Status == SubscriptionStatus.Active, ct).ConfigureAwait(false),
+                TrialingCount = await query.CountAsync(x => x.Status == SubscriptionStatus.Trialing, ct).ConfigureAwait(false),
+                PastDueCount = await query.CountAsync(x => x.Status == SubscriptionStatus.PastDue, ct).ConfigureAwait(false),
+                CanceledCount = await query.CountAsync(x => x.Status == SubscriptionStatus.Canceled, ct).ConfigureAwait(false),
+                StripeCount = await query.CountAsync(x => x.Provider == "Stripe", ct).ConfigureAwait(false),
+                MissingProviderReferenceCount = await query.CountAsync(x =>
+                    (x.ProviderSubscriptionId == null || x.ProviderSubscriptionId == string.Empty) &&
+                    (x.ProviderCheckoutSessionId == null || x.ProviderCheckoutSessionId == string.Empty), ct).ConfigureAwait(false),
+                CancelAtPeriodEndCount = await query.CountAsync(x => x.CancelAtPeriodEnd, ct).ConfigureAwait(false)
+            };
         }
     }
 
@@ -699,6 +888,12 @@ namespace Darwin.Application.Billing.Queries
                     PaymentProviderPaymentIntentRef = x.Payment.ProviderPaymentIntentRef,
                     PaymentProviderCheckoutSessionRef = x.Payment.ProviderCheckoutSessionRef,
                     PaymentStatus = x.Payment.Status,
+                    RefundProvider = x.Refund.Provider,
+                    RefundProviderReference = x.Refund.ProviderRefundReference,
+                    RefundProviderPaymentReference = x.Refund.ProviderPaymentReference,
+                    RefundProviderStatus = x.Refund.ProviderStatus,
+                    FailureReason = x.Refund.FailureReason,
+                    RequestedAtUtc = x.Refund.RequestedAtUtc,
                     CustomerId = x.Payment.CustomerId,
                     AmountMinor = x.Refund.AmountMinor,
                     Currency = x.Refund.Currency,
@@ -770,8 +965,8 @@ namespace Darwin.Application.Billing.Queries
                 item.LastRefundEventAtUtc = item.CompletedAtUtc ?? item.CreatedAtUtc;
                 item.OpenAgeHours = BillingRefundTimelineFormatter.CalculateOpenAgeHours(item.CreatedAtUtc, item.CompletedAtUtc, nowUtc);
                 item.ProviderReferenceState = BillingRefundTimelineFormatter.ResolveProviderReferenceState(
-                    item.PaymentProviderReference,
-                    item.PaymentProviderPaymentIntentRef,
+                    item.RefundProviderReference ?? item.PaymentProviderReference,
+                    item.RefundProviderPaymentReference ?? item.PaymentProviderPaymentIntentRef,
                     item.PaymentProviderCheckoutSessionRef,
                     item.IsStripe,
                     item.Status,
@@ -780,9 +975,12 @@ namespace Darwin.Application.Billing.Queries
                     item.Status == RefundStatus.Pending ||
                     item.Status == RefundStatus.Failed ||
                     (item.IsStripe &&
+                     string.IsNullOrWhiteSpace(item.RefundProviderReference) &&
+                     string.IsNullOrWhiteSpace(item.RefundProviderPaymentReference) &&
                      string.IsNullOrWhiteSpace(item.PaymentProviderReference) &&
                      string.IsNullOrWhiteSpace(item.PaymentProviderPaymentIntentRef) &&
                      string.IsNullOrWhiteSpace(item.PaymentProviderCheckoutSessionRef));
+                item.FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(item.FailureReason);
             }
         }
     }

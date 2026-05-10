@@ -54,9 +54,15 @@ namespace Darwin.Domain.Entities.Orders
         public Guid PaymentId { get; set; }
         public Guid? OrderId { get; set; }
         public long AmountMinor { get; set; }
-    public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
+        public string Currency { get; set; } = DomainDefaults.DefaultCurrency;
         public string Reason { get; set; } = string.Empty;
         public RefundStatus Status { get; set; } = RefundStatus.Pending;
+        public string Provider { get; set; } = string.Empty;
+        public string? ProviderRefundReference { get; set; }
+        public string? ProviderPaymentReference { get; set; }
+        public string? ProviderStatus { get; set; }
+        public string? FailureReason { get; set; }
+        public DateTime? RequestedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
     }
 }

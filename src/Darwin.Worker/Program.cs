@@ -19,6 +19,7 @@ builder.Services.AddSharedHostingDataProtection(builder.Configuration);
 builder.Services.AddIdentityInfrastructure();
 builder.Services.AddObjectStorageInfrastructure(builder.Configuration);
 builder.Services.AddNotificationsInfrastructure(builder.Configuration);
+builder.Services.AddPaymentProviderInfrastructure();
 builder.Services.AddShippingProviderInfrastructure();
 builder.Services.AddComplianceInfrastructure(builder.Configuration);
 builder.Services.AddHttpClient();
@@ -32,6 +33,7 @@ builder.Services.Configure<InvoiceArchiveMaintenanceWorkerOptions>(builder.Confi
 builder.Services.Configure<VatValidationRetryWorkerOptions>(builder.Configuration.GetSection("VatValidationRetryWorker"));
 builder.Services.AddScoped<ApplyDhlShipmentCreateOperationHandler>();
 builder.Services.AddScoped<ApplyDhlShipmentLabelOperationHandler>();
+builder.Services.AddScoped<ApplyDhlReturnShipmentCreateOperationHandler>();
 builder.Services.AddScoped<ApplyShipmentCarrierEventHandler>();
 builder.Services.AddScoped<ProcessStripeWebhookHandler>();
 builder.Services.AddScoped<ProcessBrevoTransactionalEmailWebhookHandler>();

@@ -569,13 +569,19 @@ namespace Darwin.Application.CRM.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IEInvoiceGenerationService _generator;
+        private readonly IEInvoiceArtifactStorage _artifactStorage;
+        private readonly EInvoiceSourceReadinessValidator _sourceReadiness;
 
         public GenerateInvoiceEInvoiceArtifactHandler(
             IAppDbContext db,
-            IEInvoiceGenerationService generator)
+            IEInvoiceGenerationService generator,
+            EInvoiceSourceReadinessValidator sourceReadiness,
+            IEInvoiceArtifactStorage? artifactStorage = null)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _generator = generator ?? throw new ArgumentNullException(nameof(generator));
+            _sourceReadiness = sourceReadiness ?? throw new ArgumentNullException(nameof(sourceReadiness));
+            _artifactStorage = artifactStorage ?? new NullEInvoiceArtifactStorage();
         }
 
         public async Task<EInvoiceGenerationResult> HandleAsync(
@@ -616,6 +622,14 @@ namespace Darwin.Application.CRM.Commands
                     "Issued invoice snapshot is required before generating an e-invoice artifact.");
             }
 
+            var readiness = _sourceReadiness.Validate(invoice);
+            if (!readiness.IsReady)
+            {
+                return new EInvoiceGenerationResult(
+                    EInvoiceGenerationStatus.ValidationFailed,
+                    $"Issued invoice snapshot is missing required e-invoice source fields: {string.Join(", ", readiness.MissingFields)}.");
+            }
+
             var result = await _generator.GenerateAsync(
                     invoice,
                     new EInvoiceGenerationRequest(format),
@@ -623,6 +637,12 @@ namespace Darwin.Application.CRM.Commands
                 .ConfigureAwait(false);
 
             ValidateGeneratedArtifact(invoiceId, result);
+            if (result.IsGenerated)
+            {
+                var storage = await _artifactStorage.SaveAsync(result.Artifact!, ct).ConfigureAwait(false);
+                return result with { Storage = storage };
+            }
+
             return result;
         }
 

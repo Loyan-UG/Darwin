@@ -18,10 +18,18 @@ public interface IEInvoiceGenerationService
 
 public sealed record EInvoiceGenerationRequest(EInvoiceArtifactFormat Format);
 
+public sealed record EInvoiceSourceReadinessResult(
+    bool IsReady,
+    IReadOnlyList<string> MissingFields)
+{
+    public static EInvoiceSourceReadinessResult Ready { get; } = new(true, Array.Empty<string>());
+}
+
 public sealed record EInvoiceGenerationResult(
     EInvoiceGenerationStatus Status,
     string Message,
-    EInvoiceArtifact? Artifact = null)
+    EInvoiceArtifact? Artifact = null,
+    EInvoiceArtifactStorageResult? Storage = null)
 {
     public bool IsGenerated => Status == EInvoiceGenerationStatus.Generated && Artifact is not null;
 }

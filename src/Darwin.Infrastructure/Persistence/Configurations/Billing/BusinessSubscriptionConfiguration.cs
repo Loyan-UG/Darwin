@@ -32,6 +32,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
             builder.Property(x => x.ProviderSubscriptionId)
                 .HasMaxLength(128);
 
+            builder.Property(x => x.ProviderCheckoutSessionId)
+                .HasMaxLength(128);
+
             builder.Property(x => x.Status)
                 .IsRequired();
 
@@ -68,6 +71,10 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
             builder.HasIndex(x => new { x.Provider, x.ProviderSubscriptionId })
                 .IsUnique()
                 .HasFilter("[ProviderSubscriptionId] IS NOT NULL AND [IsDeleted] = 0");
+
+            builder.HasIndex(x => new { x.Provider, x.ProviderCheckoutSessionId })
+                .IsUnique()
+                .HasFilter("[ProviderCheckoutSessionId] IS NOT NULL AND [IsDeleted] = 0");
         }
     }
 }

@@ -66,11 +66,11 @@
   <data name="StorefrontPaymentGatewayBaseUrlNotConfigured" xml:space="preserve">
     <value>Storefront payment gateway base URL is not configured.</value>
   </data>
-  <data name="StorefrontStripeCheckoutBaseUrlNotConfigured" xml:space="preserve">
-    <value>Storefront Stripe checkout base URL is not configured.</value>
-  </data>
   <data name="StorefrontStripeCheckoutNotConfigured" xml:space="preserve">
     <value>Stripe checkout is not enabled or the server-side Stripe key is missing.</value>
+  </data>
+  <data name="StripeRefundProviderNotConfigured" xml:space="preserve">
+    <value>Stripe refunds are not enabled or the server-side Stripe key is missing.</value>
   </data>
   <data name="StorefrontStripeCheckoutUrlsRequired" xml:space="preserve">
     <value>Stripe checkout return and cancellation URLs are required.</value>
@@ -527,6 +527,9 @@
   </data>
   <data name="InvoiceNotFound" xml:space="preserve">
     <value>Invoice not found.</value>
+  </data>
+  <data name="InvoiceArchiveUnavailable" xml:space="preserve">
+    <value>The issued invoice archive is not available.</value>
   </data>
   <data name="InvoiceNotLinkedToOrderPaymentFlow" xml:space="preserve">
     <value>Invoice is not linked to an order and cannot open a storefront payment flow.</value>
@@ -1445,6 +1448,9 @@
   <data name="BillingCheckoutEndpointNotConfigured" xml:space="preserve">
     <value>Billing checkout endpoint is not configured.</value>
   </data>
+  <data name="StripeSubscriptionCheckoutProviderNotConfigured" xml:space="preserve">
+    <value>Stripe subscription checkout is not configured.</value>
+  </data>
   <data name="LoyaltyAccountAlreadyExistsForMemberInBusiness" xml:space="preserve">
     <value>A loyalty account already exists for this member in the selected business.</value>
   </data>
@@ -1531,6 +1537,12 @@
   </data>
   <data name="DhlShipmentShippingAddressRequired" xml:space="preserve">
     <value>DHL shipment creation requires a complete shipping address.</value>
+  </data>
+  <data name="DhlReturnShipmentRequiresLines" xml:space="preserve">
+    <value>DHL return shipment requires at least one shipment line.</value>
+  </data>
+  <data name="DhlReturnShipmentOperationRequiresReturnShipment" xml:space="preserve">
+    <value>DHL return shipment operation requires a queued return shipment.</value>
   </data>
   <data name="CommunicationDispatchOperationNotFound" xml:space="preserve">
     <value>Communication dispatch operation was not found.</value>

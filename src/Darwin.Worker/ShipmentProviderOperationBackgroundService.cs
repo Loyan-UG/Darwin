@@ -108,11 +108,13 @@ public sealed class ShipmentProviderOperationBackgroundService : BackgroundServi
             {
                 item.Status = "Failed";
                 item.FailureReason = WorkerFailureText.Truncate(ex.Message);
+                await MarkShipmentProviderOperationFailedAsync(db, item, nowUtc, ct).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
             {
                 item.Status = "Failed";
                 item.FailureReason = WorkerFailureText.Truncate(ex.Message);
+                await MarkShipmentProviderOperationFailedAsync(db, item, nowUtc, ct).ConfigureAwait(false);
                 _logger.LogWarning(ex, "Shipment provider operation {OperationId} failed.", item.Id);
             }
 
@@ -140,6 +142,71 @@ public sealed class ShipmentProviderOperationBackgroundService : BackgroundServi
             .ConfigureAwait(false);
     }
 
+    private static async Task MarkShipmentProviderOperationFailedAsync(
+        IAppDbContext db,
+        ShipmentProviderOperation item,
+        DateTime nowUtc,
+        CancellationToken ct)
+    {
+        if (!string.Equals(item.Provider, "DHL", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var failureEventKey = ResolveDhlFailureEventKey(item.OperationType);
+        if (failureEventKey is null)
+        {
+            return;
+        }
+
+        var shipment = await db.Set<Shipment>()
+            .FirstOrDefaultAsync(x => x.Id == item.ShipmentId && !x.IsDeleted, ct)
+            .ConfigureAwait(false);
+        if (shipment is null)
+        {
+            return;
+        }
+
+        shipment.LastCarrierEventKey = failureEventKey;
+        var alreadyRecorded = await db.Set<ShipmentCarrierEvent>()
+            .AnyAsync(
+                x => x.ShipmentId == shipment.Id &&
+                     !x.IsDeleted &&
+                     x.CarrierEventKey == failureEventKey,
+                ct)
+            .ConfigureAwait(false);
+        if (alreadyRecorded)
+        {
+            return;
+        }
+
+        db.Set<ShipmentCarrierEvent>().Add(new ShipmentCarrierEvent
+        {
+            ShipmentId = shipment.Id,
+            Carrier = shipment.Carrier,
+            ProviderShipmentReference = shipment.ProviderShipmentReference ?? string.Empty,
+            CarrierEventKey = failureEventKey,
+            ProviderStatus = "Failed",
+            ExceptionCode = item.OperationType,
+            ExceptionMessage = item.FailureReason,
+            TrackingNumber = shipment.TrackingNumber,
+            LabelUrl = shipment.LabelUrl,
+            Service = shipment.Service,
+            OccurredAtUtc = nowUtc
+        });
+    }
+
+    private static string? ResolveDhlFailureEventKey(string operationType)
+    {
+        return operationType switch
+        {
+            "CreateShipment" => "shipment.provider_create_failed",
+            "GenerateLabel" => "shipment.label_failed",
+            "CreateReturnShipment" => "return.provider_create_failed",
+            _ => null
+        };
+    }
+
     private static async Task ProcessOneAsync(IServiceProvider services, ShipmentProviderOperation item, CancellationToken ct)
     {
         if (string.Equals(item.Provider, "DHL", StringComparison.OrdinalIgnoreCase) &&
@@ -154,6 +221,14 @@ public sealed class ShipmentProviderOperationBackgroundService : BackgroundServi
             string.Equals(item.OperationType, "GenerateLabel", StringComparison.OrdinalIgnoreCase))
         {
             var handler = services.GetRequiredService<ApplyDhlShipmentLabelOperationHandler>();
+            await handler.HandleAsync(item.ShipmentId, ct).ConfigureAwait(false);
+            return;
+        }
+
+        if (string.Equals(item.Provider, "DHL", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(item.OperationType, "CreateReturnShipment", StringComparison.OrdinalIgnoreCase))
+        {
+            var handler = services.GetRequiredService<ApplyDhlReturnShipmentCreateOperationHandler>();
             await handler.HandleAsync(item.ShipmentId, ct).ConfigureAwait(false);
             return;
         }

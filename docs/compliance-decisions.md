@@ -44,19 +44,20 @@ Current state:
 - Issued invoice snapshot exists.
 - JSON archive download exists.
 - Printable HTML archive download exists.
-- Structured invoice source-model JSON download exists and includes document, seller, buyer, business, line, tax-summary, and total sections.
+- Structured invoice source-model JSON and XML downloads exist and include document, seller, buyer, business, line, tax-summary, and total sections.
 - `IEInvoiceGenerationService` exists as the future compliant-artifact boundary, with a default `NotConfigured` implementation that does not create fake artifacts.
-- `GenerateInvoiceEInvoiceArtifactHandler` owns the shared preconditions for future artifact generation and rejects missing source snapshots, unknown formats, invoice-id mismatches, and incomplete generated metadata.
+- `EInvoiceSourceReadinessValidator` checks the issued snapshot for minimum seller, buyer, total, date, currency, and line source data before a future generator is called.
+- `GenerateInvoiceEInvoiceArtifactHandler` owns the shared preconditions for future artifact generation and rejects missing source snapshots, incomplete source snapshots, unknown formats, invoice-id mismatches, and incomplete generated metadata.
 - WebAdmin download routing is guarded and ready for generated artifacts, but no e-invoice compliance download button is exposed until a real generator and validation path are selected.
 - CSV invoice export exists.
 - Retention and purge metadata exists.
 
-These outputs are useful operational artifacts, but they are not full e-invoice compliance. The structured source-model export is explicitly marked `NotZugferdFacturX` until a generator and validator produce a compliant artifact.
+These outputs are useful operational artifacts, but they are not full e-invoice compliance. The structured source-model exports are explicitly marked `NotZugferdFacturX` until a generator and validator produce a compliant artifact.
 
 Near-term implementation design:
 
 - Choose library/tooling for ZUGFeRD/Factur-X XML generation, PDF/A-3 embedding, and validation.
-- Extend the existing immutable issued-snapshot to structured source-model mapping into the selected e-invoice format model.
+- Extend the existing immutable issued-snapshot to structured source-model mapping and readiness validation into the selected e-invoice format model.
 - Replace the default `NotConfigured` e-invoice generator with a selected, validated generator implementation.
 - Validate structured data before exposing the artifact.
 - Generate a downloadable PDF/A-3 artifact with embedded XML where required.

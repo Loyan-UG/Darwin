@@ -152,6 +152,10 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("ProviderCheckoutSessionId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<string>("ProviderCustomerId")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
@@ -184,6 +188,10 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.HasIndex("BusinessId")
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = FALSE");
+
+                    b.HasIndex("Provider", "ProviderCheckoutSessionId")
+                        .IsUnique()
+                        .HasFilter("\"ProviderCheckoutSessionId\" IS NOT NULL AND \"IsDeleted\" = FALSE");
 
                     b.HasIndex("Provider", "ProviderSubscriptionId")
                         .IsUnique()
@@ -6716,6 +6724,10 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -6731,9 +6743,29 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<Guid>("PaymentId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ProviderPaymentReference")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ProviderRefundReference")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ProviderStatus")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()

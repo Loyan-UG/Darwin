@@ -1,13 +1,11 @@
 ﻿using Darwin.Application.Billing;
 using Darwin.Contracts.Billing;
 using Darwin.Application;
-using Darwin.Application.Abstractions.Services;
 using Darwin.WebApi.Controllers;
 using Darwin.Application.Businesses.Queries;
 using Darwin.WebApi.Controllers.Businesses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
@@ -32,7 +30,6 @@ public sealed class BillingController : ApiControllerBase
     private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntentHandler;
     private readonly GetCurrentBusinessAccessStateHandler _getCurrentBusinessAccessStateHandler;
     private readonly IConfiguration _configuration;
-    private readonly IClock _clock;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public BillingController(
@@ -42,7 +39,6 @@ public sealed class BillingController : ApiControllerBase
         CreateSubscriptionCheckoutIntentHandler createSubscriptionCheckoutIntentHandler,
         GetCurrentBusinessAccessStateHandler getCurrentBusinessAccessStateHandler,
         IConfiguration configuration,
-        IClock clock,
         IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getBusinessSubscriptionStatusHandler = getBusinessSubscriptionStatusHandler ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionStatusHandler));
@@ -51,7 +47,6 @@ public sealed class BillingController : ApiControllerBase
         _createSubscriptionCheckoutIntentHandler = createSubscriptionCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createSubscriptionCheckoutIntentHandler));
         _getCurrentBusinessAccessStateHandler = getCurrentBusinessAccessStateHandler ?? throw new ArgumentNullException(nameof(getCurrentBusinessAccessStateHandler));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
 
@@ -203,37 +198,57 @@ public sealed class BillingController : ApiControllerBase
         var validation = await _createSubscriptionCheckoutIntentHandler
             .ValidateAsync(businessId, request.PlanId, ct)
             .ConfigureAwait(false);
-
         if (!validation.Succeeded)
         {
             return ProblemFromResult(validation, _validationLocalizer["CheckoutIntentCreationFailed"]);
         }
 
-        var checkoutBaseUrl = _configuration["Billing:CheckoutBaseUrl"];
-        if (string.IsNullOrWhiteSpace(checkoutBaseUrl) || !Uri.TryCreate(checkoutBaseUrl, UriKind.Absolute, out var baseUri))
+        var successUrl = TryResolveSubscriptionCheckoutUrl(
+            _configuration["Billing:SubscriptionSuccessUrl"],
+            "/business/billing/subscription/success?session_id={CHECKOUT_SESSION_ID}");
+        var cancelUrl = TryResolveSubscriptionCheckoutUrl(
+            _configuration["Billing:SubscriptionCancelUrl"],
+            "/business/billing/subscription/cancelled");
+        if (successUrl is null || cancelUrl is null)
         {
             return BadRequestProblem(_validationLocalizer["BillingCheckoutEndpointNotConfigured"]);
         }
 
-        // Build query string via framework helpers so URL composition remains safe
-        // when base URL already contains path/query components.
-        var queryBuilder = new QueryBuilder
-        {
-            { "businessId", businessId.ToString("D") },
-            { "planId", request.PlanId.ToString("D") }
-        };
+        var result = await _createSubscriptionCheckoutIntentHandler
+            .CreateAsync(businessId, request.PlanId, successUrl, cancelUrl, ct)
+            .ConfigureAwait(false);
 
-        var checkoutUrl = new UriBuilder(baseUri)
+        if (!result.Succeeded || result.Value is null)
         {
-            Query = queryBuilder.ToQueryString().Value?.TrimStart('?')
-        }.Uri.AbsoluteUri;
+            return ProblemFromResult(result, _validationLocalizer["CheckoutIntentCreationFailed"]);
+        }
 
         return Ok(new CreateSubscriptionCheckoutIntentResponse
         {
-            CheckoutUrl = checkoutUrl,
-            ExpiresAtUtc = _clock.UtcNow.AddMinutes(15),
-            Provider = "Stripe"
+            CheckoutUrl = result.Value.CheckoutUrl,
+            ExpiresAtUtc = result.Value.ExpiresAtUtc,
+            Provider = result.Value.Provider,
+            ProviderCheckoutSessionReference = result.Value.ProviderCheckoutSessionReference,
+            ProviderSubscriptionReference = result.Value.ProviderSubscriptionReference
         });
+    }
+
+    private string? TryResolveSubscriptionCheckoutUrl(string? configuredUrl, string fallbackPathAndQuery)
+    {
+        if (!string.IsNullOrWhiteSpace(configuredUrl) &&
+            Uri.TryCreate(configuredUrl.Trim(), UriKind.Absolute, out var configuredUri))
+        {
+            return configuredUri.AbsoluteUri;
+        }
+
+        var baseUrl = _configuration["Billing:BusinessManagementBaseUrl"]
+                      ?? _configuration["StorefrontCheckout:FrontOfficeBaseUrl"];
+        if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl.Trim(), UriKind.Absolute, out var baseUri))
+        {
+            return null;
+        }
+
+        return new Uri(baseUri, fallbackPathAndQuery).AbsoluteUri;
     }
 
     private static BusinessSubscriptionStatusResponse MapStatus(BusinessSubscriptionStatusDto dto)

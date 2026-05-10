@@ -15,6 +15,7 @@ namespace Darwin.Application.CRM.Services;
 public sealed class ObjectStorageInvoiceArchiveStorage : IInvoiceArchiveStorageProvider
 {
     private const string DefaultRetentionPolicyPrefix = "invoice-archive-retention:v1";
+    private const string InvoiceArchiveProfileName = "InvoiceArchive";
     private readonly IAppDbContext _db;
     private readonly IObjectStorageService _objectStorage;
     private readonly InvoiceArchiveStorageSelection _selection;
@@ -29,7 +30,7 @@ public sealed class ObjectStorageInvoiceArchiveStorage : IInvoiceArchiveStorageP
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
     }
 
-    public string ProviderName => InvoiceArchiveStorageProviderNames.S3Compatible;
+    public string ProviderName => NormalizeProviderName(_selection.ProviderName);
 
     public async Task<InvoiceArchiveStorageResult> SaveAsync(
         Invoice invoice,
@@ -72,7 +73,8 @@ public sealed class ObjectStorageInvoiceArchiveStorage : IInvoiceArchiveStorageP
                 retainUntilUtc,
                 ObjectRetentionMode.Compliance,
                 LegalHold: false,
-                ObjectOverwritePolicy.Disallow),
+                ObjectOverwritePolicy.Disallow,
+                ProfileName: InvoiceArchiveProfileName),
             ct).ConfigureAwait(false);
 
         invoice.IssuedAtUtc ??= artifact.IssuedAtUtc;
@@ -115,7 +117,7 @@ public sealed class ObjectStorageInvoiceArchiveStorage : IInvoiceArchiveStorageP
 
         var key = BuildIssuedSnapshotKey(invoice.Id, invoice.IssuedAtUtc.Value);
         var stored = await _objectStorage.ReadAsync(
-            new ObjectStorageObjectReference(ResolveContainerName(), key),
+            new ObjectStorageObjectReference(ResolveContainerName(), key, ProfileName: InvoiceArchiveProfileName),
             ct).ConfigureAwait(false);
 
         if (stored is not null)
@@ -166,7 +168,7 @@ public sealed class ObjectStorageInvoiceArchiveStorage : IInvoiceArchiveStorageP
         }
 
         var key = BuildIssuedSnapshotKey(invoice.Id, invoice.IssuedAtUtc.Value);
-        return await _objectStorage.ExistsAsync(new ObjectStorageObjectReference(ResolveContainerName(), key), ct).ConfigureAwait(false) ||
+        return await _objectStorage.ExistsAsync(new ObjectStorageObjectReference(ResolveContainerName(), key, ProfileName: InvoiceArchiveProfileName), ct).ConfigureAwait(false) ||
                !string.IsNullOrWhiteSpace(invoice.IssuedSnapshotJson);
     }
 
@@ -178,8 +180,9 @@ public sealed class ObjectStorageInvoiceArchiveStorage : IInvoiceArchiveStorageP
         {
             await _objectStorage.DeleteAsync(
                 new ObjectStorageDeleteRequest(
-                    new ObjectStorageObjectReference(ResolveContainerName(), BuildIssuedSnapshotKey(invoice.Id, invoice.IssuedAtUtc.Value)),
-                    string.IsNullOrWhiteSpace(reason) ? "Retention period elapsed" : reason.Trim()),
+                    new ObjectStorageObjectReference(ResolveContainerName(), BuildIssuedSnapshotKey(invoice.Id, invoice.IssuedAtUtc.Value), ProfileName: InvoiceArchiveProfileName),
+                    string.IsNullOrWhiteSpace(reason) ? "Retention period elapsed" : reason.Trim(),
+                    AllowLockedDelete: invoice.ArchiveRetainUntilUtc <= purgedAtUtc),
                 ct).ConfigureAwait(false);
         }
 
@@ -209,6 +212,24 @@ public sealed class ObjectStorageInvoiceArchiveStorage : IInvoiceArchiveStorageP
 
     private static string BuildIssuedSnapshotKey(Guid invoiceId, DateTime issuedAtUtc)
         => ObjectStorageKeyBuilder.ForInvoiceArchive(invoiceId, issuedAtUtc, "issued-snapshot", invoiceId);
+
+    private static string NormalizeProviderName(string? providerName)
+    {
+        if (string.Equals(providerName, InvoiceArchiveStorageProviderNames.Minio, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(providerName, InvoiceArchiveStorageProviderNames.AwsS3, StringComparison.OrdinalIgnoreCase))
+        {
+            return InvoiceArchiveStorageProviderNames.S3Compatible;
+        }
+
+        if (string.Equals(providerName, InvoiceArchiveStorageProviderNames.AzureBlob, StringComparison.OrdinalIgnoreCase))
+        {
+            return InvoiceArchiveStorageProviderNames.AzureBlob;
+        }
+
+        return string.IsNullOrWhiteSpace(providerName)
+            ? InvoiceArchiveStorageProviderNames.S3Compatible
+            : providerName.Trim();
+    }
 
     private static string BuildFileName(Guid invoiceId)
         => $"invoice-{invoiceId:N}-issued-snapshot.json";

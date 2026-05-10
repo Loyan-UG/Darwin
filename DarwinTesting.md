@@ -247,6 +247,7 @@ Provider smoke harness source-contract coverage was added on 2026-05-10:
 - This guards the Stripe, DHL, VIES, Brevo, go-live readiness smoke scripts, and `docs/external-smoke-inputs.md` so external calls stay opt-in behind `-Execute`, known secret patterns are not committed, and raw provider response payloads are not printed.
 - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1` was dry-run locally on 2026-05-10. It reported the secret scan as ready, external Stripe, DHL, Brevo, and VIES smoke prerequisites as blocked by missing account/deployment inputs, and archive/e-invoice provider decisions as blocked until selected.
 - `scripts\smoke-stripe-testmode.ps1 -Execute -CheckReturnRoute` passed locally on 2026-05-10 against an isolated WebApi instance after test Stripe settings were entered. It created a Stripe-hosted Checkout Session and confirmed the storefront return route left the payment `Pending`; hosted checkout payment and verified webhook processing remain pending.
+- `scripts\smoke-stripe-testmode.ps1 -CheckBusinessSubscriptionCheckout` dry-run passed on 2026-05-10 with non-secret placeholder inputs. The execute path requires `DARWIN_BUSINESS_API_BEARER_TOKEN` and `DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID`, creates a Stripe-hosted business subscription Checkout Session through WebApi, and redacts session/provider references from output.
 
 Go-live readiness dry-run behavior coverage was added on 2026-05-10:
 
@@ -341,6 +342,49 @@ DHL RMA/returns source-contract coverage was added on 2026-05-10:
 Running the full `Darwin.WebApi.Tests` suite in the current branch still shows failures in pre-existing suites (mostly `Security` / `Loyalty` areas), so the newly added webhook-focused coverage remains green as an isolated subset.
 
 When adding or refactoring Webhook-related behavior, prefer adding/adjusting tests in this subset before widening to broader suites.
+
+---
+
+## 5.5 Prioritized Test Queue For The Next Implementation Pass
+
+The items below are ordered by current go-live risk, not by module size. Use this list before expanding the long backlog later in this document.
+
+### P0 - Stripe subscription checkout and reconciliation
+
+These tests cover the newest payment-critical production path and should be added before broad lower-risk coverage:
+
+- Add WebApi-hosted tests for the business subscription checkout endpoint proving authenticated business users can request a Stripe-hosted subscription Checkout Session, missing/invalid plans fail safely, missing Stripe configuration fails without a local fallback URL, and returned responses never expose secrets.
+- Add application handler tests for `CreateSubscriptionCheckoutIntentHandler` covering disabled Stripe settings, missing provider client, inactive/missing business, inactive/missing plan, billing interval mapping, provider metadata, provider checkout session reference persistence, and cancellation handling.
+- Add Stripe webhook handler tests for subscription `checkout.session.completed` covering create/update of `BusinessSubscription`, duplicate event idempotency, provider checkout/customer/subscription reference storage, missing metadata, and unmatched business/plan safety.
+- Add WebAdmin hosted/render tests for `Billing/Subscriptions` proving the workspace is authenticated, compact, filterable, localized, and displays provider references/status without exposing provider secrets.
+- Add source-contract coverage proving Stripe payment and subscription return routes remain webhook-only and do not mark provider payments or subscriptions successful from a browser return URL.
+
+### P1 - Stripe refund/dispute operations and smoke harnesses
+
+These tests should follow P0 because they validate operator recovery and external-smoke readiness:
+
+- Add provider-backed refund tests proving WebAdmin refund creation calls the Stripe refund provider only for Stripe payments with provider references, stores provider refund id/status/failure details, rejects unsupported payment states, and remains row-version guarded.
+- Add webhook reconciliation tests for `refund.created`, `refund.updated`, failure cases, and dispute events if supported by the current handler. If disputes remain operator-review only, test the visibility contract and document that no automated dispute resolution is claimed.
+- Add smoke-script tests for `scripts/smoke-stripe-testmode.ps1 -CheckBusinessSubscriptionCheckout` covering missing prerequisites, dry-run readiness, execute-path output redaction, and no printed provider references.
+- Run the external Stripe test-mode smoke after webhook forwarding is configured: storefront checkout payment, verified webhook finalization, business subscription checkout, provider-backed refund, and refund/dispute visibility.
+
+### P2 - Provider storage, DHL, Brevo, and compliance follow-through
+
+These are important go-live validation tests but depend more on configured providers or selected tooling:
+
+- Add external smoke coverage or documented operator-run evidence for MinIO/S3-compatible invoice archive storage, including save/read/metadata, profile container/prefix behavior, versioning/object-lock validation where required, and no secret output.
+- Add DHL live-smoke tests or operator-run evidence for shipment creation, label retrieval/storage through the configured storage profile, tracking reference persistence, callback processing, failed/stuck operation retry, and carrier exception visibility.
+- Add Brevo production-readiness smoke evidence for sandbox send, controlled inbox send, transactional webhook subscription, callback inbox persistence, and worker processing.
+- Add e-invoice tests only after the generator/tooling decision is made: structured invoice model mapping, ZUGFeRD/Factur-X artifact generation, validation, WebAdmin download, and later XRechnung export.
+
+### P3 - Broad regression and platform-hardening backlog
+
+Run these after P0-P2 are stable or when a touched module makes them immediately relevant:
+
+- Expand hosted WebAdmin onboarding, inventory/returns, row-version, concurrency, and localization regression matrices as those workflows continue to change.
+- Continue PostgreSQL/SQL Server provider-specific migration, search, JSON, `citext`, schema-placement, and concurrency tests from the persistence backlog below.
+- Raise WebAdmin CI coverage thresholds only after repeated green CI history.
+- Keep source-contract lanes focused on stable security, route, localization, mutation, HTMX, and public-boundary behavior instead of exact layout/copy assertions.
 
 ---
 
@@ -672,6 +716,32 @@ dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj --filter "F
 ```
 
 Latest local result: `1` passed, `0` skipped, `1` total.
+
+## 2026-05-10 WebAdmin Media Object-Storage Contract
+
+The WebAdmin media upload contract now covers both the existing shared file-system fallback and the optional reusable S3-compatible object-storage path selected through `ObjectStorage:Profiles:MediaAssets`. The source-contract test verifies extension and signature validation, server-generated keys, path traversal rejection, hash capture, object-storage no-overwrite policy, cleanup hooks, and absence of provider credentials in the controller boundary:
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~WebAdminFileUploadAndFileIo_Should_RemainConfinedToHardenedMediaPipeline|FullyQualifiedName~Storage|FullyQualifiedName~Archive|FullyQualifiedName~Invoice" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\codex-media-storage-unit\
+```
+
+Latest local result: `147` passed, `0` skipped, `147` total.
+
+The generic infrastructure storage provider tests now cover S3-compatible option validation, Azure Blob configuration validation, lazy provider/profile routing, file-system root validation, generic file-system save/read/delete, path traversal rejection, hash mismatch rejection, and application-level retention delete guards:
+
+```powershell
+dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Storage|FullyQualifiedName~Archive|FullyQualifiedName~ShipmentLabel" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\codex-generic-storage-infra-tests\
+```
+
+Latest local result: `14` passed, `0` skipped, `14` total.
+
+Object-storage external smoke harness coverage was added on 2026-05-10:
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should|FullyQualifiedName~GoLiveReadinessScript_Should" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\codex-object-storage-smoke-unit\
+```
+
+The harness is guarded by `-Execute`, blocks safely when provider prerequisites are missing, reports ready without external calls when non-secret dry-run inputs are present, and is included in the go-live readiness aggregator. The local file-system execute smoke was also run with a disposable temp root and completed save/read/metadata/temp-url/delete checks without printing secrets or payloads.
 
 ## 2026-05-10 WebAdmin Business Onboarding Hosted Smoke
 

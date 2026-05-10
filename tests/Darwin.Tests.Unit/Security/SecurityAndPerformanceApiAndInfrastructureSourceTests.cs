@@ -63,8 +63,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         storefrontUrlBuilderSource.Should().Contain("IStringLocalizer<ValidationResource> validationLocalizer)");
         storefrontUrlBuilderSource.Should().Contain("_validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));");
         storefrontUrlBuilderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"StorefrontFrontOfficeBaseUrlNotConfigured\"]);");
-        storefrontUrlBuilderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"StorefrontPaymentProviderNotSupported\"]);");
-        storefrontUrlBuilderSource.Should().Contain("throw new InvalidOperationException(_validationLocalizer[\"StorefrontStripeCheckoutBaseUrlNotConfigured\"]);");
+        storefrontUrlBuilderSource.Should().NotContain("StripeCheckoutBaseUrl");
+        storefrontUrlBuilderSource.Should().NotContain("BuildStripeCheckoutUrl");
 
         validationResourceSource.Should().Contain("<data name=\"JwtIssuerConfigurationMissing\"");
         validationResourceSource.Should().Contain("<data name=\"JwtAudienceConfigurationMissing\"");
@@ -73,7 +73,6 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         validationResourceSource.Should().Contain("<data name=\"JwtValidationDisabled\"");
         validationResourceSource.Should().Contain("<data name=\"JwtSigningKeyMissingInSiteSettings\"");
         validationResourceSource.Should().Contain("<data name=\"StorefrontFrontOfficeBaseUrlNotConfigured\"");
-        validationResourceSource.Should().Contain("<data name=\"StorefrontStripeCheckoutBaseUrlNotConfigured\"");
         validationResourceSource.Should().Contain("<data name=\"StorefrontPaymentProviderNotSupported\"");
 
         germanValidationResourceSource.Should().Contain("<data name=\"JwtIssuerConfigurationMissing\"");
@@ -83,8 +82,27 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         germanValidationResourceSource.Should().Contain("<data name=\"JwtValidationDisabled\"");
         germanValidationResourceSource.Should().Contain("<data name=\"JwtSigningKeyMissingInSiteSettings\"");
         germanValidationResourceSource.Should().Contain("<data name=\"StorefrontFrontOfficeBaseUrlNotConfigured\"");
-        germanValidationResourceSource.Should().Contain("<data name=\"StorefrontStripeCheckoutBaseUrlNotConfigured\"");
         germanValidationResourceSource.Should().Contain("<data name=\"StorefrontPaymentProviderNotSupported\"");
+    }
+
+    [Fact]
+    public void CheckoutControllers_Should_Not_FallbackToLocalStripeCheckoutHandoff()
+    {
+        var sources = new[]
+        {
+            ReadWebApiFile(Path.Combine("Controllers", "Public", "PublicCheckoutController.cs")),
+            ReadWebApiFile(Path.Combine("Controllers", "Member", "MemberOrdersController.cs")),
+            ReadWebApiFile(Path.Combine("Controllers", "Member", "MemberInvoicesController.cs"))
+        };
+
+        foreach (var source in sources)
+        {
+            source.Should().Contain("string.IsNullOrWhiteSpace(result.CheckoutUrl)");
+            source.Should().Contain("StorefrontStripeCheckoutNotConfigured");
+            source.Should().Contain("ReturnUrl = returnUrl");
+            source.Should().Contain("CancelUrl = cancelUrl");
+            source.Should().NotContain("BuildStripeCheckoutUrl(result");
+        }
     }
 
 

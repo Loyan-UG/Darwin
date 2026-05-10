@@ -266,7 +266,7 @@
                                         <button type="submit" class="btn btn-sm btn-outline-success">@T.T("MarkProcessed")</button>
                                     </form>
                                 }
-                                @if (!string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+                                @if (!string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase) || item.IsStalePending)
                                 {
                                     <form asp-action="UpdateShipmentProviderOperation" method="post" hx-post="@Url.Action("UpdateShipmentProviderOperation", "Orders")" hx-target="#shipment-provider-operations-workspace-shell" hx-swap="outerHTML">
                                         @Html.AntiForgeryToken()

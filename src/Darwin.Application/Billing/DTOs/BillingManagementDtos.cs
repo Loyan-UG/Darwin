@@ -26,6 +26,18 @@ namespace Darwin.Application.Billing.DTOs
         NeedsSupport = 5
     }
 
+    public enum BusinessSubscriptionQueueFilter : short
+    {
+        All = 0,
+        Active = 1,
+        Trialing = 2,
+        PastDue = 3,
+        Canceled = 4,
+        Stripe = 5,
+        MissingProviderReference = 6,
+        CancelAtPeriodEnd = 7
+    }
+
     public enum JournalEntryQueueFilter : short
     {
         Recent = 1,
@@ -83,6 +95,45 @@ namespace Darwin.Application.Billing.DTOs
         public int FailedStripeCount { get; set; }
         public int NeedsReconciliationCount { get; set; }
         public int DisputeFollowUpCount { get; set; }
+    }
+
+    public sealed class BusinessSubscriptionListItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid? BusinessId { get; set; }
+        public string BusinessName { get; set; } = string.Empty;
+        public string? BusinessContactEmail { get; set; }
+        public Guid BillingPlanId { get; set; }
+        public string PlanCode { get; set; } = string.Empty;
+        public string PlanName { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string? ProviderCustomerId { get; set; }
+        public string? ProviderSubscriptionId { get; set; }
+        public string? ProviderCheckoutSessionId { get; set; }
+        public SubscriptionStatus Status { get; set; }
+        public DateTime StartedAtUtc { get; set; }
+        public DateTime? CurrentPeriodEndUtc { get; set; }
+        public DateTime? TrialEndsAtUtc { get; set; }
+        public DateTime? CanceledAtUtc { get; set; }
+        public bool CancelAtPeriodEnd { get; set; }
+        public long UnitPriceMinor { get; set; }
+        public string Currency { get; set; } = SiteSettingDto.DefaultCurrencyDefault;
+        public bool IsStripe { get; set; }
+        public bool MissingProviderReference { get; set; }
+        public string ProviderReferenceState { get; set; } = string.Empty;
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class BusinessSubscriptionOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int TrialingCount { get; set; }
+        public int PastDueCount { get; set; }
+        public int CanceledCount { get; set; }
+        public int StripeCount { get; set; }
+        public int MissingProviderReferenceCount { get; set; }
+        public int CancelAtPeriodEndCount { get; set; }
     }
 
     public sealed class TaxComplianceOpsSummaryDto
@@ -188,6 +239,12 @@ namespace Darwin.Application.Billing.DTOs
         public string? PaymentProviderPaymentIntentRef { get; set; }
         public string? PaymentProviderCheckoutSessionRef { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
+        public string RefundProvider { get; set; } = string.Empty;
+        public string? RefundProviderReference { get; set; }
+        public string? RefundProviderPaymentReference { get; set; }
+        public string? RefundProviderStatus { get; set; }
+        public string? FailureReason { get; set; }
+        public DateTime? RequestedAtUtc { get; set; }
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string? CustomerEmail { get; set; }

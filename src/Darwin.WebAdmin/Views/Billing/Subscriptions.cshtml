@@ -1,0 +1,219 @@
+@using Darwin.Application.Billing.DTOs
+@using System.Globalization
+@model Darwin.WebAdmin.ViewModels.Billing.BusinessSubscriptionsListVm
+@inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@{
+    ViewData["Title"] = T.T("BillingSubscriptions");
+    string SubscriptionsUrl(BusinessSubscriptionQueueFilter queue) => Url.Action("Subscriptions", "Billing", new { q = Model.Query, queue }) ?? string.Empty;
+    string ClearFiltersUrl() => Url.Action("Subscriptions", "Billing") ?? string.Empty;
+    string PlansUrl() => Url.Action("Plans", "Billing") ?? string.Empty;
+    string WebhooksUrl() => Url.Action("Webhooks", "Billing") ?? string.Empty;
+    string BusinessUrl(Guid id) => Url.Action("Edit", "Businesses", new { id }) ?? string.Empty;
+    string LocalizeStatus(object? status) => status is null ? "-" : T.T(status.ToString() ?? string.Empty);
+    string LocalizeReferenceState(string? state) => state switch
+    {
+        "Stripe subscription ref missing" => T.T("BillingSubscriptionStripeRefMissing"),
+        "Reference missing" => T.T("BillingProviderReferenceMissing"),
+        "Cancel at period end" => T.T("BillingSubscriptionCancelAtPeriodEndState"),
+        "Active on provider" => T.T("BillingSubscriptionActiveOnProvider"),
+        "Trialing on provider" => T.T("BillingSubscriptionTrialingOnProvider"),
+        "Provider payment attention" => T.T("BillingSubscriptionProviderPaymentAttention"),
+        "Canceled on provider" => T.T("BillingSubscriptionCanceledOnProvider"),
+        "Provider unpaid" => T.T("BillingSubscriptionProviderUnpaid"),
+        "Provider setup incomplete" => T.T("BillingSubscriptionProviderSetupIncomplete"),
+        "Provider setup expired" => T.T("BillingSubscriptionProviderSetupExpired"),
+        "Paused on provider" => T.T("BillingSubscriptionPausedOnProvider"),
+        "Provider reference linked" => T.T("BillingProviderReferenceLinked"),
+        _ => string.IsNullOrWhiteSpace(state) ? "-" : T.T(state)
+    };
+    string StatusBadgeClass(Darwin.Domain.Enums.SubscriptionStatus status) => status switch
+    {
+        Darwin.Domain.Enums.SubscriptionStatus.Active => "text-bg-success",
+        Darwin.Domain.Enums.SubscriptionStatus.Trialing => "text-bg-info",
+        Darwin.Domain.Enums.SubscriptionStatus.PastDue => "text-bg-warning",
+        Darwin.Domain.Enums.SubscriptionStatus.Canceled => "text-bg-secondary",
+        Darwin.Domain.Enums.SubscriptionStatus.Unpaid => "text-bg-danger",
+        Darwin.Domain.Enums.SubscriptionStatus.Incomplete => "text-bg-warning",
+        Darwin.Domain.Enums.SubscriptionStatus.IncompleteExpired => "text-bg-danger",
+        Darwin.Domain.Enums.SubscriptionStatus.Paused => "text-bg-secondary",
+        _ => "text-bg-secondary"
+    };
+}
+
+<div id="billing-subscriptions-workspace-shell">
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1">@T.T("BillingSubscriptions")</h1>
+        <p class="text-muted mb-0">@T.T("BillingSubscriptionsIntro")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Plans"
+           class="btn btn-outline-secondary"
+           hx-get="@PlansUrl()"
+           hx-target="#billing-subscriptions-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BillingPlans")</a>
+        <a asp-action="Webhooks"
+           class="btn btn-outline-secondary"
+           hx-get="@WebhooksUrl()"
+           hx-target="#billing-subscriptions-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("BillingWebhooks")</a>
+    </div>
+</div>
+
+<div class="row g-2 mb-3">
+    <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("CommonTotal")</div>
+            <div class="fs-5 fw-semibold">@Model.Summary.TotalCount</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("Active")</div>
+            <div class="fs-5 fw-semibold">@Model.Summary.ActiveCount</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("Trialing")</div>
+            <div class="fs-5 fw-semibold">@Model.Summary.TrialingCount</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("PastDue")</div>
+            <div class="fs-5 fw-semibold">@Model.Summary.PastDueCount</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">@T.T("BillingSubscriptionsMissingProviderRefs")</div>
+            <div class="fs-5 fw-semibold">@Model.Summary.MissingProviderReferenceCount</div>
+        </div>
+    </div>
+</div>
+
+<form method="get"
+      class="row g-2 align-items-end mb-3"
+      hx-get="@Url.Action("Subscriptions", "Billing")"
+      hx-target="#billing-subscriptions-workspace-shell"
+      hx-swap="outerHTML"
+      hx-push-url="true">
+    <div class="col-md-5">
+        <label class="form-label" for="billing-subscriptions-search">@T.T("Search")</label>
+        <input id="billing-subscriptions-search" class="form-control" type="search" name="q" value="@Model.Query" placeholder="@T.T("BillingSubscriptionsSearchPlaceholder")" />
+    </div>
+    <div class="col-md-4">
+        <label class="form-label" for="billing-subscriptions-queue">@T.T("CommonQueue")</label>
+        <select id="billing-subscriptions-queue" class="form-select" name="queue">
+            @foreach (BusinessSubscriptionQueueFilter value in Enum.GetValues<BusinessSubscriptionQueueFilter>())
+            {
+                <option value="@value" selected="@(Model.QueueFilter == value)">@T.T($"BusinessSubscriptionQueue{value}")</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-fill">@T.T("ApplyFilters")</button>
+        <a class="btn btn-outline-secondary"
+           href="@ClearFiltersUrl()"
+           hx-get="@ClearFiltersUrl()"
+           hx-target="#billing-subscriptions-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T("CommonClear")</a>
+    </div>
+</form>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    @foreach (var queue in new[] { BusinessSubscriptionQueueFilter.Active, BusinessSubscriptionQueueFilter.Trialing, BusinessSubscriptionQueueFilter.PastDue, BusinessSubscriptionQueueFilter.MissingProviderReference, BusinessSubscriptionQueueFilter.CancelAtPeriodEnd })
+    {
+        <a class="btn btn-sm @(Model.QueueFilter == queue ? "btn-primary" : "btn-outline-secondary")"
+           href="@SubscriptionsUrl(queue)"
+           hx-get="@SubscriptionsUrl(queue)"
+           hx-target="#billing-subscriptions-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">@T.T($"BusinessSubscriptionQueue{queue}")</a>
+    }
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>@T.T("Business")</th>
+                <th>@T.T("CommonPlan")</th>
+                <th>@T.T("CommonStatus")</th>
+                <th>@T.T("BillingSubscriptionsProviderRefs")</th>
+                <th>@T.T("BillingSubscriptionsPeriod")</th>
+                <th class="text-end">@T.T("CommonAmount")</th>
+                <th class="text-end">@T.T("CommonActions")</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="text-center text-muted py-4">@T.T("BillingSubscriptionsEmptyState")</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(item.BusinessName) ? "-" : item.BusinessName)</div>
+                        @if (!string.IsNullOrWhiteSpace(item.BusinessContactEmail))
+                        {
+                            <div class="small text-muted">@item.BusinessContactEmail</div>
+                        }
+                    </td>
+                    <td>
+                        <div>@item.PlanName</div>
+                        <div class="small text-muted">@item.PlanCode</div>
+                    </td>
+                    <td>
+                        <span class="badge @StatusBadgeClass(item.Status)">@LocalizeStatus(item.Status)</span>
+                        @if (item.CancelAtPeriodEnd)
+                        {
+                            <span class="badge text-bg-warning ms-1">@T.T("BillingSubscriptionCancelAtPeriodEnd")</span>
+                        }
+                        <div class="small text-muted mt-1">@LocalizeReferenceState(item.ProviderReferenceState)</div>
+                    </td>
+                    <td>
+                        <div class="small"><span class="text-muted">@T.T("CommonProvider"):</span> @item.Provider</div>
+                        <div class="small"><span class="text-muted">@T.T("BillingSubscriptionsSubscriptionRef"):</span> @(item.ProviderSubscriptionId ?? "-")</div>
+                        <div class="small"><span class="text-muted">@T.T("BillingSubscriptionsCheckoutRef"):</span> @(item.ProviderCheckoutSessionId ?? "-")</div>
+                        <div class="small"><span class="text-muted">@T.T("BillingSubscriptionsCustomerRef"):</span> @(item.ProviderCustomerId ?? "-")</div>
+                    </td>
+                    <td>
+                        <div class="small"><span class="text-muted">@T.T("Started"):</span> @item.StartedAtUtc.ToLocalTime().ToString(CultureInfo.CurrentCulture)</div>
+                        <div class="small"><span class="text-muted">@T.T("BillingSubscriptionsCurrentPeriodEnd"):</span> @(item.CurrentPeriodEndUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")</div>
+                        <div class="small"><span class="text-muted">@T.T("BillingSubscriptionsTrialEnd"):</span> @(item.TrialEndsAtUtc?.ToLocalTime().ToString(CultureInfo.CurrentCulture) ?? "-")</div>
+                    </td>
+                    <td class="text-end">@item.Currency @((item.UnitPriceMinor / 100M).ToString("0.00", CultureInfo.CurrentCulture))</td>
+                    <td class="text-end">
+                        @if (item.BusinessId.HasValue)
+                        {
+                            <a class="btn btn-sm btn-outline-primary" href="@BusinessUrl(item.BusinessId.Value)">@T.T("BusinessesOpen")</a>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Billing"
+       asp-action="Subscriptions"
+       asp-route-q="@Model.Query"
+       asp-route-queue="@Model.QueueFilter"
+       hx-target="#billing-subscriptions-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true"></pager>
+</div>

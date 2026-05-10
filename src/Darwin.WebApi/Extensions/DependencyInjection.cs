@@ -141,6 +141,7 @@ namespace Darwin.WebApi.Extensions
             // ------------------------------------------------------------
             services.AddObjectStorageInfrastructure(configuration);
             services.AddNotificationsInfrastructure(configuration);
+            services.AddPaymentProviderInfrastructure();
             services.AddShippingProviderInfrastructure();
             services.AddComplianceInfrastructure(configuration);
             services.AddMemoryCache();
@@ -160,6 +161,7 @@ namespace Darwin.WebApi.Extensions
 
             services.AddSingleton<StorefrontCheckoutUrlBuilder>();
             services.AddHttpClient<IStorefrontPaymentSessionClient, StripeCheckoutSessionClient>();
+            services.AddHttpClient<ISubscriptionCheckoutSessionClient, StripeSubscriptionCheckoutSessionClient>();
             services.TryAddSingleton<StripeWebhookSignatureVerifier>();
             services.AddScoped<ProviderCallbackInboxWriter>();
 

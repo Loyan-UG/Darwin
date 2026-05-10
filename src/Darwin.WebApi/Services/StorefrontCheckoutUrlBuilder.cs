@@ -1,12 +1,11 @@
 using Darwin.Application;
-using Darwin.Application.Orders.DTOs;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Localization;
 
 namespace Darwin.WebApi.Services;
 
 /// <summary>
-/// Builds storefront checkout return, cancellation, and Stripe handoff URLs from configuration.
+/// Builds storefront checkout return and cancellation URLs from configuration.
 /// </summary>
 public sealed class StorefrontCheckoutUrlBuilder
 {
@@ -53,42 +52,4 @@ public sealed class StorefrontCheckoutUrlBuilder
         }.Uri.AbsoluteUri;
     }
 
-    /// <summary>
-    /// Builds the configured Stripe checkout handoff URL for a storefront payment intent.
-    /// </summary>
-    public string BuildStripeCheckoutUrl(StorefrontPaymentIntentResultDto result, string returnUrl, string cancelUrl)
-    {
-        ArgumentNullException.ThrowIfNull(result);
-
-        if (!string.Equals(result.Provider, "Stripe", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(_validationLocalizer["StorefrontPaymentProviderNotSupported"]);
-        }
-
-        var stripeCheckoutBaseUrl = _configuration["StorefrontCheckout:StripeCheckoutBaseUrl"];
-        if (string.IsNullOrWhiteSpace(stripeCheckoutBaseUrl) || !Uri.TryCreate(stripeCheckoutBaseUrl, UriKind.Absolute, out var stripeCheckoutBaseUri))
-        {
-            throw new InvalidOperationException(_validationLocalizer["StorefrontStripeCheckoutBaseUrlNotConfigured"]);
-        }
-
-        var queryBuilder = new QueryBuilder
-        {
-            { "orderId", result.OrderId.ToString("D") },
-            { "paymentId", result.PaymentId.ToString("D") },
-            { "provider", "Stripe" },
-            { "checkoutSessionId", result.ProviderCheckoutSessionReference ?? result.ProviderReference },
-            { "returnUrl", returnUrl },
-            { "cancelUrl", cancelUrl }
-        };
-
-        if (!string.IsNullOrWhiteSpace(result.ProviderPaymentIntentReference))
-        {
-            queryBuilder.Add("paymentIntentId", result.ProviderPaymentIntentReference);
-        }
-
-        return new UriBuilder(stripeCheckoutBaseUri)
-        {
-            Query = queryBuilder.ToQueryString().Value?.TrimStart('?')
-        }.Uri.AbsoluteUri;
-    }
 }

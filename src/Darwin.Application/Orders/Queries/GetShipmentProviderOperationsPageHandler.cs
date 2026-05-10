@@ -43,7 +43,7 @@ namespace Darwin.Application.Orders.Queries
                     PendingCount = g.Count(x => x.Status == "Pending"),
                     FailedCount = g.Count(x => x.Status == "Failed"),
                     ProcessedCount = g.Count(x => x.Status == "Processed" || x.Status == "Succeeded"),
-                    StalePendingCount = g.Count(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc)
+                    StalePendingCount = g.Count(x => x.Status == "Pending" && (x.ModifiedAtUtc ?? x.LastAttemptAtUtc ?? x.CreatedAtUtc) <= staleBeforeUtc)
                 })
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false) ?? new ShipmentProviderOperationSummaryDto();
@@ -116,7 +116,7 @@ namespace Darwin.Application.Orders.Queries
 
             if (filter.StalePendingOnly)
             {
-                query = query.Where(x => x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc);
+                query = query.Where(x => x.Status == "Pending" && (x.ModifiedAtUtc ?? x.LastAttemptAtUtc ?? x.CreatedAtUtc) <= staleBeforeUtc);
             }
 
             var total = await query.CountAsync(ct).ConfigureAwait(false);
@@ -169,7 +169,7 @@ namespace Darwin.Application.Orders.Queries
                     ProcessedAtUtc = x.ProcessedAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
                     AgeMinutes = Math.Max(0, (int)(now - x.CreatedAtUtc).TotalMinutes),
-                    IsStalePending = x.Status == "Pending" && x.CreatedAtUtc <= staleBeforeUtc,
+                    IsStalePending = x.Status == "Pending" && (x.ModifiedAtUtc ?? x.LastAttemptAtUtc ?? x.CreatedAtUtc) <= staleBeforeUtc,
                     FailureReason = OperatorDisplayTextSanitizer.SanitizeFailureText(x.FailureReason),
                     TrackingNumber = shipment?.TrackingNumber,
                     LabelUrl = shipment?.LabelUrl

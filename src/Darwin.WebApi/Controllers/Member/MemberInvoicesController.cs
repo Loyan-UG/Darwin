@@ -26,6 +26,9 @@ public sealed class MemberInvoicesController : ApiControllerBase
 {
     private readonly GetMyInvoicesPageHandler _getMyInvoicesPageHandler;
     private readonly GetMyInvoiceDetailHandler _getMyInvoiceDetailHandler;
+    private readonly GetInvoiceArchiveDocumentHandler _getInvoiceArchiveDocumentHandler;
+    private readonly GetInvoiceStructuredDataExportHandler _getInvoiceStructuredDataExportHandler;
+    private readonly GetInvoiceStructuredXmlExportHandler _getInvoiceStructuredXmlExportHandler;
     private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;
     private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
@@ -36,12 +39,18 @@ public sealed class MemberInvoicesController : ApiControllerBase
     public MemberInvoicesController(
         GetMyInvoicesPageHandler getMyInvoicesPageHandler,
         GetMyInvoiceDetailHandler getMyInvoiceDetailHandler,
+        GetInvoiceArchiveDocumentHandler getInvoiceArchiveDocumentHandler,
+        GetInvoiceStructuredDataExportHandler getInvoiceStructuredDataExportHandler,
+        GetInvoiceStructuredXmlExportHandler getInvoiceStructuredXmlExportHandler,
         CreateStorefrontPaymentIntentHandler createStorefrontPaymentIntentHandler,
         StorefrontCheckoutUrlBuilder checkoutUrlBuilder,
         IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _getMyInvoicesPageHandler = getMyInvoicesPageHandler ?? throw new ArgumentNullException(nameof(getMyInvoicesPageHandler));
         _getMyInvoiceDetailHandler = getMyInvoiceDetailHandler ?? throw new ArgumentNullException(nameof(getMyInvoiceDetailHandler));
+        _getInvoiceArchiveDocumentHandler = getInvoiceArchiveDocumentHandler ?? throw new ArgumentNullException(nameof(getInvoiceArchiveDocumentHandler));
+        _getInvoiceStructuredDataExportHandler = getInvoiceStructuredDataExportHandler ?? throw new ArgumentNullException(nameof(getInvoiceStructuredDataExportHandler));
+        _getInvoiceStructuredXmlExportHandler = getInvoiceStructuredXmlExportHandler ?? throw new ArgumentNullException(nameof(getInvoiceStructuredXmlExportHandler));
         _createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));
         _checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
@@ -144,17 +153,22 @@ public sealed class MemberInvoicesController : ApiControllerBase
 
         try
         {
+            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: false);
+            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: true);
             var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto
             {
                 OrderId = dto.OrderId.Value,
                 UserId = GetCurrentUserId(),
                 OrderNumber = dto.OrderNumber,
-                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "Stripe" : request.Provider.Trim()
+                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "Stripe" : request.Provider.Trim(),
+                ReturnUrl = returnUrl,
+                CancelUrl = cancelUrl
             }, ct).ConfigureAwait(false);
 
-            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: false);
-            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.OrderId.Value, dto.OrderNumber, cancelled: true);
-            var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);
+            if (string.IsNullOrWhiteSpace(result.CheckoutUrl))
+            {
+                throw new InvalidOperationException(_validationLocalizer["StorefrontStripeCheckoutNotConfigured"]);
+            }
 
             return Ok(new CreateStorefrontPaymentIntentResponse
             {
@@ -167,7 +181,7 @@ public sealed class MemberInvoicesController : ApiControllerBase
                 AmountMinor = result.AmountMinor,
                 Currency = result.Currency,
                 Status = result.Status.ToString(),
-                CheckoutUrl = checkoutUrl,
+                CheckoutUrl = result.CheckoutUrl,
                 ReturnUrl = returnUrl,
                 CancelUrl = cancelUrl,
                 ExpiresAtUtc = result.ExpiresAtUtc
@@ -204,6 +218,96 @@ public sealed class MemberInvoicesController : ApiControllerBase
         var fileName = $"invoice-{SanitizeFileToken(dto.OrderNumber ?? dto.Id.ToString("D"))}.txt";
         var bytes = Encoding.UTF8.GetBytes(RenderInvoiceDocument(dto));
         return File(bytes, "text/plain; charset=utf-8", fileName);
+    }
+
+    /// <summary>
+    /// Downloads the printable issued-invoice archive document for an owned invoice.
+    /// </summary>
+    [HttpGet("{id:guid}/archive-document")]
+    [HttpGet("/api/v1/invoices/{id:guid}/archive-document")]
+    [Produces("text/html")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadArchiveDocumentAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)
+    {
+        var ownedInvoice = await GetOwnedInvoiceOrNullAsync(id, culture, ct).ConfigureAwait(false);
+        if (ownedInvoice is null)
+        {
+            return id == Guid.Empty
+                ? BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"])
+                : NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);
+        }
+
+        var document = await _getInvoiceArchiveDocumentHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        if (document is null)
+        {
+            return NotFoundProblem(_validationLocalizer["InvoiceArchiveUnavailable"]);
+        }
+
+        return File(
+            Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(document.Html)).ToArray(),
+            "text/html; charset=utf-8",
+            document.FileName);
+    }
+
+    /// <summary>
+    /// Downloads the structured source-model JSON export for an owned issued invoice.
+    /// </summary>
+    [HttpGet("{id:guid}/structured-data")]
+    [HttpGet("/api/v1/invoices/{id:guid}/structured-data")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadStructuredDataAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)
+    {
+        var ownedInvoice = await GetOwnedInvoiceOrNullAsync(id, culture, ct).ConfigureAwait(false);
+        if (ownedInvoice is null)
+        {
+            return id == Guid.Empty
+                ? BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"])
+                : NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);
+        }
+
+        var export = await _getInvoiceStructuredDataExportHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        if (export is null)
+        {
+            return NotFoundProblem(_validationLocalizer["InvoiceArchiveUnavailable"]);
+        }
+
+        return File(
+            Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(export.Json)).ToArray(),
+            "application/json",
+            export.FileName);
+    }
+
+    /// <summary>
+    /// Downloads the structured source-model XML export for an owned issued invoice.
+    /// </summary>
+    [HttpGet("{id:guid}/structured-xml")]
+    [HttpGet("/api/v1/invoices/{id:guid}/structured-xml")]
+    [Produces("application/xml")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadStructuredXmlAsync(Guid id, [FromQuery] string? culture = null, CancellationToken ct = default)
+    {
+        var ownedInvoice = await GetOwnedInvoiceOrNullAsync(id, culture, ct).ConfigureAwait(false);
+        if (ownedInvoice is null)
+        {
+            return id == Guid.Empty
+                ? BadRequestProblem(_validationLocalizer["IdentifierMustNotBeEmpty"])
+                : NotFoundProblem(_validationLocalizer["InvoiceNotFound"]);
+        }
+
+        var export = await _getInvoiceStructuredXmlExportHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        if (export is null)
+        {
+            return NotFoundProblem(_validationLocalizer["InvoiceArchiveUnavailable"]);
+        }
+
+        return File(
+            Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(export.Xml)).ToArray(),
+            "application/xml",
+            export.FileName);
     }
 
     private static MemberInvoiceSummary MapSummary(MemberInvoiceSummaryDto dto)
@@ -266,8 +370,22 @@ public sealed class MemberInvoicesController : ApiControllerBase
             CanRetryPayment = canRetryPayment,
             PaymentIntentPath = canRetryPayment ? GetPaymentIntentPath(dto.Id) : null,
             OrderPath = dto.OrderId.HasValue ? GetOrderPath(dto.OrderId.Value) : null,
-            DocumentPath = GetDocumentPath(dto.Id)
+            DocumentPath = GetDocumentPath(dto.Id),
+            ArchiveDocumentPath = GetArchiveDocumentPath(dto.Id),
+            StructuredDataPath = GetStructuredDataPath(dto.Id),
+            StructuredXmlPath = GetStructuredXmlPath(dto.Id)
         };
+    }
+
+    private async Task<MemberInvoiceDetailDto?> GetOwnedInvoiceOrNullAsync(Guid id, string? culture, CancellationToken ct)
+    {
+        if (id == Guid.Empty)
+        {
+            return null;
+        }
+
+        var normalizedCulture = BusinessControllerConventions.NormalizeNullable(culture);
+        return await _getMyInvoiceDetailHandler.HandleAsync(id, normalizedCulture, ct).ConfigureAwait(false);
     }
 
     private static bool CanRetryPayment(MemberInvoiceDetailDto dto)
@@ -280,6 +398,12 @@ public sealed class MemberInvoicesController : ApiControllerBase
     private static string GetOrderPath(Guid id) => $"/api/v1/member/orders/{id:D}";
 
     private static string GetDocumentPath(Guid id) => $"/api/v1/member/invoices/{id:D}/document";
+
+    private static string GetArchiveDocumentPath(Guid id) => $"/api/v1/member/invoices/{id:D}/archive-document";
+
+    private static string GetStructuredDataPath(Guid id) => $"/api/v1/member/invoices/{id:D}/structured-data";
+
+    private static string GetStructuredXmlPath(Guid id) => $"/api/v1/member/invoices/{id:D}/structured-xml";
 
     private static string SanitizeFileToken(string value)
     {

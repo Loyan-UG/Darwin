@@ -52,6 +52,12 @@ namespace Darwin.Application.Orders.Queries
                     Currency = x.Currency,
                     Reason = x.Reason,
                     Status = x.Status,
+                    RefundProvider = x.Provider,
+                    RefundProviderReference = x.ProviderRefundReference,
+                    RefundProviderStatus = x.ProviderStatus,
+                    FailureReason = x.FailureReason,
+                    RequestedAtUtc = x.RequestedAtUtc,
+                    CompletedAtUtc = x.CompletedAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
                     RowVersion = x.RowVersion
                 })

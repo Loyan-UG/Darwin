@@ -73,6 +73,76 @@ public sealed class EInvoiceGenerationServiceTests
         result.Artifact.Should().BeNull();
     }
 
+    [Fact]
+    public void EInvoiceSourceReadinessValidator_Should_Report_Missing_Fields_For_Minimal_Snapshot()
+    {
+        var validator = new EInvoiceSourceReadinessValidator();
+        var invoice = new Invoice
+        {
+            Id = Guid.NewGuid(),
+            IssuedSnapshotJson = "{\"invoiceId\":\"00000000-0000-0000-0000-000000000001\"}",
+            RowVersion = new byte[] { 1 }
+        };
+
+        var result = validator.Validate(invoice);
+
+        result.IsReady.Should().BeFalse();
+        result.MissingFields.Should().Contain("currency");
+        result.MissingFields.Should().Contain("issuedAtUtc");
+        result.MissingFields.Should().Contain("issuer");
+        result.MissingFields.Should().Contain("customer");
+        result.MissingFields.Should().Contain("lines");
+    }
+
+    [Fact]
+    public void EInvoiceSourceReadinessValidator_Should_Accept_Minimum_Ready_Source_Snapshot()
+    {
+        var validator = new EInvoiceSourceReadinessValidator();
+        var invoiceId = Guid.NewGuid();
+        var invoice = new Invoice
+        {
+            Id = invoiceId,
+            IssuedSnapshotJson = $$"""
+            {
+              "invoiceId": "{{invoiceId}}",
+              "currency": "EUR",
+              "issuedAtUtc": "2026-05-01T00:00:00Z",
+              "totalGrossMinor": 11900,
+              "issuer": {
+                "legalName": "Darwin GmbH",
+                "taxId": "DE123456789",
+                "addressLine1": "Issuer Street 1",
+                "postalCode": "10115",
+                "city": "Berlin",
+                "country": "DE"
+              },
+              "customer": {
+                "companyName": "Customer GmbH",
+                "addressLine1": "Customer Street 2",
+                "postalCode": "10115",
+                "city": "Berlin",
+                "country": "DE"
+              },
+              "lines": [
+                {
+                  "description": "Invoice line",
+                  "quantity": 1,
+                  "unitPriceNetMinor": 10000,
+                  "totalNetMinor": 10000,
+                  "totalGrossMinor": 11900
+                }
+              ]
+            }
+            """,
+            RowVersion = new byte[] { 1 }
+        };
+
+        var result = validator.Validate(invoice);
+
+        result.IsReady.Should().BeTrue();
+        result.MissingFields.Should().BeEmpty();
+    }
+
     private sealed class EInvoiceGenerationDbContext : DbContext, IAppDbContext
     {
         private EInvoiceGenerationDbContext(DbContextOptions<EInvoiceGenerationDbContext> options) : base(options) { }

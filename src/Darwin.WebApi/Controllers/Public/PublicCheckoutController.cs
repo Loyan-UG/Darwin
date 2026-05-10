@@ -220,9 +220,10 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 CancelUrl = cancelUrl
             }, ct).ConfigureAwait(false);
 
-            var checkoutUrl = string.IsNullOrWhiteSpace(result.CheckoutUrl)
-                ? _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl)
-                : result.CheckoutUrl;
+            if (string.IsNullOrWhiteSpace(result.CheckoutUrl))
+            {
+                throw new InvalidOperationException(_validationLocalizer["StorefrontStripeCheckoutNotConfigured"]);
+            }
 
             return Ok(new CreateStorefrontPaymentIntentResponse
             {
@@ -235,7 +236,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 AmountMinor = result.AmountMinor,
                 Currency = result.Currency,
                 Status = result.Status.ToString(),
-                CheckoutUrl = checkoutUrl,
+                CheckoutUrl = result.CheckoutUrl,
                 ReturnUrl = returnUrl,
                 CancelUrl = cancelUrl,
                 ExpiresAtUtc = result.ExpiresAtUtc

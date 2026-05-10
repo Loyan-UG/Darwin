@@ -2037,6 +2037,12 @@
   <data name="GenerateCarrierLabel" xml:space="preserve">
     <value>Generate carrier label</value>
   </data>
+  <data name="QueueDhlReturnLabel" xml:space="preserve">
+    <value>Queue DHL return label</value>
+  </data>
+  <data name="DhlReturnShipment" xml:space="preserve">
+    <value>DHL return shipment</value>
+  </data>
   <data name="LastCarrierEventKey" xml:space="preserve">
     <value>Last Carrier Event Key</value>
   </data>
@@ -4492,6 +4498,14 @@
   <data name="DhlLabelGenerationFailed" xml:space="preserve">
     <value>Unable to generate the DHL label right now. Review DHL readiness and the shipment data, then try again.</value>
     <comment>Error shown when DHL label generation fails from the shipment surfaces.</comment>
+  </data>
+  <data name="DhlReturnLabelQueued" xml:space="preserve">
+    <value>DHL return label generation queued.</value>
+    <comment>Success message after queuing a DHL return-label operation for background processing.</comment>
+  </data>
+  <data name="DhlReturnLabelQueueFailed" xml:space="preserve">
+    <value>Unable to queue the DHL return label. Review DHL readiness and shipment data, then try again.</value>
+    <comment>Error shown when DHL return-label queueing fails from the shipment surfaces.</comment>
   </data>
   <data name="OrderRefundAddFailed" xml:space="preserve">
     <value>Unable to add the refund right now. Review the current values and try again.</value>
@@ -11441,7 +11455,7 @@
     <value>Shipment provider operations</value>
   </data>
   <data name="ShipmentProviderOperationsIntro" xml:space="preserve">
-    <value>Monitor and recover DHL shipment-provider operations for create-shipment and label-generation workflows.</value>
+    <value>Monitor and recover DHL shipment-provider operations for create-shipment, label-generation, and return-label workflows.</value>
   </data>
   <data name="ShipmentProviderOperationTypeAll" xml:space="preserve">
     <value>All operation types</value>
@@ -13273,6 +13287,9 @@
   <data name="DownloadStructuredInvoiceData" xml:space="preserve">
     <value>Download structured invoice data</value>
   </data>
+  <data name="DownloadStructuredInvoiceXml" xml:space="preserve">
+    <value>Download structured invoice XML</value>
+  </data>
   <data name="InvoiceArchiveUnavailableMessage" xml:space="preserve">
     <value>The invoice archive snapshot is not available yet. Issue the invoice before downloading an archive artifact.</value>
   </data>
@@ -13290,6 +13307,24 @@
   </data>
   <data name="EInvoiceArtifactUnavailableMessage" xml:space="preserve">
     <value>The e-invoice artifact is not available.</value>
+  </data>
+  <data name="EInvoiceExternalGenerator" xml:space="preserve">
+    <value>E-invoice generator</value>
+  </data>
+  <data name="EInvoiceExternalGeneratorHelp" xml:space="preserve">
+    <value>Shows whether a deployment-approved external e-invoice generator is enabled and configured. Paths and command details are supplied through secure deployment configuration and are not shown here.</value>
+  </data>
+  <data name="EInvoiceExternalGeneratorEnabledHelp" xml:space="preserve">
+    <value>Generation is available only when the external command adapter is explicitly enabled in deployment configuration.</value>
+  </data>
+  <data name="EInvoiceExternalGeneratorConfiguredHelp" xml:space="preserve">
+    <value>The executable path must be configured outside WebAdmin. Do not store tooling paths, credentials, or command secrets in source-controlled settings.</value>
+  </data>
+  <data name="EInvoiceSupportedFormats" xml:space="preserve">
+    <value>Supported formats</value>
+  </data>
+  <data name="EInvoiceSupportedFormatsHelp" xml:space="preserve">
+    <value>Supported formats must match the selected and validated generator tooling. ZUGFeRD/Factur-X remains the primary target; XRechnung is secondary.</value>
   </data>
   <data name="ReverseChargeReview" xml:space="preserve">
     <value>Reverse-charge review</value>
@@ -13461,5 +13496,374 @@
   </data>
   <data name="Optional" xml:space="preserve">
     <value>Optional</value>
+  </data>
+  <data name="ObjectStorageStatus" xml:space="preserve">
+    <value>Object storage status</value>
+  </data>
+  <data name="ObjectStorageStatusHelp" xml:space="preserve">
+    <value>Shows the active storage provider and whether invoice archive storage has provider-level retention/immutability support. Credentials are never displayed here.</value>
+  </data>
+  <data name="ObjectStorageProvider" xml:space="preserve">
+    <value>Provider</value>
+  </data>
+  <data name="ObjectStorageActiveProfile" xml:space="preserve">
+    <value>Active profile</value>
+  </data>
+  <data name="ObjectStorageActiveProfileHelp" xml:space="preserve">
+    <value>Optional deployment-level default profile used when a storage consumer does not request a named profile.</value>
+  </data>
+  <data name="RunObjectStorageSmoke" xml:space="preserve">
+    <value>Run smoke</value>
+  </data>
+  <data name="ObjectStorageSmokeSucceeded" xml:space="preserve">
+    <value>Object storage smoke passed for {0}. Disposable object was written, read, verified, and cleaned up.</value>
+  </data>
+  <data name="ObjectStorageSmokeSucceededCleanupBlocked" xml:space="preserve">
+    <value>Object storage write/read smoke passed for {0}, but cleanup was blocked by storage policy. Review the disposable smoke object in the provider console.</value>
+  </data>
+  <data name="ObjectStorageSmokeFailed" xml:space="preserve">
+    <value>Object storage smoke failed for {0}. Review provider configuration, profile container/prefix, and worker/WebAdmin logs without exposing secrets.</value>
+  </data>
+  <data name="ObjectStorageProviderHelp" xml:space="preserve">
+    <value>Database and file-system providers are fallbacks. Production invoice archive should use S3-compatible storage with MinIO or AWS S3, or Azure Blob after provider validation.</value>
+  </data>
+  <data name="ObjectStorageContainer" xml:space="preserve">
+    <value>Container or bucket</value>
+  </data>
+  <data name="ObjectStorageContainerHelp" xml:space="preserve">
+    <value>Only the configuration state is shown. Bucket, container, paths, access keys, connection strings, and tokens are supplied through secure configuration.</value>
+  </data>
+  <data name="NativeImmutability" xml:space="preserve">
+    <value>Native immutability</value>
+  </data>
+  <data name="NativeImmutabilityHelp" xml:space="preserve">
+    <value>Provider-level Object Lock, immutable retention, or legal hold is required before production archive immutability can be claimed.</value>
+  </data>
+  <data name="ObjectStorageRetention" xml:space="preserve">
+    <value>Retention</value>
+  </data>
+  <data name="ObjectStorageRetentionHelp" xml:space="preserve">
+    <value>Retention is safe for production only when the storage provider enforces it outside the application runtime identity.</value>
+  </data>
+  <data name="LegalHold" xml:space="preserve">
+    <value>Legal hold</value>
+  </data>
+  <data name="ObjectStorageProductionWarning" xml:space="preserve">
+    <value>Invoice archive is not production-immutable yet. Use MinIO/S3-compatible storage with Object Lock and versioning, or another validated provider-level immutable storage backend before go-live.</value>
+  </data>
+  <data name="DatabaseInternalFallback" xml:space="preserve">
+    <value>Database/internal fallback</value>
+  </data>
+  <data name="ObjectStorageProfileInvoiceArchive" xml:space="preserve">
+    <value>Invoice archive profile</value>
+  </data>
+  <data name="ObjectStorageProfileMediaAssets" xml:space="preserve">
+    <value>Media assets profile</value>
+  </data>
+  <data name="ObjectStorageProfileShipmentLabels" xml:space="preserve">
+    <value>Shipment labels profile</value>
+  </data>
+  <data name="ObjectStorageProfileStatusFormat" xml:space="preserve">
+    <value>Provider: {0}; container: {1}; prefix: {2}</value>
+  </data>
+  <data name="EmailTransportProvider" xml:space="preserve">
+    <value>Email transport provider</value>
+  </data>
+  <data name="EmailTransportProviderHelp" xml:space="preserve">
+    <value>Shows which transactional email transport is active and whether the selected provider has the minimum safe production prerequisites.</value>
+  </data>
+  <data name="ActiveProvider" xml:space="preserve">
+    <value>Active provider</value>
+  </data>
+  <data name="EmailActiveProviderHelp" xml:space="preserve">
+    <value>Set Email:Provider through secure configuration. Supported values are SMTP and Brevo.</value>
+  </data>
+  <data name="BrevoTransactionalProvider" xml:space="preserve">
+    <value>Brevo transactional provider</value>
+  </data>
+  <data name="BrevoTransactionalProviderHelp" xml:space="preserve">
+    <value>Ready only when Brevo is the active email provider, API and sender settings are configured, webhook authentication exists, sandbox mode is off, and the dispatch/callback workers are enabled.</value>
+  </data>
+  <data name="BrevoApiConfiguration" xml:space="preserve">
+    <value>Brevo API configuration</value>
+  </data>
+  <data name="BrevoApiConfigurationHelp" xml:space="preserve">
+    <value>Requires a configured API key and HTTPS Brevo API base URL. Secrets are supplied through secure configuration and are never displayed here.</value>
+  </data>
+  <data name="BrevoSenderIdentity" xml:space="preserve">
+    <value>Brevo sender identity</value>
+  </data>
+  <data name="BrevoSenderIdentityHelp" xml:space="preserve">
+    <value>Requires the sender email configured for transactional email. DNS, DKIM, and DMARC must still be verified in Brevo before production traffic.</value>
+  </data>
+  <data name="BrevoWebhookAuthentication" xml:space="preserve">
+    <value>Brevo webhook authentication</value>
+  </data>
+  <data name="BrevoWebhookAuthenticationHelp" xml:space="preserve">
+    <value>Requires Basic Auth username and password for the public Brevo webhook endpoint. Credentials are not shown in WebAdmin.</value>
+  </data>
+  <data name="BrevoSandboxMode" xml:space="preserve">
+    <value>Brevo sandbox mode</value>
+  </data>
+  <data name="BrevoSandboxModeHelp" xml:space="preserve">
+    <value>Use sandbox/drop mode for account readiness checks only. Production delivery requires sandbox mode off.</value>
+  </data>
+  <data name="ProviderCallbackWorker" xml:space="preserve">
+    <value>Provider callback worker</value>
+  </data>
+  <data name="BrevoProviderCallbackWorkerHelp" xml:space="preserve">
+    <value>Must be enabled in the target Worker process so Brevo webhook inbox messages are processed into communication audit state.</value>
+  </data>
+  <data name="EmailDispatchOperationWorker" xml:space="preserve">
+    <value>Email dispatch operation worker</value>
+  </data>
+  <data name="BrevoEmailDispatchOperationWorkerHelp" xml:space="preserve">
+    <value>Must be enabled in the target Worker process so queued email dispatch operations are sent outside request paths.</value>
+  </data>
+  <data name="BrevoTemplateMapping" xml:space="preserve">
+    <value>Brevo template mapping</value>
+  </data>
+  <data name="BrevoTemplateMappingHelp" xml:space="preserve">
+    <value>Optional mapping from Darwin template keys to Brevo provider-managed template IDs. Zero means Darwin renders template content internally.</value>
+  </data>
+  <data name="ViesVatValidation" xml:space="preserve">
+    <value>VIES VAT validation</value>
+  </data>
+  <data name="ViesVatValidationHelp" xml:space="preserve">
+    <value>Shows whether VIES is configured for operator VAT ID checks. Provider failures must remain Unknown with manual review instead of creating false valid or invalid decisions.</value>
+  </data>
+  <data name="ViesEnabledHelp" xml:space="preserve">
+    <value>When disabled, VAT validation stays Unknown/manual review and does not block all customer or invoice work.</value>
+  </data>
+  <data name="ViesEndpoint" xml:space="preserve">
+    <value>VIES endpoint</value>
+  </data>
+  <data name="ViesEndpointHelp" xml:space="preserve">
+    <value>The endpoint must be an absolute URL. Production should use HTTPS.</value>
+  </data>
+  <data name="ViesTimeout" xml:space="preserve">
+    <value>VIES timeout seconds</value>
+  </data>
+  <data name="ViesTimeoutHelp" xml:space="preserve">
+    <value>Keep timeouts bounded so provider delays do not stall operator workflows.</value>
+  </data>
+  <data name="VatValidationRetryWorker" xml:space="preserve">
+    <value>VAT validation retry worker</value>
+  </data>
+  <data name="VatValidationRetryWorkerHelp" xml:space="preserve">
+    <value>Disabled by default. Enable only after VIES live smoke and support ownership are approved; it retries provider-generated Unknown decisions without overwriting operator decisions.</value>
+  </data>
+  <data name="ViesFailurePolicy" xml:space="preserve">
+    <value>VIES failure policy</value>
+  </data>
+  <data name="ViesFailurePolicyHelp" xml:space="preserve">
+    <value>Disabled, unavailable, timeout, rate-limit, or malformed provider responses must remain Unknown/manual review.</value>
+  </data>
+  <data name="ManualReview" xml:space="preserve">
+    <value>Manual review</value>
+  </data>
+  <data name="StripeProviderEnabled" xml:space="preserve">
+    <value>Stripe provider enabled</value>
+  </data>
+  <data name="StripeProviderEnabledHelp" xml:space="preserve">
+    <value>Stripe must be enabled only after keys, webhook verification, and test-mode smoke are prepared for the selected environment.</value>
+  </data>
+  <data name="StripePublishableKeyStatus" xml:space="preserve">
+    <value>Publishable key</value>
+  </data>
+  <data name="StripePublishableKeyStatusHelp" xml:space="preserve">
+    <value>Client-facing Stripe key. It must belong to the same test or live account as the server-side key.</value>
+  </data>
+  <data name="StripeSecretKeyStatus" xml:space="preserve">
+    <value>Server-side key</value>
+  </data>
+  <data name="StripeSecretKeyStatusHelp" xml:space="preserve">
+    <value>Server-side credential used to create Checkout Sessions. It is masked and must not be printed or committed.</value>
+  </data>
+  <data name="StripeWebhookSecretStatus" xml:space="preserve">
+    <value>Webhook signing secret</value>
+  </data>
+  <data name="StripeWebhookSecretStatusHelp" xml:space="preserve">
+    <value>Required before Stripe webhooks can finalize payments safely. The return route must never mark provider payments successful by itself.</value>
+  </data>
+  <data name="StripeProviderCallbackWorkerHelp" xml:space="preserve">
+    <value>Must be enabled so verified Stripe webhook inbox messages are reconciled into payment, order, refund, dispute, invoice, and subscription state.</value>
+  </data>
+  <data name="StripeMerchantDisplayStatus" xml:space="preserve">
+    <value>Merchant display name</value>
+  </data>
+  <data name="StripeMerchantDisplayStatusHelp" xml:space="preserve">
+    <value>Public-facing merchant name for hosted checkout and receipts where supported.</value>
+  </data>
+  <data name="StripePaymentFinalizationPolicy" xml:space="preserve">
+    <value>Payment finalization policy</value>
+  </data>
+  <data name="StripePaymentFinalizationPolicyHelp" xml:space="preserve">
+    <value>Storefront return pages may confirm navigation only. Captured, failed, refund, and dispute state must come from verified Stripe webhooks.</value>
+  </data>
+  <data name="WebhookOnly" xml:space="preserve">
+    <value>Webhook only</value>
+  </data>
+  <data name="DhlProviderEnabled" xml:space="preserve">
+    <value>DHL provider enabled</value>
+  </data>
+  <data name="DhlProviderEnabledHelp" xml:space="preserve">
+    <value>Enable DHL only after environment, account number, API credentials, shipper identity, label storage, and live-smoke plan are ready.</value>
+  </data>
+  <data name="DhlEnvironmentStatus" xml:space="preserve">
+    <value>DHL environment</value>
+  </data>
+  <data name="DhlEnvironmentStatusHelp" xml:space="preserve">
+    <value>Must match the configured DHL credentials and base URL. Do not mix sandbox and production values.</value>
+  </data>
+  <data name="DhlBaseUrlStatus" xml:space="preserve">
+    <value>DHL base URL</value>
+  </data>
+  <data name="DhlBaseUrlStatusHelp" xml:space="preserve">
+    <value>Requires an absolute URL. Production endpoints must use HTTPS.</value>
+  </data>
+  <data name="DhlAccountStatus" xml:space="preserve">
+    <value>DHL account number</value>
+  </data>
+  <data name="DhlAccountStatusHelp" xml:space="preserve">
+    <value>Account number used for shipment creation, labels, billing, and tracking reconciliation.</value>
+  </data>
+  <data name="DhlApiKeyStatus" xml:space="preserve">
+    <value>DHL API key</value>
+  </data>
+  <data name="DhlApiKeyStatusHelp" xml:space="preserve">
+    <value>Server-side credential for DHL calls. It is masked and must not be printed or committed.</value>
+  </data>
+  <data name="DhlApiSecretStatus" xml:space="preserve">
+    <value>DHL API secret</value>
+  </data>
+  <data name="DhlApiSecretStatusHelp" xml:space="preserve">
+    <value>Required with the API key before DHL shipment and label operations can be treated as provider-backed.</value>
+  </data>
+  <data name="DhlProviderCallbackWorkerHelp" xml:space="preserve">
+    <value>Must be enabled so DHL carrier callback inbox messages update shipment timelines and carrier state.</value>
+  </data>
+  <data name="ShipmentProviderOperationWorker" xml:space="preserve">
+    <value>Shipment provider operation worker</value>
+  </data>
+  <data name="DhlShipmentProviderOperationWorkerHelp" xml:space="preserve">
+    <value>Must be enabled so queued DHL create-shipment, label-generation, and return-label operations execute outside request paths.</value>
+  </data>
+  <data name="DhlShipmentLabelStorageHelp" xml:space="preserve">
+    <value>Labels should be stored through the shared ShipmentLabels profile or the configured shared media fallback so WebAdmin and downstream consumers can open them.</value>
+  </data>
+  <data name="DhlReturnLabelPolicy" xml:space="preserve">
+    <value>DHL return-label policy</value>
+  </data>
+  <data name="DhlReturnLabelPolicyHelp" xml:space="preserve">
+    <value>Return labels must come from the DHL provider operation path and be live-smoked with the target account. Do not create fake labels or local fake tracking URLs.</value>
+  </data>
+  <data name="CarrierValidated" xml:space="preserve">
+    <value>Carrier validated</value>
+  </data>
+  <data name="BillingSubscriptions" xml:space="preserve">
+    <value>Subscriptions</value>
+  </data>
+  <data name="BillingSubscriptionsIntro" xml:space="preserve">
+    <value>Review business subscription state, Stripe references, and webhook reconciliation without exposing provider secrets.</value>
+  </data>
+  <data name="BillingSubscriptionsMissingProviderRefs" xml:space="preserve">
+    <value>Missing refs</value>
+  </data>
+  <data name="BillingSubscriptionsSearchPlaceholder" xml:space="preserve">
+    <value>Search business, plan, provider, or Stripe reference</value>
+  </data>
+  <data name="BillingSubscriptionsProviderRefs" xml:space="preserve">
+    <value>Provider references</value>
+  </data>
+  <data name="BillingSubscriptionsPeriod" xml:space="preserve">
+    <value>Period</value>
+  </data>
+  <data name="BillingSubscriptionsEmptyState" xml:space="preserve">
+    <value>No business subscriptions match the current filters.</value>
+  </data>
+  <data name="BillingSubscriptionsSubscriptionRef" xml:space="preserve">
+    <value>Subscription</value>
+  </data>
+  <data name="BillingSubscriptionsCheckoutRef" xml:space="preserve">
+    <value>Checkout</value>
+  </data>
+  <data name="BillingSubscriptionsCustomerRef" xml:space="preserve">
+    <value>Customer</value>
+  </data>
+  <data name="BillingSubscriptionsCurrentPeriodEnd" xml:space="preserve">
+    <value>Period end</value>
+  </data>
+  <data name="BillingSubscriptionsTrialEnd" xml:space="preserve">
+    <value>Trial end</value>
+  </data>
+  <data name="BillingSubscriptionCancelAtPeriodEnd" xml:space="preserve">
+    <value>Cancel at period end</value>
+  </data>
+  <data name="BillingSubscriptionStripeRefMissing" xml:space="preserve">
+    <value>Stripe subscription reference missing</value>
+  </data>
+  <data name="BillingSubscriptionCancelAtPeriodEndState" xml:space="preserve">
+    <value>Cancellation scheduled at period end</value>
+  </data>
+  <data name="BillingSubscriptionActiveOnProvider" xml:space="preserve">
+    <value>Active on provider</value>
+  </data>
+  <data name="BillingSubscriptionTrialingOnProvider" xml:space="preserve">
+    <value>Trialing on provider</value>
+  </data>
+  <data name="BillingSubscriptionProviderPaymentAttention" xml:space="preserve">
+    <value>Provider payment needs attention</value>
+  </data>
+  <data name="BillingSubscriptionCanceledOnProvider" xml:space="preserve">
+    <value>Canceled on provider</value>
+  </data>
+  <data name="BillingSubscriptionProviderUnpaid" xml:space="preserve">
+    <value>Provider marked unpaid</value>
+  </data>
+  <data name="BillingSubscriptionProviderSetupIncomplete" xml:space="preserve">
+    <value>Provider setup incomplete</value>
+  </data>
+  <data name="BillingSubscriptionProviderSetupExpired" xml:space="preserve">
+    <value>Provider setup expired</value>
+  </data>
+  <data name="BillingSubscriptionPausedOnProvider" xml:space="preserve">
+    <value>Paused on provider</value>
+  </data>
+  <data name="BusinessSubscriptionQueueAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="BusinessSubscriptionQueueActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="BusinessSubscriptionQueueTrialing" xml:space="preserve">
+    <value>Trialing</value>
+  </data>
+  <data name="BusinessSubscriptionQueuePastDue" xml:space="preserve">
+    <value>Past due</value>
+  </data>
+  <data name="BusinessSubscriptionQueueCanceled" xml:space="preserve">
+    <value>Canceled</value>
+  </data>
+  <data name="BusinessSubscriptionQueueStripe" xml:space="preserve">
+    <value>Stripe</value>
+  </data>
+  <data name="BusinessSubscriptionQueueMissingProviderReference" xml:space="preserve">
+    <value>Missing provider ref</value>
+  </data>
+  <data name="BusinessSubscriptionQueueCancelAtPeriodEnd" xml:space="preserve">
+    <value>Cancel at period end</value>
+  </data>
+  <data name="CommonQueue" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="CommonClear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="BillingWebhooks" xml:space="preserve">
+    <value>Billing webhooks</value>
+  </data>
+  <data name="BusinessesOpen" xml:space="preserve">
+    <value>Open business</value>
   </data>
 </root>

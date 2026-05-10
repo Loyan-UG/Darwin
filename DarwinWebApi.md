@@ -186,6 +186,7 @@ Current public delivery ownership:
 - public checkout: order placement from the authoritative cart summary with saved member addresses or inline address snapshots and automatic cart finalization
 - public payment intent: pending storefront payment-session creation or reuse for already placed orders so front-office clients can hand off to a PSP without duplicating pending payment rows
 - public PSP handoff: payment-intent responses now include `checkoutUrl`, `returnUrl`, and `cancelUrl`; when Stripe is enabled in Site Settings, WebApi creates a real Stripe Checkout Session and returns Stripe's hosted URL
+- public Stripe handoff guard: if the Stripe provider session does not produce a provider-hosted checkout URL, WebApi fails the payment-intent request instead of returning a local/mock checkout URL
 - public payment completion: `POST /api/v1/public/checkout/orders/{orderId}/payments/{paymentId}/complete` validates the safe return context; for Stripe, it does not capture, void, or fail the payment because verified Stripe webhooks are the final payment-state authority
 - public confirmation: safe post-order confirmation delivery for member-owned or anonymous orders without exposing member-owned orders to anonymous callers
 - selected checkout shipping method is now persisted on the `Order` aggregate together with method-name/carrier/service snapshots so storefront confirmation, member order history, and admin views are not coupled to future shipping-method edits
@@ -194,8 +195,8 @@ Current public delivery ownership:
 Current storefront checkout configuration:
 
 - `StorefrontCheckout:FrontOfficeBaseUrl` defines where return/cancel flows land in `Darwin.Web`
-- `StorefrontCheckout:StripeCheckoutBaseUrl` is retained as a development/fallback handoff URL when no provider-hosted URL is returned
-- development defaults point to `http://localhost:3000` and `http://localhost:3000/mock-checkout`
+- Stripe handoff URLs must come from Stripe Checkout Session creation
+- development defaults point front-office return/cancel flows to `http://localhost:3000`
 - Stripe provider references are stored on `Payment.ProviderCheckoutSessionRef`, `Payment.ProviderPaymentIntentRef`, and `Payment.ProviderTransactionRef`; secrets stay in Site Settings/configuration and must not be returned to clients
 
 ### Required member groups
@@ -207,6 +208,9 @@ Current storefront checkout configuration:
 - `/api/v1/member/orders/{id}/document`
 - `/api/v1/member/invoices/{id}/payment-intent`
 - `/api/v1/member/invoices/{id}/document`
+- `/api/v1/member/invoices/{id}/archive-document`
+- `/api/v1/member/invoices/{id}/structured-data`
+- `/api/v1/member/invoices/{id}/structured-xml`
 - `/api/v1/member/loyalty/*`
 - `/api/v1/member/profile/preferences`
 - `/api/v1/member/*`
@@ -225,7 +229,7 @@ Current member commerce ownership:
 - member orders: paged order history and order detail under the member route root
 - member invoices: paged invoice history and invoice detail under the member route root
 - member order actions: additive retry-payment and plain-text document-download flows under the member route root, plus action metadata on order detail contracts so clients can discover canonical follow-up paths without hard-coding them
-- member invoice actions: additive retry-payment and plain-text document-download flows for order-linked invoices, plus action metadata on invoice detail contracts and line-level projections suitable for self-service document rendering
+- member invoice actions: additive retry-payment, plain-text document download, printable issued-archive HTML download, and structured source-model JSON/XML downloads for owned issued invoices. The structured downloads are review/source-model artifacts and are not compliant ZUGFeRD/Factur-X or XRechnung artifacts.
 - mobile shared now includes a dedicated member-commerce service abstraction over the canonical member order/invoice routes, including retry-payment and plain-text document downloads, so MAUI consumers can adopt the new audience-first paths without duplicating route composition logic in app code
 - member profile addresses: reusable address-book CRUD and default billing/shipping selection under the member profile route root
 - member CRM linkage: current identity-to-customer summary under the member profile route root
@@ -246,6 +250,14 @@ Current business-mobile access-state ownership:
 - the payload includes operational status, active/inactive state, approval/suspension timestamps, suspension reason, onboarding checklist booleans, and derived `isOperationsAllowed` / `isSetupComplete` flags
 - this route is intentionally additive and business-scoped; it avoids polluting public business discovery/detail contracts with admin-only lifecycle context
 - current phase-1 policy is a `Soft Gate`: business operators may sign in during `PendingApproval`, but live operational screens should block against this access-state until the business is approved and active
+
+Current business billing ownership:
+
+- canonical subscription checkout route: `POST /api/v1/business/billing/subscription/checkout-intent`
+- legacy alias still present: `POST /api/v1/billing/business/subscription/checkout-intent`
+- the endpoint creates a provider-hosted Stripe subscription Checkout Session when Stripe is enabled and configured; it must not return a local/mock checkout URL
+- subscription finalization is webhook-authoritative: return/cancel pages may continue the customer-facing flow, but `BusinessSubscription` provider references and active state are reconciled from verified Stripe webhook events
+- production return/cancel targets come from `Billing:BusinessManagementBaseUrl`, `Billing:SubscriptionSuccessUrl`, and `Billing:SubscriptionCancelUrl`; secrets stay in Site Settings or secure configuration and are never returned to clients
 
 ### Required CRM admin/integration groups
 

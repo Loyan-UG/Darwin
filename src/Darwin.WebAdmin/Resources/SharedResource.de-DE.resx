@@ -2037,6 +2037,12 @@
   <data name="GenerateCarrierLabel" xml:space="preserve">
     <value>Carrier-Label erzeugen</value>
   </data>
+  <data name="QueueDhlReturnLabel" xml:space="preserve">
+    <value>DHL-Retourenlabel einreihen</value>
+  </data>
+  <data name="DhlReturnShipment" xml:space="preserve">
+    <value>DHL-Retourensendung</value>
+  </data>
   <data name="LastCarrierEventKey" xml:space="preserve">
     <value>Letzter Versandereignis-Schluessel</value>
   </data>
@@ -4492,6 +4498,14 @@
   <data name="DhlLabelGenerationFailed" xml:space="preserve">
     <value>Das DHL-Label kann derzeit nicht erzeugt werden. Prüfen Sie die DHL-Bereitschaft und die Sendungsdaten und versuchen Sie es erneut.</value>
     <comment>Fehlermeldung, wenn die DHL-Label-Erzeugung in den Sendungsoberflächen fehlschlägt.</comment>
+  </data>
+  <data name="DhlReturnLabelQueued" xml:space="preserve">
+    <value>DHL-Retourenlabel-Erzeugung eingereiht.</value>
+    <comment>Erfolgsmeldung nach dem Einreihen einer DHL-Retourenlabel-Operation fuer Hintergrundverarbeitung.</comment>
+  </data>
+  <data name="DhlReturnLabelQueueFailed" xml:space="preserve">
+    <value>DHL-Retourenlabel kann nicht eingereiht werden. Pruefen Sie DHL-Bereitschaft und Sendungsdaten und versuchen Sie es erneut.</value>
+    <comment>Fehlermeldung, wenn das Einreihen des DHL-Retourenlabels auf den Sendungsoberflaechen fehlschlaegt.</comment>
   </data>
   <data name="OrderRefundAddFailed" xml:space="preserve">
     <value>Die Erstattung kann derzeit nicht hinzugefügt werden. Prüfen Sie die aktuellen Werte und versuchen Sie es erneut.</value>
@@ -11441,7 +11455,7 @@
     <value>Versand-Provider-Operationen</value>
   </data>
   <data name="ShipmentProviderOperationsIntro" xml:space="preserve">
-    <value>Ueberwachen und beheben Sie DHL-Versand-Provider-Operationen fuer Sendungserzeugung und Label-Erzeugung.</value>
+    <value>Ueberwachen und beheben Sie DHL-Versand-Provider-Operationen fuer Sendungserzeugung, Label-Erzeugung und Retourenlabel.</value>
   </data>
   <data name="ShipmentProviderOperationTypeAll" xml:space="preserve">
     <value>Alle Operationstypen</value>
@@ -13273,6 +13287,9 @@
   <data name="DownloadStructuredInvoiceData" xml:space="preserve">
     <value>Strukturierte Rechnungsdaten herunterladen</value>
   </data>
+  <data name="DownloadStructuredInvoiceXml" xml:space="preserve">
+    <value>Strukturierte Rechnungs-XML herunterladen</value>
+  </data>
   <data name="InvoiceArchiveUnavailableMessage" xml:space="preserve">
     <value>Der Archiv-Snapshot der Rechnung ist noch nicht verfügbar. Stellen Sie die Rechnung aus, bevor ein Archivartefakt heruntergeladen wird.</value>
   </data>
@@ -13290,6 +13307,24 @@
   </data>
   <data name="EInvoiceArtifactUnavailableMessage" xml:space="preserve">
     <value>Das E-Rechnungsartefakt ist nicht verfügbar.</value>
+  </data>
+  <data name="EInvoiceExternalGenerator" xml:space="preserve">
+    <value>E-Rechnungs-Generator</value>
+  </data>
+  <data name="EInvoiceExternalGeneratorHelp" xml:space="preserve">
+    <value>Zeigt, ob ein deployment-freigegebener externer E-Rechnungs-Generator aktiviert und konfiguriert ist. Pfade und Command-Details werden ueber sichere Deployment-Konfiguration bereitgestellt und hier nicht angezeigt.</value>
+  </data>
+  <data name="EInvoiceExternalGeneratorEnabledHelp" xml:space="preserve">
+    <value>Generierung ist nur verfuegbar, wenn der externe Command-Adapter in der Deployment-Konfiguration explizit aktiviert ist.</value>
+  </data>
+  <data name="EInvoiceExternalGeneratorConfiguredHelp" xml:space="preserve">
+    <value>Der ausfuehrbare Pfad muss ausserhalb von WebAdmin konfiguriert werden. Tooling-Pfade, Zugangsdaten oder Command-Secrets gehoeren nicht in versionierte Einstellungen.</value>
+  </data>
+  <data name="EInvoiceSupportedFormats" xml:space="preserve">
+    <value>Unterstuetzte Formate</value>
+  </data>
+  <data name="EInvoiceSupportedFormatsHelp" xml:space="preserve">
+    <value>Die unterstuetzten Formate muessen zum ausgewaehlten und validierten Generator-Tooling passen. ZUGFeRD/Factur-X bleibt das Primaerziel; XRechnung ist sekundaer.</value>
   </data>
   <data name="ReverseChargeReview" xml:space="preserve">
     <value>Reverse-Charge-Prüfung</value>
@@ -13461,5 +13496,374 @@
   </data>
   <data name="Optional" xml:space="preserve">
     <value>Optional</value>
+  </data>
+  <data name="ObjectStorageStatus" xml:space="preserve">
+    <value>Objektspeicherstatus</value>
+  </data>
+  <data name="ObjectStorageStatusHelp" xml:space="preserve">
+    <value>Zeigt den aktiven Speicheranbieter und ob die Rechnungsarchivierung anbieterseitige Aufbewahrung und Unveraenderlichkeit unterstuetzt. Zugangsdaten werden hier nie angezeigt.</value>
+  </data>
+  <data name="ObjectStorageProvider" xml:space="preserve">
+    <value>Anbieter</value>
+  </data>
+  <data name="ObjectStorageActiveProfile" xml:space="preserve">
+    <value>Aktives Profil</value>
+  </data>
+  <data name="ObjectStorageActiveProfileHelp" xml:space="preserve">
+    <value>Optionales Deployment-Standardprofil, das verwendet wird, wenn ein Storage-Verbraucher kein benanntes Profil anfordert.</value>
+  </data>
+  <data name="RunObjectStorageSmoke" xml:space="preserve">
+    <value>Smoke ausfuehren</value>
+  </data>
+  <data name="ObjectStorageSmokeSucceeded" xml:space="preserve">
+    <value>Object-Storage-Smoke fuer {0} bestanden. Ein Wegwerfobjekt wurde geschrieben, gelesen, verifiziert und bereinigt.</value>
+  </data>
+  <data name="ObjectStorageSmokeSucceededCleanupBlocked" xml:space="preserve">
+    <value>Object-Storage-Schreib-/Lese-Smoke fuer {0} bestanden, aber die Bereinigung wurde durch Storage-Policy blockiert. Pruefen Sie das Wegwerf-Smoke-Objekt in der Provider-Konsole.</value>
+  </data>
+  <data name="ObjectStorageSmokeFailed" xml:space="preserve">
+    <value>Object-Storage-Smoke fuer {0} fehlgeschlagen. Pruefen Sie Provider-Konfiguration, Profil-Container/Praefix und WebAdmin-/Worker-Logs, ohne Secrets offenzulegen.</value>
+  </data>
+  <data name="ObjectStorageProviderHelp" xml:space="preserve">
+    <value>Datenbank- und Dateisystemanbieter sind Fallbacks. Fuer produktive Rechnungsarchive sollte S3-kompatibler Speicher mit MinIO oder AWS S3 verwendet werden, oder Azure Blob nach Anbieterpruefung.</value>
+  </data>
+  <data name="ObjectStorageContainer" xml:space="preserve">
+    <value>Container oder Bucket</value>
+  </data>
+  <data name="ObjectStorageContainerHelp" xml:space="preserve">
+    <value>Es wird nur der Konfigurationsstatus angezeigt. Bucket, Container, Pfade, Zugriffsschluessel, Verbindungszeichenfolgen und Tokens werden ueber sichere Konfiguration bereitgestellt.</value>
+  </data>
+  <data name="NativeImmutability" xml:space="preserve">
+    <value>Native Unveraenderlichkeit</value>
+  </data>
+  <data name="NativeImmutabilityHelp" xml:space="preserve">
+    <value>Anbieterseitiger Object Lock, unveraenderliche Aufbewahrung oder Legal Hold ist erforderlich, bevor produktive Archiv-Unveraenderlichkeit zugesagt werden kann.</value>
+  </data>
+  <data name="ObjectStorageRetention" xml:space="preserve">
+    <value>Aufbewahrung</value>
+  </data>
+  <data name="ObjectStorageRetentionHelp" xml:space="preserve">
+    <value>Aufbewahrung ist nur produktionssicher, wenn der Speicheranbieter sie ausserhalb der Anwendungslaufzeitidentitaet erzwingt.</value>
+  </data>
+  <data name="LegalHold" xml:space="preserve">
+    <value>Legal Hold</value>
+  </data>
+  <data name="ObjectStorageProductionWarning" xml:space="preserve">
+    <value>Das Rechnungsarchiv ist noch nicht produktiv unveraenderlich. Verwende MinIO/S3-kompatiblen Speicher mit Object Lock und Versionierung oder einen anderen validierten anbieterseitigen unveraenderlichen Speicher vor dem Go-live.</value>
+  </data>
+  <data name="DatabaseInternalFallback" xml:space="preserve">
+    <value>Datenbank-/interner Fallback</value>
+  </data>
+  <data name="ObjectStorageProfileInvoiceArchive" xml:space="preserve">
+    <value>Profil fuer Rechnungsarchiv</value>
+  </data>
+  <data name="ObjectStorageProfileMediaAssets" xml:space="preserve">
+    <value>Profil fuer Medienobjekte</value>
+  </data>
+  <data name="ObjectStorageProfileShipmentLabels" xml:space="preserve">
+    <value>Profil fuer Versandlabels</value>
+  </data>
+  <data name="ObjectStorageProfileStatusFormat" xml:space="preserve">
+    <value>Anbieter: {0}; Container: {1}; Praefix: {2}</value>
+  </data>
+  <data name="EmailTransportProvider" xml:space="preserve">
+    <value>E-Mail-Transportanbieter</value>
+  </data>
+  <data name="EmailTransportProviderHelp" xml:space="preserve">
+    <value>Zeigt, welcher transaktionale E-Mail-Transport aktiv ist und ob der ausgewaehlte Anbieter die wichtigsten sicheren Produktionsvoraussetzungen erfuellt.</value>
+  </data>
+  <data name="ActiveProvider" xml:space="preserve">
+    <value>Aktiver Anbieter</value>
+  </data>
+  <data name="EmailActiveProviderHelp" xml:space="preserve">
+    <value>Setze Email:Provider ueber sichere Konfiguration. Unterstuetzte Werte sind SMTP und Brevo.</value>
+  </data>
+  <data name="BrevoTransactionalProvider" xml:space="preserve">
+    <value>Brevo Transaktionsanbieter</value>
+  </data>
+  <data name="BrevoTransactionalProviderHelp" xml:space="preserve">
+    <value>Bereit nur, wenn Brevo der aktive E-Mail-Anbieter ist, API- und Absendereinstellungen konfiguriert sind, Webhook-Authentifizierung vorhanden ist, Sandbox-Modus aus ist und Dispatch-/Callback-Worker aktiviert sind.</value>
+  </data>
+  <data name="BrevoApiConfiguration" xml:space="preserve">
+    <value>Brevo API-Konfiguration</value>
+  </data>
+  <data name="BrevoApiConfigurationHelp" xml:space="preserve">
+    <value>Erfordert einen konfigurierten API-Schluessel und eine HTTPS-Brevo-API-Basis-URL. Secrets werden ueber sichere Konfiguration geliefert und hier nie angezeigt.</value>
+  </data>
+  <data name="BrevoSenderIdentity" xml:space="preserve">
+    <value>Brevo Absenderidentitaet</value>
+  </data>
+  <data name="BrevoSenderIdentityHelp" xml:space="preserve">
+    <value>Erfordert die Absender-E-Mail fuer transaktionale E-Mails. DNS, DKIM und DMARC muessen vor Produktionsverkehr weiterhin in Brevo validiert werden.</value>
+  </data>
+  <data name="BrevoWebhookAuthentication" xml:space="preserve">
+    <value>Brevo Webhook-Authentifizierung</value>
+  </data>
+  <data name="BrevoWebhookAuthenticationHelp" xml:space="preserve">
+    <value>Erfordert Basic-Auth-Benutzername und Passwort fuer den oeffentlichen Brevo-Webhook-Endpunkt. Zugangsdaten werden in WebAdmin nicht angezeigt.</value>
+  </data>
+  <data name="BrevoSandboxMode" xml:space="preserve">
+    <value>Brevo Sandbox-Modus</value>
+  </data>
+  <data name="BrevoSandboxModeHelp" xml:space="preserve">
+    <value>Sandbox-/Drop-Modus nur fuer Konto-Readiness-Pruefungen verwenden. Produktionszustellung erfordert deaktivierten Sandbox-Modus.</value>
+  </data>
+  <data name="ProviderCallbackWorker" xml:space="preserve">
+    <value>Provider-Callback-Worker</value>
+  </data>
+  <data name="BrevoProviderCallbackWorkerHelp" xml:space="preserve">
+    <value>Muss im Ziel-Worker-Prozess aktiviert sein, damit Brevo-Webhook-Inbox-Nachrichten in Kommunikationsaudit-Zustand verarbeitet werden.</value>
+  </data>
+  <data name="EmailDispatchOperationWorker" xml:space="preserve">
+    <value>E-Mail-Dispatch-Operation-Worker</value>
+  </data>
+  <data name="BrevoEmailDispatchOperationWorkerHelp" xml:space="preserve">
+    <value>Muss im Ziel-Worker-Prozess aktiviert sein, damit eingereihte E-Mail-Dispatch-Operationen ausserhalb von Request-Pfaden gesendet werden.</value>
+  </data>
+  <data name="BrevoTemplateMapping" xml:space="preserve">
+    <value>Brevo Template-Zuordnung</value>
+  </data>
+  <data name="BrevoTemplateMappingHelp" xml:space="preserve">
+    <value>Optionale Zuordnung von Darwin-Template-Keys zu von Brevo verwalteten Template-IDs. Null bedeutet, dass Darwin Template-Inhalte intern rendert.</value>
+  </data>
+  <data name="ViesVatValidation" xml:space="preserve">
+    <value>VIES USt-IdNr.-Validierung</value>
+  </data>
+  <data name="ViesVatValidationHelp" xml:space="preserve">
+    <value>Zeigt, ob VIES fuer Operator-Pruefungen von USt-IdNrn. konfiguriert ist. Anbieterfehler muessen Unknown mit manueller Pruefung bleiben und duerfen keine falschen validen oder invaliden Entscheidungen erzeugen.</value>
+  </data>
+  <data name="ViesEnabledHelp" xml:space="preserve">
+    <value>Wenn deaktiviert, bleibt die USt-IdNr.-Validierung Unknown/manuelle Pruefung und blockiert nicht alle Kunden- oder Rechnungsablaeufe.</value>
+  </data>
+  <data name="ViesEndpoint" xml:space="preserve">
+    <value>VIES-Endpunkt</value>
+  </data>
+  <data name="ViesEndpointHelp" xml:space="preserve">
+    <value>Der Endpunkt muss eine absolute URL sein. Produktion sollte HTTPS verwenden.</value>
+  </data>
+  <data name="ViesTimeout" xml:space="preserve">
+    <value>VIES-Timeout Sekunden</value>
+  </data>
+  <data name="ViesTimeoutHelp" xml:space="preserve">
+    <value>Timeouts begrenzen, damit Anbieter-Verzoegerungen Operator-Workflows nicht blockieren.</value>
+  </data>
+  <data name="VatValidationRetryWorker" xml:space="preserve">
+    <value>USt-IdNr.-Retry-Worker</value>
+  </data>
+  <data name="VatValidationRetryWorkerHelp" xml:space="preserve">
+    <value>Standardmaessig deaktiviert. Nur nach VIES-Live-Smoke und geklaerter Support-Verantwortung aktivieren; wiederholt nur vom Anbieter erzeugte Unknown-Entscheidungen ohne Operator-Entscheidungen zu ueberschreiben.</value>
+  </data>
+  <data name="ViesFailurePolicy" xml:space="preserve">
+    <value>VIES-Fehlerregel</value>
+  </data>
+  <data name="ViesFailurePolicyHelp" xml:space="preserve">
+    <value>Deaktivierte, nicht verfuegbare, Timeout-, Rate-Limit- oder fehlerhafte Anbieterantworten muessen Unknown/manuelle Pruefung bleiben.</value>
+  </data>
+  <data name="ManualReview" xml:space="preserve">
+    <value>Manuelle Pruefung</value>
+  </data>
+  <data name="StripeProviderEnabled" xml:space="preserve">
+    <value>Stripe-Anbieter aktiviert</value>
+  </data>
+  <data name="StripeProviderEnabledHelp" xml:space="preserve">
+    <value>Stripe erst aktivieren, wenn Keys, Webhook-Verifikation und Testmodus-Smoke fuer die ausgewaehlte Umgebung vorbereitet sind.</value>
+  </data>
+  <data name="StripePublishableKeyStatus" xml:space="preserve">
+    <value>Publishable Key</value>
+  </data>
+  <data name="StripePublishableKeyStatusHelp" xml:space="preserve">
+    <value>Client-seitiger Stripe-Key. Er muss zum gleichen Test- oder Live-Konto gehoeren wie der serverseitige Key.</value>
+  </data>
+  <data name="StripeSecretKeyStatus" xml:space="preserve">
+    <value>Serverseitiger Key</value>
+  </data>
+  <data name="StripeSecretKeyStatusHelp" xml:space="preserve">
+    <value>Serverseitiges Credential zum Erstellen von Checkout Sessions. Es ist maskiert und darf nicht gedruckt oder committed werden.</value>
+  </data>
+  <data name="StripeWebhookSecretStatus" xml:space="preserve">
+    <value>Webhook-Signing-Secret</value>
+  </data>
+  <data name="StripeWebhookSecretStatusHelp" xml:space="preserve">
+    <value>Erforderlich, bevor Stripe-Webhooks Zahlungen sicher finalisieren koennen. Die Return-Route darf Provider-Zahlungen nie selbst erfolgreich markieren.</value>
+  </data>
+  <data name="StripeProviderCallbackWorkerHelp" xml:space="preserve">
+    <value>Muss aktiviert sein, damit verifizierte Stripe-Webhook-Inbox-Nachrichten in Zahlungs-, Bestell-, Refund-, Dispute-, Rechnungs- und Subscription-Zustand abgeglichen werden.</value>
+  </data>
+  <data name="StripeMerchantDisplayStatus" xml:space="preserve">
+    <value>Merchant-Anzeigename</value>
+  </data>
+  <data name="StripeMerchantDisplayStatusHelp" xml:space="preserve">
+    <value>Oeffentlich sichtbarer Haendlername fuer Hosted Checkout und Belege, sofern unterstuetzt.</value>
+  </data>
+  <data name="StripePaymentFinalizationPolicy" xml:space="preserve">
+    <value>Zahlungsfinalisierungsregel</value>
+  </data>
+  <data name="StripePaymentFinalizationPolicyHelp" xml:space="preserve">
+    <value>Storefront-Return-Seiten duerfen nur Navigation bestaetigen. Captured-, Failed-, Refund- und Dispute-Zustand muss aus verifizierten Stripe-Webhooks kommen.</value>
+  </data>
+  <data name="WebhookOnly" xml:space="preserve">
+    <value>Nur Webhook</value>
+  </data>
+  <data name="DhlProviderEnabled" xml:space="preserve">
+    <value>DHL-Anbieter aktiviert</value>
+  </data>
+  <data name="DhlProviderEnabledHelp" xml:space="preserve">
+    <value>DHL erst aktivieren, wenn Umgebung, Kontonummer, API-Zugangsdaten, Absenderidentitaet, Label-Speicher und Live-Smoke-Plan bereit sind.</value>
+  </data>
+  <data name="DhlEnvironmentStatus" xml:space="preserve">
+    <value>DHL-Umgebung</value>
+  </data>
+  <data name="DhlEnvironmentStatusHelp" xml:space="preserve">
+    <value>Muss zu den konfigurierten DHL-Zugangsdaten und der Basis-URL passen. Sandbox- und Produktionswerte nicht mischen.</value>
+  </data>
+  <data name="DhlBaseUrlStatus" xml:space="preserve">
+    <value>DHL-Basis-URL</value>
+  </data>
+  <data name="DhlBaseUrlStatusHelp" xml:space="preserve">
+    <value>Erfordert eine absolute URL. Produktionsendpunkte muessen HTTPS verwenden.</value>
+  </data>
+  <data name="DhlAccountStatus" xml:space="preserve">
+    <value>DHL-Kontonummer</value>
+  </data>
+  <data name="DhlAccountStatusHelp" xml:space="preserve">
+    <value>Kontonummer fuer Sendungserstellung, Labels, Abrechnung und Tracking-Abgleich.</value>
+  </data>
+  <data name="DhlApiKeyStatus" xml:space="preserve">
+    <value>DHL API-Key</value>
+  </data>
+  <data name="DhlApiKeyStatusHelp" xml:space="preserve">
+    <value>Serverseitiges Credential fuer DHL-Aufrufe. Es ist maskiert und darf nicht gedruckt oder committed werden.</value>
+  </data>
+  <data name="DhlApiSecretStatus" xml:space="preserve">
+    <value>DHL API-Secret</value>
+  </data>
+  <data name="DhlApiSecretStatusHelp" xml:space="preserve">
+    <value>Zusammen mit dem API-Key erforderlich, bevor DHL-Sendungs- und Label-Operationen als provider-backed gelten koennen.</value>
+  </data>
+  <data name="DhlProviderCallbackWorkerHelp" xml:space="preserve">
+    <value>Muss aktiviert sein, damit DHL-Carrier-Callback-Inbox-Nachrichten Sendungsverlauf und Carrier-Zustand aktualisieren.</value>
+  </data>
+  <data name="ShipmentProviderOperationWorker" xml:space="preserve">
+    <value>Shipment-Provider-Operation-Worker</value>
+  </data>
+  <data name="DhlShipmentProviderOperationWorkerHelp" xml:space="preserve">
+    <value>Muss aktiviert sein, damit eingereihte DHL-Create-Shipment-, Label-Generation- und Return-Label-Operationen ausserhalb von Request-Pfaden ausgefuehrt werden.</value>
+  </data>
+  <data name="DhlShipmentLabelStorageHelp" xml:space="preserve">
+    <value>Labels sollten ueber das gemeinsame ShipmentLabels-Profil oder den konfigurierten gemeinsamen Medien-Fallback gespeichert werden, damit WebAdmin und nachgelagerte Verbraucher sie oeffnen koennen.</value>
+  </data>
+  <data name="DhlReturnLabelPolicy" xml:space="preserve">
+    <value>DHL-Retourenlabel-Regel</value>
+  </data>
+  <data name="DhlReturnLabelPolicyHelp" xml:space="preserve">
+    <value>Retourenlabels muessen aus dem DHL-Provider-Operationspfad kommen und mit dem Zielkonto live-gesmoked werden. Keine Fake-Labels oder lokalen Fake-Tracking-URLs erzeugen.</value>
+  </data>
+  <data name="CarrierValidated" xml:space="preserve">
+    <value>Carrier-validiert</value>
+  </data>
+  <data name="BillingSubscriptions" xml:space="preserve">
+    <value>Abonnements</value>
+  </data>
+  <data name="BillingSubscriptionsIntro" xml:space="preserve">
+    <value>Geschaeftsabonnements, Stripe-Referenzen und Webhook-Abgleich pruefen, ohne Provider-Secrets offenzulegen.</value>
+  </data>
+  <data name="BillingSubscriptionsMissingProviderRefs" xml:space="preserve">
+    <value>Fehlende Referenzen</value>
+  </data>
+  <data name="BillingSubscriptionsSearchPlaceholder" xml:space="preserve">
+    <value>Geschaeft, Plan, Provider oder Stripe-Referenz suchen</value>
+  </data>
+  <data name="BillingSubscriptionsProviderRefs" xml:space="preserve">
+    <value>Provider-Referenzen</value>
+  </data>
+  <data name="BillingSubscriptionsPeriod" xml:space="preserve">
+    <value>Zeitraum</value>
+  </data>
+  <data name="BillingSubscriptionsEmptyState" xml:space="preserve">
+    <value>Keine Geschaeftsabonnements entsprechen den aktuellen Filtern.</value>
+  </data>
+  <data name="BillingSubscriptionsSubscriptionRef" xml:space="preserve">
+    <value>Abonnement</value>
+  </data>
+  <data name="BillingSubscriptionsCheckoutRef" xml:space="preserve">
+    <value>Checkout</value>
+  </data>
+  <data name="BillingSubscriptionsCustomerRef" xml:space="preserve">
+    <value>Kunde</value>
+  </data>
+  <data name="BillingSubscriptionsCurrentPeriodEnd" xml:space="preserve">
+    <value>Periodenende</value>
+  </data>
+  <data name="BillingSubscriptionsTrialEnd" xml:space="preserve">
+    <value>Testphase Ende</value>
+  </data>
+  <data name="BillingSubscriptionCancelAtPeriodEnd" xml:space="preserve">
+    <value>Kuendigung zum Periodenende</value>
+  </data>
+  <data name="BillingSubscriptionStripeRefMissing" xml:space="preserve">
+    <value>Stripe-Abonnementreferenz fehlt</value>
+  </data>
+  <data name="BillingSubscriptionCancelAtPeriodEndState" xml:space="preserve">
+    <value>Kuendigung zum Periodenende geplant</value>
+  </data>
+  <data name="BillingSubscriptionActiveOnProvider" xml:space="preserve">
+    <value>Beim Provider aktiv</value>
+  </data>
+  <data name="BillingSubscriptionTrialingOnProvider" xml:space="preserve">
+    <value>Testphase beim Provider</value>
+  </data>
+  <data name="BillingSubscriptionProviderPaymentAttention" xml:space="preserve">
+    <value>Provider-Zahlung benoetigt Aufmerksamkeit</value>
+  </data>
+  <data name="BillingSubscriptionCanceledOnProvider" xml:space="preserve">
+    <value>Beim Provider gekuendigt</value>
+  </data>
+  <data name="BillingSubscriptionProviderUnpaid" xml:space="preserve">
+    <value>Provider meldet unbezahlt</value>
+  </data>
+  <data name="BillingSubscriptionProviderSetupIncomplete" xml:space="preserve">
+    <value>Provider-Einrichtung unvollstaendig</value>
+  </data>
+  <data name="BillingSubscriptionProviderSetupExpired" xml:space="preserve">
+    <value>Provider-Einrichtung abgelaufen</value>
+  </data>
+  <data name="BillingSubscriptionPausedOnProvider" xml:space="preserve">
+    <value>Beim Provider pausiert</value>
+  </data>
+  <data name="BusinessSubscriptionQueueAll" xml:space="preserve">
+    <value>Alle</value>
+  </data>
+  <data name="BusinessSubscriptionQueueActive" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="BusinessSubscriptionQueueTrialing" xml:space="preserve">
+    <value>Testphase</value>
+  </data>
+  <data name="BusinessSubscriptionQueuePastDue" xml:space="preserve">
+    <value>Ueberfaellig</value>
+  </data>
+  <data name="BusinessSubscriptionQueueCanceled" xml:space="preserve">
+    <value>Gekuendigt</value>
+  </data>
+  <data name="BusinessSubscriptionQueueStripe" xml:space="preserve">
+    <value>Stripe</value>
+  </data>
+  <data name="BusinessSubscriptionQueueMissingProviderReference" xml:space="preserve">
+    <value>Provider-Referenz fehlt</value>
+  </data>
+  <data name="BusinessSubscriptionQueueCancelAtPeriodEnd" xml:space="preserve">
+    <value>Kuendigung zum Periodenende</value>
+  </data>
+  <data name="CommonQueue" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="CommonClear" xml:space="preserve">
+    <value>Zuruecksetzen</value>
+  </data>
+  <data name="BillingWebhooks" xml:space="preserve">
+    <value>Billing-Webhooks</value>
+  </data>
+  <data name="BusinessesOpen" xml:space="preserve">
+    <value>Geschaeft oeffnen</value>
   </data>
 </root>

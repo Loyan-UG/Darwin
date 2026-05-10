@@ -136,17 +136,22 @@ public sealed class MemberOrdersController : ApiControllerBase
 
         try
         {
+            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: false);
+            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: true);
             var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto
             {
                 OrderId = dto.Id,
                 UserId = GetCurrentUserId(),
                 OrderNumber = dto.OrderNumber,
-                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "Stripe" : request.Provider.Trim()
+                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "Stripe" : request.Provider.Trim(),
+                ReturnUrl = returnUrl,
+                CancelUrl = cancelUrl
             }, ct).ConfigureAwait(false);
 
-            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: false);
-            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: true);
-            var checkoutUrl = _checkoutUrlBuilder.BuildStripeCheckoutUrl(result, returnUrl, cancelUrl);
+            if (string.IsNullOrWhiteSpace(result.CheckoutUrl))
+            {
+                throw new InvalidOperationException(_validationLocalizer["StorefrontStripeCheckoutNotConfigured"]);
+            }
 
             return Ok(new CreateStorefrontPaymentIntentResponse
             {
@@ -159,7 +164,7 @@ public sealed class MemberOrdersController : ApiControllerBase
                 AmountMinor = result.AmountMinor,
                 Currency = result.Currency,
                 Status = result.Status.ToString(),
-                CheckoutUrl = checkoutUrl,
+                CheckoutUrl = result.CheckoutUrl,
                 ReturnUrl = returnUrl,
                 CancelUrl = cancelUrl,
                 ExpiresAtUtc = result.ExpiresAtUtc

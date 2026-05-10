@@ -258,6 +258,15 @@
                     var needsCarrierConfigFollowUp = item.NeedsCarrierReview || !string.IsNullOrWhiteSpace(item.ExceptionNote);
                     var needsRefundPathFollowUp = item.NeedsReturnFollowUp || !item.HasRefundablePayment;
                     var needsShipmentQueueFollowUp = item.NeedsCarrierReview || string.IsNullOrWhiteSpace(item.TrackingNumber);
+                    var isDhlReturnShipment = item.IsDhl &&
+                        !string.IsNullOrWhiteSpace(item.LastCarrierEventKey) &&
+                        item.LastCarrierEventKey.StartsWith("return.", StringComparison.OrdinalIgnoreCase);
+                    var canQueueDhlReturnLabel = item.IsDhl &&
+                        !isDhlReturnShipment &&
+                        !item.ProviderOperationQueued &&
+                        (item.Status == Darwin.Domain.Enums.ShipmentStatus.Shipped ||
+                         item.Status == Darwin.Domain.Enums.ShipmentStatus.Delivered ||
+                         item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned);
                     var hasActiveCarrierException = !string.IsNullOrWhiteSpace(item.ExceptionNote)
                         && item.RecentCarrierEvents.Any(e => !string.IsNullOrWhiteSpace(e.ExceptionCode) || !string.IsNullOrWhiteSpace(e.ExceptionMessage));
                     <tr>
@@ -281,6 +290,10 @@
                             @if (item.NeedsCarrierReview)
                             {
                                 <div><span class="badge text-bg-danger mt-1">@T.T("CarrierReview")</span></div>
+                            }
+                            @if (isDhlReturnShipment)
+                            {
+                                <div><span class="badge text-bg-dark mt-1">@T.T("DhlReturnShipment")</span></div>
                             }
                         </td>
                         <td>
@@ -334,6 +347,28 @@
                                         <input type="hidden" name="page" value="@Model.Page" />
                                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
                                         <button type="submit" class="btn btn-outline-success">@T.T("ResolveCarrierException")</button>
+                                    </form>
+                                }
+                                @if (canQueueDhlReturnLabel)
+                                {
+                                    <form asp-controller="Orders"
+                                          asp-action="QueueDhlReturnLabel"
+                                          method="post"
+                                          class="d-inline-block"
+                                          hx-post="@Url.Action("QueueDhlReturnLabel", "Orders")"
+                                          hx-target="#returns-queue-workspace-shell"
+                                          hx-swap="outerHTML"
+                                          hx-push-url="true">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="shipmentId" value="@item.Id" />
+                                        <input type="hidden" name="orderId" value="@item.OrderId" />
+                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                        <input type="hidden" name="returnToReturnsQueue" value="true" />
+                                        <input type="hidden" name="returnFilter" value="@Model.Filter" />
+                                        <input type="hidden" name="query" value="@Model.Query" />
+                                        <input type="hidden" name="page" value="@Model.Page" />
+                                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                        <button type="submit" class="btn btn-outline-dark">@T.T("QueueDhlReturnLabel")</button>
                                     </form>
                                 }
                                 @if (needsShipmentQueueFollowUp)

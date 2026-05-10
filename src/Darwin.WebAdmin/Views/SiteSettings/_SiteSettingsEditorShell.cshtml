@@ -1,5 +1,13 @@
 @model Darwin.WebAdmin.ViewModels.Settings.SiteSettingVm
+@using Darwin.Application.Abstractions.Storage
 @inject Darwin.WebAdmin.Localization.IAdminTextLocalizer T
+@inject Microsoft.Extensions.Options.IOptions<Darwin.Infrastructure.Storage.ObjectStorageOptions> ObjectStorageOptionsAccessor
+@inject Darwin.Infrastructure.Storage.ObjectStorageCapabilityReporter ObjectStorageCapabilities
+@inject Microsoft.Extensions.Options.IOptions<Darwin.Infrastructure.Compliance.ExternalCommandEInvoiceOptions> EInvoiceExternalCommandOptionsAccessor
+@inject Microsoft.Extensions.Options.IOptions<Darwin.Infrastructure.Compliance.ViesVatValidationOptions> ViesVatValidationOptionsAccessor
+@inject Microsoft.Extensions.Options.IOptions<Darwin.Infrastructure.Notifications.EmailDeliveryOptions> EmailDeliveryOptionsAccessor
+@inject Microsoft.Extensions.Options.IOptions<Darwin.Infrastructure.Notifications.Brevo.BrevoEmailOptions> BrevoEmailOptionsAccessor
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     ViewData["Title"] = T.T("EditSiteSettings");
     var activeFragment = ViewData["ActiveFragment"] as string;
@@ -35,6 +43,7 @@
     string ShippingMethodsUrl(string? filter = null) => Url.Action("Index", "ShippingMethods", new { filter }) ?? string.Empty;
     string ShipmentsQueueUrl(string? filter = null) => Url.Action("ShipmentsQueue", "Orders", new { filter }) ?? string.Empty;
     string LoyaltyScanSessionsUrl() => Url.Action("ScanSessions", "Loyalty") ?? string.Empty;
+    string ObjectStorageSmokeUrl() => Url.Action("SmokeObjectStorage", "SiteSettings") ?? string.Empty;
 
     string CommunicationChannelLabel(string channel) => channel switch
     {
@@ -92,9 +101,33 @@
         && !string.IsNullOrWhiteSpace(Model.DefaultCurrency);
     bool localizationReadiness = localizationDefaultsReady && localizationOverridesReady && localizationHandoffReady;
 
-    bool communicationTransportReady = Model.SmtpEnabled
+    var emailDeliveryOptions = EmailDeliveryOptionsAccessor.Value;
+    var activeEmailProvider = Darwin.Infrastructure.Notifications.EmailProviderNames.Normalize(emailDeliveryOptions.Provider);
+    bool emailProviderIsBrevo = string.Equals(activeEmailProvider, Darwin.Infrastructure.Notifications.EmailProviderNames.Brevo, StringComparison.OrdinalIgnoreCase);
+    var brevoEmailOptions = BrevoEmailOptionsAccessor.Value;
+    bool brevoBaseUrlReady = Uri.TryCreate(brevoEmailOptions.BaseUrl, UriKind.Absolute, out var brevoBaseUrl)
+        && string.Equals(brevoBaseUrl.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+    bool brevoApiReady = !string.IsNullOrWhiteSpace(brevoEmailOptions.ApiKey)
+        && brevoBaseUrlReady;
+    bool brevoSenderReady = !string.IsNullOrWhiteSpace(brevoEmailOptions.SenderEmail);
+    bool brevoWebhookReady = !string.IsNullOrWhiteSpace(brevoEmailOptions.WebhookUsername)
+        && !string.IsNullOrWhiteSpace(brevoEmailOptions.WebhookPassword);
+    bool providerCallbackWorkerReady = string.Equals(Configuration["ProviderCallbackWorker:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
+    bool shipmentProviderOperationWorkerReady = string.Equals(Configuration["ShipmentProviderOperationWorker:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
+    bool brevoEmailDispatchWorkerReady = string.Equals(Configuration["EmailDispatchOperationWorker:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
+    bool brevoDeliveryPipelineReady = emailProviderIsBrevo
+        && brevoApiReady
+        && brevoSenderReady
+        && brevoWebhookReady
+        && !brevoEmailOptions.SandboxMode
+        && providerCallbackWorkerReady
+        && brevoEmailDispatchWorkerReady;
+    bool smtpTransportReady = Model.SmtpEnabled
         && !string.IsNullOrWhiteSpace(Model.SmtpHost)
         && !string.IsNullOrWhiteSpace(Model.SmtpFromAddress);
+    bool communicationTransportReady = emailProviderIsBrevo
+        ? brevoApiReady && brevoSenderReady
+        : smtpTransportReady;
     bool communicationAlertsReady = !string.IsNullOrWhiteSpace(Model.AdminAlertEmailsCsv)
         || !string.IsNullOrWhiteSpace(Model.AdminAlertSmsRecipientsCsv);
     bool communicationPolicyReady = !string.IsNullOrWhiteSpace(Model.TransactionalEmailSubjectPrefix)
@@ -126,14 +159,81 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
 
     bool paymentsReady = Model.StripeEnabled
         && !string.IsNullOrWhiteSpace(Model.StripePublishableKey)
-        && !string.IsNullOrWhiteSpace(Model.StripeSecretKey);
+        && !string.IsNullOrWhiteSpace(Model.StripeSecretKey)
+        && !string.IsNullOrWhiteSpace(Model.StripeWebhookSecret)
+        && providerCallbackWorkerReady;
+    bool stripePublishableKeyReady = !string.IsNullOrWhiteSpace(Model.StripePublishableKey);
+    bool stripeSecretKeyReady = !string.IsNullOrWhiteSpace(Model.StripeSecretKey);
+    bool stripeWebhookSecretReady = !string.IsNullOrWhiteSpace(Model.StripeWebhookSecret);
+    bool stripeMerchantDisplayReady = !string.IsNullOrWhiteSpace(Model.StripeMerchantDisplayName);
     bool taxReady = Model.VatEnabled
         && !string.IsNullOrWhiteSpace(Model.InvoiceIssuerLegalName)
         && !string.IsNullOrWhiteSpace(Model.InvoiceIssuerCountry);
+    var viesVatValidationOptions = ViesVatValidationOptionsAccessor.Value;
+    bool viesEndpointReady = Uri.TryCreate(viesVatValidationOptions.EndpointUrl, UriKind.Absolute, out var viesEndpointUri)
+        && (string.Equals(viesEndpointUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(viesEndpointUri.Host, "localhost", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(viesEndpointUri.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(viesEndpointUri.Host, "::1", StringComparison.OrdinalIgnoreCase));
+    bool viesTimeoutReady = viesVatValidationOptions.TimeoutSeconds is >= 1 and <= 120;
+    bool viesRetryWorkerReady = string.Equals(Configuration["VatValidationRetryWorker:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
+    bool viesValidationReady = viesVatValidationOptions.Enabled && viesEndpointReady && viesTimeoutReady;
+    var eInvoiceExternalCommandOptions = EInvoiceExternalCommandOptionsAccessor.Value;
+    bool eInvoiceExternalCommandConfigured = eInvoiceExternalCommandOptions.Enabled
+        && !string.IsNullOrWhiteSpace(eInvoiceExternalCommandOptions.ExecutablePath);
+    bool eInvoiceExternalCommandSupportsAnyFormat = eInvoiceExternalCommandOptions.SupportsZugferdFacturX
+        || eInvoiceExternalCommandOptions.SupportsXRechnung;
+    bool eInvoiceExternalCommandReady = eInvoiceExternalCommandConfigured
+        && eInvoiceExternalCommandSupportsAnyFormat;
+    var objectStorageOptions = ObjectStorageOptionsAccessor.Value;
+    var effectiveObjectStorageProvider = !string.IsNullOrWhiteSpace(objectStorageOptions.ActiveProfile) &&
+        objectStorageOptions.Profiles.TryGetValue(objectStorageOptions.ActiveProfile.Trim(), out var activeObjectStorageProfile)
+            ? activeObjectStorageProfile.Provider
+            : objectStorageOptions.Provider;
+    var objectStorageCapabilities = ObjectStorageCapabilities.GetCapabilities(effectiveObjectStorageProvider);
+    var objectStorageProvider = effectiveObjectStorageProvider.ToString();
+    var objectStorageContainerConfigured = effectiveObjectStorageProvider switch
+    {
+        ObjectStorageProviderKind.S3Compatible => !string.IsNullOrWhiteSpace(objectStorageOptions.S3Compatible.BucketName),
+        ObjectStorageProviderKind.AzureBlob => !string.IsNullOrWhiteSpace(objectStorageOptions.AzureBlob.ContainerName),
+        ObjectStorageProviderKind.FileSystem => !string.IsNullOrWhiteSpace(objectStorageOptions.FileSystem.RootPath),
+        _ => true
+    };
+    bool objectStorageExternal = effectiveObjectStorageProvider is ObjectStorageProviderKind.S3Compatible
+        or ObjectStorageProviderKind.AzureBlob;
+    bool objectStorageConfigured = effectiveObjectStorageProvider switch
+    {
+        ObjectStorageProviderKind.S3Compatible =>
+            !string.IsNullOrWhiteSpace(objectStorageOptions.S3Compatible.BucketName)
+            && (!string.IsNullOrWhiteSpace(objectStorageOptions.S3Compatible.Endpoint) || !string.IsNullOrWhiteSpace(objectStorageOptions.S3Compatible.Region)),
+        ObjectStorageProviderKind.AzureBlob =>
+            !string.IsNullOrWhiteSpace(objectStorageOptions.AzureBlob.ContainerName)
+            && (!string.IsNullOrWhiteSpace(objectStorageOptions.AzureBlob.ConnectionString)
+                || (objectStorageOptions.AzureBlob.UseManagedIdentity && !string.IsNullOrWhiteSpace(objectStorageOptions.AzureBlob.AccountName))),
+        ObjectStorageProviderKind.FileSystem => !string.IsNullOrWhiteSpace(objectStorageOptions.FileSystem.RootPath),
+        _ => true
+    };
+    bool objectStorageProductionReady = objectStorageExternal
+        && objectStorageConfigured
+        && objectStorageCapabilities.SupportsNativeImmutability
+        && objectStorageCapabilities.SupportsRetention;
+    bool objectStorageInvoiceArchiveReady = false;
+    bool objectStorageMediaAssetsReady = false;
+    bool objectStorageShipmentLabelsReady = false;
     bool shippingReady = Model.DhlEnabled
         && !string.IsNullOrWhiteSpace(Model.DhlApiBaseUrl)
         && !string.IsNullOrWhiteSpace(Model.DhlApiKey)
+        && !string.IsNullOrWhiteSpace(Model.DhlApiSecret)
         && !string.IsNullOrWhiteSpace(Model.DhlAccountNumber);
+    bool dhlEnvironmentReady = !string.IsNullOrWhiteSpace(Model.DhlEnvironment);
+    bool dhlBaseUrlReady = Uri.TryCreate(Model.DhlApiBaseUrl, UriKind.Absolute, out var dhlBaseUri)
+        && (string.Equals(dhlBaseUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(dhlBaseUri.Host, "localhost", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(dhlBaseUri.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(dhlBaseUri.Host, "::1", StringComparison.OrdinalIgnoreCase));
+    bool dhlAccountReady = !string.IsNullOrWhiteSpace(Model.DhlAccountNumber);
+    bool dhlApiKeyReady = !string.IsNullOrWhiteSpace(Model.DhlApiKey);
+    bool dhlApiSecretReady = !string.IsNullOrWhiteSpace(Model.DhlApiSecret);
     bool shippingIdentityReady = !string.IsNullOrWhiteSpace(Model.DhlShipperName)
         && !string.IsNullOrWhiteSpace(Model.DhlShipperEmail)
         && !string.IsNullOrWhiteSpace(Model.DhlShipperStreet)
@@ -142,7 +242,13 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
         && !string.IsNullOrWhiteSpace(Model.DhlShipperCountry);
     bool shippingThresholdsReady = Model.ShipmentAttentionDelayHours > 0
         && Model.ShipmentTrackingGraceHours > 0;
-    bool shippingExecutionReadiness = shippingReady && shippingIdentityReady && shippingThresholdsReady;
+    bool shippingExecutionReadiness = shippingReady
+        && dhlEnvironmentReady
+        && dhlBaseUrlReady
+        && shippingIdentityReady
+        && shippingThresholdsReady
+        && providerCallbackWorkerReady
+        && shipmentProviderOperationWorkerReady;
     bool commerceReadiness = paymentsReady && taxReady && shippingReady;
 
     bool jwtReady = Model.JwtEnabled
@@ -181,6 +287,67 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
         "PhoneVerification" => "#PhoneVerificationPreferredChannel",
         _ => "#site-settings-communications-policy"
     };
+
+    bool TryGetObjectStorageProfile(string profileName, out Darwin.Infrastructure.Storage.ObjectStorageProfileOptions profile)
+        => objectStorageOptions.Profiles.TryGetValue(profileName, out profile!);
+
+    bool IsObjectStorageProfileReady(string profileName, bool requirePublicUrl)
+    {
+        if (!TryGetObjectStorageProfile(profileName, out var profile) ||
+            profile.Provider == ObjectStorageProviderKind.Database ||
+            string.IsNullOrWhiteSpace(profile.ContainerName))
+        {
+            return false;
+        }
+
+        return !requirePublicUrl || !string.IsNullOrWhiteSpace(GetObjectStorageProviderPublicBaseUrl(profile.Provider));
+    }
+
+    bool IsInvoiceArchiveProfileProductionReady()
+    {
+        if (!TryGetObjectStorageProfile("InvoiceArchive", out var profile) ||
+            profile.Provider is not (ObjectStorageProviderKind.S3Compatible or ObjectStorageProviderKind.AzureBlob) ||
+            string.IsNullOrWhiteSpace(profile.ContainerName))
+        {
+            return false;
+        }
+
+        var capabilities = ObjectStorageCapabilities.GetCapabilities(profile.Provider);
+        return capabilities.SupportsNativeImmutability && capabilities.SupportsRetention;
+    }
+
+    string ObjectStorageProfileProviderText(string profileName)
+        => TryGetObjectStorageProfile(profileName, out var profile) ? profile.Provider.ToString() : T.T("DatabaseInternalFallback");
+
+    string ObjectStorageProfileContainerText(string profileName)
+        => TryGetObjectStorageProfile(profileName, out var profile) && !string.IsNullOrWhiteSpace(profile.ContainerName)
+            ? T.T("Configured")
+            : T.T("NotConfigured");
+
+    string ObjectStorageProfilePrefixText(string profileName)
+        => TryGetObjectStorageProfile(profileName, out var profile) && !string.IsNullOrWhiteSpace(profile.Prefix)
+            ? T.T("Configured")
+            : T.T("NotConfigured");
+
+    string? GetObjectStorageProviderPublicBaseUrl(ObjectStorageProviderKind provider) => provider switch
+    {
+        ObjectStorageProviderKind.S3Compatible => objectStorageOptions.S3Compatible.PublicBaseUrl,
+        ObjectStorageProviderKind.AzureBlob => objectStorageOptions.AzureBlob.PublicBaseUrl,
+        ObjectStorageProviderKind.FileSystem => objectStorageOptions.FileSystem.PublicBaseUrl,
+        _ => null
+    };
+
+    string ObjectStorageProfileSummary(string profileName)
+        => string.Format(
+            System.Globalization.CultureInfo.CurrentCulture,
+            T.T("ObjectStorageProfileStatusFormat"),
+            ObjectStorageProfileProviderText(profileName),
+            ObjectStorageProfileContainerText(profileName),
+            ObjectStorageProfilePrefixText(profileName));
+
+    objectStorageInvoiceArchiveReady = IsInvoiceArchiveProfileProductionReady();
+    objectStorageMediaAssetsReady = IsObjectStorageProfileReady("MediaAssets", requirePublicUrl: true);
+    objectStorageShipmentLabelsReady = IsObjectStorageProfileReady("ShipmentLabels", requirePublicUrl: false);
 }
 
 <div id="site-settings-editor-shell">
@@ -270,7 +437,9 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                         </div>
                         <div class="small text-muted mb-3">@T.T("SiteSettingsTransactionalPolicyIntro")</div>
                         <ul class="small mb-3 ps-3">
-                            <li>@T.T("SiteSettingsEmailSmtpTitle"): @ReadinessBadgeText(communicationTransportReady)</li>
+                            <li>@T.T("EmailTransportProvider"): @activeEmailProvider</li>
+                            <li>@T.T("SiteSettingsEmailSmtpTitle"): @ReadinessBadgeText(smtpTransportReady)</li>
+                            <li>@T.T("BrevoTransactionalProvider"): @ReadinessBadgeText(brevoDeliveryPipelineReady)</li>
                             <li>@T.T("AdminAlerts"): @ReadinessBadgeText(communicationAlertsReady)</li>
                             <li>@T.T("CommunicationPolicy"): @ReadinessBadgeText(communicationPolicyReady)</li>
                             <li>@T.T("Communications"): @ReadinessBadgeText(communicationDeliveryVisibilityReady)</li>
@@ -332,6 +501,8 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                         <ul class="small mb-3 ps-3">
                             <li>@T.T("SiteSettingsPaymentsStripeTitle"): @ReadinessBadgeText(paymentsReady)</li>
                             <li>@T.T("SiteSettingsTaxVatTitle"): @ReadinessBadgeText(taxReady)</li>
+                            <li>@T.T("ViesVatValidation"): @ReadinessBadgeText(viesValidationReady)</li>
+                            <li>@T.T("EInvoiceExternalGenerator"): @ReadinessBadgeText(eInvoiceExternalCommandReady)</li>
                             <li>@T.T("SiteSettingsShippingDhlTitle"): @ReadinessBadgeText(shippingReady)</li>
                         </ul>
                         <div class="d-flex flex-wrap gap-2">
@@ -903,6 +1074,47 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 <label class="form-check-label" asp-for="StripeEnabled"></label>
                 <field-help title="@T.T("SiteSettingStripeEnabled")" content="@T.T("SiteSettingsStripeEnabledHelp")" placement="right"></field-help>
             </div>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <th scope="row">@T.T("StripeProviderEnabled")</th>
+                            <td><span class="@ReadinessBadgeClass(Model.StripeEnabled)">@ReadinessBadgeText(Model.StripeEnabled)</span></td>
+                            <td class="text-muted small">@T.T("StripeProviderEnabledHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("StripePublishableKeyStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(stripePublishableKeyReady)">@ReadinessBadgeText(stripePublishableKeyReady)</span></td>
+                            <td class="text-muted small">@T.T("StripePublishableKeyStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("StripeSecretKeyStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(stripeSecretKeyReady)">@ReadinessBadgeText(stripeSecretKeyReady)</span></td>
+                            <td class="text-muted small">@T.T("StripeSecretKeyStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("StripeWebhookSecretStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(stripeWebhookSecretReady)">@ReadinessBadgeText(stripeWebhookSecretReady)</span></td>
+                            <td class="text-muted small">@T.T("StripeWebhookSecretStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ProviderCallbackWorker")</th>
+                            <td><span class="@ReadinessBadgeClass(providerCallbackWorkerReady)">@ReadinessBadgeText(providerCallbackWorkerReady)</span></td>
+                            <td class="text-muted small">@T.T("StripeProviderCallbackWorkerHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("StripeMerchantDisplayStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(stripeMerchantDisplayReady)">@ReadinessBadgeText(stripeMerchantDisplayReady)</span></td>
+                            <td class="text-muted small">@T.T("StripeMerchantDisplayStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("StripePaymentFinalizationPolicy")</th>
+                            <td>@T.T("WebhookOnly")</td>
+                            <td class="text-muted small">@T.T("StripePaymentFinalizationPolicyHelp")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="StripeMerchantDisplayName" class="form-label"></label>
@@ -1014,6 +1226,203 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                     <span asp-validation-for="InvoiceArchiveRetentionYears" class="text-danger"></span>
                 </div>
             </div>
+            <hr class="my-4" />
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="fw-semibold">@T.T("ViesVatValidation")</div>
+                    <div class="small text-muted">@T.T("ViesVatValidationHelp")</div>
+                </div>
+                <span class="@ReadinessBadgeClass(viesValidationReady)">@ReadinessBadgeText(viesValidationReady)</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <th scope="row">@T.T("Enabled")</th>
+                            <td>@(viesVatValidationOptions.Enabled ? T.T("Yes") : T.T("No"))</td>
+                            <td class="text-muted small">@T.T("ViesEnabledHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ViesEndpoint")</th>
+                            <td><span class="@ReadinessBadgeClass(viesEndpointReady)">@ReadinessBadgeText(viesEndpointReady)</span></td>
+                            <td class="text-muted small">@T.T("ViesEndpointHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ViesTimeout")</th>
+                            <td>@viesVatValidationOptions.TimeoutSeconds</td>
+                            <td class="text-muted small">@T.T("ViesTimeoutHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("VatValidationRetryWorker")</th>
+                            <td><span class="@ReadinessBadgeClass(viesRetryWorkerReady)">@ReadinessBadgeText(viesRetryWorkerReady)</span></td>
+                            <td class="text-muted small">@T.T("VatValidationRetryWorkerHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ViesFailurePolicy")</th>
+                            <td>@T.T("ManualReview")</td>
+                            <td class="text-muted small">@T.T("ViesFailurePolicyHelp")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-4" />
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="fw-semibold">@T.T("EInvoiceExternalGenerator")</div>
+                    <div class="small text-muted">@T.T("EInvoiceExternalGeneratorHelp")</div>
+                </div>
+                <span class="@ReadinessBadgeClass(eInvoiceExternalCommandReady)">@ReadinessBadgeText(eInvoiceExternalCommandReady)</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <th scope="row">@T.T("Enabled")</th>
+                            <td>@(eInvoiceExternalCommandOptions.Enabled ? T.T("Yes") : T.T("No"))</td>
+                            <td class="text-muted small">@T.T("EInvoiceExternalGeneratorEnabledHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("Configured")</th>
+                            <td><span class="@ReadinessBadgeClass(eInvoiceExternalCommandConfigured)">@ReadinessBadgeText(eInvoiceExternalCommandConfigured)</span></td>
+                            <td class="text-muted small">@T.T("EInvoiceExternalGeneratorConfiguredHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("EInvoiceSupportedFormats")</th>
+                            <td>
+                                @if (eInvoiceExternalCommandOptions.SupportsZugferdFacturX)
+                                {
+                                    <span class="badge bg-info-subtle text-info-emphasis">ZUGFeRD/Factur-X</span>
+                                }
+                                @if (eInvoiceExternalCommandOptions.SupportsXRechnung)
+                                {
+                                    <span class="badge bg-info-subtle text-info-emphasis">XRechnung</span>
+                                }
+                                @if (!eInvoiceExternalCommandSupportsAnyFormat)
+                                {
+                                    <span class="text-muted">@T.T("NotConfigured")</span>
+                                }
+                            </td>
+                            <td class="text-muted small">@T.T("EInvoiceSupportedFormatsHelp")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-4" />
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="fw-semibold">@T.T("ObjectStorageStatus")</div>
+                    <div class="small text-muted">@T.T("ObjectStorageStatusHelp")</div>
+                </div>
+                <span class="@ReadinessBadgeClass(objectStorageProductionReady)">@ReadinessBadgeText(objectStorageProductionReady)</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <th scope="row">@T.T("ObjectStorageProvider")</th>
+                            <td>@objectStorageProvider</td>
+                            <td class="text-muted small">@T.T("ObjectStorageProviderHelp")</td>
+                            <td class="text-end">
+                                <button type="submit"
+                                        name="profileName"
+                                        value="__active"
+                                        formaction="@ObjectStorageSmokeUrl()"
+                                        formmethod="post"
+                                        hx-post="@ObjectStorageSmokeUrl()"
+                                        hx-target="#site-settings-editor-shell"
+                                        hx-swap="outerHTML"
+                                        class="btn btn-sm btn-outline-secondary">@T.T("RunObjectStorageSmoke")</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ObjectStorageActiveProfile")</th>
+                            <td>@(string.IsNullOrWhiteSpace(objectStorageOptions.ActiveProfile) ? T.T("NotConfigured") : objectStorageOptions.ActiveProfile)</td>
+                            <td class="text-muted small">@T.T("ObjectStorageActiveProfileHelp")</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ObjectStorageContainer")</th>
+                            <td>@(objectStorageContainerConfigured ? T.T("Configured") : T.T("NotConfigured"))</td>
+                            <td class="text-muted small">@T.T("ObjectStorageContainerHelp")</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("NativeImmutability")</th>
+                            <td><span class="@ReadinessBadgeClass(objectStorageCapabilities.SupportsNativeImmutability)">@ReadinessBadgeText(objectStorageCapabilities.SupportsNativeImmutability)</span></td>
+                            <td class="text-muted small">@T.T("NativeImmutabilityHelp")</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ObjectStorageRetention")</th>
+                            <td>
+                                <span class="@ReadinessBadgeClass(objectStorageCapabilities.SupportsRetention)">@ReadinessBadgeText(objectStorageCapabilities.SupportsRetention)</span>
+                                @if (objectStorageCapabilities.SupportsLegalHold)
+                                {
+                                    <span class="badge bg-info-subtle text-info-emphasis ms-1">@T.T("LegalHold")</span>
+                                }
+                            </td>
+                            <td class="text-muted small">@T.T("ObjectStorageRetentionHelp")</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ObjectStorageProfileInvoiceArchive")</th>
+                            <td><span class="@ReadinessBadgeClass(objectStorageInvoiceArchiveReady)">@ReadinessBadgeText(objectStorageInvoiceArchiveReady)</span></td>
+                            <td class="text-muted small">@ObjectStorageProfileSummary("InvoiceArchive")</td>
+                            <td class="text-end">
+                                <button type="submit"
+                                        name="profileName"
+                                        value="InvoiceArchive"
+                                        formaction="@ObjectStorageSmokeUrl()"
+                                        formmethod="post"
+                                        hx-post="@ObjectStorageSmokeUrl()"
+                                        hx-target="#site-settings-editor-shell"
+                                        hx-swap="outerHTML"
+                                        class="btn btn-sm btn-outline-secondary">@T.T("RunObjectStorageSmoke")</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ObjectStorageProfileMediaAssets")</th>
+                            <td><span class="@ReadinessBadgeClass(objectStorageMediaAssetsReady)">@ReadinessBadgeText(objectStorageMediaAssetsReady)</span></td>
+                            <td class="text-muted small">@ObjectStorageProfileSummary("MediaAssets")</td>
+                            <td class="text-end">
+                                <button type="submit"
+                                        name="profileName"
+                                        value="MediaAssets"
+                                        formaction="@ObjectStorageSmokeUrl()"
+                                        formmethod="post"
+                                        hx-post="@ObjectStorageSmokeUrl()"
+                                        hx-target="#site-settings-editor-shell"
+                                        hx-swap="outerHTML"
+                                        class="btn btn-sm btn-outline-secondary">@T.T("RunObjectStorageSmoke")</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ObjectStorageProfileShipmentLabels")</th>
+                            <td><span class="@ReadinessBadgeClass(objectStorageShipmentLabelsReady)">@ReadinessBadgeText(objectStorageShipmentLabelsReady)</span></td>
+                            <td class="text-muted small">@ObjectStorageProfileSummary("ShipmentLabels")</td>
+                            <td class="text-end">
+                                <button type="submit"
+                                        name="profileName"
+                                        value="ShipmentLabels"
+                                        formaction="@ObjectStorageSmokeUrl()"
+                                        formmethod="post"
+                                        hx-post="@ObjectStorageSmokeUrl()"
+                                        hx-target="#site-settings-editor-shell"
+                                        hx-swap="outerHTML"
+                                        class="btn btn-sm btn-outline-secondary">@T.T("RunObjectStorageSmoke")</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            @if (!objectStorageProductionReady)
+            {
+                <div class="alert alert-warning mt-3 mb-0">
+                    @T.T("ObjectStorageProductionWarning")
+                </div>
+            }
         </div>
     </div>
 
@@ -1137,6 +1546,62 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 <input class="form-check-input" asp-for="DhlEnabled" />
                 <label class="form-check-label" asp-for="DhlEnabled"></label>
                 <field-help title="@T.T("SiteSettingDhlEnabled")" content="@T.T("SiteSettingsDhlEnabledHelp")" placement="right"></field-help>
+            </div>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <th scope="row">@T.T("DhlProviderEnabled")</th>
+                            <td><span class="@ReadinessBadgeClass(Model.DhlEnabled)">@ReadinessBadgeText(Model.DhlEnabled)</span></td>
+                            <td class="text-muted small">@T.T("DhlProviderEnabledHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("DhlEnvironmentStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(dhlEnvironmentReady)">@ReadinessBadgeText(dhlEnvironmentReady)</span></td>
+                            <td class="text-muted small">@T.T("DhlEnvironmentStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("DhlBaseUrlStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(dhlBaseUrlReady)">@ReadinessBadgeText(dhlBaseUrlReady)</span></td>
+                            <td class="text-muted small">@T.T("DhlBaseUrlStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("DhlAccountStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(dhlAccountReady)">@ReadinessBadgeText(dhlAccountReady)</span></td>
+                            <td class="text-muted small">@T.T("DhlAccountStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("DhlApiKeyStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(dhlApiKeyReady)">@ReadinessBadgeText(dhlApiKeyReady)</span></td>
+                            <td class="text-muted small">@T.T("DhlApiKeyStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("DhlApiSecretStatus")</th>
+                            <td><span class="@ReadinessBadgeClass(dhlApiSecretReady)">@ReadinessBadgeText(dhlApiSecretReady)</span></td>
+                            <td class="text-muted small">@T.T("DhlApiSecretStatusHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ProviderCallbackWorker")</th>
+                            <td><span class="@ReadinessBadgeClass(providerCallbackWorkerReady)">@ReadinessBadgeText(providerCallbackWorkerReady)</span></td>
+                            <td class="text-muted small">@T.T("DhlProviderCallbackWorkerHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ShipmentProviderOperationWorker")</th>
+                            <td><span class="@ReadinessBadgeClass(shipmentProviderOperationWorkerReady)">@ReadinessBadgeText(shipmentProviderOperationWorkerReady)</span></td>
+                            <td class="text-muted small">@T.T("DhlShipmentProviderOperationWorkerHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ObjectStorageProfileShipmentLabels")</th>
+                            <td><span class="@ReadinessBadgeClass(objectStorageShipmentLabelsReady)">@ReadinessBadgeText(objectStorageShipmentLabelsReady)</span></td>
+                            <td class="text-muted small">@T.T("DhlShipmentLabelStorageHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("DhlReturnLabelPolicy")</th>
+                            <td>@T.T("CarrierValidated")</td>
+                            <td class="text-muted small">@T.T("DhlReturnLabelPolicyHelp")</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             <div class="row g-3">
                 <div class="col-md-4">
@@ -1438,6 +1903,64 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
     <div id="site-settings-smtp" class="@SectionCardClass("site-settings-smtp")">
         <div class="card-header">@T.T("SiteSettingsEmailSmtpTitle")</div>
         <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="fw-semibold">@T.T("EmailTransportProvider")</div>
+                    <div class="small text-muted">@T.T("EmailTransportProviderHelp")</div>
+                </div>
+                <span class="@ReadinessBadgeClass(communicationTransportReady)">@ReadinessBadgeText(communicationTransportReady)</span>
+            </div>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <th scope="row">@T.T("ActiveProvider")</th>
+                            <td>@activeEmailProvider</td>
+                            <td class="text-muted small">@T.T("EmailActiveProviderHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("BrevoTransactionalProvider")</th>
+                            <td><span class="@ReadinessBadgeClass(brevoDeliveryPipelineReady)">@ReadinessBadgeText(brevoDeliveryPipelineReady)</span></td>
+                            <td class="text-muted small">@T.T("BrevoTransactionalProviderHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("BrevoApiConfiguration")</th>
+                            <td><span class="@ReadinessBadgeClass(brevoApiReady)">@ReadinessBadgeText(brevoApiReady)</span></td>
+                            <td class="text-muted small">@T.T("BrevoApiConfigurationHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("BrevoSenderIdentity")</th>
+                            <td><span class="@ReadinessBadgeClass(brevoSenderReady)">@ReadinessBadgeText(brevoSenderReady)</span></td>
+                            <td class="text-muted small">@T.T("BrevoSenderIdentityHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("BrevoWebhookAuthentication")</th>
+                            <td><span class="@ReadinessBadgeClass(brevoWebhookReady)">@ReadinessBadgeText(brevoWebhookReady)</span></td>
+                            <td class="text-muted small">@T.T("BrevoWebhookAuthenticationHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("BrevoSandboxMode")</th>
+                            <td>@(brevoEmailOptions.SandboxMode ? T.T("Enabled") : T.T("Disabled"))</td>
+                            <td class="text-muted small">@T.T("BrevoSandboxModeHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("ProviderCallbackWorker")</th>
+                            <td><span class="@ReadinessBadgeClass(providerCallbackWorkerReady)">@ReadinessBadgeText(providerCallbackWorkerReady)</span></td>
+                            <td class="text-muted small">@T.T("BrevoProviderCallbackWorkerHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("EmailDispatchOperationWorker")</th>
+                            <td><span class="@ReadinessBadgeClass(brevoEmailDispatchWorkerReady)">@ReadinessBadgeText(brevoEmailDispatchWorkerReady)</span></td>
+                            <td class="text-muted small">@T.T("BrevoEmailDispatchOperationWorkerHelp")</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">@T.T("BrevoTemplateMapping")</th>
+                            <td>@brevoEmailOptions.TemplateIds.Count</td>
+                            <td class="text-muted small">@T.T("BrevoTemplateMappingHelp")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="SmtpEnabled" />
                 <label class="form-check-label" asp-for="SmtpEnabled"></label>

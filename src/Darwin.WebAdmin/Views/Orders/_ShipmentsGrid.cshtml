@@ -170,12 +170,19 @@
                     {
                         var needsServiceResolution = string.IsNullOrWhiteSpace(s.Service);
                         var needsThresholdReview = s.AwaitingHandoff || s.TrackingOverdue;
+                        var isDhlReturnShipment = s.IsDhl &&
+                            !string.IsNullOrWhiteSpace(s.LastCarrierEventKey) &&
+                            s.LastCarrierEventKey.StartsWith("return.", StringComparison.OrdinalIgnoreCase);
                         <tr>
                             <td>
                                 @s.Carrier
                                 @if (s.IsDhl)
                                 {
                                     <div><span class="badge text-bg-info mt-1">@T.T("Dhl")</span></div>
+                                }
+                                @if (isDhlReturnShipment)
+                                {
+                                    <div><span class="badge text-bg-dark mt-1">@T.T("DhlReturnShipment")</span></div>
                                 }
                             </td>
                             <td>
@@ -304,7 +311,7 @@
                                         @T.T("CarrierLabel")
                                     </a>
                                 }
-                                @if (s.IsDhl && string.IsNullOrWhiteSpace(s.LabelUrl) && !s.ProviderOperationQueued)
+                                @if (s.IsDhl && !isDhlReturnShipment && string.IsNullOrWhiteSpace(s.LabelUrl) && !s.ProviderOperationQueued)
                                 {
                                     <form asp-controller="Orders"
                                           asp-action="GenerateDhlLabel"
@@ -320,6 +327,29 @@
                                         <input type="hidden" name="returnToQueue" value="false" />
                                         <button type="submit" class="btn btn-sm btn-outline-primary">
                                             @T.T("GenerateCarrierLabel")
+                                        </button>
+                                    </form>
+                                }
+                                @if (s.IsDhl &&
+                                     !s.ProviderOperationQueued &&
+                                     !isDhlReturnShipment &&
+                                     (s.Status == Darwin.Domain.Enums.ShipmentStatus.Shipped ||
+                                      s.Status == Darwin.Domain.Enums.ShipmentStatus.Delivered ||
+                                      s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned))
+                                {
+                                    <form asp-controller="Orders"
+                                          asp-action="QueueDhlReturnLabel"
+                                          method="post"
+                                          class="d-inline-block"
+                                          hx-post="@Url.Action("QueueDhlReturnLabel", "Orders")"
+                                          hx-target="#shipments-grid-content"
+                                          hx-swap="outerHTML">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="shipmentId" value="@s.Id" />
+                                        <input type="hidden" name="orderId" value="@Model.OrderId" />
+                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(s.RowVersion)" />
+                                        <button type="submit" class="btn btn-sm btn-outline-dark">
+                                            @T.T("QueueDhlReturnLabel")
                                         </button>
                                     </form>
                                 }
