@@ -2004,5 +2004,55 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         handlerSource.Should().Contain("ApplySubscriptionPeriod");
         handlerSource.Should().Contain("MapSubscriptionStatus");
     }
+
+    [Fact]
+    public void BillingController_Should_KeepCheckoutEndpointAuthenticatedAndAvoidExposingProviderSecrets()
+    {
+        // Proves that the business subscription checkout-intent endpoint is behind authentication,
+        // URL resolution falls back through base URL configuration without hardcoding secrets,
+        // and the response mapping exposes only safe fields (no StripeSecretKey).
+        var billingSource = ReadWebApiFile(Path.Combine("Controllers", "Billing", "BillingController.cs"));
+        var contractsSource = ReadContractsFile(Path.Combine("Billing", "CreateSubscriptionCheckoutIntentResponse.cs"));
+
+        billingSource.Should().Contain("[Authorize]",
+            "the BillingController must require authentication at the controller level");
+        billingSource.Should().Contain("[Authorize(Policy = \"perm:AccessLoyaltyBusiness\")]",
+            "the checkout-intent action requires the business loyalty access permission");
+        billingSource.Should().Contain("TryResolveSubscriptionCheckoutUrl",
+            "URL resolution must use the helper that applies base-URL configuration fallback");
+        billingSource.Should().Contain("Billing:SubscriptionSuccessUrl",
+            "the success URL must be drawn from configuration, not hardcoded");
+        billingSource.Should().Contain("Billing:SubscriptionCancelUrl",
+            "the cancel URL must be drawn from configuration, not hardcoded");
+        billingSource.Should().Contain("Billing:BusinessManagementBaseUrl",
+            "the base-URL fallback must be read from Billing:BusinessManagementBaseUrl");
+        billingSource.Should().Contain("StorefrontCheckout:FrontOfficeBaseUrl",
+            "the base-URL fallback must also accept StorefrontCheckout:FrontOfficeBaseUrl");
+        billingSource.Should().NotContain("StripeSecretKey",
+            "the BillingController response mapping must never expose the Stripe secret key");
+        billingSource.Should().NotContain("sk_live_",
+            "the BillingController must not contain any live Stripe secret key material");
+        billingSource.Should().NotContain("sk_test_",
+            "the BillingController must not contain any test Stripe secret key material");
+
+        // Checkout-intent response shape: safe fields only
+        billingSource.Should().Contain("CheckoutUrl = result.Value.CheckoutUrl");
+        billingSource.Should().Contain("Provider = result.Value.Provider");
+        billingSource.Should().Contain("ProviderCheckoutSessionReference = result.Value.ProviderCheckoutSessionReference");
+        billingSource.Should().NotContain("result.Value.StripeSecretKey",
+            "the checkout response must not surface the Stripe secret key from the handler result");
+
+        // Handler validates before creating checkout — reject missing/invalid plan
+        billingSource.Should().Contain("ValidateAsync(businessId, request.PlanId");
+        billingSource.Should().Contain("ProblemFromResult(validation, _validationLocalizer[\"CheckoutIntentCreationFailed\"])");
+        billingSource.Should().Contain("BadRequestProblem(_validationLocalizer[\"BillingCheckoutEndpointNotConfigured\"])");
+
+        // Contracts: the response DTO exposes safe provider references, not secrets
+        contractsSource.Should().Contain("CreateSubscriptionCheckoutIntentResponse");
+        contractsSource.Should().Contain("CheckoutUrl");
+        contractsSource.Should().Contain("ProviderCheckoutSessionReference");
+        contractsSource.Should().NotContain("SecretKey",
+            "checkout intent response contracts must not expose any form of secret key");
+    }
 }
 

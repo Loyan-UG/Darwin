@@ -540,6 +540,307 @@ public sealed class ProcessStripeWebhookHandlerTests
         subscription.ProviderCustomerId.Should().Be("cus_ref_xyz");
     }
 
+    [Fact]
+    public async Task HandleAsync_Should_CreateRefundRecord_OnRefundCreated_WithSucceededStatus()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-REF-001",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 4500,
+            SubtotalNetMinor = 3782,
+            TaxTotalMinor = 718,
+            Status = OrderStatus.Paid
+        });
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            OrderId = orderId,
+            AmountMinor = 4500,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderPaymentIntentRef = "pi_ref001",
+            Status = PaymentStatus.Captured
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync("""
+            {
+              "id": "evt_refund_created",
+              "type": "refund.created",
+              "created": 1710100000,
+              "data": {
+                "object": {
+                  "id": "re_abc123",
+                  "payment_intent": "pi_ref001",
+                  "amount": 4500,
+                  "currency": "eur",
+                  "status": "succeeded"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var refund = await db.Set<Refund>().SingleAsync(x => x.PaymentId == paymentId, TestContext.Current.CancellationToken);
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var order = await db.Set<Order>().SingleAsync(x => x.Id == orderId, TestContext.Current.CancellationToken);
+
+        refund.ProviderRefundReference.Should().Be("re_abc123");
+        refund.ProviderStatus.Should().Be("succeeded");
+        refund.Status.Should().Be(RefundStatus.Completed);
+        refund.CompletedAtUtc.Should().NotBeNull();
+        refund.Provider.Should().Be("Stripe");
+        payment.Status.Should().Be(PaymentStatus.Refunded);
+        order.Status.Should().Be(OrderStatus.Refunded);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_CreateRefundRecord_OnRefundCreated_WithFailedStatus()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            AmountMinor = 2000,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderPaymentIntentRef = "pi_failed_ref",
+            Status = PaymentStatus.Captured
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync("""
+            {
+              "id": "evt_refund_failed",
+              "type": "refund.created",
+              "created": 1710200000,
+              "data": {
+                "object": {
+                  "id": "re_failed001",
+                  "payment_intent": "pi_failed_ref",
+                  "amount": 2000,
+                  "currency": "eur",
+                  "status": "failed",
+                  "failure_reason": "lost_or_stolen_card"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var refund = await db.Set<Refund>().SingleAsync(x => x.PaymentId == paymentId, TestContext.Current.CancellationToken);
+
+        refund.ProviderRefundReference.Should().Be("re_failed001");
+        refund.ProviderStatus.Should().Be("failed");
+        refund.Status.Should().Be(RefundStatus.Failed);
+        refund.FailureReason.Should().Be("lost_or_stolen_card");
+        refund.CompletedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_UpdateExistingRefundStatus_OnRefundUpdated()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        var refundId = Guid.NewGuid();
+
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            AmountMinor = 3000,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderPaymentIntentRef = "pi_update_ref",
+            Status = PaymentStatus.Captured
+        });
+        db.Set<Refund>().Add(new Refund
+        {
+            Id = refundId,
+            PaymentId = paymentId,
+            AmountMinor = 3000,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderRefundReference = "re_update001",
+            Status = RefundStatus.Pending,
+            Reason = "Existing pending refund"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync("""
+            {
+              "id": "evt_refund_updated",
+              "type": "refund.updated",
+              "created": 1710300000,
+              "data": {
+                "object": {
+                  "id": "re_update001",
+                  "payment_intent": "pi_update_ref",
+                  "amount": 3000,
+                  "currency": "eur",
+                  "status": "succeeded"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var refund = await db.Set<Refund>().SingleAsync(x => x.Id == refundId, TestContext.Current.CancellationToken);
+
+        refund.Status.Should().Be(RefundStatus.Completed,
+            "refund.updated with succeeded status must update the existing refund record");
+        refund.ProviderStatus.Should().Be("succeeded");
+        refund.CompletedAtUtc.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_UpdatePaymentAndOrderStatus_OnChargeRefunded_FullAmount()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CHG-001",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 5000,
+            SubtotalNetMinor = 4202,
+            TaxTotalMinor = 798,
+            Status = OrderStatus.Paid
+        });
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            OrderId = orderId,
+            AmountMinor = 5000,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderPaymentIntentRef = "pi_charge_ref",
+            ProviderTransactionRef = "ch_charge001",
+            Status = PaymentStatus.Captured
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync("""
+            {
+              "id": "evt_charge_refunded",
+              "type": "charge.refunded",
+              "created": 1710400000,
+              "data": {
+                "object": {
+                  "id": "ch_charge001",
+                  "payment_intent": "pi_charge_ref",
+                  "amount_refunded": 5000,
+                  "currency": "eur"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var order = await db.Set<Order>().SingleAsync(x => x.Id == orderId, TestContext.Current.CancellationToken);
+
+        payment.Status.Should().Be(PaymentStatus.Refunded,
+            "charge.refunded with full amount_refunded must mark payment as Refunded");
+        order.Status.Should().Be(OrderStatus.Refunded,
+            "charge.refunded for the full payment amount must mark the order as Refunded");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_MarkPartiallyRefunded_OnChargeRefunded_PartialAmount()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-CHG-002",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 6000,
+            SubtotalNetMinor = 5042,
+            TaxTotalMinor = 958,
+            Status = OrderStatus.Paid
+        });
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            OrderId = orderId,
+            AmountMinor = 6000,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderPaymentIntentRef = "pi_partial_ref",
+            Status = PaymentStatus.Captured
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync("""
+            {
+              "id": "evt_charge_partial_refund",
+              "type": "charge.refunded",
+              "created": 1710500000,
+              "data": {
+                "object": {
+                  "id": "ch_partial001",
+                  "payment_intent": "pi_partial_ref",
+                  "amount_refunded": 2500,
+                  "currency": "eur"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var order = await db.Set<Order>().SingleAsync(x => x.Id == orderId, TestContext.Current.CancellationToken);
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+
+        order.Status.Should().Be(OrderStatus.PartiallyRefunded,
+            "charge.refunded with partial amount must mark the order as PartiallyRefunded");
+        payment.Status.Should().Be(PaymentStatus.Captured,
+            "a partial charge.refunded must not change the payment status to Refunded");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Skip_OnRefundCreated_WhenNoMatchingPayment()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        var act = () => handler.HandleAsync("""
+            {
+              "id": "evt_refund_no_match",
+              "type": "refund.created",
+              "created": 1710600000,
+              "data": {
+                "object": {
+                  "id": "re_nomatch001",
+                  "payment_intent": "pi_not_in_db",
+                  "amount": 1000,
+                  "currency": "eur",
+                  "status": "succeeded"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        await act.Should().NotThrowAsync(
+            "a refund.created event referencing an unknown payment_intent must be silently skipped");
+
+        var refundCount = await db.Set<Refund>().CountAsync(TestContext.Current.CancellationToken);
+        refundCount.Should().Be(0, "no refund record should be created when the payment is not found");
+    }
+
     private sealed class StripeWebhookTestDbContext : DbContext, IAppDbContext
     {
         private StripeWebhookTestDbContext(DbContextOptions<StripeWebhookTestDbContext> options)
@@ -627,6 +928,14 @@ public sealed class ProcessStripeWebhookHandlerTests
                 builder.Property(x => x.Provider).IsRequired();
                 builder.Property(x => x.Currency).IsRequired();
                 builder.Property(x => x.LinesJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Refund>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.Reason).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }
