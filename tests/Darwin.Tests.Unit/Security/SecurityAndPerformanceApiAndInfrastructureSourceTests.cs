@@ -1966,5 +1966,43 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         resourceGermanSource.Should().Contain("<data name=\"SiteSettingSmtpHostRequiredWhenEnabled\"");
         resourceGermanSource.Should().Contain("<data name=\"SiteSettingSmtpPasswordRequiredWhenUsernameConfigured\"");
     }
+
+
+    [Fact]
+    public void BillingController_Should_Not_ActivateSubscription_On_ReturnUrl_Only_Via_Webhook()
+    {
+        // Proves that subscription checkout return routes (success/cancel) are passive — they never
+        // mark a subscription as active. Activation is exclusively handled by the
+        // checkout.session.completed Stripe webhook → ProcessStripeWebhookHandler.
+        var billingSource = ReadWebApiFile(Path.Combine("Controllers", "Billing", "BillingController.cs"));
+        var webhookSource = ReadWebApiFile(Path.Combine("Controllers", "Public", "StripeWebhooksController.cs"));
+        var handlerSource = ReadApplicationFile(Path.Combine("Billing", "ProcessStripeWebhookHandler.cs"));
+
+        // BillingController only creates the checkout intent; it contains no endpoint that
+        // writes a subscription as Active/Trialing from a browser return redirect.
+        billingSource.Should().Contain("[HttpPost(\"subscription/checkout-intent\")]");
+        billingSource.Should().NotContain("[HttpGet(\"subscription/success\")]",
+            "the success return URL is browser-only and must never activate a subscription");
+        billingSource.Should().NotContain("[HttpPost(\"subscription/success\")]",
+            "the success return URL is browser-only and must never activate a subscription");
+        billingSource.Should().NotContain("Status = SubscriptionStatus.Active",
+            "BillingController must not write a subscription Active status directly");
+        billingSource.Should().NotContain("Status = SubscriptionStatus.Trialing",
+            "BillingController must not write a subscription Trialing status directly");
+
+        // Stripe webhook controller routes all events through the webhook handler.
+        webhookSource.Should().Contain("ProviderCallbackInboxWriter",
+            "Stripe webhooks are written to the callback inbox for async processing");
+        webhookSource.Should().Contain("StripeWebhookSignatureVerifier",
+            "Stripe webhooks must be verified with the signature verifier instead of bearer token authentication");
+        webhookSource.Should().Contain("_signatureVerifier.TryVerify",
+            "the Stripe signature must be verified before processing any event");
+
+        // The handler processes checkout.session.completed and activates subscriptions.
+        handlerSource.Should().Contain("case \"checkout.session.completed\":");
+        handlerSource.Should().Contain("ApplySubscriptionCheckoutSessionCompletedAsync");
+        handlerSource.Should().Contain("ApplySubscriptionPeriod");
+        handlerSource.Should().Contain("MapSubscriptionStatus");
+    }
 }
 

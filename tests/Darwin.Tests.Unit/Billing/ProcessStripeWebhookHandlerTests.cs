@@ -2,6 +2,7 @@ using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing;
 using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
@@ -103,6 +104,442 @@ public sealed class ProcessStripeWebhookHandlerTests
         eventLogs.Should().Be(1);
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // checkout.session.completed — subscription mode
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public async Task HandleAsync_Should_CreateNewBusinessSubscription_OnCheckoutSessionCompleted_SubscriptionMode()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Test Co" });
+        db.Set<BillingPlan>().Add(new BillingPlan
+        {
+            Id = planId,
+            Code = "starter",
+            Name = "Starter",
+            Currency = "EUR",
+            PriceMinor = 2900,
+            FeaturesJson = "{}"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_1",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_session1",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_stripe_1",
+                  "customer": "cus_stripe_1",
+                  "metadata": {
+                    "businessId": "{{businessId}}",
+                    "planId": "{{planId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.MatchedBusinessSubscriptionId.Should().NotBeNull("a new subscription should be created");
+
+        var subscription = await db.Set<BusinessSubscription>()
+            .SingleAsync(x => x.BusinessId == businessId, TestContext.Current.CancellationToken);
+        subscription.ProviderCheckoutSessionId.Should().Be("cs_test_session1");
+        subscription.ProviderSubscriptionId.Should().Be("sub_stripe_1");
+        subscription.ProviderCustomerId.Should().Be("cus_stripe_1");
+        subscription.Provider.Should().Be("Stripe");
+        subscription.BillingPlanId.Should().Be(planId);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_UpdateExistingSubscription_MatchedByProviderSubscriptionId()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Test Co" });
+        db.Set<BillingPlan>().Add(new BillingPlan
+        {
+            Id = planId,
+            Code = "pro",
+            Name = "Pro",
+            Currency = "EUR",
+            PriceMinor = 4900,
+            FeaturesJson = "{}"
+        });
+        var existingSubscription = new BusinessSubscription
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            ProviderSubscriptionId = "sub_existing",
+            Status = SubscriptionStatus.Trialing
+        };
+        db.Set<BusinessSubscription>().Add(existingSubscription);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_update",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_session_update",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_existing",
+                  "customer": "cus_updated",
+                  "metadata": {
+                    "businessId": "{{businessId}}",
+                    "planId": "{{planId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.MatchedBusinessSubscriptionId.Should().Be(existingSubscription.Id,
+            "the existing subscription matched by provider subscription id should be updated");
+
+        var subscriptions = await db.Set<BusinessSubscription>().ToListAsync(TestContext.Current.CancellationToken);
+        subscriptions.Should().HaveCount(1, "no new subscription should be created");
+        subscriptions[0].ProviderCustomerId.Should().Be("cus_updated");
+        subscriptions[0].ProviderCheckoutSessionId.Should().Be("cs_test_session_update");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_UpdateExistingSubscription_MatchedByCheckoutSessionId()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Test Co" });
+        db.Set<BillingPlan>().Add(new BillingPlan
+        {
+            Id = planId,
+            Code = "basic",
+            Name = "Basic",
+            Currency = "EUR",
+            PriceMinor = 1900,
+            FeaturesJson = "{}"
+        });
+        var existingSubscription = new BusinessSubscription
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            ProviderCheckoutSessionId = "cs_test_existing_session",
+            Status = SubscriptionStatus.Incomplete
+        };
+        db.Set<BusinessSubscription>().Add(existingSubscription);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_session_match",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_existing_session",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_new_ref",
+                  "customer": "cus_new",
+                  "metadata": {
+                    "businessId": "{{businessId}}",
+                    "planId": "{{planId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.MatchedBusinessSubscriptionId.Should().Be(existingSubscription.Id,
+            "the existing subscription matched by checkout session id should be updated");
+
+        var subscriptions = await db.Set<BusinessSubscription>().ToListAsync(TestContext.Current.CancellationToken);
+        subscriptions.Should().HaveCount(1, "no new subscription should be created");
+        subscriptions[0].ProviderSubscriptionId.Should().Be("sub_new_ref");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_UpdateExistingSubscription_MatchedByBusinessId_WhenNoSessionOrSubscriptionMatch()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Test Co" });
+        db.Set<BillingPlan>().Add(new BillingPlan
+        {
+            Id = planId,
+            Code = "team",
+            Name = "Team",
+            Currency = "EUR",
+            PriceMinor = 9900,
+            FeaturesJson = "{}"
+        });
+        // Existing subscription with no provider references - only linked by businessId
+        var existingSubscription = new BusinessSubscription
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            Status = SubscriptionStatus.Incomplete
+        };
+        db.Set<BusinessSubscription>().Add(existingSubscription);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_bizid_match",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_no_match_session",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_brand_new",
+                  "customer": "cus_brand_new",
+                  "metadata": {
+                    "businessId": "{{businessId}}",
+                    "planId": "{{planId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.MatchedBusinessSubscriptionId.Should().Be(existingSubscription.Id,
+            "the subscription matched by businessId should be updated when no session/subscription id matches");
+
+        var subscriptions = await db.Set<BusinessSubscription>().ToListAsync(TestContext.Current.CancellationToken);
+        subscriptions.Should().HaveCount(1, "no new subscription should be created");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Throw_When_BusinessId_Metadata_Missing_In_SubscriptionCheckout()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var planId = Guid.NewGuid();
+
+        db.Set<BillingPlan>().Add(new BillingPlan
+        {
+            Id = planId,
+            Code = "starter",
+            Name = "Starter",
+            Currency = "EUR",
+            PriceMinor = 2900,
+            FeaturesJson = "{}"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        // businessId is missing from metadata
+        var act = () => handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_no_biz",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_no_biz",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_test",
+                  "metadata": {
+                    "planId": "{{planId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>(
+            "missing businessId metadata must be rejected with an exception");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Throw_When_PlanId_Metadata_Missing_In_SubscriptionCheckout()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Test Co" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        // planId is missing from metadata
+        var act = () => handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_no_plan",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_no_plan",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_test",
+                  "metadata": {
+                    "businessId": "{{businessId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>(
+            "missing planId metadata must be rejected with an exception");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Throw_When_Business_Not_Found_In_SubscriptionCheckout()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var planId = Guid.NewGuid();
+
+        db.Set<BillingPlan>().Add(new BillingPlan
+        {
+            Id = planId,
+            Code = "starter",
+            Name = "Starter",
+            Currency = "EUR",
+            PriceMinor = 2900,
+            FeaturesJson = "{}"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        // businessId refers to a non-existent business
+        var missingBusinessId = Guid.NewGuid();
+        var act = () => handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_missing_biz",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_missing_biz",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_test",
+                  "metadata": {
+                    "businessId": "{{missingBusinessId}}",
+                    "planId": "{{planId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>(
+            "a non-existent business must be rejected with an exception");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Throw_When_Plan_Not_Found_In_SubscriptionCheckout()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Test Co" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        // planId refers to a non-existent plan
+        var missingPlanId = Guid.NewGuid();
+        var act = () => handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_missing_plan",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_missing_plan",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_test",
+                  "metadata": {
+                    "businessId": "{{businessId}}",
+                    "planId": "{{missingPlanId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>(
+            "a non-existent plan must be rejected with an exception");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_StoreProviderReferences_OnCheckoutSessionCompleted_SubscriptionMode()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Test Co" });
+        db.Set<BillingPlan>().Add(new BillingPlan
+        {
+            Id = planId,
+            Code = "enterprise",
+            Name = "Enterprise",
+            Currency = "EUR",
+            PriceMinor = 19900,
+            FeaturesJson = "{}"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync($$"""
+            {
+              "id": "evt_checkout_sub_refs",
+              "type": "checkout.session.completed",
+              "created": 1710000000,
+              "data": {
+                "object": {
+                  "id": "cs_test_refs_session",
+                  "mode": "subscription",
+                  "payment_status": "paid",
+                  "subscription": "sub_ref_abc",
+                  "customer": "cus_ref_xyz",
+                  "metadata": {
+                    "businessId": "{{businessId}}",
+                    "planId": "{{planId}}"
+                  }
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var subscription = await db.Set<BusinessSubscription>()
+            .SingleAsync(x => x.BusinessId == businessId, TestContext.Current.CancellationToken);
+
+        subscription.ProviderCheckoutSessionId.Should().Be("cs_test_refs_session");
+        subscription.ProviderSubscriptionId.Should().Be("sub_ref_abc");
+        subscription.ProviderCustomerId.Should().Be("cus_ref_xyz");
+    }
+
     private sealed class StripeWebhookTestDbContext : DbContext, IAppDbContext
     {
         private StripeWebhookTestDbContext(DbContextOptions<StripeWebhookTestDbContext> options)
@@ -158,6 +595,30 @@ public sealed class ProcessStripeWebhookHandlerTests
                 builder.Property(x => x.Provider).IsRequired();
                 builder.Property(x => x.Currency).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<BillingPlan>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Code).IsRequired();
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.FeaturesJson).IsRequired();
+            });
+
+            modelBuilder.Entity<Business>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Ignore(x => x.Locations);
+                builder.Ignore(x => x.Members);
+                builder.Ignore(x => x.Invitations);
+                builder.Ignore(x => x.Subscriptions);
+                builder.Ignore(x => x.Favorites);
+                builder.Ignore(x => x.Likes);
+                builder.Ignore(x => x.Reviews);
+                builder.Ignore(x => x.StaffQrCodes);
+                builder.Ignore(x => x.AnalyticsExportJobs);
             });
 
             modelBuilder.Entity<SubscriptionInvoice>(builder =>
