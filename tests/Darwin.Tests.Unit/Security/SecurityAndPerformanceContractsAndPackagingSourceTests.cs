@@ -307,11 +307,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .NotContain("DARWIN_STRIPE_SECRET")
             .And.NotContain("Write-Host $intent.checkoutUrl")
             .And.NotContain("Write-Host $checkoutUri")
+            .And.NotContain("Write-Host $response.checkoutUrl",
+                "the subscription checkout smoke must not print the provider checkout URL")
             .And.Contain("[switch]$CreateSmokeOrder")
             .And.Contain("function New-StripeSmokeOrder")
             .And.Contain("[switch]$OpenCheckout")
             .And.Contain("[switch]$WaitForWebhookFinalization")
             .And.Contain("[switch]$RequireRuntimePipeline")
+            .And.Contain("[switch]$CheckBusinessSubscriptionCheckout",
+                "the subscription checkout smoke switch must be present")
+            .And.Contain("function Invoke-BusinessSubscriptionCheckoutSmoke",
+                "the subscription checkout smoke function must be declared")
             .And.Contain("DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED")
             .And.Contain("WebhookWaitSeconds")
             .And.Contain("Creating a public storefront smoke order before Stripe handoff.")
@@ -565,6 +571,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         if (string.Equals(scriptName, "smoke-stripe-testmode.ps1", StringComparison.Ordinal))
         {
             output.Should().Contain("Add -CreateSmokeOrder");
+            output.Should().Contain("Add -CheckBusinessSubscriptionCheckout",
+                "the subscription checkout flag must be described in the dry-run output");
             output.Should().Contain("Add -OpenCheckout");
             output.Should().Contain("Add -WaitForWebhookFinalization");
         }
@@ -576,6 +584,102 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
         secretPattern.IsMatch(output).Should().BeFalse($"{scriptName} ready dry-run output must not print provider secrets");
+    }
+
+    [Fact]
+    public async Task StripeSubscriptionCheckoutSmoke_Should_BlockWhenCheckoutPrerequisitesMissing()
+    {
+        // Proves that smoke-stripe-testmode.ps1 exits 2 when -CheckBusinessSubscriptionCheckout
+        // is passed but DARWIN_BUSINESS_API_BEARER_TOKEN and/or DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID
+        // are absent, and that the blocked output does not print any provider secrets.
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-stripe-testmode.ps1"));
+        startInfo.ArgumentList.Add("-CheckBusinessSubscriptionCheckout");
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        // Intentionally omit DARWIN_BUSINESS_API_BEARER_TOKEN and DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID
+        // Only DARWIN_WEBAPI_BASE_URL is absent as well, confirming multi-prerequisite validation
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-stripe-testmode.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2,
+            "smoke-stripe-testmode.ps1 with -CheckBusinessSubscriptionCheckout and missing prerequisites must exit 2");
+        output.Should().Contain("Stripe test-mode smoke is blocked.",
+            "the blocked message must be written to output when prerequisites are missing");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        secretPattern.IsMatch(output).Should().BeFalse("blocked output must not print provider secrets");
+    }
+
+    [Fact]
+    public async Task StripeSubscriptionCheckoutSmoke_Should_ReportReadyDryRunWithCheckoutPrerequisites()
+    {
+        // Proves that smoke-stripe-testmode.ps1 exits 0 when -CheckBusinessSubscriptionCheckout
+        // is passed and all required checkout prerequisites are present (without -Execute).
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-stripe-testmode.ps1"));
+        startInfo.ArgumentList.Add("-CheckBusinessSubscriptionCheckout");
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_WEBAPI_BASE_URL"] = "http://127.0.0.1:5134";
+        startInfo.Environment["DARWIN_BUSINESS_API_BEARER_TOKEN"] = "fake-bearer-token-for-unit-test";
+        startInfo.Environment["DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID"] = "22222222-2222-2222-2222-222222222222";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-stripe-testmode.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(0,
+            "smoke-stripe-testmode.ps1 with -CheckBusinessSubscriptionCheckout and all prerequisites present must exit 0 in dry-run mode");
+        output.Should().Contain("Stripe test-mode smoke configuration is present.");
+        output.Should().NotContain("blocked");
+        output.Should().NotContain("Invoke-RestMethod");
+        output.Should().NotContain("Invoke-WebRequest");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        secretPattern.IsMatch(output).Should().BeFalse("subscription checkout dry-run output must not print provider secrets");
     }
 
     public static IEnumerable<object[]> ProviderSmokeScriptReadyDryRunCases()
