@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Payments;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing;
@@ -485,6 +487,411 @@ public sealed class BillingSubscriptionHandlersTests
         result.Succeeded.Should().BeTrue();
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // CreateSubscriptionCheckoutIntentHandler — CreateAsync
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fail_When_Provider_Client_Is_Null()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // null client = provider not configured
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), subscriptionCheckoutSessionClient: null);
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("a null provider client means Stripe is not configured");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fail_When_SuccessUrl_Is_Not_Absolute()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var fakeClient = CreateFakeCheckoutClient("https://checkout.stripe.com/pay/test123");
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        // "not-a-url" cannot be parsed as an absolute URI
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "not-a-url",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("an invalid success URL must be rejected");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fail_When_CancelUrl_Is_Not_Absolute()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var fakeClient = CreateFakeCheckoutClient("https://checkout.stripe.com/pay/test123");
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        // "not-a-url" cannot be parsed as an absolute URI
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "not-a-url",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("an invalid cancel URL must be rejected");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fail_When_No_SiteSettings()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var fakeClient = CreateFakeCheckoutClient("https://checkout.stripe.com/pay/test123");
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("missing site settings means Stripe is not configured");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fail_When_Stripe_Disabled()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = false, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var fakeClient = CreateFakeCheckoutClient("https://checkout.stripe.com/pay/test123");
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("Stripe disabled means checkout cannot be created");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fail_When_SecretKey_Is_Whitespace()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "   " });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var fakeClient = CreateFakeCheckoutClient("https://checkout.stripe.com/pay/test123");
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("whitespace-only StripeSecretKey must be treated as not configured");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fail_When_PlanPrice_Is_Zero()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 0);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var fakeClient = CreateFakeCheckoutClient("https://checkout.stripe.com/pay/test123");
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("a zero-price plan is not available for checkout");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Return_CheckoutUrl_And_Provider_References()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900, currency: "EUR");
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var fakeClient = CreateFakeCheckoutClient(
+            checkoutUrl: "https://checkout.stripe.com/pay/cs_test_abc",
+            sessionRef: "cs_test_abc",
+            subscriptionRef: "sub_test_123");
+        var now = new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient, CreateClock(now));
+
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.CheckoutUrl.Should().Be("https://checkout.stripe.com/pay/cs_test_abc");
+        result.Value.Provider.Should().Be("Stripe");
+        result.Value.ProviderCheckoutSessionReference.Should().Be("cs_test_abc");
+        result.Value.ProviderSubscriptionReference.Should().Be("sub_test_123");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_FallbackExpiresAtUtc_When_Provider_Returns_Null()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var fakeClient = CreateFakeCheckoutClient("https://checkout.stripe.com/pay/cs_test_x", expiresAtUtc: null);
+        var now = new DateTime(2030, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient, CreateClock(now));
+
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.ExpiresAtUtc.Should().BeCloseTo(now.AddMinutes(30), TimeSpan.FromSeconds(1),
+            "when provider doesn't return an expiry the handler defaults to now+30m");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Use_ExpiresAtUtc_From_Provider()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var providerExpiry = new DateTime(2030, 6, 1, 13, 0, 0, DateTimeKind.Utc);
+        var fakeClient = CreateFakeCheckoutClient("https://checkout.stripe.com/pay/cs_test_x", expiresAtUtc: providerExpiry);
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.ExpiresAtUtc.Should().Be(providerExpiry);
+    }
+
+    [Theory]
+    [InlineData(BillingInterval.Day, "day")]
+    [InlineData(BillingInterval.Week, "week")]
+    [InlineData(BillingInterval.Year, "year")]
+    [InlineData(BillingInterval.Month, "month")]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Map_BillingInterval_Correctly(
+        BillingInterval interval, string expectedIntervalString)
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        string? capturedInterval = null;
+        var fakeClient = CreateFakeCheckoutClientWithCapture(
+            "https://checkout.stripe.com/pay/cs_test_interval",
+            req => capturedInterval = req.Interval);
+
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        plan.Interval = interval;
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        capturedInterval.Should().Be(expectedIntervalString);
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Prefer_BrandDisplayName_For_BusinessName()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        string? capturedBusinessName = null;
+        var fakeClient = CreateFakeCheckoutClientWithCapture(
+            "https://checkout.stripe.com/pay/cs_test_brandname",
+            req => capturedBusinessName = req.BusinessName);
+
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business
+        {
+            Id = Guid.NewGuid(),
+            Name = "Legal Name",
+            LegalName = "Legal Name Ltd",
+            BrandDisplayName = "Brand Name"
+        };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        capturedBusinessName.Should().Be("Brand Name", "BrandDisplayName takes priority over LegalName and Name");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fall_Back_To_Name_When_No_BrandDisplayName()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        string? capturedBusinessName = null;
+        var fakeClient = CreateFakeCheckoutClientWithCapture(
+            "https://checkout.stripe.com/pay/cs_test_name",
+            req => capturedBusinessName = req.BusinessName);
+
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business
+        {
+            Id = Guid.NewGuid(),
+            Name = "Plain Name",
+            BrandDisplayName = null,
+            LegalName = null
+        };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), fakeClient);
+        await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        capturedBusinessName.Should().Be("Plain Name");
+    }
+
+    [Fact]
+    public async Task CreateSubscriptionCheckoutIntent_CreateAsync_Should_Fail_When_Provider_Throws_HttpRequestException()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var plan = MakePlan(isActive: true, priceMinor: 2900);
+        var business = new Business { Id = Guid.NewGuid(), Name = "Test Co" };
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<Business>().Add(business);
+        db.Set<SiteSetting>().Add(new SiteSetting { StripeEnabled = true, StripeSecretKey = "sk_test_abc" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var throwingClient = CreateThrowingCheckoutClient(new HttpRequestException("Network error"));
+        var handler = new CreateSubscriptionCheckoutIntentHandler(db, CreateLocalizer(), throwingClient);
+
+        var result = await handler.CreateAsync(
+            business.Id, plan.Id,
+            "https://example.com/success",
+            "https://example.com/cancel",
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("network errors from the provider must be caught and surfaced as failure");
+    }
+
+    // ─── Checkout client helpers ─────────────────────────────────────────────
+
+    private static ISubscriptionCheckoutSessionClient CreateFakeCheckoutClient(
+        string checkoutUrl,
+        string sessionRef = "cs_test_session",
+        string? subscriptionRef = null,
+        DateTime? expiresAtUtc = null)
+    {
+        var mock = new Mock<ISubscriptionCheckoutSessionClient>();
+        mock.Setup(c => c.CreateSessionAsync(It.IsAny<SubscriptionCheckoutSessionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionCheckoutSessionResult
+            {
+                CheckoutUrl = checkoutUrl,
+                ProviderCheckoutSessionReference = sessionRef,
+                ProviderSubscriptionReference = subscriptionRef,
+                ExpiresAtUtc = expiresAtUtc
+            });
+        return mock.Object;
+    }
+
+    private static ISubscriptionCheckoutSessionClient CreateFakeCheckoutClientWithCapture(
+        string checkoutUrl,
+        Action<SubscriptionCheckoutSessionRequest> captureAction)
+    {
+        var mock = new Mock<ISubscriptionCheckoutSessionClient>();
+        mock.Setup(c => c.CreateSessionAsync(It.IsAny<SubscriptionCheckoutSessionRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<SubscriptionCheckoutSessionRequest, CancellationToken>((req, _) => captureAction(req))
+            .ReturnsAsync(new SubscriptionCheckoutSessionResult
+            {
+                CheckoutUrl = checkoutUrl,
+                ProviderCheckoutSessionReference = "cs_test",
+                ExpiresAtUtc = null
+            });
+        return mock.Object;
+    }
+
+    private static ISubscriptionCheckoutSessionClient CreateThrowingCheckoutClient(Exception ex)
+    {
+        var mock = new Mock<ISubscriptionCheckoutSessionClient>();
+        mock.Setup(c => c.CreateSessionAsync(It.IsAny<SubscriptionCheckoutSessionRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(ex);
+        return mock.Object;
+    }
+
     // ─── In-memory DbContext ──────────────────────────────────────────────
 
     private sealed class BillingSubscriptionTestDbContext : DbContext, IAppDbContext
@@ -534,6 +941,11 @@ public sealed class BillingSubscriptionHandlersTests
                 b.Ignore(x => x.Reviews);
                 b.Ignore(x => x.StaffQrCodes);
                 b.Ignore(x => x.AnalyticsExportJobs);
+            });
+
+            modelBuilder.Entity<SiteSetting>(b =>
+            {
+                b.HasKey(x => x.Id);
             });
         }
     }

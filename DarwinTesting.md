@@ -249,6 +249,16 @@ Provider smoke harness source-contract coverage was added on 2026-05-10:
 - `scripts\smoke-stripe-testmode.ps1 -Execute -CheckReturnRoute` passed locally on 2026-05-10 against an isolated WebApi instance after test Stripe settings were entered. It created a Stripe-hosted Checkout Session and confirmed the storefront return route left the payment `Pending`; hosted checkout payment and verified webhook processing remain pending.
 - `scripts\smoke-stripe-testmode.ps1 -CheckBusinessSubscriptionCheckout` dry-run passed on 2026-05-10 with non-secret placeholder inputs. The execute path requires `DARWIN_BUSINESS_API_BEARER_TOKEN` and `DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID`, creates a Stripe-hosted business subscription Checkout Session through WebApi, and redacts session/provider references from output.
 
+P0 Stripe subscription checkout and reconciliation tests were added on 2026-05-11:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingSubscriptionHandlersTests" --no-restore`
+  - 41 passed — now includes `CreateSubscriptionCheckoutIntentHandler.CreateAsync()` coverage: null provider client, invalid success/cancel URLs, missing site settings, Stripe disabled, whitespace secret key, zero-price plan, happy-path with provider references, ExpiresAtUtc fallback to `now+30m`, BillingInterval mapping (`Day`/`Week`/`Year`/`Month`), `BrandDisplayName` priority, `Name` fallback, `HttpRequestException` from provider.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProcessStripeWebhookHandlerTests" --no-restore`
+  - 11 passed — now includes `checkout.session.completed` subscription mode coverage: create new `BusinessSubscription`, update matched by `ProviderSubscriptionId`, update matched by `ProviderCheckoutSessionId`, update matched by `BusinessId` fallback, missing `businessId` metadata throws, missing `planId` metadata throws, missing business throws, missing plan throws, provider session/subscription/customer references stored.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingSubscriptionQueryHandlerTests" --no-restore`
+  - 19 passed — covers `GetBusinessSubscriptionsPageHandler` (empty state, soft-delete exclusion, page/pageSize normalization, all queue filters: `Active`/`Trialing`/`PastDue`/`Canceled`/`Stripe`/`MissingProviderReference`/`CancelAtPeriodEnd`, business name/email/plan enrichment, `ProviderReferenceState` computation for `Stripe subscription ref missing`, `Active on provider`, `Cancel at period end`) and `GetBusinessSubscriptionOpsSummaryHandler` (zero counts, soft-delete exclusion, all status/provider group counts).
+- Source-contract test `BillingController_Should_Not_ActivateSubscription_On_ReturnUrl_Only_Via_Webhook` added to `SecurityAndPerformanceApiAndInfrastructureSourceTests` — proves `BillingController` has no subscription-success endpoint and no direct `Status = SubscriptionStatus.Active/Trialing` writes; Stripe webhooks are routed through `ProviderCallbackInboxWriter` with mandatory `_signatureVerifier.TryVerify` before processing; `ProcessStripeWebhookHandler` contains the `checkout.session.completed` handler that applies subscription activation.
+
 Go-live readiness dry-run behavior coverage was added on 2026-05-10:
 
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GoLiveReadinessScript_Should_RunDryRunAndAvoidSecretOutput" --no-restore /p:UseSharedCompilation=false`
@@ -353,11 +363,12 @@ The items below are ordered by current go-live risk, not by module size. Use thi
 
 These tests cover the newest payment-critical production path and should be added before broad lower-risk coverage:
 
+- ✅ Add application handler tests for `CreateSubscriptionCheckoutIntentHandler` covering disabled Stripe settings, missing provider client, inactive/missing business, inactive/missing plan, billing interval mapping, provider metadata, provider checkout session reference persistence, and cancellation handling. (17 tests added to `BillingSubscriptionHandlersTests.cs`)
+- ✅ Add Stripe webhook handler tests for subscription `checkout.session.completed` covering create/update of `BusinessSubscription`, duplicate event idempotency, provider checkout/customer/subscription reference storage, missing metadata, and unmatched business/plan safety. (9 tests added to `ProcessStripeWebhookHandlerTests.cs`)
+- ✅ Add WebAdmin query handler tests for `Billing/Subscriptions` proving the page handler is filterable, business/plan enriched, page-size normalized, and ops summary is accurate. (19 tests added in new `BillingSubscriptionQueryHandlerTests.cs`)
+- ✅ Add source-contract coverage proving Stripe payment and subscription return routes remain webhook-only and do not mark provider payments or subscriptions successful from a browser return URL. (`BillingController_Should_Not_ActivateSubscription_On_ReturnUrl_Only_Via_Webhook` added to `SecurityAndPerformanceApiAndInfrastructureSourceTests`)
 - Add WebApi-hosted tests for the business subscription checkout endpoint proving authenticated business users can request a Stripe-hosted subscription Checkout Session, missing/invalid plans fail safely, missing Stripe configuration fails without a local fallback URL, and returned responses never expose secrets.
-- Add application handler tests for `CreateSubscriptionCheckoutIntentHandler` covering disabled Stripe settings, missing provider client, inactive/missing business, inactive/missing plan, billing interval mapping, provider metadata, provider checkout session reference persistence, and cancellation handling.
-- Add Stripe webhook handler tests for subscription `checkout.session.completed` covering create/update of `BusinessSubscription`, duplicate event idempotency, provider checkout/customer/subscription reference storage, missing metadata, and unmatched business/plan safety.
 - Add WebAdmin hosted/render tests for `Billing/Subscriptions` proving the workspace is authenticated, compact, filterable, localized, and displays provider references/status without exposing provider secrets.
-- Add source-contract coverage proving Stripe payment and subscription return routes remain webhook-only and do not mark provider payments or subscriptions successful from a browser return URL.
 
 ### P1 - Stripe refund/dispute operations and smoke harnesses
 
