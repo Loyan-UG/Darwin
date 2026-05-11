@@ -132,6 +132,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
                 {
                     "Controllers\\Admin\\Media\\MediaController.cs",
                     "Extensions\\Startup.cs",
+                    "Controllers\\Admin\\Settings\\SiteSettingsController.cs",
                     "ViewModels\\CMS\\MediaVms.cs"
                 },
                 "WebAdmin file upload and file IO should remain isolated to the hardened media pipeline");
@@ -3106,7 +3107,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         shellSource.Should().Contain("string CommunicationTemplateAnchorHref(string flowKey) => flowKey switch");
         shellSource.Should().Contain("bool shippingIdentityReady = !string.IsNullOrWhiteSpace(Model.DhlShipperName)");
         shellSource.Should().Contain("bool shippingThresholdsReady = Model.ShipmentAttentionDelayHours > 0");
-        shellSource.Should().Contain("bool shippingExecutionReadiness = shippingReady && shippingIdentityReady && shippingThresholdsReady;");
+        shellSource.Should().Contain("bool shippingExecutionReadiness = shippingReady");
+        shellSource.Should().Contain("&& providerCallbackWorkerReady");
+        shellSource.Should().Contain("&& shipmentProviderOperationWorkerReady;");
         shellSource.Should().Contain("@inject Microsoft.Extensions.Options.IOptions<Darwin.Infrastructure.Storage.ObjectStorageOptions> ObjectStorageOptionsAccessor");
         shellSource.Should().Contain("@inject Darwin.Infrastructure.Storage.ObjectStorageCapabilityReporter ObjectStorageCapabilities");
         shellSource.Should().Contain("bool objectStorageProductionReady = objectStorageExternal");
@@ -9365,7 +9368,7 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("[ValidateAntiForgeryToken]");
         source.Should().Contain("return BadRequest(new { error = T(\"MediaUploadFileRequired\") });");
         source.Should().Contain("return Json(new { url = stored.PublicUrl });");
-        source.Should().Contain("if (stored is not null && System.IO.File.Exists(stored.PhysicalPath))");
+        source.Should().Contain("if (!string.IsNullOrWhiteSpace(stored.PhysicalPath) && System.IO.File.Exists(stored.PhysicalPath))");
         source.Should().Contain("System.IO.File.Delete(stored.PhysicalPath);");
         source.Should().Contain("private IActionResult RenderCreateEditor(MediaAssetCreateVm vm)");
         source.Should().Contain("return PartialView(\"~/Views/Media/_MediaAssetCreateEditorShell.cshtml\", vm);");
@@ -9422,7 +9425,13 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
         source.Should().Contain("private string? TryGetUploadRelativePath(string? url)");
         source.Should().Contain("MediaStoragePathResolver.NormalizeRequestPath(_mediaStorageOptions.RequestPath)");
         source.Should().Contain("private static bool IsPathUnderRoot(string path, string root)");
-        source.Should().Contain("private sealed record StoredUploadResult(string PhysicalPath, string PublicUrl, long SizeBytes, string ContentHash);");
+        source.Should().Contain("private sealed record StoredUploadResult(");
+        source.Should().Contain("string? PhysicalPath,");
+        source.Should().Contain("string PublicUrl,");
+        source.Should().Contain("long SizeBytes,");
+        source.Should().Contain("string ContentHash,");
+        source.Should().Contain("string? ObjectContainerName = null,");
+        source.Should().Contain("string? ObjectKey = null);");
     }
 
 

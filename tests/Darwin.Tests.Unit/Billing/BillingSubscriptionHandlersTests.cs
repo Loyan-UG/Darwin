@@ -5,6 +5,7 @@ using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Billing;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;

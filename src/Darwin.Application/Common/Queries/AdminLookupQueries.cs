@@ -6,6 +6,7 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Inventory;
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Common.Queries
@@ -241,7 +242,7 @@ namespace Darwin.Application.Common.Queries
                 .Select(x => new LookupItemDto
                 {
                     Id = x.Id,
-                    Label = x.Provider + " - " + x.Currency + " " + ((decimal)x.AmountMinor / 100M).ToString("0.00"),
+                    Label = x.Provider + " - " + x.Currency + " " + ((decimal)x.AmountMinor / 100M).ToString("0.00", CultureInfo.InvariantCulture),
                     SecondaryLabel = x.Status.ToString()
                 })
                 .ToList();

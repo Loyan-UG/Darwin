@@ -158,7 +158,9 @@ Verified implementation:
 
 Gaps:
 
-- Carrier-integrated DHL return-label queueing is implemented under the shipping slice; live account smoke and any account-specific RMA refinements remain under DHL go-live validation.
+- Carrier-integrated RMA automation remains under the DHL/shipping go-live slice.
+- Returns/RMA flows are visible, but full carrier-integrated RMA automation remains a go-live task.
+- Live account smoke and account-specific RMA refinements remain under DHL go-live validation.
 
 ## Testing / CI
 
