@@ -13048,6 +13048,58 @@ subscriptionWorkspaceSource.Should().Contain("@SubscriptionTimelineDisplayText(\
             searchIndex = markerIndex + marker.Length;
         }
     }
+
+    [Fact]
+    public void BillingSubscriptionsAdminWorkspace_Should_KeepAuthenticatedAndLocalizedWithoutExposingProviderSecrets()
+    {
+        // Proves that the Billing/Subscriptions workspace uses localization, displays provider
+        // references and subscription status badges, and does not expose provider secrets in the view.
+        var subscriptionsSource = ReadWebAdminFile(Path.Combine("Views", "Billing", "Subscriptions.cshtml"));
+        var billingControllerSource = ReadWebAdminFile(Path.Combine("Controllers", "Admin", "Billing", "BillingController.cs"));
+        var billingVmSource = ReadWebAdminFile(Path.Combine("ViewModels", "Billing", "BillingVms.cs"));
+
+        // View uses the localization helper for all user-facing text
+        subscriptionsSource.Should().Contain("T.T(\"BillingSubscriptions\")");
+        subscriptionsSource.Should().Contain("T.T(\"BillingSubscriptionsIntro\")");
+
+        // View renders provider reference state and status badges using locale helpers, not raw values
+        subscriptionsSource.Should().Contain("LocalizeReferenceState");
+        subscriptionsSource.Should().Contain("LocalizeStatus");
+        subscriptionsSource.Should().Contain("StatusBadgeClass");
+
+        // View exposes safe provider reference fields (subscription id, checkout session id, customer id)
+        subscriptionsSource.Should().Contain("ProviderSubscriptionId");
+        subscriptionsSource.Should().Contain("ProviderCheckoutSessionId");
+        subscriptionsSource.Should().Contain("ProviderCustomerId");
+
+        // View must not expose raw secret key fields
+        subscriptionsSource.Should().NotContain("StripeSecretKey",
+            "the Subscriptions view must not render the Stripe secret key");
+        subscriptionsSource.Should().NotContain("sk_live_",
+            "the Subscriptions view must not contain committed Stripe live key material");
+        subscriptionsSource.Should().NotContain("sk_test_",
+            "the Subscriptions view must not contain committed Stripe test key material");
+
+        // Controller uses [PermissionAuthorize] (via AdminBaseController) and loads both page and summary handlers
+        billingControllerSource.Should().Contain("AdminBaseController",
+            "the admin BillingController must derive from AdminBaseController which requires the AccessAdminPanel permission");
+        billingControllerSource.Should().Contain("GetBusinessSubscriptionsPageHandler");
+        billingControllerSource.Should().Contain("GetBusinessSubscriptionOpsSummaryHandler");
+        billingControllerSource.Should().Contain("public async Task<IActionResult> Subscriptions(");
+        billingControllerSource.Should().Contain("BusinessSubscriptionQueueFilter");
+
+        // View model exposes provider references but not secrets
+        billingVmSource.Should().Contain("BusinessSubscriptionsListVm");
+        billingVmSource.Should().Contain("BusinessSubscriptionListItemVm");
+        billingVmSource.Should().Contain("ProviderSubscriptionId");
+        billingVmSource.Should().Contain("ProviderCheckoutSessionId");
+        billingVmSource.Should().NotContain("StripeSecretKey =",
+            "billing view models must not expose the raw Stripe secret key as a property");
+        billingVmSource.Should().NotContain("sk_live_",
+            "billing view models must not contain committed Stripe live key material");
+        billingVmSource.Should().NotContain("sk_test_",
+            "billing view models must not contain committed Stripe test key material");
+    }
 }
 
 
