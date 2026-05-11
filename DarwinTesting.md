@@ -722,7 +722,7 @@ Latest local result: `1` passed, `0` skipped, `1` total.
 The WebAdmin media upload contract now covers both the existing shared file-system fallback and the optional reusable S3-compatible object-storage path selected through `ObjectStorage:Profiles:MediaAssets`. The source-contract test verifies extension and signature validation, server-generated keys, path traversal rejection, hash capture, object-storage no-overwrite policy, cleanup hooks, and absence of provider credentials in the controller boundary:
 
 ```powershell
-dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~WebAdminFileUploadAndFileIo_Should_RemainConfinedToHardenedMediaPipeline|FullyQualifiedName~Storage|FullyQualifiedName~Archive|FullyQualifiedName~Invoice" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\codex-media-storage-unit\
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~WebAdminFileUploadAndFileIo_Should_RemainConfinedToHardenedMediaPipeline|FullyQualifiedName~Storage|FullyQualifiedName~Archive|FullyQualifiedName~Invoice" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\media-storage-unit\
 ```
 
 Latest local result: `147` passed, `0` skipped, `147` total.
@@ -730,7 +730,7 @@ Latest local result: `147` passed, `0` skipped, `147` total.
 The generic infrastructure storage provider tests now cover S3-compatible option validation, Azure Blob configuration validation, lazy provider/profile routing, file-system root validation, generic file-system save/read/delete, path traversal rejection, hash mismatch rejection, and application-level retention delete guards:
 
 ```powershell
-dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Storage|FullyQualifiedName~Archive|FullyQualifiedName~ShipmentLabel" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\codex-generic-storage-infra-tests\
+dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Storage|FullyQualifiedName~Archive|FullyQualifiedName~ShipmentLabel" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\generic-storage-infra-tests\
 ```
 
 Latest local result: `14` passed, `0` skipped, `14` total.
@@ -738,7 +738,7 @@ Latest local result: `14` passed, `0` skipped, `14` total.
 Object-storage external smoke harness coverage was added on 2026-05-10:
 
 ```powershell
-dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should|FullyQualifiedName~GoLiveReadinessScript_Should" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\codex-object-storage-smoke-unit\
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should|FullyQualifiedName~GoLiveReadinessScript_Should" --no-restore /p:UseSharedCompilation=false /p:OutputPath=bin\object-storage-smoke-unit\
 ```
 
 The harness is guarded by `-Execute`, blocks safely when provider prerequisites are missing, reports ready without external calls when non-secret dry-run inputs are present, and is included in the go-live readiness aggregator. The local file-system execute smoke was also run with a disposable temp root and completed save/read/metadata/temp-url/delete checks without printing secrets or payloads.

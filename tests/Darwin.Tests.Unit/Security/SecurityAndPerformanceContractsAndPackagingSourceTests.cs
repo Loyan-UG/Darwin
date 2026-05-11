@@ -947,12 +947,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         goLiveStatusSource.Should().Contain("Returns/RMA flows are visible, but full carrier-integrated RMA automation remains a go-live task.");
         goLiveStatusSource.Should().Contain("Carrier-integrated RMA automation remains under the DHL/shipping go-live slice.");
-        backlogSource.Should().Contain("Carrier-integrated DHL RMA/returns automation beyond the current returns queue and shipment provider operations.");
+        backlogSource.Should().Contain("Carrier-integrated DHL RMA/returns automation beyond the current return-label queue path, returns queue, and shipment provider operations.");
         productionSetupSource.Should().Contain("Do not create fake DHL labels, fake references, or local fake tracking URLs.");
 
         dhlContractSource.Should().Contain("CreateShipmentAsync");
+        dhlContractSource.Should().Contain("CreateReturnShipmentAsync");
         dhlContractSource.Should().Contain("GetLabelAsync");
-        dhlContractSource.Should().NotContain("CreateReturn");
         dhlContractSource.Should().NotContain("Rma");
 
         dhlClientSource.Should().Contain("orders?validate=false");
