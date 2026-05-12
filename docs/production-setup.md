@@ -289,6 +289,14 @@ MinIO production checklist:
 - Backup, replication, offsite copy, disk-usage monitoring, and failed-write alerts are configured.
 - Restore is tested before go-live.
 
+Local MinIO smoke:
+
+- Developers can start an optional local MinIO instance with `docker compose -f docker-compose.minio.yml up -d`.
+- The compose file uses development-only credentials from `.env.example`, creates a dedicated smoke bucket, requests Object Lock at bucket creation time, and enables versioning.
+- Run `dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Minio"` only after setting `DARWIN_RUN_MINIO_SMOKE=true` and the `DARWIN_MINIO_*` environment variables documented in `docs/minio-storage-runbook.md`.
+- Local MinIO smoke proves the S3-compatible provider can write/read/hash/metadata-check against a real endpoint. It does not prove production immutability; production still requires target-bucket Object Lock, default retention/legal hold policy, backup, restore, and least-privilege access validation.
+- Latest local result on 2026-05-12: the smoke bucket existed, versioning was enabled, default Object Lock retention reported `COMPLIANCE` for `1DAYS`, and `dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Minio"` passed with `3` passed and `0` skipped.
+
 Checklist:
 
 - Internal/database archive enabled for development/internal fallback.

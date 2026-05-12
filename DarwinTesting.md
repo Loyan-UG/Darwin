@@ -793,6 +793,58 @@ dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj --filter "F
 
 Latest local result: `3` passed, `0` skipped, `3` total.
 
+## 2026-05-12 Object Storage and Hosted Smoke Follow-Up
+
+The optional local MinIO smoke lane is now isolated from normal infrastructure storage/archive filters. It only runs when `DARWIN_RUN_MINIO_SMOKE=true` and the `DARWIN_MINIO_*` variables are configured. Without those variables the dedicated MinIO filter reports the tests as skipped by design, while the normal storage/archive lane remains skip-free:
+
+```powershell
+dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Minio"
+dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Storage|FullyQualifiedName~Archive"
+```
+
+Latest local results: MinIO optional filter `1` passed, `2` skipped, `3` total with local MinIO not configured; normal infrastructure storage/archive filter `23` passed, `0` skipped, `23` total.
+
+Real local MinIO smoke was run on 2026-05-12 after starting `docker-compose.minio.yml` and validating that the smoke bucket existed, versioning was enabled, and default Object Lock retention reported `COMPLIANCE` for `1DAYS`:
+
+```powershell
+$env:DARWIN_RUN_MINIO_SMOKE = "true"
+dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Minio"
+```
+
+Latest local result with MinIO enabled: `3` passed, `0` skipped, `3` total. The retained smoke objects are intentionally not cleaned up while the local bucket's COMPLIANCE retention blocks deletion.
+
+The focused unit source-contract/storage/archive/invoice lane is also skip-free:
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~Storage|FullyQualifiedName~Archive|FullyQualifiedName~Invoice|FullyQualifiedName~SourceContract"
+```
+
+Latest local result: `154` passed, `0` skipped, `154` total.
+
+The WebAdmin hosted business onboarding smoke was expanded to verify closed accepted/revoked invitation rows do not expose resend or revoke operator forms. The WebAdmin Testing host also now supplies non-secret SMTP option values so email option validation can run while email delivery remains replaced with the no-op sender:
+
+```powershell
+dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj --filter "FullyQualifiedName~ClosedBusinessInvitations|FullyQualifiedName~BusinessLifecycle|FullyQualifiedName~BusinessCreation|FullyQualifiedName~BusinessApproval"
+```
+
+Latest local result: `5` passed, `0` skipped, `5` total.
+
+The full WebAdmin hosted/unit smoke project also passes after this update:
+
+```powershell
+dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj
+```
+
+Latest local result: `315` passed, `0` skipped, `315` total.
+
+The broad onboarding/inventory/tax/invoice unit lane remains skip-free:
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~Inventory|FullyQualifiedName~Business|FullyQualifiedName~Invitation|FullyQualifiedName~SignIn|FullyQualifiedName~Tax|FullyQualifiedName~Invoice|FullyQualifiedName~Vat"
+```
+
+Latest local result: `1042` passed, `0` skipped, `1042` total.
+
 WebApi-hosted onboarding smoke coverage was added for email-confirm enforcement and public discovery/detail visibility:
 
 ```powershell

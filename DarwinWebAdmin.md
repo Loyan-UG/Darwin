@@ -1,8 +1,13 @@
 ## Dashboard Information Architecture
 
-Reviewed: 2026-05-08.
+Reviewed: 2026-05-12.
 
 `/Home/Index` is the compact operational command center, not a diagnostics workspace.
+
+## 2026-05-12 - WebAdmin Hosted Onboarding Smoke
+
+- WebAdmin Testing hosts now provide non-secret SMTP option values while replacing delivery with the no-op email sender, so startup email option validation remains active without real credentials.
+- Hosted onboarding smoke now verifies closed accepted/revoked BusinessInvitation rows render without resend or revoke operator forms, in addition to the existing inactive `PendingApproval` creation, approval prerequisite, and approve/suspend/reactivate coverage.
 
 Dashboard rules:
 

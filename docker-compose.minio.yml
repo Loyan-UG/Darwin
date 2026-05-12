@@ -1,0 +1,42 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: darwin-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${DARWIN_MINIO_ROOT_USER:-darwin-local-minio}
+      MINIO_ROOT_PASSWORD: ${DARWIN_MINIO_ROOT_PASSWORD:-change-this-local-minio-password}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - darwin-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: darwin-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      DARWIN_MINIO_ROOT_USER: ${DARWIN_MINIO_ROOT_USER:-darwin-local-minio}
+      DARWIN_MINIO_ROOT_PASSWORD: ${DARWIN_MINIO_ROOT_PASSWORD:-change-this-local-minio-password}
+      DARWIN_MINIO_BUCKET: ${DARWIN_MINIO_BUCKET:-darwin-invoice-archive-smoke}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        mc alias set darwin-local http://minio:9000 "$$DARWIN_MINIO_ROOT_USER" "$$DARWIN_MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing --with-lock "darwin-local/$$DARWIN_MINIO_BUCKET"
+        mc version enable "darwin-local/$$DARWIN_MINIO_BUCKET"
+        mc retention set --default compliance 1d "darwin-local/$$DARWIN_MINIO_BUCKET" || true
+
+volumes:
+  darwin-minio-data:
