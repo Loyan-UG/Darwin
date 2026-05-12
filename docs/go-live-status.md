@@ -1,6 +1,6 @@
 ﻿# Darwin Go-Live Status
 
-Last reviewed: 2026-05-10
+Last reviewed: 2026-05-12
 
 This status is code-backed. It intentionally distinguishes implemented plumbing from production-complete provider behavior.
 
@@ -140,7 +140,7 @@ Verified implementation:
 
 Coverage:
 
-- WebAdmin hosted smoke covers creation into inactive `PendingApproval`, approval prerequisite failure, approve/suspend/reactivate lifecycle forms, invitation resend/revoke, and business-location row-version mutation.
+- WebAdmin hosted smoke covers creation into inactive `PendingApproval`, approval prerequisite failure, approve/suspend/reactivate lifecycle forms, invitation resend/revoke, closed accepted/revoked invitation rows without resend/revoke operator forms, and business-location row-version mutation.
 - WebApi-hosted smoke tests for email-confirm enforcement and public discovery/detail visibility now pass against the local PostgreSQL `darwin_integration_tests` database with `2` passed and `0` skipped.
 
 ## Inventory / Returns
@@ -181,7 +181,8 @@ Status: WebAdmin test project exists and is wired into split CI lanes; provider-
 - Provider smoke script dry-run behavior coverage now executes the Stripe, DHL, Brevo, and VIES smoke scripts with `DARWIN_*` inputs cleared in the child process and verifies each one blocks safely with exit code `2`, reports missing prerequisites, and avoids provider secret output. It also executes the scripts with fake non-secret prerequisites and no `-Execute` flag to verify exit code `0` readiness reporting without external calls. The focused tests `ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing` and `ProviderSmokeScripts_Should_ReportReadyDryRunWithoutExecutingExternalCalls` passed locally on 2026-05-10 with `8` passed and `0` skipped.
 - Invoice archive storage coverage now includes the source-contract boundary, router behavior, and behavioral tests for the internal/database fallback. The focused run `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~InvoiceArchiveStorageRouterTests|FullyQualifiedName~DatabaseInvoiceArchiveStorage|FullyQualifiedName~InvoiceArchiveStorage_Should_KeepInternalFallbackBoundaryAndAvoidImplicitProviderChoice" --no-restore /p:UseSharedCompilation=false` passed locally on 2026-05-10 with `8` passed and `0` skipped, covering named provider routing, unregistered-provider failure, save/read/exists, exact SHA-256 metadata, retention policy metadata, purge audit metadata, mismatched invoice id rejection, and empty payload rejection.
 - Invoice archive storage source-contract coverage also verifies `IInvoiceArchiveStorage` keeps save/read/exists/purge operations, hash and retention metadata, named provider registration, router-based fallback registration, and no implicit Azure/S3/MinIO implementation choice inside the Application layer.
-- Focused storage/archive verification passed locally on 2026-05-10 after adding S3-compatible bucket creation, FailFast Object Lock/versioning preflight, and file-system read-time hash verification: `Darwin.Infrastructure.Tests` storage/archive (`21` passed, `0` skipped) and `Darwin.Tests.Unit` storage/archive/invoice (`149` passed, `0` skipped).
+- Focused storage/archive verification passed locally on 2026-05-12 after adding S3-compatible bucket creation, FailFast Object Lock/versioning preflight, and file-system read-time hash verification: `Darwin.Infrastructure.Tests` storage/archive (`23` passed, `0` skipped) and `Darwin.Tests.Unit` storage/archive/invoice/source-contract (`154` passed, `0` skipped).
+- Optional local MinIO smoke support exists through `docker-compose.minio.yml`, `.env.example`, `docs/minio-storage-runbook.md`, and environment-gated `MinioS3CompatibleSmokeTests`. The optional smoke tests are skipped unless `DARWIN_RUN_MINIO_SMOKE=true` and `DARWIN_MINIO_*` variables are configured. Real local MinIO smoke passed on 2026-05-12 with `3` passed and `0` skipped after confirming the smoke bucket existed, versioning was enabled, and default Object Lock retention reported `COMPLIANCE` for `1DAYS`. Local MinIO smoke is not a replacement for production Object Lock/retention/legal-hold validation.
 - WebAdmin CSP was tightened back to self-hosted script/style/font/connect sources, and admin/auth/anti-forgery cookies now keep secure defaults instead of relying on environment-specific relaxation.
 
 

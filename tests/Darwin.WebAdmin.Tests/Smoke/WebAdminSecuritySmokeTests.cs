@@ -1921,6 +1921,27 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         blockedHtml.Should().Contain("0 Owner, 0 Primary Locations");
     }
 
+    [Theory]
+    [InlineData("Accepted", "webadmin-invitation-accepted@example.test")]
+    [InlineData("Revoked", "webadmin-invitation-revoked@example.test")]
+    public async Task AuthenticatedClosedBusinessInvitations_ShouldNotExposeResendOrRevokeOperatorForms(
+        string filter,
+        string invitationEmail)
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        using var response = await SendHtmxGetAsync(
+            client,
+            $"/Businesses/Invitations?businessId=44444444-4444-4444-4444-444444444444&filter={filter}&query={Uri.EscapeDataString(invitationEmail)}");
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        html.Should().Contain(invitationEmail);
+        html.Should().Contain(filter);
+        html.Should().NotContain("hx-post=\"/Businesses/ResendInvitation\"");
+        html.Should().NotContain("hx-post=\"/Businesses/RevokeInvitation\"");
+    }
+
     [Fact]
     public async Task AuthenticatedAdminFragmentWithoutRequiredPermission_ShouldBeForbidden()
     {

@@ -55,6 +55,8 @@ public sealed class WebAdminTestFactory : WebApplicationFactory<Program>
     public static readonly Guid TestBrandLifecycleId = Guid.Parse("22222222-2222-2222-2222-222222222223");
     public static readonly Guid TestBusinessLocationLifecycleId = Guid.Parse("23232323-2323-2323-2323-232323232323");
     public static readonly Guid TestBusinessInvitationLifecycleId = Guid.Parse("24242424-2424-2424-2424-242424242424");
+    public static readonly Guid TestAcceptedBusinessInvitationId = Guid.Parse("24242424-2424-2424-2424-242424242425");
+    public static readonly Guid TestRevokedBusinessInvitationId = Guid.Parse("24242424-2424-2424-2424-242424242426");
     private const string TestAuthenticationScheme = "Test";
 
     public HttpClient CreateNoRedirectClient()
@@ -331,6 +333,40 @@ public sealed class WebAdminTestFactory : WebApplicationFactory<Program>
                 CreatedByUserId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
                 RowVersion = [1]
             });
+            db.Set<BusinessInvitation>().Add(new BusinessInvitation
+            {
+                Id = TestAcceptedBusinessInvitationId,
+                BusinessId = businessId,
+                InvitedByUserId = TestLifecycleUserId,
+                Email = "webadmin-invitation-accepted@example.test",
+                NormalizedEmail = "WEBADMIN-INVITATION-ACCEPTED@EXAMPLE.TEST",
+                Role = BusinessMemberRole.Manager,
+                Token = "seeded-invitation-accepted-token",
+                ExpiresAtUtc = DateTime.UtcNow.AddDays(3),
+                Status = BusinessInvitationStatus.Accepted,
+                Note = "Seeded accepted invitation.",
+                AcceptedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedByUserId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                RowVersion = [1]
+            });
+            db.Set<BusinessInvitation>().Add(new BusinessInvitation
+            {
+                Id = TestRevokedBusinessInvitationId,
+                BusinessId = businessId,
+                InvitedByUserId = TestLifecycleUserId,
+                Email = "webadmin-invitation-revoked@example.test",
+                NormalizedEmail = "WEBADMIN-INVITATION-REVOKED@EXAMPLE.TEST",
+                Role = BusinessMemberRole.Manager,
+                Token = "seeded-invitation-revoked-token",
+                ExpiresAtUtc = DateTime.UtcNow.AddDays(3),
+                Status = BusinessInvitationStatus.Revoked,
+                Note = "Seeded revoked invitation.",
+                RevokedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedByUserId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                RowVersion = [1]
+            });
             db.Businesses.Add(new Business
             {
                 Id = TestLoyaltyProgramBusinessId,
@@ -575,7 +611,12 @@ public sealed class WebAdminTestFactory : WebApplicationFactory<Program>
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:DefaultConnection"] = "Server=(localdb)\\MSSQLLocalDB;Database=Darwin_WebAdmin_SmokeTests;Trusted_Connection=True;TrustServerCertificate=True",
-                ["DataProtection:RequireKeyEncryption"] = "false"
+                ["DataProtection:RequireKeyEncryption"] = "false",
+                ["Email:Provider"] = "SMTP",
+                ["Email:Smtp:Host"] = "smtp.example.test",
+                ["Email:Smtp:Port"] = "587",
+                ["Email:Smtp:FromAddress"] = "noreply@example.test",
+                ["Email:Smtp:FromDisplayName"] = "Darwin Smoke Tests"
             });
         });
         builder.ConfigureServices(services =>
