@@ -10,6 +10,8 @@ Copy `.env.example` to `.env` if needed and set local-only MinIO values:
 
 ```powershell
 docker compose -f docker-compose.minio.yml up -d
+docker compose -f docker-compose.minio.yml ps
+docker compose -f docker-compose.minio.yml logs --tail=100
 ```
 
 Default local endpoints:
@@ -19,6 +21,17 @@ Default local endpoints:
 - Default smoke bucket: `darwin-invoice-archive-smoke`
 
 The compose init container creates the smoke bucket with Object Lock enabled from the start and enables versioning. Object Lock must be enabled when a bucket is created; it cannot be added later to an existing bucket.
+
+If the bucket must be recreated manually, delete the local development bucket only after confirming it contains no needed smoke artifacts, then create it with Object Lock enabled at creation time. Use local development credentials only:
+
+```powershell
+docker compose -f docker-compose.minio.yml exec minio mc alias set local http://localhost:9000 $env:DARWIN_MINIO_ACCESS_KEY $env:DARWIN_MINIO_SECRET_KEY
+docker compose -f docker-compose.minio.yml exec minio mc mb --with-lock local/darwin-invoice-archive-smoke
+docker compose -f docker-compose.minio.yml exec minio mc version enable local/darwin-invoice-archive-smoke
+docker compose -f docker-compose.minio.yml exec minio mc retention set --default COMPLIANCE 1d local/darwin-invoice-archive-smoke
+```
+
+Do not run destructive bucket commands against production from this local runbook.
 
 ## Configure Darwin For Local Smoke
 
@@ -67,6 +80,13 @@ dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj
 ```
 
 The smoke test writes a disposable object, verifies metadata and SHA-256, reads it back, checks temporary URL support, verifies overwrite rejection with `ObjectOverwritePolicy.Disallow`, and confirms that retained objects cannot be deleted without an explicit locked-delete override.
+
+Interpretation:
+
+- `3` passed means the local S3-compatible provider path reached MinIO, wrote/read objects, verified hash/metadata behavior, and exercised configured overwrite/delete boundaries.
+- A skipped run means `DARWIN_RUN_MINIO_SMOKE=true` or required `DARWIN_MINIO_*` variables are missing; that is expected for normal CI and machines without local MinIO.
+- Cleanup warnings for retained smoke objects are expected when default COMPLIANCE retention is active.
+- Passing local smoke does not prove the production bucket, TLS, credentials, retention policy, legal hold, backup, restore, or monitoring setup.
 
 Latest local result:
 

@@ -1787,7 +1787,8 @@ Wizard steps:
 
 Implementation rules:
 
-- The wizard is resumable because every step links back to the underlying business, setup, support, location, loyalty, and communication workspaces.
+- The wizard is resumable because every step has a stable step key/deep link and links back to the underlying business, setup, support, location, loyalty, communication, visibility, and review workspaces.
+- The wizard exposes the derived next-action step separately from any requested active step, so operators can bookmark a step without losing the current go-live blocker.
 - It does not bypass existing validation or approval prerequisites.
 - It reuses existing handlers and workspaces wherever practical.
 - The final activation action posts to the existing onboarding provisioning flow with anti-forgery and row-version protection.
