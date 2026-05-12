@@ -918,3 +918,49 @@ dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQual
 ```
 
 Latest local result: `35` passed, `0` skipped, `35` total.
+
+
+# 2026-05-12 Coverage Extension — CartAddOnSelectionJson, BusinessPublicTextResolver, Invitation Boundary, and SiteSetting Soft-Delete
+
+Added four targeted coverage passes filling gaps identified in the P3 backlog.
+
+### `tests/Darwin.Tests.Unit/CartCheckout/CartAddOnSelectionJsonTests.cs` (13 tests — new file)
+Direct unit tests for `CartAddOnSelectionJson`:
+- `NormalizeIds` — null input, empty input, single-ID stable output, deterministic ordering (same GUIDs in any order produce same JSON), deduplication, sort+deduplicate together.
+- `NormalizeJsonOrNull` — null input returns null, whitespace returns null, valid JSON array → sorted/deduplicated output, JSON with duplicate GUIDs → deduplicated, invalid JSON → trimmed input string, empty array JSON → `"[]"`.
+- Round-trip consistency: `NormalizeIds(ids)` equals `NormalizeJsonOrNull(NormalizeIds(ids))` for the same GUID set regardless of input ordering.
+
+### `tests/Darwin.Tests.Unit/Businesses/BusinessPublicTextResolverTests.cs` (14 tests — new file)
+Direct unit tests for `BusinessPublicTextResolver` (internal, visible via `InternalsVisibleTo`):
+- `ResolveName` — null overrides JSON returns original name; empty JSON object returns original; exact culture match returns override (trimmed); default-culture fallback when requested culture absent; `de-DE` built-in fallback when culture and defaultCulture both null; `en-US` final fallback when `de-DE` also absent; whitespace-only override treated as absent; override value trimmed; priority order (cascade tried left to right: culture → defaultCulture → de-DE → en-US).
+- `ResolveShortDescription` — null overrides returns null; no cascade match returns original description; exact culture match returns override; null original and no override returns null.
+
+### `tests/Darwin.Tests.Unit/Businesses/BusinessCommunicationAndInvitationQueryHandlersTests.cs` (+5 tests)
+Added exact `ExpiresAtUtc` boundary tests for `GetBusinessInvitationsPageHandler` using a `FixedClock`:
+- Pending invitation with `ExpiresAtUtc == utcNow` projects as `Expired` (the `<=` condition is inclusive at the boundary).
+- Pending invitation with `ExpiresAtUtc == utcNow + 1s` projects as `Pending`.
+- Expired filter includes the invitation at the exact boundary.
+- Pending filter excludes the invitation at the exact boundary.
+- Open filter includes the invitation at the exact boundary (Expired belongs to Open bucket).
+
+### `tests/Darwin.Tests.Unit/Businesses/BusinessInvitationOnboardingHandlersTests.cs` (+2 tests)
+Added exact boundary tests for `GetBusinessInvitationPreviewHandler`:
+- Invitation with `ExpiresAtUtc == utcNow` returns `Status = "Expired"`.
+- Invitation with `ExpiresAtUtc == utcNow + 1s` returns `Status = "Pending"`.
+
+### `tests/Darwin.Tests.Unit/Businesses/BusinessQueryHandlersTests.cs` (+2 tests)
+Added admin text override name resolution tests for `GetBusinessPublicDetailHandler`:
+- `AdminTextOverridesJson` with a matching culture returns the override name and short description.
+- `AdminTextOverridesJson` with a non-matching culture (outside the fallback chain) falls back to the original entity name.
+
+### `tests/Darwin.Tests.Unit/Settings/SettingsHandlerTests.cs` (+3 tests)
+Added soft-delete coverage for `GetSiteSettingHandler` and `GetCulturesHandler`:
+- `GetSiteSetting_Should_ReturnNull_WhenOnlySoftDeletedRowExists` — a single soft-deleted row returns null.
+- `GetSiteSetting_Should_SkipSoftDeletedRow_AndReturnActiveRow` — mixed deleted + active rows → only active returned.
+- `GetCultures_Should_ReturnDefaults_WhenOnlySoftDeletedRowsExist` — soft-deleted settings row is ignored and default cultures apply.
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CartAddOnSelectionJson|FullyQualifiedName~BusinessPublicTextResolver|FullyQualifiedName~BusinessCommunicationAndInvitationQueryHandlersTests|FullyQualifiedName~BusinessInvitationOnboardingHandlersTests|FullyQualifiedName~BusinessQueryHandlersTests|FullyQualifiedName~SettingsHandlerTests" --no-restore /p:UseSharedCompilation=false
+```
+
+Latest local result: `98` passed, `0` skipped, `98` total (39 net new tests across 4 new/extended files).
