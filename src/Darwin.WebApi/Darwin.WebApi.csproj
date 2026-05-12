@@ -1,28 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>cdae8912-6fa7-411e-bc1f-351d023063b6</UserSecretsId>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="HtmlSanitizer" Version="9.0.892" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.6" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.6" />
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.7" />
     <PackageReference Include="Serilog" Version="4.3.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.7" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.7" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Darwin.Application\Darwin.Application.csproj" />
     <ProjectReference Include="..\Darwin.Contracts\Darwin.Contracts.csproj" />
     <ProjectReference Include="..\Darwin.Infrastructure\Darwin.Infrastructure.csproj" />
     <ProjectReference Include="..\Darwin.Infrastructure.PersistenceProviders\Darwin.Infrastructure.PersistenceProviders.csproj" />
   </ItemGroup>
-
 </Project>

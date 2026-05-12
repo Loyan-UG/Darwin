@@ -7,9 +7,9 @@ Current go-live implementation status is summarized in `docs/go-live-status.md`.
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EntityFrameworkCore-10.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)
 [![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
-[![React](https://img.shields.io/badge/React-19.2.4-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![Next.js](https://img.shields.io/badge/Next.js-16.2.1-black?logo=next.js)](https://nextjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18.0.0-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-19.2.6-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.6-black?logo=next.js)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24.15.0-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 [![HTMX](https://img.shields.io/badge/HTMX-2.0-3366CC?logo=htmx&logoColor=white)](https://htmx.org/)
 [![Stripe](https://img.shields.io/badge/Stripe-Phase--1-635BFF?logo=stripe&logoColor=white)](https://stripe.com/)
@@ -268,8 +268,7 @@ Required direction:
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/)
 - [Node.js 18.0+](https://nodejs.org/)
-- Docker Desktop for local PostgreSQL development
-- SQL Server only when validating SQL Server customer deployments or the SQL Server migration lane
+- Docker Desktop for local PostgreSQL, SQL Server, and pgAdmin services
 - MAUI workloads for mobile work
 
 ### Local Setup
@@ -281,13 +280,29 @@ git clone https://github.com/shahramvafadar/Darwin.git
 cd Darwin
 ```
 
-Start the preferred local PostgreSQL services:
+Create a local `.env` from `.env.example`, set local-only passwords, and keep it out of git.
+
+Start the local database services:
 
 ```bash
-docker compose -f docker-compose.postgres.yml up -d
+docker compose -f docker-compose.databases.yml up -d
 ```
 
-Configure the .NET provider and connection string in `src/Darwin.WebAdmin/appsettings.Development.json`, `src/Darwin.WebApi/appsettings.Development.json`, and/or `src/Darwin.Worker/appsettings.Development.json`.
+Default local service ports:
+
+- PostgreSQL: `localhost:5432`
+- SQL Server: `localhost,11433`
+- pgAdmin: `http://localhost:5050`
+
+Configure development secrets through `dotnet user-secrets` or user environment variables, not tracked `appsettings.Development.json` files:
+
+```bash
+dotnet user-secrets set "Persistence:Provider" "PostgreSql" --project src/Darwin.WebAdmin
+dotnet user-secrets set "ConnectionStrings:PostgreSql" "Host=localhost;Port=5432;Database=darwin_dev;Username=darwin;Password=<local-password>;Include Error Detail=true" --project src/Darwin.WebAdmin
+dotnet user-secrets set "ConnectionStrings:SqlServer" "Server=localhost,11433;Database=Darwin_Dev;User Id=sa;Password=<local-password>;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True" --project src/Darwin.WebAdmin
+```
+
+Repeat the same values for `src/Darwin.WebApi` and `src/Darwin.Worker` when running those entry points locally, or set equivalent user environment variables such as `ConnectionStrings__PostgreSql`, `ConnectionStrings__SqlServer`, and `Persistence__Provider`.
 
 Apply PostgreSQL migrations:
 

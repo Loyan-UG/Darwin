@@ -106,7 +106,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             // 3) Users (Admin)
             // ----------------------------
             var adminEmail = "admin@darwin.de";
-            var adminUser = await db.Set<User>().FirstOrDefaultAsync(u => u.Email == adminEmail && !u.IsDeleted, ct);
+            var adminNormalizedEmail = NormalizeEmail(adminEmail);
+            var adminUser = await db.Set<User>().FirstOrDefaultAsync(u => u.NormalizedEmail == adminNormalizedEmail && !u.IsDeleted, ct);
             if (adminUser is null)
             {
                 var stamp = _stamps.NewStamp();
@@ -195,8 +196,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             Guid roleId,
             CancellationToken ct)
         {
+            var normalizedEmail = NormalizeEmail(data.Email);
             var user = await db.Set<User>()
-                .FirstOrDefaultAsync(x => x.Email == data.Email && !x.IsDeleted, ct);
+                .FirstOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail && !x.IsDeleted, ct);
 
             if (user is null)
             {
@@ -303,6 +305,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             return user;
         }
+
+        private static string NormalizeEmail(string email) => email.Trim().ToUpperInvariant();
 
         private static async Task<Role> EnsureRoleAsync(
             DarwinDbContext db,

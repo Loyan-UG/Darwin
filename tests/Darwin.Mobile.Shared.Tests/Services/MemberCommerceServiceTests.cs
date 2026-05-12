@@ -5,6 +5,8 @@ using Darwin.Contracts.Common;
 using Darwin.Contracts.Invoices;
 using Darwin.Contracts.Orders;
 using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Caching;
+using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services.Commerce;
 using Darwin.Shared.Results;
 using FluentAssertions;
@@ -19,7 +21,7 @@ public sealed class MemberCommerceServiceTests
     [Fact]
     public async Task GetMyOrdersAsync_Should_Fail_WhenPageIsInvalid()
     {
-        var service = new MemberCommerceService(new FakeApiClient());
+        var service = CreateService(new FakeApiClient());
 
         var result = await service.GetMyOrdersAsync(0, 20, TestContext.Current.CancellationToken);
 
@@ -43,7 +45,7 @@ public sealed class MemberCommerceServiceTests
                 });
             }
         };
-        var service = new MemberCommerceService(apiClient);
+        var service = CreateService(apiClient);
 
         var result = await service.GetOrderAsync(Guid.Parse("11111111-2222-3333-4444-555555555555"), TestContext.Current.CancellationToken);
 
@@ -77,7 +79,7 @@ public sealed class MemberCommerceServiceTests
                 });
             }
         };
-        var service = new MemberCommerceService(apiClient);
+        var service = CreateService(apiClient);
 
         var result = await service.CreateInvoicePaymentIntentAsync(
             Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
@@ -121,7 +123,7 @@ public sealed class MemberCommerceServiceTests
                 });
             }
         };
-        var service = new MemberCommerceService(apiClient);
+        var service = CreateService(apiClient);
 
         var result = await service.GetMyInvoicesAsync(1, 20, TestContext.Current.CancellationToken);
 
@@ -142,7 +144,7 @@ public sealed class MemberCommerceServiceTests
                 return Result<string>.Ok("Order: ORD-1001");
             }
         };
-        var service = new MemberCommerceService(apiClient);
+        var service = CreateService(apiClient);
 
         var result = await service.DownloadOrderDocumentAsync(
             Guid.Parse("11111111-2222-3333-4444-555555555555"),
@@ -150,6 +152,36 @@ public sealed class MemberCommerceServiceTests
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().Be("Order: ORD-1001");
+    }
+
+    private static MemberCommerceService CreateService(FakeApiClient apiClient)
+        => new(apiClient, new FakeMobileCacheService(), new FakeTokenStore());
+
+    private sealed class FakeMobileCacheService : IMobileCacheService
+    {
+        public Task ClearAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task<T?> GetFreshAsync<T>(string cacheKey, CancellationToken ct) => Task.FromResult<T?>(default);
+
+        public Task<T?> GetUsableAsync<T>(string cacheKey, TimeSpan maxAge, CancellationToken ct) => Task.FromResult<T?>(default);
+
+        public Task RemoveAsync(string cacheKey, CancellationToken ct) => Task.CompletedTask;
+
+        public Task SetAsync<T>(string cacheKey, T value, TimeSpan ttl, CancellationToken ct) => Task.CompletedTask;
+    }
+
+    private sealed class FakeTokenStore : ITokenStore
+    {
+        public Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc)
+            => Task.CompletedTask;
+
+        public Task<(string? AccessToken, DateTime? AccessExpiresUtc)> GetAccessAsync()
+            => Task.FromResult<(string?, DateTime?)>((null, null));
+
+        public Task<(string? RefreshToken, DateTime? RefreshExpiresUtc)> GetRefreshAsync()
+            => Task.FromResult<(string?, DateTime?)>((null, null));
+
+        public Task ClearAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeApiClient : IApiClient

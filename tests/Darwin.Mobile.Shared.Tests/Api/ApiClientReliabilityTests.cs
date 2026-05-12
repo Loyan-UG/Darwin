@@ -572,7 +572,8 @@ public sealed class ApiClientReliabilityTests
             httpClient,
             retryPolicy ?? new ExponentialBackoffRetryPolicy(maxAttempts: 1, baseDelay: TimeSpan.FromMilliseconds(1)),
             tokenStore ?? new FakeTokenStore(),
-            new ServiceCollection().BuildServiceProvider());
+            new ServiceCollection().BuildServiceProvider(),
+            TimeProvider.System);
     }
 
     /// <summary>
