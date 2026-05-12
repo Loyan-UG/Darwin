@@ -6,6 +6,13 @@ This status is code-backed. It intentionally distinguishes implemented plumbing 
 
 External smoke input names and commands are centralized in `docs/external-smoke-inputs.md`; do not commit real provider values.
 
+## Completed Baseline Updates
+
+- Source-contract cleanup is complete for the current focused lanes: the latest storage/archive/invoice/source-contract lane passed with `154` passed and `0` skipped, and the broader source-contract lanes listed under Testing/CI also report `0` skipped.
+- The reusable object-storage implementation is complete for the current slice: provider-neutral Application abstractions, S3-compatible MinIO/AWS-style storage, Azure Blob storage, file-system fallback, internal/database archive fallback, invoice archive integration, Worker usage, and WebAdmin secret-free status/smoke surfaces are implemented.
+- Local MinIO smoke passed on 2026-05-12 using the new `docker-compose.minio.yml` profile/file and environment-gated smoke tests: `3` passed, `0` skipped, with the smoke bucket versioned and default Object Lock retention reported as `COMPLIANCE` for `1DAYS`.
+- Production archive immutability still depends on the selected MinIO, AWS S3, or Azure Blob deployment enforcing provider-level versioning, Object Lock/retention/legal hold, or the provider-specific equivalent. Local smoke is not production validation.
+
 ## WebAdmin Dashboard
 
 Status: compact operational command center implemented.
@@ -140,7 +147,7 @@ Verified implementation:
 
 Coverage:
 
-- WebAdmin hosted smoke covers creation into inactive `PendingApproval`, approval prerequisite failure, approve/suspend/reactivate lifecycle forms, invitation resend/revoke, closed accepted/revoked invitation rows without resend/revoke operator forms, and business-location row-version mutation.
+- WebAdmin hosted smoke covers creation into inactive `PendingApproval`, approval prerequisite failure, approve/suspend/reactivate lifecycle forms, invitation resend/revoke, closed accepted/revoked invitation rows without resend/revoke operator forms, business-location row-version mutation, and the resumable onboarding wizard step/deep-link contract.
 - WebApi-hosted smoke tests for email-confirm enforcement and public discovery/detail visibility now pass against the local PostgreSQL `darwin_integration_tests` database with `2` passed and `0` skipped.
 
 ## Inventory / Returns
@@ -154,7 +161,7 @@ Verified implementation:
 - Return receipt increases available stock and is idempotent when a return/reference id is supplied.
 - Reservation and release are now also idempotent when a `ReferenceId` is supplied, preventing retried order/cart workflows from double-moving stock.
 - WebAdmin hosted positive mutation smoke coverage now posts the real Razor/HTMX forms for reserve stock, release reservation, return receipt, stock-transfer MarkInTransit/Complete, and purchase-order Issue/Receive. The same pass hardened row-version handling for EF InMemory smoke tests and base64 row-version delete posts on Media, Brands, and Business Locations.
-- Inventory/returns hosted operator-flow smoke now covers stock reserve/release, order cancel stock release, explicit return receipt idempotency, refund coordination without unintended stock movement, stock-transfer lifecycle, and purchase-order receiving through WebAdmin forms.
+- Inventory/returns hosted operator-flow smoke now covers stock reserve/release, order cancel stock release, explicit return receipt idempotency, refund coordination without unintended stock movement, stock-transfer lifecycle, and purchase-order receiving through WebAdmin forms. The 2026-05-12 expansion asserts stock quantities and ledger rows after reserve, release, return receipt, source/destination stock transfer, and supplier receiving.
 
 Gaps:
 
@@ -171,7 +178,7 @@ Status: WebAdmin test project exists and is wired into split CI lanes; provider-
 - Initial WebAdmin coverage threshold is intentionally low (`10`) so the lane can run continuously while coverage grows.
 - `Darwin.Infrastructure.Tests` passed locally on 2026-05-10 with `45` passed and `0` skipped after restoring compatibility with injected clock services, provider-specific design-time factories, and whitespace-safe connection-string precedence.
 - The focused WebApi provider boundary run for Stripe, DHL, Brevo, and provider-callback worker tests passed locally on 2026-05-10 with an isolated output path to avoid running-binary file locks (`280` passed, `0` skipped).
-- `Darwin.WebAdmin.Tests` builds locally with an isolated output path. The non-hosted security subset, public/auth hosted smoke subset (`27` passed), render hosted smoke subset (`105` passed), tokenless CSRF matrix (`115` passed), valid-token CSRF matrix (`8` passed), and positive mutation smoke flow (`1` passed) passed locally. The positive mutation flow was re-run on 2026-05-10 after adding hosted inventory lifecycle coverage and hardening base64 row-version delete posts. The focused hosted business onboarding smoke for creation, approval prerequisite failure, and approve/suspend/reactivate lifecycle forms passed locally on 2026-05-10 with `3` passed, `0` skipped. The focused WebAdmin render smoke including the admin-assisted onboarding wizard passed locally on 2026-05-10 with `45` passed and `0` skipped.
+- `Darwin.WebAdmin.Tests` builds locally with an isolated output path. The non-hosted security subset, public/auth hosted smoke subset (`27` passed), render hosted smoke subset (`105` passed), tokenless CSRF matrix (`115` passed), valid-token CSRF matrix (`8` passed), and positive mutation smoke flow (`1` passed) passed locally. The focused onboarding wizard smoke passed on 2026-05-12 with `2` passed and `0` skipped after adding resumable step/deep-link coverage. The positive mutation flow passed on 2026-05-12 with `1` passed and `0` skipped after adding stock quantity and ledger assertions for inventory/returns flows.
 - `BusinessOnboardingApiSmokeTests` under `Darwin.Tests.Integration` passed locally against PostgreSQL on 2026-05-10 with `2` passed and `0` skipped after the Testing host was isolated from production Data Protection certificate requirements and real email delivery.
 - `ViesVatValidationProviderTests` under `Darwin.WebApi.Tests` passed locally on 2026-05-10 with `7` passed and `0` skipped, covering the phase-one soft `Unknown`/manual-review policy without external VIES calls.
 - The focused unit/source-contract run for Shipment/Stripe/Billing/Communication/Inventory/Tax/SignIn passed locally on 2026-05-09 (`602` passed). The broader Inventory/Business/Invitation/SignIn/Tax/Invoice/VAT filter passed on 2026-05-10 with `981` passed, `0` skipped after replacing stale exact-source assertions with stable contracts for JWT, business discovery, invitation auth, row-version forms, dashboard compactness, and business setup/loyalty API wiring.

@@ -215,6 +215,8 @@ Production decision:
 
 Do not claim production archive immutability until the configured provider is validated with native versioning, object lock/retention/legal hold, or the provider-specific equivalent. Application-level overwrite protection is useful but is not the same as provider-level immutable retention.
 
+AWS S3 and Azure Blob use the same provider-neutral object-storage abstraction and invoice archive policy layer. AWS S3 should be configured through the S3-compatible provider with the deployment's region/bucket and validated Object Lock/versioning settings. Azure Blob should be configured through the Azure provider and validated with container immutability policy/legal-hold settings. Neither alternative is considered production immutable until provider-native retention behavior is validated in the target account.
+
 Generic configuration shape:
 
 ```json
@@ -288,6 +290,15 @@ MinIO production checklist:
 - Default retention is configured; use COMPLIANCE mode when legal retention is confirmed.
 - Backup, replication, offsite copy, disk-usage monitoring, and failed-write alerts are configured.
 - Restore is tested before go-live.
+
+MinIO deployment runbook summary:
+
+- Create the bucket with Object Lock enabled at creation time; Object Lock cannot be added later to an existing bucket.
+- Enable versioning before any invoice archive writes.
+- Configure default retention and use `COMPLIANCE` mode only after legal retention is confirmed.
+- Keep production credentials in secure configuration only.
+- Validate backup, restore, monitoring, failed-write alerting, retention behavior, and legal-hold or locked-delete expectations against the real deployment.
+- Treat local MinIO smoke as a provider-path check only, not as production immutability validation.
 
 Local MinIO smoke:
 

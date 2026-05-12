@@ -821,6 +821,14 @@ dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQual
 
 Latest local result: `154` passed, `0` skipped, `154` total.
 
+Source-contract cleanup is complete for the current focused lanes and should remain at zero skips. Optional MinIO smoke tests are the only expected skip when the local MinIO environment is disabled; they must run and pass when `DARWIN_RUN_MINIO_SMOKE=true` and the local MinIO variables are configured.
+
+The hosted smoke expansion now covers the resumable admin-assisted business onboarding wizard steps: profile, plan, users, locations, loyalty, communications, visibility, and review. The focused wizard run passed locally on 2026-05-12 with `2` passed and `0` skipped, including requested-step deep-link behavior and derived next-action state.
+
+The inventory/returns hosted smoke expansion keeps using operator flows where behavior matters. The positive mutation smoke passed locally on 2026-05-12 with `1` passed and `0` skipped after adding stock quantity and ledger assertions for supplier receiving, stock-transfer source/destination movement, reservation release, return receipt idempotency, and no invalid stock double movement.
+
+On 2026-05-13 the local Windows environment was repaired after the fresh Windows install: .NET SDK `10.0.204` and the MAUI workloads were installed, Android SDK licenses were accepted, and the mobile Windows/Android builds for `Darwin.Mobile.Business` and `Darwin.Mobile.Consumer` passed. The Android API guard cleanup and WebAdmin security-test cancellation-token cleanup removed the previously observed CA1422, CS8604, and `xUnit1051` warnings in the focused verification runs.
+
 The WebAdmin hosted business onboarding smoke was expanded to verify closed accepted/revoked invitation rows do not expose resend or revoke operator forms. The WebAdmin Testing host also now supplies non-secret SMTP option values so email option validation can run while email delivery remains replaced with the no-op sender:
 
 ```powershell
