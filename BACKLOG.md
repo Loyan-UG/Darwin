@@ -22,6 +22,7 @@ These are blocked on external credentials, deployment choices, provider account 
 - `Source contracts`: the current focused Storage/Archive/Invoice/SourceContract lane passed with `154` passed and `0` skipped on 2026-05-12. WebAdmin source-contract (`257` passed, `0` skipped), Business source-contract (`87` passed, `0` skipped), all-source `SecurityAndPerformance` (`615` passed, `0` skipped), and broader Inventory/Business/Invitation/SignIn/Tax/Invoice/VAT (`981` passed, `0` skipped) are clean as of the latest focused runs.
 - `Infrastructure tests`: `Darwin.Infrastructure.Tests` now passes locally with `45` passed and `0` skipped after provider-specific design-time factory and injected-clock alignment.
 - `Provider smoke readiness`: guarded local smoke harnesses now exist for Stripe test-mode handoff/return-route checks, DHL live validation prerequisites, Brevo sandbox/controlled-inbox readiness, and VIES valid/invalid/provider-failure checks. Source-contract and behavior coverage verifies these scripts keep external calls opt-in, block safely when prerequisites are missing, report ready dry-run status without `-Execute`, and avoid committed secret patterns or raw provider response output.
+- `DHL smoke-script contracts`: source-contract coverage now explicitly verifies `scripts/smoke-dhl-live.ps1` keeps runtime pipeline guards (`-RequireRuntimePipeline`) wired to non-secret worker/storage confirmations and keeps the optional return-flow path (`-IncludeReturn`) guarded and explicit.
 - `VIES retry`: `RetryUnknownCustomerVatValidationBatchHandler` and the disabled-by-default `VatValidationRetryWorker` retry only provider-generated `Unknown` VAT validation decisions (`provider.unavailable`, `vies.disabled`, `vies.unavailable`) after a configured age. Operator/manual decisions are not overwritten by the retry batch.
 - `Go-live readiness dry-run`: `scripts/check-go-live-readiness.ps1` aggregates the secret scan and provider smoke prerequisite checks without executing external provider calls.
 - `External smoke inputs`: `docs/external-smoke-inputs.md` lists the required non-committed provider smoke inputs and execution commands for Stripe, DHL, Brevo, and VIES.
@@ -66,4 +67,3 @@ These are blocked on external credentials, deployment choices, provider account 
 - Storefront payment completion remains verified-webhook-only.
 - No provider secrets belong in git, docs, logs, or test output.
 - Compliance planning decisions are summarized in `docs/compliance-decisions.md`.
-
