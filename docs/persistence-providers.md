@@ -35,21 +35,22 @@ Provider selection is normalized during startup. Empty or missing `Persistence:P
 
 PostgreSQL is the preferred local default.
 
-Start PostgreSQL and pgAdmin:
+Start PostgreSQL, SQL Server, and pgAdmin:
 
 ```powershell
-docker compose -f docker-compose.postgres.yml up -d
+docker compose -f docker-compose.databases.yml up -d
 ```
 
 Default local services:
 
 - PostgreSQL: `localhost:5432`
 - Database: `darwin_dev`
-- User: `darwin_app`
+- User: value from local `.env` (`DARWIN_POSTGRES_USER`)
+- SQL Server: `localhost,11433`
 - pgAdmin: `http://localhost:5050`
 - pgAdmin login: value from local `.env` (`DARWIN_PGADMIN_EMAIL`)
 
-The development connection string is named `ConnectionStrings:PostgreSql`.
+The development connection strings are named `ConnectionStrings:PostgreSql` and `ConnectionStrings:SqlServer`. Store local development values in `dotnet user-secrets` or user environment variables, not tracked `appsettings.Development.json` files.
 
 The PostgreSQL provider normalizes runtime and design-time Npgsql connection strings with conservative production-friendly defaults:
 
@@ -90,7 +91,7 @@ Set:
 }
 ```
 
-Use either `ConnectionStrings:SqlServer` or the legacy `ConnectionStrings:DefaultConnection`.
+Use either `ConnectionStrings:SqlServer` or the legacy `ConnectionStrings:DefaultConnection`. The local Docker SQL Server service maps container port `1433` to host port `11433`, so local connection strings should use `Server=localhost,11433` unless that mapping is changed.
 
 The SQL Server migration lane now lives in `Darwin.Infrastructure.SqlServer.Migrations`. The shared `Darwin.Infrastructure` project intentionally contains no provider-specific migrations or SQL Server registration.
 

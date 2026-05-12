@@ -1,27 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="HtmlSanitizer" Version="9.0.892" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.7" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Darwin.Domain\Darwin.Domain.csproj" />
     <ProjectReference Include="..\Darwin.Shared\Darwin.Shared.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Folder Include="Meta\Commands\" />
     <Folder Include="Meta\Validators\" />
@@ -30,5 +26,4 @@
     <Folder Include="x\Validators\" />
     <Folder Include="x\Queries\" />
   </ItemGroup>
-
 </Project>

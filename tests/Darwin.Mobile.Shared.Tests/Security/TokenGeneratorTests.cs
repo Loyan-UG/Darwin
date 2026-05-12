@@ -14,7 +14,7 @@ public sealed class TokenGeneratorTests
 
         token.Should().NotBeNullOrWhiteSpace();
         token.Length.Should().Be(22);
-        token.Should().NotContain('=');
+        token.Should().NotContain("=");
         token.Should().MatchRegex("^[A-Za-z0-9_-]+$");
     }
 
@@ -47,9 +47,9 @@ public sealed class TokenGeneratorTests
         var token = RandomTokenGenerator.UrlSafeToken();
 
         token.Should().NotBeNullOrWhiteSpace();
-        token.Should().NotContain('+');
-        token.Should().NotContain('/');
-        token.Should().NotContain('=');
+        token.Should().NotContain("+");
+        token.Should().NotContain("/");
+        token.Should().NotContain("=");
         token.Should().MatchRegex("^[A-Za-z0-9_-]+$");
     }
 

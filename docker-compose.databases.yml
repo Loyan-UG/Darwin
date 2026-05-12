@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: darwin-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DARWIN_POSTGRES_DB:?Set DARWIN_POSTGRES_DB in .env}
+      POSTGRES_USER: ${DARWIN_POSTGRES_USER:?Set DARWIN_POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${DARWIN_POSTGRES_PASSWORD:?Set DARWIN_POSTGRES_PASSWORD in .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - darwin-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: darwin-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${DARWIN_PGADMIN_EMAIL:?Set DARWIN_PGADMIN_EMAIL in .env}
+      PGADMIN_DEFAULT_PASSWORD: ${DARWIN_PGADMIN_PASSWORD:?Set DARWIN_PGADMIN_PASSWORD in .env}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - darwin-pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: darwin-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: ${DARWIN_MSSQL_SA_PASSWORD:?Set DARWIN_MSSQL_SA_PASSWORD in .env}
+    ports:
+      - "11433:1433"
+    volumes:
+      - darwin-sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  darwin-postgres-data:
+  darwin-pgadmin-data:
+  darwin-sqlserver-data:

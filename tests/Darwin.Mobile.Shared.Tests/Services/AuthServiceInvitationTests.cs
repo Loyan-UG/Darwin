@@ -193,7 +193,8 @@ public sealed class AuthServiceInvitationTests
                 AppRole = MobileAppRole.Business,
                 JwtAudience = string.Empty
             },
-            new FakeDeviceIdProvider());
+            new FakeDeviceIdProvider(),
+            TimeProvider.System);
     }
 
     private static string CreateBusinessJwt(Guid businessId)
