@@ -259,6 +259,67 @@ public sealed class SettingsHandlerTests
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
+    public async Task GetSiteSetting_Should_ReturnNull_WhenOnlySoftDeletedRowExists()
+    {
+        await using var db = SettingsTestDbContext.Create();
+        var entity = BuildSetting();
+        entity.IsDeleted = true;
+        db.Set<SiteSetting>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetSiteSettingHandler(db);
+        var result = await handler.HandleAsync(TestContext.Current.CancellationToken);
+
+        result.Should().BeNull("soft-deleted settings rows must not be returned");
+    }
+
+    [Fact]
+    public async Task GetSiteSetting_Should_SkipSoftDeletedRow_AndReturnActiveRow()
+    {
+        await using var db = SettingsTestDbContext.Create();
+
+        var deletedEntity = BuildSetting();
+        deletedEntity.Title = "Deleted Settings";
+        deletedEntity.IsDeleted = true;
+
+        var activeEntity = BuildSetting();
+        activeEntity.Title = "Active Settings";
+        activeEntity.IsDeleted = false;
+
+        db.Set<SiteSetting>().AddRange(deletedEntity, activeEntity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetSiteSettingHandler(db);
+        var result = await handler.HandleAsync(TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.Title.Should().Be("Active Settings",
+            "only the non-deleted row should be returned");
+    }
+
+    [Fact]
+    public async Task GetCultures_Should_ReturnDefaults_WhenOnlySoftDeletedRowsExist()
+    {
+        await using var db = SettingsTestDbContext.Create();
+
+        var entity = BuildSetting("fr-FR", "fr-FR,de-DE");
+        entity.IsDeleted = true;
+        db.Set<SiteSetting>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetCulturesHandler(db);
+        var (defaultCulture, supported) = await handler.HandleAsync(TestContext.Current.CancellationToken);
+
+        defaultCulture.Should().Be(SiteSettingDto.DefaultCultureDefault,
+            "the soft-deleted row should be ignored so defaults apply");
+        supported.Should().Contain(SiteSettingDto.DefaultCultureDefault);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // UpdateSiteSettingHandler
+    // ─────────────────────────────────────────────────────────────────────────
+
+    [Fact]
     public async Task UpdateSiteSetting_Should_Throw_ValidationException_When_Dto_Invalid()
     {
         await using var db = SettingsTestDbContext.Create();
