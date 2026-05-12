@@ -13419,6 +13419,21 @@
   <data name="BusinessOnboardingWizardRequiredProgress" xml:space="preserve">
     <value>Erforderliche Schritte abgeschlossen</value>
   </data>
+  <data name="BusinessOnboardingWizardTotalProgress" xml:space="preserve">
+    <value>Schritte insgesamt abgeschlossen</value>
+  </data>
+  <data name="BusinessOnboardingWizardResumeLabel" xml:space="preserve">
+    <value>Onboarding fortsetzen</value>
+  </data>
+  <data name="BusinessOnboardingWizardResumeAction" xml:space="preserve">
+    <value>Diesen Schritt fortsetzen</value>
+  </data>
+  <data name="BusinessOnboardingWizardResumeHere" xml:space="preserve">
+    <value>Hier fortsetzen</value>
+  </data>
+  <data name="BusinessOnboardingWizardNextBadge" xml:space="preserve">
+    <value>Nächster</value>
+  </data>
   <data name="BusinessOnboardingWizardStepNumber" xml:space="preserve">
     <value>Schritt {0}</value>
   </data>

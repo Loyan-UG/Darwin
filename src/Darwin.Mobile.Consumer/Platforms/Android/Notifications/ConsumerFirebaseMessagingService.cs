@@ -13,6 +13,12 @@ public sealed class ConsumerFirebaseMessagingService : FirebaseMessagingService
 {
     public override void OnNewToken(string? token)
     {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            PushTokenRuntimeState.SetPushToken(null);
+            return;
+        }
+
         base.OnNewToken(token);
 
         // Persist token updates immediately so registration coordinator can pick up changes.
