@@ -298,10 +298,10 @@ Provider smoke script dry-run behavior coverage was added on 2026-05-10:
 
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing" --no-restore /p:UseSharedCompilation=false`
 - 6 passed, 0 skipped
-- This executes the Stripe, Stripe webhook-forwarding preflight, DHL, Brevo, VIES, and object-storage smoke scripts with `DARWIN_*` inputs cleared in the child process and verifies each one blocks with exit code `2`, reports missing prerequisites, and avoids printing provider secret patterns.
+- This theory matrix executes the Stripe, Stripe webhook-forwarding preflight, DHL, Brevo, VIES, and object-storage smoke scripts with `DARWIN_*` inputs cleared in the child process and verifies each one blocks with exit code `2`, reports missing prerequisites, and avoids printing provider secret patterns. (The dedicated `ObjectStorageSmoke_Should_*` branch tests are tracked separately above.)
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_ReportReadyDryRunWithoutExecutingExternalCalls" --no-restore /p:UseSharedCompilation=false`
 - 6 passed, 0 skipped
-- This executes the same scripts with fake non-secret prerequisite values and no `-Execute` flag, verifies exit code `0`, and confirms the scripts only report readiness for an explicit operator-run execution instead of making external calls.
+- This theory matrix executes the same six scripts with fake non-secret prerequisite values and no `-Execute` flag, verifies exit code `0`, and confirms the scripts only report readiness for an explicit operator-run execution instead of making external calls. (The dedicated `ObjectStorageSmoke_Should_*` branch tests are tracked separately above.)
 
 Repository documentation and operational script source-contract coverage was added on 2026-05-10:
 
