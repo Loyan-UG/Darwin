@@ -345,7 +345,17 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .Should()
             .Contain("No secrets or response payloads will be printed.")
             .And.Contain("DARWIN_DHL_API_BASE_URL must be an absolute URL.")
-            .And.Contain("DARWIN_DHL_API_BASE_URL must use HTTPS for non-local endpoints.");
+            .And.Contain("DARWIN_DHL_API_BASE_URL must use HTTPS for non-local endpoints.")
+            .And.Contain("[switch]$IncludeReturn")
+            .And.Contain("[switch]$RequireRuntimePipeline")
+            .And.Contain("Assert-DhlRuntimePipelineReady")
+            .And.Contain("DHL runtime pipeline readiness is blocked.")
+            .And.Contain("DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED=true")
+            .And.Contain("DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED=true")
+            .And.Contain("DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED=true")
+            .And.Contain("DHL runtime pipeline readiness is confirmed.")
+            .And.Contain("if ($IncludeReturn)")
+            .And.Contain("return-shipment");
 
         ReadRepositoryFile(Path.Combine("scripts", "smoke-brevo-readiness.ps1"))
             .Should()
