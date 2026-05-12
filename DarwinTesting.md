@@ -412,6 +412,9 @@ These are important go-live validation tests but depend more on configured provi
 
 Run these after P0-P2 are stable or when a touched module makes them immediately relevant:
 
+- ✅ Add unit tests for Billing management query handlers covering `GetPaymentsPageHandler`, `GetPaymentOpsSummaryHandler`, and `GetPaymentForEditHandler` (20 tests in new `BillingManagementQueryHandlerTests.cs`).
+- ✅ Add unit tests for Billing refund query handlers covering `GetRefundsPageHandler` and `GetRefundOpsSummaryHandler` (18 tests in new `BillingRefundQueryHandlerTests.cs`).
+- ✅ Add unit tests for financial query handlers covering `GetFinancialAccountsPageHandler`, `GetFinancialAccountForEditHandler`, `GetExpensesPageHandler`, `GetExpenseForEditHandler`, `GetJournalEntriesPageHandler`, and `GetJournalEntryForEditHandler` (35 tests in new `BillingFinancialQueryHandlerTests.cs`).
 - Expand hosted WebAdmin onboarding, inventory/returns, row-version, concurrency, and localization regression matrices as those workflows continue to change.
 - Continue PostgreSQL/SQL Server provider-specific migration, search, JSON, `citext`, schema-placement, and concurrency tests from the persistence backlog below.
 - Raise WebAdmin CI coverage thresholds only after repeated green CI history.
@@ -829,3 +832,31 @@ dotnet test tests\Darwin.WebAdmin.Tests\Darwin.WebAdmin.Tests.csproj --filter "F
 ```
 
 Latest local result: `1` passed, `0` skipped, `1` total.
+
+## 2026-05-12 Billing Management, Refund, and Financial Query Handler Coverage
+
+Unit tests were added for the previously untested Billing management query handlers.
+
+**`BillingManagementQueryHandlerTests`** covers `GetPaymentsPageHandler` (empty state, soft-delete, business scoping, page normalisation, filters: Pending/Authorized, Failed, Refunded, Unlinked, ProviderLinked, Stripe, MissingProviderRef, FailedStripe, order-number enrichment, refund amount computation), `GetPaymentOpsSummaryHandler` (zero baseline, soft-delete exclusion, all status/provider groups, business scoping), and `GetPaymentForEditHandler` (not-found, soft-deleted, basic projection, order-number enrichment, refund history ordering, soft-deleted refund exclusion, IsStripe flag, customer display-name enrichment):
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingManagementQueryHandlerTests" --no-restore /p:UseSharedCompilation=false
+```
+
+Latest local result: `20` passed, `0` skipped, `20` total.
+
+**`BillingRefundQueryHandlerTests`** covers `GetRefundsPageHandler` (empty state, soft-delete, other-business exclusion, soft-deleted payment exclusion, page normalisation, filters: Pending/Completed/Failed/Stripe/NeedsSupport, order-number enrichment, payment-provider field mapping) and `GetRefundOpsSummaryHandler` (zero baseline, soft-delete exclusion, all status/provider counts, business scoping):
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingRefundQueryHandlerTests" --no-restore /p:UseSharedCompilation=false
+```
+
+Latest local result: `18` passed, `0` skipped, `18` total.
+
+**`BillingFinancialQueryHandlerTests`** covers `GetFinancialAccountsPageHandler` (empty state, soft-delete, other-business exclusion, type filter, page normalisation, summary counts), `GetFinancialAccountForEditHandler` (not-found, soft-deleted, correct projection), `GetExpensesPageHandler` (empty state, soft-delete, other-business exclusion, page normalisation, summary counts), `GetExpenseForEditHandler` (not-found, soft-deleted, correct projection), `GetJournalEntriesPageHandler` (empty state, soft-delete, other-business exclusion, Recent/MultiLine filters, line-count/totals projection excluding deleted lines, summary counts), and `GetJournalEntryForEditHandler` (not-found, soft-deleted, correct projection with lines, soft-deleted lines excluded):
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingFinancialQueryHandlerTests" --no-restore /p:UseSharedCompilation=false
+```
+
+Latest local result: `35` passed, `0` skipped, `35` total.
