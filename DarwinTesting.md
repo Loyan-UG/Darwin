@@ -279,6 +279,12 @@ P0 Stripe subscription checkout and reconciliation tests were added on 2026-05-1
   - 19 passed — covers `GetBusinessSubscriptionsPageHandler` (empty state, soft-delete exclusion, page/pageSize normalization, all queue filters: `Active`/`Trialing`/`PastDue`/`Canceled`/`Stripe`/`MissingProviderReference`/`CancelAtPeriodEnd`, business name/email/plan enrichment, `ProviderReferenceState` computation for `Stripe subscription ref missing`, `Active on provider`, `Cancel at period end`) and `GetBusinessSubscriptionOpsSummaryHandler` (zero counts, soft-delete exclusion, all status/provider group counts).
 - Source-contract test `BillingController_Should_Not_ActivateSubscription_On_ReturnUrl_Only_Via_Webhook` added to `SecurityAndPerformanceApiAndInfrastructureSourceTests` — proves `BillingController` has no subscription-success endpoint and no direct `Status = SubscriptionStatus.Active/Trialing` writes; Stripe webhooks are routed through `ProviderCallbackInboxWriter` with mandatory `_signatureVerifier.TryVerify` before processing; `ProcessStripeWebhookHandler` contains the `checkout.session.completed` handler that applies subscription activation.
 
+P2 object-storage smoke prerequisite branch coverage was added on 2026-05-12:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ObjectStorageSmoke_Should" --no-restore`
+  - 3 passed, 0 skipped
+  - This now covers `scripts/smoke-object-storage.ps1` dry-run branch behavior for unsupported provider rejection, S3 endpoint/region prerequisite enforcement, and Azure managed-identity readiness without a connection string.
+
 Go-live readiness dry-run behavior coverage was added on 2026-05-10:
 
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GoLiveReadinessScript_Should_RunDryRunAndAvoidSecretOutput" --no-restore /p:UseSharedCompilation=false`
@@ -291,11 +297,11 @@ Go-live readiness dry-run behavior coverage was added on 2026-05-10:
 Provider smoke script dry-run behavior coverage was added on 2026-05-10:
 
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing" --no-restore /p:UseSharedCompilation=false`
-- 4 passed, 0 skipped
-- This executes the Stripe, DHL, Brevo, and VIES smoke scripts with `DARWIN_*` inputs cleared in the child process and verifies each one blocks with exit code `2`, reports missing prerequisites, and avoids printing provider secret patterns.
+- 6 passed, 0 skipped
+- This theory matrix executes the Stripe, Stripe webhook-forwarding preflight, DHL, Brevo, VIES, and object-storage smoke scripts with `DARWIN_*` inputs cleared in the child process and verifies each one blocks with exit code `2`, reports missing prerequisites, and avoids printing provider secret patterns. (The dedicated `ObjectStorageSmoke_Should_*` branch tests are tracked separately above.)
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_ReportReadyDryRunWithoutExecutingExternalCalls" --no-restore /p:UseSharedCompilation=false`
-- 4 passed, 0 skipped
-- This executes the same scripts with fake non-secret prerequisite values and no `-Execute` flag, verifies exit code `0`, and confirms the scripts only report readiness for an explicit operator-run execution instead of making external calls.
+- 6 passed, 0 skipped
+- This theory matrix executes the same six scripts with fake non-secret prerequisite values and no `-Execute` flag, verifies exit code `0`, and confirms the scripts only report readiness for an explicit operator-run execution instead of making external calls. (The dedicated `ObjectStorageSmoke_Should_*` branch tests are tracked separately above.)
 
 Repository documentation and operational script source-contract coverage was added on 2026-05-10:
 
@@ -403,7 +409,7 @@ These tests should follow P0 because they validate operator recovery and externa
 
 These are important go-live validation tests but depend more on configured providers or selected tooling:
 
-- Add external smoke coverage or documented operator-run evidence for MinIO/S3-compatible invoice archive storage, including save/read/metadata, profile container/prefix behavior, versioning/object-lock validation where required, and no secret output.
+- ✅ Extend object-storage smoke-script dry-run branch tests for provider-specific prerequisites and secure readiness paths (`ObjectStorageSmoke_Should_*` in `SecurityAndPerformanceContractsAndPackagingSourceTests` now covers unsupported provider blocking, S3 endpoint/region requirement enforcement, and Azure managed-identity readiness without connection string). External operator-run evidence for target MinIO/S3-compatible deployment still remains a go-live activity.
 - Add DHL live-smoke tests or operator-run evidence for shipment creation, label retrieval/storage through the configured storage profile, tracking reference persistence, callback processing, failed/stuck operation retry, and carrier exception visibility.
 - Add Brevo production-readiness smoke evidence for sandbox send, controlled inbox send, transactional webhook subscription, callback inbox persistence, and worker processing.
 - Add e-invoice tests only after the generator/tooling decision is made: structured invoice model mapping, ZUGFeRD/Factur-X artifact generation, validation, WebAdmin download, and later XRechnung export.
