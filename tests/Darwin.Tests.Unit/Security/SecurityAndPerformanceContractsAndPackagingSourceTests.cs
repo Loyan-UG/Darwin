@@ -682,6 +682,132 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         secretPattern.IsMatch(output).Should().BeFalse("subscription checkout dry-run output must not print provider secrets");
     }
 
+    [Fact]
+    public async Task ObjectStorageSmoke_Should_BlockWhenProviderNameIsUnsupported()
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-object-storage.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_PROVIDER"] = "Unsupported";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-object-storage.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Object storage smoke is blocked. Provider must be S3Compatible, AzureBlob, or FileSystem.");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Fact]
+    public async Task ObjectStorageSmoke_Should_BlockS3DryRunWhenEndpointAndRegionAreBothMissing()
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-object-storage.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_PROVIDER"] = "S3Compatible";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_S3_BUCKET"] = "smoke-bucket";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_S3_ACCESS_KEY"] = "smoke-access";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_S3_SECRET_KEY"] = "smoke-secret";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-object-storage.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Object storage smoke is blocked. Configure these environment variables first:");
+        output.Should().Contain("DARWIN_OBJECT_STORAGE_S3_ENDPOINT_OR_REGION");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Fact]
+    public async Task ObjectStorageSmoke_Should_ReportReadyForAzureManagedIdentityWithoutConnectionString()
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-object-storage.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_PROVIDER"] = "AzureBlob";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_AZURE_CONTAINER"] = "smoke-azure";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_AZURE_ACCOUNT_NAME"] = "storageaccount";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_AZURE_USE_MANAGED_IDENTITY"] = "true";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-object-storage.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(0);
+        output.Should().Contain("Object storage smoke configuration is present for provider 'AzureBlob'.");
+        output.Should().Contain("Run with -Execute");
+        output.Should().NotContain("blocked");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
     public static IEnumerable<object[]> ProviderSmokeScriptReadyDryRunCases()
     {
         yield return new object[]
