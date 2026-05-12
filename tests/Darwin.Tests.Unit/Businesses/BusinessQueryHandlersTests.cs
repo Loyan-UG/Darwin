@@ -292,6 +292,70 @@ public sealed class BusinessQueryHandlersTests
     }
 
     [Fact]
+    public async Task GetBusinessPublicDetail_Should_UseAdminTextOverride_WhenRequestedCultureMatches()
+    {
+        await using var db = BusinessQueryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+
+        const string overrides = """{"de-DE":{"PublicBusinessName":"Café Aurora (DE)","PublicBusinessShortDescription":"Gemütliches Café"}}""";
+
+        var business = new Business
+        {
+            Id = businessId,
+            Name = "Cafe Aurora Original",
+            ShortDescription = "Original description",
+            AdminTextOverridesJson = overrides,
+            IsActive = true,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            DefaultTimeZoneId = "Europe/Berlin",
+            RowVersion = [1]
+        };
+        business.OperationalStatus = BusinessOperationalStatus.Approved;
+        db.Set<Business>().Add(business);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessPublicDetailHandler(db);
+        var result = await handler.HandleAsync(businessId, "de-DE", TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("Café Aurora (DE)", "the de-DE admin text override must replace the original name");
+        result.ShortDescription.Should().Be("Gemütliches Café", "the de-DE short-description override must replace the original");
+    }
+
+    [Fact]
+    public async Task GetBusinessPublicDetail_Should_UseOriginalName_WhenNoOverrideMatchesCulture()
+    {
+        await using var db = BusinessQueryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+
+        const string overrides = """{"fr-FR":{"PublicBusinessName":"Café Aurora (FR)"}}""";
+
+        var business = new Business
+        {
+            Id = businessId,
+            Name = "Cafe Aurora Original",
+            AdminTextOverridesJson = overrides,
+            IsActive = true,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            DefaultTimeZoneId = "Europe/Berlin",
+            RowVersion = [1]
+        };
+        business.OperationalStatus = BusinessOperationalStatus.Approved;
+        db.Set<Business>().Add(business);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessPublicDetailHandler(db);
+        // Requesting en-US; fr-FR override exists but is not in the fallback cascade
+        var result = await handler.HandleAsync(businessId, "en-US", TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("Cafe Aurora Original",
+            "fr-FR is not in the fallback chain for en-US so the original name is used");
+    }
+
+    [Fact]
     public async Task GetBusinessesForDiscovery_Should_FilterOutActiveButUnapprovedBusinesses()
     {
         await using var db = BusinessQueryTestDbContext.Create();
