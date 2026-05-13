@@ -379,6 +379,21 @@ Running the full `Darwin.WebApi.Tests` suite in the current branch still shows f
 
 When adding or refactoring Webhook-related behavior, prefer adding/adjusting tests in this subset before widening to broader suites.
 
+New unit tests added on 2026-05-13:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingManagementCommandHandlerTests" --no-build`
+  - 52 passed — covers `BillingStatusTransitionPolicy` (allowed/forbidden/same-status transitions), `CreatePaymentHandler` (validation, persistence, currency normalization), `UpdatePaymentHandler` (not-found, empty RowVersion, stale RowVersion, forbidden-transition, success), `CreateFinancialAccountHandler`/`UpdateFinancialAccountHandler` (RowVersion guards, persistence, trimming), `CreateExpenseHandler`/`UpdateExpenseHandler` (RowVersion guards, persistence), `CreateJournalEntryHandler` (empty lines, unbalanced lines, persistence with lines), `UpdateJournalEntryHandler` (not-found, stale RowVersion, line replacement).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~OrderBillingHandlerTests" --no-build`
+  - 14 passed (7 new) — adds payment-creation Refunded/Voided rejection, PaidAtUtc-on-Captured, early-order-to-Paid advancement, currency-mismatch rejection, refund rejection for Pending/Failed payments.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BusinessCreateUpdateHandlersTests" --no-build`
+  - 9 passed (5 new) — adds UpdateBusiness not-found, empty-RowVersion, stale-RowVersion, field trimming, and whitespace-only null normalization.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BusinessLifecycleHandlersTests" --no-build`
+  - 19 passed (14 new) — adds lifecycle transition boundary tests (Approve only from PendingApproval, Suspend only from Approved, Reactivate only from Suspended) plus RowVersion guards for each lifecycle action.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BusinessMediaHandlerTests" --no-build`
+  - 12 passed — covers `UpdateBusinessMediaHandler` (not-found, empty/stale RowVersion, persistence with trimming, whitespace-only caption nullification) and `DeleteBusinessMediaHandler` (empty-Id/empty-RowVersion/not-found failure paths, successful delete via dto and id overloads, silent no-op on missing id).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CrmPipelineLifecycleHandlerTests" --no-build`
+  - 28 passed — covers `UpdateLeadLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, unsupported action, valid QUALIFY/DISQUALIFY/REOPEN transitions incl. case-insensitive, converted-lead blocking) and `UpdateOpportunityLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, ClosedWon/ClosedLost ADVANCE rejection, stage transitions for all ADVANCE steps, CLOSEWON/CLOSELOST/REOPEN paths, close-date defaulting and existing-date preservation, unsupported action rejection).
+
 ---
 
 ## 5.5 Prioritized Test Queue For The Next Implementation Pass
@@ -421,6 +436,12 @@ Run these after P0-P2 are stable or when a touched module makes them immediately
 - ✅ Add unit tests for Billing management query handlers covering `GetPaymentsPageHandler`, `GetPaymentOpsSummaryHandler`, and `GetPaymentForEditHandler` (20 tests in new `BillingManagementQueryHandlerTests.cs`).
 - ✅ Add unit tests for Billing refund query handlers covering `GetRefundsPageHandler` and `GetRefundOpsSummaryHandler` (18 tests in new `BillingRefundQueryHandlerTests.cs`).
 - ✅ Add unit tests for financial query handlers covering `GetFinancialAccountsPageHandler`, `GetFinancialAccountForEditHandler`, `GetExpensesPageHandler`, `GetExpenseForEditHandler`, `GetJournalEntriesPageHandler`, and `GetJournalEntryForEditHandler` (35 tests in new `BillingFinancialQueryHandlerTests.cs`).
+- ✅ Add Billing management command handler tests covering `BillingStatusTransitionPolicy` allowed/forbidden/same-status transitions, `CreatePaymentHandler` validation/persistence/currency normalization, `UpdatePaymentHandler` not-found/empty-RowVersion/stale-RowVersion/forbidden-transition/success, `CreateFinancialAccountHandler`/`UpdateFinancialAccountHandler`/`CreateExpenseHandler`/`UpdateExpenseHandler`/`CreateJournalEntryHandler`/`UpdateJournalEntryHandler` coverage with RowVersion guards and validation (52 tests in new `BillingManagementCommandHandlerTests.cs`).
+- ✅ Add order billing boundary tests proving payments cannot be created as Refunded/Voided, PaidAtUtc is set for Captured payments, early-stage orders advance to Paid on Captured payments, currency mismatch rejection, and refunds are only allowed for Captured/Completed payments (7 new tests added to `OrderBillingHandlerTests.cs`).
+- ✅ Add UpdateBusiness RowVersion coverage proving not-found, empty RowVersion, stale RowVersion errors, plus field trimming and whitespace-only null normalization (5 tests added to `BusinessCreateUpdateHandlersTests.cs`).
+- ✅ Add Business lifecycle transition boundary tests proving approval only applies from PendingApproval, suspension only from Approved, reactivation only from Suspended, plus RowVersion guards for each lifecycle action (14 tests added to `BusinessLifecycleHandlersTests.cs`).
+- ✅ Add Business media handler tests covering `UpdateBusinessMediaHandler` not-found, empty/stale RowVersion, persistence with trimming, whitespace-only caption nullification, and `DeleteBusinessMediaHandler` empty-Id/empty-RowVersion/not-found failure paths, successful delete (dto and id overloads), and silent no-op on missing id (12 tests in new `BusinessMediaHandlerTests.cs`).
+- ✅ Add CRM pipeline lifecycle handler tests covering `UpdateLeadLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, unsupported action, valid transitions, converted lead blocking) and `UpdateOpportunityLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, ClosedWon/ClosedLost advance rejection, stage transitions including ADVANCE/CLOSEWON/CLOSELOST/REOPEN, close-date defaulting and preservation) (28 tests in new `CrmPipelineLifecycleHandlerTests.cs`).
 - Expand hosted WebAdmin onboarding, inventory/returns, row-version, concurrency, and localization regression matrices as those workflows continue to change.
 - Continue PostgreSQL/SQL Server provider-specific migration, search, JSON, `citext`, schema-placement, and concurrency tests from the persistence backlog below.
 - Raise WebAdmin CI coverage thresholds only after repeated green CI history.
