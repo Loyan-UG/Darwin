@@ -56,7 +56,7 @@ These outputs are useful operational artifacts, but they are not full e-invoice 
 
 Near-term implementation design:
 
-- Choose library/tooling for ZUGFeRD/Factur-X XML generation, PDF/A-3 embedding, and validation.
+- Pin and package the selected Mustangproject CLI external-command path for ZUGFeRD/Factur-X XML generation, PDF/A-3 embedding, and validation.
 - Extend the existing immutable issued-snapshot to structured source-model mapping and readiness validation into the selected e-invoice format model.
 - Replace the default `NotConfigured` e-invoice generator with a selected, validated generator implementation.
 - Validate structured data before exposing the artifact.
@@ -66,8 +66,8 @@ Near-term implementation design:
 
 Open decision:
 
-- The ZUGFeRD/Factur-X library/tooling decision is still open.
-- See `docs/e-invoice-tooling-decision.md` for the selection criteria and implementation requirements.
+- The first ZUGFeRD/Factur-X tooling path is selected as Mustangproject CLI through the existing external-command adapter, but generation is not production-ready until a pinned artifact, wrapper, validation-report parsing, deterministic fixtures, and deployment smoke are complete.
+- See `docs/e-invoice-tooling-decision.md` for the selected path, retained alternatives, and implementation requirements.
 
 ## Invoice Archive Storage
 

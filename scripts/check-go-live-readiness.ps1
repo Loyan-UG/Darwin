@@ -28,7 +28,8 @@ $checks = @(
     @{ Name = "VIES live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-vies-live.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-object-storage.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage MediaAssets profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "MediaAssets" -ContainerName $env:DARWIN_OBJECT_STORAGE_MEDIA_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_MEDIA_PREFIX; ExpectedBlockedExitCode = 2 },
-    @{ Name = "Object storage ShipmentLabels profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "ShipmentLabels" -ContainerName $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_PREFIX; ExpectedBlockedExitCode = 2 }
+    @{ Name = "Object storage ShipmentLabels profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "ShipmentLabels" -ContainerName $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_PREFIX; ExpectedBlockedExitCode = 2 },
+    @{ Name = "E-invoice external-command smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-einvoice-external-command.ps1"); ExpectedBlockedExitCode = 2 }
 )
 
 $results = New-Object System.Collections.Generic.List[object]
