@@ -1,6 +1,7 @@
 using Darwin.Application;
 using Darwin.Application.Abstractions.Payments;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
@@ -10,6 +11,7 @@ using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -431,6 +433,266 @@ public sealed class OrderBillingHandlerTests
         var refund = await db.Set<Refund>().SingleAsync(x => x.PaymentId == paymentId, TestContext.Current.CancellationToken);
         refund.Status.Should().Be(RefundStatus.Completed,
             "Stripe payments without a provider reference are completed locally");
+    }
+
+    // ─── AddPaymentHandler ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AddPaymentHandler_Should_Throw_WhenStatusIsRefunded()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-PAY-001",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 3000,
+            SubtotalNetMinor = 2521,
+            TaxTotalMinor = 479,
+            Status = OrderStatus.Created
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var clock = new FixedClock(new DateTime(2026, 5, 1, 12, 0, 0, DateTimeKind.Utc));
+        var handler = new AddPaymentHandler(db, clock, new PaymentCreateValidator(), new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new PaymentCreateDto
+        {
+            OrderId = orderId,
+            Provider = "Stripe",
+            ProviderReference = "ch_refunded",
+            AmountMinor = 3000,
+            Currency = "EUR",
+            Status = PaymentStatus.Refunded
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("Refunded status must be rejected at payment creation");
+    }
+
+    [Fact]
+    public async Task AddPaymentHandler_Should_Throw_WhenStatusIsVoided()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-PAY-002",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 1500,
+            SubtotalNetMinor = 1261,
+            TaxTotalMinor = 239,
+            Status = OrderStatus.Created
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var clock = new FixedClock(new DateTime(2026, 5, 1, 12, 0, 0, DateTimeKind.Utc));
+        var handler = new AddPaymentHandler(db, clock, new PaymentCreateValidator(), new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new PaymentCreateDto
+        {
+            OrderId = orderId,
+            Provider = "Stripe",
+            ProviderReference = "ch_voided",
+            AmountMinor = 1500,
+            Currency = "EUR",
+            Status = PaymentStatus.Voided
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("Voided status must be rejected at payment creation");
+    }
+
+    [Fact]
+    public async Task AddPaymentHandler_Should_SetPaidAtUtc_WhenStatusIsCaptured()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-PAY-003",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 2000,
+            SubtotalNetMinor = 1681,
+            TaxTotalMinor = 319,
+            Status = OrderStatus.Confirmed
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var now = new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc);
+        var clock = new FixedClock(now);
+        var handler = new AddPaymentHandler(db, clock, new PaymentCreateValidator(), new TestStringLocalizer());
+
+        await handler.HandleAsync(new PaymentCreateDto
+        {
+            OrderId = orderId,
+            Provider = "Stripe",
+            ProviderReference = "ch_captured",
+            AmountMinor = 2000,
+            Currency = "EUR",
+            Status = PaymentStatus.Captured
+        }, TestContext.Current.CancellationToken);
+
+        var payment = await db.Set<Payment>().SingleAsync(x => x.OrderId == orderId, TestContext.Current.CancellationToken);
+        payment.PaidAtUtc.Should().Be(now, "Captured payment must have PaidAtUtc set to clock.UtcNow");
+    }
+
+    [Fact]
+    public async Task AddPaymentHandler_Should_AdvanceOrderToPaid_WhenCapturedAndOrderIsEarlyStage()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-PAY-004",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 1000,
+            SubtotalNetMinor = 840,
+            TaxTotalMinor = 160,
+            Status = OrderStatus.Confirmed
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var clock = new FixedClock(new DateTime(2026, 5, 1, 12, 0, 0, DateTimeKind.Utc));
+        var handler = new AddPaymentHandler(db, clock, new PaymentCreateValidator(), new TestStringLocalizer());
+
+        await handler.HandleAsync(new PaymentCreateDto
+        {
+            OrderId = orderId,
+            Provider = "Stripe",
+            ProviderReference = "ch_advance",
+            AmountMinor = 1000,
+            Currency = "EUR",
+            Status = PaymentStatus.Captured
+        }, TestContext.Current.CancellationToken);
+
+        var order = await db.Set<Order>().SingleAsync(x => x.Id == orderId, TestContext.Current.CancellationToken);
+        order.Status.Should().Be(OrderStatus.Paid, "a Captured payment on a Confirmed order must advance it to Paid");
+    }
+
+    [Fact]
+    public async Task AddPaymentHandler_Should_Throw_WhenCurrencyDoesNotMatchOrder()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-PAY-005",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 5000,
+            SubtotalNetMinor = 4202,
+            TaxTotalMinor = 798,
+            Status = OrderStatus.Created
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var clock = new FixedClock(new DateTime(2026, 5, 1, 12, 0, 0, DateTimeKind.Utc));
+        var handler = new AddPaymentHandler(db, clock, new PaymentCreateValidator(), new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new PaymentCreateDto
+        {
+            OrderId = orderId,
+            Provider = "Stripe",
+            ProviderReference = "ch_currency_mismatch",
+            AmountMinor = 5000,
+            Currency = "USD",   // mismatches order currency EUR
+            Status = PaymentStatus.Pending
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("currency mismatch with order must be rejected");
+    }
+
+    [Fact]
+    public async Task AddRefundHandler_Should_Throw_WhenPaymentStatusIsPending()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-REF-PENDING",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 2000,
+            SubtotalNetMinor = 1681,
+            TaxTotalMinor = 319,
+            Status = OrderStatus.Created
+        });
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            OrderId = orderId,
+            AmountMinor = 2000,
+            Currency = "EUR",
+            Status = PaymentStatus.Pending,  // not yet captured
+            Provider = "Stripe"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new AddRefundHandler(db, new RefundCreateValidator(), new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new RefundCreateDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId,
+            AmountMinor = 2000,
+            Currency = "EUR",
+            Reason = "Early refund"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("refund must be rejected for non-Captured/non-Completed payment");
+    }
+
+    [Fact]
+    public async Task AddRefundHandler_Should_Throw_WhenPaymentStatusIsFailed()
+    {
+        await using var db = OrderBillingTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-REF-FAILED",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 1500,
+            SubtotalNetMinor = 1261,
+            TaxTotalMinor = 239,
+            Status = OrderStatus.Created
+        });
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            OrderId = orderId,
+            AmountMinor = 1500,
+            Currency = "EUR",
+            Status = PaymentStatus.Failed,
+            Provider = "Stripe"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new AddRefundHandler(db, new RefundCreateValidator(), new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new RefundCreateDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId,
+            AmountMinor = 1500,
+            Currency = "EUR",
+            Reason = "Error refund"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("refund must be rejected for Failed payment");
+    }
+
+    private sealed class FixedClock : IClock
+    {
+        public FixedClock(DateTime utcNow) => UtcNow = utcNow;
+        public DateTime UtcNow { get; }
     }
 
     private sealed class FakeRefundProviderClient : IRefundProviderClient
