@@ -394,6 +394,23 @@ New unit tests added on 2026-05-13:
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CrmPipelineLifecycleHandlerTests" --no-build`
   - 28 passed — covers `UpdateLeadLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, unsupported action, valid QUALIFY/DISQUALIFY/REOPEN transitions incl. case-insensitive, converted-lead blocking) and `UpdateOpportunityLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, ClosedWon/ClosedLost ADVANCE rejection, stage transitions for all ADVANCE steps, CLOSEWON/CLOSELOST/REOPEN paths, close-date defaulting and existing-date preservation, unsupported action rejection).
 
+New unit tests added on 2026-05-13 (this session):
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ExpireLoyaltyScanSessionHandlerTests" --no-build`
+  - 18 passed — new file covers `ExpireLoyaltyScanSessionHandler` (empty session Id, session not found, session already completed, session already failed, session already expired, valid expiry updates status and expiredAt, RowVersion mismatch rejection, null RowVersion rejection, DbUpdateConcurrencyException converted to safe error, successful expiry sets ExpiredAtUtc) and `BatchExpireLoyaltyScanSessionHandler` (empty batch produces no results, expired sessions skipped, non-pending sessions skipped, multiple valid expirations in single batch).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~LoyaltyScanSessionQueryHandlerTests" --no-build`
+  - 16 passed — new file covers `GetRecentLoyaltyScanSessionsPageHandler` (empty result, soft-delete exclusion, business scoping, user scoping, date range filtering, status filtering, page/pageSize normalization, summary counts with clock-based cutoffs).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~QueryLikePatternTests" --no-build`
+  - 13 passed — new file covers `QueryLikePattern.Contains()` and `QueryLikePattern.Escape()`: plain terms, terms with SQL wildcards (%, _), terms with backslash, empty terms, whitespace-only terms, terms with brackets, long terms, and EscapeCharacter contract.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderCallbackInboxHandlerTests" --no-build`
+  - 22 passed — new file covers `GetProviderCallbackInboxPageHandler`: empty result, soft-delete exclusion, page normalization, provider/status/failedOnly/stalePendingOnly/deliveryFailureOnly filters, Succeeded→Processed normalization, filter 'Processed' includes 'Succeeded', summary counts (total/pending/failed/processed/retried/brevo breakdown), distinct providers list ordered alphabetically, Stripe/Brevo/DHL/invalid-JSON/empty payload preview building, email masking in Brevo previews, AgeMinutes calculation, and IsStalePending flag logic (pending+old=true, pending+recent=false, failed+old=false).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CustomerLeadHandlerTests" --no-build`
+  - extended (+3 tests): `UpdateCustomer_Should_Throw_WhenRowVersionIsEmpty` (ValidationException), `UpdateLead_Should_Throw_WhenRowVersionIsEmpty` (ValidationException), `UpdateLead_Should_Throw_WhenRowVersionIsNull` (ValidationException).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~OpportunityHandlerTests" --no-build`
+  - extended (+1 test): `UpdateOpportunity_Should_Throw_WhenRowVersionIsEmpty` (ValidationException — validator NotEmpty guard fires before handler concurrency check).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CrmEngagementHandlersTests" --no-build`
+  - extended (+1 test): `UpdateCustomerSegment_Should_Throw_WhenRowVersionIsEmpty` (DbUpdateConcurrencyException — CustomerSegmentEditValidator does not validate RowVersion so the handler's own concurrency check fires).
+
 ---
 
 ## 5.5 Prioritized Test Queue For The Next Implementation Pass
