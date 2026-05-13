@@ -240,11 +240,11 @@ Latest known-good signal for the recently expanded Webhook/reader/writer tests i
 `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ShipmentCarrierEventHandlerTests"`  
   - 100 passed (as of 2026-05-08 after adding delivered exception-field merge-on-duplicate dedupe coverage)
 
-Provider smoke harness source-contract coverage was added on 2026-05-10:
+Provider smoke harness source-contract coverage was added on 2026-05-10 and extended for the e-invoice external-command adapter on 2026-05-13:
 
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_StayGuardedAndAvoidSecretOutput" --no-restore /p:UseSharedCompilation=false`
 - 1 passed, 0 skipped
-- This guards the Stripe, DHL, VIES, Brevo, go-live readiness smoke scripts, and `docs/external-smoke-inputs.md` so external calls stay opt-in behind `-Execute`, known secret patterns are not committed, and raw provider response payloads are not printed.
+- This guards the Stripe, DHL, VIES, Brevo, object-storage, e-invoice external-command, go-live readiness smoke scripts, and `docs/external-smoke-inputs.md` so external calls stay opt-in behind `-Execute`, known secret patterns are not committed, and raw provider response payloads are not printed.
 - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1` was dry-run locally on 2026-05-10. It reported the secret scan as ready, external Stripe, DHL, Brevo, and VIES smoke prerequisites as blocked by missing account/deployment inputs, and archive/e-invoice provider decisions as blocked until selected.
 - `scripts\smoke-stripe-testmode.ps1 -Execute -CheckReturnRoute` passed locally on 2026-05-10 against an isolated WebApi instance after test Stripe settings were entered. It created a Stripe-hosted Checkout Session and confirmed the storefront return route left the payment `Pending`; hosted checkout payment and verified webhook processing remain pending.
 - `scripts\smoke-stripe-testmode.ps1 -CheckBusinessSubscriptionCheckout` dry-run passed on 2026-05-10 with non-secret placeholder inputs. The execute path requires `DARWIN_BUSINESS_API_BEARER_TOKEN` and `DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID`, creates a Stripe-hosted business subscription Checkout Session through WebApi, and redacts session/provider references from output.
@@ -290,9 +290,9 @@ Go-live readiness dry-run behavior coverage was added on 2026-05-10:
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GoLiveReadinessScript_Should_RunDryRunAndAvoidSecretOutput" --no-restore /p:UseSharedCompilation=false`
 - 1 passed, 0 skipped
 - This executes `scripts/check-go-live-readiness.ps1` in dry-run mode, accepts ready or blocked prerequisites, verifies the expected provider prerequisite sections are reported, and guards against printing Stripe/Brevo/DHL/VIES secret patterns.
-- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GoLiveReadinessScript_Should_ReportProviderReadyAndKeepOpenDecisionsBlocked" --no-restore /p:UseSharedCompilation=false`
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~GoLiveReadinessScript_Should_ReportProviderReadyAndSelectedDecisionsReady" --no-restore /p:UseSharedCompilation=false`
 - 1 passed, 0 skipped
-- This executes the same readiness aggregator with fake non-secret provider prerequisites present and verifies Stripe, DHL, Brevo, and VIES report `Ready` while the archive object-storage and e-invoice tooling deployment decisions remain `Blocked`.
+- This executes the same readiness aggregator with fake non-secret provider prerequisites present and verifies Stripe, DHL, Brevo, VIES, object-storage smoke, archive object-storage decision, and the selected Mustangproject e-invoice tooling decision report `Ready`.
 
 Provider smoke script dry-run behavior coverage was added on 2026-05-10:
 
@@ -301,7 +301,7 @@ Provider smoke script dry-run behavior coverage was added on 2026-05-10:
 - This theory matrix executes the Stripe, Stripe webhook-forwarding preflight, DHL, Brevo, VIES, and object-storage smoke scripts with `DARWIN_*` inputs cleared in the child process and verifies each one blocks with exit code `2`, reports missing prerequisites, and avoids printing provider secret patterns. (The dedicated `ObjectStorageSmoke_Should_*` branch tests are tracked separately above.)
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderSmokeScripts_Should_ReportReadyDryRunWithoutExecutingExternalCalls" --no-restore /p:UseSharedCompilation=false`
 - 6 passed, 0 skipped
-- This theory matrix executes the same six scripts with fake non-secret prerequisite values and no `-Execute` flag, verifies exit code `0`, and confirms the scripts only report readiness for an explicit operator-run execution instead of making external calls. (The dedicated `ObjectStorageSmoke_Should_*` branch tests are tracked separately above.)
+- This theory matrix executes the same guarded scripts with fake non-secret prerequisite values and no `-Execute` flag, verifies exit code `0`, and confirms the scripts only report readiness for an explicit operator-run execution instead of making external calls. (The dedicated `ObjectStorageSmoke_Should_*` branch tests are tracked separately above.)
 
 Repository documentation and operational script source-contract coverage was added on 2026-05-10:
 
@@ -341,12 +341,19 @@ E-invoice generation boundary coverage was added on 2026-05-10:
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EInvoiceGenerationServiceTests" /p:UseSharedCompilation=false /m:1 /nr:false`
 - 3 passed, 0 skipped
 - This proves the default `IEInvoiceGenerationService` registration is provider-neutral and `NotConfigured`, rejects unknown formats, and does not generate fake legal e-invoice artifacts before tooling is selected.
+- The guarded external-command adapter smoke harness was added on 2026-05-13 at `scripts\smoke-einvoice-external-command.ps1`. It is included in the go-live readiness dry-run and remains blocked until `DARWIN_EINVOICE_COMMAND_PATH` points to a deployment-approved generator wrapper. A passed execute smoke only proves Darwin can call the wrapper and artifact-shape checks pass; it does not prove ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation.
+- The focused smoke/source-contract run now covers blocked prerequisites, ready dry-run, invalid path/format blocking, and local-wrapper execute behavior for both `ZugferdFacturX` PDF shape and `XRechnung` XML shape:
+  - `dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~EInvoiceExternalCommandSmoke_Should|FullyQualifiedName~ProviderSmokeScripts_Should|FullyQualifiedName~GoLiveReadinessScript_Should|FullyQualifiedName~EInvoiceDocs_Should" --no-restore /p:UseSharedCompilation=false`
+  - 23 passed, 0 skipped
 
 E-invoice artifact handler coverage was added on 2026-05-10:
 
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~GenerateInvoiceEInvoiceArtifactHandlerTests" /p:UseSharedCompilation=false /m:1 /nr:false`
 - 4 passed, 0 skipped
 - This proves the artifact generation handler requires an available issued invoice snapshot, does not call the generator for missing/purged source data, passes valid requests to the configured generator, and rejects generated artifacts whose invoice id or required metadata do not match the request.
+- Infrastructure external-command coverage now also proves the command adapter passes the expected `--format` value to deployment-approved wrappers:
+  - `dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~ExternalCommandEInvoiceGenerationServiceTests|FullyQualifiedName~Compliance|FullyQualifiedName~Storage|FullyQualifiedName~Archive" --no-restore /p:UseSharedCompilation=false`
+  - 33 passed, 0 skipped
 
 WebAdmin e-invoice artifact endpoint source-contract coverage was added on 2026-05-10:
 
