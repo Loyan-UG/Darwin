@@ -10,6 +10,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -172,6 +173,134 @@ public sealed class BusinessCreateUpdateHandlersTests
         persisted.CustomerEmailNotificationsEnabled.Should().BeTrue();
         persisted.CustomerMarketingEmailsEnabled.Should().BeTrue();
         persisted.OperationalAlertEmailsEnabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UpdateBusiness_Should_Throw_WhenNotFound()
+    {
+        await using var db = BusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator(localizer), localizer);
+
+        var act = () => handler.HandleAsync(new BusinessEditDto
+        {
+            Id = Guid.NewGuid(),
+            RowVersion = [1],
+            Name = "Ghost",
+            DefaultCurrency = "EUR",
+            DefaultCulture = "en-US",
+            DefaultTimeZoneId = "UTC"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>("non-existent business must raise not-found");
+    }
+
+    [Fact]
+    public async Task UpdateBusiness_Should_Throw_WhenRowVersionIsEmpty()
+    {
+        await using var db = BusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        var entity = CreateBusiness(BusinessOperationalStatus.Approved, isActive: true);
+        db.Set<Business>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator(localizer), localizer);
+
+        var act = () => handler.HandleAsync(new BusinessEditDto
+        {
+            Id = entity.Id,
+            RowVersion = [],    // empty → concurrency guard should reject this
+            Name = entity.Name,
+            DefaultCurrency = entity.DefaultCurrency,
+            DefaultCulture = entity.DefaultCulture,
+            DefaultTimeZoneId = entity.DefaultTimeZoneId
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("empty RowVersion must be rejected");
+    }
+
+    [Fact]
+    public async Task UpdateBusiness_Should_Throw_WhenRowVersionIsStale()
+    {
+        await using var db = BusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        var entity = CreateBusiness(BusinessOperationalStatus.Approved, isActive: true);
+        db.Set<Business>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator(localizer), localizer);
+
+        var act = () => handler.HandleAsync(new BusinessEditDto
+        {
+            Id = entity.Id,
+            RowVersion = [9, 9, 9],    // stale
+            Name = entity.Name,
+            DefaultCurrency = entity.DefaultCurrency,
+            DefaultCulture = entity.DefaultCulture,
+            DefaultTimeZoneId = entity.DefaultTimeZoneId
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("stale RowVersion must be rejected as a concurrency conflict");
+    }
+
+    [Fact]
+    public async Task UpdateBusiness_Should_TrimStringFields_WhenWhitespaceProvided()
+    {
+        await using var db = BusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        var entity = CreateBusiness(BusinessOperationalStatus.Approved, isActive: true);
+        db.Set<Business>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator(localizer), localizer);
+
+        await handler.HandleAsync(new BusinessEditDto
+        {
+            Id = entity.Id,
+            RowVersion = entity.RowVersion,
+            Name = "  Baeckerei Morgenstern  ",
+            LegalName = "  Morgenstern GmbH  ",
+            SupportEmail = "  support@test.de  ",
+            DefaultCurrency = entity.DefaultCurrency,
+            DefaultCulture = entity.DefaultCulture,
+            DefaultTimeZoneId = entity.DefaultTimeZoneId,
+            IsActive = true
+        }, TestContext.Current.CancellationToken);
+
+        var updated = await db.Set<Business>().AsNoTracking().SingleAsync(x => x.Id == entity.Id, TestContext.Current.CancellationToken);
+        updated.Name.Should().Be("Baeckerei Morgenstern", "name should be trimmed");
+        updated.LegalName.Should().Be("Morgenstern GmbH", "legal name should be trimmed");
+        updated.SupportEmail.Should().Be("support@test.de", "support email should be trimmed");
+    }
+
+    [Fact]
+    public async Task UpdateBusiness_Should_NullifyOptionalFields_WhenWhitespaceOnlyProvided()
+    {
+        await using var db = BusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        var entity = CreateBusiness(BusinessOperationalStatus.Approved, isActive: true);
+        db.Set<Business>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator(localizer), localizer);
+
+        await handler.HandleAsync(new BusinessEditDto
+        {
+            Id = entity.Id,
+            RowVersion = entity.RowVersion,
+            Name = entity.Name,
+            LegalName = "   ",        // whitespace-only → should become null
+            TaxId = "   ",
+            WebsiteUrl = "   ",
+            DefaultCurrency = entity.DefaultCurrency,
+            DefaultCulture = entity.DefaultCulture,
+            DefaultTimeZoneId = entity.DefaultTimeZoneId
+        }, TestContext.Current.CancellationToken);
+
+        var updated = await db.Set<Business>().AsNoTracking().SingleAsync(x => x.Id == entity.Id, TestContext.Current.CancellationToken);
+        updated.LegalName.Should().BeNull("whitespace-only legal name must be nullified");
+        updated.TaxId.Should().BeNull("whitespace-only tax id must be nullified");
+        updated.WebsiteUrl.Should().BeNull("whitespace-only website url must be nullified");
     }
 
     private static Business CreateBusiness(BusinessOperationalStatus status, bool isActive)
