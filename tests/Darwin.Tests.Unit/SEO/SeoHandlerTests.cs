@@ -220,6 +220,33 @@ public sealed class SeoHandlerTests
     }
 
     [Fact]
+    public async Task UpdateRedirectRule_Should_Throw_DbUpdateConcurrencyException_When_RowVersion_Is_Empty()
+    {
+        await using var db = SeoTestDbContext.Create();
+        var id = Guid.NewGuid();
+        db.Set<RedirectRule>().Add(new RedirectRule
+        {
+            Id = id,
+            FromPath = "/path",
+            To = "/target",
+            RowVersion = new byte[] { 1, 2, 3 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateRedirectRuleHandler(db, CreateLocalizer());
+
+        var act = () => handler.HandleAsync(new RedirectRuleEditDto
+        {
+            Id = id,
+            RowVersion = Array.Empty<byte>(), // empty RowVersion
+            FromPath = "/path",
+            To = "/other"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>("an empty RowVersion must be treated as a concurrency conflict");
+    }
+
+    [Fact]
     public async Task UpdateRedirectRule_Should_Throw_ValidationException_When_Dto_Invalid()
     {
         await using var db = SeoTestDbContext.Create();
@@ -296,6 +323,65 @@ public sealed class SeoHandlerTests
 
         var count = await db.Set<RedirectRule>().CountAsync(TestContext.Current.CancellationToken);
         count.Should().Be(1, "the entity should remain in the store");
+    }
+
+    [Fact]
+    public async Task DeleteRedirectRule_Should_Fail_WhenIdIsEmpty()
+    {
+        await using var db = SeoTestDbContext.Create();
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
+
+        var result = await handler.HandleAsync(Guid.Empty, new byte[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty Guid is not a valid redirect rule identifier");
+    }
+
+    [Fact]
+    public async Task DeleteRedirectRule_Should_Fail_WhenRowVersionIsNull_ForExistingRule()
+    {
+        await using var db = SeoTestDbContext.Create();
+        var id = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        db.Set<RedirectRule>().Add(new RedirectRule { Id = id, FromPath = "/from", To = "/to", RowVersion = rowVersion });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, null, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("null RowVersion must be rejected");
+        result.Error.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteRedirectRule_Should_Fail_WhenRowVersionIsEmpty_ForExistingRule()
+    {
+        await using var db = SeoTestDbContext.Create();
+        var id = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        db.Set<RedirectRule>().Add(new RedirectRule { Id = id, FromPath = "/from", To = "/to", RowVersion = rowVersion });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, Array.Empty<byte>(), TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty RowVersion must be rejected");
+        result.Error.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteRedirectRule_Should_Fail_WhenRowVersionIsStale()
+    {
+        await using var db = SeoTestDbContext.Create();
+        var id = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        db.Set<RedirectRule>().Add(new RedirectRule { Id = id, FromPath = "/from", To = "/to", RowVersion = rowVersion });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, new byte[] { 9, 9, 9 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("stale RowVersion must trigger a concurrency conflict");
+        result.Error.Should().NotBeNullOrEmpty();
     }
 
     // ─── ResolveRedirectHandler ───────────────────────────────────────────────

@@ -373,6 +373,27 @@ public sealed class SettingsHandlerTests
     }
 
     [Fact]
+    public async Task UpdateSiteSetting_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
+    {
+        await using var db = SettingsTestDbContext.Create();
+        var entity = BuildSetting(rowVersion: new byte[] { 1, 2, 3, 4 });
+        db.Set<SiteSetting>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateSiteSettingHandler(
+            db,
+            new SiteSettingEditValidator(CreateLocalizer()),
+            CreateLocalizer());
+
+        var dto = CreateValidDto(entity.Id, Array.Empty<byte>()); // empty RowVersion
+
+        var act = () => handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>(
+            "an empty RowVersion must be rejected before the concurrency check");
+    }
+
+    [Fact]
     public async Task UpdateSiteSetting_Should_Persist_Basic_Fields_Successfully()
     {
         await using var db = SettingsTestDbContext.Create();

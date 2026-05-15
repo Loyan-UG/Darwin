@@ -357,6 +357,34 @@ public sealed class CmsPageHandlerTests
         page!.IsDeleted.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task SoftDeletePage_Should_Fail_When_RowVersion_Is_Null_For_Existing_Page()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+        var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeletePageHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, null, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("null RowVersion must be rejected for an existing page");
+    }
+
+    [Fact]
+    public async Task SoftDeletePage_Should_Fail_When_RowVersion_Is_Empty_For_Existing_Page()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+        var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeletePageHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, Array.Empty<byte>(), TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty RowVersion must be rejected for an existing page");
+    }
+
     // ─── GetPageForEditHandler ────────────────────────────────────────────────
 
     [Fact]

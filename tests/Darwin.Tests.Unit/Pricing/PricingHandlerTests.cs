@@ -670,6 +670,34 @@ public sealed class PricingHandlerTests
     }
 
     [Fact]
+    public async Task UpdatePromotion_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var promoId = Guid.NewGuid();
+        db.Set<Promotion>().Add(new Promotion
+        {
+            Id = promoId,
+            Name = "Test",
+            Currency = "EUR",
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePromotionHandler(db, new PromotionEditValidator(), CreateLocalizer());
+
+        var act = () => handler.HandleAsync(
+            new PromotionEditDto
+            {
+                Id = promoId,
+                RowVersion = Array.Empty<byte>(), // empty - should throw ValidationException
+                Name = "Updated",
+                Currency = "EUR"
+            }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("an empty RowVersion must be rejected before the concurrency check");
+    }
+
+    [Fact]
     public async Task UpdatePromotion_Should_Persist_Changes_Successfully()
     {
         await using var db = PricingTestDbContext.Create();
@@ -979,6 +1007,34 @@ public sealed class PricingHandlerTests
             }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>("a stale RowVersion must trigger a concurrency exception");
+    }
+
+    [Fact]
+    public async Task UpdateTaxCategory_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var catId = Guid.NewGuid();
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = catId,
+            Name = "Old",
+            VatRate = 0.19m,
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateTaxCategoryHandler(db, new TaxCategoryEditValidator(), CreateLocalizer());
+
+        var act = () => handler.HandleAsync(
+            new TaxCategoryEditDto
+            {
+                Id = catId,
+                RowVersion = Array.Empty<byte>(), // empty - should throw ValidationException
+                Name = "Updated",
+                VatRate = 0.07m
+            }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("an empty RowVersion must be rejected before the concurrency check");
     }
 
     [Fact]

@@ -215,6 +215,23 @@ public sealed class MediaHandlerTests
     }
 
     [Fact]
+    public async Task UpdateMediaAsset_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1, 2, 3 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateMediaAssetHandler(db, CreateLocalizer());
+
+        var act = () => handler.HandleAsync(
+            new MediaAssetEditDto { Id = asset.Id, RowVersion = Array.Empty<byte>(), Alt = "new alt" },
+            TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("an empty RowVersion must be rejected before the concurrency check");
+    }
+
+    [Fact]
     public async Task UpdateMediaAsset_Should_Persist_Changes_Successfully()
     {
         await using var db = MediaTestDbContext.Create();
@@ -328,6 +345,65 @@ public sealed class MediaHandlerTests
         var act = () => handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
 
         await act.Should().NotThrowAsync("handler silently no-ops when asset is already soft-deleted");
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_Fail_WhenIdIsEmpty()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+
+        var result = await handler.HandleAsync(Guid.Empty, new byte[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty Guid is not a valid asset identifier");
+        result.Error.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_Fail_WhenRowVersionIsNull_ForExistingAsset()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var asset = BuildAsset(rowVersion: rowVersion);
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("null RowVersion must be rejected for an existing asset");
+        result.Error.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_Fail_WhenRowVersionIsEmpty_ForExistingAsset()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var asset = BuildAsset(rowVersion: rowVersion);
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, Array.Empty<byte>(), TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty RowVersion must be rejected for an existing asset");
+        result.Error.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_Fail_WhenRowVersionIsStale()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1, 2, 3 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, new byte[] { 9, 9, 9 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("stale RowVersion must trigger a concurrency conflict");
+        result.Error.Should().NotBeNullOrEmpty();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
