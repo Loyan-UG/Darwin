@@ -386,6 +386,38 @@ Running the full `Darwin.WebApi.Tests` suite in the current branch still shows f
 
 When adding or refactoring Webhook-related behavior, prefer adding/adjusting tests in this subset before widening to broader suites.
 
+New unit tests added on 2026-05-13:
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BillingManagementCommandHandlerTests" --no-build`
+  - 52 passed — covers `BillingStatusTransitionPolicy` (allowed/forbidden/same-status transitions), `CreatePaymentHandler` (validation, persistence, currency normalization), `UpdatePaymentHandler` (not-found, empty RowVersion, stale RowVersion, forbidden-transition, success), `CreateFinancialAccountHandler`/`UpdateFinancialAccountHandler` (RowVersion guards, persistence, trimming), `CreateExpenseHandler`/`UpdateExpenseHandler` (RowVersion guards, persistence), `CreateJournalEntryHandler` (empty lines, unbalanced lines, persistence with lines), `UpdateJournalEntryHandler` (not-found, stale RowVersion, line replacement).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~OrderBillingHandlerTests" --no-build`
+  - 14 passed (7 new) — adds payment-creation Refunded/Voided rejection, PaidAtUtc-on-Captured, early-order-to-Paid advancement, currency-mismatch rejection, refund rejection for Pending/Failed payments.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BusinessCreateUpdateHandlersTests" --no-build`
+  - 9 passed (5 new) — adds UpdateBusiness not-found, empty-RowVersion, stale-RowVersion, field trimming, and whitespace-only null normalization.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BusinessLifecycleHandlersTests" --no-build`
+  - 19 passed (14 new) — adds lifecycle transition boundary tests (Approve only from PendingApproval, Suspend only from Approved, Reactivate only from Suspended) plus RowVersion guards for each lifecycle action.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BusinessMediaHandlerTests" --no-build`
+  - 12 passed — covers `UpdateBusinessMediaHandler` (not-found, empty/stale RowVersion, persistence with trimming, whitespace-only caption nullification) and `DeleteBusinessMediaHandler` (empty-Id/empty-RowVersion/not-found failure paths, successful delete via dto and id overloads, silent no-op on missing id).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CrmPipelineLifecycleHandlerTests" --no-build`
+  - 28 passed — covers `UpdateLeadLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, unsupported action, valid QUALIFY/DISQUALIFY/REOPEN transitions incl. case-insensitive, converted-lead blocking) and `UpdateOpportunityLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, ClosedWon/ClosedLost ADVANCE rejection, stage transitions for all ADVANCE steps, CLOSEWON/CLOSELOST/REOPEN paths, close-date defaulting and existing-date preservation, unsupported action rejection).
+
+New unit tests added on 2026-05-13 (this session):
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ExpireLoyaltyScanSessionHandlerTests" --no-build`
+  - 18 passed — new file covers `ExpireLoyaltyScanSessionHandler` (empty session Id, session not found, session already completed, session already failed, session already expired, valid expiry updates status and expiredAt, RowVersion mismatch rejection, null RowVersion rejection, DbUpdateConcurrencyException converted to safe error, successful expiry sets ExpiredAtUtc) and `BatchExpireLoyaltyScanSessionHandler` (empty batch produces no results, expired sessions skipped, non-pending sessions skipped, multiple valid expirations in single batch).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~LoyaltyScanSessionQueryHandlerTests" --no-build`
+  - 16 passed — new file covers `GetRecentLoyaltyScanSessionsPageHandler` (empty result, soft-delete exclusion, business scoping, user scoping, date range filtering, status filtering, page/pageSize normalization, summary counts with clock-based cutoffs).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~QueryLikePatternTests" --no-build`
+  - 13 passed — new file covers `QueryLikePattern.Contains()` and `QueryLikePattern.Escape()`: plain terms, terms with SQL wildcards (%, _), terms with backslash, empty terms, whitespace-only terms, terms with brackets, long terms, and EscapeCharacter contract.
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~ProviderCallbackInboxHandlerTests" --no-build`
+  - 22 passed — new file covers `GetProviderCallbackInboxPageHandler`: empty result, soft-delete exclusion, page normalization, provider/status/failedOnly/stalePendingOnly/deliveryFailureOnly filters, Succeeded→Processed normalization, filter 'Processed' includes 'Succeeded', summary counts (total/pending/failed/processed/retried/brevo breakdown), distinct providers list ordered alphabetically, Stripe/Brevo/DHL/invalid-JSON/empty payload preview building, email masking in Brevo previews, AgeMinutes calculation, and IsStalePending flag logic (pending+old=true, pending+recent=false, failed+old=false).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CustomerLeadHandlerTests" --no-build`
+  - extended (+3 tests): `UpdateCustomer_Should_Throw_WhenRowVersionIsEmpty` (ValidationException), `UpdateLead_Should_Throw_WhenRowVersionIsEmpty` (ValidationException), `UpdateLead_Should_Throw_WhenRowVersionIsNull` (ValidationException).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~OpportunityHandlerTests" --no-build`
+  - extended (+1 test): `UpdateOpportunity_Should_Throw_WhenRowVersionIsEmpty` (ValidationException — validator NotEmpty guard fires before handler concurrency check).
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CrmEngagementHandlersTests" --no-build`
+  - extended (+1 test): `UpdateCustomerSegment_Should_Throw_WhenRowVersionIsEmpty` (DbUpdateConcurrencyException — CustomerSegmentEditValidator does not validate RowVersion so the handler's own concurrency check fires).
+
 ---
 
 ## 5.5 Prioritized Test Queue For The Next Implementation Pass
@@ -417,7 +449,7 @@ These tests should follow P0 because they validate operator recovery and externa
 These are important go-live validation tests but depend more on configured providers or selected tooling:
 
 - ✅ Extend object-storage smoke-script dry-run branch tests for provider-specific prerequisites and secure readiness paths (`ObjectStorageSmoke_Should_*` in `SecurityAndPerformanceContractsAndPackagingSourceTests` now covers unsupported provider blocking, S3 endpoint/region requirement enforcement, and Azure managed-identity readiness without connection string). External operator-run evidence for target MinIO/S3-compatible deployment still remains a go-live activity.
-- Add DHL live-smoke tests or operator-run evidence for shipment creation, label retrieval/storage through the configured storage profile, tracking reference persistence, callback processing, failed/stuck operation retry, and carrier exception visibility.
+- ✅ Extend DHL smoke-script source-contract coverage for runtime-pipeline and return-flow safety rails (`ProviderSmokeScripts_Should_StayGuardedAndAvoidSecretOutput` now asserts `-RequireRuntimePipeline` readiness/blocking contracts, required worker/storage confirmations, and guarded `-IncludeReturn` path wiring in `smoke-dhl-live.ps1`). Operator-run live-smoke evidence for shipment creation, label retrieval/storage through the configured storage profile, tracking reference persistence, callback processing, failed/stuck operation retry, and carrier exception visibility still remains a go-live activity.
 - Add Brevo production-readiness smoke evidence for sandbox send, controlled inbox send, transactional webhook subscription, callback inbox persistence, and worker processing.
 - Add e-invoice tests only after the generator/tooling decision is made: structured invoice model mapping, ZUGFeRD/Factur-X artifact generation, validation, WebAdmin download, and later XRechnung export.
 
@@ -428,6 +460,12 @@ Run these after P0-P2 are stable or when a touched module makes them immediately
 - ✅ Add unit tests for Billing management query handlers covering `GetPaymentsPageHandler`, `GetPaymentOpsSummaryHandler`, and `GetPaymentForEditHandler` (20 tests in new `BillingManagementQueryHandlerTests.cs`).
 - ✅ Add unit tests for Billing refund query handlers covering `GetRefundsPageHandler` and `GetRefundOpsSummaryHandler` (18 tests in new `BillingRefundQueryHandlerTests.cs`).
 - ✅ Add unit tests for financial query handlers covering `GetFinancialAccountsPageHandler`, `GetFinancialAccountForEditHandler`, `GetExpensesPageHandler`, `GetExpenseForEditHandler`, `GetJournalEntriesPageHandler`, and `GetJournalEntryForEditHandler` (35 tests in new `BillingFinancialQueryHandlerTests.cs`).
+- ✅ Add Billing management command handler tests covering `BillingStatusTransitionPolicy` allowed/forbidden/same-status transitions, `CreatePaymentHandler` validation/persistence/currency normalization, `UpdatePaymentHandler` not-found/empty-RowVersion/stale-RowVersion/forbidden-transition/success, `CreateFinancialAccountHandler`/`UpdateFinancialAccountHandler`/`CreateExpenseHandler`/`UpdateExpenseHandler`/`CreateJournalEntryHandler`/`UpdateJournalEntryHandler` coverage with RowVersion guards and validation (52 tests in new `BillingManagementCommandHandlerTests.cs`).
+- ✅ Add order billing boundary tests proving payments cannot be created as Refunded/Voided, PaidAtUtc is set for Captured payments, early-stage orders advance to Paid on Captured payments, currency mismatch rejection, and refunds are only allowed for Captured/Completed payments (7 new tests added to `OrderBillingHandlerTests.cs`).
+- ✅ Add UpdateBusiness RowVersion coverage proving not-found, empty RowVersion, stale RowVersion errors, plus field trimming and whitespace-only null normalization (5 tests added to `BusinessCreateUpdateHandlersTests.cs`).
+- ✅ Add Business lifecycle transition boundary tests proving approval only applies from PendingApproval, suspension only from Approved, reactivation only from Suspended, plus RowVersion guards for each lifecycle action (14 tests added to `BusinessLifecycleHandlersTests.cs`).
+- ✅ Add Business media handler tests covering `UpdateBusinessMediaHandler` not-found, empty/stale RowVersion, persistence with trimming, whitespace-only caption nullification, and `DeleteBusinessMediaHandler` empty-Id/empty-RowVersion/not-found failure paths, successful delete (dto and id overloads), and silent no-op on missing id (12 tests in new `BusinessMediaHandlerTests.cs`).
+- ✅ Add CRM pipeline lifecycle handler tests covering `UpdateLeadLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, unsupported action, valid transitions, converted lead blocking) and `UpdateOpportunityLifecycleHandler` (empty Id, empty RowVersion, not-found, stale RowVersion, ClosedWon/ClosedLost advance rejection, stage transitions including ADVANCE/CLOSEWON/CLOSELOST/REOPEN, close-date defaulting and preservation) (28 tests in new `CrmPipelineLifecycleHandlerTests.cs`).
 - Expand hosted WebAdmin onboarding, inventory/returns, row-version, concurrency, and localization regression matrices as those workflows continue to change.
 - Continue PostgreSQL/SQL Server provider-specific migration, search, JSON, `citext`, schema-placement, and concurrency tests from the persistence backlog below.
 - Raise WebAdmin CI coverage thresholds only after repeated green CI history.
@@ -933,3 +971,49 @@ dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQual
 ```
 
 Latest local result: `35` passed, `0` skipped, `35` total.
+
+
+# 2026-05-12 Coverage Extension — CartAddOnSelectionJson, BusinessPublicTextResolver, Invitation Boundary, and SiteSetting Soft-Delete
+
+Added four targeted coverage passes filling gaps identified in the P3 backlog.
+
+### `tests/Darwin.Tests.Unit/CartCheckout/CartAddOnSelectionJsonTests.cs` (13 tests — new file)
+Direct unit tests for `CartAddOnSelectionJson`:
+- `NormalizeIds` — null input, empty input, single-ID stable output, deterministic ordering (same GUIDs in any order produce same JSON), deduplication, sort+deduplicate together.
+- `NormalizeJsonOrNull` — null input returns null, whitespace returns null, valid JSON array → sorted/deduplicated output, JSON with duplicate GUIDs → deduplicated, invalid JSON → trimmed input string, empty array JSON → `"[]"`.
+- Round-trip consistency: `NormalizeIds(ids)` equals `NormalizeJsonOrNull(NormalizeIds(ids))` for the same GUID set regardless of input ordering.
+
+### `tests/Darwin.Tests.Unit/Businesses/BusinessPublicTextResolverTests.cs` (14 tests — new file)
+Direct unit tests for `BusinessPublicTextResolver` (internal, visible via `InternalsVisibleTo`):
+- `ResolveName` — null overrides JSON returns original name; empty JSON object returns original; exact culture match returns override (trimmed); default-culture fallback when requested culture absent; `de-DE` built-in fallback when culture and defaultCulture both null; `en-US` final fallback when `de-DE` also absent; whitespace-only override treated as absent; override value trimmed; priority order (cascade tried left to right: culture → defaultCulture → de-DE → en-US).
+- `ResolveShortDescription` — null overrides returns null; no cascade match returns original description; exact culture match returns override; null original and no override returns null.
+
+### `tests/Darwin.Tests.Unit/Businesses/BusinessCommunicationAndInvitationQueryHandlersTests.cs` (+5 tests)
+Added exact `ExpiresAtUtc` boundary tests for `GetBusinessInvitationsPageHandler` using a `FixedClock`:
+- Pending invitation with `ExpiresAtUtc == utcNow` projects as `Expired` (the `<=` condition is inclusive at the boundary).
+- Pending invitation with `ExpiresAtUtc == utcNow + 1s` projects as `Pending`.
+- Expired filter includes the invitation at the exact boundary.
+- Pending filter excludes the invitation at the exact boundary.
+- Open filter includes the invitation at the exact boundary (Expired belongs to Open bucket).
+
+### `tests/Darwin.Tests.Unit/Businesses/BusinessInvitationOnboardingHandlersTests.cs` (+2 tests)
+Added exact boundary tests for `GetBusinessInvitationPreviewHandler`:
+- Invitation with `ExpiresAtUtc == utcNow` returns `Status = "Expired"`.
+- Invitation with `ExpiresAtUtc == utcNow + 1s` returns `Status = "Pending"`.
+
+### `tests/Darwin.Tests.Unit/Businesses/BusinessQueryHandlersTests.cs` (+2 tests)
+Added admin text override name resolution tests for `GetBusinessPublicDetailHandler`:
+- `AdminTextOverridesJson` with a matching culture returns the override name and short description.
+- `AdminTextOverridesJson` with a non-matching culture (outside the fallback chain) falls back to the original entity name.
+
+### `tests/Darwin.Tests.Unit/Settings/SettingsHandlerTests.cs` (+3 tests)
+Added soft-delete coverage for `GetSiteSettingHandler` and `GetCulturesHandler`:
+- `GetSiteSetting_Should_ReturnNull_WhenOnlySoftDeletedRowExists` — a single soft-deleted row returns null.
+- `GetSiteSetting_Should_SkipSoftDeletedRow_AndReturnActiveRow` — mixed deleted + active rows → only active returned.
+- `GetCultures_Should_ReturnDefaults_WhenOnlySoftDeletedRowsExist` — soft-deleted settings row is ignored and default cultures apply.
+
+```powershell
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CartAddOnSelectionJson|FullyQualifiedName~BusinessPublicTextResolver|FullyQualifiedName~BusinessCommunicationAndInvitationQueryHandlersTests|FullyQualifiedName~BusinessInvitationOnboardingHandlersTests|FullyQualifiedName~BusinessQueryHandlersTests|FullyQualifiedName~SettingsHandlerTests" --no-restore /p:UseSharedCompilation=false
+```
+
+Latest local result: `98` passed, `0` skipped, `98` total (39 net new tests across 4 new/extended files).

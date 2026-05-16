@@ -10,6 +10,7 @@ using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Enums;
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using System.Net.Http;
@@ -381,6 +382,39 @@ public sealed class CustomerLeadHandlerTests
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
     }
 
+    [Fact]
+    public async Task UpdateCustomer_Should_Throw_WhenRowVersionIsEmpty()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Test",
+            LastName = "Test",
+            Email = "test@test.de",
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerHandler(
+            db,
+            new CustomerEditValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new CustomerEditDto
+        {
+            Id = customerId,
+            RowVersion = Array.Empty<byte>(), // empty row version
+            FirstName = "Test",
+            LastName = "Test",
+            Email = "test@test.de"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("empty RowVersion is rejected by the validator before the handler's concurrency check");
+    }
+
     // ─── CreateLeadHandler ────────────────────────────────────────────────────
 
     [Fact]
@@ -539,6 +573,78 @@ public sealed class CustomerLeadHandlerTests
         }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+    }
+
+    [Fact]
+    public async Task UpdateLead_Should_Throw_WhenRowVersionIsEmpty()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var leadId = Guid.NewGuid();
+
+        db.Set<Lead>().Add(new Lead
+        {
+            Id = leadId,
+            FirstName = "Test",
+            LastName = "Lead",
+            Email = "test@lead.de",
+            Phone = "+4917000000000",
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateLeadHandler(
+            db,
+            new LeadEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new LeadEditDto
+        {
+            Id = leadId,
+            RowVersion = Array.Empty<byte>(), // empty row version
+            FirstName = "Test",
+            LastName = "Lead",
+            Email = "test@lead.de",
+            Phone = "+4917000000000",
+            Status = LeadStatus.New
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("empty RowVersion is rejected by the validator before the handler's concurrency check");
+    }
+
+    [Fact]
+    public async Task UpdateLead_Should_Throw_WhenRowVersionIsNull()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var leadId = Guid.NewGuid();
+
+        db.Set<Lead>().Add(new Lead
+        {
+            Id = leadId,
+            FirstName = "Test",
+            LastName = "Lead",
+            Email = "test@lead.de",
+            Phone = "+4917000000000",
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateLeadHandler(
+            db,
+            new LeadEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new LeadEditDto
+        {
+            Id = leadId,
+            RowVersion = null, // null row version
+            FirstName = "Test",
+            LastName = "Lead",
+            Email = "test@lead.de",
+            Phone = "+4917000000000",
+            Status = LeadStatus.New
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("null RowVersion is also rejected by the validator");
     }
 
     // ─── ConvertLeadToCustomerHandler ─────────────────────────────────────────
