@@ -112,6 +112,91 @@ public sealed class BusinessInvitationOnboardingHandlersTests
         result.Error.Should().Be("InvitedBusinessUnavailable");
     }
 
+    // ─── GetBusinessInvitationPreview — exact ExpiresAtUtc boundary ──────────
+
+    [Fact]
+    public async Task GetBusinessInvitationPreview_Should_ReturnExpired_WhenExpiresAtIsExactlyNow()
+    {
+        // GetBusinessInvitationPreviewHandler uses <= for boundary: ExpiresAtUtc <= utcNow → Expired
+        var utcNow = new DateTime(2030, 8, 15, 10, 0, 0, DateTimeKind.Utc);
+        var clock = new FakeClock(utcNow);
+
+        await using var db = BusinessInvitationTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        const string token = "preview-boundary-exact";
+
+        db.Set<Business>().Add(new Business
+        {
+            Id = businessId,
+            Name = "Boundary Café",
+            DefaultCulture = "de-DE",
+            DefaultCurrency = "EUR",
+            OperationalStatus = BusinessOperationalStatus.PendingApproval,
+            IsActive = false
+        });
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            InvitedByUserId = Guid.NewGuid(),
+            Email = "boundary@test.de",
+            NormalizedEmail = "BOUNDARY@TEST.DE",
+            Role = BusinessMemberRole.Staff,
+            Token = token,
+            ExpiresAtUtc = utcNow, // exactly at clock time
+            Status = BusinessInvitationStatus.Pending
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessInvitationPreviewHandler(db, new TestStringLocalizer<ValidationResource>(), clock);
+        var result = await handler.HandleAsync(token, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.Status.Should().Be(nameof(BusinessInvitationStatus.Expired),
+            "ExpiresAtUtc == utcNow satisfies the <= condition and marks the invitation as Expired");
+    }
+
+    [Fact]
+    public async Task GetBusinessInvitationPreview_Should_ReturnPending_WhenExpiresAtIsOneSecondInFuture()
+    {
+        var utcNow = new DateTime(2030, 8, 15, 10, 0, 0, DateTimeKind.Utc);
+        var clock = new FakeClock(utcNow);
+
+        await using var db = BusinessInvitationTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        const string token = "preview-boundary-future";
+
+        db.Set<Business>().Add(new Business
+        {
+            Id = businessId,
+            Name = "Future Café",
+            DefaultCulture = "de-DE",
+            DefaultCurrency = "EUR",
+            OperationalStatus = BusinessOperationalStatus.PendingApproval,
+            IsActive = false
+        });
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            InvitedByUserId = Guid.NewGuid(),
+            Email = "future@test.de",
+            NormalizedEmail = "FUTURE@TEST.DE",
+            Role = BusinessMemberRole.Manager,
+            Token = token,
+            ExpiresAtUtc = utcNow.AddSeconds(1), // one second in the future
+            Status = BusinessInvitationStatus.Pending
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessInvitationPreviewHandler(db, new TestStringLocalizer<ValidationResource>(), clock);
+        var result = await handler.HandleAsync(token, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.Status.Should().Be(nameof(BusinessInvitationStatus.Pending),
+            "ExpiresAtUtc > utcNow keeps the invitation in Pending state");
+    }
+
     [Fact]
     public async Task AcceptBusinessInvitation_Should_CreateUserMembership_AndIssuePreferredBusinessToken()
     {

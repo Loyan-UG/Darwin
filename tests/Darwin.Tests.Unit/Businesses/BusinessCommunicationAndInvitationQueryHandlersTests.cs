@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Domain.Common;
@@ -495,7 +496,177 @@ public sealed class BusinessCommunicationAndInvitationQueryHandlersTests
         items[0].Email.Should().Be("alice@example.de");
     }
 
+    // ─── GetBusinessInvitationsPage — exact ExpiresAtUtc boundary ────────────
+
+    [Fact]
+    public async Task GetBusinessInvitationsPage_Should_ProjectExpiredStatus_WhenExpiresAtIsExactlyNow()
+    {
+        // The handler uses <=, so a pending invitation with ExpiresAtUtc == utcNow must show as Expired.
+        var utcNow = new DateTime(2030, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+        var clock = new FixedClock(utcNow);
+
+        await using var db = BizCommTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var inviterId = Guid.NewGuid();
+        db.Set<User>().Add(CreateUser(inviterId, "inv@test.de"));
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            InvitedByUserId = inviterId,
+            Email = "boundary@test.de",
+            Token = "tok-boundary-exact",
+            Status = BusinessInvitationStatus.Pending,
+            ExpiresAtUtc = utcNow, // exactly at the clock
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessInvitationsPageHandler(db, clock);
+        var (items, _) = await handler.HandleAsync(businessId, 1, 10, ct: TestContext.Current.CancellationToken);
+
+        items.Should().HaveCount(1);
+        items[0].Status.Should().Be(BusinessInvitationStatus.Expired,
+            "ExpiresAtUtc <= utcNow is true when they are equal, so the invitation must show as Expired");
+    }
+
+    [Fact]
+    public async Task GetBusinessInvitationsPage_Should_ProjectPendingStatus_WhenExpiresAtIsOneSecondInFuture()
+    {
+        var utcNow = new DateTime(2030, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+        var clock = new FixedClock(utcNow);
+
+        await using var db = BizCommTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var inviterId = Guid.NewGuid();
+        db.Set<User>().Add(CreateUser(inviterId, "inv@test.de"));
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            InvitedByUserId = inviterId,
+            Email = "almost-expired@test.de",
+            Token = "tok-almost-expired",
+            Status = BusinessInvitationStatus.Pending,
+            ExpiresAtUtc = utcNow.AddSeconds(1), // one second in the future
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessInvitationsPageHandler(db, clock);
+        var (items, _) = await handler.HandleAsync(businessId, 1, 10, ct: TestContext.Current.CancellationToken);
+
+        items.Should().HaveCount(1);
+        items[0].Status.Should().Be(BusinessInvitationStatus.Pending,
+            "ExpiresAtUtc > utcNow means the invitation is still active");
+    }
+
+    [Fact]
+    public async Task GetBusinessInvitationsPage_FilterExpired_Should_IncludeInvitation_WhenExpiresAtIsExactlyNow()
+    {
+        var utcNow = new DateTime(2030, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+        var clock = new FixedClock(utcNow);
+
+        await using var db = BizCommTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var inviterId = Guid.NewGuid();
+        db.Set<User>().Add(CreateUser(inviterId, "inv@test.de"));
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            InvitedByUserId = inviterId,
+            Email = "exact@test.de",
+            Token = "tok-exact-filter",
+            Status = BusinessInvitationStatus.Pending,
+            ExpiresAtUtc = utcNow, // at the boundary
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessInvitationsPageHandler(db, clock);
+        var (items, total) = await handler.HandleAsync(
+            businessId, 1, 10,
+            filter: BusinessInvitationQueueFilter.Expired,
+            ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(1, "an invitation at exactly ExpiresAtUtc is expired and must appear in the Expired filter");
+        items[0].Email.Should().Be("exact@test.de");
+    }
+
+    [Fact]
+    public async Task GetBusinessInvitationsPage_FilterPending_Should_ExcludeInvitation_WhenExpiresAtIsExactlyNow()
+    {
+        var utcNow = new DateTime(2030, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+        var clock = new FixedClock(utcNow);
+
+        await using var db = BizCommTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var inviterId = Guid.NewGuid();
+        db.Set<User>().Add(CreateUser(inviterId, "inv@test.de"));
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            InvitedByUserId = inviterId,
+            Email = "boundary-pending@test.de",
+            Token = "tok-boundary-pending",
+            Status = BusinessInvitationStatus.Pending,
+            ExpiresAtUtc = utcNow,
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessInvitationsPageHandler(db, clock);
+        var (_, total) = await handler.HandleAsync(
+            businessId, 1, 10,
+            filter: BusinessInvitationQueueFilter.Pending,
+            ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(0, "an invitation at exactly ExpiresAtUtc is expired and must NOT appear in the Pending filter");
+    }
+
+    [Fact]
+    public async Task GetBusinessInvitationsPage_FilterOpen_Should_IncludeInvitation_WhenExpiresAtIsExactlyNow()
+    {
+        // "Open" includes both Pending and Expired, so exact boundary invitations must still appear.
+        var utcNow = new DateTime(2030, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+        var clock = new FixedClock(utcNow);
+
+        await using var db = BizCommTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var inviterId = Guid.NewGuid();
+        db.Set<User>().Add(CreateUser(inviterId, "inv@test.de"));
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            InvitedByUserId = inviterId,
+            Email = "open-boundary@test.de",
+            Token = "tok-open-boundary",
+            Status = BusinessInvitationStatus.Pending,
+            ExpiresAtUtc = utcNow,
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessInvitationsPageHandler(db, clock);
+        var (_, total) = await handler.HandleAsync(
+            businessId, 1, 10,
+            filter: BusinessInvitationQueueFilter.Open,
+            ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(1, "an expired invitation (boundary) still belongs to the Open bucket");
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private sealed class FixedClock : IClock
+    {
+        private readonly DateTime _utcNow;
+        public FixedClock(DateTime utcNow) => _utcNow = utcNow;
+        public DateTime UtcNow => _utcNow;
+    }
 
     private static User CreateUser(Guid id, string email, string? firstName = null, string? lastName = null)
     {
