@@ -33,6 +33,7 @@ namespace Darwin.Infrastructure.Extensions
                     "DataProtectionKeys");
             }
 
+            keysPath = Environment.ExpandEnvironmentVariables(keysPath);
             Directory.CreateDirectory(keysPath);
 
             var builder = services

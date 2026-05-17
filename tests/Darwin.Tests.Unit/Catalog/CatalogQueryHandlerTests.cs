@@ -723,6 +723,43 @@ public sealed class CatalogQueryHandlerTests
         items.Single().Name.Should().Be("Global");
     }
 
+    [Fact]
+    public async Task GetAddOnGroupsPage_Should_Count_Only_NonDeleted_Options()
+    {
+        await using var db = CreateDb();
+
+        db.Set<AddOnGroup>().Add(new AddOnGroup
+        {
+            Id = Guid.NewGuid(),
+            Name = "Gift Wrap",
+            Currency = "EUR",
+            IsActive = true,
+            IsGlobal = false,
+            Options =
+            [
+                new AddOnOption
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "Active",
+                    IsDeleted = false
+                },
+                new AddOnOption
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "Deleted",
+                    IsDeleted = true
+                }
+            ]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetAddOnGroupsPageHandler(db);
+        var (items, total) = await handler.HandleAsync(ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(1);
+        items.Single().OptionsCount.Should().Be(1);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // GetAddOnGroupOpsSummaryHandler
     // ─────────────────────────────────────────────────────────────────────────

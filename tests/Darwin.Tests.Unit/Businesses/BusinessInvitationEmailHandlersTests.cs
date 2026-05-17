@@ -123,6 +123,69 @@ public sealed class BusinessInvitationEmailHandlersTests
     }
 
     [Fact]
+    public async Task CreateBusinessInvitation_Should_Ignore_SoftDeleted_Settings_WhenActive_Row_Is_Present()
+    {
+        await using var db = BusinessInvitationEmailTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business
+        {
+            Id = businessId,
+            Name = "Old Mill",
+            DefaultCulture = "de-DE",
+            DefaultCurrency = "EUR",
+            IsActive = true
+        });
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Legacy",
+            DefaultCulture = "de-DE",
+            SupportedCulturesCsv = "de-DE,en-US",
+            ContactEmail = "legacy@darwin.de",
+            HomeSlug = "home",
+            IsDeleted = true,
+            BusinessInvitationEmailSubjectTemplate = "Deleted {business_name} {role}",
+            BusinessInvitationEmailBodyTemplate = "<p>DELETED {business_name}</p>"
+        });
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Darwin",
+            DefaultCulture = "de-DE",
+            SupportedCulturesCsv = "de-DE,en-US",
+            ContactEmail = "ops@darwin.de",
+            HomeSlug = "home",
+            BusinessInvitationEmailSubjectTemplate = "Active {business_name} {role}",
+            BusinessInvitationEmailBodyTemplate = "<p>ACTIVE {business_name}</p><p>{invitation_action}</p>"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var emailSender = new CapturingEmailSender();
+        var handler = new CreateBusinessInvitationHandler(
+            db,
+            emailSender,
+            new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
+            new FixedCurrentUserService(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")),
+            new NullBusinessInvitationLinkBuilder(),
+            new BusinessInvitationCreateDtoValidator(),
+            new TestValidationStringLocalizer(),
+            new TestCommunicationStringLocalizer());
+
+        await handler.HandleAsync(new BusinessInvitationCreateDto
+        {
+            BusinessId = businessId,
+            Email = "invited@oldmill.de",
+            Role = BusinessMemberRole.Owner,
+            ExpiresInDays = 7
+        }, TestContext.Current.CancellationToken);
+
+        emailSender.LastSubject.Should().Contain("Active Old Mill Owner");
+        emailSender.LastSubject.Should().NotContain("Deleted");
+        emailSender.LastBody.Should().Contain("ACTIVE");
+    }
+
+    [Fact]
     public async Task ResendBusinessInvitation_Should_KeepManualToken_WhenMagicLinkMissing()
     {
         await using var db = BusinessInvitationEmailTestDbContext.Create();

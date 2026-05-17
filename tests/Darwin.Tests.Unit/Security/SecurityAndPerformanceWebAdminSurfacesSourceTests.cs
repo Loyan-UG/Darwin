@@ -1864,10 +1864,11 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         var memberShellSource = ReadWebAdminFile(Path.Combine("Views", "Businesses", "_BusinessMemberEditorShell.cshtml"));
 
         controllerSource.Should().Contain("public async Task<IActionResult> ProvisionSupportCustomer(");
-        controllerSource.Should().Contain("public async Task<IActionResult> OnboardingWizard(Guid id, CancellationToken ct = default)");
-        controllerSource.Should().Contain("return RenderOnboardingWizardWorkspace(BuildOnboardingWizardVm(business));");
+        controllerSource.Should().Contain("public async Task<IActionResult> OnboardingWizard(Guid id, string? step = null, CancellationToken ct = default)");
+        controllerSource.Should().Contain("return RenderOnboardingWizardWorkspace(BuildOnboardingWizardVm(business, step));");
         controllerSource.Should().Contain("private IActionResult RenderOnboardingWizardWorkspace(BusinessOnboardingWizardVm vm)");
-        controllerSource.Should().Contain("private BusinessOnboardingWizardVm BuildOnboardingWizardVm(BusinessEditVm business)");
+        controllerSource.Should().Contain("private BusinessOnboardingWizardVm BuildOnboardingWizardVm(BusinessEditVm business, string? requestedStepKey = null)");
+        controllerSource.Should().Contain("step.WizardUrl = Url.Action(\"OnboardingWizard\", \"Businesses\", new { id = business.Id, step = step.Key }) ?? string.Empty;");
         controllerSource.Should().Contain("public async Task<IActionResult> SupportQueue(");
         controllerSource.Should().Contain("public async Task<IActionResult> Approve(");
         controllerSource.Should().Contain("public async Task<IActionResult> Suspend(");

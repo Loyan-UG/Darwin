@@ -139,9 +139,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 FeatureFlagsJson = "{}",
 
                 // WebAuthn (Passkeys)
-                WebAuthnRelyingPartyId = "localhost",
-                WebAuthnRelyingPartyName = "Darwin Dev (DE)",
-                WebAuthnAllowedOriginsCsv = "https://localhost:5001,https://localhost:7170",
+                WebAuthnRelyingPartyId = "vafadar.pro",
+                WebAuthnRelyingPartyName = "Darwin",
+                WebAuthnAllowedOriginsCsv = "https://admin.vafadar.pro,https://vafadar.pro",
                 WebAuthnRequireUserVerification = false,
 
                 // SMTP (disabled by default in seed; configured later via Admin)

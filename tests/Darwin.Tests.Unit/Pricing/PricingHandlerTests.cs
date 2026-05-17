@@ -547,6 +547,58 @@ public sealed class PricingHandlerTests
     }
 
     [Fact]
+    public async Task CreatePromotion_Should_Normalize_Code_To_Canonical_Form()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var handler = new CreatePromotionHandler(db, new PromotionCreateValidator(), CreateLocalizer());
+
+        await handler.HandleAsync(
+            new PromotionCreateDto
+            {
+                Name = "Summer Sale",
+                Currency = "EUR",
+                Type = PromotionType.Percentage,
+                Percent = 10m,
+                IsActive = true,
+                Code = "  summer20 "
+            },
+            TestContext.Current.CancellationToken);
+
+        var promo = db.Set<Promotion>().Single();
+        promo.Code.Should().Be("SUMMER20");
+    }
+
+    [Fact]
+    public async Task CreatePromotion_Should_Reject_Duplicate_Code_After_Normalization()
+    {
+        await using var db = PricingTestDbContext.Create();
+        db.Set<Promotion>().Add(new Promotion
+        {
+            Id = Guid.NewGuid(),
+            Name = "Existing",
+            Code = "SUMMER20",
+            IsActive = true,
+            Currency = "EUR"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreatePromotionHandler(db, new PromotionCreateValidator(), CreateLocalizer());
+
+        var act = () => handler.HandleAsync(
+            new PromotionCreateDto
+            {
+                Name = "New",
+                Currency = "EUR",
+                Type = PromotionType.Percentage,
+                Percent = 5m,
+                Code = "  summer20 "
+            },
+            TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("canonical lookup must still reject duplicate coupon codes");
+    }
+
+    [Fact]
     public async Task CreatePromotion_Should_Throw_When_Active_Code_Already_Exists()
     {
         await using var db = PricingTestDbContext.Create();
@@ -703,6 +755,90 @@ public sealed class PricingHandlerTests
         promo.Name.Should().Be("Updated Name");
         promo.Percent.Should().Be(20m);
         promo.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UpdatePromotion_Should_Normalize_Code_To_Canonical_Form()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var promoId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+        db.Set<Promotion>().Add(new Promotion
+        {
+            Id = promoId,
+            Name = "Original",
+            Currency = "EUR",
+            Type = PromotionType.Percentage,
+            Percent = 5m,
+            IsActive = true,
+            RowVersion = rowVersion
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePromotionHandler(db, new PromotionEditValidator(), CreateLocalizer());
+        await handler.HandleAsync(
+            new PromotionEditDto
+            {
+                Id = promoId,
+                RowVersion = rowVersion,
+                Name = "Updated Name",
+                Currency = "EUR",
+                Type = PromotionType.Percentage,
+                Percent = 20m,
+                IsActive = false,
+                Code = "  winter25 "
+            },
+            TestContext.Current.CancellationToken);
+
+        var promo = db.Set<Promotion>().Single();
+        promo.Code.Should().Be("WINTER25");
+    }
+
+    [Fact]
+    public async Task UpdatePromotion_Should_Reject_Code_Conflicts_For_Canonicalized_Input()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var promoId = Guid.NewGuid();
+        var otherPromoId = Guid.NewGuid();
+        var rowVersion = new byte[] { 5, 6, 7, 8 };
+        db.Set<Promotion>().AddRange(
+            new Promotion
+            {
+                Id = promoId,
+                Name = "Mine",
+                Code = null,
+                IsActive = true,
+                Currency = "EUR",
+                RowVersion = rowVersion
+            },
+            new Promotion
+            {
+                Id = otherPromoId,
+                Name = "Other",
+                Code = "WINTER25",
+                IsActive = true,
+                Currency = "EUR",
+                RowVersion = new byte[] { 1 }
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePromotionHandler(db, new PromotionEditValidator(), CreateLocalizer());
+
+        var act = () => handler.HandleAsync(
+            new PromotionEditDto
+            {
+                Id = promoId,
+                RowVersion = rowVersion,
+                Name = "Mine",
+                Currency = "EUR",
+                Type = PromotionType.Percentage,
+                Percent = 10m,
+                IsActive = true,
+                Code = "  winter25 "
+            },
+            TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("conflicts must be detected after canonical normalization");
     }
 
     [Fact]
@@ -867,13 +1003,27 @@ public sealed class PricingHandlerTests
         var handler = new CreateTaxCategoryHandler(db, new TaxCategoryCreateValidator(), CreateLocalizer());
 
         await handler.HandleAsync(
-            new TaxCategoryCreateDto { Name = "Standard", VatRate = 0.19m, Notes = "19% German VAT" },
+            new TaxCategoryCreateDto { Name = " Standard ", VatRate = 0.19m, Notes = "19% German VAT" },
             TestContext.Current.CancellationToken);
 
         var cat = db.Set<TaxCategory>().Single();
-        cat.Name.Should().Be("Standard");
+        cat.Name.Should().Be("standard");
         cat.VatRate.Should().Be(0.19m);
         cat.Notes.Should().Be("19% German VAT");
+    }
+
+    [Fact]
+    public async Task CreateTaxCategory_Should_Normalize_Name_For_Canonical_Lookup()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var handler = new CreateTaxCategoryHandler(db, new TaxCategoryCreateValidator(), CreateLocalizer());
+
+        await handler.HandleAsync(
+            new TaxCategoryCreateDto { Name = " Reduced-Rate ", VatRate = 0.19m },
+            TestContext.Current.CancellationToken);
+
+        var cat = db.Set<TaxCategory>().Single();
+        cat.Name.Should().Be("reduced-rate");
     }
 
     [Fact]
@@ -1001,15 +1151,45 @@ public sealed class PricingHandlerTests
         {
             Id = catId,
             RowVersion = rowVersion,
-            Name = "Reduced Rate",
+            Name = " Reduced Rate ",
             VatRate = 0.07m,
             Notes = "Reduced German VAT"
         }, TestContext.Current.CancellationToken);
 
         var cat = db.Set<TaxCategory>().Single();
-        cat.Name.Should().Be("Reduced Rate");
+        cat.Name.Should().Be("reduced rate");
         cat.VatRate.Should().Be(0.07m);
         cat.Notes.Should().Be("Reduced German VAT");
+    }
+
+    [Fact]
+    public async Task UpdateTaxCategory_Should_Normalize_Name_For_Canonical_Lookup()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var catId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = catId,
+            Name = "standard",
+            VatRate = 0.19m,
+            RowVersion = rowVersion
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateTaxCategoryHandler(db, new TaxCategoryEditValidator(), CreateLocalizer());
+        await handler.HandleAsync(
+            new TaxCategoryEditDto
+            {
+                Id = catId,
+                RowVersion = rowVersion,
+                Name = "  VAT-Low ",
+                VatRate = 0.07m,
+                Notes = "VAT low"
+            }, TestContext.Current.CancellationToken);
+
+        var cat = db.Set<TaxCategory>().Single();
+        cat.Name.Should().Be("vat-low");
     }
 
     [Fact]

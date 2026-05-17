@@ -271,7 +271,7 @@ namespace Darwin.Domain.Entities.Settings
         /// WebAuthn relying party identifier (RP ID). Usually the registrable domain ("example.com") or "localhost" for dev.
         /// Must match the effective host where WebAuthn ceremonies happen.
         /// </summary>
-        public string WebAuthnRelyingPartyId { get; set; } = "localhost";
+        public string WebAuthnRelyingPartyId { get; set; } = "vafadar.pro";
 
         /// <summary>
         /// Human-friendly RP name shown by authenticators (e.g., "Darwin").
@@ -280,9 +280,9 @@ namespace Darwin.Domain.Entities.Settings
 
         /// <summary>
         /// Comma-separated list of allowed origins (scheme + host [+ port]).
-        /// Examples: "https://shop.example.com,https://admin.example.com,https://localhost:5001".
+        /// Examples: "https://vafadar.pro,https://admin.vafadar.pro".
         /// </summary>
-        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://localhost:5001";
+        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://admin.vafadar.pro,https://vafadar.pro";
 
         /// <summary>
         /// If true, user verification is required during authentication (biometric/PIN).

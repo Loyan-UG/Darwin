@@ -74,6 +74,28 @@ public sealed class MetaQueryHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_Should_Ignore_SoftDeleted_Settings_When_Active_Row_Is_Present()
+    {
+        await using var db = BootstrapTestDbContext.Create();
+        var deletedSetting = BuildValidSetting();
+        deletedSetting.Id = Guid.NewGuid();
+        deletedSetting.IsDeleted = true;
+        deletedSetting.DefaultCulture = "fr-FR";
+        var activeSetting = BuildValidSetting();
+        activeSetting.Id = Guid.NewGuid();
+        activeSetting.DefaultCulture = "en-US";
+
+        db.Set<SiteSetting>().AddRange(deletedSetting, activeSetting);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetAppBootstrapHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.DefaultCulture.Should().Be("en-US");
+    }
+
+    [Fact]
     public async Task HandleAsync_Should_Fail_When_JwtEnabled_Is_False()
     {
         await using var db = BootstrapTestDbContext.Create();
