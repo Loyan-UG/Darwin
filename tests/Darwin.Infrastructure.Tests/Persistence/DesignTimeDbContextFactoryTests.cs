@@ -1,7 +1,9 @@
 using System.IO;
 using Darwin.Infrastructure.Persistence.Db;
+using Darwin.Infrastructure.PostgreSql.Persistence.Db;
 using Darwin.Infrastructure.SqlServer.Persistence.Db;
 using FluentAssertions;
+using Npgsql;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Infrastructure.Tests.Persistence;
@@ -13,6 +15,7 @@ public sealed class DesignTimeDbContextFactoryTests
 {
     private const string ProviderConnectionEnvName = "ConnectionStrings__SqlServer";
     private const string DefaultConnectionEnvName = "ConnectionStrings__DefaultConnection";
+    private const string PostgreSqlProviderConnectionEnvName = "ConnectionStrings__PostgreSql";
 
     /// <summary>
     ///     Ensures explicit environment connection string has highest precedence
@@ -97,6 +100,39 @@ public sealed class DesignTimeDbContextFactoryTests
         // Assert
         providerName.Should().NotBeNullOrWhiteSpace();
         providerName.Should().Contain("SqlServer");
+    }
+
+    [Fact]
+    public void CreateDbContext_Should_UseNormalizedPostgreSqlDefaults_WhenConfiguredForPostgreSql()
+    {
+        // Arrange
+        var previousProviderConnection = Environment.GetEnvironmentVariable(PostgreSqlProviderConnectionEnvName);
+        var previousDefaultConnection = Environment.GetEnvironmentVariable(DefaultConnectionEnvName);
+
+        try
+        {
+            Environment.SetEnvironmentVariable(PostgreSqlProviderConnectionEnvName, "Host=127.0.0.1;Database=DarwinPostgresDesignTime;Username=postgres;Password=postgres;");
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, null);
+
+            var factory = new PostgreSqlDesignTimeDbContextFactory();
+
+            // Act
+            using var context = factory.CreateDbContext([]);
+            var builder = new NpgsqlConnectionStringBuilder(context.Database.GetConnectionString());
+
+            // Assert
+            builder.ApplicationName.Should().Be("Darwin");
+            builder.MaxAutoPrepare.Should().Be(100);
+            builder.AutoPrepareMinUsages.Should().Be(2);
+            builder.KeepAlive.Should().Be(30);
+            builder.Timeout.Should().Be(15);
+            builder.CommandTimeout.Should().Be(60);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(PostgreSqlProviderConnectionEnvName, previousProviderConnection);
+            Environment.SetEnvironmentVariable(DefaultConnectionEnvName, previousDefaultConnection);
+        }
     }
 
     /// <summary>

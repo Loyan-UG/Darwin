@@ -141,9 +141,9 @@ namespace Darwin.Application.Settings.Queries
                 WhatsAppAdminRecipientsCsv = s.WhatsAppAdminRecipientsCsv,
 
                 // WebAuthn
-                WebAuthnRelyingPartyId = s.WebAuthnRelyingPartyId ?? "localhost",
+                WebAuthnRelyingPartyId = s.WebAuthnRelyingPartyId ?? "vafadar.pro",
                 WebAuthnRelyingPartyName = s.WebAuthnRelyingPartyName ?? "Darwin",
-                WebAuthnAllowedOriginsCsv = s.WebAuthnAllowedOriginsCsv ?? "https://localhost:5001",
+                WebAuthnAllowedOriginsCsv = s.WebAuthnAllowedOriginsCsv ?? "https://admin.vafadar.pro,https://vafadar.pro",
                 WebAuthnRequireUserVerification = s.WebAuthnRequireUserVerification,
 
                 // SMTP

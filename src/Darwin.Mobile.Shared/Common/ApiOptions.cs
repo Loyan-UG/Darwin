@@ -44,7 +44,7 @@ public sealed class ApiOptions
     /// <summary>
     /// TEST-ONLY switch:
     /// When true, mobile client bypasses TLS certificate validation.
-    /// This is only for temporary test tunnels (e.g. ngrok).
+    /// This is only for temporary test tunnels or self-signed local endpoints.
     /// </summary>
     public bool UnsafeTrustAnyServerCertificate { get; set; } = false;
 

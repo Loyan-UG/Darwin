@@ -75,6 +75,52 @@ public sealed class StripeWebhooksControllerTests
         var result = await controller.ReceiveAsync(TestContext.Current.CancellationToken);
 
         AssertProblem(result, StatusCodes.Status413PayloadTooLarge, "ProviderWebhookPayloadTooLarge");
+
+        var messageCount = await db.Set<ProviderCallbackInboxMessage>()
+            .CountAsync(cancellationToken: TestContext.Current.CancellationToken);
+        messageCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ReceiveAsync_Should_ReturnPayloadTooLarge_WhenPayloadExceedsLimit_BeforeSignatureVerification()
+    {
+        await using var db = StripeWebhookControllerTestDbContext.Create();
+        await SeedSiteSettingAsync(db, new SiteSetting { StripeWebhookSecret = StripeWebhookSecret });
+
+        var payload = new string('x', ProviderWebhookPayloadReader.MaxPayloadBytes + 1);
+        var clock = new Mock<IClock>();
+        clock.Setup(x => x.UtcNow).Throws(new InvalidOperationException("Clock should not be read on oversized payloads"));
+
+        var controller = CreateController(db, DateTime.UtcNow, clock.Object);
+        SetRequestBody(controller, payload, signature: BuildStripeSignature(payload, StripeWebhookSecret, DateTimeOffset.UtcNow));
+        var result = await controller.ReceiveAsync(TestContext.Current.CancellationToken);
+
+        AssertProblem(result, StatusCodes.Status413PayloadTooLarge, "ProviderWebhookPayloadTooLarge");
+
+        var messageCount = await db.Set<ProviderCallbackInboxMessage>()
+            .CountAsync(cancellationToken: TestContext.Current.CancellationToken);
+        messageCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ReceiveAsync_Should_Accept_WhenPayloadIsExactlyAtSizeLimit()
+    {
+        await using var db = StripeWebhookControllerTestDbContext.Create();
+        await SeedSiteSettingAsync(db, new SiteSetting { StripeWebhookSecret = StripeWebhookSecret });
+
+        var now = DateTimeOffset.UtcNow;
+        var payload = BuildStripePayloadAtOrBelowMaxSize();
+        var controller = CreateController(db, now.UtcDateTime);
+        SetRequestBody(controller, payload, signature: BuildStripeSignature(payload, StripeWebhookSecret, now));
+
+        var result = await controller.ReceiveAsync(TestContext.Current.CancellationToken);
+        var (received, duplicate) = AssertOk(result);
+        received.Should().BeTrue();
+        duplicate.Should().BeFalse();
+
+        var messageCount = await db.Set<ProviderCallbackInboxMessage>()
+            .CountAsync(cancellationToken: TestContext.Current.CancellationToken);
+        messageCount.Should().Be(1);
     }
 
     [Fact]
@@ -681,6 +727,39 @@ public sealed class StripeWebhooksControllerTests
     }
 
     [Fact]
+    public async Task ReceiveAsync_Should_MarkDuplicateTrue_WhenConcurrentCallbacksShareTheSameEventId()
+    {
+        var databaseName = $"darwin_stripe_webhooks_concurrent_idempotency_{Guid.NewGuid()}";
+        await using var seedDb = StripeWebhookControllerTestDbContext.Create(databaseName);
+        await SeedSiteSettingAsync(seedDb, new SiteSetting { StripeWebhookSecret = StripeWebhookSecret });
+
+        var now = DateTimeOffset.UtcNow;
+        var payload = """{"id":"evt_concurrent","type":"charge.succeeded"}""";
+        var signature = BuildStripeSignature(payload, StripeWebhookSecret, now);
+
+        await using var firstDb = StripeWebhookControllerTestDbContext.Create(databaseName);
+        await using var secondDb = StripeWebhookControllerTestDbContext.Create(databaseName);
+        var firstController = CreateController(firstDb, now.UtcDateTime);
+        var secondController = CreateController(secondDb, now.UtcDateTime);
+
+        SetRequestBody(firstController, payload, signature);
+        SetRequestBody(secondController, payload, signature);
+
+        var firstTask = firstController.ReceiveAsync(TestContext.Current.CancellationToken);
+        var secondTask = secondController.ReceiveAsync(TestContext.Current.CancellationToken);
+        await Task.WhenAll(firstTask, secondTask);
+
+        var firstOk = AssertOk(firstTask.Result);
+        var secondOk = AssertOk(secondTask.Result);
+        new[] { firstOk.Duplicate, secondOk.Duplicate }.Count(x => x).Should().Be(1);
+        new[] { firstOk.Duplicate, secondOk.Duplicate }.Count(x => !x).Should().Be(1);
+
+        var messageCount = await firstDb.Set<ProviderCallbackInboxMessage>()
+            .CountAsync(cancellationToken: TestContext.Current.CancellationToken);
+        messageCount.Should().Be(1);
+    }
+
+    [Fact]
     public async Task ReceiveAsync_Should_Accept_WhenSignatureTimestampHasLeadingPlus()
     {
         await using var db = StripeWebhookControllerTestDbContext.Create();
@@ -702,12 +781,13 @@ public sealed class StripeWebhooksControllerTests
 
     private static StripeWebhooksController CreateController(
         StripeWebhookControllerTestDbContext db,
-        DateTime? now = null)
+        DateTime? now = null,
+        IClock? clock = null)
     {
         var controller = new StripeWebhooksController(
             new ProviderCallbackInboxWriter(db),
             new GetSiteSettingHandler(db),
-            new StripeWebhookSignatureVerifier(CreateClock(now ?? DateTime.UtcNow)),
+            new StripeWebhookSignatureVerifier(clock ?? CreateClock(now ?? DateTime.UtcNow)),
             new TestValidationLocalizer());
 
         controller.ControllerContext = new ControllerContext
@@ -801,6 +881,13 @@ public sealed class StripeWebhooksControllerTests
         return $"t={timestamp.ToUnixTimeSeconds()},v1={signature}";
     }
 
+    private static string BuildStripePayloadAtOrBelowMaxSize()
+    {
+        var basePayload = """{"id":"evt_boundary","type":"charge.succeeded","x":""}""";
+        var paddingLength = ProviderWebhookPayloadReader.MaxPayloadBytes - basePayload.Length;
+        return $$"""{"id":"evt_boundary","type":"charge.succeeded","x":"{{new string('x', paddingLength)}}"}""";
+    }
+
     private static string ComputeSha256(string payload)
     {
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(StripeWebhookSecret));
@@ -839,6 +926,15 @@ public sealed class StripeWebhooksControllerTests
         {
             var options = new DbContextOptionsBuilder<StripeWebhookControllerTestDbContext>()
                 .UseInMemoryDatabase($"darwin_stripe_webhooks_tests_{Guid.NewGuid()}")
+                .Options;
+
+            return new StripeWebhookControllerTestDbContext(options);
+        }
+
+        public static StripeWebhookControllerTestDbContext Create(string databaseName)
+        {
+            var options = new DbContextOptionsBuilder<StripeWebhookControllerTestDbContext>()
+                .UseInMemoryDatabase(databaseName)
                 .Options;
 
             return new StripeWebhookControllerTestDbContext(options);

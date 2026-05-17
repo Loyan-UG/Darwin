@@ -196,6 +196,88 @@ public sealed class JwtSigningParametersProviderTests
             scopeFactory.CreateScopeCallCount.Should().Be(1);
         }
     }
+
+    [Fact]
+    public void GetParameters_Should_Ignore_SoftDeleted_SiteSetting_WhenCacheHasExpired()
+    {
+        using var rootServices = JwtSecurityTestHarness.CreateServices();
+
+        using (var seedScope = rootServices.CreateScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<JwtSigningParametersTestDbContext>();
+            db.Set<SiteSetting>().Add(new SiteSetting { JwtSigningKey = "SigningKey" });
+            db.SaveChanges();
+        }
+
+        var clock = new Mock<IClock>();
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        clock.SetupSequence(x => x.UtcNow)
+            .Returns(start)
+            .Returns(start.AddMinutes(2));
+
+        var scopeFactory = new CountingServiceScopeFactory(rootServices.GetRequiredService<IServiceScopeFactory>());
+        var provider = new JwtSigningParametersProvider(
+            scopeFactory,
+            clock.Object,
+            new Mock<ILogger<JwtSigningParametersProvider>>().Object,
+            new TestValidationLocalizer());
+
+        var parameters = provider.GetParameters();
+        parameters.SigningKeys.Should().NotBeEmpty();
+
+        JwtSecurityTestHarness.UpdateSiteSetting(rootServices, x => x.IsDeleted = true);
+
+        Action act = () => provider.GetParameters();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("JwtValidationSiteSettingsMissing");
+        scopeFactory.CreateScopeCallCount.Should().Be(2);
+    }
+
+    [Fact]
+    public void GetParameters_Should_UseActiveSiteSetting_When_SoftDeleted_SiteSetting_Also_Exists()
+    {
+        using var rootServices = JwtSecurityTestHarness.CreateServices();
+
+        using (var seedScope = rootServices.CreateScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<JwtSigningParametersTestDbContext>();
+            db.Set<SiteSetting>().AddRange(new[]
+            {
+                new SiteSetting
+                {
+                    Id = Guid.NewGuid(),
+                    IsDeleted = true,
+                    JwtSigningKey = "DeletedSigningKey"
+                },
+                new SiteSetting
+                {
+                    Id = Guid.NewGuid(),
+                    JwtSigningKey = "ActiveSigningKey",
+                    JwtIssuer = "active-issuer"
+                }
+            });
+            db.SaveChanges();
+        }
+
+        var clock = new Mock<IClock>();
+        clock.Setup(x => x.UtcNow).Returns(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        var scopeFactory = new CountingServiceScopeFactory(rootServices.GetRequiredService<IServiceScopeFactory>());
+        var provider = new JwtSigningParametersProvider(
+            scopeFactory,
+            clock.Object,
+            new Mock<ILogger<JwtSigningParametersProvider>>().Object,
+            new TestValidationLocalizer());
+
+        var parameters = provider.GetParameters();
+
+        parameters.SigningKeys.Should().HaveCount(1);
+        Encoding.UTF8.GetString(((SymmetricSecurityKey)parameters.SigningKeys.Single()).Key)
+            .Should().Be("ActiveSigningKey");
+        parameters.Issuer.Should().Be("active-issuer");
+        scopeFactory.CreateScopeCallCount.Should().Be(1);
+    }
 }
 
 public sealed class JwtBearerOptionsSetupTests

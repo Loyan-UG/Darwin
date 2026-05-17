@@ -111,7 +111,7 @@ namespace Darwin.WebAdmin.Extensions
                 sp.GetRequiredService<IAuthAntiBotChallengeService>());
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
                 options.ForwardLimit = 1;
 
                 foreach (var proxy in config.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? Array.Empty<string>())

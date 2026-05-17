@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing;
@@ -102,6 +103,83 @@ public sealed class ProcessStripeWebhookHandlerTests
 
         var eventLogs = await db.Set<EventLog>().CountAsync(x => x.IdempotencyKey == "evt_test_duplicate", TestContext.Current.CancellationToken);
         eventLogs.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_ReturnDuplicate_WhenConcurrentCallbacksShareSameEventId_AndLosingSavePathWinsFirstWriter()
+    {
+        var databaseName = $"darwin_stripe_webhook_concurrent_losing_save_{Guid.NewGuid()}";
+        StripeWebhookTestDbContext.ClearRaceSignals();
+
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+        const string eventId = "evt_concurrent_losing_save_1";
+        const string payload = """{"id":"evt_concurrent_losing_save_1","type":"payment_intent.succeeded","created":1710000000,"data":{"object":{"id":"pi_loser_1","latest_charge":"ch_loser_1"}}}""";
+
+        await using (var seedDb = StripeWebhookTestDbContext.Create(databaseName))
+        {
+            seedDb.Set<Order>().Add(new Order
+            {
+                Id = orderId,
+                OrderNumber = "ORD-STRIPE-2002",
+                Currency = "EUR",
+                GrandTotalGrossMinor = 3200,
+                SubtotalNetMinor = 2689,
+                TaxTotalMinor = 511,
+                Status = OrderStatus.Created
+            });
+            seedDb.Set<Payment>().Add(new Payment
+            {
+                Id = paymentId,
+                OrderId = orderId,
+                AmountMinor = 3200,
+                Currency = "EUR",
+                Provider = "Stripe",
+                ProviderPaymentIntentRef = "pi_loser_1",
+                Status = PaymentStatus.Pending
+            });
+            await seedDb.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var firstDb = StripeWebhookTestDbContext.Create(
+            databaseName,
+            StripeWebhookRaceMode.Leader,
+            leaderDelayMs: 150);
+        await using var secondDb = StripeWebhookTestDbContext.Create(
+            databaseName,
+            StripeWebhookRaceMode.Follower);
+
+        var firstHandler = new ProcessStripeWebhookHandler(firstDb, new TestStringLocalizer());
+        var secondHandler = new ProcessStripeWebhookHandler(secondDb, new TestStringLocalizer());
+
+        var firstTask = Task.Run(() => firstHandler.HandleAsync(payload, TestContext.Current.CancellationToken));
+        await Task.Delay(40, TestContext.Current.CancellationToken);
+        var secondTask = Task.Run(() => secondHandler.HandleAsync(payload, TestContext.Current.CancellationToken));
+
+        await Task.WhenAll(firstTask, secondTask);
+
+        var firstResult = firstTask.Result;
+        var secondResult = secondTask.Result;
+
+        firstResult.Succeeded.Should().BeTrue();
+        secondResult.Succeeded.Should().BeTrue();
+        firstResult.Value.Should().NotBeNull();
+        secondResult.Value.Should().NotBeNull();
+
+        var duplicateCount = new[] { firstResult.Value!.IsDuplicate, secondResult.Value!.IsDuplicate }.Count(x => x);
+        var notDuplicateCount = new[] { firstResult.Value!.IsDuplicate, secondResult.Value!.IsDuplicate }.Count(x => !x);
+        duplicateCount.Should().Be(1);
+        notDuplicateCount.Should().Be(1);
+        secondDb.SaveAttempted.Should().BeTrue();
+
+        var eventLogCount = await firstDb.Set<EventLog>()
+            .CountAsync(x => x.IdempotencyKey == eventId && !x.IsDeleted, TestContext.Current.CancellationToken);
+        eventLogCount.Should().Be(1);
+
+        var payment = await firstDb.Set<Payment>()
+            .SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        payment.Status.Should().Be(PaymentStatus.Captured);
+        payment.ProviderTransactionRef.Should().Be("ch_loser_1");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -841,22 +919,91 @@ public sealed class ProcessStripeWebhookHandlerTests
         refundCount.Should().Be(0, "no refund record should be created when the payment is not found");
     }
 
+    private enum StripeWebhookRaceMode
+    {
+        None,
+        Leader,
+        Follower
+    }
+
     private sealed class StripeWebhookTestDbContext : DbContext, IAppDbContext
     {
-        private StripeWebhookTestDbContext(DbContextOptions<StripeWebhookTestDbContext> options)
+        private static readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> RaceSaveSignals = new();
+        private readonly StripeWebhookRaceMode _raceMode;
+        private readonly int _leaderDelayMs;
+
+        public bool SaveAttempted { get; private set; }
+
+        private StripeWebhookTestDbContext(
+            DbContextOptions<StripeWebhookTestDbContext> options,
+            StripeWebhookRaceMode raceMode,
+            int leaderDelayMs)
             : base(options)
         {
+            _raceMode = raceMode;
+            _leaderDelayMs = leaderDelayMs;
         }
 
         public new DbSet<T> Set<T>() where T : class => base.Set<T>();
 
-        public static StripeWebhookTestDbContext Create()
+        public static StripeWebhookTestDbContext Create(
+            string? databaseName = null,
+            StripeWebhookRaceMode raceMode = StripeWebhookRaceMode.None,
+            int leaderDelayMs = 0)
         {
             var options = new DbContextOptionsBuilder<StripeWebhookTestDbContext>()
-                .UseInMemoryDatabase($"darwin_stripe_webhook_tests_{Guid.NewGuid()}")
+                .UseInMemoryDatabase(databaseName ?? $"darwin_stripe_webhook_tests_{Guid.NewGuid()}")
                 .Options;
 
-            return new StripeWebhookTestDbContext(options);
+            return new StripeWebhookTestDbContext(options, raceMode, leaderDelayMs);
+        }
+
+        public static void ClearRaceSignals()
+        {
+            RaceSaveSignals.Clear();
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            SaveAttempted = true;
+            var addedEventLogId = ChangeTracker.Entries<EventLog>()
+                .Where(x => x.State == EntityState.Added)
+                .Select(x => x.Entity.IdempotencyKey)
+                .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+
+            if (_raceMode == StripeWebhookRaceMode.Leader && !string.IsNullOrWhiteSpace(addedEventLogId))
+            {
+                if (_leaderDelayMs > 0)
+                {
+                    await Task.Delay(_leaderDelayMs, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            if (_raceMode == StripeWebhookRaceMode.Follower && !string.IsNullOrWhiteSpace(addedEventLogId))
+            {
+                var signal = RaceSaveSignals.GetOrAdd(addedEventLogId, static _ => new(TaskCreationOptions.RunContinuationsAsynchronously));
+                await signal.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+                if (await Set<EventLog>().AnyAsync(
+                        x => !x.IsDeleted && x.IdempotencyKey == addedEventLogId,
+                        cancellationToken).ConfigureAwait(false))
+                {
+                    throw new DbUpdateException("Simulated concurrent EventLog conflict.");
+                }
+            }
+
+            try
+            {
+                return await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (_raceMode == StripeWebhookRaceMode.Leader && !string.IsNullOrWhiteSpace(addedEventLogId))
+                {
+                    var signal = RaceSaveSignals.GetOrAdd(addedEventLogId, static _ => new(TaskCreationOptions.RunContinuationsAsynchronously));
+                    signal.TrySetResult(true);
+                }
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

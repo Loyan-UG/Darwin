@@ -334,6 +334,21 @@ public sealed class ProviderCallbackInboxHandlerTests
     }
 
     [Fact]
+    public async Task GetInboxPage_Should_FallbackToPayloadCapturedMessage_ForNonObjectPayloadJson()
+    {
+        await using var db = InboxTestDbContext.Create();
+        db.Set<ProviderCallbackInboxMessage>().Add(MakeMessage(payloadJson: "[\"legacy\",{\"event\":\"old_format\"}]"));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateHandler(db);
+        var (items, _, _, _) = await handler.HandleAsync(
+            1, 20, new ProviderCallbackInboxFilterDto(), TestContext.Current.CancellationToken);
+
+        items.Single().PayloadPreview.Should().Be("Payload captured; preview unavailable.",
+            "non-object/legacy payloads should safely fall back to unavailable preview");
+    }
+
+    [Fact]
     public async Task GetInboxPage_Should_ReturnEmptyPreview_ForEmptyPayloadJson()
     {
         await using var db = InboxTestDbContext.Create();
@@ -348,6 +363,26 @@ public sealed class ProviderCallbackInboxHandlerTests
     }
 
     // ─── Payload preview: Brevo ───────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetInboxPage_Should_BoundStripePayloadPreview_To220Chars()
+    {
+        await using var db = InboxTestDbContext.Create();
+        var longText = new string('A', 300);
+        var payload = $$"""{"id":"{{longText}}","type":"{{longText}}","created":1696147200,"data":{"object":{"object":"{{longText}}","id":"{{longText}}","payment_intent":"{{longText}}","checkout_session":"{{longText}}","status":"{{longText}}"}}}""";
+        db.Set<ProviderCallbackInboxMessage>().Add(MakeMessage(provider: "Stripe", payloadJson: payload));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateHandler(db);
+        var (items, _, _, _) = await handler.HandleAsync(
+            1, 20, new ProviderCallbackInboxFilterDto(), TestContext.Current.CancellationToken);
+
+        var preview = items.Single().PayloadPreview;
+        preview.Should().HaveLength(220);
+        preview.Should().Contain("event:");
+        preview.Should().NotContain("{");
+        preview.Should().EndWith("...");
+    }
 
     [Fact]
     public async Task GetInboxPage_Should_MaskEmailInBrevoPreview()
@@ -388,6 +423,52 @@ public sealed class ProviderCallbackInboxHandlerTests
     }
 
     // ─── Age and stale flag ───────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetInboxPage_Should_BoundDhlPayloadPreview_To220Chars()
+    {
+        await using var db = InboxTestDbContext.Create();
+        var longText = new string('B', 300);
+        var payload = $$"""{"providerShipmentReference":"{{longText}}","trackingNumber":"{{longText}}","carrierEventKey":"{{longText}}","providerStatus":"{{longText}}","occurredAtUtc":"{{longText}}","exceptionCode":"{{longText}}"}""";
+        db.Set<ProviderCallbackInboxMessage>().Add(MakeMessage(provider: "DHL", payloadJson: payload));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateHandler(db);
+        var (items, _, _, _) = await handler.HandleAsync(
+            1, 20, new ProviderCallbackInboxFilterDto(), TestContext.Current.CancellationToken);
+
+        var preview = items.Single().PayloadPreview;
+        preview.Should().HaveLength(220);
+        preview.Should().Contain("shipmentRef:");
+        preview.Should().NotContain("{");
+        preview.Should().EndWith("...");
+    }
+
+    [Fact]
+    public async Task GetInboxPage_Should_RedactSensitiveFields_ForUnknownProvider()
+    {
+        await using var db = InboxTestDbContext.Create();
+        var payload = """{"event":"manual_review","token":"top-secret-token","signature":"abc123","secret":"super_secret","authorization":"bearer-token","message":"ok","session":"cookie-like"}""";
+        db.Set<ProviderCallbackInboxMessage>().Add(MakeMessage(provider: "UnknownProvider", payloadJson: payload));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateHandler(db);
+        var (items, _, _, _) = await handler.HandleAsync(
+            1, 20, new ProviderCallbackInboxFilterDto(), TestContext.Current.CancellationToken);
+
+        var preview = items.Single().PayloadPreview;
+        preview.Should().Contain("event: manual_review");
+        preview.Should().Contain("token: [redacted]");
+        preview.Should().Contain("signature: [redacted]");
+        preview.Should().Contain("secret: [redacted]");
+        preview.Should().Contain("authorization: [redacted]");
+        preview.Should().Contain("session: [redacted]");
+        preview.Should().NotContain("top-secret-token");
+        preview.Should().NotContain("abc123");
+        preview.Should().NotContain("super_secret");
+        preview.Should().NotContain("bearer-token");
+        preview.Should().NotContain("cookie-like");
+    }
 
     [Fact]
     public async Task GetInboxPage_Should_ComputeAgeMinutes_Correctly()

@@ -24,6 +24,25 @@ export function shouldLogDegradedOperations() {
   return process.env.NODE_ENV === "production";
 }
 
+export function shouldLogSlowOperations() {
+  if (process.env.DARWIN_WEB_LOG_SLOW === "true") {
+    return true;
+  }
+
+  if (process.env.DARWIN_WEB_LOG_SLOW === "false") {
+    return false;
+  }
+
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.npm_lifecycle_event === "build"
+  ) {
+    return false;
+  }
+
+  return process.env.NODE_ENV !== "development";
+}
+
 export function getDegradedStatusEntries(detail?: Record<string, unknown>) {
   if (!detail) {
     return [];
@@ -34,7 +53,11 @@ export function getDegradedStatusEntries(detail?: Record<string, unknown>) {
       return false;
     }
 
-    return typeof value === "string" && value !== "ok";
+    return (
+      typeof value === "string" &&
+      value !== "ok" &&
+      !isExpectedNonActionableStatus(key, value)
+    );
   });
 }
 
@@ -42,6 +65,34 @@ function toDegradedSurfaceKey(statusKey: string) {
   return statusKey.endsWith("Status")
     ? statusKey.slice(0, -1 * "Status".length)
     : statusKey;
+}
+
+function isExpectedNonActionableStatus(key: string, value: unknown) {
+  const surface = toDegradedSurfaceKey(key).toLowerCase();
+
+  if (surface.includes("cart")) {
+    return value === "not-found" || value === "empty";
+  }
+
+  if (surface === "addresses") {
+    return value === "unauthenticated" || value === "unknown";
+  }
+
+  if (surface === "matching") {
+    return value === "not-requested";
+  }
+
+  if (
+    surface === "profile" ||
+    surface === "preferences" ||
+    surface === "invoicesummary" ||
+    surface === "ordersummary" ||
+    surface === "confirmation"
+  ) {
+    return value === "unknown";
+  }
+
+  return false;
 }
 
 export function getDegradedSurfaceFootprint(
@@ -198,6 +249,7 @@ export async function observeAsyncOperation<T>(
   work: () => Promise<T>,
 ) {
   const now = input.now ?? Date.now;
+  const hasCustomWarn = Boolean(input.warn);
   const warn = input.warn ?? ((message, detail) => console.warn(message, detail));
   const error =
     input.error ?? ((message, detail) => console.error(message, detail));
@@ -224,7 +276,10 @@ export async function observeAsyncOperation<T>(
       ...(successDetail ?? {}),
     };
 
-    if (durationMs >= thresholdMs) {
+    if (
+      durationMs >= thresholdMs &&
+      (hasCustomWarn || shouldLogSlowOperations())
+    ) {
       warn("Darwin.Web slow operation", diagnosticDetail);
     } else if (degradedStatuses.length > 0 && shouldLogDegradedOperations()) {
       warn("Darwin.Web degraded operation", diagnosticDetail);

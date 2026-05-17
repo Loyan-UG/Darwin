@@ -209,9 +209,9 @@ namespace Darwin.Application.Settings.DTOs
         public string? WhatsAppAdminRecipientsCsv { get; set; }
 
         // -------- WebAuthn (Passkeys) --------
-        public string WebAuthnRelyingPartyId { get; set; } = "localhost";
+        public string WebAuthnRelyingPartyId { get; set; } = "vafadar.pro";
         public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
-        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://localhost:5001";
+        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://admin.vafadar.pro,https://vafadar.pro";
         public bool WebAuthnRequireUserVerification { get; set; } = false;
 
         // -------- Email (SMTP) --------

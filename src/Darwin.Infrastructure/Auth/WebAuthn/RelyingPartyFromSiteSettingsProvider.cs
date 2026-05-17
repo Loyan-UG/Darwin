@@ -27,17 +27,17 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
                 .AsNoTracking()
                 .FirstOrDefaultAsync(ct) ?? new Darwin.Domain.Entities.Settings.SiteSetting();
 
-            var csv = row.WebAuthnAllowedOriginsCsv ?? "https://localhost:5001";
+            var csv = row.WebAuthnAllowedOriginsCsv ?? "https://admin.vafadar.pro,https://vafadar.pro";
             var origins = csv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                              .Select(x => x.Trim())
                              .Where(x => !string.IsNullOrWhiteSpace(x))
                              .ToArray();
             if (origins.Length == 0)
             {
-                origins = new[] { "https://localhost:5001" };
+                origins = new[] { "https://admin.vafadar.pro", "https://vafadar.pro" };
             }
 
-            var rpId = string.IsNullOrWhiteSpace(row.WebAuthnRelyingPartyId) ? "localhost" : row.WebAuthnRelyingPartyId.Trim();
+            var rpId = string.IsNullOrWhiteSpace(row.WebAuthnRelyingPartyId) ? "vafadar.pro" : row.WebAuthnRelyingPartyId.Trim();
             var rpName = string.IsNullOrWhiteSpace(row.WebAuthnRelyingPartyName) ? "Darwin" : row.WebAuthnRelyingPartyName.Trim();
             var require = row.WebAuthnRequireUserVerification;
 
