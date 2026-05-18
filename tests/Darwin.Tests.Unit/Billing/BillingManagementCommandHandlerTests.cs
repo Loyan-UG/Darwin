@@ -973,6 +973,105 @@ public sealed class BillingManagementCommandHandlerTests
             RowVersion = rowVersion ?? new byte[] { 1 }
         };
 
+    // ─── Null database RowVersion guards ──────────────────────────────────────
+
+    [Fact]
+    public async Task UpdatePayment_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = BillingCommandTestDbContext.Create();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = Guid.NewGuid(),
+            Currency = "EUR",
+            Provider = "Manual",
+            Status = PaymentStatus.Pending
+        };
+        payment.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<Payment>().Add(payment);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentHandler(db, new PaymentEditValidator(), CreateLocalizer());
+
+        var act = async () => await handler.HandleAsync(new PaymentEditDto
+        {
+            Id = payment.Id,
+            BusinessId = payment.BusinessId!.Value,
+            Currency = "EUR",
+            Provider = "Manual",
+            Status = PaymentStatus.Pending,
+            RowVersion = [1] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
+    [Fact]
+    public async Task UpdateFinancialAccount_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = BillingCommandTestDbContext.Create();
+        var account = new FinancialAccount
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = Guid.NewGuid(),
+            Name = "Legacy Account",
+            Type = AccountType.Asset
+        };
+        account.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<FinancialAccount>().Add(account);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateFinancialAccountHandler(
+            db, new FinancialAccountEditValidator(), CreateLocalizer());
+
+        var act = async () => await handler.HandleAsync(new FinancialAccountEditDto
+        {
+            Id = account.Id,
+            BusinessId = account.BusinessId,
+            Name = "Legacy Account",
+            Type = AccountType.Asset,
+            RowVersion = [1] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
+    [Fact]
+    public async Task UpdateExpense_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = BillingCommandTestDbContext.Create();
+        var expense = new Expense
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = Guid.NewGuid(),
+            Category = "Legacy",
+            Description = "Legacy expense",
+            AmountMinor = 100,
+            ExpenseDateUtc = DateTime.UtcNow
+        };
+        expense.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<Expense>().Add(expense);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateExpenseHandler(db, new ExpenseEditValidator(), CreateLocalizer());
+
+        var act = async () => await handler.HandleAsync(new ExpenseEditDto
+        {
+            Id = expense.Id,
+            BusinessId = expense.BusinessId,
+            Category = "Legacy",
+            Description = "Legacy expense",
+            AmountMinor = 100,
+            ExpenseDateUtc = DateTime.UtcNow,
+            RowVersion = [1] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     // ─── DbContext ────────────────────────────────────────────────────────────
 
     private sealed class BillingCommandTestDbContext : DbContext, IAppDbContext
