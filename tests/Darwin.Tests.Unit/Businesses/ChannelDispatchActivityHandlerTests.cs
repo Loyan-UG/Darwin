@@ -112,6 +112,17 @@ public sealed class ChannelDispatchActivityHandlerTests
                 builder.Property(x => x.Status).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
+
+            modelBuilder.Entity<ChannelDispatchOperation>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Channel).IsRequired();
+                builder.Property(x => x.Provider).IsRequired();
+                builder.Property(x => x.RecipientAddress).IsRequired();
+                builder.Property(x => x.MessageText).IsRequired();
+                builder.Property(x => x.Status).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
         }
     }
 }

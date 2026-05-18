@@ -68,7 +68,7 @@ public sealed class ComputeCartSummaryHandlerTests
                     Quantity = 1,
                     UnitPriceNetMinor = 1200,
                     VatRate = 0.19m,
-                    SelectedAddOnValueIdsJson = JsonSerializer.Serialize([valueId])
+                    SelectedAddOnValueIdsJson = JsonSerializer.Serialize(new Guid[] { valueId })
                 }
             ]
         });

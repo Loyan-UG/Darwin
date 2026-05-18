@@ -369,7 +369,7 @@ public sealed class ProviderCallbackInboxHandlerTests
     {
         await using var db = InboxTestDbContext.Create();
         var longText = new string('A', 300);
-        var payload = $$"""{"id":"{{longText}}","type":"{{longText}}","created":1696147200,"data":{"object":{"object":"{{longText}}","id":"{{longText}}","payment_intent":"{{longText}}","checkout_session":"{{longText}}","status":"{{longText}}"}}}""";
+        var payload = "{\"id\":\"" + longText + "\",\"type\":\"" + longText + "\",\"created\":1696147200,\"data\":{\"object\":{\"object\":\"" + longText + "\",\"id\":\"" + longText + "\",\"payment_intent\":\"" + longText + "\",\"checkout_session\":\"" + longText + "\",\"status\":\"" + longText + "\"}}}";
         db.Set<ProviderCallbackInboxMessage>().Add(MakeMessage(provider: "Stripe", payloadJson: payload));
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
