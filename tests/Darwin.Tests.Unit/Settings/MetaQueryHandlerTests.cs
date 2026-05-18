@@ -80,10 +80,10 @@ public sealed class MetaQueryHandlerTests
         var deletedSetting = BuildValidSetting();
         deletedSetting.Id = Guid.NewGuid();
         deletedSetting.IsDeleted = true;
-        deletedSetting.DefaultCulture = "fr-FR";
+        deletedSetting.JwtAudience = "deleted-audience";
         var activeSetting = BuildValidSetting();
         activeSetting.Id = Guid.NewGuid();
-        activeSetting.DefaultCulture = "en-US";
+        activeSetting.JwtAudience = "active-audience";
 
         db.Set<SiteSetting>().AddRange(deletedSetting, activeSetting);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -92,7 +92,7 @@ public sealed class MetaQueryHandlerTests
         var result = await handler.HandleAsync(TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
-        result.Value!.DefaultCulture.Should().Be("en-US");
+        result.Value!.JwtAudience.Should().Be("active-audience");
     }
 
     [Fact]

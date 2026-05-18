@@ -418,6 +418,12 @@ New unit tests added on 2026-05-13 (this session):
 - `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~CrmEngagementHandlersTests" --no-build`
   - extended (+1 test): `UpdateCustomerSegment_Should_Throw_WhenRowVersionIsEmpty` (DbUpdateConcurrencyException — CustomerSegmentEditValidator does not validate RowVersion so the handler's own concurrency check fires).
 
+New unit tests added on 2026-05-18 (this session):
+
+- `dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~BusinessOperationsCommandHandlerTests" --no-build`
+  - 34 passed — new file covers `ProvisionBusinessOnboardingHandler` (empty Id, empty RowVersion, null RowVersion, business not found, stale RowVersion, missing owner prerequisite, missing primary location prerequisite, successful provisioning, customer profile creation, WasApproved/WasActivated flags when already approved), `UpdateProviderCallbackInboxMessageHandler` (empty Id, empty RowVersion, not found, stale RowVersion, unsupported action, MARKPROCESSED, MARKFAILED with reason, MARKFAILED with default reason, REQUEUE state reset, case-insensitive action, oversized action rejected), and `CancelCommunicationDispatchOperationHandler` (empty Id, empty RowVersion, email not found, email stale RowVersion, email cancel success, already-cancelled no-op, in-flight protection window, channel not found, channel cancel success, batch zero results, batch limit respected, batch skip deleted, batch invalid status filter).
+- Pre-existing build errors fixed: CS9007 raw string literal in `ProviderCallbackInboxHandlerTests.cs:372`, CS0411 type inference in `ComputeCartSummaryHandlerTests.cs:71`, CS1061 missing `DefaultCulture` in `MetaQueryHandlerTests.cs:95`, missing `ChannelDispatchOperation` registration in `ChannelDispatchActivityHandlerTests.cs` DbContext.
+
 ---
 
 ## 5.5 Prioritized Test Queue For The Next Implementation Pass
@@ -557,7 +563,7 @@ Do not expand test projects until the current implementation slice calls for it,
 - Add Worker completion-save resilience coverage proving queue completion and inactive webhook-subscription batch updates retry transient database failures and handle post-claim concurrency without crashing the worker loop.
 - Add notification sender idempotency coverage proving SMTP/SMS/WhatsApp create a pending audit claim before external sends, skip duplicate sends when a non-deleted active audit (`Pending` or `Sent`) already exists for the same `CorrelationKey`, allow old failed/pending retry flows with new correlation keys, and enforce one active audit through SQL Server/PostgreSQL unique filtered/partial indexes.
 - Add admin text override JSON coverage proving business/site-setting validators, public business text resolution, and WebAdmin admin-text localization all use the same object-of-culture-to-string-map structure, reject structurally invalid values, and do not throw on duplicate/case-variant keys.
-- Add Business operations RowVersion coverage proving onboarding provisioning, provider-callback inbox actions, and communication dispatch cancellation reject missing/stale row versions and compare null database row versions without raw exceptions.
+- ✅ Add Business operations RowVersion coverage proving onboarding provisioning, provider-callback inbox actions, and communication dispatch cancellation reject missing/stale row versions and compare null database row versions without raw exceptions.
  - ✅ Add WebApi provider-webhook boundary coverage proving public Stripe/DHL webhook endpoints reject payloads larger than the configured/raw 256 KiB cap with HTTP 413 before signature verification or inbox persistence, and still accept valid payloads within the cap.
 - ✅ Add WebApi provider-webhook idempotency coverage proving concurrent Stripe/DHL callbacks with the same provider idempotency key create only one active inbox row and subsequent requests return `duplicate=true`.
 - ✅ Add Stripe webhook processing idempotency coverage proving concurrent processing of the same Stripe event creates only one non-deleted `EventLog` row and the losing save path returns a duplicate result without applying a second observable update.
