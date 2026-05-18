@@ -312,6 +312,36 @@ public sealed class TransitionInvoiceStatusHandlerTests
         payment.PaidAtUtc.Should().BeNull();
     }
 
+    [Fact]
+    public async Task HandleAsync_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = InvoiceTransitionTestDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+
+        var invoice = new Invoice
+        {
+            Id = invoiceId,
+            Currency = "EUR",
+            DueDateUtc = new DateTime(2026, 3, 26, 10, 0, 0, DateTimeKind.Utc)
+        };
+        invoice.RowVersion = null!;
+        db.Set<Invoice>().Add(invoice);
+        SeedReadyInvoiceSettings(db);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new TransitionInvoiceStatusHandler(db, new InvoiceStatusTransitionValidator(), new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new InvoiceStatusTransitionDto
+        {
+            Id = invoiceId,
+            RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
+            TargetStatus = InvoiceStatus.Open
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     private sealed class InvoiceTransitionTestDbContext : DbContext, IAppDbContext
     {
         private InvoiceTransitionTestDbContext(DbContextOptions<InvoiceTransitionTestDbContext> options)

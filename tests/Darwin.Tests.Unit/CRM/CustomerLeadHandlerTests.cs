@@ -1270,6 +1270,79 @@ public sealed class CustomerLeadHandlerTests
         customer.VatValidationMessage.Should().Be("VAT validation provider failed; manual review is required.");
     }
 
+    // ─── Null database RowVersion guards ─────────────────────────────────────
+
+    [Fact]
+    public async Task UpdateCustomer_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+
+        var customer = new Customer
+        {
+            Id = customerId,
+            FirstName = "Legacy",
+            LastName = "Customer",
+            Email = "legacy@example.de",
+            Phone = "+490000000"
+        };
+        customer.RowVersion = null!;
+        db.Set<Customer>().Add(customer);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerHandler(
+            db,
+            new CustomerEditValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new CustomerEditDto
+        {
+            Id = customerId,
+            RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
+            FirstName = "Legacy",
+            LastName = "Customer",
+            Email = "legacy@example.de"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
+    [Fact]
+    public async Task UpdateLead_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var leadId = Guid.NewGuid();
+
+        var lead = new Lead
+        {
+            Id = leadId,
+            FirstName = "Legacy",
+            LastName = "Lead",
+            Email = "legacy.lead@example.de"
+        };
+        lead.RowVersion = null!;
+        db.Set<Lead>().Add(lead);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateLeadHandler(
+            db,
+            new LeadEditValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new LeadEditDto
+        {
+            Id = leadId,
+            RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
+            FirstName = "Legacy",
+            LastName = "Lead",
+            Email = "legacy.lead@example.de"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     private static User MakeUser(Guid userId) =>
         new("user@example.com", "hashed-password", "security-stamp")
         {

@@ -319,6 +319,44 @@ public sealed class OpportunityHandlerTests
         await act.Should().ThrowAsync<ValidationException>("empty RowVersion is rejected by the validator before the handler's concurrency check");
     }
 
+    [Fact]
+    public async Task UpdateOpportunity_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = OpportunityDbContext.Create();
+        var opportunityId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+
+        db.Set<Customer>().Add(MakeCustomer(customerId));
+        var opportunity = new Opportunity
+        {
+            Id = opportunityId,
+            CustomerId = customerId,
+            Title = "Legacy Opportunity",
+            Stage = OpportunityStage.Qualification
+        };
+        opportunity.RowVersion = null!;
+        db.Set<Opportunity>().Add(opportunity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateOpportunityHandler(
+            db,
+            new OpportunityEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new OpportunityEditDto
+        {
+            Id = opportunityId,
+            RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
+            CustomerId = customerId,
+            Title = "Legacy Opportunity",
+            EstimatedValueMinor = 50000,
+            Stage = OpportunityStage.Qualification
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     // ─── Shared helpers ───────────────────────────────────────────────────────
 
     private static Customer MakeCustomer(Guid id) => new()

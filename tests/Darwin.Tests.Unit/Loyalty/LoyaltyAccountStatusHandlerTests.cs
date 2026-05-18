@@ -202,6 +202,64 @@ public sealed class LoyaltyAccountStatusHandlerTests
         await act.Should().ThrowAsync<ValidationException>();
     }
 
+    // ─── Null database RowVersion guards ──────────────────────────────────────
+
+    [Fact]
+    public async Task Activate_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = StatusTestDbContext.Create();
+        var account = new LoyaltyAccount
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            Status = LoyaltyAccountStatus.Suspended
+        };
+        account.RowVersion = null!;
+        db.Set<LoyaltyAccount>().Add(account);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ActivateLoyaltyAccountHandler(db, new TestLocalizer());
+
+        var result = await handler.HandleAsync(new ActivateLoyaltyAccountDto
+        {
+            Id = account.Id,
+            RowVersion = [1, 2, 3] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("LoyaltyAccountConcurrencyConflict");
+    }
+
+    [Fact]
+    public async Task Suspend_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = StatusTestDbContext.Create();
+        var account = new LoyaltyAccount
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            Status = LoyaltyAccountStatus.Active
+        };
+        account.RowVersion = null!;
+        db.Set<LoyaltyAccount>().Add(account);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SuspendLoyaltyAccountHandler(db, new TestLocalizer());
+
+        var result = await handler.HandleAsync(new SuspendLoyaltyAccountDto
+        {
+            Id = account.Id,
+            RowVersion = [1, 2, 3] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("LoyaltyAccountConcurrencyConflict");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static LoyaltyAccount CreateAccount(LoyaltyAccountStatus status, byte[]? rowVersion = null) =>

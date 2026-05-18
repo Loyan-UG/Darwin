@@ -245,6 +245,69 @@ public sealed class LoyaltyRewardTierHandlerTests
         result.Error.Should().Be("LoyaltyRewardTierConcurrencyConflict");
     }
 
+    [Fact]
+    public async Task UpdateLoyaltyRewardTier_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = RewardTierTestDbContext.Create();
+        var tierId = Guid.NewGuid();
+        var programId = Guid.NewGuid();
+
+        var entity = new LoyaltyRewardTier
+        {
+            Id = tierId,
+            LoyaltyProgramId = programId,
+            PointsRequired = 200,
+            RewardType = LoyaltyRewardType.PercentDiscount
+        };
+        entity.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<LoyaltyRewardTier>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateLoyaltyRewardTierHandler(db, new LoyaltyRewardTierEditValidator(), new TestLocalizer());
+
+        var act = () => handler.HandleAsync(new LoyaltyRewardTierEditDto
+        {
+            Id = tierId,
+            LoyaltyProgramId = programId,
+            PointsRequired = 300,
+            RewardType = LoyaltyRewardType.PercentDiscount,
+            RowVersion = [1] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
+    [Fact]
+    public async Task SoftDeleteLoyaltyRewardTier_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = RewardTierTestDbContext.Create();
+        var tierId = Guid.NewGuid();
+
+        var entity = new LoyaltyRewardTier
+        {
+            Id = tierId,
+            LoyaltyProgramId = Guid.NewGuid(),
+            PointsRequired = 100,
+            RewardType = LoyaltyRewardType.FreeItem
+        };
+        entity.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<LoyaltyRewardTier>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteLoyaltyRewardTierHandler(db, new TestLocalizer());
+
+        var result = await handler.HandleAsync(new LoyaltyRewardTierDeleteDto
+        {
+            Id = tierId,
+            RowVersion = [1] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("LoyaltyRewardTierConcurrencyConflict");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private sealed class TestLocalizer : IStringLocalizer<ValidationResource>

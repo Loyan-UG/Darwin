@@ -557,6 +557,33 @@ public sealed class CrmEngagementHandlersTests
             .WithMessage("CustomerSegmentMembershipNotFound");
     }
 
+    [Fact]
+    public async Task UpdateCustomerSegment_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = CrmEngagementDbContext.Create();
+        var segmentId = Guid.NewGuid();
+
+        var segment = new CustomerSegment { Id = segmentId, Name = "Legacy Segment" };
+        segment.RowVersion = null!;
+        db.Set<CustomerSegment>().Add(segment);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerSegmentHandler(
+            db,
+            new CustomerSegmentEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new CustomerSegmentEditDto
+        {
+            Id = segmentId,
+            RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
+            Name = "Legacy Segment Updated"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     // ─── Shared helpers ───────────────────────────────────────────────────────
 
     private static Customer MakeCustomer(Guid id) => new()
