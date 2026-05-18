@@ -167,6 +167,24 @@ public sealed class MediaHandlerTests
         asset.Title.Should().BeNull("whitespace-only title should be stored as null");
     }
 
+    [Fact]
+    public async Task CreateMediaAsset_Should_Normalize_Known_Roles_For_Canonical_Lookup()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var handler = new CreateMediaAssetHandler(db);
+
+        await handler.HandleAsync(new MediaAssetCreateDto
+        {
+            Url = "https://cdn.example.com/hero.jpg",
+            OriginalFileName = "hero.jpg",
+            SizeBytes = 100,
+            Role = "  editorasset  "
+        }, TestContext.Current.CancellationToken);
+
+        var asset = db.Set<MediaAsset>().Single();
+        asset.Role.Should().Be("EditorAsset", "EditorAsset role should be canonicalized for lookup");
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // UpdateMediaAssetHandler
     // ─────────────────────────────────────────────────────────────────────────
@@ -212,6 +230,23 @@ public sealed class MediaHandlerTests
             TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>("a stale RowVersion must trigger a concurrency exception");
+    }
+
+    [Fact]
+    public async Task UpdateMediaAsset_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1, 2, 3 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateMediaAssetHandler(db, CreateLocalizer());
+
+        var act = () => handler.HandleAsync(
+            new MediaAssetEditDto { Id = asset.Id, RowVersion = Array.Empty<byte>(), Alt = "new alt" },
+            TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("an empty RowVersion must be rejected before the concurrency check");
     }
 
     [Fact]
@@ -280,6 +315,29 @@ public sealed class MediaHandlerTests
         updated.Title.Should().BeNull("whitespace title should be stored as null on update");
     }
 
+    [Fact]
+    public async Task UpdateMediaAsset_Should_Normalize_Known_Role_For_Canonical_Lookup()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var rowVersion = new byte[] { 9, 9, 9 };
+        var asset = BuildAsset(rowVersion: rowVersion);
+        asset.Role = "libraryasset";
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateMediaAssetHandler(db, CreateLocalizer());
+        await handler.HandleAsync(new MediaAssetEditDto
+        {
+            Id = asset.Id,
+            RowVersion = rowVersion,
+            Alt = "updated",
+            Role = "  LIBRARYASSET  "
+        }, TestContext.Current.CancellationToken);
+
+        var updated = db.Set<MediaAsset>().Single();
+        updated.Role.Should().Be("LibraryAsset", "LibraryAsset role should be canonicalized on update");
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // SoftDeleteMediaAssetHandler
     // ─────────────────────────────────────────────────────────────────────────
@@ -328,6 +386,65 @@ public sealed class MediaHandlerTests
         var act = () => handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
 
         await act.Should().NotThrowAsync("handler silently no-ops when asset is already soft-deleted");
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_Fail_WhenIdIsEmpty()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+
+        var result = await handler.HandleAsync(Guid.Empty, new byte[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty Guid is not a valid asset identifier");
+        result.Error.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_Fail_WhenRowVersionIsNull_ForExistingAsset()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var asset = BuildAsset(rowVersion: rowVersion);
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("null RowVersion must be rejected for an existing asset");
+        result.Error.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_Fail_WhenRowVersionIsEmpty_ForExistingAsset()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var asset = BuildAsset(rowVersion: rowVersion);
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, Array.Empty<byte>(), TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty RowVersion must be rejected for an existing asset");
+        result.Error.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_Fail_WhenRowVersionIsStale()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1, 2, 3 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, new byte[] { 9, 9, 9 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("stale RowVersion must trigger a concurrency conflict");
+        result.Error.Should().NotBeNullOrEmpty();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -499,6 +616,29 @@ public sealed class MediaHandlerTests
 
         total.Should().Be(1);
         items.Single().OriginalFileName.Should().Be("ed.jpg");
+    }
+
+    [Fact]
+    public async Task GetMediaAssetsPage_Should_Filter_EditorAssets_By_Canonicalized_Role()
+    {
+        await using var db = MediaTestDbContext.Create();
+        var createHandler = new CreateMediaAssetHandler(db);
+
+        await createHandler.HandleAsync(new MediaAssetCreateDto
+        {
+            Url = "https://cdn.example.com/canonical-editor.jpg",
+            OriginalFileName = "canonical-editor.jpg",
+            Alt = "canonical",
+            SizeBytes = 256,
+            Role = "  editorasset  "
+        }, TestContext.Current.CancellationToken);
+
+        var handler = new GetMediaAssetsPageHandler(db);
+        var (items, total) = await handler.HandleAsync(
+            1, 20, filter: MediaAssetQueueFilter.EditorAssets, ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(1, "canonicalized role values must satisfy direct EditorAssets lookup");
+        items.Single().Role.Should().Be("EditorAsset");
     }
 
     [Fact]

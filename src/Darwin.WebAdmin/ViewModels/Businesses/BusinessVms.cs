@@ -690,19 +690,25 @@ public sealed class BusinessSubscriptionInvoicesListVm
     {
         public BusinessEditVm Business { get; set; } = new();
         public List<BusinessOnboardingWizardStepVm> Steps { get; set; } = new();
+        public BusinessOnboardingWizardStepVm? ResumeStep { get; set; }
         public int RequiredStepCount { get; set; }
         public int CompletedRequiredStepCount { get; set; }
+        public int CompletedStepCount { get; set; }
         public bool CanFinalize { get; set; }
     }
 
     public sealed class BusinessOnboardingWizardStepVm
     {
         public int Number { get; set; }
+        public string Key { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Summary { get; set; } = string.Empty;
         public bool IsRequired { get; set; } = true;
         public bool IsComplete { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsNextAction { get; set; }
         public string ActionLabel { get; set; } = string.Empty;
         public string ActionUrl { get; set; } = string.Empty;
+        public string WizardUrl { get; set; } = string.Empty;
     }
 }

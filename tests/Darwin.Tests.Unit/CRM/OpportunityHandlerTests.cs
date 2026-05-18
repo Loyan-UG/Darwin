@@ -3,6 +3,7 @@ using Darwin.Application;
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Validators;
+using FluentValidation;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Enums;
@@ -279,6 +280,43 @@ public sealed class OpportunityHandlerTests
         }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+    }
+
+    [Fact]
+    public async Task UpdateOpportunity_Should_Throw_WhenRowVersionIsEmpty()
+    {
+        await using var db = OpportunityDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var opportunityId = Guid.NewGuid();
+
+        db.Set<Customer>().Add(MakeCustomer(customerId));
+        db.Set<Opportunity>().Add(new Opportunity
+        {
+            Id = opportunityId,
+            CustomerId = customerId,
+            Title = "Empty RowVersion Opportunity",
+            EstimatedValueMinor = 100000,
+            Stage = OpportunityStage.Qualification,
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateOpportunityHandler(
+            db,
+            new OpportunityEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new OpportunityEditDto
+        {
+            Id = opportunityId,
+            RowVersion = Array.Empty<byte>(), // empty row version
+            CustomerId = customerId,
+            Title = "Empty RowVersion Opportunity",
+            EstimatedValueMinor = 100000,
+            Stage = OpportunityStage.Qualification
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("empty RowVersion is rejected by the validator before the handler's concurrency check");
     }
 
     // ─── Shared helpers ───────────────────────────────────────────────────────

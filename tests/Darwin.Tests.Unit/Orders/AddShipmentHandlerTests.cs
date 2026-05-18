@@ -106,6 +106,93 @@ public sealed class AddShipmentHandlerTests
         db.Set<ShipmentCarrierEvent>().Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task AddShipmentHandler_Should_Ignore_SoftDeleted_Settings_AndQueueDhlOperation_WhenActiveSettingsExist()
+    {
+        await using var db = AddShipmentTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var orderLineId = Guid.NewGuid();
+
+        db.Set<SiteSetting>().AddRange(
+            new SiteSetting
+            {
+                Id = Guid.NewGuid(),
+                Title = "Legacy",
+                ContactEmail = "legacy@darwin.de",
+                IsDeleted = true,
+                DhlEnabled = false
+            },
+            new SiteSetting
+            {
+                Title = "Darwin",
+                ContactEmail = "ops@darwin.de",
+                DhlEnabled = true,
+                DhlApiBaseUrl = "https://api-sandbox.dhl.example",
+                DhlApiKey = "key",
+                DhlApiSecret = "secret",
+                DhlAccountNumber = "22222222220101",
+                DhlShipperName = "Darwin Ops",
+                DhlShipperEmail = "ops@darwin.de",
+                DhlShipperPhoneE164 = "+4915112345678",
+                DhlShipperStreet = "Musterstrasse 1",
+                DhlShipperPostalCode = "10115",
+                DhlShipperCity = "Berlin",
+                DhlShipperCountry = "DE"
+            });
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-ADD-SHIP-2",
+            Currency = "EUR",
+            Status = OrderStatus.Paid,
+            Lines = new List<OrderLine>
+            {
+                new()
+                {
+                    Id = orderLineId,
+                    OrderId = orderId,
+                    Name = "Coffee",
+                    Sku = "SKU-2",
+                    Quantity = 2,
+                    UnitPriceNetMinor = 1000,
+                    UnitPriceGrossMinor = 1190,
+                    LineTaxMinor = 190,
+                    LineGrossMinor = 2380,
+                    VatRate = 0.19m
+                }
+            }
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new AddShipmentHandler(
+            db,
+            new ShipmentCreateValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        await handler.HandleAsync(new ShipmentCreateDto
+        {
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            TotalWeight = 900,
+            Lines = new List<ShipmentLineCreateDto>
+            {
+                new()
+                {
+                    OrderLineId = orderLineId,
+                    Quantity = 1
+                }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var operation = await db.Set<ShipmentProviderOperation>().SingleAsync(TestContext.Current.CancellationToken);
+        operation.Provider.Should().Be("DHL");
+        operation.OperationType.Should().Be("CreateShipment");
+        operation.Status.Should().Be("Pending");
+    }
+
     private sealed class AddShipmentTestDbContext : DbContext, IAppDbContext
     {
         private AddShipmentTestDbContext(DbContextOptions<AddShipmentTestDbContext> options)

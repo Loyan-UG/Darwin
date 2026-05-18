@@ -121,6 +121,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     LastName = "Administrator",
                     IsSystem = true,
                     IsActive = true,
+                    EmailConfirmed = true,
                     Locale = DomainDefaults.DefaultCulture,
                     Timezone = DomainDefaults.DefaultTimezone,
                     Currency = DomainDefaults.DefaultCurrency
@@ -130,6 +131,41 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
                 db.Add(new UserRole(adminUser.Id, adminRole.Id));
                 await db.SaveChangesAsync(ct);
+            }
+            else
+            {
+                var requiresSave = false;
+
+                if (!adminUser.IsActive)
+                {
+                    adminUser.IsActive = true;
+                    requiresSave = true;
+                }
+
+                if (!adminUser.EmailConfirmed)
+                {
+                    adminUser.EmailConfirmed = true;
+                    requiresSave = true;
+                }
+
+                if (!adminUser.IsSystem)
+                {
+                    adminUser.IsSystem = true;
+                    requiresSave = true;
+                }
+
+                if (requiresSave)
+                {
+                    await db.SaveChangesAsync(ct);
+                }
+
+                var hasAdminRole = await db.Set<UserRole>()
+                    .AnyAsync(ur => ur.UserId == adminUser.Id && ur.RoleId == adminRole.Id && !ur.IsDeleted, ct);
+                if (!hasAdminRole)
+                {
+                    db.Add(new UserRole(adminUser.Id, adminRole.Id));
+                    await db.SaveChangesAsync(ct);
+                }
             }
 
             // ----------------------------

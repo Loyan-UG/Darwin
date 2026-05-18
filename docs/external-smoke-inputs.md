@@ -216,3 +216,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage
 ```
 
 Do not run the execute mode against an invoice archive production container until retention/legal-hold policy and cleanup expectations are explicit. Use a disposable smoke container or object prefix first. Use `-SmokeRetention` only when the selected provider/container is expected to keep the disposable retained object for operator inspection; the script intentionally skips delete cleanup in that mode.
+
+## E-Invoice External Command
+
+Use this smoke only after an operator has selected a deployment-approved ZUGFeRD/Factur-X or XRechnung generator/validator wrapper. The smoke runs Darwin's disabled-by-default `IEInvoiceGenerationService` external-command adapter and verifies process execution plus artifact shape. It does not prove legal compliance, PDF/A-3 validity, EN16931 validation, or XRechnung profile validation.
+
+Environment variables:
+
+- `DARWIN_EINVOICE_COMMAND_PATH`: absolute path to the approved wrapper executable.
+- `DARWIN_EINVOICE_FORMAT` optional; defaults to `ZugferdFacturX`. Accepted values are `ZugferdFacturX` and `XRechnung`.
+- `DARWIN_EINVOICE_VALIDATION_PROFILE` optional; defaults to `external-command-smoke`.
+- `DARWIN_EINVOICE_TEMP_DIRECTORY` optional; use an approved local temp root when the default OS temp directory is unsuitable.
+
+Commands:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Format XRechnung -Execute
+```
+
+The configured command receives `--input <issued-snapshot-json> --output <artifact-path> --format <zugferd-factur-x|xrechnung>`. The smoke does not print invoice payloads, generated artifacts, command stdout/stderr, executable path, or provider credentials. A passed smoke only means the adapter can call the selected wrapper and Darwin's local artifact-shape guard accepted the output. Full release readiness still requires validator evidence from the selected tooling and production download/storage smoke.

@@ -241,6 +241,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             "smoke-vies-live.ps1",
             "smoke-brevo-readiness.ps1",
             "smoke-object-storage.ps1",
+            "smoke-einvoice-external-command.ps1",
             "check-go-live-readiness.ps1"
         };
 
@@ -280,10 +281,11 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("\"-RequireDeliveryPipeline\"")
             .And.Contain("scripts\\smoke-vies-live.ps1")
             .And.Contain("scripts\\smoke-object-storage.ps1")
+            .And.Contain("scripts\\smoke-einvoice-external-command.ps1")
             .And.Contain("docs\\archive-storage-provider-decision.md")
             .And.Contain("docs\\e-invoice-tooling-decision.md")
             .And.Contain("No option is selected yet\\.")
-            .And.Contain("No library or tooling is selected yet\\.");
+            .And.Contain("E-invoice tooling decision");
 
         externalSmokeInputsSource.Should().Contain("Do not store real secret values");
         externalSmokeInputsSource.Should().Contain("scripts\\check-go-live-readiness.ps1");
@@ -295,6 +297,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_PROVIDER");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_S3_BUCKET");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_AZURE_CONTAINER");
+        externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_COMMAND_PATH");
         externalSmokeInputsSource.Should().Contain("Provider failures must remain `Unknown`");
         externalSmokeInputsSource.Should().NotContain("sk_live_");
         externalSmokeInputsSource.Should().NotContain("sk_test_");
@@ -386,6 +389,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("ObjectStorage:AzureBlob:ConnectionString")
             .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_S3_SECRET_KEY")
             .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_AZURE_CONNECTION_STRING");
+
+        ReadRepositoryFile(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"))
+            .Should()
+            .Contain("IEInvoiceGenerationService")
+            .And.Contain("DARWIN_EINVOICE_COMMAND_PATH")
+            .And.Contain("not a substitute for ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation")
+            .And.NotContain("Write-Host $resolvedExecutable");
     }
 
     [Fact]
@@ -423,6 +433,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("VIES live smoke prerequisites");
         output.Should().Contain("Object storage MediaAssets profile prerequisites");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites");
+        output.Should().Contain("E-invoice external-command smoke prerequisites");
         output.Should().NotContain("System.Management.Automation.RemoteException");
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
@@ -430,7 +441,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     }
 
     [Fact]
-    public async Task GoLiveReadinessScript_Should_ReportProviderReadyAndKeepOpenDecisionsBlocked()
+    public async Task GoLiveReadinessScript_Should_ReportProviderReadyAndSelectedDecisionsReady()
     {
         var root = ResolveRepositoryPath();
         var startInfo = new ProcessStartInfo
@@ -464,7 +475,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         await process.WaitForExitAsync(TestContext.Current.CancellationToken);
         var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
 
-        process.ExitCode.Should().Be(2);
+        process.ExitCode.Should().Be(0);
         output.Should().Contain("Stripe test-mode smoke prerequisites: Ready");
         output.Should().Contain("Stripe webhook forwarding prerequisites: Ready");
         output.Should().Contain("DHL live smoke prerequisites: Ready");
@@ -473,8 +484,10 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("Object storage smoke prerequisites: Ready");
         output.Should().Contain("Object storage MediaAssets profile prerequisites: Ready");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites: Ready");
+        output.Should().Contain("E-invoice external-command smoke prerequisites: Ready");
         output.Should().Contain("Invoice archive object-storage provider decision: Ready");
-        output.Should().Contain("E-invoice tooling decision: Blocked");
+        output.Should().Contain("E-invoice tooling decision: Ready");
+        output.Should().Contain("All local readiness checks are ready.");
         output.Should().NotContain("System.Management.Automation.RemoteException");
 
         var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
@@ -488,6 +501,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     [InlineData("smoke-brevo-readiness.ps1", "Brevo readiness smoke is blocked.")]
     [InlineData("smoke-vies-live.ps1", "VIES live smoke is blocked.")]
     [InlineData("smoke-object-storage.ps1", "Object storage smoke is blocked.")]
+    [InlineData("smoke-einvoice-external-command.ps1", "E-invoice external-command smoke is blocked.")]
     public async Task ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing(
         string scriptName,
         string expectedBlockedMessage)
@@ -818,6 +832,184 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
+    [Fact]
+    public async Task EInvoiceExternalCommandSmoke_Should_ExecuteThroughConfiguredAdapterWithLocalWrapper()
+    {
+        var root = ResolveRepositoryPath();
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"darwin-einvoice-smoke-wrapper-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            var wrapperPath = Path.Combine(tempRoot, "generator.cmd");
+            File.WriteAllText(
+                wrapperPath,
+                """
+                @echo off
+                set output=%4
+                echo %%PDF-1.7>%output%
+                exit /b 0
+                """);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                WorkingDirectory = root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
+            startInfo.ArgumentList.Add("-Execute");
+
+            foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                         .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                startInfo.Environment.Remove(key);
+            }
+
+            startInfo.Environment["DARWIN_EINVOICE_COMMAND_PATH"] = wrapperPath;
+
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-einvoice-external-command.ps1.");
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+            await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+            var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+            process.ExitCode.Should().Be(0);
+            output.Should().Contain("E-invoice external-command smoke generated an artifact through the configured adapter.");
+            output.Should().Contain("Format: ZugferdFacturX");
+            output.Should().Contain("Content type: application/pdf");
+            output.Should().NotContain(wrapperPath);
+            output.Should().NotContain("System.Management.Automation.RemoteException");
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EInvoiceExternalCommandSmoke_Should_ExecuteXRechnungThroughConfiguredAdapterWithLocalWrapper()
+    {
+        var root = ResolveRepositoryPath();
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"darwin-einvoice-smoke-wrapper-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            var wrapperPath = Path.Combine(tempRoot, "generator.cmd");
+            File.WriteAllText(
+                wrapperPath,
+                """
+                @echo off
+                set output=%4
+                echo ^<Invoice^>^<Id^>smoke^</Id^>^</Invoice^>>%output%
+                exit /b 0
+                """);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                WorkingDirectory = root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
+            startInfo.ArgumentList.Add("-Format");
+            startInfo.ArgumentList.Add("XRechnung");
+            startInfo.ArgumentList.Add("-Execute");
+
+            foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                         .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                startInfo.Environment.Remove(key);
+            }
+
+            startInfo.Environment["DARWIN_EINVOICE_COMMAND_PATH"] = wrapperPath;
+
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-einvoice-external-command.ps1.");
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+            await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+            var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+            process.ExitCode.Should().Be(0);
+            output.Should().Contain("E-invoice external-command smoke generated an artifact through the configured adapter.");
+            output.Should().Contain("Format: XRechnung");
+            output.Should().Contain("Content type: application/xml");
+            output.Should().NotContain(wrapperPath);
+            output.Should().NotContain("System.Management.Automation.RemoteException");
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("RelativeGenerator.cmd", "ZugferdFacturX", "DARWIN_EINVOICE_COMMAND_PATH must be an existing absolute file path.")]
+    [InlineData("C:\\missing\\generator.cmd", "ZugferdFacturX", "DARWIN_EINVOICE_COMMAND_PATH must be an existing absolute file path.")]
+    [InlineData("C:\\missing\\generator.cmd", "Unsupported", "DARWIN_EINVOICE_FORMAT must be ZugferdFacturX or XRechnung.")]
+    public async Task EInvoiceExternalCommandSmoke_Should_BlockInvalidPathAndFormat(
+        string commandPath,
+        string format,
+        string expectedMessage)
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_EINVOICE_COMMAND_PATH"] = commandPath;
+        startInfo.Environment["DARWIN_EINVOICE_FORMAT"] = format;
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-einvoice-external-command.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("E-invoice external-command smoke is blocked.");
+        output.Should().Contain(expectedMessage);
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
     public static IEnumerable<object[]> ProviderSmokeScriptReadyDryRunCases()
     {
         yield return new object[]
@@ -903,6 +1095,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_OBJECT_STORAGE_FILE_ROOT"] = Path.Combine(Path.GetTempPath(), "darwin-object-storage-ready-dry-run")
             }
         };
+
+        yield return new object[]
+        {
+            "smoke-einvoice-external-command.ps1",
+            "E-invoice external-command smoke configuration is present",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe"
+            }
+        };
     }
 
     private static IReadOnlyDictionary<string, string> AllProviderReadyDryRunEnvironment() =>
@@ -946,7 +1148,8 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_VIES_ENDPOINT_URL"] = "http://127.0.0.1:5135/vies",
             ["DARWIN_OBJECT_STORAGE_PROVIDER"] = "FileSystem",
             ["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke",
-            ["DARWIN_OBJECT_STORAGE_FILE_ROOT"] = Path.Combine(Path.GetTempPath(), "darwin-object-storage-ready-dry-run")
+            ["DARWIN_OBJECT_STORAGE_FILE_ROOT"] = Path.Combine(Path.GetTempPath(), "darwin-object-storage-ready-dry-run"),
+            ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe"
         };
 
     [Fact]
@@ -1089,12 +1292,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         complianceDecisionSource.Should().Contain("Primary target: ZUGFeRD/Factur-X");
         complianceDecisionSource.Should().Contain("Secondary target: XRechnung export");
         complianceDecisionSource.Should().Contain("not full e-invoice compliance");
-        complianceDecisionSource.Should().Contain("The ZUGFeRD/Factur-X library/tooling decision is still open.");
+        complianceDecisionSource.Should().Contain("The first ZUGFeRD/Factur-X tooling path is selected as Mustangproject CLI");
         complianceDecisionSource.Should().Contain("PDF/A-3");
         complianceDecisionSource.Should().Contain("embedded XML");
         complianceDecisionSource.Should().Contain("docs/e-invoice-tooling-decision.md");
 
-        toolingDecisionSource.Should().Contain("No library or tooling is selected yet.");
+        toolingDecisionSource.Should().Contain("Selected first implementation path: `Mustangproject` CLI");
         toolingDecisionSource.Should().Contain("PDF/A-3 generation or embedding support");
         toolingDecisionSource.Should().Contain("Structured XML validation before download.");
         toolingDecisionSource.Should().Contain("Failure modes that keep the invoice in manual review instead of exposing invalid artifacts.");
@@ -1104,7 +1307,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         toolingDecisionSource.Should().Contain("malformed XRechnung XML");
         toolingDecisionSource.Should().Contain("IEInvoiceGenerationService");
         toolingDecisionSource.Should().Contain("NotConfigured");
-        toolingDecisionSource.Should().NotContain("Selected library:");
+        toolingDecisionSource.Should().Contain("The selected path still requires a pinned artifact");
         toolingDecisionSource.Should().NotContain("Full e-invoice compliance is complete");
 
         goLiveStatusSource.Should().Contain("Full e-invoicing compliance is not implemented.");
@@ -1120,7 +1323,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         productionSetupSource.Should().Contain("not full legal validation");
 
         backlogSource.Should().Contain("structured invoice source-model JSON, minimum source-readiness validation, and a provider-neutral `IEInvoiceGenerationService` boundary now exist");
-        backlogSource.Should().Contain("E-invoice library/tooling for ZUGFeRD/Factur-X PDF/A-3 embedding and structured XML validation.");
+        backlogSource.Should().Contain("The first tooling path is selected as Mustangproject CLI through the external-command adapter");
 
         abstractionSource.Should().Contain("public interface IEInvoiceGenerationService");
         abstractionSource.Should().Contain("Task<EInvoiceGenerationResult> GenerateAsync");

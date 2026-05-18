@@ -146,6 +146,25 @@ public sealed class ShippingHandlerTests
     }
 
     [Fact]
+    public async Task CreateShippingMethod_Should_Normalize_Dhl_Carrier_To_Canonical_Value()
+    {
+        await using var db = ShippingTestDbContext.Create();
+        var handler = new CreateShippingMethodHandler(
+            db, new ShippingMethodCreateValidator(), CreateLocalizer());
+
+        await handler.HandleAsync(new ShippingMethodCreateDto
+        {
+            Name = "Standard",
+            Carrier = "  dhl  ",
+            Service = "PARCEL",
+            Rates = new List<ShippingRateDto>()
+        }, TestContext.Current.CancellationToken);
+
+        var method = db.Set<ShippingMethod>().Single();
+        method.Carrier.Should().Be("DHL", "DHL carrier should be canonicalized for direct filter lookup");
+    }
+
+    [Fact]
     public async Task CreateShippingMethod_Should_Order_Rates_By_SortOrder()
     {
         await using var db = ShippingTestDbContext.Create();
@@ -689,6 +708,32 @@ public sealed class ShippingHandlerTests
 
         total.Should().Be(1, "only methods with global coverage (null/empty CountriesCsv) should appear");
         items.Single().Name.Should().Be("Global");
+    }
+
+    [Fact]
+    public async Task GetShippingMethodsPage_Should_Filter_Dhl_By_Canonicalized_Carrier()
+    {
+        await using var db = ShippingTestDbContext.Create();
+        var createHandler = new CreateShippingMethodHandler(
+            db, new ShippingMethodCreateValidator(), CreateLocalizer());
+
+        await createHandler.HandleAsync(new ShippingMethodCreateDto
+        {
+            Name = "Express",
+            Carrier = "  dhl  ",
+            Service = "PARCEL",
+            Rates = new List<ShippingRateDto>()
+        }, TestContext.Current.CancellationToken);
+
+        var handler = new GetShippingMethodsPageHandler(db);
+        var (items, total) = await handler.HandleAsync(
+            1,
+            20,
+            filter: ShippingMethodQueueFilter.Dhl,
+            ct: TestContext.Current.CancellationToken);
+
+        total.Should().Be(1, "canonicalized carrier values must satisfy direct DHL lookup");
+        items.Single().Carrier.Should().Be("DHL");
     }
 
     [Fact]

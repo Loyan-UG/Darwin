@@ -41,8 +41,14 @@ public sealed class MainActivity : MauiAppCompatActivity
         var brandStatusColor = Android.Graphics.Color.ParseColor(AndroidStatusBarColor);
         var brandNavigationColor = Android.Graphics.Color.ParseColor(AndroidNavigationBarColor);
 
-        Window?.SetStatusBarColor(brandStatusColor);
-        Window?.SetNavigationBarColor(brandNavigationColor);
+        if (Build.VERSION.SdkInt < BuildVersionCodes.VanillaIceCream)
+        {
+#pragma warning disable CA1422
+            // The legacy color APIs are only used below Android 15; newer versions keep MAUI/edge-to-edge defaults.
+            Window?.SetStatusBarColor(brandStatusColor);
+            Window?.SetNavigationBarColor(brandNavigationColor);
+#pragma warning restore CA1422
+        }
 
         if (Window is not null)
         {

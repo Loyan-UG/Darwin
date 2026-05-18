@@ -57,6 +57,151 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
     }
 
     [Fact]
+    public async Task GenerateAsync_Should_Reject_Malformed_XRechnung_Xml_Output()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, "echo ^<Invoice^>^<Id^>1^</Invoice^>>%output%");
+            var service = CreateService(command, root, supportsXRechnung: true);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.XRechnung),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("did not create a valid XML artifact");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Theory]
+    [InlineData(EInvoiceArtifactFormat.ZugferdFacturX, "zugferd-factur-x", "%%PDF-1.7")]
+    [InlineData(EInvoiceArtifactFormat.XRechnung, "xrechnung", "^<Invoice^>^<Id^>1^</Id^>^</Invoice^>")]
+    public async Task GenerateAsync_Should_Pass_Expected_Format_Argument_To_Command(
+        EInvoiceArtifactFormat format,
+        string expectedCommandFormat,
+        string artifactContent)
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, $$"""
+            if not "%6"=="{{expectedCommandFormat}}" exit /b 7
+            echo {{artifactContent}}>%output%
+            """);
+            var service = CreateService(command, root, supportsXRechnung: true);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(format),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+            result.Artifact.Should().NotBeNull();
+            result.Artifact!.Format.Should().Be(format);
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Return_UnsupportedFormat_When_XRechnung_Is_Not_Enabled()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, "exit /b 9");
+            var service = CreateService(command, root, supportsXRechnung: false);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.XRechnung),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.UnsupportedFormat);
+            result.Message.Should().Contain("does not support the requested format");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Return_NotConfigured_When_Command_Path_Is_Not_Absolute()
+    {
+        var service = CreateService("generator.cmd", Path.GetTempPath());
+
+        var result = await service.GenerateAsync(
+            CreateInvoice(),
+            new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+            TestContext.Current.CancellationToken);
+
+        result.Status.Should().Be(EInvoiceGenerationStatus.NotConfigured);
+        result.Artifact.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Bound_Command_Failure_Output()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, """
+            powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Output ('x' * 5000); exit 7"
+            """);
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Length.Should().BeLessThanOrEqualTo(4098);
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Delete_Temporary_Input_And_Output_Files_After_Success()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, "echo %%PDF-1.7>%output%");
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+            Directory.GetFiles(root, "darwin-einvoice-*")
+                .Should()
+                .BeEmpty("the adapter should not leave source snapshots or generated artifacts in the temp directory");
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
     public async Task GenerateAsync_Should_Reject_Output_Larger_Than_Configured_Maximum()
     {
         var root = CreateTempRoot();

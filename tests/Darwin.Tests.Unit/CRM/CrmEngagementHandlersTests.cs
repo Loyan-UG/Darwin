@@ -342,6 +342,35 @@ public sealed class CrmEngagementHandlersTests
     }
 
     [Fact]
+    public async Task UpdateCustomerSegment_Should_Throw_WhenRowVersionIsEmpty()
+    {
+        await using var db = CrmEngagementDbContext.Create();
+        var segmentId = Guid.NewGuid();
+
+        db.Set<CustomerSegment>().Add(new CustomerSegment
+        {
+            Id = segmentId,
+            Name = "Segment Empty RV",
+            RowVersion = [1, 2, 3, 4]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCustomerSegmentHandler(
+            db,
+            new CustomerSegmentEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new CustomerSegmentEditDto
+        {
+            Id = segmentId,
+            RowVersion = Array.Empty<byte>(), // empty row version
+            Name = "Segment Empty RV Updated"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>("empty RowVersion must be treated as a concurrency conflict");
+    }
+
+    [Fact]
     public async Task UpdateCustomerSegment_Should_Throw_WhenNameConflictsWithAnotherSegment()
     {
         await using var db = CrmEngagementDbContext.Create();

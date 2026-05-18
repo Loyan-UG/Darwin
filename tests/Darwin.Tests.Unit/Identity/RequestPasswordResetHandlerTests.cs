@@ -63,6 +63,59 @@ public sealed class RequestPasswordResetHandlerTests
         email.Messages[0].Context!.FlowKey.Should().Be("PasswordReset");
     }
 
+    [Fact]
+    public async Task HandleAsync_Should_Ignore_SoftDeleted_Settings_When_Active_Row_Exists()
+    {
+        await using var db = PasswordResetTestDbContext.Create();
+        var user = CreateUser("reset-template-softdelete@darwin.de");
+        db.Set<User>().Add(user);
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Legacy",
+            DefaultCulture = "de-DE",
+            SupportedCulturesCsv = "de-DE,en-US",
+            ContactEmail = "legacy@darwin.de",
+            HomeSlug = "home",
+            IsDeleted = true,
+            TransactionalEmailSubjectPrefix = "[Legacy]",
+            PasswordResetEmailSubjectTemplate = "Deleted {email}",
+            PasswordResetEmailBodyTemplate = "<p>{email} {token} {expires_at_utc}</p>"
+        });
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Darwin",
+            DefaultCulture = "de-DE",
+            SupportedCulturesCsv = "de-DE,en-US",
+            ContactEmail = "ops@darwin.de",
+            HomeSlug = "home",
+            TransactionalEmailSubjectPrefix = "[QA]",
+            PasswordResetEmailSubjectTemplate = "Active {email}",
+            PasswordResetEmailBodyTemplate = "<p>ACTIVE {email} {token}</p><p>{expires_at_utc}</p>"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var email = new FakeEmailSender();
+        var handler = new RequestPasswordResetHandler(
+            db,
+            email,
+            new FakeClock(new DateTime(2030, 3, 1, 10, 0, 0, DateTimeKind.Utc)),
+            new RequestPasswordResetValidator(),
+            new TestStringLocalizer<CommunicationResource>(),
+            NullLogger<RequestPasswordResetHandler>.Instance);
+
+        var result = await handler.HandleAsync(
+            new RequestPasswordResetDto { Email = user.Email },
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        email.Messages.Should().HaveCount(1);
+        email.Messages[0].Subject.Should().Be("[QA] Active reset-template-softdelete@darwin.de");
+        email.Messages[0].Body.Should().Contain("ACTIVE");
+        email.Messages[0].Body.Should().NotContain("Deleted");
+    }
+
     private static User CreateUser(string email)
     {
         return new User(email, "hashed-password", "security-stamp")

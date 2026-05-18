@@ -179,9 +179,9 @@ namespace Darwin.WebAdmin.Services.Settings
                 WhatsAppAdminRecipientsCsv = s.WhatsAppAdminRecipientsCsv,
 
                 // WebAuthn
-                WebAuthnRelyingPartyId = string.IsNullOrWhiteSpace(s.WebAuthnRelyingPartyId) ? "localhost" : s.WebAuthnRelyingPartyId,
+                WebAuthnRelyingPartyId = string.IsNullOrWhiteSpace(s.WebAuthnRelyingPartyId) ? "vafadar.pro" : s.WebAuthnRelyingPartyId,
                 WebAuthnRelyingPartyName = string.IsNullOrWhiteSpace(s.WebAuthnRelyingPartyName) ? "Darwin" : s.WebAuthnRelyingPartyName,
-                WebAuthnAllowedOriginsCsv = string.IsNullOrWhiteSpace(s.WebAuthnAllowedOriginsCsv) ? "https://localhost:5001" : s.WebAuthnAllowedOriginsCsv,
+                WebAuthnAllowedOriginsCsv = string.IsNullOrWhiteSpace(s.WebAuthnAllowedOriginsCsv) ? "https://admin.vafadar.pro,https://vafadar.pro" : s.WebAuthnAllowedOriginsCsv,
                 WebAuthnRequireUserVerification = s.WebAuthnRequireUserVerification,
 
                 // SMTP

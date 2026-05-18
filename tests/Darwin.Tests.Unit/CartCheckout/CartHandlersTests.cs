@@ -9,6 +9,7 @@ using Darwin.Domain.Entities.Pricing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using System.Text.Json;
 
 namespace Darwin.Tests.Unit.CartCheckout;
 
@@ -78,6 +79,119 @@ public sealed class CartHandlersTests
 
         items.Should().HaveCount(1);
         items[0].Quantity.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task AddOrIncreaseCartItem_Should_MergeLine_WhenSelectedAddOnOrderChangesOrIdsAreDuplicated()
+    {
+        await using var db = CartTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+        var addOnA = new Guid("00000000-0000-0000-0000-000000000001");
+        var addOnB = new Guid("00000000-0000-0000-0000-000000000002");
+
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            TaxCategoryId = taxCategoryId,
+            Sku = "SKU-222",
+            Currency = "EUR",
+            BasePriceNetMinor = 1999
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<Cart>().Add(new Cart { Id = cartId, AnonymousId = "anon-order", Currency = "EUR" });
+        db.Set<CartItem>().Add(new CartItem
+        {
+            CartId = cartId,
+            VariantId = variantId,
+            Quantity = 1,
+            UnitPriceNetMinor = 1999,
+            VatRate = 0.19m,
+            SelectedAddOnValueIdsJson = JsonSerializer.Serialize(new[] { addOnB, addOnA, addOnA })
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new AddOrIncreaseCartItemHandler(db, new TestAddOnPricingService(), new TestStringLocalizer());
+
+        await handler.HandleAsync(new CartAddItemDto
+        {
+            AnonymousId = "anon-order",
+            VariantId = variantId,
+            Quantity = 2,
+            Currency = "EUR",
+            SelectedAddOnValueIds = new List<Guid> { addOnA, addOnB, addOnA }
+        }, TestContext.Current.CancellationToken);
+
+        var items = await db.Set<CartItem>()
+            .Where(x => x.CartId == cartId && !x.IsDeleted)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        items.Should().HaveCount(1);
+        items[0].Quantity.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task AddOrIncreaseCartItem_Should_StoreCanonicalAddOnSelectionJson_ForNewLine()
+    {
+        await using var db = CartTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+        var addOnA = new Guid("11111111-1111-1111-1111-111111111111");
+        var addOnB = new Guid("22222222-2222-2222-2222-222222222222");
+
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = taxCategoryId,
+            Name = "Standard",
+            VatRate = 0.19m
+        });
+        db.Set<ProductVariant>().Add(new ProductVariant
+        {
+            Id = variantId,
+            ProductId = productId,
+            TaxCategoryId = taxCategoryId,
+            Sku = "SKU-223",
+            Currency = "EUR",
+            BasePriceNetMinor = 1500
+        });
+        db.Set<Product>().Add(new Product
+        {
+            Id = productId,
+            IsActive = true,
+            IsVisible = true
+        });
+        db.Set<Cart>().Add(new Cart { Id = cartId, AnonymousId = "anon-canonical", Currency = "EUR" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new AddOrIncreaseCartItemHandler(db, new TestAddOnPricingService(), new TestStringLocalizer());
+
+        await handler.HandleAsync(new CartAddItemDto
+        {
+            AnonymousId = "anon-canonical",
+            VariantId = variantId,
+            Quantity = 1,
+            Currency = "EUR",
+            SelectedAddOnValueIds = new List<Guid> { addOnB, addOnA, addOnA }
+        }, TestContext.Current.CancellationToken);
+
+        var item = await db.Set<CartItem>().SingleAsync(x => x.CartId == cartId, TestContext.Current.CancellationToken);
+        item.SelectedAddOnValueIdsJson.Should().Be(JsonSerializer.Serialize(new[] { addOnA, addOnB }));
     }
 
     [Fact]
@@ -383,6 +497,45 @@ public sealed class CartHandlersTests
         itemB.IsDeleted.Should().BeFalse();
     }
 
+    [Fact]
+    public async Task RemoveCartItem_Should_IgnoreAddOnOrderAndDuplicates_InSelectionJson()
+    {
+        await using var db = CartTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var addOnA = new Guid("33333333-3333-3333-3333-333333333333");
+        var addOnB = new Guid("44444444-4444-4444-4444-444444444444");
+
+        db.Set<Cart>().Add(new Cart { Id = cartId, AnonymousId = "anon-remove", Currency = "EUR" });
+        db.Set<CartItem>().Add(new CartItem
+        {
+            Id = itemId,
+            CartId = cartId,
+            VariantId = variantId,
+            Quantity = 1,
+            UnitPriceNetMinor = 1000,
+            VatRate = 0.19m,
+            SelectedAddOnValueIdsJson = JsonSerializer.Serialize(new[] { addOnA, addOnB })
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new RemoveCartItemHandler(db);
+        var requestJson = JsonSerializer.Serialize(new[] { addOnB, addOnA, addOnA });
+
+        await handler.HandleAsync(
+            new CartRemoveItemDto
+            {
+                CartId = cartId,
+                VariantId = variantId,
+                SelectedAddOnValueIdsJson = requestJson
+            },
+            TestContext.Current.CancellationToken);
+
+        var item = await db.Set<CartItem>().SingleAsync(i => i.Id == itemId, TestContext.Current.CancellationToken);
+        item.IsDeleted.Should().BeTrue();
+    }
+
     // ─── UpdateCartItemQuantityHandler ───────────────────────────────────────
 
     [Fact]
@@ -414,6 +567,47 @@ public sealed class CartHandlersTests
 
         var item = await db.Set<CartItem>().SingleAsync(i => i.Id == itemId, TestContext.Current.CancellationToken);
         item.Quantity.Should().Be(5);
+        item.IsDeleted.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UpdateCartItemQuantity_Should_FindLine_WhenAddOnOrderChangesOrIdsAreDuplicated()
+    {
+        await using var db = CartTestDbContext.Create();
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        var addOnA = new Guid("55555555-5555-5555-5555-555555555555");
+        var addOnB = new Guid("66666666-6666-6666-6666-666666666666");
+
+        db.Set<Cart>().Add(new Cart { Id = cartId, AnonymousId = "anon-update", Currency = "EUR" });
+        db.Set<CartItem>().Add(new CartItem
+        {
+            Id = itemId,
+            CartId = cartId,
+            VariantId = variantId,
+            Quantity = 1,
+            UnitPriceNetMinor = 1200,
+            VatRate = 0.07m,
+            SelectedAddOnValueIdsJson = JsonSerializer.Serialize(new[] { addOnA, addOnB })
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCartItemQuantityHandler(db, new TestStringLocalizer());
+        var requestJson = JsonSerializer.Serialize(new[] { addOnB, addOnA, addOnA });
+
+        await handler.HandleAsync(
+            new CartUpdateQtyDto
+            {
+                CartId = cartId,
+                VariantId = variantId,
+                Quantity = 4,
+                SelectedAddOnValueIdsJson = requestJson
+            },
+            TestContext.Current.CancellationToken);
+
+        var item = await db.Set<CartItem>().SingleAsync(i => i.Id == itemId, TestContext.Current.CancellationToken);
+        item.Quantity.Should().Be(4);
         item.IsDeleted.Should().BeFalse();
     }
 

@@ -805,6 +805,9 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         identitySeedSource.Should().Contain("Timezone = DomainDefaults.DefaultTimezone");
         identitySeedSource.Should().Contain("Currency = DomainDefaults.DefaultCurrency");
         identitySeedSource.Should().Contain("CountryCode = DomainDefaults.DefaultCountryCode");
+        identitySeedSource.Should().Contain("EmailConfirmed = true");
+        identitySeedSource.Should().Contain("if (!adminUser.EmailConfirmed)");
+        identitySeedSource.Should().Contain("adminUser.EmailConfirmed = true;");
 
         businessesSeedSource.Should().Contain("DefaultCurrency = DomainDefaults.DefaultCurrency");
         businessesSeedSource.Should().Contain("DefaultCulture = DomainDefaults.DefaultCulture");
