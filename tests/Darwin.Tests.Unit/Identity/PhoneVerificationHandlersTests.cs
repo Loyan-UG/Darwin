@@ -70,6 +70,63 @@ public sealed class PhoneVerificationHandlersTests
     }
 
     [Fact]
+    public async Task RequestPhoneVerification_Should_Ignore_SoftDeleted_SiteSetting_WhenActiveSettingsExist()
+    {
+        await using var db = PhoneVerificationTestDbContext.Create();
+        var user = CreateUser("phone-verify-softdel@darwin.de", "+4915001111111");
+        db.Set<User>().Add(user);
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Legacy",
+            DefaultCulture = "de-DE",
+            SupportedCulturesCsv = "de-DE,en-US",
+            ContactEmail = "legacy@darwin.de",
+            HomeSlug = "home",
+            IsDeleted = true,
+            SmsEnabled = true,
+            SmsProvider = "Twilio",
+            SmsFromPhoneE164 = "+4915000000000",
+            PhoneVerificationSmsTemplate = "DELETED {token}"
+        });
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Darwin",
+            DefaultCulture = "de-DE",
+            SupportedCulturesCsv = "de-DE,en-US",
+            ContactEmail = "ops@darwin.de",
+            HomeSlug = "home",
+            SmsEnabled = true,
+            SmsProvider = "Twilio",
+            SmsFromPhoneE164 = "+4915000000000",
+            PhoneVerificationSmsTemplate = "ACTIVE {token}"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var smsSender = new FakeSmsSender();
+        var handler = new RequestPhoneVerificationHandler(
+            db,
+            new StubCurrentUserService(user.Id),
+            smsSender,
+            new FakeWhatsAppSender(),
+            new FakeClock(new DateTime(2030, 4, 1, 8, 0, 0, DateTimeKind.Utc)),
+            new RequestPhoneVerificationValidator(),
+            new TestStringLocalizer<ValidationResource>(),
+            new TestStringLocalizer<CommunicationResource>());
+
+        var result = await handler.HandleAsync(
+            new RequestPhoneVerificationDto { Channel = PhoneVerificationChannel.Sms },
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        smsSender.Messages.Should().HaveCount(1);
+        smsSender.Messages[0].Text.Should().Contain("ACTIVE");
+        smsSender.Messages[0].Text.Should().NotContain("DELETED");
+        smsSender.Messages[0].ToPhone.Should().Be(user.PhoneE164);
+    }
+
+    [Fact]
     public async Task ConfirmPhoneVerification_Should_MarkPhoneConfirmed_AndConsumeToken()
     {
         await using var db = PhoneVerificationTestDbContext.Create();

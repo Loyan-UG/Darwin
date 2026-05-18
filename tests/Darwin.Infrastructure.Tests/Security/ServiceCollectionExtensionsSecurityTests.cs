@@ -57,4 +57,44 @@ public sealed class ServiceCollectionExtensionsSecurityTests
         using var serviceProvider = services.BuildServiceProvider();
         serviceProvider.GetService<IDataProtectionProvider>().Should().NotBeNull();
     }
+
+    [Fact]
+    public void AddSharedHostingDataProtection_Should_ExpandEnvironmentVariables_InConfiguredKeysPath()
+    {
+        var rootPath = Path.Combine(Path.GetTempPath(), "darwin-dpkeys-root-" + Guid.NewGuid());
+        var expectedPath = Path.Combine(rootPath, "keys");
+        const string variableName = "DARWIN_TEST_DPKEYS_ROOT";
+
+        try
+        {
+            Environment.SetEnvironmentVariable(variableName, rootPath);
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(
+                    new[]
+                    {
+                        new KeyValuePair<string, string?>(
+                            "DataProtection:KeysPath",
+                            $"%{variableName}%\\keys")
+                    })
+                .Build();
+
+            var services = new ServiceCollection();
+
+            services.AddSharedHostingDataProtection(configuration);
+
+            Directory.Exists(expectedPath).Should().BeTrue();
+            using var serviceProvider = services.BuildServiceProvider();
+            serviceProvider.GetService<IDataProtectionProvider>().Should().NotBeNull();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(variableName, null);
+
+            if (Directory.Exists(rootPath))
+            {
+                Directory.Delete(rootPath, recursive: true);
+            }
+        }
+    }
 }

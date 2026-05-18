@@ -215,6 +215,8 @@ Production decision:
 
 Do not claim production archive immutability until the configured provider is validated with native versioning, object lock/retention/legal hold, or the provider-specific equivalent. Application-level overwrite protection is useful but is not the same as provider-level immutable retention.
 
+AWS S3 and Azure Blob use the same provider-neutral object-storage abstraction and invoice archive policy layer. AWS S3 should be configured through the S3-compatible provider with the deployment's region/bucket and validated Object Lock/versioning settings. Azure Blob should be configured through the Azure provider and validated with container immutability policy/legal-hold settings. Neither alternative is considered production immutable until provider-native retention behavior is validated in the target account.
+
 Generic configuration shape:
 
 ```json
@@ -289,6 +291,15 @@ MinIO production checklist:
 - Backup, replication, offsite copy, disk-usage monitoring, and failed-write alerts are configured.
 - Restore is tested before go-live.
 
+MinIO deployment runbook summary:
+
+- Create the bucket with Object Lock enabled at creation time; Object Lock cannot be added later to an existing bucket.
+- Enable versioning before any invoice archive writes.
+- Configure default retention and use `COMPLIANCE` mode only after legal retention is confirmed.
+- Keep production credentials in secure configuration only.
+- Validate backup, restore, monitoring, failed-write alerting, retention behavior, and legal-hold or locked-delete expectations against the real deployment.
+- Treat local MinIO smoke as a provider-path check only, not as production immutability validation.
+
 Local MinIO smoke:
 
 - Developers can start an optional local MinIO instance with `docker compose -f docker-compose.minio.yml up -d`.
@@ -331,6 +342,15 @@ Checklist:
 ```
 
 Only enable this after the generator/tooling decision is approved. The executable path must be absolute and supplied through deployment configuration. Darwin calls the command with `--input`, `--output`, and `--format`; the command must validate and create the artifact file. Darwin also rejects empty artifacts, artifacts larger than `MaxArtifactBytes`, non-PDF ZUGFeRD/Factur-X outputs, and malformed XRechnung XML outputs, but this is a safety guard, not full legal validation. Do not use this adapter to bypass ZUGFeRD/Factur-X or XRechnung validation.
+
+Before wiring an approved external command to WebAdmin downloads, run the adapter smoke:
+
+```powershell
+$env:DARWIN_EINVOICE_COMMAND_PATH = "C:\path\to\approved-einvoice-wrapper.exe"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute
+```
+
+This smoke proves only that Darwin can call the wrapper through `IEInvoiceGenerationService` and that the local artifact-shape guard accepts the generated file. Production readiness still requires selected-tool validation reports, PDF/A-3 and embedded XML validation for ZUGFeRD/Factur-X, XRechnung profile validation when enabled, and archive-storage smoke against the selected object-storage provider.
 - DHL labels can use the same generic object-storage backend by adding an `ObjectStorage:Profiles:ShipmentLabels` profile with `Provider` set to `S3Compatible`, `AzureBlob`, or `FileSystem`. If the profile is absent or uses the database fallback, labels continue to use the shared file-system media storage fallback.
 - CMS/media uploads can use the same generic object-storage backend by adding an `ObjectStorage:Profiles:MediaAssets` profile with `Provider` set to `S3Compatible`, `AzureBlob`, or `FileSystem`, plus the selected provider's public base URL. If the profile is absent, has no public base URL, or uses the database fallback, WebAdmin keeps the current shared file-system media fallback.
 - The WebAdmin and Darwin.Web public storefront must resolve the same media URLs. For object storage, publish the configured public base URL through the reverse proxy/CDN; for file-system fallback, keep the shared uploads path mounted consistently for both applications.

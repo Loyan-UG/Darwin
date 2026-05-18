@@ -11,6 +11,7 @@ import {
   getSuggestedAction,
   observeAsyncOperation,
   shouldLogDegradedOperations,
+  shouldLogSlowOperations,
 } from "@/lib/route-observability";
 
 test("route observability helpers classify duration, signal, attention, and suggested action directly", () => {
@@ -90,6 +91,15 @@ test("route observability helper internals keep degraded extraction and outcome 
       productsStatus: "ok",
       shell: "fallback",
       cartStatus: "missing",
+      liveCartStatus: "not-found",
+      cartSummaryStatus: "empty",
+      addressesStatus: "unauthenticated",
+      profileStatus: "unknown",
+      preferencesStatus: "unknown",
+      invoiceSummaryStatus: "unknown",
+      orderSummaryStatus: "unknown",
+      confirmationStatus: "unknown",
+      matchingStatus: "not-requested",
       itemCount: 3,
     }),
     [
@@ -167,6 +177,42 @@ test("route observability degraded log gate stays explicit across env modes", ()
       delete process.env.DARWIN_WEB_LOG_DEGRADED;
     } else {
       process.env.DARWIN_WEB_LOG_DEGRADED = previousDegraded;
+    }
+  }
+});
+
+test("route observability slow log gate stays explicit across env modes", () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousSlow = process.env.DARWIN_WEB_LOG_SLOW;
+
+  try {
+    process.env.NODE_ENV = "development";
+    delete process.env.DARWIN_WEB_LOG_SLOW;
+    assert.equal(shouldLogSlowOperations(), false);
+
+    process.env.DARWIN_WEB_LOG_SLOW = "true";
+    assert.equal(shouldLogSlowOperations(), true);
+
+    process.env.DARWIN_WEB_LOG_SLOW = "false";
+    assert.equal(shouldLogSlowOperations(), false);
+
+    delete process.env.DARWIN_WEB_LOG_SLOW;
+    process.env.NODE_ENV = "test";
+    assert.equal(shouldLogSlowOperations(), true);
+
+    process.env.NODE_ENV = "production";
+    assert.equal(shouldLogSlowOperations(), true);
+  } finally {
+    if (previousNodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+
+    if (previousSlow === undefined) {
+      delete process.env.DARWIN_WEB_LOG_SLOW;
+    } else {
+      process.env.DARWIN_WEB_LOG_SLOW = previousSlow;
     }
   }
 });

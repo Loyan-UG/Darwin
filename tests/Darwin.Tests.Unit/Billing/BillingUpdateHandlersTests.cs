@@ -31,6 +31,31 @@ public sealed class BillingUpdateHandlersTests
     }
 
     [Fact]
+    public async Task UpdateBillingWebhookDeliveryHandler_Should_ReturnRowVersionRequired_WhenRowVersionIsMissing()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var deliveryId = Guid.NewGuid();
+        db.Set<WebhookDelivery>().Add(new WebhookDelivery
+        {
+            Id = deliveryId,
+            Status = "Pending",
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBillingWebhookDeliveryHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdateBillingWebhookDeliveryDto
+        {
+            Id = deliveryId,
+            RowVersion = [],
+            Action = "MarkSucceeded"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("RowVersionRequired");
+    }
+
+    [Fact]
     public async Task UpdateBillingWebhookDeliveryHandler_Should_ReturnNotFound_WhenDeliveryDoesNotExist()
     {
         await using var db = BillingUpdateTestDbContext.Create();
@@ -45,6 +70,34 @@ public sealed class BillingUpdateHandlersTests
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("WebhookDeliveryNotFound");
+    }
+
+    [Fact]
+    public async Task UpdateBillingWebhookDeliveryHandler_Should_ApplyMarkSucceeded_WhenActionIsTrimmedAndCaseInsensitive()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var deliveryId = Guid.NewGuid();
+        db.Set<WebhookDelivery>().Add(new WebhookDelivery
+        {
+            Id = deliveryId,
+            Status = "Pending",
+            RowVersion = [2]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBillingWebhookDeliveryHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdateBillingWebhookDeliveryDto
+        {
+            Id = deliveryId,
+            RowVersion = [2],
+            Action = "   mArKsUcCeEded  "
+        }, TestContext.Current.CancellationToken);
+
+        var updated = await db.Set<WebhookDelivery>().SingleAsync(x => x.Id == deliveryId, TestContext.Current.CancellationToken);
+        result.Succeeded.Should().BeTrue();
+        updated.Status.Should().Be("Succeeded");
+        updated.IsDeleted.Should().BeFalse();
+        updated.ResponseCode.Should().Be(200);
     }
 
     [Fact]

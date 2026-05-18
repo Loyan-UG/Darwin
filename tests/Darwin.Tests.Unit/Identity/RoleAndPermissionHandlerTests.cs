@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
@@ -438,6 +441,200 @@ public sealed class RoleAndPermissionHandlerTests
         result.Error.Should().Be("UserNotFound");
     }
 
+    // ─── UpdateRolePermissionsHandler ─────────────────────────────────────────
+
+    private static UpdateRolePermissionsHandler CreateUpdateRolePermissionsHandler(RolePermissionTestDbContext db) =>
+        new(db, new FixedClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)), new TestLocalizer());
+
+    [Fact]
+    public async Task UpdateRolePermissions_Should_Fail_WhenRowVersionIsEmpty()
+    {
+        await using var db = RolePermissionTestDbContext.Create();
+        var handler = CreateUpdateRolePermissionsHandler(db);
+
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = Guid.NewGuid(),
+            RowVersion = Array.Empty<byte>(),
+            PermissionIds = new List<Guid>()
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty RowVersion must be rejected before any DB access");
+        result.Error.Should().Be("RowVersionRequired");
+    }
+
+    [Fact]
+    public async Task UpdateRolePermissions_Should_Fail_WhenRoleNotFound()
+    {
+        await using var db = RolePermissionTestDbContext.Create();
+        var handler = CreateUpdateRolePermissionsHandler(db);
+
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = Guid.NewGuid(),
+            RowVersion = new byte[] { 1, 2, 3 },
+            PermissionIds = new List<Guid>()
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("non-existent role must fail");
+        result.Error.Should().Be("RoleNotFound");
+    }
+
+    [Fact]
+    public async Task UpdateRolePermissions_Should_Fail_WhenRowVersionIsStale()
+    {
+        await using var db = RolePermissionTestDbContext.Create();
+        var role = new Role("editor", "Editor", false, null) { RowVersion = new byte[] { 1, 2, 3 } };
+        db.Set<Role>().Add(role);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateRolePermissionsHandler(db);
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = role.Id,
+            RowVersion = new byte[] { 9, 9, 9 }, // stale
+            PermissionIds = new List<Guid>()
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("stale RowVersion must trigger a concurrency conflict");
+    }
+
+    [Fact]
+    public async Task UpdateRolePermissions_Should_Fail_WhenPermissionIdsContainInvalid()
+    {
+        await using var db = RolePermissionTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var role = new Role("editor", "Editor", false, null) { RowVersion = rowVersion };
+        db.Set<Role>().Add(role);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateRolePermissionsHandler(db);
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = role.Id,
+            RowVersion = rowVersion,
+            PermissionIds = new List<Guid> { Guid.NewGuid() } // non-existent
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("invalid permission IDs must be rejected");
+    }
+
+    [Fact]
+    public async Task UpdateRolePermissions_Should_AddNewPermissions_WhenValid()
+    {
+        await using var db = RolePermissionTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var role = new Role("editor", "Editor", false, null) { RowVersion = rowVersion };
+        var perm1 = new Permission("catalog.read", "Catalog Read", false, null) { RowVersion = new byte[] { 1 } };
+        var perm2 = new Permission("orders.read", "Orders Read", false, null) { RowVersion = new byte[] { 1 } };
+        db.Set<Role>().Add(role);
+        db.Set<Permission>().AddRange(perm1, perm2);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateRolePermissionsHandler(db);
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = role.Id,
+            RowVersion = rowVersion,
+            PermissionIds = new List<Guid> { perm1.Id, perm2.Id }
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        var links = await db.Set<RolePermission>()
+            .Where(x => x.RoleId == role.Id && !x.IsDeleted)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        links.Select(x => x.PermissionId).Should().BeEquivalentTo(new[] { perm1.Id, perm2.Id });
+    }
+
+    [Fact]
+    public async Task UpdateRolePermissions_Should_RemovePermissions_NotInNewList()
+    {
+        await using var db = RolePermissionTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var role = new Role("editor", "Editor", false, null) { RowVersion = rowVersion };
+        var perm1 = new Permission("catalog.read", "Catalog Read", false, null) { RowVersion = new byte[] { 1 } };
+        var perm2 = new Permission("orders.read", "Orders Read", false, null) { RowVersion = new byte[] { 1 } };
+        db.Set<Role>().Add(role);
+        db.Set<Permission>().AddRange(perm1, perm2);
+        // Pre-assign both permissions
+        db.Set<RolePermission>().Add(new RolePermission(role.Id, perm1.Id));
+        db.Set<RolePermission>().Add(new RolePermission(role.Id, perm2.Id));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateRolePermissionsHandler(db);
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = role.Id,
+            RowVersion = rowVersion,
+            PermissionIds = new List<Guid> { perm1.Id } // perm2 removed
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        var active = await db.Set<RolePermission>()
+            .Where(x => x.RoleId == role.Id && !x.IsDeleted)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        active.Should().ContainSingle(x => x.PermissionId == perm1.Id);
+        var softDeleted = await db.Set<RolePermission>()
+            .Where(x => x.RoleId == role.Id && x.IsDeleted)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        softDeleted.Should().ContainSingle(x => x.PermissionId == perm2.Id);
+    }
+
+    [Fact]
+    public async Task UpdateRolePermissions_Should_ClearAll_WhenEmptyListProvided()
+    {
+        await using var db = RolePermissionTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var role = new Role("editor", "Editor", false, null) { RowVersion = rowVersion };
+        var perm = new Permission("catalog.read", "Catalog Read", false, null) { RowVersion = new byte[] { 1 } };
+        db.Set<Role>().Add(role);
+        db.Set<Permission>().Add(perm);
+        db.Set<RolePermission>().Add(new RolePermission(role.Id, perm.Id));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateRolePermissionsHandler(db);
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = role.Id,
+            RowVersion = rowVersion,
+            PermissionIds = new List<Guid>() // clear all
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        var active = await db.Set<RolePermission>()
+            .Where(x => x.RoleId == role.Id && !x.IsDeleted)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        active.Should().BeEmpty("all permissions should be soft-removed");
+    }
+
+    [Fact]
+    public async Task UpdateRolePermissions_Should_RestoreSoftDeletedLink_WhenPermissionReAdded()
+    {
+        await using var db = RolePermissionTestDbContext.Create();
+        var rowVersion = new byte[] { 1, 2, 3 };
+        var role = new Role("editor", "Editor", false, null) { RowVersion = rowVersion };
+        var perm = new Permission("catalog.read", "Catalog Read", false, null) { RowVersion = new byte[] { 1 } };
+        db.Set<Role>().Add(role);
+        db.Set<Permission>().Add(perm);
+        // A previously deleted link
+        db.Set<RolePermission>().Add(new RolePermission(role.Id, perm.Id) { IsDeleted = true });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateRolePermissionsHandler(db);
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = role.Id,
+            RowVersion = rowVersion,
+            PermissionIds = new List<Guid> { perm.Id }
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        var linkCount = await db.Set<RolePermission>().CountAsync(TestContext.Current.CancellationToken);
+        linkCount.Should().Be(1, "restore should reuse the existing row, not create a duplicate");
+        var link = await db.Set<RolePermission>().SingleAsync(TestContext.Current.CancellationToken);
+        link.IsDeleted.Should().BeFalse("restored link should be active");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static User CreateUser(string email)
@@ -456,6 +653,13 @@ public sealed class RoleAndPermissionHandlerTests
             ExternalIdsJson = "{}",
             RowVersion = [1, 2, 3]
         };
+    }
+
+    private sealed class FixedClock : IClock
+    {
+        private readonly DateTime _utcNow;
+        public FixedClock(DateTime utcNow) { _utcNow = utcNow; }
+        public DateTime UtcNow => _utcNow;
     }
 
     private sealed class TestLocalizer : IStringLocalizer<ValidationResource>

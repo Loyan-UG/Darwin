@@ -528,6 +528,17 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         html.Should().Contain("id=\"business-onboarding-wizard-shell\"");
         html.Should().MatchRegex("Onboarding[- ](Wizard|Assistent)");
         html.Should().Contain("WebAdmin Smoke Business");
+        html.Should().Contain("data-onboarding-resume-step=\"users\"");
+        html.Should().Contain("data-onboarding-next=\"true\"");
+        html.Should().Contain("data-onboarding-step=\"profile\"");
+        html.Should().Contain("data-onboarding-step=\"plan\"");
+        html.Should().Contain("data-onboarding-step=\"users\"");
+        html.Should().Contain("data-onboarding-step=\"locations\"");
+        html.Should().Contain("data-onboarding-step=\"loyalty\"");
+        html.Should().Contain("data-onboarding-step=\"communications\"");
+        html.Should().Contain("data-onboarding-step=\"visibility\"");
+        html.Should().Contain("data-onboarding-step=\"review\"");
+        html.Should().Contain("step=locations");
         html.Should().Contain("hx-target=\"#business-onboarding-wizard-shell\"");
         html.Should().Contain("/Businesses/Edit");
         html.Should().Contain("/Businesses/Members");
@@ -542,6 +553,26 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         cspValues!.Single().Should().Contain("default-src 'self'");
         response.Headers.TryGetValues("X-Content-Type-Options", out var contentTypeOptions).Should().BeTrue();
         contentTypeOptions!.Single().Should().Be("nosniff");
+    }
+
+    [Fact]
+    public async Task AuthenticatedBusinessOnboardingWizard_ShouldResumeRequestedStepWithoutChangingDerivedNextAction()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        using var response = await SendHtmxGetAsync(
+            client,
+            "/Businesses/OnboardingWizard?id=44444444-4444-4444-4444-444444444444&step=locations");
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        html.Should().Contain("id=\"onboarding-step-locations\"");
+        html.Should().Contain("aria-current=\"step\"");
+        html.Should().Contain("data-onboarding-resume-step=\"users\"");
+        html.Should().Contain("data-onboarding-next=\"true\"");
+        html.Should().Contain("step=locations");
+        html.Should().Contain("step=review");
+        html.Should().NotContain("https://cdn.jsdelivr.net");
     }
 
     [Theory]
@@ -1236,6 +1267,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             "Inventory reserved for smoke order.",
             Guid.NewGuid(),
             "Reserved");
+        await AssertStockQuantitiesAsync(client, warehouseFromId, 24, 3);
+        await AssertInventoryLedgerContainsAsync(client, warehouseFromId, "Inventory reserved for smoke order.");
 
         await PostValidInventoryStockActionAndAssertStockLevelAsync(
             client,
@@ -1245,6 +1278,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             "Released smoke reservation.",
             Guid.NewGuid(),
             "Reserved");
+        await AssertStockQuantitiesAsync(client, warehouseFromId, 25, 2);
+        await AssertInventoryLedgerContainsAsync(client, warehouseFromId, "Released smoke reservation.");
 
         var returnReferenceId = Guid.NewGuid();
         var returnReceiptListHtml = await PostValidInventoryStockActionAndAssertStockLevelAsync(
@@ -1262,6 +1297,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             warehouseFromId,
             returnReferenceId,
             returnReceiptListHtml);
+        await AssertStockQuantitiesAsync(client, warehouseFromId, 26, 2);
+        await AssertInventoryLedgerContainsAsync(client, warehouseFromId, "Received smoke return.");
 
         var stockTransferRedirect = await PostValidEditorMutationAndAssertListedAsync(
             client,
@@ -1286,6 +1323,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             warehouseToName,
             "MarkInTransit",
             "InTransit");
+        await AssertStockQuantitiesAsync(client, warehouseFromId, 22, 2);
+        await AssertInventoryLedgerContainsAsync(client, warehouseFromId, "StockTransferDispatched");
 
         await PostValidStockTransferLifecycleActionAndAssertStatusAsync(
             client,
@@ -1294,6 +1333,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             warehouseToName,
             "Complete",
             "Completed");
+        await AssertStockQuantitiesAsync(client, warehouseFromId, 22, 2);
+        await AssertStockQuantitiesAsync(client, warehouseToId, 4, 0);
+        await AssertInventoryLedgerContainsAsync(client, warehouseToId, "StockTransferReceived");
 
         var purchaseOrderRedirect = await PostValidEditorMutationAndAssertListedAsync(
             client,
@@ -1328,6 +1370,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             purchaseOrderNumber,
             "Receive",
             "Received");
+        await AssertStockQuantitiesAsync(client, warehouseFromId, 28, 2);
+        await AssertInventoryLedgerContainsAsync(client, warehouseFromId, "PurchaseOrderReceived");
 
         var crmCustomerRedirect = await PostValidEditorMutationAndAssertListedAsync(
             client,
@@ -2144,6 +2188,38 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         return (
             int.Parse(match.Groups["available"].Value, System.Globalization.CultureInfo.InvariantCulture),
             int.Parse(match.Groups["reserved"].Value, System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    private static async Task AssertStockQuantitiesAsync(
+        HttpClient client,
+        Guid warehouseId,
+        int expectedAvailable,
+        int expectedReserved)
+    {
+        using var response = await SendHtmxGetAsync(
+            client,
+            $"/Inventory/StockLevels?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}&q=WEBADMIN-SMOKE-VARIANT");
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        ExtractStockQuantities(html, "WEBADMIN-SMOKE-VARIANT")
+            .Should()
+            .Be((expectedAvailable, expectedReserved));
+    }
+
+    private static async Task AssertInventoryLedgerContainsAsync(
+        HttpClient client,
+        Guid warehouseId,
+        string expectedReason)
+    {
+        using var response = await SendHtmxGetAsync(
+            client,
+            $"/Inventory/VariantLedger?variantId={WebAdminTestFactory.TestProductVariantId}&warehouseId={warehouseId}");
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        html.Should().Contain(expectedReason);
+        html.Should().Contain(WebAdminTestFactory.TestProductVariantId.ToString());
     }
 
     private static async Task PostValidStockTransferLifecycleActionAndAssertStatusAsync(

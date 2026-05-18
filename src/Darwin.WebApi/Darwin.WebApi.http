@@ -1,4 +1,4 @@
-@Darwin.WebApi_HostAddress = http://localhost:5134
+@Darwin.WebApi_HostAddress = https://api.vafadar.pro
 
 GET {{Darwin.WebApi_HostAddress}}/weatherforecast/
 Accept: application/json

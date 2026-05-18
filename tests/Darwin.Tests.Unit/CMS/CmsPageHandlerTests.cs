@@ -357,6 +357,34 @@ public sealed class CmsPageHandlerTests
         page!.IsDeleted.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task SoftDeletePage_Should_Fail_When_RowVersion_Is_Null_For_Existing_Page()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+        var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeletePageHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, null, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("null RowVersion must be rejected for an existing page");
+    }
+
+    [Fact]
+    public async Task SoftDeletePage_Should_Fail_When_RowVersion_Is_Empty_For_Existing_Page()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+        var id = await createHandler.HandleAsync(ValidCreateDto(), TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeletePageHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, Array.Empty<byte>(), TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("empty RowVersion must be rejected for an existing page");
+    }
+
     // ─── GetPageForEditHandler ────────────────────────────────────────────────
 
     [Fact]
@@ -485,6 +513,70 @@ public sealed class CmsPageHandlerTests
 
         total.Should().Be(1);
         items.Single().Title.Should().Be("Datenschutz");
+    }
+
+    [Fact]
+    public async Task GetPagesPage_Should_Ignore_SoftDeleted_Translations_In_Title_Search()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Published,
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Active German", Slug = "active-de", ContentHtml = "" },
+                new() { Culture = "en-US", Title = "Removed English", Slug = "removed-en", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var page = await db.Set<Page>()
+            .Include(p => p.Translations)
+            .SingleAsync(TestContext.Current.CancellationToken);
+
+        var removedTranslation = page.Translations.Single(t => t.Culture == "en-US");
+        removedTranslation.IsDeleted = true;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetPagesPageHandler(db);
+        var (items, total) = await handler.HandleAsync(1, 20, "en-US", "Removed English", null, TestContext.Current.CancellationToken);
+
+        total.Should().Be(0);
+        items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetPagesPage_Should_Fallback_To_NonDeleted_Translation_When_RequestCulture_Is_SoftDeleted()
+    {
+        var db = TestDbFactory.Create();
+        var createValidator = new PageCreateDtoValidator(CreateLocalizer());
+        var createHandler = new CreatePageHandler(db, createValidator);
+
+        await createHandler.HandleAsync(new PageCreateDto
+        {
+            Status = PageStatus.Published,
+            Translations = new List<PageTranslationDto>
+            {
+                new() { Culture = "de-DE", Title = "Active German", Slug = "active-de", ContentHtml = "" },
+                new() { Culture = "en-US", Title = "Removed English", Slug = "removed-en", ContentHtml = "" }
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var page = await db.Set<Page>()
+            .Include(p => p.Translations)
+            .SingleAsync(TestContext.Current.CancellationToken);
+
+        var removedTranslation = page.Translations.Single(t => t.Culture == "en-US");
+        removedTranslation.IsDeleted = true;
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetPagesPageHandler(db);
+        var (items, total) = await handler.HandleAsync(1, 20, "en-US", null, null, TestContext.Current.CancellationToken);
+
+        total.Should().Be(1);
+        items.Single().Title.Should().Be("Active German");
     }
 
     [Fact]

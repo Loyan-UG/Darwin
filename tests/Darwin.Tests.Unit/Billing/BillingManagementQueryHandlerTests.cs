@@ -584,6 +584,45 @@ public sealed class BillingManagementQueryHandlerTests
     }
 
     [Fact]
+    public async Task GetPaymentForEdit_Should_FilterProviderEventCandidates_ByExactJsonValueMatching()
+    {
+        await using var db = CreateDb();
+        var payment = MakePayment(provider: "Stripe", status: PaymentStatus.Completed, providerPaymentIntentRef: "pi_abc_123");
+        db.Set<Payment>().Add(payment);
+        db.Set<EventLog>().AddRange(
+            new EventLog
+            {
+                Type = "StripeWebhook:payment_intent.succeeded",
+                OccurredAtUtc = FixedNow,
+                PropertiesJson = "{\"payment_intent\":\"pi_abc_123\"}",
+                UtmSnapshotJson = "{}"
+            },
+            new EventLog
+            {
+                Type = "StripeWebhook:other.related",
+                OccurredAtUtc = FixedNow.AddMinutes(-1),
+                PropertiesJson = "{\"pi_abc_123\":\"not-a-ref\"}",
+                UtmSnapshotJson = "{}"
+            },
+            new EventLog
+            {
+                Type = "StripeWebhook:charge.succeeded",
+                OccurredAtUtc = FixedNow.AddMinutes(-2),
+                PropertiesJson = "{\"note\":\"payment id is prefix-pi_abc_123-suffix\"}",
+                UtmSnapshotJson = "{}"
+            });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreatePaymentForEditHandler(db);
+        var result = await handler.HandleAsync(payment.Id, TestContext.Current.CancellationToken);
+
+        result!.ProviderEvents.Should().HaveCount(1, "only exact JSON value matches must pass correlation filtering");
+        result.ProviderEvents.Single().EventType.Should().Be("StripeWebhook:payment_intent.succeeded");
+        result.ProviderEvents.Single().CorrelationKind.Should().Be("PaymentIntent");
+        result.ProviderEvents.Single().CorrelationReference.Should().Be("pi_abc_123");
+    }
+
+    [Fact]
     public async Task GetPaymentForEdit_Should_EnrichCustomerDisplayName_WhenCustomerIdSet()
     {
         await using var db = CreateDb();

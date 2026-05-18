@@ -10,7 +10,7 @@ function shouldAllowInsecureLocalTls() {
     return false;
   }
 
-  const baseUrl = process.env.DARWIN_WEBAPI_BASE_URL ?? "http://localhost:5134";
+  const baseUrl = process.env.DARWIN_WEBAPI_BASE_URL ?? "https://api.vafadar.pro";
 
   try {
     const url = new URL(baseUrl);

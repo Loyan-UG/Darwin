@@ -40,7 +40,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
 
         try
         {
-            var result = await service.VerifyAsync(new AuthAntiBotCheck());
+            var result = await service.VerifyAsync(new AuthAntiBotCheck(), TestContext.Current.CancellationToken);
             result.Succeeded.Should().BeTrue();
         }
         finally
@@ -57,7 +57,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
 
         try
         {
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { HoneypotValue = "bot" });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { HoneypotValue = "bot" }, TestContext.Current.CancellationToken);
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Honeypot was filled.");
         }
@@ -75,7 +75,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
 
         try
         {
-            var result = await service.VerifyAsync(new AuthAntiBotCheck());
+            var result = await service.VerifyAsync(new AuthAntiBotCheck(), TestContext.Current.CancellationToken);
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Missing challenge token.");
         }
@@ -93,7 +93,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
 
         try
         {
-            var result = await service.VerifyAsync(new AuthAntiBotCheck());
+            var result = await service.VerifyAsync(new AuthAntiBotCheck(), TestContext.Current.CancellationToken);
             result.Succeeded.Should().BeTrue();
         }
         finally
@@ -110,7 +110,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
 
         try
         {
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = "not-a-valid-payload" });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = "not-a-valid-payload" }, TestContext.Current.CancellationToken);
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Invalid challenge token.");
         }
@@ -131,7 +131,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
         try
         {
             var token = service.CreateChallengeToken();
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Form submitted too quickly.");
@@ -150,7 +150,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
 
         try
         {
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { HoneypotValue = "   " });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { HoneypotValue = "   " }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Honeypot was filled.");
@@ -172,7 +172,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
             var expiredAt = DateTimeOffset.UtcNow.AddSeconds(-61);
             var token = BuildTokenWithIssuedAt(expiredAt, tempPath);
 
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token }, TestContext.Current.CancellationToken);
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Challenge token expired.");
         }
@@ -193,7 +193,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
             var issuedInFuture = DateTimeOffset.UtcNow.AddSeconds(90);
             var token = BuildTokenWithIssuedAt(issuedInFuture, tempPath);
 
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Form submitted too quickly.");
@@ -214,7 +214,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
         {
             var token = BuildTokenWithIssuedAt(DateTimeOffset.UtcNow.AddSeconds(-2), tempPath);
 
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token }, TestContext.Current.CancellationToken);
             result.Succeeded.Should().BeTrue();
         }
         finally
@@ -232,7 +232,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
         try
         {
             var token = BuildTokenWithIssuedAt(DateTimeOffset.UtcNow, tempPath);
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeTrue();
         }
@@ -250,7 +250,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
 
         try
         {
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = string.Empty });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = string.Empty }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Missing challenge token.");
@@ -273,7 +273,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
             {
                 HoneypotValue = "bot",
                 ChallengeToken = string.Empty
-            });
+            }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeTrue();
         }
@@ -294,7 +294,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
             var issuedAt = DateTimeOffset.UtcNow.AddSeconds(-30);
             var token = BuildTokenWithIssuedAt(issuedAt, tempPath);
 
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeTrue();
         }
@@ -314,7 +314,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
         {
             var token = BuildTokenWithIssuedAt(DateTimeOffset.UtcNow.AddSeconds(-3), tempPath);
 
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeTrue();
         }
@@ -333,7 +333,7 @@ public sealed class ProtectedAuthAntiBotChallengeServiceTests
         try
         {
             var token = BuildTokenWithPayload("not-a-timestamp", tempPath);
-            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token });
+            var result = await service.VerifyAsync(new AuthAntiBotCheck { ChallengeToken = token }, TestContext.Current.CancellationToken);
 
             result.Succeeded.Should().BeFalse();
             result.FailureReason.Should().Be("Invalid challenge token.");

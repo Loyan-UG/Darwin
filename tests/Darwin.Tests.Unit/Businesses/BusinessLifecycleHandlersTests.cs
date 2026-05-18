@@ -179,6 +179,181 @@ public sealed class BusinessLifecycleHandlersTests
             .WithMessage("BusinessApprovalPrerequisitesMissing");
     }
 
+    // ─── Lifecycle transition boundary tests ─────────────────────────────────
+
+    [Theory]
+    [InlineData(BusinessOperationalStatus.Approved)]
+    [InlineData(BusinessOperationalStatus.Suspended)]
+    public async Task ApproveBusiness_Should_Throw_WhenStatusIsNotPendingApproval(
+        BusinessOperationalStatus wrongStatus)
+    {
+        await using var db = BusinessLifecycleTestDbContext.Create();
+        var entity = CreateBusiness();
+        entity.OperationalStatus = wrongStatus;
+        entity.IsActive = wrongStatus == BusinessOperationalStatus.Approved;
+
+        db.Set<Business>().Add(entity);
+        SeedApprovalPrerequisites(db, entity.Id);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApproveBusinessHandler(
+            db,
+            new FakeClock(new DateTime(2030, 1, 5, 8, 0, 0, DateTimeKind.Utc)),
+            new BusinessLifecycleActionDtoValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLifecycleActionDto
+        {
+            Id = entity.Id,
+            RowVersion = entity.RowVersion
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("approval is only valid from PendingApproval state");
+    }
+
+    [Theory]
+    [InlineData(BusinessOperationalStatus.PendingApproval)]
+    [InlineData(BusinessOperationalStatus.Suspended)]
+    public async Task SuspendBusiness_Should_Throw_WhenStatusIsNotApproved(
+        BusinessOperationalStatus wrongStatus)
+    {
+        await using var db = BusinessLifecycleTestDbContext.Create();
+        var entity = CreateBusiness();
+        entity.OperationalStatus = wrongStatus;
+        entity.IsActive = false;
+
+        db.Set<Business>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SuspendBusinessHandler(
+            db,
+            new FakeClock(new DateTime(2030, 2, 1, 9, 0, 0, DateTimeKind.Utc)),
+            new BusinessLifecycleActionDtoValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLifecycleActionDto
+        {
+            Id = entity.Id,
+            RowVersion = entity.RowVersion,
+            Note = "test reason"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("suspension is only valid from Approved state");
+    }
+
+    [Theory]
+    [InlineData(BusinessOperationalStatus.PendingApproval)]
+    [InlineData(BusinessOperationalStatus.Approved)]
+    public async Task ReactivateBusiness_Should_Throw_WhenStatusIsNotSuspended(
+        BusinessOperationalStatus wrongStatus)
+    {
+        await using var db = BusinessLifecycleTestDbContext.Create();
+        var entity = CreateBusiness();
+        entity.OperationalStatus = wrongStatus;
+        entity.IsActive = wrongStatus == BusinessOperationalStatus.Approved;
+
+        db.Set<Business>().Add(entity);
+        SeedApprovalPrerequisites(db, entity.Id);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ReactivateBusinessHandler(
+            db,
+            new FakeClock(new DateTime(2030, 3, 1, 9, 0, 0, DateTimeKind.Utc)),
+            new BusinessLifecycleActionDtoValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLifecycleActionDto
+        {
+            Id = entity.Id,
+            RowVersion = entity.RowVersion
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("reactivation is only valid from Suspended state");
+    }
+
+    // ─── RowVersion boundary tests ────────────────────────────────────────────
+
+    [Fact]
+    public async Task ApproveBusiness_Should_Throw_WhenRowVersionIsStale()
+    {
+        await using var db = BusinessLifecycleTestDbContext.Create();
+        var entity = CreateBusiness();
+        entity.OperationalStatus = BusinessOperationalStatus.PendingApproval;
+        entity.IsActive = false;
+
+        db.Set<Business>().Add(entity);
+        SeedApprovalPrerequisites(db, entity.Id);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ApproveBusinessHandler(
+            db,
+            new FakeClock(new DateTime(2030, 1, 5, 8, 0, 0, DateTimeKind.Utc)),
+            new BusinessLifecycleActionDtoValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLifecycleActionDto
+        {
+            Id = entity.Id,
+            RowVersion = [9, 9, 9]   // stale
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("stale RowVersion must be rejected before approval");
+    }
+
+    [Fact]
+    public async Task SuspendBusiness_Should_Throw_WhenRowVersionIsEmpty()
+    {
+        await using var db = BusinessLifecycleTestDbContext.Create();
+        var entity = CreateBusiness();
+        entity.OperationalStatus = BusinessOperationalStatus.Approved;
+        entity.IsActive = true;
+
+        db.Set<Business>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SuspendBusinessHandler(
+            db,
+            new FakeClock(new DateTime(2030, 2, 1, 9, 0, 0, DateTimeKind.Utc)),
+            new BusinessLifecycleActionDtoValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLifecycleActionDto
+        {
+            Id = entity.Id,
+            RowVersion = [],     // empty
+            Note = "policy violation"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("empty RowVersion must be rejected by concurrency guard");
+    }
+
+    [Fact]
+    public async Task ReactivateBusiness_Should_Throw_WhenRowVersionIsStale()
+    {
+        await using var db = BusinessLifecycleTestDbContext.Create();
+        var entity = CreateBusiness();
+        entity.OperationalStatus = BusinessOperationalStatus.Suspended;
+        entity.IsActive = false;
+
+        db.Set<Business>().Add(entity);
+        SeedApprovalPrerequisites(db, entity.Id);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ReactivateBusinessHandler(
+            db,
+            new FakeClock(new DateTime(2030, 3, 1, 9, 0, 0, DateTimeKind.Utc)),
+            new BusinessLifecycleActionDtoValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLifecycleActionDto
+        {
+            Id = entity.Id,
+            RowVersion = [7, 7, 7]   // stale
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("stale RowVersion must be rejected before reactivation");
+    }
+
     private static Business CreateBusiness()
     {
         return new Business

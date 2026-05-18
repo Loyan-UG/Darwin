@@ -84,6 +84,10 @@ public sealed class DhlWebhooksControllerTests
         var result = await controller.ReceiveAsync(TestContext.Current.CancellationToken);
 
         AssertProblem(result, StatusCodes.Status413PayloadTooLarge, "ProviderWebhookPayloadTooLarge");
+
+        var messageCount = await db.Set<ProviderCallbackInboxMessage>()
+            .CountAsync(cancellationToken: TestContext.Current.CancellationToken);
+        messageCount.Should().Be(0);
     }
 
     [Fact]
@@ -162,6 +166,10 @@ public sealed class DhlWebhooksControllerTests
         var ok = result.Should().BeAssignableTo<ObjectResult>().Subject;
         ok.StatusCode.Should().Be(StatusCodes.Status200OK);
         AssertOk(result).Duplicate.Should().BeFalse();
+
+        var messageCount = await db.Set<ProviderCallbackInboxMessage>()
+            .CountAsync(cancellationToken: TestContext.Current.CancellationToken);
+        messageCount.Should().Be(1);
     }
 
     [Fact]
@@ -668,6 +676,43 @@ public sealed class DhlWebhooksControllerTests
     }
 
     [Fact]
+    public async Task ReceiveAsync_Should_MarkDuplicateTrue_WhenConcurrentCallbacksShareTheSameCarrierReference()
+    {
+        var databaseName = $"darwin_dhl_webhooks_concurrent_idempotency_{Guid.NewGuid()}";
+        await using var seedDb = DhlWebhookControllerTestDbContext.Create(databaseName);
+        await SeedSiteSettingAsync(seedDb, new SiteSetting
+        {
+            DhlEnabled = true,
+            DhlApiKey = DhlApiKey,
+            DhlApiSecret = DhlApiSecret
+        });
+
+        var payload = CreateDhlPayload();
+        var signature = BuildDhlSignature(payload);
+
+        await using var firstDb = DhlWebhookControllerTestDbContext.Create(databaseName);
+        await using var secondDb = DhlWebhookControllerTestDbContext.Create(databaseName);
+        var firstController = CreateController(firstDb);
+        var secondController = CreateController(secondDb);
+
+        SetRequestBody(firstController, payload, dhlKey: DhlApiKey, dhlSignature: signature);
+        SetRequestBody(secondController, payload, dhlKey: DhlApiKey, dhlSignature: signature);
+
+        var firstTask = firstController.ReceiveAsync(TestContext.Current.CancellationToken);
+        var secondTask = secondController.ReceiveAsync(TestContext.Current.CancellationToken);
+        await Task.WhenAll(firstTask, secondTask);
+
+        var firstResult = AssertOk(firstTask.Result);
+        var secondResult = AssertOk(secondTask.Result);
+        new[] { firstResult.Duplicate, secondResult.Duplicate }.Count(x => x).Should().Be(1);
+        new[] { firstResult.Duplicate, secondResult.Duplicate }.Count(x => !x).Should().Be(1);
+
+        var messageCount = await firstDb.Set<ProviderCallbackInboxMessage>()
+            .CountAsync(cancellationToken: TestContext.Current.CancellationToken);
+        messageCount.Should().Be(1);
+    }
+
+    [Fact]
     public async Task ReceiveAsync_Should_MarkDuplicateFalse_WhenCarrierEventKeyCaseChanges()
     {
         await using var db = DhlWebhookControllerTestDbContext.Create();
@@ -916,6 +961,15 @@ public sealed class DhlWebhooksControllerTests
         {
             var options = new DbContextOptionsBuilder<DhlWebhookControllerTestDbContext>()
                 .UseInMemoryDatabase($"darwin_dhl_webhooks_tests_{Guid.NewGuid()}")
+                .Options;
+
+            return new DhlWebhookControllerTestDbContext(options);
+        }
+
+        public static DhlWebhookControllerTestDbContext Create(string databaseName)
+        {
+            var options = new DbContextOptionsBuilder<DhlWebhookControllerTestDbContext>()
+                .UseInMemoryDatabase(databaseName)
                 .Options;
 
             return new DhlWebhookControllerTestDbContext(options);

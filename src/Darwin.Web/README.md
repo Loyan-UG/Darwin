@@ -55,6 +55,9 @@ Customer-facing failures should use concise copy, for example:
 - "Please try again later."
 
 Operational diagnostics, loader health, and observability belong on the server side and in logs/tests, not in rendered customer UI.
+In local development, healthy `slow-success` loader warnings are suppressed by default to keep the console focused on actionable issues.
+Set `DARWIN_WEB_LOG_SLOW=true` when profiling slow local routes.
+Set `DARWIN_WEB_LOG_DEGRADED=true` when investigating degraded dependency states outside production.
 
 ## Navigation
 

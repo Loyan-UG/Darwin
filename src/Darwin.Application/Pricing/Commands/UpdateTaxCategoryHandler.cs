@@ -46,7 +46,7 @@ namespace Darwin.Application.Pricing.Commands
             if (!currentRowVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
 
-            var normalizedName = dto.Name.Trim();
+            var normalizedName = dto.Name.Trim().ToLowerInvariant();
             var exists = await _db.Set<TaxCategory>().AsNoTracking()
                 .AnyAsync(t => t.Id != dto.Id && t.Name == normalizedName, ct);
             if (exists) throw new ValidationException(_localizer["TaxCategoryNameMustBeUnique"]);

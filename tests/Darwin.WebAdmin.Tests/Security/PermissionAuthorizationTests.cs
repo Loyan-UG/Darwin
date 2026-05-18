@@ -179,7 +179,7 @@ public sealed class PermissionAuthorizationTests
     public async Task PermissionRazorHelper_Should_Reject_WhenNoContextOrUnauthenticated()
     {
         var helperWithNullContext = new PermissionRazorHelper(new HttpContextAccessor(), new FakePermissionService());
-        var canWithoutContext = await helperWithNullContext.HasAsync("Catalog.View");
+        var canWithoutContext = await helperWithNullContext.HasAsync("Catalog.View", TestContext.Current.CancellationToken);
 
         canWithoutContext.Should().BeFalse();
 
@@ -192,7 +192,7 @@ public sealed class PermissionAuthorizationTests
         };
         var helper = new PermissionRazorHelper(access, new FakePermissionService());
 
-        var can = await helper.HasAsync("Catalog.View");
+        var can = await helper.HasAsync("Catalog.View", TestContext.Current.CancellationToken);
 
         can.Should().BeFalse();
     }
@@ -209,7 +209,7 @@ public sealed class PermissionAuthorizationTests
         };
         var helper = new PermissionRazorHelper(access, new FakePermissionService());
 
-        var can = await helper.HasAsync("Catalog.View");
+        var can = await helper.HasAsync("Catalog.View", TestContext.Current.CancellationToken);
 
         can.Should().BeFalse();
     }
@@ -223,7 +223,7 @@ public sealed class PermissionAuthorizationTests
         var access = new HttpContextAccessor { HttpContext = CreateHttpContext(userId, isAuthenticated: true) };
         var helper = new PermissionRazorHelper(access, service);
 
-        var can = await helper.HasAsync("Catalog.View");
+        var can = await helper.HasAsync("Catalog.View", TestContext.Current.CancellationToken);
 
         can.Should().BeTrue();
         service.Calls.Select(c => c.permission).Should().Contain(new[] { "FullAdminAccess" });
@@ -241,7 +241,7 @@ public sealed class PermissionAuthorizationTests
         var access = new HttpContextAccessor { HttpContext = CreateHttpContext(userId, isAuthenticated: true) };
         var helper = new PermissionRazorHelper(access, service);
 
-        var can = await helper.HasAsync("Catalog.View");
+        var can = await helper.HasAsync("Catalog.View", TestContext.Current.CancellationToken);
 
         can.Should().Be(grantPermission);
         service.Calls.Should().Contain(c => c.permission == "FullAdminAccess");

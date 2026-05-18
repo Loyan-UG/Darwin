@@ -81,8 +81,6 @@ namespace Darwin.Mobile.Shared.Extensions
 
                 client.Timeout = TimeSpan.FromSeconds(20);
 
-                // Helpful header for local tunneling (ngrok) dev scenarios.
-                client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "1");
             })
             .ConfigurePrimaryHttpMessageHandler(() =>
             {

@@ -634,7 +634,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> OnboardingWizard(Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> OnboardingWizard(Guid id, string? step = null, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
@@ -652,7 +652,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var business = MapBusinessEditVm(dto);
             await PopulateBusinessFormOptionsAsync(business, ct);
 
-            return RenderOnboardingWizardWorkspace(BuildOnboardingWizardVm(business));
+            return RenderOnboardingWizardWorkspace(BuildOnboardingWizardVm(business, step));
         }
 
         [HttpGet]
@@ -3073,7 +3073,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
         }
 
-        private BusinessOnboardingWizardVm BuildOnboardingWizardVm(BusinessEditVm business)
+        private BusinessOnboardingWizardVm BuildOnboardingWizardVm(BusinessEditVm business, string? requestedStepKey = null)
         {
             var profileComplete = !string.IsNullOrWhiteSpace(business.Name)
                 && !string.IsNullOrWhiteSpace(business.LegalName)
@@ -3091,22 +3091,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             var steps = new List<BusinessOnboardingWizardStepVm>
             {
-                BuildWizardStep(1, "BusinessOnboardingWizardStepBusinessProfile", profileComplete, true, profileComplete ? "BusinessOnboardingWizardBusinessProfileComplete" : "BusinessOnboardingWizardBusinessProfileMissing", "EditBusiness", Url.Action("Edit", "Businesses", new { id = business.Id })),
-                BuildWizardStep(2, "BusinessOnboardingWizardStepCommercialPlan", commercialComplete, false, commercialComplete ? "BusinessOnboardingWizardCommercialPlanComplete" : "BusinessOnboardingWizardCommercialPlanMissing", "Subscription", Url.Action("Subscription", "Businesses", new { businessId = business.Id })),
-                BuildWizardStep(3, "BusinessOnboardingWizardStepOwnerStaff", ownerComplete, true, ownerComplete ? "BusinessOnboardingWizardOwnerStaffComplete" : "BusinessOnboardingWizardOwnerStaffMissing", "Members", Url.Action("Members", "Businesses", new { businessId = business.Id, filter = BusinessMemberSupportFilter.Attention })),
-                BuildWizardStep(4, "BusinessOnboardingWizardStepLocations", locationComplete, true, locationComplete ? "BusinessOnboardingWizardLocationsComplete" : "BusinessOnboardingWizardLocationsMissing", "Locations", Url.Action("Locations", "Businesses", new { businessId = business.Id })),
-                BuildWizardStep(5, "BusinessOnboardingWizardStepLoyalty", false, false, "BusinessOnboardingWizardLoyaltySummary", "Loyalty", Url.Action("Programs", "Loyalty", new { businessId = business.Id })),
-                BuildWizardStep(6, "BusinessOnboardingWizardStepCommunication", communicationComplete, false, communicationComplete ? "BusinessOnboardingWizardCommunicationComplete" : "BusinessOnboardingWizardCommunicationMissing", "BusinessCommunicationProfileTitle", Url.Action("Details", "BusinessCommunications", new { businessId = business.Id })),
-                BuildWizardStep(7, "BusinessOnboardingWizardStepStorefrontVisibility", storefrontComplete, false, storefrontComplete ? "BusinessOnboardingWizardStorefrontComplete" : "BusinessOnboardingWizardStorefrontMissing", "MerchantReadinessTitle", Url.Action("MerchantReadiness", "Businesses", new { businessId = business.Id })),
-                BuildWizardStep(8, "BusinessOnboardingWizardStepReviewActivate", requiredPrerequisitesComplete && storefrontComplete, true, requiredPrerequisitesComplete ? "BusinessOnboardingWizardReviewReady" : "FinalizeBusinessOnboardingBlocked", "FinalizeBusinessOnboarding", Url.Action("OnboardingWizard", "Businesses", new { id = business.Id }))
+                BuildWizardStep(1, "profile", "BusinessOnboardingWizardStepBusinessProfile", profileComplete, true, profileComplete ? "BusinessOnboardingWizardBusinessProfileComplete" : "BusinessOnboardingWizardBusinessProfileMissing", "EditBusiness", Url.Action("Edit", "Businesses", new { id = business.Id })),
+                BuildWizardStep(2, "plan", "BusinessOnboardingWizardStepCommercialPlan", commercialComplete, false, commercialComplete ? "BusinessOnboardingWizardCommercialPlanComplete" : "BusinessOnboardingWizardCommercialPlanMissing", "Subscription", Url.Action("Subscription", "Businesses", new { businessId = business.Id })),
+                BuildWizardStep(3, "users", "BusinessOnboardingWizardStepOwnerStaff", ownerComplete, true, ownerComplete ? "BusinessOnboardingWizardOwnerStaffComplete" : "BusinessOnboardingWizardOwnerStaffMissing", "Members", Url.Action("Members", "Businesses", new { businessId = business.Id, filter = BusinessMemberSupportFilter.Attention })),
+                BuildWizardStep(4, "locations", "BusinessOnboardingWizardStepLocations", locationComplete, true, locationComplete ? "BusinessOnboardingWizardLocationsComplete" : "BusinessOnboardingWizardLocationsMissing", "Locations", Url.Action("Locations", "Businesses", new { businessId = business.Id })),
+                BuildWizardStep(5, "loyalty", "BusinessOnboardingWizardStepLoyalty", false, false, "BusinessOnboardingWizardLoyaltySummary", "Loyalty", Url.Action("Programs", "Loyalty", new { businessId = business.Id })),
+                BuildWizardStep(6, "communications", "BusinessOnboardingWizardStepCommunication", communicationComplete, false, communicationComplete ? "BusinessOnboardingWizardCommunicationComplete" : "BusinessOnboardingWizardCommunicationMissing", "BusinessCommunicationProfileTitle", Url.Action("Details", "BusinessCommunications", new { businessId = business.Id })),
+                BuildWizardStep(7, "visibility", "BusinessOnboardingWizardStepStorefrontVisibility", storefrontComplete, false, storefrontComplete ? "BusinessOnboardingWizardStorefrontComplete" : "BusinessOnboardingWizardStorefrontMissing", "MerchantReadinessTitle", Url.Action("MerchantReadiness", "Businesses", new { businessId = business.Id })),
+                BuildWizardStep(8, "review", "BusinessOnboardingWizardStepReviewActivate", requiredPrerequisitesComplete && storefrontComplete, true, requiredPrerequisitesComplete ? "BusinessOnboardingWizardReviewReady" : "FinalizeBusinessOnboardingBlocked", "FinalizeBusinessOnboarding", Url.Action("OnboardingWizard", "Businesses", new { id = business.Id, step = "review" }))
             };
+            var resumeStep = steps.FirstOrDefault(x => x.IsRequired && !x.IsComplete)
+                ?? steps.FirstOrDefault(x => !x.IsComplete)
+                ?? steps.Last();
+            var activeStep = steps.FirstOrDefault(x => string.Equals(x.Key, requestedStepKey, StringComparison.OrdinalIgnoreCase))
+                ?? resumeStep;
+            foreach (var step in steps)
+            {
+                step.IsNextAction = ReferenceEquals(step, resumeStep);
+                step.IsActive = ReferenceEquals(step, activeStep);
+                step.WizardUrl = Url.Action("OnboardingWizard", "Businesses", new { id = business.Id, step = step.Key }) ?? string.Empty;
+            }
 
             return new BusinessOnboardingWizardVm
             {
                 Business = business,
                 Steps = steps,
+                ResumeStep = resumeStep,
                 RequiredStepCount = steps.Count(x => x.IsRequired),
                 CompletedRequiredStepCount = steps.Count(x => x.IsRequired && x.IsComplete),
+                CompletedStepCount = steps.Count(x => x.IsComplete),
                 CanFinalize = requiredPrerequisitesComplete &&
                     (business.OperationalStatus != BusinessOperationalStatus.Approved || !business.IsActive)
             };
@@ -3114,6 +3127,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private BusinessOnboardingWizardStepVm BuildWizardStep(
             int number,
+            string key,
             string titleKey,
             bool isComplete,
             bool isRequired,
@@ -3124,6 +3138,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return new BusinessOnboardingWizardStepVm
             {
                 Number = number,
+                Key = key,
                 Title = T(titleKey),
                 Summary = T(summaryKey),
                 IsComplete = isComplete,
