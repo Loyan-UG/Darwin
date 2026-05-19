@@ -603,6 +603,61 @@ public sealed class BillingUpdateHandlersTests
         updated.FailureReason.Should().Be("initial payment failed");
     }
 
+    // ─── Null database RowVersion guards ──────────────────────────────────────
+
+    [Fact]
+    public async Task UpdateBillingWebhookDeliveryHandler_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var deliveryId = Guid.NewGuid();
+        var delivery = new WebhookDelivery { Id = deliveryId, Status = "Pending" };
+        delivery.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<WebhookDelivery>().Add(delivery);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBillingWebhookDeliveryHandler(db, new TestStringLocalizer());
+
+        var result = await handler.HandleAsync(new UpdateBillingWebhookDeliveryDto
+        {
+            Id = deliveryId,
+            RowVersion = [1], // non-empty DTO RowVersion vs null DB value
+            Action = "MarkSucceeded"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("ItemConcurrencyConflict");
+    }
+
+    [Fact]
+    public async Task UpdatePaymentDisputeReviewHandler_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = BillingUpdateTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        var payment = new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            Status = PaymentStatus.Pending
+        };
+        payment.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<Payment>().Add(payment);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePaymentDisputeReviewHandler(db, new TestStringLocalizer());
+
+        var result = await handler.HandleAsync(new UpdatePaymentDisputeReviewDto
+        {
+            Id = paymentId,
+            RowVersion = [1], // non-empty DTO RowVersion vs null DB value
+            Action = UpdatePaymentDisputeReviewHandler.ClearAction
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     private sealed class BillingUpdateTestDbContext : DbContext, IAppDbContext
     {
         private BillingUpdateTestDbContext(DbContextOptions<BillingUpdateTestDbContext> options)

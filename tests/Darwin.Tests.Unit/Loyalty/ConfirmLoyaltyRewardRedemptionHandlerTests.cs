@@ -330,6 +330,49 @@ public sealed class ConfirmLoyaltyRewardRedemptionHandlerTests
         updated.LifetimePoints.Should().Be(1000, "lifetime points should not be decremented on redemption");
     }
 
+    [Fact]
+    public async Task ConfirmRedemption_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = RedemptionTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+
+        db.Set<LoyaltyAccount>().Add(new LoyaltyAccount
+        {
+            Id = accountId,
+            BusinessId = businessId,
+            UserId = Guid.NewGuid(),
+            Status = LoyaltyAccountStatus.Active,
+            PointsBalance = 300,
+            LifetimePoints = 300
+        });
+
+        var redemption = new LoyaltyRewardRedemption
+        {
+            BusinessId = businessId,
+            LoyaltyAccountId = accountId,
+            LoyaltyRewardTierId = Guid.NewGuid(),
+            PointsSpent = 100,
+            Status = LoyaltyRedemptionStatus.Pending
+        };
+        redemption.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<LoyaltyRewardRedemption>().Add(redemption);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ConfirmLoyaltyRewardRedemptionHandler(db, new TestLocalizer());
+
+        var result = await handler.HandleAsync(new ConfirmLoyaltyRewardRedemptionDto
+        {
+            RedemptionId = redemption.Id,
+            BusinessId = businessId,
+            RowVersion = [1, 2, 3] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("RedemptionConcurrencyConflict");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static async Task<(Guid AccountId, Guid RedemptionId)> SeedPendingRedemption(

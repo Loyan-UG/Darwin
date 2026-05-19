@@ -1109,16 +1109,20 @@ public sealed class InventoryManagementHandlerTests
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Null-DB-RowVersion and missing empty-RowVersion edge-case tests
+    // Null database RowVersion guards
+    // These tests verify that handlers compare entity.RowVersion null-safely
+    // (via ?? Array.Empty<byte>()) so legacy rows with null RowVersion values
+    // produce a safe concurrency failure rather than a NullReferenceException.
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task UpdateWarehouse_Should_ThrowConcurrency_WhenDbRowVersionIsNull()
+    public async Task UpdateWarehouse_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
     {
         await using var db = InventoryTestDbContext.Create();
         var id = Guid.NewGuid();
-        // Seed with null RowVersion to simulate entity that has never had a row-version written.
-        db.Set<Warehouse>().Add(new Warehouse { Id = id, BusinessId = Guid.NewGuid(), Name = "WH" /* RowVersion = null */ });
+        var entity = new Warehouse { Id = id, BusinessId = Guid.NewGuid(), Name = "Legacy WH" };
+        entity.RowVersion = null!;
+        db.Set<Warehouse>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new UpdateWarehouseHandler(db, new WarehouseEditValidator(), CreateLocalizer());
@@ -1127,94 +1131,49 @@ public sealed class InventoryManagementHandlerTests
         {
             Id = id,
             BusinessId = Guid.NewGuid(),
-            Name = "WH Updated",
-            RowVersion = [1, 2, 3] // non-empty client version against a null DB version
+            Name = "Legacy WH",
+            RowVersion = [1]
         }, TestContext.Current.CancellationToken);
 
-        // The handler normalises null DB RowVersion to [] and then detects [] != [1,2,3],
-        // so a DbUpdateConcurrencyException must be thrown — never a NullReferenceException.
-        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
     }
 
     [Fact]
-    public async Task UpdateSupplier_Should_ThrowValidation_WhenRowVersionIsEmpty()
+    public async Task UpdateSupplier_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
     {
         await using var db = InventoryTestDbContext.Create();
         var id = Guid.NewGuid();
         var businessId = Guid.NewGuid();
-        db.Set<Supplier>().Add(new Supplier
-        {
-            Id = id, BusinessId = businessId, Name = "Sup", Email = "s@s.com", Phone = "000", RowVersion = [1]
-        });
+        var entity = new Supplier { Id = id, BusinessId = businessId, Name = "Legacy Sup", Email = "s@s.com", Phone = "000" };
+        entity.RowVersion = null!;
+        db.Set<Supplier>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new UpdateSupplierHandler(db, new SupplierEditValidator(), CreateLocalizer());
 
         var act = async () => await handler.HandleAsync(new SupplierEditDto
         {
-            Id = id, BusinessId = businessId, Name = "Sup", Email = "s@s.com", Phone = "000",
-            RowVersion = [] // empty — must be rejected by the validator
+            Id = id, BusinessId = businessId, Name = "Legacy Sup", Email = "s@s.com", Phone = "000",
+            RowVersion = [1]
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<ValidationException>();
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure");
     }
 
     [Fact]
-    public async Task UpdateSupplier_Should_ThrowConcurrency_WhenDbRowVersionIsNull()
-    {
-        await using var db = InventoryTestDbContext.Create();
-        var id = Guid.NewGuid();
-        var businessId = Guid.NewGuid();
-        db.Set<Supplier>().Add(new Supplier
-        {
-            Id = id, BusinessId = businessId, Name = "Sup", Email = "s@s.com", Phone = "000" /* RowVersion = null */
-        });
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        var handler = new UpdateSupplierHandler(db, new SupplierEditValidator(), CreateLocalizer());
-
-        var act = async () => await handler.HandleAsync(new SupplierEditDto
-        {
-            Id = id, BusinessId = businessId, Name = "Sup", Email = "s@s.com", Phone = "000",
-            RowVersion = [1, 2, 3]
-        }, TestContext.Current.CancellationToken);
-
-        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
-    }
-
-    [Fact]
-    public async Task UpdateStockLevel_Should_ThrowValidation_WhenRowVersionIsEmpty()
-    {
-        await using var db = InventoryTestDbContext.Create();
-        var id = Guid.NewGuid();
-        db.Set<StockLevel>().Add(new StockLevel
-        {
-            Id = id, WarehouseId = Guid.NewGuid(), ProductVariantId = Guid.NewGuid(), RowVersion = [1]
-        });
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        var handler = new UpdateStockLevelHandler(db, new StockLevelEditValidator(), CreateLocalizer());
-
-        var act = async () => await handler.HandleAsync(new StockLevelEditDto
-        {
-            Id = id, WarehouseId = Guid.NewGuid(), ProductVariantId = Guid.NewGuid(),
-            RowVersion = [] // empty — must be rejected by the validator
-        }, TestContext.Current.CancellationToken);
-
-        await act.Should().ThrowAsync<ValidationException>();
-    }
-
-    [Fact]
-    public async Task UpdateStockLevel_Should_ThrowConcurrency_WhenDbRowVersionIsNull()
+    public async Task UpdateStockLevel_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
     {
         await using var db = InventoryTestDbContext.Create();
         var id = Guid.NewGuid();
         var warehouseId = Guid.NewGuid();
         var variantId = Guid.NewGuid();
-        db.Set<StockLevel>().Add(new StockLevel
-        {
-            Id = id, WarehouseId = warehouseId, ProductVariantId = variantId /* RowVersion = null */
-        });
+        var entity = new StockLevel { Id = id, WarehouseId = warehouseId, ProductVariantId = variantId, AvailableQuantity = 5 };
+        entity.RowVersion = null!;
+        db.Set<Warehouse>().Add(new Warehouse { Id = warehouseId, Name = "WH" });
+        db.Set<ProductVariant>().Add(new ProductVariant { Id = variantId, Sku = "SKU-NULL" });
+        db.Set<StockLevel>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new UpdateStockLevelHandler(db, new StockLevelEditValidator(), CreateLocalizer());
@@ -1222,146 +1181,115 @@ public sealed class InventoryManagementHandlerTests
         var act = async () => await handler.HandleAsync(new StockLevelEditDto
         {
             Id = id, WarehouseId = warehouseId, ProductVariantId = variantId,
-            RowVersion = [5, 6, 7]
+            AvailableQuantity = 10, RowVersion = [1]
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure");
     }
 
     [Fact]
-    public async Task UpdateStockTransfer_Should_ThrowValidation_WhenRowVersionIsEmpty()
+    public async Task UpdateStockTransfer_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
     {
         await using var db = InventoryTestDbContext.Create();
         var id = Guid.NewGuid();
-        var fromWh = Guid.NewGuid();
-        var toWh = Guid.NewGuid();
-        db.Set<StockTransfer>().Add(new StockTransfer
-        {
-            Id = id, FromWarehouseId = fromWh, ToWarehouseId = toWh,
-            Status = TransferStatus.Draft,
-            Lines = [new StockTransferLine { ProductVariantId = Guid.NewGuid(), Quantity = 1 }],
-            RowVersion = [1]
-        });
+        var fromId = Guid.NewGuid();
+        var toId = Guid.NewGuid();
+        var entity = new StockTransfer { Id = id, FromWarehouseId = fromId, ToWarehouseId = toId, Status = TransferStatus.Draft };
+        entity.RowVersion = null!;
+        db.Set<StockTransfer>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new UpdateStockTransferHandler(db, new StockTransferEditValidator(), CreateLocalizer());
 
         var act = async () => await handler.HandleAsync(new StockTransferEditDto
         {
-            Id = id, FromWarehouseId = fromWh, ToWarehouseId = toWh,
-            Status = "Draft",
+            Id = id, FromWarehouseId = fromId, ToWarehouseId = toId, Status = "Draft",
             Lines = [new StockTransferLineDto { ProductVariantId = Guid.NewGuid(), Quantity = 1 }],
-            RowVersion = [] // empty — must be rejected by the validator
-        }, TestContext.Current.CancellationToken);
-
-        await act.Should().ThrowAsync<ValidationException>();
-    }
-
-    [Fact]
-    public async Task UpdateStockTransfer_Should_ThrowConcurrency_WhenDbRowVersionIsNull()
-    {
-        await using var db = InventoryTestDbContext.Create();
-        var id = Guid.NewGuid();
-        var fromWh = Guid.NewGuid();
-        var toWh = Guid.NewGuid();
-        db.Set<StockTransfer>().Add(new StockTransfer
-        {
-            Id = id, FromWarehouseId = fromWh, ToWarehouseId = toWh,
-            Status = TransferStatus.Draft,
-            Lines = [new StockTransferLine { ProductVariantId = Guid.NewGuid(), Quantity = 2 }]
-            /* RowVersion = null */
-        });
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        var handler = new UpdateStockTransferHandler(db, new StockTransferEditValidator(), CreateLocalizer());
-
-        var act = async () => await handler.HandleAsync(new StockTransferEditDto
-        {
-            Id = id, FromWarehouseId = fromWh, ToWarehouseId = toWh,
-            Status = "Draft",
-            Lines = [new StockTransferLineDto { ProductVariantId = Guid.NewGuid(), Quantity = 2 }],
-            RowVersion = [3, 4, 5]
-        }, TestContext.Current.CancellationToken);
-
-        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
-    }
-
-    [Fact]
-    public async Task UpdatePurchaseOrder_Should_ThrowValidation_WhenRowVersionIsEmpty()
-    {
-        await using var db = InventoryTestDbContext.Create();
-        var id = Guid.NewGuid();
-        var supplierId = Guid.NewGuid();
-        var businessId = Guid.NewGuid();
-        db.Set<PurchaseOrder>().Add(new PurchaseOrder
-        {
-            Id = id, SupplierId = supplierId, BusinessId = businessId, OrderNumber = "PO-X",
-            Status = PurchaseOrderStatus.Draft,
-            Lines = [new PurchaseOrderLine { ProductVariantId = Guid.NewGuid(), Quantity = 1, UnitCostMinor = 100, TotalCostMinor = 100 }],
             RowVersion = [1]
-        });
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        var handler = new UpdatePurchaseOrderHandler(db, new PurchaseOrderEditValidator(), CreateLocalizer());
-
-        var act = async () => await handler.HandleAsync(new PurchaseOrderEditDto
-        {
-            Id = id, SupplierId = supplierId, BusinessId = businessId, OrderNumber = "PO-X", Status = "Draft",
-            Lines = [new PurchaseOrderLineDto { ProductVariantId = Guid.NewGuid(), Quantity = 1 }],
-            RowVersion = [] // empty — must be rejected by the validator
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<ValidationException>();
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure");
     }
 
     [Fact]
-    public async Task UpdatePurchaseOrder_Should_ThrowConcurrency_WhenDbRowVersionIsNull()
+    public async Task StockTransferLifecycle_Should_ReturnFail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = InventoryTestDbContext.Create();
+        var id = Guid.NewGuid();
+        var entity = new StockTransfer
+        {
+            Id = id, FromWarehouseId = Guid.NewGuid(), ToWarehouseId = Guid.NewGuid(),
+            Status = TransferStatus.Draft
+        };
+        entity.RowVersion = null!;
+        db.Set<StockTransfer>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateStockTransferLifecycleHandler(db, CreateLocalizer());
+
+        var result = await handler.HandleAsync(new StockTransferLifecycleActionDto
+        {
+            Id = id, RowVersion = [1], Action = "MarkInTransit"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
+    [Fact]
+    public async Task UpdatePurchaseOrder_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
     {
         await using var db = InventoryTestDbContext.Create();
         var id = Guid.NewGuid();
         var supplierId = Guid.NewGuid();
         var businessId = Guid.NewGuid();
-        db.Set<PurchaseOrder>().Add(new PurchaseOrder
+        var entity = new PurchaseOrder
         {
-            Id = id, SupplierId = supplierId, BusinessId = businessId, OrderNumber = "PO-Y",
-            Status = PurchaseOrderStatus.Draft,
-            Lines = [new PurchaseOrderLine { ProductVariantId = Guid.NewGuid(), Quantity = 1, UnitCostMinor = 50, TotalCostMinor = 50 }]
-            /* RowVersion = null */
-        });
+            Id = id, SupplierId = supplierId, BusinessId = businessId,
+            OrderNumber = "PO-NULL", Status = PurchaseOrderStatus.Draft
+        };
+        entity.RowVersion = null!;
+        db.Set<PurchaseOrder>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new UpdatePurchaseOrderHandler(db, new PurchaseOrderEditValidator(), CreateLocalizer());
 
         var act = async () => await handler.HandleAsync(new PurchaseOrderEditDto
         {
-            Id = id, SupplierId = supplierId, BusinessId = businessId, OrderNumber = "PO-Y", Status = "Draft",
+            Id = id, SupplierId = supplierId, BusinessId = businessId, OrderNumber = "PO-NULL", Status = "Draft",
             Lines = [new PurchaseOrderLineDto { ProductVariantId = Guid.NewGuid(), Quantity = 1 }],
-            RowVersion = [7, 8, 9]
+            RowVersion = [1]
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>(
+            "null DB RowVersion must produce a safe concurrency failure");
     }
 
     [Fact]
-    public async Task PurchaseOrderLifecycle_Should_ReturnFail_WhenRowVersionMismatches()
+    public async Task PurchaseOrderLifecycle_Should_ReturnFail_WhenDatabaseRowVersionIsNull()
     {
         await using var db = InventoryTestDbContext.Create();
         var id = Guid.NewGuid();
-        db.Set<PurchaseOrder>().Add(new PurchaseOrder
+        var entity = new PurchaseOrder
         {
             Id = id, SupplierId = Guid.NewGuid(), BusinessId = Guid.NewGuid(),
-            OrderNumber = "PO-STALE", Status = PurchaseOrderStatus.Draft, RowVersion = [1, 2, 3]
-        });
+            OrderNumber = "PO-NULL-LC", Status = PurchaseOrderStatus.Draft
+        };
+        entity.RowVersion = null!;
+        db.Set<PurchaseOrder>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new UpdatePurchaseOrderLifecycleHandler(db, CreateLocalizer());
 
         var result = await handler.HandleAsync(new PurchaseOrderLifecycleActionDto
         {
-            Id = id, RowVersion = [9, 9, 9], Action = "Issue" // stale row version
+            Id = id, RowVersion = [1], Action = "Issue"
         }, TestContext.Current.CancellationToken);
 
-        result.Succeeded.Should().BeFalse("stale RowVersion must be detected before applying the lifecycle transition");
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

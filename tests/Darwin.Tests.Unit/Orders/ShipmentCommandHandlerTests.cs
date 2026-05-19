@@ -448,6 +448,64 @@ public sealed class ShipmentCommandHandlerTests
         updated!.Status.Should().Be("Processed");
     }
 
+    // ─── Null database RowVersion guards ──────────────────────────────────────
+
+    [Fact]
+    public async Task ResolveShipmentCarrierException_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = CreateDb();
+        var shipmentId = Guid.NewGuid();
+        var shipment = new Shipment
+        {
+            Id = shipmentId,
+            OrderId = Guid.NewGuid(),
+            Carrier = "DHL",
+            Service = "Parcel"
+        };
+        shipment.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<Shipment>().Add(shipment);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateResolveHandler(db);
+        var result = await handler.HandleAsync(new ResolveShipmentCarrierExceptionDto
+        {
+            ShipmentId = shipmentId,
+            RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
+            ResolutionNote = "Testing null DB row version"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
+    [Fact]
+    public async Task UpdateShipmentProviderOperation_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = CreateDb();
+        var operation = new ShipmentProviderOperation
+        {
+            Id = Guid.NewGuid(),
+            ShipmentId = Guid.NewGuid(),
+            Provider = "DHL",
+            OperationType = "CreateShipment",
+            Status = "Pending"
+        };
+        operation.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<ShipmentProviderOperation>().Add(operation);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateOpHandler(db);
+        var result = await handler.HandleAsync(new UpdateShipmentProviderOperationDto
+        {
+            Id = operation.Id,
+            RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
+            Action = "MarkProcessed"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     // ─── Test DbContext ────────────────────────────────────────────────────────
 
     private sealed class ShipmentCommandTestDbContext : DbContext, IAppDbContext

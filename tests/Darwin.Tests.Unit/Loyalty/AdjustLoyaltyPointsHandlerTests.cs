@@ -243,6 +243,38 @@ public sealed class AdjustLoyaltyPointsHandlerTests
         result.Value!.NewPointsBalance.Should().Be(0);
     }
 
+    [Fact]
+    public async Task Adjust_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = AdjustTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var account = new LoyaltyAccount
+        {
+            BusinessId = businessId,
+            UserId = Guid.NewGuid(),
+            PointsBalance = 200,
+            LifetimePoints = 200,
+            Status = LoyaltyAccountStatus.Active
+        };
+        account.RowVersion = null!;
+        db.Set<LoyaltyAccount>().Add(account);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateHandler(db);
+
+        var result = await handler.HandleAsync(new AdjustLoyaltyPointsDto
+        {
+            LoyaltyAccountId = account.Id,
+            BusinessId = businessId,
+            PointsDelta = 50,
+            RowVersion = [1, 2, 3] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("ConcurrencyConflictLoyaltyAccountModified");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private AdjustLoyaltyPointsHandler CreateHandler(IAppDbContext db)
