@@ -9,10 +9,10 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Loyalty;
+using Darwin.Domain.Enums;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Entities.Settings;
-using Darwin.Domain.Enums;
 using Darwin.Infrastructure.Persistence.Db;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Authentication;
@@ -113,7 +113,10 @@ public sealed class WebAdminTestFactory : WebApplicationFactory<Program>
         return client;
     }
 
-    public HttpClient CreateAuthenticatedDatabaseNoRedirectClient(bool allowPermissions = true)
+    public HttpClient CreateAuthenticatedDatabaseNoRedirectClient(
+        bool allowPermissions = true,
+        Action<DarwinDbContext>? seedDatabase = null,
+        Action<IServiceCollection>? configureServices = null)
     {
         var databaseName = $"darwin_webadmin_smoke_{Guid.NewGuid():N}";
         var factory = WithWebHostBuilder(builder =>
@@ -137,6 +140,7 @@ public sealed class WebAdminTestFactory : WebApplicationFactory<Program>
                 services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<DarwinDbContext>());
                 services.RemoveAll<ISiteSettingCache>();
                 services.AddScoped<ISiteSettingCache, DatabaseSiteSettingCache>();
+                configureServices?.Invoke(services);
             });
         });
 
@@ -587,6 +591,7 @@ public sealed class WebAdminTestFactory : WebApplicationFactory<Program>
                     }
                 }
             });
+            seedDatabase?.Invoke(db);
             db.SaveChanges();
         }
 

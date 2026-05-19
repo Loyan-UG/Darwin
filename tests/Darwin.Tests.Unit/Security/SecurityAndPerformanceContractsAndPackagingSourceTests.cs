@@ -707,6 +707,112 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     }
 
     [Fact]
+    public async Task BrevoReadinessSmoke_Should_BlockWhenDeliveryPipelinePrerequisitesAreMissing()
+    {
+        // Confirms the Brevo smoke script enforces webhook and worker readiness gates in dry-run mode
+        // before any execute path is reached.
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-brevo-readiness.ps1"));
+        startInfo.ArgumentList.Add("-RequireDeliveryPipeline");
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_BREVO_API_KEY"] = "local-api-key";
+        startInfo.Environment["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test";
+        startInfo.Environment["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-brevo-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Brevo readiness smoke is blocked.");
+        output.Should().Contain("DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED=true is required after the Brevo webhook subscription is configured.");
+        output.Should().Contain("DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED=true is required after transactional webhook events are subscribed.");
+        output.Should().Contain("DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true is required after ProviderCallbackWorker is enabled for the target environment.");
+        output.Should().Contain("DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true is required after EmailDispatchOperationWorker is enabled for the target environment.");
+        output.Should().NotContain("Invoke-RestMethod");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        secretPattern.IsMatch(output).Should().BeFalse("blocked output must not print provider secrets");
+    }
+
+    [Fact]
+    public async Task BrevoReadinessSmoke_Should_ReportDeliveryPipelineReadinessInDryRun()
+    {
+        // Confirms delivery-pipeline readiness can be validated without executing external calls.
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-brevo-readiness.ps1"));
+        startInfo.ArgumentList.Add("-RequireDeliveryPipeline");
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_BREVO_API_KEY"] = "local-api-key";
+        startInfo.Environment["DARWIN_BREVO_SENDER_EMAIL"] = "sender@example.test";
+        startInfo.Environment["DARWIN_BREVO_TEST_RECIPIENT_EMAIL"] = "recipient@example.test";
+        startInfo.Environment["DARWIN_BREVO_WEBHOOK_PUBLIC_URL"] = "https://brevo-webhook.example.test/api/v1/public/notifications/brevo/webhooks";
+        startInfo.Environment["DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED"] = "true";
+        startInfo.Environment["DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED"] = "true";
+        startInfo.Environment["DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true";
+        startInfo.Environment["DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED"] = "true";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-brevo-readiness.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(0);
+        output.Should().Contain("Brevo readiness smoke configuration is present.");
+        output.Should().Contain("Brevo delivery pipeline readiness is confirmed.");
+        output.Should().Contain("Run with -Execute");
+        output.Should().NotContain("blocked");
+        output.Should().NotContain("Invoke-RestMethod");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+
+        var secretPattern = new Regex(@"\b(sk|rk)_(live|test)_[A-Za-z0-9]{12,}\b|\bwhsec_[A-Za-z0-9]{12,}\b", RegexOptions.IgnoreCase);
+        secretPattern.IsMatch(output).Should().BeFalse("ready dry-run output must not print provider secrets");
+    }
+
+
+    [Fact]
     public async Task ObjectStorageSmoke_Should_BlockWhenProviderNameIsUnsupported()
     {
         var root = ResolveRepositoryPath();
@@ -954,6 +1060,140 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             output.Should().Contain("Content type: application/xml");
             output.Should().NotContain(wrapperPath);
             output.Should().NotContain("System.Management.Automation.RemoteException");
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EInvoiceExternalCommandSmoke_Should_Pass_CustomValidationProfile_ToConfiguredAdapter()
+    {
+        var root = ResolveRepositoryPath();
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"darwin-einvoice-smoke-wrapper-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            const string validationProfile = "smoke-profile";
+            var wrapperPath = Path.Combine(tempRoot, "generator.cmd");
+            File.WriteAllText(
+                wrapperPath,
+                $"""
+                @echo off
+                if not "%7"=="{validationProfile}" exit /b 11
+                set output=%4
+                echo ^<Invoice^>^<Id^>smoke^</Id^>^</Invoice^>>%output%
+                exit /b 0
+                """);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                WorkingDirectory = root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
+            startInfo.ArgumentList.Add("-Format");
+            startInfo.ArgumentList.Add("XRechnung");
+            startInfo.ArgumentList.Add("-Execute");
+
+            foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                         .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                startInfo.Environment.Remove(key);
+            }
+
+            startInfo.Environment["DARWIN_EINVOICE_COMMAND_PATH"] = wrapperPath;
+            startInfo.Environment["DARWIN_EINVOICE_VALIDATION_PROFILE"] = validationProfile;
+
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-einvoice-external-command.ps1.");
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+            await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+            var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+            process.ExitCode.Should().Be(0);
+            output.Should().Contain("E-invoice external-command smoke generated an artifact through the configured adapter.");
+            output.Should().Contain("Format: XRechnung");
+            output.Should().Contain($"Validation profile: {validationProfile}");
+            output.Should().Contain("Content type: application/xml");
+            output.Should().NotContain("System.Management.Automation.RemoteException");
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EInvoiceExternalCommandSmoke_Should_Fail_When_ValidationReport_Reports_FailedLegalValidation()
+    {
+        var root = ResolveRepositoryPath();
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"darwin-einvoice-smoke-wrapper-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            var wrapperPath = Path.Combine(tempRoot, "generator.cmd");
+            File.WriteAllText(
+                wrapperPath,
+                """
+                @echo off
+                set output=%4
+                set validationReport=%8
+                echo %%PDF-1.7>%output%
+                powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%validationReport%' -Value '{\"isValid\":false,\"issues\":[\"profile not supported\"]}'"
+                exit /b 0
+                """);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                WorkingDirectory = root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
+            startInfo.ArgumentList.Add("-Execute");
+
+            foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                         .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                startInfo.Environment.Remove(key);
+            }
+
+            startInfo.Environment["DARWIN_EINVOICE_COMMAND_PATH"] = wrapperPath;
+
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-einvoice-external-command.ps1.");
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+            await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+            var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+            process.ExitCode.Should().NotBe(0);
+            output.Should().Contain("E-invoice external-command smoke failed with status ValidationFailed.");
+            output.Should().NotContain("E-invoice external-command smoke generated an artifact through the configured adapter.");
         }
         finally
         {
@@ -1460,3 +1700,4 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         return File.ReadAllText(path);
     }
 }
+

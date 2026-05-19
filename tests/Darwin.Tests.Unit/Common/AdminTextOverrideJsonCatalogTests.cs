@@ -147,6 +147,33 @@ public sealed class AdminTextOverrideJsonCatalogTests
     }
 
     [Fact]
+    public void Parse_Should_Handle_Duplicate_Culture_Keys_With_Case_Variation()
+    {
+        const string json = """
+            {"de-de":{"Logout":"Primary de"}, "DE-DE":{"Logout":"Fallback de"}}
+            """;
+
+        var catalog = AdminTextOverrideJsonCatalog.Parse(json);
+
+        catalog.Should().ContainKey("de-DE");
+        catalog["de-DE"].Should().ContainKey("Logout");
+        catalog["de-DE"]["Logout"].Should().Be("Fallback de");
+    }
+
+    [Fact]
+    public void Parse_Should_Handle_Duplicate_Text_Keys_With_Case_Variation()
+    {
+        const string json = """
+            {"de-DE":{"Logout":"Primary","logout":"Fallback","LogoutKey":"x"}}
+            """;
+
+        var catalog = AdminTextOverrideJsonCatalog.Parse(json);
+
+        catalog["de-DE"]["logout"].Should().Be("Fallback");
+        catalog["de-DE"]["LogoutKey"].Should().Be("x");
+    }
+
+    [Fact]
     public void Parse_Should_Trim_Text_Values()
     {
         const string json = """{"en-US":{"Key":"  trimmed  "}}""";

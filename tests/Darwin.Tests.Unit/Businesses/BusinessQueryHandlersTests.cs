@@ -356,6 +356,70 @@ public sealed class BusinessQueryHandlersTests
     }
 
     [Fact]
+    public async Task GetBusinessPublicDetail_Should_UseAdminTextOverride_WhenCultureKeyIsCaseVariant()
+    {
+        await using var db = BusinessQueryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+
+        const string overrides = """{"DE-de":{"PublicBusinessName":"CafÃ© Aurora (DE-variant)","PublicBusinessShortDescription":"Variante"}}""";
+
+        var business = new Business
+        {
+            Id = businessId,
+            Name = "Cafe Aurora Original",
+            ShortDescription = "Original description",
+            AdminTextOverridesJson = overrides,
+            IsActive = true,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            DefaultTimeZoneId = "Europe/Berlin",
+            RowVersion = [1]
+        };
+        business.OperationalStatus = BusinessOperationalStatus.Approved;
+        db.Set<Business>().Add(business);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessPublicDetailHandler(db);
+        var result = await handler.HandleAsync(businessId, "de-DE", TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("CafÃ© Aurora (DE-variant)", "case-variant culture keys should resolve normally");
+        result.ShortDescription.Should().Be("Variante");
+    }
+
+    [Fact]
+    public async Task GetBusinessPublicDetail_Should_PreferLastCaseVariantTextValue_WhenDuplicate()
+    {
+        await using var db = BusinessQueryTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+
+        const string overrides = """{"de-DE":{"PublicBusinessName":"First","publicbusinessname":"Second","PublicBusinessShortDescription":"Third"}}""";
+
+        var business = new Business
+        {
+            Id = businessId,
+            Name = "Cafe Aurora Original",
+            ShortDescription = "Original description",
+            AdminTextOverridesJson = overrides,
+            IsActive = true,
+            DefaultCurrency = "EUR",
+            DefaultCulture = "de-DE",
+            DefaultTimeZoneId = "Europe/Berlin",
+            RowVersion = [1]
+        };
+        business.OperationalStatus = BusinessOperationalStatus.Approved;
+        db.Set<Business>().Add(business);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GetBusinessPublicDetailHandler(db);
+        var result = await handler.HandleAsync(businessId, "de-DE", TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("Second", "duplicate case-variant text keys resolve to the most recent value");
+        result.ShortDescription.Should().Be("Third");
+    }
+
+    [Fact]
     public async Task GetBusinessesForDiscovery_Should_FilterOutActiveButUnapprovedBusinesses()
     {
         await using var db = BusinessQueryTestDbContext.Create();

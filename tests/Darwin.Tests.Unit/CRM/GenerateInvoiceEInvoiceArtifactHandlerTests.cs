@@ -164,10 +164,136 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
         generator.Calls.Should().Be(0);
     }
 
+    [Fact]
+    public async Task HandleAsync_Should_Reject_Unsupported_Format()
+    {
+        await using var db = EInvoiceArtifactDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        db.Set<Invoice>().Add(new Invoice
+        {
+            Id = invoiceId,
+            Status = InvoiceStatus.Open,
+            Currency = "EUR",
+            DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedSnapshotJson = BuildReadySnapshot(invoiceId),
+            RowVersion = new byte[] { 1 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var generator = new RecordingGenerator();
+        var handler = CreateHandler(db, generator);
+
+        var result = await handler.HandleAsync(
+            invoiceId,
+            (EInvoiceArtifactFormat)123,
+            TestContext.Current.CancellationToken);
+
+        result.Status.Should().Be(EInvoiceGenerationStatus.UnsupportedFormat);
+        result.Message.Should().Be("The requested e-invoice format is not supported.");
+        generator.Calls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Save_Generated_Artifact_To_Storage()
+    {
+        await using var db = EInvoiceArtifactDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        db.Set<Invoice>().Add(new Invoice
+        {
+            Id = invoiceId,
+            Status = InvoiceStatus.Open,
+            Currency = "EUR",
+            DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedSnapshotJson = BuildReadySnapshot(invoiceId),
+            RowVersion = new byte[] { 1 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var expectedArtifact = new EInvoiceArtifact(
+            invoiceId,
+            EInvoiceArtifactFormat.ZugferdFacturX,
+            "application/pdf",
+            "invoice.pdf",
+            new byte[] { 1, 2, 3, 4 },
+            "factur-x-test-profile",
+            new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc));
+        var generator = new RecordingGenerator(new EInvoiceGenerationResult(
+            EInvoiceGenerationStatus.Generated,
+            "Generated",
+            expectedArtifact));
+        var storage = new RecordingArtifactStorage();
+        var handler = CreateHandler(db, generator, storage);
+
+        var result = await handler.HandleAsync(
+            invoiceId,
+            EInvoiceArtifactFormat.ZugferdFacturX,
+            TestContext.Current.CancellationToken);
+
+        result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+        result.Artifact!.InvoiceId.Should().Be(invoiceId);
+        storage.Calls.Should().Be(1);
+        storage.Artifact.Should().Be(expectedArtifact);
+        result.Storage.Should().NotBeNull();
+        result.Storage!.Provider.Should().Be("InMemoryTest");
+        result.Storage.Sha256Hash.Should().Be("test-hash");
+        result.Storage.ObjectKey.Should().Be("tests/2026-05-10/invoice.pdf");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Generate_XRechnung_When_Requested_Format_Is_XRechnung()
+    {
+        await using var db = EInvoiceArtifactDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        db.Set<Invoice>().Add(new Invoice
+        {
+            Id = invoiceId,
+            Status = InvoiceStatus.Open,
+            Currency = "EUR",
+            DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedSnapshotJson = BuildReadySnapshot(invoiceId),
+            RowVersion = new byte[] { 1 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var expectedArtifact = new EInvoiceArtifact(
+            invoiceId,
+            EInvoiceArtifactFormat.XRechnung,
+            "application/xml",
+            "rechnung.xml",
+            new byte[] { 11, 22, 33 },
+            "xrechnung-test-profile",
+            new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc));
+        var generator = new RecordingGenerator(new EInvoiceGenerationResult(
+            EInvoiceGenerationStatus.Generated,
+            "Generated",
+            expectedArtifact));
+        var storage = new RecordingArtifactStorage();
+        var handler = CreateHandler(db, generator, storage);
+
+        var result = await handler.HandleAsync(
+            invoiceId,
+            EInvoiceArtifactFormat.XRechnung,
+            TestContext.Current.CancellationToken);
+
+        result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+        result.Artifact!.Format.Should().Be(EInvoiceArtifactFormat.XRechnung);
+        result.Artifact!.ContentType.Should().Be("application/xml");
+        generator.Calls.Should().Be(1);
+        generator.LastFormat.Should().Be(EInvoiceArtifactFormat.XRechnung);
+        storage.Calls.Should().Be(1);
+        storage.Artifact.Should().Be(expectedArtifact);
+        result.Storage.Should().NotBeNull();
+        result.Storage!.Provider.Should().Be("InMemoryTest");
+    }
+
     private static GenerateInvoiceEInvoiceArtifactHandler CreateHandler(
         IAppDbContext db,
-        IEInvoiceGenerationService generator)
-        => new(db, generator, new EInvoiceSourceReadinessValidator());
+        IEInvoiceGenerationService generator,
+        IEInvoiceArtifactStorage? artifactStorage = null)
+        => new(db, generator, new EInvoiceSourceReadinessValidator(), artifactStorage);
 
     private static string BuildReadySnapshot(Guid invoiceId)
         => $$"""
@@ -223,6 +349,30 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
         {
             Calls++;
             LastFormat = request.Format;
+            return Task.FromResult(_result);
+        }
+    }
+
+    private sealed class RecordingArtifactStorage : IEInvoiceArtifactStorage
+    {
+        private readonly EInvoiceArtifactStorageResult _result = new(
+            Provider: "InMemoryTest",
+            ContainerName: "tests",
+            ObjectKey: "tests/2026-05-10/invoice.pdf",
+            VersionId: null,
+            Sha256Hash: "test-hash",
+            ContentLength: 4,
+            CreatedAtUtc: new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc),
+            RetentionUntilUtc: null,
+            IsImmutable: false);
+
+        public int Calls { get; private set; }
+        public EInvoiceArtifact? Artifact { get; private set; }
+
+        public Task<EInvoiceArtifactStorageResult> SaveAsync(EInvoiceArtifact artifact, CancellationToken ct = default)
+        {
+            Calls++;
+            Artifact = artifact;
             return Task.FromResult(_result);
         }
     }

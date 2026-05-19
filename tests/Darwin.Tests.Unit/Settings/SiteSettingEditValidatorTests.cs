@@ -779,6 +779,29 @@ public sealed class SiteSettingEditValidatorTests
     }
 
     [Fact]
+    public void SiteSetting_Should_Pass_When_AdminTextOverridesJson_Has_CaseVariant_Duplicate_Culture_Or_Key()
+    {
+        var dto = CreateValidDto();
+        dto.AdminTextOverridesJson = """{"DE-de":{"LoginMessage":"Primary","loginmessage":"Fallback"}, "de-DE":{"Welcome":"Case test"}}""";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("case-variant culture/key entries are accepted in the object map structure");
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Fail_When_AdminTextOverridesJson_Is_StructurallyInvalid()
+    {
+        var dto = CreateValidDto();
+        dto.AdminTextOverridesJson = """{"de-DE":{"title":[1,2,3]}}""";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("array values are not valid text override values");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.AdminTextOverridesJson));
+    }
+
+    [Fact]
     public void SiteSetting_Should_Fail_When_AdminTextOverridesJson_Is_Invalid_Json()
     {
         var dto = CreateValidDto();

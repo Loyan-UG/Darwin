@@ -341,7 +341,7 @@ Checklist:
 }
 ```
 
-Only enable this after the generator/tooling decision is approved. The executable path must be absolute and supplied through deployment configuration. Darwin calls the command with `--input`, `--output`, and `--format`; the command must validate and create the artifact file. Darwin also rejects empty artifacts, artifacts larger than `MaxArtifactBytes`, non-PDF ZUGFeRD/Factur-X outputs, and malformed XRechnung XML outputs, but this is a safety guard, not full legal validation. Do not use this adapter to bypass ZUGFeRD/Factur-X or XRechnung validation.
+Only enable this after the generator/tooling decision is approved. The executable path must be absolute and supplied through deployment configuration. Darwin calls the command with `--input`, `--output`, `--format`, `--validation-profile`, and `--validation-report`; the command must validate and create the artifact file. Darwin also rejects empty artifacts, artifacts larger than `MaxArtifactBytes`, non-PDF ZUGFeRD/Factur-X outputs, malformed XRechnung XML outputs, and legal-validation report failures, but this is a safety guard, not full legal validation. Do not use this adapter to bypass ZUGFeRD/Factur-X or XRechnung validation.
 
 Before wiring an approved external command to WebAdmin downloads, run the adapter smoke:
 
@@ -350,7 +350,7 @@ $env:DARWIN_EINVOICE_COMMAND_PATH = "C:\path\to\approved-einvoice-wrapper.exe"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute
 ```
 
-This smoke proves only that Darwin can call the wrapper through `IEInvoiceGenerationService` and that the local artifact-shape guard accepts the generated file. Production readiness still requires selected-tool validation reports, PDF/A-3 and embedded XML validation for ZUGFeRD/Factur-X, XRechnung profile validation when enabled, and archive-storage smoke against the selected object-storage provider.
+This smoke proves only that Darwin can call the wrapper through `IEInvoiceGenerationService` and that the local artifact-shape guard accepts the generated file; it can also fail fast if a `--validation-report` indicates a legal validation failure. Production readiness still requires selected-tool validation reports, PDF/A-3 and embedded XML validation for ZUGFeRD/Factur-X, XRechnung profile validation when enabled, and archive-storage smoke against the selected object-storage provider.
 - DHL labels can use the same generic object-storage backend by adding an `ObjectStorage:Profiles:ShipmentLabels` profile with `Provider` set to `S3Compatible`, `AzureBlob`, or `FileSystem`. If the profile is absent or uses the database fallback, labels continue to use the shared file-system media storage fallback.
 - CMS/media uploads can use the same generic object-storage backend by adding an `ObjectStorage:Profiles:MediaAssets` profile with `Provider` set to `S3Compatible`, `AzureBlob`, or `FileSystem`, plus the selected provider's public base URL. If the profile is absent, has no public base URL, or uses the database fallback, WebAdmin keeps the current shared file-system media fallback.
 - The WebAdmin and Darwin.Web public storefront must resolve the same media URLs. For object storage, publish the configured public base URL through the reverse proxy/CDN; for file-system fallback, keep the shared uploads path mounted consistently for both applications.

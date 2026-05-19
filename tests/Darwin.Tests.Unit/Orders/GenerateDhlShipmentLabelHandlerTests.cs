@@ -82,6 +82,116 @@ public sealed class GenerateDhlShipmentLabelHandlerTests
     }
 
     [Fact]
+    public async Task GenerateDhlShipmentLabelHandler_Should_RejectStaleShipmentRowVersion()
+    {
+        await using var db = GenerateDhlShipmentLabelTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Title = "Darwin",
+            ContactEmail = "ops@darwin.de",
+            DhlEnabled = true,
+            DhlApiBaseUrl = "https://api-sandbox.dhl.example",
+            DhlApiKey = "key",
+            DhlApiSecret = "secret",
+            DhlAccountNumber = "22222222220101",
+            DhlShipperName = "Darwin Ops",
+            DhlShipperEmail = "ops@darwin.de",
+            DhlShipperPhoneE164 = "+4915112345678",
+            DhlShipperStreet = "Musterstrasse 1",
+            DhlShipperPostalCode = "10115",
+            DhlShipperCity = "Berlin",
+            DhlShipperCountry = "DE"
+        });
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-DHL-LABEL-1",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            Status = ShipmentStatus.Pending,
+            RowVersion = new byte[] { 1, 2, 3 }
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GenerateDhlShipmentLabelHandler(db, new TestStringLocalizer());
+        var act = () => handler.HandleAsync(shipmentId, new byte[] { 9, 9, 9 }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+    }
+
+    [Fact]
+    public async Task GenerateDhlShipmentLabelHandler_Should_KeepSinglePendingOperation_WhenCalledMultipleTimes()
+    {
+        await using var db = GenerateDhlShipmentLabelTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var rowVersion = new byte[] { 7, 7, 7 };
+
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Title = "Darwin",
+            ContactEmail = "ops@darwin.de",
+            DhlEnabled = true,
+            DhlApiBaseUrl = "https://api-sandbox.dhl.example",
+            DhlApiKey = "key",
+            DhlApiSecret = "secret",
+            DhlAccountNumber = "22222222220101",
+            DhlShipperName = "Darwin Ops",
+            DhlShipperEmail = "ops@darwin.de",
+            DhlShipperPhoneE164 = "+4915112345678",
+            DhlShipperStreet = "Musterstrasse 1",
+            DhlShipperPostalCode = "10115",
+            DhlShipperCity = "Berlin",
+            DhlShipperCountry = "DE"
+        });
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "ORD-DHL-LABEL-2",
+            Currency = "EUR",
+            Status = OrderStatus.Paid
+        });
+
+        db.Set<Shipment>().Add(new Shipment
+        {
+            Id = shipmentId,
+            OrderId = orderId,
+            Carrier = "DHL",
+            Service = "Parcel",
+            Status = ShipmentStatus.Pending,
+            RowVersion = rowVersion
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new GenerateDhlShipmentLabelHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync(shipmentId, rowVersion, TestContext.Current.CancellationToken);
+        await handler.HandleAsync(shipmentId, rowVersion, TestContext.Current.CancellationToken);
+
+        var operations = await db.Set<ShipmentProviderOperation>().Where(
+            x => x.ShipmentId == shipmentId &&
+                 x.Provider == "DHL" &&
+                 x.OperationType == "GenerateLabel").ToListAsync(TestContext.Current.CancellationToken);
+
+        operations.Should().HaveCount(1);
+        operations.Single().Status.Should().Be("Pending");
+    }
+
+    [Fact]
     public async Task GenerateDhlShipmentLabelHandler_Should_RejectNonDhlShipments()
     {
         await using var db = GenerateDhlShipmentLabelTestDbContext.Create();

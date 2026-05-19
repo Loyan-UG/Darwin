@@ -289,6 +289,32 @@ public sealed class ShippingHandlerTests
     }
 
     [Fact]
+    public async Task UpdateShippingMethod_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
+    {
+        await using var db = ConcurrencyFailingShippingTestDbContext.Create();
+        var method = BuildMethod(rowVersion: new byte[] { 1, 2, 3, 4 });
+        db.Set<ShippingMethod>().Add(method);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateShippingMethodHandler(
+            db, new ShippingMethodEditValidator(), CreateLocalizer());
+
+        var act = () => handler.HandleAsync(
+            new ShippingMethodEditDto
+            {
+                Id = method.Id,
+                RowVersion = new byte[] { 1, 2, 3, 4 },
+                Name = "Updated",
+                Carrier = "DHL",
+                Service = "PARCEL"
+            },
+            TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateShippingMethod_Should_Throw_ValidationException_When_Carrier_Service_Conflicts_With_Another()
     {
         await using var db = ShippingTestDbContext.Create();
@@ -852,6 +878,61 @@ public sealed class ShippingHandlerTests
                 b.Property(x => x.MaxShipmentMass);
                 b.Property(x => x.MaxSubtotalNetMinor);
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingShippingTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingShippingTestDbContext(DbContextOptions<ConcurrencyFailingShippingTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingShippingTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingShippingTestDbContext>()
+                .UseInMemoryDatabase($"darwin_shipping_concurrency_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingShippingTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ShippingMethod>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Name).HasMaxLength(256).IsRequired();
+                b.Property(x => x.Carrier).HasMaxLength(64).IsRequired();
+                b.Property(x => x.Service).HasMaxLength(64).IsRequired();
+                b.Property(x => x.CountriesCsv).HasMaxLength(1000);
+                b.Property(x => x.Currency).HasMaxLength(3);
+                b.Property(x => x.IsActive);
+                b.Property(x => x.RowVersion).IsRowVersion();
+                b.HasMany(x => x.Rates)
+                 .WithOne()
+                 .HasForeignKey(r => r.ShippingMethodId)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ShippingRate>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.ShippingMethodId).IsRequired();
+                b.Property(x => x.PriceMinor);
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.MaxShipmentMass);
+                b.Property(x => x.MaxSubtotalNetMinor);
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(
+            global::System.Threading.CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<int>(new DbUpdateConcurrencyException());
         }
     }
 }

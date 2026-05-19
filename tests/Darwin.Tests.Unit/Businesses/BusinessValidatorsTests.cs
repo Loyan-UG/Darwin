@@ -251,6 +251,41 @@ public sealed class BusinessValidatorsTests
     }
 
     [Fact]
+    public void BusinessCreate_Should_Pass_WhenAdminTextOverridesJson_Is_Case_Insensitive_Duplicate_Accepted()
+    {
+        var dto = new BusinessCreateDto
+        {
+            Name = "Test Business",
+            DefaultCurrency = "EUR",
+            DefaultCulture = "en-US",
+            DefaultTimeZoneId = "UTC",
+            AdminTextOverridesJson = """{"DE-de":{"key":"primary"}, "de-DE":{"key":"fallback"}}"""
+        };
+
+        var result = new BusinessCreateDtoValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("duplicate culture keys are handled by case-insensitive dictionary semantics");
+    }
+
+    [Fact]
+    public void BusinessCreate_Should_Fail_WhenAdminTextOverridesJson_Has_Structurally_Invalid_Values()
+    {
+        var dto = new BusinessCreateDto
+        {
+            Name = "Test Business",
+            DefaultCurrency = "EUR",
+            DefaultCulture = "en-US",
+            DefaultTimeZoneId = "UTC",
+            AdminTextOverridesJson = """{"de-DE":{"key":123}}"""
+        };
+
+        var result = new BusinessCreateDtoValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse("nested non-string values are structurally invalid");
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.AdminTextOverridesJson));
+    }
+
+    [Fact]
     public void BusinessCreate_Should_Pass_WhenAdminTextOverridesJsonIsNull()
     {
         var dto = new BusinessCreateDto
@@ -265,6 +300,25 @@ public sealed class BusinessValidatorsTests
         var result = new BusinessCreateDtoValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeTrue("null AdminTextOverridesJson is optional and should pass");
+    }
+
+    [Fact]
+    public void BusinessEdit_Should_Pass_WhenAdminTextOverridesJson_Is_Case_Variant_Duplicate_CultureAccepted()
+    {
+        var dto = new BusinessEditDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Aurora Cafe",
+            DefaultCurrency = "EUR",
+            DefaultCulture = "en-US",
+            DefaultTimeZoneId = "Europe/Berlin",
+            RowVersion = new byte[] { 1, 2, 3 },
+            AdminTextOverridesJson = """{"EN-us":{"Name":"Upper"}, "en-US":{"Name":"Lower"}}"""
+        };
+
+        var result = new BusinessEditDtoValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue("edit validator should use the same override JSON contract");
     }
 
     [Fact]

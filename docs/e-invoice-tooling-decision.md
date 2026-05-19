@@ -6,7 +6,7 @@ Darwin does not yet implement full e-invoice compliance. Current invoice outputs
 
 The application now exposes `IEInvoiceGenerationService` as the provider-neutral generation boundary. The registered default is `NotConfiguredEInvoiceGenerationService`, which returns `NotConfigured` and does not produce fake compliant artifacts. `EInvoiceSourceReadinessValidator` verifies minimum issued-snapshot source fields before any future generator runs; this is a safety gate only and does not validate ZUGFeRD/Factur-X or XRechnung compliance.
 
-Infrastructure also supports a disabled-by-default external command adapter behind `IEInvoiceGenerationService`. It is intended for a deployment-approved generator or validation tool after the tooling decision is made. The command receives `--input <issued-snapshot-json> --output <artifact-path> --format <zugferd-factur-x|xrechnung>` and must create a validated artifact file. The adapter rejects empty output, output larger than the configured `MaxArtifactBytes`, non-PDF ZUGFeRD/Factur-X output, and malformed XRechnung XML output before storage. This adapter does not make Darwin compliant by itself; compliance still depends on the selected tool, its validation behavior, and production smoke.
+Infrastructure also supports a disabled-by-default external command adapter behind `IEInvoiceGenerationService`. It is intended for a deployment-approved generator or validation tool after the tooling decision is made. The command receives `--input <issued-snapshot-json> --output <artifact-path> --format <zugferd-factur-x|xrechnung> --validation-profile <profile-name> --validation-report <path-to-json>` and must create a validated artifact file. The adapter rejects empty output, output larger than the configured `MaxArtifactBytes`, non-PDF ZUGFeRD/Factur-X output, and malformed XRechnung XML output before storage. It also parses the optional validation report when present and can fail generation on a negative legal-validation result. This adapter does not make Darwin compliant by itself; compliance still depends on the selected tool, its validation behavior, and production smoke.
 
 ## Decision Criteria
 
@@ -29,10 +29,10 @@ Selected first implementation path: `Mustangproject` CLI behind Darwin's disable
 
 Reasoning:
 
-- The existing Darwin boundary already supports an out-of-process generator/validator through `--input`, `--output`, and `--format`.
+- The existing Darwin boundary already supports an out-of-process generator/validator through `--input`, `--output`, `--format`, and optional `--validation-profile`.
 - `Mustangproject` is maintained as an e-invoice focused Java library/CLI/server and documents read, write, validate, and convert support for ZUGFeRD/Factur-X and XRechnung artifacts.
 - Keeping the first slice out-of-process avoids adding provider/tooling SDK references to Domain or Application and keeps the implementation replaceable if a deployment later mandates another generator.
-- The selected path still requires a pinned artifact, wrapper hardening, validation-report parsing, deterministic fixtures, and deployment smoke before any generated artifact is exposed as compliant.
+- The selected path still requires a pinned artifact, wrapper hardening, deterministic fixtures, and deployment smoke before any generated artifact is exposed as compliant.
 
 Alternatives retained for later:
 
@@ -46,11 +46,11 @@ Alternatives retained for later:
 These notes are a shortlist for the next implementation slice, not an approved production decision.
 
 - `ZUGFeRD-csharp`: current NuGet package metadata shows version `18.0.0` and targets .NET 8.0 plus .NET Standard 2.0. It remains a plausible .NET-side XML/model fallback, but Darwin still needs proof of the exact profile support, PDF/A-3 embedding path, validation behavior, license review, and generated sample acceptance before switching away from the selected external-command path. Reference: <https://www.nuget.org/packages/ZUGFeRD-csharp/>.
-- `Mustangproject`: current project documentation describes a Java library/CLI/server that can read, write, validate, and convert ZUGFeRD/Factur-X and XRechnung artifacts. Its 2026 release line documents support for ZUGFeRD 2.4 / Factur-X 1.08 and XRechnung 3.0.x. Darwin selected it as the first external-command path, but production use still requires pinning the artifact, JVM/runtime packaging, command wrapper hardening, validation-report parsing, and deployment smoke. Reference: <https://www.mustangproject.org/>.
+- `Mustangproject`: current project documentation describes a Java library/CLI/server that can read, write, validate, and convert ZUGFeRD/Factur-X and XRechnung artifacts. Its 2026 release line documents support for ZUGFeRD 2.4 / Factur-X 1.08 and XRechnung 3.0.x. Darwin selected it as the first external-command path, but production use still requires pinning the artifact, JVM/runtime packaging, command wrapper hardening, and deployment smoke. Reference: <https://www.mustangproject.org/>.
 - `KoSIT XRechnung validator configuration`: relevant for the later XRechnung export path and for German CIUS validation evidence. It is not by itself a ZUGFeRD/Factur-X PDF generator.
 - `FeRD ZUGFeRD/Factur-X 2.4 package`: this remains the reference specification and validation artifact source for the target format. Implementation work must align generated profile/version output with the active deployment requirement. Reference: <https://www.ferd-net.de/en/standards/zugferd/factur-x>.
 
-The next implementation slice is a proof-of-concept using the existing external-command adapter and a pinned Mustangproject CLI wrapper: first drive the wrapper through `scripts/smoke-einvoice-external-command.ps1`, then add deterministic fixtures and validation-report parsing before any WebAdmin download is treated as compliant.
+The next implementation slice is a proof-of-concept using the existing external-command adapter and a pinned Mustangproject CLI wrapper: first drive the wrapper through `scripts/smoke-einvoice-external-command.ps1`, then add deterministic fixtures and legal validation evidence before any WebAdmin download is treated as compliant.
 
 ## Implementation Requirements After Selection
 

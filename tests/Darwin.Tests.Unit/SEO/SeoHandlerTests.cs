@@ -220,6 +220,38 @@ public sealed class SeoHandlerTests
     }
 
     [Fact]
+    public async Task UpdateRedirectRule_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
+    {
+        await using var db = ConcurrencyFailingSeoTestDbContext.Create();
+        var id = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+
+        db.Set<RedirectRule>().Add(new RedirectRule
+        {
+            Id = id,
+            FromPath = "/original",
+            To = "/original-target",
+            IsPermanent = true,
+            RowVersion = rowVersion
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateRedirectRuleHandler(db, CreateLocalizer());
+
+        var act = () => handler.HandleAsync(new RedirectRuleEditDto
+        {
+            Id = id,
+            RowVersion = rowVersion,
+            FromPath = "/updated",
+            To = "/updated-target",
+            IsPermanent = false
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateRedirectRule_Should_Throw_ValidationException_When_Dto_Invalid()
     {
         await using var db = SeoTestDbContext.Create();
@@ -296,6 +328,27 @@ public sealed class SeoHandlerTests
 
         var count = await db.Set<RedirectRule>().CountAsync(TestContext.Current.CancellationToken);
         count.Should().Be(1, "the entity should remain in the store");
+    }
+
+    [Fact]
+    public async Task DeleteRedirectRule_Should_Return_ItemConcurrencyConflict_When_SaveChanges_Detects_PostSaveConflict()
+    {
+        await using var db = ConcurrencyFailingSeoTestDbContext.Create();
+        var id = Guid.NewGuid();
+        db.Set<RedirectRule>().Add(new RedirectRule
+        {
+            Id = id,
+            FromPath = "/to-delete",
+            To = "/somewhere",
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new DeleteRedirectRuleHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(id, new byte[] { 1, 2, 3, 4 }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("save-level concurrency should surface item concurrency conflict");
+        result.Error.Should().Be("ItemConcurrencyConflict");
     }
 
     // ─── ResolveRedirectHandler ───────────────────────────────────────────────
@@ -395,6 +448,45 @@ public sealed class SeoHandlerTests
                 b.Property(x => x.IsDeleted);
                 b.Property(x => x.RowVersion).IsRowVersion();
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingSeoTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingSeoTestDbContext(DbContextOptions<ConcurrencyFailingSeoTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingSeoTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingSeoTestDbContext>()
+                .UseInMemoryDatabase($"darwin_seo_concurrency_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingSeoTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<RedirectRule>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.FromPath).HasMaxLength(2048).IsRequired();
+                b.Property(x => x.To).HasMaxLength(2048).IsRequired();
+                b.Property(x => x.IsPermanent);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion).IsRowVersion();
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(
+            global::System.Threading.CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<int>(new DbUpdateConcurrencyException());
         }
     }
 }

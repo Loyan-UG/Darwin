@@ -1,5 +1,10 @@
 using Darwin.WebAdmin.Tests.TestInfrastructure;
+using Darwin.Application.Abstractions.Invoicing;
+using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Entities.Marketing;
+using Darwin.Domain.Enums;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
@@ -2349,6 +2354,3946 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         updatedHtml.Should().Contain("4915700000003");
     }
 
+    [Fact]
+    public async Task AuthenticatedSiteSettingsEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        const string editorPath = "/SiteSettings/Edit?fragment=site-settings-communications-policy";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editorPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        var form = BuildValidSiteSettingsForm(
+            ExtractHiddenInputValue(tokenHtml, "Id"),
+            string.Empty,
+            $"Missing RowVersion {Guid.NewGuid():N}",
+            $"Smoke email transport {Guid.NewGuid():N} {{test_target}}");
+        form["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml);
+
+        using var response = await SendHtmxPostAsync(client, editorPath, form);
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedSiteSettingsEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        const string editorPath = "/SiteSettings/Edit?fragment=site-settings-communications-policy";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var baselineRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+        var titleSeed = $"Stale Concurrency {Guid.NewGuid():N}";
+        var emailTemplateSeed = $"Smoke email transport {Guid.NewGuid():N} {{test_target}}";
+
+        using var baselineResponse = await SendHtmxPostAsync(
+            client,
+            editorPath,
+            AddRequestVerificationToken(
+                BuildValidSiteSettingsForm(
+                    ExtractHiddenInputValue(baselineTokenHtml, "Id"),
+                    baselineRowVersion,
+                    $"{titleSeed} phase 1",
+                    emailTemplateSeed),
+                baselineTokenHtml));
+        baselineResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        baselineResponse.Headers.TryGetValues("HX-Redirect", out var baselineRedirectValues)
+            .Should().BeTrue();
+        baselineRedirectValues!.Single().Should().Contain("/SiteSettings/Edit");
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            editorPath,
+            AddRequestVerificationToken(
+                BuildValidSiteSettingsForm(
+                    ExtractHiddenInputValue(staleTokenHtml, "Id"),
+                    baselineRowVersion,
+                    $"{titleSeed} phase 2",
+                    emailTemplateSeed),
+                staleTokenHtml));
+
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency conflict: the settings were modified by another user.");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
+        staleCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedShippingMethodEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var name = $"Smoke Shipping {suffix}";
+        var carrier = $"SmokeCarrier{suffix}";
+        var service = $"SmokeService{suffix}";
+
+        var methodId = await CreateShippingMethodAndGetIdAsync(client, name, carrier, service);
+        var editorPath = $"/ShippingMethods/Edit?id={methodId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editorPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(client, "/ShippingMethods/Edit", AddRequestVerificationToken(
+            BuildShippingMethodEditPayload(
+                methodId.ToString(),
+                string.Empty,
+                $"{name} - missing row-version",
+                carrier,
+                $"{service} 2"),
+            tokenHtml));
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedShippingMethodEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var name = $"Smoke Shipping {suffix}";
+        var carrier = $"SmokeCarrier{suffix}";
+        var service = $"SmokeService{suffix}";
+
+        var methodId = await CreateShippingMethodAndGetIdAsync(client, name, carrier, service);
+        var editorPath = $"/ShippingMethods/Edit?id={methodId}";
+
+        using var baselineEditResponse = await SendHtmxGetAsync(client, editorPath);
+        baselineEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineEditHtml = await baselineEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var baselineRowVersion = ExtractHiddenInputValue(baselineEditHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/ShippingMethods/Edit",
+            AddRequestVerificationToken(
+                BuildShippingMethodEditPayload(
+                    methodId.ToString(),
+                    baselineRowVersion,
+                    $"{name} - first",
+                    carrier,
+                    $"{service} 1"),
+                baselineEditHtml));
+
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues)
+            .Should().BeTrue();
+        firstRedirectValues!.Single().Should().Contain("/ShippingMethods/Edit");
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/ShippingMethods/Edit",
+            AddRequestVerificationToken(
+                BuildShippingMethodEditPayload(
+                    methodId.ToString(),
+                    baselineRowVersion,
+                    $"{name} - stale",
+                    carrier,
+                    $"{service} 2"),
+                staleTokenHtml));
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues)
+            .Should().BeTrue();
+        staleRedirectValues!.Single().Should().Contain("/ShippingMethods/Edit");
+
+        using var staleEditResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+        var staleEditHtml = await staleEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        staleEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleEditHtml.Should().Contain("Concurrency conflict. Reload and try again.");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLoyaltyAccountSuspend_WithMissingRowVersion_ShouldSurfaceFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var accountId = await CreateLoyaltyAccountAndGetIdAsync(
+            client,
+            WebAdminTestFactory.TestLoyaltyProgramBusinessId,
+            WebAdminTestFactory.TestMemberUserId);
+
+        using var tokenResponse = await SendHtmxGetAsync(client, $"/Loyalty/AccountDetails?id={accountId}");
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(client, "/Loyalty/SuspendAccount", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["id"] = accountId.ToString(),
+            ["rowVersion"] = string.Empty
+        });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("Failed to suspend loyalty account.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLoyaltyAccountActivate_WithMissingRowVersion_ShouldSurfaceFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var accountId = await CreateLoyaltyAccountAndGetIdAsync(
+            client,
+            WebAdminTestFactory.TestLoyaltyProgramBusinessId,
+            WebAdminTestFactory.TestLifecycleUserId);
+        var detailsPath = $"/Loyalty/AccountDetails?id={accountId}";
+
+        using var detailsResponse = await SendHtmxGetAsync(client, detailsPath);
+        detailsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var detailsHtml = await detailsResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var suspendResponse = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/SuspendAccount",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(detailsHtml),
+                ["id"] = accountId.ToString(),
+                ["rowVersion"] = ExtractHiddenInputValue(detailsHtml, "rowVersion")
+            });
+        suspendResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        suspendResponse.Headers.TryGetValues("HX-Redirect", out var suspendRedirectValues).Should().BeTrue();
+        suspendRedirectValues!.Single().Should().Contain("/Loyalty/AccountDetails");
+
+        using var refreshedDetailsResponse = await SendHtmxGetAsync(client, detailsPath);
+        var refreshedDetailsHtml = await refreshedDetailsResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var activateResponse = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/ActivateAccount",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(refreshedDetailsHtml),
+                ["id"] = accountId.ToString(),
+                ["rowVersion"] = string.Empty
+            });
+        var activateResponseHtml = await activateResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        activateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        activateResponseHtml.Should().Contain("Failed to activate loyalty account.");
+        activateResponse.Headers.TryGetValues("Content-Security-Policy", out var activateCspValues).Should().BeTrue();
+        activateCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLoyaltyAccountAdjustPoints_WithMissingRowVersion_ShouldSurfaceValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var accountId = await CreateLoyaltyAccountAndGetIdAsync(
+            client,
+            WebAdminTestFactory.TestLoyaltyProgramBusinessId,
+            WebAdminTestFactory.TestMemberUserId);
+        var adjustPath = $"/Loyalty/AdjustPoints?loyaltyAccountId={accountId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, adjustPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(client, "/Loyalty/AdjustPoints", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["LoyaltyAccountId"] = accountId.ToString(),
+            ["BusinessId"] = ExtractHiddenInputValue(tokenHtml, "BusinessId"),
+            ["UserId"] = ExtractHiddenInputValue(tokenHtml, "UserId"),
+            ["AccountLabel"] = ExtractHiddenInputValue(tokenHtml, "AccountLabel"),
+            ["RowVersion"] = string.Empty,
+            ["PointsDelta"] = "1",
+            ["Reason"] = "Smoke loyalty adjustment",
+            ["Reference"] = "Smoke reference"
+        });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("Failed to adjust loyalty points.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLoyaltyCampaignActivation_WithMissingRowVersion_ShouldSurfaceFailure()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var businessId = WebAdminTestFactory.TestLoyaltyProgramBusinessId;
+        var campaignName = $"Smoke Loyalty Campaign {Guid.NewGuid():N}";
+        var campaignTitle = $"Smoke Campaign Title {Guid.NewGuid():N}";
+
+        var campaignId = await CreateLoyaltyCampaignAndGetIdAsync(
+            client,
+            businessId,
+            campaignName,
+            campaignTitle,
+            "/loyalty");
+
+        using var listResponse = await SendHtmxGetAsync(client, $"/Loyalty/Campaigns?businessId={businessId}");
+        listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var listHtml = await listResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(client, "/Loyalty/SetCampaignActivation", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(listHtml),
+            ["id"] = campaignId.ToString(),
+            ["businessId"] = businessId.ToString(),
+            ["isActive"] = "true",
+            ["rowVersion"] = string.Empty
+        });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.TryGetValues("HX-Redirect", out var redirectValues).Should().BeTrue();
+        var redirectPath = redirectValues!.Single();
+        using var redirectedResponse = await SendHtmxGetAsync(client, redirectPath);
+        redirectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        redirectedHtml.Should().Contain("Failed to update loyalty campaign activation.");
+        responseHtml.Should().NotBeNullOrWhiteSpace();
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLoyaltyCampaignActivation_WithStaleRowVersion_ShouldSurfaceFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var businessId = WebAdminTestFactory.TestLoyaltyProgramBusinessId;
+        var campaignName = $"Smoke Loyalty Campaign {Guid.NewGuid():N}";
+        var campaignTitle = $"Smoke Campaign Title {Guid.NewGuid():N}";
+        var campaignId = await CreateLoyaltyCampaignAndGetIdAsync(
+            client,
+            businessId,
+            campaignName,
+            campaignTitle,
+            "/loyalty");
+
+        var editPath = $"/Loyalty/EditCampaign?id={campaignId}&businessId={businessId}";
+        using var editResponse = await SendHtmxGetAsync(client, editPath);
+        editResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var editHtml = await editResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var baselineRowVersion = ExtractHiddenInputValue(editHtml, "RowVersion");
+        var campaignIsActive = editHtml.Contains("name=\"IsActive\" checked", StringComparison.Ordinal);
+        var staleTargetActive = (!campaignIsActive).ToString().ToLowerInvariant();
+
+        using var firstResponse = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/SetCampaignActivation",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(editHtml),
+                ["id"] = campaignId.ToString(),
+                ["businessId"] = businessId.ToString(),
+                ["isActive"] = staleTargetActive,
+                ["rowVersion"] = baselineRowVersion
+            });
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues).Should().BeTrue();
+        firstRedirectValues!.Single().Should().Contain("/Loyalty/Campaigns");
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/SetCampaignActivation",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(editHtml),
+                ["id"] = campaignId.ToString(),
+                ["businessId"] = businessId.ToString(),
+                ["isActive"] = staleTargetActive,
+                ["rowVersion"] = baselineRowVersion
+            });
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues).Should().BeTrue();
+        using var staleRedirectResponse = await SendHtmxGetAsync(client, staleRedirectValues!.Single());
+        staleRedirectResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleRedirectHtml = await staleRedirectResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        (
+            staleRedirectHtml.Contains("Failed to update loyalty campaign activation.", StringComparison.Ordinal) ||
+            staleRedirectHtml.Contains("Concurrency", StringComparison.OrdinalIgnoreCase))
+            .Should().BeTrue();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
+        staleCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLoyaltyCampaignDeliveryStatus_WithMissingRowVersion_ShouldSurfaceFailureMessage()
+    {
+        var businessId = WebAdminTestFactory.TestLoyaltyProgramBusinessId;
+        var campaignId = Guid.Parse("33333333-3333-3333-3333-333333333330");
+        var deliveryId = Guid.Parse("33333333-3333-3333-3333-333333333331");
+
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
+            seedDatabase: db =>
+            {
+                SeedCampaignAndDeliveryForStatusActionTests(db, businessId, campaignId, deliveryId);
+            });
+
+        using var listResponse = await SendHtmxGetAsync(
+            client,
+            $"/Loyalty/CampaignDeliveries?businessId={businessId}&campaignId={campaignId}");
+        listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var listHtml = await listResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/UpdateCampaignDeliveryStatus",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(listHtml),
+                ["id"] = deliveryId.ToString(),
+                ["businessId"] = businessId.ToString(),
+                ["campaignId"] = campaignId.ToString(),
+                ["status"] = ((int)global::Darwin.Domain.Enums.CampaignDeliveryStatus.Succeeded).ToString(),
+                ["rowVersion"] = string.Empty,
+                ["page"] = "1",
+                ["pageSize"] = "20",
+                ["filter"] = "All"
+            });
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.TryGetValues("HX-Redirect", out var redirectValues).Should().BeTrue();
+        using var redirectedResponse = await SendHtmxGetAsync(client, redirectValues!.Single());
+        var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        redirectedHtml.Should().Contain("Campaign delivery status could not be updated.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLoyaltyCampaignDeliveryStatus_WithStaleRowVersion_ShouldSurfaceFailureMessage()
+    {
+        var businessId = WebAdminTestFactory.TestLoyaltyProgramBusinessId;
+        var campaignId = Guid.Parse("33333333-3333-3333-3333-333333333332");
+        var deliveryId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
+            seedDatabase: db =>
+            {
+                SeedCampaignAndDeliveryForStatusActionTests(db, businessId, campaignId, deliveryId);
+            });
+
+        using var listResponse = await SendHtmxGetAsync(
+            client,
+            $"/Loyalty/CampaignDeliveries?businessId={businessId}&campaignId={campaignId}");
+        listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var listHtml = await listResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(listHtml, "rowVersion");
+
+        using var firstResponse = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/UpdateCampaignDeliveryStatus",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(listHtml),
+                ["id"] = deliveryId.ToString(),
+                ["businessId"] = businessId.ToString(),
+                ["campaignId"] = campaignId.ToString(),
+                ["status"] = ((int)global::Darwin.Domain.Enums.CampaignDeliveryStatus.Succeeded).ToString(),
+                ["rowVersion"] = staleRowVersion,
+                ["page"] = "1",
+                ["pageSize"] = "20",
+                ["filter"] = "All"
+            });
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues).Should().BeTrue();
+        using var firstRedirectResponse = await SendHtmxGetAsync(client, firstRedirectValues!.Single());
+        firstRedirectResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var firstRedirectHtml = await firstRedirectResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        firstRedirectHtml.Should().Contain("Campaign delivery status was updated.");
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/UpdateCampaignDeliveryStatus",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(firstRedirectHtml),
+                ["id"] = deliveryId.ToString(),
+                ["businessId"] = businessId.ToString(),
+                ["campaignId"] = campaignId.ToString(),
+                ["status"] = ((int)global::Darwin.Domain.Enums.CampaignDeliveryStatus.Failed).ToString(),
+                ["rowVersion"] = staleRowVersion,
+                ["page"] = "1",
+                ["pageSize"] = "20",
+                ["filter"] = "All"
+            });
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues).Should().BeTrue();
+        using var staleRedirectResponse = await SendHtmxGetAsync(client, staleRedirectValues!.Single());
+        staleRedirectResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleRedirectHtml = await staleRedirectResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleRedirectHtml.Should().Contain("Campaign delivery status could not be updated.");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
+        staleCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedMediaAssetEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Media/Edit?id={WebAdminTestFactory.TestMediaAssetId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(client, "/Media/Edit", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["Id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
+            ["RowVersion"] = string.Empty,
+            ["Url"] = ExtractHiddenInputValue(tokenHtml, "Url"),
+            ["OriginalFileName"] = ExtractHiddenInputValue(tokenHtml, "OriginalFileName"),
+            ["SizeBytes"] = ExtractHiddenInputValue(tokenHtml, "SizeBytes"),
+            ["Width"] = ExtractHiddenInputValue(tokenHtml, "Width"),
+            ["Height"] = ExtractHiddenInputValue(tokenHtml, "Height"),
+            ["Alt"] = "Seeded alt",
+            ["Title"] = "Seeded title",
+            ["Role"] = "LibraryAsset"
+        });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedMediaAssetEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Media/Edit?id={WebAdminTestFactory.TestMediaAssetId}";
+
+        using var baselineResponse = await SendHtmxGetAsync(client, editPath);
+        baselineResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineHtml = await baselineResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Media/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(baselineHtml),
+                ["Id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["Url"] = ExtractHiddenInputValue(baselineHtml, "Url"),
+                ["OriginalFileName"] = ExtractHiddenInputValue(baselineHtml, "OriginalFileName"),
+                ["SizeBytes"] = ExtractHiddenInputValue(baselineHtml, "SizeBytes"),
+                ["Width"] = ExtractHiddenInputValue(baselineHtml, "Width"),
+                ["Height"] = ExtractHiddenInputValue(baselineHtml, "Height"),
+                ["Alt"] = "Seeded alt (version 1)",
+                ["Title"] = "Seeded title v1",
+                ["Role"] = "LibraryAsset"
+            });
+
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues)
+            .Should().BeTrue();
+        firstRedirectValues!.Single().Should().Contain("/Media/Edit");
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(client, "/Media/Edit", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(staleTokenHtml),
+            ["Id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
+            ["RowVersion"] = staleRowVersion,
+            ["Url"] = ExtractHiddenInputValue(staleTokenHtml, "Url"),
+            ["OriginalFileName"] = ExtractHiddenInputValue(staleTokenHtml, "OriginalFileName"),
+            ["SizeBytes"] = ExtractHiddenInputValue(staleTokenHtml, "SizeBytes"),
+            ["Width"] = ExtractHiddenInputValue(staleTokenHtml, "Width"),
+            ["Height"] = ExtractHiddenInputValue(staleTokenHtml, "Height"),
+            ["Alt"] = "Seeded alt (stale)",
+            ["Title"] = "Seeded title stale",
+            ["Role"] = "LibraryAssetReviewed"
+        });
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues)
+            .Should().BeTrue();
+        staleRedirectValues!.Single().Should().Contain("/Media/Edit");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
+        staleCspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var staleEditResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+        var staleEditHtml = await staleEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        staleEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleEditHtml.Should().Contain("Concurrency conflict. Reload the media asset and try again.");
+    }
+
+    [Fact]
+    public async Task AuthenticatedMediaAssetDelete_WithStaleRowVersion_ShouldSurfaceValidationMessageAndPreserveAsset()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Media/Edit?id={WebAdminTestFactory.TestMediaAssetId}";
+        var staleMarker = $"media stale delete {Guid.NewGuid():N}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var baselineRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var refreshResponse = await SendHtmxPostAsync(
+            client,
+            "/Media/Edit",
+            AddRequestVerificationToken(
+                BuildMediaAssetEditPayload(
+                    WebAdminTestFactory.TestMediaAssetId.ToString(),
+                    baselineRowVersion,
+                    $"Seeded media before stale delete {staleMarker}",
+                    "Alt before stale delete",
+                    ExtractHiddenInputValue(baselineTokenHtml, "Url"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "OriginalFileName"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "SizeBytes"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "Width"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "Height"),
+                    "LibraryAsset"),
+                baselineTokenHtml));
+        refreshResponse.Headers.TryGetValues("HX-Redirect", out var refreshRedirectValues)
+            .Should().BeTrue();
+        refreshRedirectValues!.Single().Should().Contain("/Media/Edit");
+
+        using var staleDeleteSourceResponse = await SendHtmxGetAsync(client, editPath);
+        staleDeleteSourceResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleDeleteTokenHtml = await staleDeleteSourceResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleDeleteResponse = await SendHtmxPostAsync(client, "/Media/Delete", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(staleDeleteTokenHtml),
+            ["id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
+            ["rowVersion"] = baselineRowVersion
+        });
+        staleDeleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleDeleteResponse.Headers.TryGetValues("HX-Redirect", out var staleDeleteRedirectValues)
+            .Should().BeTrue();
+        staleDeleteRedirectValues!.Single().Should().Contain("/Media");
+        staleDeleteResponse.Headers.TryGetValues("Content-Security-Policy", out var staleDeleteCspValues).Should().BeTrue();
+        staleDeleteCspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var staleDeleteEditResponse = await SendHtmxGetAsync(client, editPath);
+        staleDeleteEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleDeleteEditHtml = await staleDeleteEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        staleDeleteEditHtml.Should().Contain($"Seeded media before stale delete {staleMarker}");
+    }
+
+    [Fact]
+    public async Task AuthenticatedMediaAssetPurgeUnused_WithStaleRowVersion_ShouldRejectAndPreserveAsset()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Media/Edit?id={WebAdminTestFactory.TestMediaAssetId}";
+        var staleMarker = $"media stale purge {Guid.NewGuid():N}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var baselineRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var refreshResponse = await SendHtmxPostAsync(
+            client,
+            "/Media/Edit",
+            AddRequestVerificationToken(
+                BuildMediaAssetEditPayload(
+                    WebAdminTestFactory.TestMediaAssetId.ToString(),
+                    baselineRowVersion,
+                    $"Seeded media before stale purge {staleMarker}",
+                    "Alt before stale purge",
+                    ExtractHiddenInputValue(baselineTokenHtml, "Url"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "OriginalFileName"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "SizeBytes"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "Width"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "Height"),
+                    "LibraryAssetReviewed"),
+                baselineTokenHtml));
+        refreshResponse.Headers.TryGetValues("HX-Redirect", out var refreshRedirectValues)
+            .Should().BeTrue();
+        refreshRedirectValues!.Single().Should().Contain("/Media/Edit");
+
+        using var stalePurgeSourceResponse = await SendHtmxGetAsync(client, editPath);
+        stalePurgeSourceResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var stalePurgeTokenHtml = await stalePurgeSourceResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var stalePurgeResponse = await SendHtmxPostAsync(client, "/Media/PurgeUnused", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(stalePurgeTokenHtml),
+            ["id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
+            ["rowVersion"] = baselineRowVersion
+        });
+        stalePurgeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        stalePurgeResponse.Headers.TryGetValues("HX-Redirect", out var stalePurgeRedirectValues)
+            .Should().BeTrue();
+        stalePurgeRedirectValues!.Single().Should().Contain("/Media?filter=Unused");
+        stalePurgeResponse.Headers.TryGetValues("Content-Security-Policy", out var stalePurgeCspValues).Should().BeTrue();
+        stalePurgeCspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var stalePurgeEditResponse = await SendHtmxGetAsync(client, editPath);
+        stalePurgeEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var stalePurgeEditHtml = await stalePurgeEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        stalePurgeEditHtml.Should().Contain($"Seeded media before stale purge {staleMarker}");
+    }
+
+    [Fact]
+    public async Task AuthenticatedMediaAssetDelete_WithMissingRowVersion_ShouldShowValidationErrorAndPreserveAsset()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Media/Edit?id={WebAdminTestFactory.TestMediaAssetId}";
+        var missingMarker = $"media missing delete {Guid.NewGuid():N}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var baselineRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var refreshResponse = await SendHtmxPostAsync(
+            client,
+            "/Media/Edit",
+            AddRequestVerificationToken(
+                BuildMediaAssetEditPayload(
+                    WebAdminTestFactory.TestMediaAssetId.ToString(),
+                    baselineRowVersion,
+                    $"Seeded media before missing delete {missingMarker}",
+                    "Alt before missing delete",
+                    ExtractHiddenInputValue(baselineTokenHtml, "Url"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "OriginalFileName"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "SizeBytes"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "Width"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "Height"),
+                    "LibraryAsset"),
+                baselineTokenHtml));
+        refreshResponse.Headers.TryGetValues("HX-Redirect", out var refreshRedirectValues)
+            .Should().BeTrue();
+        refreshRedirectValues!.Single().Should().Contain("/Media/Edit");
+
+        using var missingDeleteSourceResponse = await SendHtmxGetAsync(client, editPath);
+        missingDeleteSourceResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var missingDeleteTokenHtml = await missingDeleteSourceResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var missingDeleteResponse = await SendHtmxPostAsync(client, "/Media/Delete", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(missingDeleteTokenHtml),
+            ["id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
+            ["rowVersion"] = string.Empty
+        });
+        var missingDeleteResponseHtml = await missingDeleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        missingDeleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        missingDeleteResponseHtml.Should().Contain("RowVersion is required.");
+        missingDeleteResponse.Headers.TryGetValues("Content-Security-Policy", out var missingDeleteCspValues).Should().BeTrue();
+        missingDeleteCspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var preservedAfterDeleteResponse = await SendHtmxGetAsync(client, editPath);
+        preservedAfterDeleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var preservedAfterDeleteHtml = await preservedAfterDeleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        preservedAfterDeleteHtml.Should().Contain($"Seeded media before missing delete {missingMarker}");
+    }
+
+    [Fact]
+    public async Task AuthenticatedMediaAssetPurgeUnused_WithMissingRowVersion_ShouldShowValidationErrorAndPreserveAsset()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Media/Edit?id={WebAdminTestFactory.TestMediaAssetId}";
+        var missingMarker = $"media missing purge {Guid.NewGuid():N}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var baselineRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var refreshResponse = await SendHtmxPostAsync(
+            client,
+            "/Media/Edit",
+            AddRequestVerificationToken(
+                BuildMediaAssetEditPayload(
+                    WebAdminTestFactory.TestMediaAssetId.ToString(),
+                    baselineRowVersion,
+                    $"Seeded media before missing purge {missingMarker}",
+                    "Alt before missing purge",
+                    ExtractHiddenInputValue(baselineTokenHtml, "Url"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "OriginalFileName"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "SizeBytes"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "Width"),
+                    ExtractHiddenInputValue(baselineTokenHtml, "Height"),
+                    "LibraryAssetReviewed"),
+                baselineTokenHtml));
+        refreshResponse.Headers.TryGetValues("HX-Redirect", out var refreshRedirectValues)
+            .Should().BeTrue();
+        refreshRedirectValues!.Single().Should().Contain("/Media/Edit");
+
+        using var missingPurgeSourceResponse = await SendHtmxGetAsync(client, editPath);
+        missingPurgeSourceResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var missingPurgeTokenHtml = await missingPurgeSourceResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var missingPurgeResponse = await SendHtmxPostAsync(client, "/Media/PurgeUnused", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(missingPurgeTokenHtml),
+            ["id"] = WebAdminTestFactory.TestMediaAssetId.ToString(),
+            ["rowVersion"] = string.Empty
+        });
+        var missingPurgeResponseHtml = await missingPurgeResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        missingPurgeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        missingPurgeResponseHtml.Should().Contain("RowVersion is required.");
+        missingPurgeResponse.Headers.TryGetValues("Content-Security-Policy", out var missingPurgeCspValues).Should().BeTrue();
+        missingPurgeCspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var preservedAfterPurgeResponse = await SendHtmxGetAsync(client, editPath);
+        preservedAfterPurgeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var preservedAfterPurgeHtml = await preservedAfterPurgeResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        preservedAfterPurgeHtml.Should().Contain($"Seeded media before missing purge {missingMarker}");
+    }
+
+    [Fact]
+    public async Task AuthenticatedBrandEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Brands/Edit?id={WebAdminTestFactory.TestBrandId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Brands/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = WebAdminTestFactory.TestBrandId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["Slug"] = $"smoke-brand-{Guid.NewGuid():N}",
+                ["LogoMediaId"] = ExtractHiddenInputValue(tokenHtml, "LogoMediaId"),
+                ["Translations[0].Culture"] = ExtractHiddenInputValue(tokenHtml, "Translations[0].Culture"),
+                ["Translations[0].Name"] = $"Smoke Brand {Guid.NewGuid():N}",
+                ["Translations[0].DescriptionHtml"] = "<p>Smoke brand row-version coverage.</p>"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedBrandEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Brands/Edit?id={WebAdminTestFactory.TestBrandId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Brands/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(baselineTokenHtml),
+                ["Id"] = WebAdminTestFactory.TestBrandId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["Slug"] = $"smoke-brand-{Guid.NewGuid():N}-v1",
+                ["LogoMediaId"] = ExtractHiddenInputValue(baselineTokenHtml, "LogoMediaId"),
+                ["Translations[0].Culture"] = ExtractHiddenInputValue(baselineTokenHtml, "Translations[0].Culture"),
+                ["Translations[0].Name"] = $"Smoke Brand {Guid.NewGuid():N} v1",
+                ["Translations[0].DescriptionHtml"] = "<p>Smoke brand stale step one.</p>"
+            });
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues).Should().BeTrue();
+        firstRedirectValues!.Single().Should().Contain("/Brands/Edit");
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Brands/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(staleTokenHtml),
+                ["Id"] = WebAdminTestFactory.TestBrandId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["Slug"] = $"smoke-brand-{Guid.NewGuid():N}-v2",
+                ["LogoMediaId"] = ExtractHiddenInputValue(staleTokenHtml, "LogoMediaId"),
+                ["Translations[0].Culture"] = ExtractHiddenInputValue(staleTokenHtml, "Translations[0].Culture"),
+                ["Translations[0].Name"] = $"Smoke Brand {Guid.NewGuid():N} v2",
+                ["Translations[0].DescriptionHtml"] = "<p>Smoke brand stale step two.</p>"
+            });
+        _ = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues).Should().BeTrue();
+        staleRedirectValues!.Single().Should().Contain("/Brands/Edit");
+        using var staleEditorResponse = await SendHtmxGetAsync(client, staleRedirectValues!.Single());
+        var staleEditorHtml = await staleEditorResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        staleEditorHtml.Should().Contain("Concurrency conflict. The brand has been modified by another process.");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedCategoryEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Categories/Edit?id={WebAdminTestFactory.TestCategoryId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Categories/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = WebAdminTestFactory.TestCategoryId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["ParentId"] = ExtractHiddenInputValue(tokenHtml, "ParentId"),
+                ["SortOrder"] = ExtractHiddenInputValue(tokenHtml, "SortOrder"),
+                ["IsActive"] = ExtractHiddenInputValue(tokenHtml, "IsActive"),
+                ["Translations[0].Culture"] = ExtractHiddenInputValue(tokenHtml, "Translations[0].Culture"),
+                ["Translations[0].Name"] = $"Smoke Category {Guid.NewGuid():N}",
+                ["Translations[0].Slug"] = $"smoke-category-{Guid.NewGuid():N}",
+                ["Translations[0].Description"] = "Smoke coverage description.",
+                ["Translations[0].MetaTitle"] = "Smoke category title",
+                ["Translations[0].MetaDescription"] = "Smoke category meta"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedCategoryEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Categories/Edit?id={WebAdminTestFactory.TestCategoryId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Categories/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(baselineTokenHtml),
+                ["Id"] = WebAdminTestFactory.TestCategoryId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["ParentId"] = ExtractHiddenInputValue(baselineTokenHtml, "ParentId"),
+                ["SortOrder"] = ExtractHiddenInputValue(baselineTokenHtml, "SortOrder"),
+                ["IsActive"] = ExtractHiddenInputValue(baselineTokenHtml, "IsActive"),
+                ["Translations[0].Culture"] = ExtractHiddenInputValue(baselineTokenHtml, "Translations[0].Culture"),
+                ["Translations[0].Name"] = $"Smoke Category {Guid.NewGuid():N} v1",
+                ["Translations[0].Slug"] = $"smoke-category-{Guid.NewGuid():N}-v1",
+                ["Translations[0].Description"] = "Smoke coverage description.",
+                ["Translations[0].MetaTitle"] = "Smoke category title",
+                ["Translations[0].MetaDescription"] = "Smoke category meta"
+            });
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues).Should().BeTrue();
+        firstRedirectValues!.Single().Should().Contain("/Categories/Edit");
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Categories/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(staleTokenHtml),
+                ["Id"] = WebAdminTestFactory.TestCategoryId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["ParentId"] = ExtractHiddenInputValue(staleTokenHtml, "ParentId"),
+                ["SortOrder"] = ExtractHiddenInputValue(staleTokenHtml, "SortOrder"),
+                ["IsActive"] = ExtractHiddenInputValue(staleTokenHtml, "IsActive"),
+                ["Translations[0].Culture"] = ExtractHiddenInputValue(staleTokenHtml, "Translations[0].Culture"),
+                ["Translations[0].Name"] = $"Smoke Category {Guid.NewGuid():N} v2",
+                ["Translations[0].Slug"] = $"smoke-category-{Guid.NewGuid():N}-v2",
+                ["Translations[0].Description"] = "Smoke coverage description updated.",
+                ["Translations[0].MetaTitle"] = "Smoke category title updated",
+                ["Translations[0].MetaDescription"] = "Smoke category meta updated"
+            });
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("The category was modified by another user.");
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeFalse();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedProductEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Products/Edit?id={WebAdminTestFactory.TestProductId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Products/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = WebAdminTestFactory.TestProductId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["BrandId"] = WebAdminTestFactory.TestBrandId.ToString(),
+                ["PrimaryCategoryId"] = WebAdminTestFactory.TestCategoryId.ToString(),
+                ["Kind"] = "Simple",
+                ["Translations.Index"] = "0",
+                ["Translations[0].Culture"] = "de-DE",
+                ["Translations[0].Name"] = $"Smoke Product {Guid.NewGuid():N}",
+                ["Translations[0].Slug"] = $"smoke-product-{Guid.NewGuid():N}",
+                ["Translations[0].ShortDescription"] = "Smoke product row-version coverage.",
+                ["Translations[0].FullDescriptionHtml"] = "<p>Smoke product row-version coverage.</p>",
+                ["Translations[0].MetaTitle"] = "Smoke product title",
+                ["Translations[0].MetaDescription"] = "Smoke product meta",
+                ["Translations[0].SearchKeywords"] = "smoke,product,row-version",
+                ["Variants.Index"] = "0",
+                ["Variants[0].Id"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["Variants[0].Sku"] = $"SMOKE-{Guid.NewGuid():N}",
+                ["Variants[0].Currency"] = "EUR",
+                ["Variants[0].TaxCategoryId"] = WebAdminTestFactory.TestTaxCategoryId.ToString(),
+                ["Variants[0].BasePriceNetMinor"] = "1999",
+                ["Variants[0].StockOnHand"] = "5",
+                ["Variants[0].StockReserved"] = "0",
+                ["Variants[0].BackorderAllowed"] = "false",
+                ["Variants[0].IsDigital"] = "false"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedProductEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editPath = $"/Products/Edit?id={WebAdminTestFactory.TestProductId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Products/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(baselineTokenHtml),
+                ["Id"] = WebAdminTestFactory.TestProductId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["BrandId"] = WebAdminTestFactory.TestBrandId.ToString(),
+                ["PrimaryCategoryId"] = WebAdminTestFactory.TestCategoryId.ToString(),
+                ["Kind"] = "Simple",
+                ["Translations.Index"] = "0",
+                ["Translations[0].Culture"] = "de-DE",
+                ["Translations[0].Name"] = $"Smoke Product {Guid.NewGuid():N} v1",
+                ["Translations[0].Slug"] = $"smoke-product-{Guid.NewGuid():N}-v1",
+                ["Translations[0].ShortDescription"] = "Smoke product stale coverage.",
+                ["Translations[0].FullDescriptionHtml"] = "<p>Smoke product stale coverage v1.</p>",
+                ["Translations[0].MetaTitle"] = "Smoke product title v1",
+                ["Translations[0].MetaDescription"] = "Smoke product meta v1",
+                ["Translations[0].SearchKeywords"] = "smoke,product,stale,v1",
+                ["Variants.Index"] = "0",
+                ["Variants[0].Id"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["Variants[0].Sku"] = $"SMOKE-{Guid.NewGuid():N}v1",
+                ["Variants[0].Currency"] = "EUR",
+                ["Variants[0].TaxCategoryId"] = WebAdminTestFactory.TestTaxCategoryId.ToString(),
+                ["Variants[0].BasePriceNetMinor"] = "1999",
+                ["Variants[0].StockOnHand"] = "5",
+                ["Variants[0].StockReserved"] = "0",
+                ["Variants[0].BackorderAllowed"] = "false",
+                ["Variants[0].IsDigital"] = "false"
+            });
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Products/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(staleTokenHtml),
+                ["Id"] = WebAdminTestFactory.TestProductId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["BrandId"] = WebAdminTestFactory.TestBrandId.ToString(),
+                ["PrimaryCategoryId"] = WebAdminTestFactory.TestCategoryId.ToString(),
+                ["Kind"] = "Simple",
+                ["Translations.Index"] = "0",
+                ["Translations[0].Culture"] = "de-DE",
+                ["Translations[0].Name"] = $"Smoke Product {Guid.NewGuid():N} v2",
+                ["Translations[0].Slug"] = $"smoke-product-{Guid.NewGuid():N}-v2",
+                ["Translations[0].ShortDescription"] = "Smoke product stale coverage v2.",
+                ["Translations[0].FullDescriptionHtml"] = "<p>Smoke product stale coverage v2.</p>",
+                ["Translations[0].MetaTitle"] = "Smoke product title v2",
+                ["Translations[0].MetaDescription"] = "Smoke product meta v2",
+                ["Translations[0].SearchKeywords"] = "smoke,product,stale,v2",
+                ["Variants.Index"] = "0",
+                ["Variants[0].Id"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["Variants[0].Sku"] = $"SMOKE-{Guid.NewGuid():N}v2",
+                ["Variants[0].Currency"] = "EUR",
+                ["Variants[0].TaxCategoryId"] = WebAdminTestFactory.TestTaxCategoryId.ToString(),
+                ["Variants[0].BasePriceNetMinor"] = "1999",
+                ["Variants[0].StockOnHand"] = "6",
+                ["Variants[0].StockReserved"] = "0",
+                ["Variants[0].BackorderAllowed"] = "false",
+                ["Variants[0].IsDigital"] = "false"
+            });
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("The product was modified by another user. Please reload and try again.");
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeFalse();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedPageEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var title = $"Smoke Page {Guid.NewGuid():N}";
+        var slug = $"smoke-page-{Guid.NewGuid():N}";
+
+        using var createResponse = await SendHtmxGetAsync(client, "/Pages/Create");
+        createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createHtml = await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var createToken = ExtractAntiForgeryToken(createHtml);
+
+        using var createPostResponse = await SendHtmxPostAsync(client, "/Pages/Create", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = createToken,
+            ["Status"] = "Draft",
+            ["PublishStartUtc"] = string.Empty,
+            ["PublishEndUtc"] = string.Empty,
+            ["Translations.Index"] = "0",
+            ["Translations[0].Culture"] = "de-DE",
+            ["Translations[0].Title"] = title,
+            ["Translations[0].Slug"] = slug,
+            ["Translations[0].MetaTitle"] = $"{title} Meta",
+            ["Translations[0].MetaDescription"] = "Smoke page meta description.",
+            ["Translations[0].ContentHtml"] = "<p>Smoke page content for testing.</p>"
+        });
+
+        createPostResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createPostResponseHtml = await createPostResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        createPostResponse.Headers.TryGetValues("HX-Redirect", out var createRedirectValues)
+            .Should().BeTrue(
+                "a successful CMS page create should return an HTMX redirect; response preview: {0}",
+                createPostResponseHtml.Length > 600 ? createPostResponseHtml[..600] : createPostResponseHtml);
+        var createRedirect = createRedirectValues!.Single();
+        createRedirect.Should().NotBeNullOrWhiteSpace();
+
+        using var createdPageListResponse = await SendHtmxGetAsync(client, $"/Pages?query={Uri.EscapeDataString(title)}");
+        var createdListHtml = await createdPageListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        createdPageListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var pageId = ExtractHrefQueryGuid(createdListHtml, "/Pages/Edit", "id");
+
+        var editPath = $"/Pages/Edit?id={pageId}";
+        using var editResponse = await SendHtmxGetAsync(client, editPath);
+        editResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var editHtml = await editResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var postResponse = await SendHtmxPostAsync(client, "/Pages/Edit", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(editHtml),
+            ["Id"] = pageId.ToString(),
+            ["Status"] = "Draft",
+            ["PublishStartUtc"] = string.Empty,
+            ["PublishEndUtc"] = string.Empty,
+            ["Translations.Index"] = "0",
+            ["Translations[0].Culture"] = "de-DE",
+            ["Translations[0].Title"] = title,
+            ["Translations[0].Slug"] = slug,
+            ["Translations[0].MetaTitle"] = $"{title} Meta",
+            ["Translations[0].MetaDescription"] = "Smoke page meta description.",
+            ["Translations[0].ContentHtml"] = "<p>Smoke page content for testing.</p>"
+        });
+        var postHtml = await postResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        postHtml.Should().Contain("RowVersion is required.");
+        postResponse.Headers.TryGetValues("Content-Security-Policy", out var postCspValues).Should().BeTrue();
+        postCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedPageEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var title = $"Smoke Page {Guid.NewGuid():N}";
+        var staleTitle = $"{title} v1";
+        var slug = $"smoke-page-{Guid.NewGuid():N}";
+        var updatedTitle = $"{title} v2";
+
+        using var createResponse = await SendHtmxGetAsync(client, "/Pages/Create");
+        createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createHtml = await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var createToken = ExtractAntiForgeryToken(createHtml);
+
+        using var createPostResponse = await SendHtmxPostAsync(client, "/Pages/Create", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = createToken,
+            ["Status"] = "Draft",
+            ["PublishStartUtc"] = string.Empty,
+            ["PublishEndUtc"] = string.Empty,
+            ["Translations.Index"] = "0",
+            ["Translations[0].Culture"] = "de-DE",
+            ["Translations[0].Title"] = title,
+            ["Translations[0].Slug"] = slug,
+            ["Translations[0].MetaTitle"] = $"{title} Meta",
+            ["Translations[0].MetaDescription"] = "Smoke page meta description.",
+            ["Translations[0].ContentHtml"] = "<p>Smoke page content for testing.</p>"
+        });
+        createPostResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createPostResponseHtml = await createPostResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        createPostResponse.Headers.TryGetValues("HX-Redirect", out var _)
+            .Should().BeTrue("a successful CMS page create should return an HTMX redirect; response preview: {0}",
+                createPostResponseHtml.Length > 600 ? createPostResponseHtml[..600] : createPostResponseHtml);
+
+        using var createdPageListResponse = await SendHtmxGetAsync(client, $"/Pages?query={Uri.EscapeDataString(title)}");
+        var createdListHtml = await createdPageListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        createdPageListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var pageId = ExtractHrefQueryGuid(createdListHtml, "/Pages/Edit", "id");
+
+        var editPath = $"/Pages/Edit?id={pageId}";
+        using var baselineEditResponse = await SendHtmxGetAsync(client, editPath);
+        baselineEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineEditHtml = await baselineEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineEditHtml, "RowVersion");
+        var validPostToken = ExtractAntiForgeryToken(baselineEditHtml);
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Pages/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = validPostToken,
+                ["Id"] = pageId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["Status"] = "Published",
+                ["PublishStartUtc"] = string.Empty,
+                ["PublishEndUtc"] = string.Empty,
+                ["Translations.Index"] = "0",
+                ["Translations[0].Culture"] = "de-DE",
+                ["Translations[0].Title"] = staleTitle,
+                ["Translations[0].Slug"] = $"{slug}-v1",
+                ["Translations[0].MetaTitle"] = $"{staleTitle} Meta",
+                ["Translations[0].MetaDescription"] = "Smoke page meta description.",
+                ["Translations[0].ContentHtml"] = "<p>Smoke page content first update.</p>"
+            });
+        var firstUpdateHtml = await firstUpdateResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var firstUpdateRedirectValues)
+            .Should().BeTrue(
+                "initial CMS page edit should succeed and return an HTMX redirect; response preview: {0}",
+                firstUpdateHtml.Length > 600 ? firstUpdateHtml[..600] : firstUpdateHtml);
+        firstUpdateRedirectValues!.Single().Should().Contain("/Pages");
+
+        using var staleEditResponse = await SendHtmxGetAsync(client, editPath);
+        staleEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleEditHtml = await staleEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Pages/Edit",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(staleEditHtml),
+                ["Id"] = pageId.ToString(),
+                ["RowVersion"] = staleRowVersion,
+                ["Status"] = "Published",
+                ["PublishStartUtc"] = string.Empty,
+                ["PublishEndUtc"] = string.Empty,
+                ["Translations.Index"] = "0",
+                ["Translations[0].Culture"] = "de-DE",
+                ["Translations[0].Title"] = updatedTitle,
+                ["Translations[0].Slug"] = $"{slug}-stale",
+                ["Translations[0].MetaTitle"] = $"{updatedTitle} Meta",
+                ["Translations[0].MetaDescription"] = "Smoke page meta description.",
+                ["Translations[0].ContentHtml"] = "<p>Smoke page content stale update.</p>"
+            });
+
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeFalse();
+        staleResponseHtml.Should().Contain("The page was modified by another user. Please reload and try again.");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedCustomerEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var crmCustomerFirstName = $"Smoke{Guid.NewGuid():N}";
+        var crmCustomerLastName = $"Customer{Guid.NewGuid():N}";
+        var crmCustomerEmail = $"smoke-customer-missing-rv-{Guid.NewGuid():N}@example.test";
+        var crmCustomerId = await CreateTestCustomerAndReturnIdAsync(client, crmCustomerFirstName, crmCustomerLastName, crmCustomerEmail);
+
+        var editPath = $"/Crm/EditCustomer?id={crmCustomerId}";
+        using var tokenResponse = await SendHtmxGetAsync(client, editPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditCustomer",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = crmCustomerId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["UserId"] = string.Empty,
+                ["CompanyName"] = string.Empty,
+                ["TaxProfileType"] = "Consumer",
+                ["VatId"] = string.Empty,
+                ["FirstName"] = crmCustomerFirstName,
+                ["LastName"] = crmCustomerLastName,
+                ["Email"] = crmCustomerEmail,
+                ["Phone"] = "+493012345678",
+                ["Notes"] = "Smoke customer missing row-version coverage.",
+                ["Addresses[0].Id"] = string.Empty,
+                ["Addresses[0].AddressId"] = string.Empty,
+                ["Addresses[0].Line1"] = "CRM Street 1",
+                ["Addresses[0].Line2"] = string.Empty,
+                ["Addresses[0].PostalCode"] = "10115",
+                ["Addresses[0].City"] = "Berlin",
+                ["Addresses[0].State"] = "Berlin",
+                ["Addresses[0].Country"] = "DE",
+                ["Addresses[0].IsDefaultBilling"] = "true",
+                ["Addresses[0].IsDefaultShipping"] = "true"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedCustomerEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var crmCustomerFirstName = $"Smoke{Guid.NewGuid():N}";
+        var crmCustomerLastName = $"Customer{Guid.NewGuid():N}";
+        var crmCustomerEmail = $"smoke-customer-stale-rv-{Guid.NewGuid():N}@example.test";
+        var crmCustomerId = await CreateTestCustomerAndReturnIdAsync(client, crmCustomerFirstName, crmCustomerLastName, crmCustomerEmail);
+
+        var editPath = $"/Crm/EditCustomer?id={crmCustomerId}";
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditCustomer",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = crmCustomerId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["UserId"] = string.Empty,
+                    ["CompanyName"] = string.Empty,
+                    ["TaxProfileType"] = "Consumer",
+                    ["VatId"] = string.Empty,
+                    ["FirstName"] = $"{crmCustomerFirstName} v1",
+                    ["LastName"] = crmCustomerLastName,
+                    ["Email"] = crmCustomerEmail,
+                    ["Phone"] = "+493012345678",
+                    ["Notes"] = "Smoke customer stale coverage v1.",
+                    ["Addresses[0].Id"] = string.Empty,
+                    ["Addresses[0].AddressId"] = string.Empty,
+                    ["Addresses[0].Line1"] = "CRM Street 1",
+                    ["Addresses[0].Line2"] = string.Empty,
+                    ["Addresses[0].PostalCode"] = "10115",
+                    ["Addresses[0].City"] = "Berlin",
+                    ["Addresses[0].State"] = "Berlin",
+                    ["Addresses[0].Country"] = "DE",
+                    ["Addresses[0].IsDefaultBilling"] = "true",
+                    ["Addresses[0].IsDefaultShipping"] = "true"
+                },
+                baselineTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditCustomer",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = crmCustomerId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["UserId"] = string.Empty,
+                    ["CompanyName"] = string.Empty,
+                    ["TaxProfileType"] = "Consumer",
+                    ["VatId"] = string.Empty,
+                    ["FirstName"] = $"{crmCustomerFirstName} v2",
+                    ["LastName"] = crmCustomerLastName,
+                    ["Email"] = crmCustomerEmail,
+                    ["Phone"] = "+493012345678",
+                    ["Notes"] = "Smoke customer stale coverage v2.",
+                    ["Addresses[0].Id"] = string.Empty,
+                    ["Addresses[0].AddressId"] = string.Empty,
+                    ["Addresses[0].Line1"] = "CRM Street 1",
+                    ["Addresses[0].Line2"] = string.Empty,
+                    ["Addresses[0].PostalCode"] = "10115",
+                    ["Addresses[0].City"] = "Berlin",
+                    ["Addresses[0].State"] = "Berlin",
+                    ["Addresses[0].Country"] = "DE",
+                    ["Addresses[0].IsDefaultBilling"] = "true",
+                    ["Addresses[0].IsDefaultShipping"] = "true"
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency", StringComparison.OrdinalIgnoreCase);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeFalse();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLeadEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var crmLeadFirstName = $"Smoke{Guid.NewGuid():N}";
+        var crmLeadLastName = $"Lead{Guid.NewGuid():N}";
+        var crmLeadEmail = $"smoke-lead-missing-rv-{Guid.NewGuid():N}@example.test";
+
+        using var createLeadTokenResponse = await SendHtmxGetAsync(client, "/Crm/CreateLead");
+        createLeadTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createLeadHtml = await createLeadTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var createLeadResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/CreateLead",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(createLeadHtml),
+                ["FirstName"] = crmLeadFirstName,
+                ["LastName"] = crmLeadLastName,
+                ["CompanyName"] = "Smoke Lead Company",
+                ["Status"] = "New",
+                ["Email"] = crmLeadEmail,
+                ["Phone"] = "+493087654321",
+                ["AssignedToUserId"] = string.Empty,
+                ["CustomerId"] = string.Empty,
+                ["Source"] = "Smoke",
+                ["Notes"] = "Smoke-created CRM lead."
+            });
+        createLeadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createLeadResponse.Headers.TryGetValues("HX-Redirect", out var createLeadRedirectValues).Should().BeTrue();
+        createLeadRedirectValues!.Single().Should().Contain("/Crm/Leads");
+
+        using var leadListResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/Leads?query={Uri.EscapeDataString(crmLeadEmail)}");
+        var leadListHtml = await leadListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        leadListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var leadId = ExtractHrefQueryGuid(leadListHtml, "/Crm/EditLead", "id");
+
+        var editPath = $"/Crm/EditLead?id={leadId}";
+        using var tokenResponse = await SendHtmxGetAsync(client, editPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditLead",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = leadId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["FirstName"] = crmLeadFirstName,
+                ["LastName"] = crmLeadLastName,
+                ["CompanyName"] = "Smoke Lead Company",
+                ["Status"] = "New",
+                ["Email"] = crmLeadEmail,
+                ["Phone"] = "+493087654321",
+                ["AssignedToUserId"] = string.Empty,
+                ["CustomerId"] = string.Empty,
+                ["Source"] = "Smoke",
+                ["Notes"] = "Smoke-created CRM lead."
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedLeadEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var crmLeadFirstName = $"Smoke{Guid.NewGuid():N}";
+        var crmLeadLastName = $"Lead{Guid.NewGuid():N}";
+        var crmLeadEmail = $"smoke-lead-stale-rv-{Guid.NewGuid():N}@example.test";
+
+        using var createLeadTokenResponse = await SendHtmxGetAsync(client, "/Crm/CreateLead");
+        createLeadTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createLeadHtml = await createLeadTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var createLeadResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/CreateLead",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(createLeadHtml),
+                ["FirstName"] = crmLeadFirstName,
+                ["LastName"] = crmLeadLastName,
+                ["CompanyName"] = "Smoke Lead Company",
+                ["Status"] = "New",
+                ["Email"] = crmLeadEmail,
+                ["Phone"] = "+493087654321",
+                ["AssignedToUserId"] = string.Empty,
+                ["CustomerId"] = string.Empty,
+                ["Source"] = "Smoke",
+                ["Notes"] = "Smoke-created CRM lead."
+            });
+        createLeadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createLeadResponse.Headers.TryGetValues("HX-Redirect", out var createLeadRedirectValues).Should().BeTrue();
+        createLeadRedirectValues!.Single().Should().Contain("/Crm/Leads");
+
+        using var leadListResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/Leads?query={Uri.EscapeDataString(crmLeadEmail)}");
+        var leadListHtml = await leadListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        leadListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var leadId = ExtractHrefQueryGuid(leadListHtml, "/Crm/EditLead", "id");
+
+        var editPath = $"/Crm/EditLead?id={leadId}";
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditLead",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = leadId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["FirstName"] = $"{crmLeadFirstName} v1",
+                    ["LastName"] = crmLeadLastName,
+                    ["CompanyName"] = "Smoke Lead Company",
+                    ["Status"] = "New",
+                    ["Email"] = crmLeadEmail,
+                    ["Phone"] = "+493087654321",
+                    ["AssignedToUserId"] = string.Empty,
+                    ["CustomerId"] = string.Empty,
+                    ["Source"] = "Smoke",
+                    ["Notes"] = "Smoke-created CRM lead."
+                },
+                baselineTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditLead",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = leadId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["FirstName"] = $"{crmLeadFirstName} v2",
+                    ["LastName"] = crmLeadLastName,
+                    ["CompanyName"] = "Smoke Lead Company",
+                    ["Status"] = "New",
+                    ["Email"] = crmLeadEmail,
+                    ["Phone"] = "+493087654321",
+                    ["AssignedToUserId"] = string.Empty,
+                    ["CustomerId"] = string.Empty,
+                    ["Source"] = "Smoke",
+                    ["Notes"] = "Smoke-created CRM lead."
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency", StringComparison.OrdinalIgnoreCase);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeFalse();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedOpportunityEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var crmCustomerFirstName = $"Smoke{Guid.NewGuid():N}";
+        var crmCustomerLastName = $"Customer{Guid.NewGuid():N}";
+        var crmCustomerEmail = $"smoke-opportunity-owner-missing-rv-{Guid.NewGuid():N}@example.test";
+        var crmCustomerId = await CreateTestCustomerAndReturnIdAsync(client, crmCustomerFirstName, crmCustomerLastName, crmCustomerEmail);
+
+        var crmOpportunityTitle = $"Smoke Opportunity {Guid.NewGuid():N}";
+        using var createOpportunityTokenResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/CreateOpportunity?customerId={crmCustomerId}");
+        createOpportunityTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createOpportunityHtml = await createOpportunityTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var createOpportunityResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/CreateOpportunity",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(createOpportunityHtml),
+                ["CustomerId"] = crmCustomerId.ToString(),
+                ["AssignedToUserId"] = string.Empty,
+                ["Title"] = crmOpportunityTitle,
+                ["Currency"] = "EUR",
+                ["Stage"] = "Qualification",
+                ["ExpectedCloseDateUtc"] = $"{DateTime.UtcNow.AddDays(15):yyyy-MM-dd}",
+                ["EstimatedValueMinor"] = "5000",
+                ["Items[0].Id"] = string.Empty,
+                ["Items[0].ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["Items[0].Quantity"] = "2",
+                ["Items[0].UnitPriceMinor"] = "2500"
+            });
+        createOpportunityResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createOpportunityResponse.Headers.TryGetValues("HX-Redirect", out var createOpportunityRedirectValues).Should().BeTrue();
+        createOpportunityRedirectValues!.Single().Should().Contain("/Crm/Opportunities");
+
+        using var opportunityListResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/Opportunities?query={Uri.EscapeDataString(crmOpportunityTitle)}");
+        var opportunityListHtml = await opportunityListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        opportunityListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var opportunityId = ExtractHrefQueryGuid(opportunityListHtml, "/Crm/EditOpportunity", "id");
+
+        var editPath = $"/Crm/EditOpportunity?id={opportunityId}";
+        using var tokenResponse = await SendHtmxGetAsync(client, editPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditOpportunity",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = opportunityId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["CustomerId"] = crmCustomerId.ToString(),
+                ["AssignedToUserId"] = string.Empty,
+                ["Title"] = crmOpportunityTitle,
+                ["Currency"] = "EUR",
+                ["Stage"] = "Qualification",
+                ["ExpectedCloseDateUtc"] = $"{DateTime.UtcNow.AddDays(15):yyyy-MM-dd}",
+                ["EstimatedValueMinor"] = "5000",
+                ["Items[0].Id"] = string.Empty,
+                ["Items[0].ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["Items[0].Quantity"] = "2",
+                ["Items[0].UnitPriceMinor"] = "2500"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedOpportunityEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var crmCustomerFirstName = $"Smoke{Guid.NewGuid():N}";
+        var crmCustomerLastName = $"Customer{Guid.NewGuid():N}";
+        var crmCustomerEmail = $"smoke-opportunity-owner-stale-rv-{Guid.NewGuid():N}@example.test";
+        var crmCustomerId = await CreateTestCustomerAndReturnIdAsync(client, crmCustomerFirstName, crmCustomerLastName, crmCustomerEmail);
+
+        var crmOpportunityTitle = $"Smoke Opportunity {Guid.NewGuid():N}";
+        using var createOpportunityTokenResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/CreateOpportunity?customerId={crmCustomerId}");
+        createOpportunityTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createOpportunityHtml = await createOpportunityTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var createOpportunityResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/CreateOpportunity",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(createOpportunityHtml),
+                ["CustomerId"] = crmCustomerId.ToString(),
+                ["AssignedToUserId"] = string.Empty,
+                ["Title"] = crmOpportunityTitle,
+                ["Currency"] = "EUR",
+                ["Stage"] = "Qualification",
+                ["ExpectedCloseDateUtc"] = $"{DateTime.UtcNow.AddDays(15):yyyy-MM-dd}",
+                ["EstimatedValueMinor"] = "5000",
+                ["Items[0].Id"] = string.Empty,
+                ["Items[0].ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["Items[0].Quantity"] = "2",
+                ["Items[0].UnitPriceMinor"] = "2500"
+            });
+        createOpportunityResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createOpportunityResponse.Headers.TryGetValues("HX-Redirect", out var createOpportunityRedirectValues).Should().BeTrue();
+        createOpportunityRedirectValues!.Single().Should().Contain("/Crm/Opportunities");
+
+        using var opportunityListResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/Opportunities?query={Uri.EscapeDataString(crmOpportunityTitle)}");
+        var opportunityListHtml = await opportunityListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        opportunityListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var opportunityId = ExtractHrefQueryGuid(opportunityListHtml, "/Crm/EditOpportunity", "id");
+
+        var editPath = $"/Crm/EditOpportunity?id={opportunityId}";
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditOpportunity",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = opportunityId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["CustomerId"] = crmCustomerId.ToString(),
+                    ["AssignedToUserId"] = string.Empty,
+                    ["Title"] = $"{crmOpportunityTitle} v1",
+                    ["Currency"] = "EUR",
+                    ["Stage"] = "Qualification",
+                    ["ExpectedCloseDateUtc"] = $"{DateTime.UtcNow.AddDays(16):yyyy-MM-dd}",
+                    ["EstimatedValueMinor"] = "5000",
+                    ["Items[0].Id"] = string.Empty,
+                    ["Items[0].ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                    ["Items[0].Quantity"] = "2",
+                    ["Items[0].UnitPriceMinor"] = "2500"
+                },
+                baselineTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditOpportunity",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = opportunityId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["CustomerId"] = crmCustomerId.ToString(),
+                    ["AssignedToUserId"] = string.Empty,
+                    ["Title"] = $"{crmOpportunityTitle} v2",
+                    ["Currency"] = "EUR",
+                    ["Stage"] = "Qualification",
+                    ["ExpectedCloseDateUtc"] = $"{DateTime.UtcNow.AddDays(17):yyyy-MM-dd}",
+                    ["EstimatedValueMinor"] = "5000",
+                    ["Items[0].Id"] = string.Empty,
+                    ["Items[0].ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                    ["Items[0].Quantity"] = "2",
+                    ["Items[0].UnitPriceMinor"] = "2500"
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency", StringComparison.OrdinalIgnoreCase);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeFalse();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var invoiceId = await CreateTestInvoiceAndReturnIdAsync(client, WebAdminTestFactory.TestOrderId, Guid.Empty);
+
+        using var invoiceTokenResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/EditInvoice?id={invoiceId}");
+        invoiceTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var invoiceTokenHtml = await invoiceTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var invoiceRowVersion = ExtractHiddenInputValue(invoiceTokenHtml, "RowVersion");
+
+        using var draftTransitionResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/TransitionInvoiceStatus",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = invoiceId.ToString(),
+                    ["RowVersion"] = invoiceRowVersion,
+                    ["TargetStatus"] = "0"
+                },
+                invoiceTokenHtml));
+        draftTransitionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        draftTransitionResponse.Headers.TryGetValues("HX-Redirect", out var draftRedirectValues).Should().BeTrue();
+        draftRedirectValues!.Single().Should().Contain($"/Crm/EditInvoice");
+
+        using var draftTokenResponse = await SendHtmxGetAsync(client, $"/Crm/EditInvoice?id={invoiceId}");
+        draftTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var draftTokenHtml = await draftTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditInvoice",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(draftTokenHtml),
+                ["Id"] = invoiceId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["Status"] = "Draft",
+                ["Currency"] = "EUR",
+                ["TotalNetMinor"] = "1000",
+                ["TotalTaxMinor"] = "190",
+                ["TotalGrossMinor"] = "1190",
+                ["DueDateUtc"] = $"{DateTime.UtcNow.AddDays(15):yyyy-MM-ddTHH:mm:ss}"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var responseCspValues).Should().BeTrue();
+        responseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var invoiceId = await CreateTestInvoiceAndReturnIdAsync(client, WebAdminTestFactory.TestOrderId, Guid.Empty);
+
+        using var invoiceTokenResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/EditInvoice?id={invoiceId}");
+        invoiceTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var invoiceTokenHtml = await invoiceTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var initialRowVersion = ExtractHiddenInputValue(invoiceTokenHtml, "RowVersion");
+
+        using var draftTransitionResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/TransitionInvoiceStatus",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = invoiceId.ToString(),
+                    ["RowVersion"] = initialRowVersion,
+                    ["TargetStatus"] = "0"
+                },
+                invoiceTokenHtml));
+        draftTransitionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        draftTransitionResponse.Headers.TryGetValues("HX-Redirect", out var draftRedirectValues).Should().BeTrue();
+        draftRedirectValues!.Single().Should().Contain($"/Crm/EditInvoice");
+
+        using var draftTokenResponse = await SendHtmxGetAsync(client, $"/Crm/EditInvoice?id={invoiceId}");
+        draftTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var draftTokenHtml = await draftTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var draftRowVersion = ExtractHiddenInputValue(draftTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditInvoice",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = invoiceId.ToString(),
+                    ["RowVersion"] = draftRowVersion,
+                    ["Status"] = "Draft",
+                    ["Currency"] = "EUR",
+                    ["TotalNetMinor"] = "1000",
+                    ["TotalTaxMinor"] = "190",
+                    ["TotalGrossMinor"] = "1190",
+                    ["DueDateUtc"] = $"{DateTime.UtcNow.AddDays(16):yyyy-MM-ddTHH:mm:ss}"
+                },
+                draftTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, $"/Crm/EditInvoice?id={invoiceId}");
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditInvoice",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = invoiceId.ToString(),
+                    ["RowVersion"] = initialRowVersion,
+                    ["Status"] = "Draft",
+                    ["Currency"] = "EUR",
+                    ["TotalNetMinor"] = "1000",
+                    ["TotalTaxMinor"] = "190",
+                    ["TotalGrossMinor"] = "1190",
+                    ["DueDateUtc"] = $"{DateTime.UtcNow.AddDays(17):yyyy-MM-ddTHH:mm:ss}"
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            staleResponseHtml.Contains("Concurrency", StringComparison.OrdinalIgnoreCase) ||
+            staleResponseHtml.Contains("Invoice not found", StringComparison.Ordinal))
+            .Should().BeTrue();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceTransition_WithMissingRowVersion_ShouldShowFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var invoiceId = await CreateTestInvoiceAndReturnIdAsync(client, WebAdminTestFactory.TestOrderId, Guid.Empty);
+
+        using var editorResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/EditInvoice?id={invoiceId}");
+        editorResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var editorHtmlResponse = await editorResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Crm/TransitionInvoiceStatus",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(editorHtmlResponse),
+                ["Id"] = invoiceId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["TargetStatus"] = "1"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        if (response.Headers.TryGetValues("HX-Redirect", out var responseRedirectValues))
+        {
+            using var redirectedResponse = await SendHtmxGetAsync(client, responseRedirectValues.Single());
+            redirectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            responseHtml = redirectedHtml;
+        }
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            responseHtml.Contains("RowVersion is required.", StringComparison.Ordinal) ||
+            responseHtml.Contains("Failed to update invoice status.", StringComparison.Ordinal))
+            .Should().BeTrue();
+        response.Headers.TryGetValues("Content-Security-Policy", out var responseCspValues).Should().BeTrue();
+        responseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceTransition_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var invoiceId = await CreateTestInvoiceAndReturnIdAsync(client, WebAdminTestFactory.TestOrderId, Guid.Empty);
+
+        var editorPath = $"/Crm/EditInvoice?id={invoiceId}";
+        using var editorTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        editorTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var editorTokenHtml = await editorTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(editorTokenHtml, "RowVersion");
+
+        using var firstTransitionResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/TransitionInvoiceStatus",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = invoiceId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["TargetStatus"] = "3"
+                },
+                editorTokenHtml));
+        firstTransitionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstTransitionResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/TransitionInvoiceStatus",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = invoiceId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["TargetStatus"] = "1"
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        if (staleResponse.Headers.TryGetValues("HX-Redirect", out var staleResponseRedirectValues))
+        {
+            using var staleRedirectedResponse = await SendHtmxGetAsync(client, staleResponseRedirectValues.Single());
+            staleRedirectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            staleResponseHtml = await staleRedirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            staleResponseHtml.Contains("Concurrency conflict. Reload the invoice and try again.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("Concurrency", StringComparison.OrdinalIgnoreCase))
+            .Should().BeTrue();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceEInvoiceDownload_WithMissingSnapshot_ShouldRedirectToEditor()
+    {
+        var invoiceId = Guid.NewGuid();
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
+            seedDatabase: db =>
+            {
+                db.Set<Invoice>().Add(new Invoice
+                {
+                    Id = invoiceId,
+                    Status = InvoiceStatus.Open,
+                    Currency = "EUR",
+                    DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    RowVersion = new byte[] { 1 }
+                });
+            });
+
+        using var response = await client.GetAsync($"/Crm/DownloadInvoiceEInvoiceArtifact?id={invoiceId}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location.Should().NotBeNull();
+        response.Headers.Location!.ToString().Should().Be($"/Crm/EditInvoice?id={invoiceId}");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceEInvoiceDownload_WithGeneratedSnapshotAndReadyGenerator_ShouldReturnFileContent()
+    {
+        var invoiceId = Guid.NewGuid();
+        var expectedContent = new byte[] { 1, 2, 3, 4 };
+        var generator = new RecordingEInvoiceGenerationService(new EInvoiceGenerationResult(
+            EInvoiceGenerationStatus.Generated,
+            "Generated",
+            new EInvoiceArtifact(
+                invoiceId,
+                EInvoiceArtifactFormat.ZugferdFacturX,
+                "application/pdf",
+                "invoice.xml",
+                expectedContent,
+                "factur-x-test-profile",
+                new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc))));
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
+            seedDatabase: db =>
+            {
+                db.Set<Invoice>().Add(new Invoice
+                {
+                    Id = invoiceId,
+                    Status = InvoiceStatus.Open,
+                    Currency = "EUR",
+                    DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedSnapshotJson = BuildReadyInvoiceSnapshot(invoiceId),
+                    RowVersion = new byte[] { 1 }
+                });
+            },
+            configureServices: services =>
+            {
+                services.RemoveAll<IEInvoiceGenerationService>();
+                services.AddSingleton<IEInvoiceGenerationService>(generator);
+            });
+
+        using var response = await client.GetAsync($"/Crm/DownloadInvoiceEInvoiceArtifact?id={invoiceId}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+        var content = await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
+        content.Should().Equal(expectedContent);
+        generator.Calls.Should().Be(1);
+        generator.LastInvoiceId.Should().Be(invoiceId);
+        generator.LastFormat.Should().Be(EInvoiceArtifactFormat.ZugferdFacturX);
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceEInvoiceDownload_WithXRechnungFormat_ShouldReturnXmlContent()
+    {
+        var invoiceId = Guid.NewGuid();
+        var expectedContent = new byte[] { 5, 6, 7, 8 };
+        var generator = new RecordingEInvoiceGenerationService(new EInvoiceGenerationResult(
+            EInvoiceGenerationStatus.Generated,
+            "Generated",
+            new EInvoiceArtifact(
+                invoiceId,
+                EInvoiceArtifactFormat.XRechnung,
+                "application/xml",
+                "rechnung.xml",
+                expectedContent,
+                "xrechnung-test-profile",
+                new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc))));
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
+            seedDatabase: db =>
+            {
+                db.Set<Invoice>().Add(new Invoice
+                {
+                    Id = invoiceId,
+                    Status = InvoiceStatus.Open,
+                    Currency = "EUR",
+                    DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedSnapshotJson = BuildReadyInvoiceSnapshot(invoiceId),
+                    RowVersion = new byte[] { 1 }
+                });
+            },
+            configureServices: services =>
+            {
+                services.RemoveAll<IEInvoiceGenerationService>();
+                services.AddSingleton<IEInvoiceGenerationService>(generator);
+            });
+
+        using var response = await client.GetAsync($"/Crm/DownloadInvoiceEInvoiceArtifact?id={invoiceId}&format=XRechnung", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/xml");
+        var content = await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
+        content.Should().Equal(expectedContent);
+        generator.Calls.Should().Be(1);
+        generator.LastInvoiceId.Should().Be(invoiceId);
+        generator.LastFormat.Should().Be(EInvoiceArtifactFormat.XRechnung);
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceEInvoiceDownload_WithUnsupportedFormat_ShouldRedirectToEditor()
+    {
+        var invoiceId = Guid.NewGuid();
+        var generator = new RecordingEInvoiceGenerationService(new EInvoiceGenerationResult(
+            EInvoiceGenerationStatus.NotConfigured,
+            "Not configured"));
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
+            seedDatabase: db =>
+            {
+                db.Set<Invoice>().Add(new Invoice
+                {
+                    Id = invoiceId,
+                    Status = InvoiceStatus.Open,
+                    Currency = "EUR",
+                    DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedSnapshotJson = BuildReadyInvoiceSnapshot(invoiceId),
+                    RowVersion = new byte[] { 1 }
+                });
+            },
+            configureServices: services =>
+            {
+                services.RemoveAll<IEInvoiceGenerationService>();
+                services.AddSingleton<IEInvoiceGenerationService>(generator);
+            });
+
+        using var response = await client.GetAsync($"/Crm/DownloadInvoiceEInvoiceArtifact?id={invoiceId}&format=999", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location.Should().NotBeNull();
+        response.Headers.Location!.ToString().Should().Be($"/Crm/EditInvoice?id={invoiceId}");
+        generator.Calls.Should().Be(0);
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceRefund_WithMissingRowVersion_ShouldShowFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var invoiceId = await CreateTestInvoiceAndReturnIdAsync(client, WebAdminTestFactory.TestOrderId, WebAdminTestFactory.TestOrderPaymentId);
+
+        using var editorResponse = await SendHtmxGetAsync(client, $"/Crm/EditInvoice?id={invoiceId}");
+        editorResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var editorHtml = await editorResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Crm/RefundInvoice",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(editorHtml),
+                ["InvoiceId"] = invoiceId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["AmountMinor"] = "1",
+                ["Currency"] = "EUR",
+                ["Reason"] = "Smoke missing row version invoice refund."
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        if (response.Headers.TryGetValues("HX-Redirect", out var responseRedirectValues))
+        {
+            using var redirectedResponse = await SendHtmxGetAsync(client, responseRedirectValues.Single());
+            redirectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            responseHtml = redirectedHtml;
+        }
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            responseHtml.Contains("RowVersion is required.", StringComparison.Ordinal) ||
+            responseHtml.Contains("Failed to record invoice refund.", StringComparison.Ordinal))
+            .Should().BeTrue();
+        response.Headers.TryGetValues("Content-Security-Policy", out var responseCspValues).Should().BeTrue();
+        responseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceRefund_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var invoiceId = await CreateTestInvoiceAndReturnIdAsync(client, WebAdminTestFactory.TestOrderId, WebAdminTestFactory.TestOrderPaymentId);
+
+        var editorPath = $"/Crm/EditInvoice?id={invoiceId}";
+        using var editorTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        editorTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var editorTokenHtml = await editorTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(editorTokenHtml, "RowVersion");
+
+        using var firstRefundResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/RefundInvoice",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["InvoiceId"] = invoiceId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["AmountMinor"] = "1",
+                    ["Currency"] = "EUR",
+                    ["Reason"] = "Smoke first invoice refund."
+                },
+                editorTokenHtml));
+        firstRefundResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstRefundResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/RefundInvoice",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["InvoiceId"] = invoiceId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["AmountMinor"] = "1",
+                    ["Currency"] = "EUR",
+                    ["Reason"] = "Smoke stale invoice refund."
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        if (staleResponse.Headers.TryGetValues("HX-Redirect", out var staleResponseRedirectValues))
+        {
+            using var staleRedirectedResponse = await SendHtmxGetAsync(client, staleResponseRedirectValues.Single());
+            staleRedirectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            staleResponseHtml = await staleRedirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            staleResponseHtml.Contains("Concurrency conflict. Reload the invoice and try again.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("Concurrency", StringComparison.OrdinalIgnoreCase))
+            .Should().BeTrue();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedSegmentEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var segmentName = $"SmokeSegment-{Guid.NewGuid():N}";
+
+        var segmentId = await CreateTestSegmentAndReturnIdAsync(client, segmentName);
+
+        using var editResponse = await SendHtmxGetAsync(client, $"/Crm/EditSegment?id={segmentId}");
+        editResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var editHtml = await editResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditSegment",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(editHtml),
+                ["Id"] = segmentId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["Name"] = segmentName,
+                ["Description"] = "Smoke missing row-version for segment edit."
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedSegmentEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var segmentName = $"SmokeSegment-{Guid.NewGuid():N}";
+
+        var segmentId = await CreateTestSegmentAndReturnIdAsync(client, segmentName);
+        var editorPath = $"/Crm/EditSegment?id={segmentId}";
+
+        using var initialTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        initialTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var initialTokenHtml = await initialTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(initialTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditSegment",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = segmentId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["Name"] = $"{segmentName} v1",
+                    ["Description"] = "Smoke stale segment flow v1"
+                },
+                initialTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/EditSegment",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = segmentId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["Name"] = $"{segmentName} v2",
+                    ["Description"] = "Smoke stale segment flow v2"
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        if (staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues))
+        {
+            using var staleRedirectedResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+            staleRedirectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            staleResponseHtml = await staleRedirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedWarehouseEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var warehouseName = $"Smoke Warehouse {Guid.NewGuid():N}";
+        var warehouseId = await CreateTestWarehouseAndReturnIdAsync(
+            client,
+            warehouseName,
+            "Berlin-Edit",
+            "Smoke warehouse for row-version validation.",
+            isDefault: true);
+        var editorPath = $"/Inventory/EditWarehouse?id={warehouseId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editorPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditWarehouse",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = warehouseId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["BusinessId"] = ExtractHiddenInputValue(tokenHtml, "BusinessId"),
+                ["Name"] = $"{warehouseName} updated",
+                ["Location"] = "Berlin West",
+                ["Description"] = "Row-version smoke update.",
+                ["IsDefault"] = "false"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedWarehouseEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var warehouseName = $"Smoke Warehouse {Guid.NewGuid():N}";
+        var warehouseId = await CreateTestWarehouseAndReturnIdAsync(
+            client,
+            warehouseName,
+            "Berlin-Edit",
+            "Smoke warehouse for stale row-version.",
+            isDefault: true);
+        var editorPath = $"/Inventory/EditWarehouse?id={warehouseId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditWarehouse",
+            AddRequestVerificationToken(
+                BuildWarehouseEditPayload(
+                    warehouseId.ToString(),
+                    staleRowVersion,
+                    $"{warehouseName} - first",
+                    "Berlin West",
+                    "Smoke warehouse stale update phase 1.",
+                    false),
+                baselineTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues).Should().BeTrue();
+        firstRedirectValues!.Single().Should().Contain("/Inventory/EditWarehouse");
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditWarehouse",
+            AddRequestVerificationToken(
+                BuildWarehouseEditPayload(
+                    warehouseId.ToString(),
+                    staleRowVersion,
+                    $"{warehouseName} - stale",
+                    "Berlin East",
+                    "Smoke warehouse stale update phase 2.",
+                    true),
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        if (staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues))
+        {
+            using var staleRedirectResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+            staleRedirectResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            staleResponseHtml = await staleRedirectResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedSupplierEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var supplierName = $"Smoke Supplier {Guid.NewGuid():N}";
+        var supplierEmail = $"smoke-{Guid.NewGuid():N}@example.test";
+        var supplierId = await CreateTestSupplierAndReturnIdAsync(client, supplierName, supplierEmail);
+        var editorPath = $"/Inventory/EditSupplier?id={supplierId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editorPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditSupplier",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = supplierId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["BusinessId"] = ExtractHiddenInputValue(tokenHtml, "BusinessId"),
+                ["Name"] = $"{supplierName} updated",
+                ["Email"] = supplierEmail,
+                ["Phone"] = "+49301234567",
+                ["Address"] = "Supplier Street 2, Berlin",
+                ["Notes"] = "Supplier row-version smoke update."
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedSupplierEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var supplierName = $"Smoke Supplier {Guid.NewGuid():N}";
+        var supplierEmail = $"smoke-{Guid.NewGuid():N}@example.test";
+        var supplierId = await CreateTestSupplierAndReturnIdAsync(client, supplierName, supplierEmail);
+        var editorPath = $"/Inventory/EditSupplier?id={supplierId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditSupplier",
+            AddRequestVerificationToken(
+                BuildSupplierEditPayload(
+                    supplierId.ToString(),
+                    staleRowVersion,
+                    $"{supplierName} - first",
+                    supplierEmail,
+                    "+49301234567",
+                    "Supplier Street 1, Berlin",
+                    "Smoke supplier stale update phase 1."),
+                baselineTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues).Should().BeTrue();
+        firstRedirectValues!.Single().Should().Contain("/Inventory/EditSupplier");
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditSupplier",
+            AddRequestVerificationToken(
+                BuildSupplierEditPayload(
+                    supplierId.ToString(),
+                    staleRowVersion,
+                    $"{supplierName} - stale",
+                    supplierEmail,
+                    "+49301230000",
+                    "Supplier Street 2, Berlin",
+                    "Smoke supplier stale update phase 2."),
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        if (staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues))
+        {
+            using var staleRedirectResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+            staleRedirectResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            staleResponseHtml = await staleRedirectResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedStockLevelEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var (warehouseId, stockLevelId) = await CreateTestStockLevelAndReturnIdAsync(client);
+        var editPath = $"/Inventory/EditStockLevel?id={stockLevelId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditStockLevel",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Id"] = stockLevelId.ToString(),
+                ["RowVersion"] = string.Empty,
+                ["WarehouseId"] = warehouseId.ToString(),
+                ["ProductVariantId"] = ExtractHiddenInputValue(tokenHtml, "ProductVariantId"),
+                ["AvailableQuantity"] = "33",
+                ["ReservedQuantity"] = "1",
+                ["ReorderPoint"] = "7",
+                ["ReorderQuantity"] = "15",
+                ["InTransitQuantity"] = "4"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedStockLevelEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var (warehouseId, stockLevelId) = await CreateTestStockLevelAndReturnIdAsync(client);
+        var editPath = $"/Inventory/EditStockLevel?id={stockLevelId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditStockLevel",
+            AddRequestVerificationToken(
+                BuildStockLevelEditPayload(
+                    stockLevelId.ToString(),
+                    staleRowVersion,
+                    warehouseId.ToString(),
+                    ExtractHiddenInputValue(baselineTokenHtml, "ProductVariantId"),
+                    "33",
+                    "1",
+                    "7",
+                    "15",
+                    "4"),
+                baselineTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var firstRedirectValues).Should().BeTrue();
+        firstRedirectValues!.Single().Should().Contain("/Inventory/EditStockLevel");
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Inventory/EditStockLevel",
+            AddRequestVerificationToken(
+                BuildStockLevelEditPayload(
+                    stockLevelId.ToString(),
+                    staleRowVersion,
+                    warehouseId.ToString(),
+                    ExtractHiddenInputValue(staleTokenHtml, "ProductVariantId"),
+                    "34",
+                    "2",
+                    "8",
+                    "16",
+                    "5"),
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        if (staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues))
+        {
+            using var staleRedirectResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+            staleRedirectResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            staleResponseHtml = await staleRedirectResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedCustomerSegmentMembershipLifecycle_ShouldAssignAndRemoveSegment()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var crmCustomerFirstName = $"SmokeCustomer{Guid.NewGuid():N}";
+        var crmCustomerLastName = "SegmentOps";
+        var crmCustomerEmail = $"segment-customer-{Guid.NewGuid():N}@example.test";
+        var crmSegmentName = $"SmokeSegment-{Guid.NewGuid():N}";
+
+        var customerId = await CreateTestCustomerAndReturnIdAsync(client, crmCustomerFirstName, crmCustomerLastName, crmCustomerEmail);
+        var segmentId = await CreateTestSegmentAndReturnIdAsync(client, crmSegmentName);
+
+        using var customerResponse = await SendHtmxGetAsync(client, $"/Crm/EditCustomer?id={customerId}");
+        customerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var customerHtml = await customerResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var assignResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/CustomerSegmentMemberships",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["CustomerId"] = customerId.ToString(),
+                    ["CustomerSegmentId"] = segmentId.ToString()
+                },
+                customerHtml));
+        var assignResponseHtml = await assignResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        assignResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        assignResponseHtml.Should().Contain(crmSegmentName);
+        assignResponse.Headers.TryGetValues("Content-Security-Policy", out var assignResponseCspValues).Should().BeTrue();
+        assignResponseCspValues!.Single().Should().Contain("form-action 'self'");
+
+        var membershipIdMatch = Regex.Match(
+            assignResponseHtml,
+            "name=\"membershipId\" value=\"(?<id>[0-9a-fA-F-]{36})\"",
+            RegexOptions.IgnoreCase);
+        membershipIdMatch.Success.Should().BeTrue();
+        var membershipId = membershipIdMatch.Groups["id"].Value;
+
+        using var removeResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/RemoveCustomerSegmentMembership",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(customerHtml),
+                ["customerId"] = customerId.ToString(),
+                ["membershipId"] = membershipId
+            });
+        var removeResponseHtml = await removeResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        removeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        removeResponseHtml.Should().NotContain(crmSegmentName);
+        removeResponse.Headers.TryGetValues("Content-Security-Policy", out var removeResponseCspValues).Should().BeTrue();
+        removeResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedStockTransferLifecycle_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var (stockTransferId, sourceWarehouseId, transferTargetWarehouseName) =
+            await CreateStockTransferLifecycleSeedAsync(client);
+        var listPath =
+            $"/Inventory/StockTransfers?businessId=44444444-4444-4444-4444-444444444444&warehouseId={sourceWarehouseId}&q={Uri.EscapeDataString(transferTargetWarehouseName)}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, listPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            $"/Inventory/UpdateStockTransferLifecycle?id={stockTransferId}",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["id"] = stockTransferId.ToString(),
+                ["rowVersion"] = string.Empty,
+                ["action"] = "MarkInTransit",
+                ["businessId"] = "44444444-4444-4444-4444-444444444444",
+                ["warehouseId"] = sourceWarehouseId.ToString(),
+                ["page"] = "1",
+                ["pageSize"] = "20",
+                ["q"] = transferTargetWarehouseName,
+                ["filter"] = "All"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedStockTransferLifecycle_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var (stockTransferId, sourceWarehouseId, transferTargetWarehouseName) =
+            await CreateStockTransferLifecycleSeedAsync(client);
+        var listPath =
+            $"/Inventory/StockTransfers?businessId=44444444-4444-4444-4444-444444444444&warehouseId={sourceWarehouseId}&q={Uri.EscapeDataString(transferTargetWarehouseName)}";
+
+        using var initialTokenResponse = await SendHtmxGetAsync(client, listPath);
+        initialTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var initialTokenHtml = await initialTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(initialTokenHtml, "rowVersion");
+
+        using var firstResponse = await SendHtmxPostAsync(
+            client,
+            $"/Inventory/UpdateStockTransferLifecycle?id={stockTransferId}",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["id"] = stockTransferId.ToString(),
+                    ["rowVersion"] = staleRowVersion,
+                    ["action"] = "MarkInTransit",
+                    ["businessId"] = "44444444-4444-4444-4444-444444444444",
+                    ["warehouseId"] = sourceWarehouseId.ToString(),
+                    ["page"] = "1",
+                    ["pageSize"] = "20",
+                    ["q"] = transferTargetWarehouseName,
+                    ["filter"] = "All"
+                },
+                initialTokenHtml));
+
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+        firstResponse.Headers.TryGetValues("Content-Security-Policy", out var firstCspValues).Should().BeTrue();
+        firstCspValues!.Single().Should().Contain("form-action 'self'");
+        using var secondTokenResponse = await SendHtmxGetAsync(client, listPath);
+        secondTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var secondTokenHtml = await secondTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            $"/Inventory/UpdateStockTransferLifecycle?id={stockTransferId}",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["id"] = stockTransferId.ToString(),
+                    ["rowVersion"] = staleRowVersion,
+                    ["action"] = "Complete",
+                    ["businessId"] = "44444444-4444-4444-4444-444444444444",
+                    ["warehouseId"] = sourceWarehouseId.ToString(),
+                    ["page"] = "1",
+                    ["pageSize"] = "20",
+                    ["q"] = transferTargetWarehouseName,
+                    ["filter"] = "All"
+                },
+                secondTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        if (staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues))
+        {
+            using var staleRedirectedResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+            staleRedirectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            staleResponseHtml = await staleRedirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedStockTransferLifecycle_WithWhitespaceAction_ShouldBeTrimmedAndCaseInsensitive()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var (stockTransferId, sourceWarehouseId, transferTargetWarehouseName) =
+            await CreateStockTransferLifecycleSeedAsync(client);
+
+        await PostValidStockTransferLifecycleActionAndAssertStatusAsync(
+            client,
+            stockTransferId,
+            sourceWarehouseId,
+            transferTargetWarehouseName,
+            "  markintransit  ",
+            "InTransit");
+    }
+
+    [Fact]
+    public async Task AuthenticatedPurchaseOrderLifecycle_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var (purchaseOrderId, orderNumber) = await CreatePurchaseOrderLifecycleSeedAsync(client);
+        var listPath =
+            $"/Inventory/PurchaseOrders?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(orderNumber)}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, listPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(
+            client,
+            $"/Inventory/UpdatePurchaseOrderLifecycle?id={purchaseOrderId}",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["id"] = purchaseOrderId.ToString(),
+                ["rowVersion"] = string.Empty,
+                ["action"] = "Issue",
+                ["businessId"] = "44444444-4444-4444-4444-444444444444",
+                ["page"] = "1",
+                ["pageSize"] = "20",
+                ["q"] = orderNumber,
+                ["filter"] = "All"
+            });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedPurchaseOrderLifecycle_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var (purchaseOrderId, orderNumber) = await CreatePurchaseOrderLifecycleSeedAsync(client);
+        var listPath =
+            $"/Inventory/PurchaseOrders?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(orderNumber)}";
+
+        using var initialTokenResponse = await SendHtmxGetAsync(client, listPath);
+        initialTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var initialTokenHtml = await initialTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(initialTokenHtml, "rowVersion");
+
+        using var firstResponse = await SendHtmxPostAsync(
+            client,
+            $"/Inventory/UpdatePurchaseOrderLifecycle?id={purchaseOrderId}",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["id"] = purchaseOrderId.ToString(),
+                    ["rowVersion"] = staleRowVersion,
+                    ["action"] = "Issue",
+                    ["businessId"] = "44444444-4444-4444-4444-444444444444",
+                    ["page"] = "1",
+                    ["pageSize"] = "20",
+                    ["q"] = orderNumber,
+                    ["filter"] = "All"
+                },
+                initialTokenHtml));
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstResponse.Headers.TryGetValues("Content-Security-Policy", out var firstResponseCspValues).Should().BeTrue();
+        firstResponseCspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            $"/Inventory/UpdatePurchaseOrderLifecycle?id={purchaseOrderId}",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["id"] = purchaseOrderId.ToString(),
+                    ["rowVersion"] = staleRowVersion,
+                    ["action"] = "Receive",
+                    ["businessId"] = "44444444-4444-4444-4444-444444444444",
+                    ["page"] = "1",
+                    ["pageSize"] = "20",
+                    ["q"] = orderNumber,
+                    ["filter"] = "All"
+                },
+                initialTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        if (staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues))
+        {
+            using var staleRedirectedResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+            staleRedirectedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            staleResponseHtml = await staleRedirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        }
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponseHtml.Should().Contain("Concurrency");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleResponseCspValues).Should().BeTrue();
+        staleResponseCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedPurchaseOrderLifecycle_WithCaseInsensitiveAction_ShouldBeAcceptedAndExecuted()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+
+        var (purchaseOrderId, orderNumber) = await CreatePurchaseOrderLifecycleSeedAsync(client);
+
+        await PostValidPurchaseOrderLifecycleActionAndAssertStatusAsync(
+            client,
+            purchaseOrderId,
+            orderNumber,
+            "  iSsUe  ",
+            "Issued");
+    }
+
+    private static async Task<Guid> CreateTestCustomerAndReturnIdAsync(
+        HttpClient client,
+        string firstName,
+        string lastName,
+        string email)
+    {
+        using var createCustomerResponse = await SendHtmxGetAsync(client, "/Crm/CreateCustomer");
+        createCustomerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createCustomerHtml = await createCustomerResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var createResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/CreateCustomer",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(createCustomerHtml),
+                ["UserId"] = string.Empty,
+                ["CompanyName"] = string.Empty,
+                ["TaxProfileType"] = "Consumer",
+                ["VatId"] = string.Empty,
+                ["FirstName"] = firstName,
+                ["LastName"] = lastName,
+                ["Email"] = email,
+                ["Phone"] = "+493012345678",
+                ["Notes"] = "Smoke-created CRM customer.",
+                ["Addresses[0].Id"] = string.Empty,
+                ["Addresses[0].AddressId"] = string.Empty,
+                ["Addresses[0].Line1"] = "CRM Street 1",
+                ["Addresses[0].Line2"] = string.Empty,
+                ["Addresses[0].PostalCode"] = "10115",
+                ["Addresses[0].City"] = "Berlin",
+                ["Addresses[0].State"] = "Berlin",
+                ["Addresses[0].Country"] = "DE",
+                ["Addresses[0].IsDefaultBilling"] = "true",
+                ["Addresses[0].IsDefaultShipping"] = "true"
+            });
+        createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var customerListResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/Customers?query={Uri.EscapeDataString(email)}");
+        customerListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var customerListHtml = await customerListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        return ExtractHrefQueryGuid(customerListHtml, "/Crm/EditCustomer", "id");
+    }
+
+    private static async Task<(Guid TransferId, Guid SourceWarehouseId, string TargetWarehouseName)> CreateStockTransferLifecycleSeedAsync(
+        HttpClient client)
+    {
+        var warehouseFromName = $"Smoke-Source-{Guid.NewGuid():N}";
+        var warehouseToName = $"Smoke-Target-{Guid.NewGuid():N}";
+
+        var warehouseFromRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Inventory/CreateWarehouse?businessId=44444444-4444-4444-4444-444444444444",
+            "/Inventory/CreateWarehouse",
+            $"/Inventory/Warehouses?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(warehouseFromName)}",
+            warehouseFromName,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["Name"] = warehouseFromName,
+                ["Location"] = "Berlin Source",
+                ["Description"] = "Smoke-created source warehouse.",
+                ["IsDefault"] = "true"
+            });
+
+        var warehouseToRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Inventory/CreateWarehouse?businessId=44444444-4444-4444-4444-444444444444",
+            "/Inventory/CreateWarehouse",
+            $"/Inventory/Warehouses?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(warehouseToName)}",
+            warehouseToName,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["Name"] = warehouseToName,
+                ["Location"] = "Berlin Target",
+                ["Description"] = "Smoke-created destination warehouse.",
+                ["IsDefault"] = "false"
+            });
+
+        var warehouseFromId = ExtractQueryGuid(warehouseFromRedirect, "id");
+        var warehouseToId = ExtractQueryGuid(warehouseToRedirect, "id");
+
+        await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            $"/Inventory/CreateStockLevel?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseFromId}",
+            "/Inventory/CreateStockLevel",
+            $"/Inventory/StockLevels?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseFromId}&q=WEBADMIN-SMOKE-VARIANT",
+            "WEBADMIN-SMOKE-VARIANT",
+            new Dictionary<string, string>
+            {
+                ["WarehouseId"] = warehouseFromId.ToString(),
+                ["ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["AvailableQuantity"] = "25",
+                ["ReservedQuantity"] = "2",
+                ["ReorderPoint"] = "5",
+                ["ReorderQuantity"] = "20",
+                ["InTransitQuantity"] = "3"
+            });
+
+        var stockTransferRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            $"/Inventory/CreateStockTransfer?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseFromId}",
+            "/Inventory/CreateStockTransfer",
+            $"/Inventory/StockTransfers?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseFromId}&q={Uri.EscapeDataString(warehouseToName)}",
+            warehouseToName,
+            new Dictionary<string, string>
+            {
+                ["FromWarehouseId"] = warehouseFromId.ToString(),
+                ["ToWarehouseId"] = warehouseToId.ToString(),
+                ["Status"] = "Draft",
+                ["Lines[0].ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["Lines[0].Quantity"] = "4"
+            });
+
+        return (
+            ExtractQueryGuid(stockTransferRedirect, "id"),
+            warehouseFromId,
+            warehouseToName);
+    }
+
+    private static async Task<(Guid PurchaseOrderId, string OrderNumber)> CreatePurchaseOrderLifecycleSeedAsync(
+        HttpClient client)
+    {
+        var supplierName = $"SmokeSupplier-{Guid.NewGuid():N}";
+        var supplierEmail = $"s-{Guid.NewGuid():N}@example.test";
+
+        var supplierRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Inventory/CreateSupplier?businessId=44444444-4444-4444-4444-444444444444",
+            "/Inventory/CreateSupplier",
+            $"/Inventory/Suppliers?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(supplierName)}",
+            supplierName,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["Name"] = supplierName,
+                ["Email"] = supplierEmail,
+                ["Phone"] = "+49301234567",
+                ["Address"] = "Supplier Street 1, Berlin",
+                ["Notes"] = "Smoke-created supplier."
+            });
+        var supplierId = ExtractQueryGuid(supplierRedirect, "id");
+
+        var orderNumber = $"PO-{Guid.NewGuid():N}";
+
+        var purchaseOrderRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Inventory/CreatePurchaseOrder?businessId=44444444-4444-4444-4444-444444444444",
+            "/Inventory/CreatePurchaseOrder",
+            $"/Inventory/PurchaseOrders?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(orderNumber)}",
+            orderNumber,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["SupplierId"] = supplierId.ToString(),
+                ["Status"] = "Draft",
+                ["OrderNumber"] = orderNumber,
+                ["OrderedAtUtc"] = "2026-04-24T12:00:00",
+                ["Lines[0].ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["Lines[0].Quantity"] = "6",
+                ["Lines[0].UnitCostMinor"] = "700",
+                ["Lines[0].TotalCostMinor"] = "4200"
+            });
+
+        return (ExtractQueryGuid(purchaseOrderRedirect, "id"), orderNumber);
+    }
+
+    private static async Task<Guid> CreateTestWarehouseAndReturnIdAsync(
+        HttpClient client,
+        string warehouseName,
+        string location,
+        string description,
+        bool isDefault)
+    {
+        var warehouseRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Inventory/CreateWarehouse?businessId=44444444-4444-4444-4444-444444444444",
+            "/Inventory/CreateWarehouse",
+            $"/Inventory/Warehouses?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(warehouseName)}",
+            warehouseName,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["Name"] = warehouseName,
+                ["Location"] = location,
+                ["Description"] = description,
+                ["IsDefault"] = isDefault.ToString().ToLowerInvariant()
+            });
+
+        return ExtractQueryGuid(warehouseRedirect, "id");
+    }
+
+    private static async Task<Guid> CreateTestSupplierAndReturnIdAsync(
+        HttpClient client,
+        string supplierName,
+        string supplierEmail)
+    {
+        var supplierRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            "/Inventory/CreateSupplier?businessId=44444444-4444-4444-4444-444444444444",
+            "/Inventory/CreateSupplier",
+            $"/Inventory/Suppliers?businessId=44444444-4444-4444-4444-444444444444&q={Uri.EscapeDataString(supplierEmail)}",
+            supplierName,
+            new Dictionary<string, string>
+            {
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["Name"] = supplierName,
+                ["Email"] = supplierEmail,
+                ["Phone"] = "+49301234567",
+                ["Address"] = "Supplier Street 1, Berlin",
+                ["Notes"] = "Smoke-created supplier."
+            });
+
+        return ExtractQueryGuid(supplierRedirect, "id");
+    }
+
+    private static async Task<(Guid WarehouseId, Guid StockLevelId)> CreateTestStockLevelAndReturnIdAsync(HttpClient client)
+    {
+        var warehouseName = $"Smoke-StockLevel-{Guid.NewGuid():N}";
+        var warehouseId = await CreateTestWarehouseAndReturnIdAsync(
+            client,
+            warehouseName,
+            "Berlin StockLevel",
+            "Smoke stock-level warehouse.",
+            false);
+
+        var stockLevelRedirect = await PostValidEditorMutationAndAssertListedAsync(
+            client,
+            $"/Inventory/CreateStockLevel?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}",
+            "/Inventory/CreateStockLevel",
+            $"/Inventory/StockLevels?businessId=44444444-4444-4444-4444-444444444444&warehouseId={warehouseId}&q=WEBADMIN-SMOKE-VARIANT",
+            "WEBADMIN-SMOKE-VARIANT",
+            new Dictionary<string, string>
+            {
+                ["WarehouseId"] = warehouseId.ToString(),
+                ["ProductVariantId"] = WebAdminTestFactory.TestProductVariantId.ToString(),
+                ["AvailableQuantity"] = "25",
+                ["ReservedQuantity"] = "2",
+                ["ReorderPoint"] = "5",
+                ["ReorderQuantity"] = "20",
+                ["InTransitQuantity"] = "3"
+            });
+
+        return (warehouseId, ExtractQueryGuid(stockLevelRedirect, "id"));
+    }
+
+    private static async Task<Guid> CreateTestSegmentAndReturnIdAsync(
+        HttpClient client,
+        string segmentName)
+    {
+        using var createSegmentTokenResponse = await SendHtmxGetAsync(client, "/Crm/CreateSegment");
+        createSegmentTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createSegmentTokenHtml = await createSegmentTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var createSegmentResponse = await SendHtmxPostAsync(
+            client,
+            "/Crm/CreateSegment",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(createSegmentTokenHtml),
+                ["Name"] = segmentName,
+                ["Description"] = "Smoke-created CRM segment."
+            });
+        createSegmentResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createSegmentResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var segmentListResponse = await SendHtmxGetAsync(
+            client,
+            $"/Crm/Segments?q={Uri.EscapeDataString(segmentName)}");
+        segmentListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var segmentListHtml = await segmentListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        return ExtractHrefQueryGuid(segmentListHtml, "/Crm/EditSegment", "id");
+    }
+
+    private static async Task<Guid> CreateTestInvoiceAndReturnIdAsync(
+        HttpClient client,
+        Guid orderId,
+        Guid paymentId)
+    {
+        const string createPath = "/Orders/CreateInvoice";
+
+        using var createInvoiceTokenResponse = await SendHtmxGetAsync(client, $"/Orders/CreateInvoice?orderId={orderId}");
+        createInvoiceTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var createInvoiceTokenHtml = await createInvoiceTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var createInvoiceResponse = await SendHtmxPostAsync(
+            client,
+            createPath,
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(createInvoiceTokenHtml),
+                ["OrderId"] = orderId.ToString(),
+                ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+                ["CustomerId"] = string.Empty,
+                ["PaymentId"] = paymentId == Guid.Empty ? string.Empty : paymentId.ToString(),
+                ["DueAtUtc"] = $"{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ss}"
+            });
+        createInvoiceResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createInvoiceResponse.Headers.TryGetValues("HX-Redirect", out var createRedirectValues).Should().BeTrue();
+        var createInvoiceRedirect = createRedirectValues!.Single();
+
+        using var invoiceListResponse = await SendHtmxGetAsync(client, createInvoiceRedirect);
+        invoiceListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var invoiceListHtml = await invoiceListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        return ExtractHrefQueryGuid(invoiceListHtml, "/Crm/EditInvoice", "id");
+    }
+
+    private static Dictionary<string, string> AddRequestVerificationToken(
+        Dictionary<string, string> form,
+        string tokenHtml)
+    {
+        form["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml);
+        return form;
+    }
+
+    private static string BuildReadyInvoiceSnapshot(Guid invoiceId)
+        => $$"""
+        {
+          "invoiceId": "{{invoiceId}}",
+          "currency": "EUR",
+          "issuedAtUtc": "2026-05-01T00:00:00Z",
+          "totalGrossMinor": 11900,
+          "issuer": {
+            "legalName": "Darwin GmbH",
+            "taxId": "DE123456789",
+            "addressLine1": "Issuer Street 1",
+            "postalCode": "10115",
+            "city": "Berlin",
+            "country": "DE"
+          },
+          "customer": {
+            "companyName": "Customer GmbH",
+            "addressLine1": "Customer Street 2",
+            "postalCode": "10115",
+            "city": "Berlin",
+            "country": "DE"
+          },
+          "lines": [
+            {
+              "id": "11111111-1111-1111-1111-111111111111",
+              "description": "Invoice line",
+              "quantity": 1,
+              "unitPriceNetMinor": 10000,
+              "totalNetMinor": 10000,
+              "totalGrossMinor": 11900
+            }
+          ]
+        }
+        """;
+
+    private sealed class RecordingEInvoiceGenerationService : IEInvoiceGenerationService
+    {
+        private readonly EInvoiceGenerationResult _result;
+
+        public RecordingEInvoiceGenerationService(EInvoiceGenerationResult result)
+        {
+            _result = result;
+        }
+
+        public int Calls { get; private set; }
+        public EInvoiceArtifactFormat? LastFormat { get; private set; }
+        public Guid LastInvoiceId { get; private set; }
+
+        public Task<EInvoiceGenerationResult> GenerateAsync(
+            Invoice invoice,
+            EInvoiceGenerationRequest request,
+            CancellationToken ct = default)
+        {
+            Calls++;
+            LastFormat = request.Format;
+            LastInvoiceId = invoice.Id;
+            return Task.FromResult(_result);
+        }
+    }
+
+    [Fact]
+    public async Task AuthenticatedBillingPlanEdit_WithMissingRowVersion_ShouldShowValidationError()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        const string editorPath = $"/Billing/EditPlan?id={WebAdminTestFactory.TestBillingPlanId}";
+        const string updatedName = "Smoke Billing Plan missing row version";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editorPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(client, "/Billing/EditPlan", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["Id"] = WebAdminTestFactory.TestBillingPlanId.ToString(),
+            ["RowVersion"] = string.Empty,
+            ["Code"] = ExtractHiddenInputValue(tokenHtml, "Code"),
+            ["Name"] = updatedName,
+            ["Description"] = "Smoke billing plan with missing row version.",
+            ["PriceMinor"] = "1290",
+            ["Currency"] = "EUR",
+            ["Interval"] = "Month",
+            ["IntervalCount"] = "1",
+            ["TrialDays"] = "14",
+            ["IsActive"] = "false",
+            ["FeaturesJson"] = "{\"smoke\":true,\"missingRowVersion\":true}"
+        });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedBillingPlanEdit_WithStaleRowVersion_ShouldSurfaceConcurrencyMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        const string editorPath = $"/Billing/EditPlan?id={WebAdminTestFactory.TestBillingPlanId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+        var planCode = ExtractHiddenInputValue(baselineTokenHtml, "Code");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Billing/EditPlan",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = WebAdminTestFactory.TestBillingPlanId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["Code"] = planCode,
+                    ["Name"] = "Smoke Billing Plan stale v1",
+                    ["Description"] = "Smoke-updated inactive billing plan.",
+                    ["PriceMinor"] = "1290",
+                    ["Currency"] = "EUR",
+                    ["Interval"] = "Month",
+                    ["IntervalCount"] = "1",
+                    ["TrialDays"] = "14",
+                    ["IsActive"] = "false",
+                    ["FeaturesJson"] = "{\"smoke\":true,\"stale\":false}"
+                },
+                baselineTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Billing/EditPlan",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["Id"] = WebAdminTestFactory.TestBillingPlanId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["Code"] = planCode,
+                    ["Name"] = "Smoke Billing Plan stale v2",
+                    ["Description"] = "Smoke-updated inactive billing plan.",
+                    ["PriceMinor"] = "1290",
+                    ["Currency"] = "EUR",
+                    ["Interval"] = "Month",
+                    ["IntervalCount"] = "1",
+                    ["TrialDays"] = "14",
+                    ["IsActive"] = "false",
+                    ["FeaturesJson"] = "{\"smoke\":true,\"stale\":true}"
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues).Should().BeTrue();
+        var staleRedirect = staleRedirectValues!.Single();
+        using var staleEditorResponse = await SendHtmxGetAsync(client, staleRedirect);
+        var staleEditorHtml = await staleEditorResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        staleEditorResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        staleEditorHtml.Should().Contain("Concurrency conflict. Reload the billing plan and try again.");
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
+        staleCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedRolePermissionsEdit_WithMissingRowVersion_ShouldShowFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editorPath = $"/Roles/Permissions?id={WebAdminTestFactory.TestRoleId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editorPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(client, "/Roles/Permissions", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["RoleId"] = WebAdminTestFactory.TestRoleId.ToString(),
+            ["RowVersion"] = string.Empty,
+            ["SelectedPermissionIds"] = WebAdminTestFactory.TestPermissionId.ToString()
+        });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            responseHtml.Contains("RowVersion is required.", StringComparison.Ordinal) ||
+            responseHtml.Contains("Failed to update role permissions.", StringComparison.Ordinal))
+            .Should().BeTrue();
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedRolePermissionsEdit_WithStaleRowVersion_ShouldSurfaceFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editorPath = $"/Roles/Permissions?id={WebAdminTestFactory.TestRoleId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(client, "/Roles/Permissions", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(baselineTokenHtml),
+            ["RoleId"] = WebAdminTestFactory.TestRoleId.ToString(),
+            ["RowVersion"] = staleRowVersion,
+            ["SelectedPermissionIds"] = WebAdminTestFactory.TestPermissionId.ToString()
+        });
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(client, "/Roles/Permissions", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(staleTokenHtml),
+            ["RoleId"] = WebAdminTestFactory.TestRoleId.ToString(),
+            ["RowVersion"] = staleRowVersion,
+            ["SelectedPermissionIds"] = WebAdminTestFactory.TestPermissionId.ToString()
+        });
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            staleResponseHtml.Contains("Failed to update role permissions.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("RowVersion is required.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("Concurrency", StringComparison.OrdinalIgnoreCase))
+            .Should().BeTrue();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
+        staleCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedUserRolesEdit_WithMissingRowVersion_ShouldShowFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editorPath = $"/Users/Roles?id={WebAdminTestFactory.TestLifecycleUserId}";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, editorPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var response = await SendHtmxPostAsync(client, "/Users/Roles", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+            ["UserId"] = WebAdminTestFactory.TestLifecycleUserId.ToString(),
+            ["RowVersion"] = string.Empty,
+            ["UserEmail"] = ExtractHiddenInputValue(tokenHtml, "UserEmail"),
+            ["UserDisplay"] = ExtractHiddenInputValue(tokenHtml, "UserEmail"),
+            ["SelectedRoleIds"] = WebAdminTestFactory.TestRoleId.ToString(),
+            ["ReturnToIndex"] = "false",
+            ["Query"] = string.Empty,
+            ["Filter"] = "All",
+            ["Page"] = "1",
+            ["PageSize"] = "20"
+        });
+        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            responseHtml.Contains("RowVersion is required.", StringComparison.Ordinal) ||
+            responseHtml.Contains("Failed to update user roles.", StringComparison.Ordinal))
+            .Should().BeTrue();
+        response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
+        cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedUserRolesEdit_WithStaleRowVersion_ShouldSurfaceFailureMessage()
+    {
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient();
+        var editorPath = $"/Users/Roles?id={WebAdminTestFactory.TestLifecycleUserId}";
+
+        using var baselineTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        baselineTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var baselineTokenHtml = await baselineTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var staleRowVersion = ExtractHiddenInputValue(baselineTokenHtml, "RowVersion");
+
+        using var firstUpdateResponse = await SendHtmxPostAsync(
+            client,
+            "/Users/Roles",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["UserId"] = WebAdminTestFactory.TestLifecycleUserId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["UserEmail"] = ExtractHiddenInputValue(baselineTokenHtml, "UserEmail"),
+                    ["UserDisplay"] = ExtractHiddenInputValue(baselineTokenHtml, "UserEmail"),
+                    ["SelectedRoleIds"] = WebAdminTestFactory.TestRoleId.ToString(),
+                    ["ReturnToIndex"] = "false",
+                    ["Query"] = string.Empty,
+                    ["Filter"] = "All",
+                    ["Page"] = "1",
+                    ["PageSize"] = "20"
+                },
+                baselineTokenHtml));
+        firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        firstUpdateResponse.Headers.TryGetValues("HX-Redirect", out var _).Should().BeTrue();
+
+        using var staleTokenResponse = await SendHtmxGetAsync(client, editorPath);
+        staleTokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var staleTokenHtml = await staleTokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var staleResponse = await SendHtmxPostAsync(
+            client,
+            "/Users/Roles",
+            AddRequestVerificationToken(
+                new Dictionary<string, string>
+                {
+                    ["UserId"] = WebAdminTestFactory.TestLifecycleUserId.ToString(),
+                    ["RowVersion"] = staleRowVersion,
+                    ["UserEmail"] = ExtractHiddenInputValue(staleTokenHtml, "UserEmail"),
+                    ["UserDisplay"] = ExtractHiddenInputValue(staleTokenHtml, "UserEmail"),
+                    ["SelectedRoleIds"] = WebAdminTestFactory.TestRoleId.ToString(),
+                    ["ReturnToIndex"] = "false",
+                    ["Query"] = string.Empty,
+                    ["Filter"] = "All",
+                    ["Page"] = "1",
+                    ["PageSize"] = "20"
+                },
+                staleTokenHtml));
+        var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        (
+            staleResponseHtml.Contains("Failed to update user roles.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("RowVersion is required.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("Concurrency", StringComparison.OrdinalIgnoreCase))
+            .Should().BeTrue();
+        staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
+        staleCspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    private static async Task<Guid> CreateShippingMethodAndGetIdAsync(
+        HttpClient client,
+        string name,
+        string carrier,
+        string service)
+    {
+        const string createPath = "/ShippingMethods/Create";
+
+        using var tokenResponse = await SendHtmxGetAsync(client, createPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var createResponse = await SendHtmxPostAsync(
+            client,
+            createPath,
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["Name"] = name,
+                ["Carrier"] = carrier,
+                ["Service"] = service,
+                ["CountriesCsv"] = "DE",
+                ["IsActive"] = "true",
+                ["Currency"] = "EUR",
+                ["Rates[0].MaxShipmentMass"] = "1500",
+                ["Rates[0].MaxSubtotalNetMinor"] = "3000",
+                ["Rates[0].PriceMinor"] = "1299",
+                ["Rates[0].SortOrder"] = "0"
+            });
+
+        createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createResponse.Headers.TryGetValues("HX-Redirect", out var createRedirectValues)
+            .Should().BeTrue("successful shipping create should redirect");
+        createRedirectValues!.Single().Should().Contain("/ShippingMethods");
+        createResponse.Headers.TryGetValues("Content-Security-Policy", out var createCspValues).Should().BeTrue();
+        createCspValues!.Single().Should().Contain("form-action 'self'");
+
+        using var indexResponse = await SendHtmxGetAsync(
+            client,
+            $"/ShippingMethods?query={Uri.EscapeDataString(name)}");
+        indexResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var indexHtml = await indexResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        return ExtractShippingMethodIdFromIndexHtml(indexHtml, name);
+    }
+
+    private static async Task<Guid> CreateLoyaltyAccountAndGetIdAsync(
+        HttpClient client,
+        Guid businessId,
+        Guid userId)
+    {
+        var createPath = $"/Loyalty/CreateAccount?businessId={businessId}";
+        using var tokenResponse = await SendHtmxGetAsync(client, createPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var createResponse = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/CreateAccount",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["BusinessId"] = businessId.ToString(),
+                ["UserId"] = userId.ToString()
+            });
+        createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createResponse.Headers.TryGetValues("HX-Redirect", out var createRedirectValues).Should().BeTrue();
+        var createRedirect = createRedirectValues!.Single();
+
+        return ExtractQueryGuid(createRedirect, "id");
+    }
+
+    private static async Task<Guid> CreateLoyaltyCampaignAndGetIdAsync(
+        HttpClient client,
+        Guid businessId,
+        string campaignName,
+        string campaignTitle,
+        string landingUrl)
+    {
+        var createPath = $"/Loyalty/CreateCampaign?businessId={businessId}";
+        using var tokenResponse = await SendHtmxGetAsync(client, createPath);
+        tokenResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tokenHtml = await tokenResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        using var createResponse = await SendHtmxPostAsync(
+            client,
+            "/Loyalty/CreateCampaign",
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(tokenHtml),
+                ["BusinessId"] = businessId.ToString(),
+                ["Name"] = campaignName,
+                ["Title"] = campaignTitle,
+                ["Subtitle"] = "Smoke campaign subtitle",
+                ["Body"] = $"Smoke campaign body for {campaignName}.",
+                ["MediaUrl"] = string.Empty,
+                ["LandingUrl"] = landingUrl,
+                ["Channels"] = "3",
+                ["StartsAtUtc"] = string.Empty,
+                ["EndsAtUtc"] = string.Empty,
+                ["TargetingJson"] = "{}",
+                ["PayloadJson"] = "{}"
+            });
+        createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createResponse.Headers.TryGetValues("HX-Redirect", out var createRedirectValues).Should().BeTrue();
+        var createRedirect = createRedirectValues!.Single();
+
+        return ExtractQueryGuid(createRedirect, "id");
+    }
+
+    private static void SeedCampaignAndDeliveryForStatusActionTests(
+        Darwin.Infrastructure.Persistence.Db.DarwinDbContext db,
+        Guid businessId,
+        Guid campaignId,
+        Guid deliveryId)
+    {
+        db.Set<Campaign>()
+            .Add(new Campaign
+            {
+                Id = campaignId,
+                BusinessId = businessId,
+                Name = $"Smoke Delivery Campaign {campaignId:N}",
+                Title = "Smoke Delivery Campaign Title",
+                Subtitle = "Seeded for campaign delivery status action test",
+                Body = "Seeded campaign delivery body for status action testing.",
+                Channels = CampaignChannels.InApp,
+                IsActive = true,
+                TargetingJson = "{}",
+                PayloadJson = "{}",
+                RowVersion = [1]
+            });
+
+        db.Set<CampaignDelivery>().Add(new CampaignDelivery
+        {
+            Id = deliveryId,
+            CampaignId = campaignId,
+            RecipientUserId = WebAdminTestFactory.TestMemberUserId,
+            BusinessId = businessId,
+            Channel = CampaignDeliveryChannel.InApp,
+            Status = CampaignDeliveryStatus.Pending,
+            Destination = "smoke-recipient@example.test",
+            AttemptCount = 0,
+            RowVersion = [1]
+        });
+    }
+
+    private static Dictionary<string, string> BuildShippingMethodEditPayload(
+        string id,
+        string rowVersion,
+        string name,
+        string carrier,
+        string service)
+    {
+        return new Dictionary<string, string>
+        {
+            ["Id"] = id,
+            ["RowVersion"] = rowVersion,
+            ["Name"] = name,
+            ["Carrier"] = carrier,
+            ["Service"] = service,
+            ["CountriesCsv"] = "DE",
+            ["IsActive"] = "true",
+            ["Currency"] = "EUR",
+            ["Rates[0].MaxShipmentMass"] = "1600",
+            ["Rates[0].MaxSubtotalNetMinor"] = "3500",
+            ["Rates[0].PriceMinor"] = "1399",
+            ["Rates[0].SortOrder"] = "0"
+        };
+    }
+
+    private static Dictionary<string, string> BuildWarehouseEditPayload(
+        string id,
+        string rowVersion,
+        string name,
+        string location,
+        string description,
+        bool isDefault)
+    {
+        return new Dictionary<string, string>
+        {
+            ["Id"] = id,
+            ["RowVersion"] = rowVersion,
+            ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+            ["Name"] = name,
+            ["Location"] = location,
+            ["Description"] = description,
+            ["IsDefault"] = isDefault.ToString().ToLowerInvariant()
+        };
+    }
+
+    private static Dictionary<string, string> BuildSupplierEditPayload(
+        string id,
+        string rowVersion,
+        string name,
+        string email,
+        string phone,
+        string address,
+        string notes)
+    {
+        return new Dictionary<string, string>
+        {
+            ["Id"] = id,
+            ["RowVersion"] = rowVersion,
+            ["BusinessId"] = "44444444-4444-4444-4444-444444444444",
+            ["Name"] = name,
+            ["Email"] = email,
+            ["Phone"] = phone,
+            ["Address"] = address,
+            ["Notes"] = notes
+        };
+    }
+
+    private static Dictionary<string, string> BuildStockLevelEditPayload(
+        string id,
+        string rowVersion,
+        string warehouseId,
+        string productVariantId,
+        string availableQuantity,
+        string reservedQuantity,
+        string reorderPoint,
+        string reorderQuantity,
+        string inTransitQuantity)
+    {
+        return new Dictionary<string, string>
+        {
+            ["Id"] = id,
+            ["RowVersion"] = rowVersion,
+            ["WarehouseId"] = warehouseId,
+            ["ProductVariantId"] = productVariantId,
+            ["AvailableQuantity"] = availableQuantity,
+            ["ReservedQuantity"] = reservedQuantity,
+            ["ReorderPoint"] = reorderPoint,
+            ["ReorderQuantity"] = reorderQuantity,
+            ["InTransitQuantity"] = inTransitQuantity
+        };
+    }
+
+    private static Dictionary<string, string> BuildMediaAssetEditPayload(
+        string id,
+        string rowVersion,
+        string title,
+        string alt,
+        string url,
+        string originalFileName,
+        string sizeBytes,
+        string width,
+        string height,
+        string role)
+    {
+        return new Dictionary<string, string>
+        {
+            ["Id"] = id,
+            ["RowVersion"] = rowVersion,
+            ["Url"] = url,
+            ["OriginalFileName"] = originalFileName,
+            ["SizeBytes"] = sizeBytes,
+            ["Width"] = width,
+            ["Height"] = height,
+            ["Alt"] = alt,
+            ["Title"] = title,
+            ["Role"] = role
+        };
+    }
+
+    private static Guid ExtractShippingMethodIdFromIndexHtml(string html, string shippingMethodName)
+    {
+        var pattern = $@"{Regex.Escape(shippingMethodName)}.*?href=""\/ShippingMethods\/Edit\?id=(?<id>[0-9a-fA-F-]{{36}})""";
+        var match = Regex.Match(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        match.Success.Should().BeTrue("shipping method '{0}' should be present in the index view", shippingMethodName);
+        return Guid.Parse(match.Groups["id"].Value);
+    }
+
     private static Dictionary<string, string> BuildValidSiteSettingsForm(
         string id,
         string rowVersion,
@@ -3336,6 +7281,24 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         throw new InvalidOperationException($"Redirect path '{path}' did not contain query parameter '{parameterName}' or a trailing GUID segment.");
+    }
+
+    private static Guid ExtractHrefQueryGuid(string html, string routePath, string parameterName)
+    {
+        var hrefPattern = @"href\s*=\s*(?<quote>[""'])(?<url>[^""']+)\k<quote>";
+        foreach (Match match in Regex.Matches(html, hrefPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            var href = match.Groups["url"].Value;
+            if (!href.Contains(routePath, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return ExtractQueryGuid(href, parameterName);
+        }
+
+        throw new InvalidOperationException(
+            $"Could not find href for '{routePath}' containing query parameter '{parameterName}' in provided HTML.");
     }
 
 }

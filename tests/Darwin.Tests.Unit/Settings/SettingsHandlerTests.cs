@@ -373,6 +373,29 @@ public sealed class SettingsHandlerTests
     }
 
     [Fact]
+    public async Task UpdateSiteSetting_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
+    {
+        await using var db = ConcurrencyFailingSettingsTestDbContext.Create();
+        var rowVersion = new byte[] { 9, 9, 9, 9 };
+        var entity = BuildSetting(rowVersion: rowVersion);
+        db.Set<SiteSetting>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateSiteSettingHandler(
+            db,
+            new SiteSettingEditValidator(CreateLocalizer()),
+            CreateLocalizer());
+
+        var dto = CreateValidDto(entity.Id, rowVersion);
+        dto.Title = "Updated Shop Title";
+
+        var act = () => handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
+            .WithMessage("*SettingsModifiedByAnotherUser*");
+    }
+
+    [Fact]
     public async Task UpdateSiteSetting_Should_Persist_Basic_Fields_Successfully()
     {
         await using var db = SettingsTestDbContext.Create();
@@ -510,6 +533,49 @@ public sealed class SettingsHandlerTests
                 b.Property(x => x.JwtAudience).HasMaxLength(200);
                 b.Property(x => x.JwtSigningKey).HasMaxLength(2048);
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingSettingsTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingSettingsTestDbContext(DbContextOptions<ConcurrencyFailingSettingsTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingSettingsTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingSettingsTestDbContext>()
+                .UseInMemoryDatabase($"darwin_settings_concurrency_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingSettingsTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<SiteSetting>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.RowVersion).IsRowVersion();
+                b.Property(x => x.Title).IsRequired();
+                b.Property(x => x.DefaultCulture);
+                b.Property(x => x.SupportedCulturesCsv);
+                b.Property(x => x.DefaultCurrency).HasMaxLength(3);
+                b.Property(x => x.ContactEmail);
+                b.Property(x => x.JwtIssuer).HasMaxLength(200);
+                b.Property(x => x.JwtAudience).HasMaxLength(200);
+                b.Property(x => x.JwtSigningKey).HasMaxLength(2048);
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(
+            global::System.Threading.CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<int>(new DbUpdateConcurrencyException());
         }
     }
 }

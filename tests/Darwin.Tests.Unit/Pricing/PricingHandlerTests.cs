@@ -722,6 +722,40 @@ public sealed class PricingHandlerTests
     }
 
     [Fact]
+    public async Task UpdatePromotion_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
+    {
+        await using var db = ConcurrencyFailingPricingTestDbContext.Create();
+        var promoId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+        db.Set<Promotion>().Add(new Promotion
+        {
+            Id = promoId,
+            Name = "Original",
+            Currency = "EUR",
+            Type = PromotionType.Percentage,
+            Percent = 5m,
+            IsActive = true,
+            RowVersion = rowVersion
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePromotionHandler(db, new PromotionEditValidator(), CreateLocalizer());
+        var act = () => handler.HandleAsync(new PromotionEditDto
+        {
+            Id = promoId,
+            RowVersion = rowVersion,
+            Name = "Updated Name",
+            Currency = "EUR",
+            Type = PromotionType.Percentage,
+            Percent = 20m,
+            IsActive = false
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdatePromotion_Should_Persist_Changes_Successfully()
     {
         await using var db = PricingTestDbContext.Create();
@@ -1132,6 +1166,35 @@ public sealed class PricingHandlerTests
     }
 
     [Fact]
+    public async Task UpdateTaxCategory_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
+    {
+        await using var db = ConcurrencyFailingPricingTestDbContext.Create();
+        var catId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+        db.Set<TaxCategory>().Add(new TaxCategory
+        {
+            Id = catId,
+            Name = "Old",
+            VatRate = 0.19m,
+            RowVersion = rowVersion
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateTaxCategoryHandler(db, new TaxCategoryEditValidator(), CreateLocalizer());
+
+        var act = () => handler.HandleAsync(new TaxCategoryEditDto
+        {
+            Id = catId,
+            RowVersion = rowVersion,
+            Name = "Updated",
+            VatRate = 0.07m
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateTaxCategory_Should_Persist_Changes_Successfully()
     {
         await using var db = PricingTestDbContext.Create();
@@ -1261,6 +1324,58 @@ public sealed class PricingHandlerTests
                 b.Property(x => x.Name).HasMaxLength(128).IsRequired();
                 b.Property(x => x.RowVersion).IsRowVersion();
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingPricingTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingPricingTestDbContext(DbContextOptions<ConcurrencyFailingPricingTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingPricingTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingPricingTestDbContext>()
+                .UseInMemoryDatabase($"darwin_pricing_concurrency_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingPricingTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Promotion>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Name).HasMaxLength(256).IsRequired();
+                b.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+                b.Property(x => x.Code).HasMaxLength(64);
+                b.Property(x => x.RowVersion).IsRowVersion();
+            });
+
+            modelBuilder.Entity<PromotionRedemption>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.PromotionId).IsRequired();
+                b.Property(x => x.OrderId).IsRequired();
+            });
+
+            modelBuilder.Entity<TaxCategory>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Name).HasMaxLength(128).IsRequired();
+                b.Property(x => x.RowVersion).IsRowVersion();
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(
+            global::System.Threading.CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<int>(new DbUpdateConcurrencyException());
         }
     }
 }

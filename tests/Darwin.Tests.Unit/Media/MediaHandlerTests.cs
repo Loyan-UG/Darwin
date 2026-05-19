@@ -233,6 +233,23 @@ public sealed class MediaHandlerTests
     }
 
     [Fact]
+    public async Task UpdateMediaAsset_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
+    {
+        await using var db = ConcurrencyFailingMediaTestDbContext.Create();
+        var asset = BuildAsset(rowVersion: new byte[] { 1, 2, 3, 4 });
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateMediaAssetHandler(db, CreateLocalizer());
+        var act = () => handler.HandleAsync(
+            new MediaAssetEditDto { Id = asset.Id, RowVersion = new byte[] { 1, 2, 3, 4 }, Alt = "updated alt" },
+            TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateMediaAsset_Should_Persist_Changes_Successfully()
     {
         await using var db = MediaTestDbContext.Create();
@@ -369,6 +386,22 @@ public sealed class MediaHandlerTests
         var act = () => handler.HandleAsync(asset.Id, null, TestContext.Current.CancellationToken);
 
         await act.Should().NotThrowAsync("handler silently no-ops when asset is already soft-deleted");
+    }
+
+    [Fact]
+    public async Task SoftDeleteMediaAsset_Should_Return_ItemConcurrencyConflict_When_SaveChanges_Detects_Concurrency()
+    {
+        await using var db = ConcurrencyFailingMediaTestDbContext.Create();
+        var rowVersion = new byte[] { 1 };
+        var asset = BuildAsset(rowVersion: rowVersion);
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, rowVersion, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("save-level concurrency should be surfaced through item-concurrency failure");
+        result.Error.Should().Be("ItemConcurrencyConflict");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -769,6 +802,22 @@ public sealed class MediaHandlerTests
     }
 
     [Fact]
+    public async Task PurgeUnusedMediaAsset_Single_Should_Return_ConcurrencyConflict_When_SaveChanges_Detects_Concurrency()
+    {
+        await using var db = ConcurrencyFailingMediaTestDbContext.Create();
+        var rowVersion = new byte[] { 1 };
+        var asset = BuildAsset(rowVersion: rowVersion);
+        db.Set<MediaAsset>().Add(asset);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new PurgeUnusedMediaAssetHandler(db, CreateLocalizer());
+        var result = await handler.HandleAsync(asset.Id, rowVersion, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("save-level concurrency should map to concurrency conflict");
+        result.Error.Should().Be("ConcurrencyConflictDetected");
+    }
+
+    [Fact]
     public async Task PurgeUnusedMediaAsset_Single_Should_Fail_WhenAssetIsReferencedByActiveProductMedia()
     {
         await using var db = MediaTestDbContext.Create();
@@ -999,6 +1048,61 @@ public sealed class MediaHandlerTests
                 b.Property(x => x.Role).HasMaxLength(64);
                 b.Property(x => x.IsDeleted);
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingMediaTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingMediaTestDbContext(DbContextOptions<ConcurrencyFailingMediaTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingMediaTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingMediaTestDbContext>()
+                .UseInMemoryDatabase($"darwin_media_concurrency_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingMediaTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<MediaAsset>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Url).HasMaxLength(2048).IsRequired();
+                b.Property(x => x.Alt).HasMaxLength(256).IsRequired();
+                b.Property(x => x.Title).HasMaxLength(256);
+                b.Property(x => x.OriginalFileName).HasMaxLength(512).IsRequired();
+                b.Property(x => x.SizeBytes);
+                b.Property(x => x.ContentHash).HasMaxLength(128);
+                b.Property(x => x.Width);
+                b.Property(x => x.Height);
+                b.Property(x => x.Role).HasMaxLength(64);
+                b.Property(x => x.IsDeleted);
+                b.Property(x => x.RowVersion).IsRowVersion();
+            });
+
+            modelBuilder.Entity<ProductMedia>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.ProductId).IsRequired();
+                b.Property(x => x.MediaAssetId).IsRequired();
+                b.Property(x => x.SortOrder);
+                b.Property(x => x.Role).HasMaxLength(64);
+                b.Property(x => x.IsDeleted);
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(
+            global::System.Threading.CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<int>(new DbUpdateConcurrencyException());
         }
     }
 }

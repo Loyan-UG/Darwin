@@ -113,6 +113,123 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
     }
 
     [Fact]
+    public async Task GenerateAsync_Should_Pass_Validation_Profile_Argument_To_Command()
+    {
+        var root = CreateTempRoot();
+        const string validationProfile = "smoke-profile";
+        try
+        {
+            var command = WriteGeneratorScript(root, $$"""
+            if not "%7"=="{{validationProfile}}" exit /b 11
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root, validationProfile: validationProfile);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+            result.Artifact.Should().NotBeNull();
+            result.Artifact!.ValidationProfile.Should().Be(validationProfile);
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Pass_Validation_Report_Path_To_Command()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, """
+            if "%8"=="" exit /b 14
+            if not exist "%8" exit /b 15
+            echo %%PDF-1.7>%output%
+            powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%8' -Value '{\"isValid\":true,\"issues\":[\"ok\"]}'"
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+            result.Artifact.Should().NotBeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Reject_Generator_Report_Failure()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, """
+            echo %%PDF-1.7>%output%
+            powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%8' -Value '{\"isValid\":false,\"issues\":[\"profile not supported\"]}'"
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("reported failed legal validation");
+            result.Message.Should().Contain("profile not supported");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Reject_Generator_Invalid_Validation_Report_Format()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, """
+            if "%8"=="" exit /b 14
+            if not exist "%8" exit /b 15
+            echo %%PDF-1.7>%output%
+            powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%8' -Value '[\"validation\", \"report\", \"invalid\"]'"
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("invalid validation report");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
     public async Task GenerateAsync_Should_Return_UnsupportedFormat_When_XRechnung_Is_Not_Enabled()
     {
         var root = CreateTempRoot();
@@ -231,7 +348,8 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
         string commandPath,
         string tempDirectory,
         bool supportsXRechnung = false,
-        long maxArtifactBytes = 1024 * 1024)
+        long maxArtifactBytes = 1024 * 1024,
+        string validationProfile = "test-profile")
         => new(Options.Create(new ExternalCommandEInvoiceOptions
         {
             Enabled = true,
@@ -241,7 +359,7 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
             SupportsZugferdFacturX = true,
             SupportsXRechnung = supportsXRechnung,
             MaxArtifactBytes = maxArtifactBytes,
-            ValidationProfile = "test-profile"
+            ValidationProfile = validationProfile
         }));
 
     private static Invoice CreateInvoice()

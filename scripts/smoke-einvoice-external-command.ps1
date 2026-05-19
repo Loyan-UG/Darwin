@@ -65,7 +65,7 @@ if ($MaxArtifactBytes -lt 1024 -or $MaxArtifactBytes -gt 104857600) {
 
 if (-not $Execute) {
     Write-Host "E-invoice external-command smoke configuration is present for format '$normalizedFormat'."
-    Write-Host "Run with -Execute to call the configured command through Darwin's IEInvoiceGenerationService adapter. The smoke verifies process execution plus artifact shape only; it is not a substitute for ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation."
+    Write-Host "Run with -Execute to call the configured command through Darwin's IEInvoiceGenerationService adapter. The smoke verifies process execution plus artifact shape only; it can also fail if `--validation-report` reports a negative legal validation result. It is not a substitute for ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation."
     exit 0
 }
 

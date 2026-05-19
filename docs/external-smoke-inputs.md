@@ -219,7 +219,7 @@ Do not run the execute mode against an invoice archive production container unti
 
 ## E-Invoice External Command
 
-Use this smoke only after an operator has selected a deployment-approved ZUGFeRD/Factur-X or XRechnung generator/validator wrapper. The smoke runs Darwin's disabled-by-default `IEInvoiceGenerationService` external-command adapter and verifies process execution plus artifact shape. It does not prove legal compliance, PDF/A-3 validity, EN16931 validation, or XRechnung profile validation.
+Use this smoke only after an operator has selected a deployment-approved ZUGFeRD/Factur-X or XRechnung generator/validator wrapper. The smoke runs Darwin's disabled-by-default `IEInvoiceGenerationService` external-command adapter and verifies process execution plus artifact shape. It may also surface legal-validation report failures when the wrapper writes `--validation-report`. It does not prove legal compliance, PDF/A-3 validity, EN16931 validation, or XRechnung profile validation.
 
 Environment variables:
 
@@ -236,4 +236,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-exter
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Format XRechnung -Execute
 ```
 
-The configured command receives `--input <issued-snapshot-json> --output <artifact-path> --format <zugferd-factur-x|xrechnung>`. The smoke does not print invoice payloads, generated artifacts, command stdout/stderr, executable path, or provider credentials. A passed smoke only means the adapter can call the selected wrapper and Darwin's local artifact-shape guard accepted the output. Full release readiness still requires validator evidence from the selected tooling and production download/storage smoke.
+The configured command receives `--input <issued-snapshot-json> --output <artifact-path> --format <zugferd-factur-x|xrechnung> --validation-profile <profile-name> --validation-report <path-to-json>`. The smoke does not print invoice payloads, generated artifacts, command stdout/stderr, executable path, or provider credentials. A passed smoke only means the adapter can call the selected wrapper and Darwin's local artifact-shape guard accepted the output. Full release readiness still requires validator evidence from the selected tooling and production download/storage smoke.
