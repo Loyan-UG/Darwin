@@ -373,11 +373,18 @@ public sealed class SettingsHandlerTests
     }
 
     [Fact]
+<<<<<<< HEAD
     public async Task UpdateSiteSetting_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
     {
         await using var db = ConcurrencyFailingSettingsTestDbContext.Create();
         var rowVersion = new byte[] { 9, 9, 9, 9 };
         var entity = BuildSetting(rowVersion: rowVersion);
+=======
+    public async Task UpdateSiteSetting_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
+    {
+        await using var db = SettingsTestDbContext.Create();
+        var entity = BuildSetting(rowVersion: new byte[] { 1, 2, 3, 4 });
+>>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
         db.Set<SiteSetting>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -386,6 +393,7 @@ public sealed class SettingsHandlerTests
             new SiteSettingEditValidator(CreateLocalizer()),
             CreateLocalizer());
 
+<<<<<<< HEAD
         var dto = CreateValidDto(entity.Id, rowVersion);
         dto.Title = "Updated Shop Title";
 
@@ -393,6 +401,14 @@ public sealed class SettingsHandlerTests
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*SettingsModifiedByAnotherUser*");
+=======
+        var dto = CreateValidDto(entity.Id, Array.Empty<byte>()); // empty RowVersion
+
+        var act = () => handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>(
+            "an empty RowVersion must be rejected before the concurrency check");
+>>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
     }
 
     [Fact]

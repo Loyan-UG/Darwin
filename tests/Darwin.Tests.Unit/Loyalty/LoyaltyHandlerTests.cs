@@ -878,6 +878,68 @@ public sealed class LoyaltyHandlerTests
         result.Error.Should().Be("LoyaltyProgramConcurrencyConflict");
     }
 
+    [Fact]
+    public async Task UpdateLoyaltyProgram_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = LoyaltyTestDbContext.Create();
+        var programId = Guid.NewGuid();
+
+        var entity = new LoyaltyProgram
+        {
+            Id = programId,
+            BusinessId = Guid.NewGuid(),
+            Name = "Legacy Program"
+        };
+        entity.RowVersion = null!;
+        db.Set<LoyaltyProgram>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateLoyaltyProgramHandler(
+            db,
+            new LoyaltyProgramEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new LoyaltyProgramEditDto
+        {
+            Id = programId,
+            BusinessId = entity.BusinessId,
+            Name = "Legacy Program Updated",
+            RowVersion = new byte[] { 1 } // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
+    [Fact]
+    public async Task SoftDeleteLoyaltyProgram_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = LoyaltyTestDbContext.Create();
+        var programId = Guid.NewGuid();
+
+        var entity = new LoyaltyProgram
+        {
+            Id = programId,
+            BusinessId = Guid.NewGuid(),
+            Name = "Legacy Delete Program"
+        };
+        entity.RowVersion = null!;
+        db.Set<LoyaltyProgram>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteLoyaltyProgramHandler(db, new TestStringLocalizer());
+
+        var result = await handler.HandleAsync(new LoyaltyProgramDeleteDto
+        {
+            Id = programId,
+            RowVersion = new byte[] { 1 } // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("LoyaltyProgramConcurrencyConflict");
+    }
+
     // ─── Shared infrastructure ────────────────────────────────────────────────
 
     private static AdjustLoyaltyPointsHandler CreateAdjustHandler(LoyaltyTestDbContext db)

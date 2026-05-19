@@ -822,6 +822,111 @@ public sealed class BusinessCampaignHandlerTests
         updated.LastResponseCode.Should().BeNull("pending requeue clears response code");
     }
 
+    // ─── Null database RowVersion guards ──────────────────────────────────────
+
+    [Fact]
+    public async Task UpdateCampaign_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = CampaignTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var campaign = new Campaign
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            Name = "Legacy Campaign",
+            Title = "Legacy Title",
+            Channels = CampaignChannels.InApp,
+            TargetingJson = "{}",
+            PayloadJson = "{}"
+        };
+        campaign.RowVersion = null!;
+        db.Set<Campaign>().Add(campaign);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessCampaignHandler(db, new TestLocalizer());
+
+        var result = await handler.HandleAsync(new UpdateBusinessCampaignDto
+        {
+            BusinessId = businessId,
+            Id = campaign.Id,
+            Name = "Legacy Campaign Updated",
+            Title = "Legacy Title Updated",
+            Channels = 1,
+            RowVersion = [1] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("BusinessCampaignConcurrencyConflict");
+    }
+
+    [Fact]
+    public async Task ActivateCampaign_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = CampaignTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var campaign = new Campaign
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = businessId,
+            Name = "Legacy Active Campaign",
+            Title = "Legacy Active Title",
+            Channels = CampaignChannels.InApp,
+            TargetingJson = "{}",
+            PayloadJson = "{}"
+        };
+        campaign.RowVersion = null!;
+        db.Set<Campaign>().Add(campaign);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+        var handler = new SetCampaignActivationHandler(db, clock, new TestLocalizer());
+
+        var result = await handler.HandleAsync(new SetCampaignActivationDto
+        {
+            BusinessId = businessId,
+            Id = campaign.Id,
+            IsActive = true,
+            RowVersion = [1] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("BusinessCampaignConcurrencyConflict");
+    }
+
+    [Fact]
+    public async Task UpdateCampaignDeliveryStatus_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = CampaignTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var delivery = new CampaignDelivery
+        {
+            Id = Guid.NewGuid(),
+            CampaignId = Guid.NewGuid(),
+            BusinessId = businessId,
+            Channel = CampaignDeliveryChannel.Push,
+            Status = CampaignDeliveryStatus.Pending
+        };
+        delivery.RowVersion = null!;
+        db.Set<CampaignDelivery>().Add(delivery);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateCampaignDeliveryStatusHandler(db, new TestLocalizer());
+
+        var result = await handler.HandleAsync(new UpdateCampaignDeliveryStatusDto
+        {
+            Id = delivery.Id,
+            BusinessId = businessId,
+            Status = CampaignDeliveryStatus.Delivered,
+            RowVersion = [1] // non-empty DTO RowVersion vs null DB value
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+        result.Error.Should().Be("CampaignDeliveryConcurrencyConflict");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static Campaign CreateCampaign(

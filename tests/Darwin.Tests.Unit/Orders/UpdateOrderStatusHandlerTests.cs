@@ -573,6 +573,40 @@ public sealed class UpdateOrderStatusHandlerTests
         line.WarehouseId.Should().Be(warehouseId, "handler should assign WarehouseId to unset lines");
     }
 
+    // ─── Null database RowVersion guard ──────────────────────────────────────
+
+    [Fact]
+    public async Task HandleAsync_Should_ThrowConcurrency_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = UpdateOrderStatusTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+
+        var order = new Order
+        {
+            Id = orderId,
+            OrderNumber = $"ORD-{orderId:N}",
+            Currency = "EUR",
+            Status = OrderStatus.Placed,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}"
+        };
+        order.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<Order>().Add(order);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateHandler(db);
+
+        var act = () => handler.HandleAsync(new UpdateOrderStatusDto
+        {
+            OrderId = orderId,
+            RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
+            TargetStatus = OrderStatus.Processing
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     // ─── Builders ─────────────────────────────────────────────────────────────
 
     private static Order BuildOrder(

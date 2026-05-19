@@ -892,6 +892,31 @@ public sealed class BillingSubscriptionHandlersTests
         return mock.Object;
     }
 
+    // ─── Null database RowVersion guards ──────────────────────────────────────
+
+    [Fact]
+    public async Task SetCancelAtPeriodEnd_Should_Fail_WhenDatabaseRowVersionIsNull()
+    {
+        await using var db = BillingSubscriptionTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var plan = MakePlan();
+        var subscription = MakeSubscription(businessId, plan.Id);
+        subscription.RowVersion = null!; // simulate legacy row with null RowVersion
+        db.Set<BillingPlan>().Add(plan);
+        db.Set<BusinessSubscription>().Add(subscription);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SetCancelAtPeriodEndHandler(db, CreateClock(DateTime.UtcNow), CreateLocalizer());
+
+        var result = await handler.HandleAsync(
+            businessId, subscription.Id, true,
+            rowVersion: [1], // non-empty DTO RowVersion vs null DB value
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse(
+            "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
+    }
+
     // ─── In-memory DbContext ──────────────────────────────────────────────
 
     private sealed class BillingSubscriptionTestDbContext : DbContext, IAppDbContext

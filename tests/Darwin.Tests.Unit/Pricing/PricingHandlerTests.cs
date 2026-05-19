@@ -722,6 +722,7 @@ public sealed class PricingHandlerTests
     }
 
     [Fact]
+<<<<<<< HEAD
     public async Task UpdatePromotion_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
     {
         await using var db = ConcurrencyFailingPricingTestDbContext.Create();
@@ -736,10 +737,23 @@ public sealed class PricingHandlerTests
             Percent = 5m,
             IsActive = true,
             RowVersion = rowVersion
+=======
+    public async Task UpdatePromotion_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var promoId = Guid.NewGuid();
+        db.Set<Promotion>().Add(new Promotion
+        {
+            Id = promoId,
+            Name = "Test",
+            Currency = "EUR",
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+>>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new UpdatePromotionHandler(db, new PromotionEditValidator(), CreateLocalizer());
+<<<<<<< HEAD
         var act = () => handler.HandleAsync(new PromotionEditDto
         {
             Id = promoId,
@@ -753,6 +767,19 @@ public sealed class PricingHandlerTests
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
+=======
+
+        var act = () => handler.HandleAsync(
+            new PromotionEditDto
+            {
+                Id = promoId,
+                RowVersion = Array.Empty<byte>(), // empty - should throw ValidationException
+                Name = "Updated",
+                Currency = "EUR"
+            }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("an empty RowVersion must be rejected before the concurrency check");
+>>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
     }
 
     [Fact]
@@ -1166,22 +1193,34 @@ public sealed class PricingHandlerTests
     }
 
     [Fact]
+<<<<<<< HEAD
     public async Task UpdateTaxCategory_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
     {
         await using var db = ConcurrencyFailingPricingTestDbContext.Create();
         var catId = Guid.NewGuid();
         var rowVersion = new byte[] { 1, 2, 3, 4 };
+=======
+    public async Task UpdateTaxCategory_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
+    {
+        await using var db = PricingTestDbContext.Create();
+        var catId = Guid.NewGuid();
+>>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
         db.Set<TaxCategory>().Add(new TaxCategory
         {
             Id = catId,
             Name = "Old",
             VatRate = 0.19m,
+<<<<<<< HEAD
             RowVersion = rowVersion
+=======
+            RowVersion = new byte[] { 1, 2, 3, 4 }
+>>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new UpdateTaxCategoryHandler(db, new TaxCategoryEditValidator(), CreateLocalizer());
 
+<<<<<<< HEAD
         var act = () => handler.HandleAsync(new TaxCategoryEditDto
         {
             Id = catId,
@@ -1192,6 +1231,18 @@ public sealed class PricingHandlerTests
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
+=======
+        var act = () => handler.HandleAsync(
+            new TaxCategoryEditDto
+            {
+                Id = catId,
+                RowVersion = Array.Empty<byte>(), // empty - should throw ValidationException
+                Name = "Updated",
+                VatRate = 0.07m
+            }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("an empty RowVersion must be rejected before the concurrency check");
+>>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
     }
 
     [Fact]
