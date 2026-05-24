@@ -41,6 +41,9 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         ViewInvoiceCommand = new AsyncCommand<MemberCommerceInvoiceItemViewModel>(LoadInvoiceDetailAsync, CanLoadInvoiceDetail);
         RetryInvoicePaymentCommand = new AsyncCommand(RetryInvoicePaymentAsync, () => !IsBusy && SelectedInvoice?.CanRetryPayment == true);
         CopyInvoiceDocumentCommand = new AsyncCommand(CopyInvoiceDocumentAsync, () => !IsBusy && SelectedInvoice?.HasDocument == true);
+        CopyInvoiceArchiveDocumentCommand = new AsyncCommand(CopyInvoiceArchiveDocumentAsync, () => !IsBusy && SelectedInvoice is not null);
+        CopyInvoiceStructuredDataCommand = new AsyncCommand(CopyInvoiceStructuredDataAsync, () => !IsBusy && SelectedInvoice is not null);
+        CopyInvoiceStructuredXmlCommand = new AsyncCommand(CopyInvoiceStructuredXmlAsync, () => !IsBusy && SelectedInvoice is not null);
     }
 
     /// <summary>
@@ -94,6 +97,21 @@ public sealed class MemberCommerceViewModel : BaseViewModel
     public AsyncCommand CopyInvoiceDocumentCommand { get; }
 
     /// <summary>
+    /// Gets the command that copies the archived invoice artifact when available.
+    /// </summary>
+    public AsyncCommand CopyInvoiceArchiveDocumentCommand { get; }
+
+    /// <summary>
+    /// Gets the command that copies the structured invoice data export.
+    /// </summary>
+    public AsyncCommand CopyInvoiceStructuredDataCommand { get; }
+
+    /// <summary>
+    /// Gets the command that copies the structured invoice XML export.
+    /// </summary>
+    public AsyncCommand CopyInvoiceStructuredXmlCommand { get; }
+
+    /// <summary>
     /// Gets the latest success message.
     /// </summary>
     public string? SuccessMessage
@@ -144,6 +162,9 @@ public sealed class MemberCommerceViewModel : BaseViewModel
                 OnPropertyChanged(nameof(HasSelectedInvoice));
                 RetryInvoicePaymentCommand.RaiseCanExecuteChanged();
                 CopyInvoiceDocumentCommand.RaiseCanExecuteChanged();
+                CopyInvoiceArchiveDocumentCommand.RaiseCanExecuteChanged();
+                CopyInvoiceStructuredDataCommand.RaiseCanExecuteChanged();
+                CopyInvoiceStructuredXmlCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -244,7 +265,12 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.MemberCommerceLoadFailed));
+            RunOnMain(() =>
+            {
+                SelectedOrder = null;
+                SelectedInvoice = null;
+                ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.MemberCommerceLoadFailed);
+            });
         }
         finally
         {
@@ -426,10 +452,60 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             AppResources.MemberCommerceDocumentDownloadFailed).ConfigureAwait(false);
     }
 
+    private async Task CopyInvoiceArchiveDocumentAsync()
+    {
+        if (SelectedInvoice is null || IsBusy)
+        {
+            return;
+        }
+
+        await CopyInvoiceExportAsync(
+            SelectedInvoice.ReferenceNumber,
+            cancellationToken => _memberCommerceService.DownloadInvoiceArchiveDocumentAsync(SelectedInvoice.Id, cancellationToken),
+            AppResources.MemberCommerceArchiveDocumentCopiedFormat,
+            AppResources.MemberCommerceArchiveDocumentDownloadFailed).ConfigureAwait(false);
+    }
+
+    private async Task CopyInvoiceStructuredDataAsync()
+    {
+        if (SelectedInvoice is null || IsBusy)
+        {
+            return;
+        }
+
+        await CopyInvoiceExportAsync(
+            SelectedInvoice.ReferenceNumber,
+            cancellationToken => _memberCommerceService.DownloadInvoiceStructuredDataAsync(SelectedInvoice.Id, cancellationToken),
+            AppResources.MemberCommerceStructuredDataCopiedFormat,
+            AppResources.MemberCommerceStructuredDownloadFailed).ConfigureAwait(false);
+    }
+
+    private async Task CopyInvoiceStructuredXmlAsync()
+    {
+        if (SelectedInvoice is null || IsBusy)
+        {
+            return;
+        }
+
+        await CopyInvoiceExportAsync(
+            SelectedInvoice.ReferenceNumber,
+            cancellationToken => _memberCommerceService.DownloadInvoiceStructuredXmlAsync(SelectedInvoice.Id, cancellationToken),
+            AppResources.MemberCommerceStructuredXmlCopiedFormat,
+            AppResources.MemberCommerceStructuredDownloadFailed).ConfigureAwait(false);
+    }
+
+    private Task CopyInvoiceExportAsync(
+        string referenceNumber,
+        Func<CancellationToken, Task<Darwin.Shared.Results.Result<string>>> action,
+        string successFormat,
+        string fallbackError)
+        => CopyDocumentAsync(referenceNumber, action, fallbackError, successFormat);
+
     private async Task CopyDocumentAsync(
         string referenceNumber,
         Func<CancellationToken, Task<Darwin.Shared.Results.Result<string>>> action,
-        string fallbackError)
+        string fallbackError,
+        string? successFormat = null)
     {
         using var operation = BeginBusyOperation();
 
@@ -443,7 +519,7 @@ public sealed class MemberCommerceViewModel : BaseViewModel
             }
 
             await Clipboard.Default.SetTextAsync(result.Value).ConfigureAwait(false);
-            RunOnMain(() => SuccessMessage = string.Format(AppResources.MemberCommerceDocumentCopiedFormat, referenceNumber));
+            RunOnMain(() => SuccessMessage = string.Format(successFormat ?? AppResources.MemberCommerceDocumentCopiedFormat, referenceNumber));
         }
         catch (OperationCanceledException)
         {
@@ -604,6 +680,9 @@ public sealed class MemberCommerceViewModel : BaseViewModel
         ViewInvoiceCommand.RaiseCanExecuteChanged();
         RetryInvoicePaymentCommand.RaiseCanExecuteChanged();
         CopyInvoiceDocumentCommand.RaiseCanExecuteChanged();
+        CopyInvoiceArchiveDocumentCommand.RaiseCanExecuteChanged();
+        CopyInvoiceStructuredDataCommand.RaiseCanExecuteChanged();
+        CopyInvoiceStructuredXmlCommand.RaiseCanExecuteChanged();
     }
 
     private static MemberCommerceOrderItemViewModel MapOrderSummary(MemberOrderSummary order)

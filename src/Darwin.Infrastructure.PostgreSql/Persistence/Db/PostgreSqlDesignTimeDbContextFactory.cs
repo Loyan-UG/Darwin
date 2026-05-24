@@ -27,6 +27,7 @@ public sealed class PostgreSqlDesignTimeDbContextFactory : IDesignTimeDbContextF
             .UseNpgsql(normalizedConnectionString, npgsql =>
             {
                 npgsql.CommandTimeout(60);
+                npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                 npgsql.EnableRetryOnFailure(
                     maxRetryCount: 5,
                     maxRetryDelay: TimeSpan.FromSeconds(10),

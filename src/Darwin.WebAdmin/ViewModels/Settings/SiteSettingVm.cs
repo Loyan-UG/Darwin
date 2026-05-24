@@ -288,13 +288,13 @@ namespace Darwin.WebAdmin.ViewModels.Settings
 
         // ---------- WebAuthn ----------
         [Display(Name = "SiteSettingWebAuthnRelyingPartyId")]
-        public string WebAuthnRelyingPartyId { get; set; } = "vafadar.pro";
+        public string WebAuthnRelyingPartyId { get; set; } = "loyan.de";
 
         [Display(Name = "SiteSettingWebAuthnRelyingPartyName")]
         public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
 
         [Display(Name = "SiteSettingWebAuthnAllowedOriginsCsv")]
-        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://admin.vafadar.pro,https://vafadar.pro";
+        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://admin.loyan.de,https://web.loyan.de";
 
         [Display(Name = "SiteSettingWebAuthnRequireUserVerification")]
         public bool WebAuthnRequireUserVerification { get; set; } = false;

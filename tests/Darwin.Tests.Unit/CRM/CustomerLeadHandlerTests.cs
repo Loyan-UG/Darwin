@@ -383,6 +383,45 @@ public sealed class CustomerLeadHandlerTests
     }
 
     [Fact]
+    public async Task UpdateCustomer_Should_ThrowConcurrency_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "John",
+            LastName = "Test",
+            Email = "john@test.de",
+            Phone = "+491700000000",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new UpdateCustomerHandler(
+            db,
+            new CustomerEditValidator(new TestStringLocalizer()),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new CustomerEditDto
+        {
+            Id = customerId,
+            RowVersion = rowVersion,
+            FirstName = "John",
+            LastName = "Updated",
+            Email = "john@test.de",
+            TaxProfileType = CustomerTaxProfileType.Consumer
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateCustomer_Should_Throw_WhenRowVersionIsEmpty()
     {
         await using var db = CustomerLeadDbContext.Create();
@@ -576,6 +615,46 @@ public sealed class CustomerLeadHandlerTests
     }
 
     [Fact]
+    public async Task UpdateLead_Should_ThrowConcurrency_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var leadId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+
+        db.Set<Lead>().Add(new Lead
+        {
+            Id = leadId,
+            FirstName = "Old",
+            LastName = "Lead",
+            Email = "lead@test.de",
+            Phone = "+491701234567",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new UpdateLeadHandler(
+            db,
+            new LeadEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new LeadEditDto
+        {
+            Id = leadId,
+            RowVersion = rowVersion,
+            FirstName = "Updated",
+            LastName = "Lead",
+            Email = "lead@test.de",
+            Phone = "+491701234567",
+            Status = LeadStatus.New
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateLead_Should_Throw_WhenRowVersionIsEmpty()
     {
         await using var db = CustomerLeadDbContext.Create();
@@ -636,7 +715,7 @@ public sealed class CustomerLeadHandlerTests
         var act = () => handler.HandleAsync(new LeadEditDto
         {
             Id = leadId,
-            RowVersion = null, // null row version
+            RowVersion = null!, // null row version
             FirstName = "Test",
             LastName = "Lead",
             Email = "test@lead.de",
@@ -905,6 +984,42 @@ public sealed class CustomerLeadHandlerTests
         }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+    }
+
+    [Fact]
+    public async Task ConvertLeadToCustomer_Should_ThrowConcurrency_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = CustomerLeadDbContext.Create();
+        var leadId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+
+        db.Set<Lead>().Add(new Lead
+        {
+            Id = leadId,
+            FirstName = "Test",
+            LastName = "Lead",
+            Email = "lead.conv@test.de",
+            Phone = "+491701234567",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new ConvertLeadToCustomerHandler(
+            db,
+            new ConvertLeadToCustomerValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new ConvertLeadToCustomerDto
+        {
+            LeadId = leadId,
+            RowVersion = rowVersion,
+            CopyNotesToCustomer = false
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
     }
 
     // ─── Shared helpers ───────────────────────────────────────────────────────
@@ -1327,7 +1442,7 @@ public sealed class CustomerLeadHandlerTests
 
         var handler = new UpdateLeadHandler(
             db,
-            new LeadEditValidator(new TestStringLocalizer()),
+            new LeadEditValidator(),
             new TestStringLocalizer());
 
         var act = () => handler.HandleAsync(new LeadEditDto
@@ -1390,6 +1505,19 @@ public sealed class CustomerLeadHandlerTests
                 .UseInMemoryDatabase($"darwin_customer_lead_tests_{Guid.NewGuid()}")
                 .Options;
             return new CustomerLeadDbContext(options);
+        }
+
+        public bool ThrowConcurrencyOnSave { get; set; }
+
+        public override Task<int> SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (ThrowConcurrencyOnSave)
+            {
+                ThrowConcurrencyOnSave = false;
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict during save");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

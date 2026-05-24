@@ -74,7 +74,8 @@ public sealed partial class AppShell : Shell
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Business startup navigation to '{_initialRoute}' failed: {ex}");
+                _ = ex;
+                System.Diagnostics.Debug.WriteLine("Business startup navigation failed.");
             }
         });
     }
@@ -102,7 +103,8 @@ public sealed partial class AppShell : Shell
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Business logout navigation failed: {ex}");
+                _ = ex;
+                System.Diagnostics.Debug.WriteLine("Business logout navigation failed.");
             }
         }
     }

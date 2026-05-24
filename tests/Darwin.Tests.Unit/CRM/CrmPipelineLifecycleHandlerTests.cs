@@ -90,6 +90,28 @@ public sealed class CrmPipelineLifecycleHandlerTests
     }
 
     [Fact]
+    public async Task UpdateLeadLifecycle_Should_ReturnFail_AndConcurrencyConflict_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = PipelineTestDbContext.Create();
+        var lead = MakeLead(LeadStatus.New);
+        db.Set<Lead>().Add(lead);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new UpdateLeadLifecycleHandler(db, Loc());
+
+        var result = await handler.HandleAsync(new UpdateLeadLifecycleDto
+        {
+            Id = lead.Id,
+            RowVersion = lead.RowVersion,
+            Action = "QUALIFY"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("SaveChangesConcurrency should return a failure result");
+    }
+
+    [Fact]
     public async Task UpdateLeadLifecycle_Should_ReturnFail_WhenActionIsUnsupported()
     {
         await using var db = PipelineTestDbContext.Create();
@@ -112,7 +134,9 @@ public sealed class CrmPipelineLifecycleHandlerTests
     [Theory]
     [InlineData("QUALIFY", LeadStatus.Qualified)]
     [InlineData("qualify", LeadStatus.Qualified)]    // case-insensitive
+    [InlineData("  qualify  ", LeadStatus.Qualified)] // trimmed + case-insensitive
     [InlineData("DISQUALIFY", LeadStatus.Disqualified)]
+    [InlineData("  disqualify ", LeadStatus.Disqualified)] // trimmed + case-insensitive
     [InlineData("REOPEN", LeadStatus.New)]
     public async Task UpdateLeadLifecycle_Should_TransitionStatus_WhenActionIsValid(
         string action, LeadStatus expectedStatus)
@@ -271,9 +295,12 @@ public sealed class CrmPipelineLifecycleHandlerTests
 
     [Theory]
     [InlineData(OpportunityStage.Qualification, "ADVANCE", OpportunityStage.Proposal)]
+    [InlineData(OpportunityStage.Qualification, "  advance  ", OpportunityStage.Proposal)] // trimmed + case-insensitive
     [InlineData(OpportunityStage.Proposal, "ADVANCE", OpportunityStage.Negotiation)]
+    [InlineData(OpportunityStage.Proposal, "closewon", OpportunityStage.ClosedWon)] // case-insensitive
     [InlineData(OpportunityStage.Negotiation, "ADVANCE", OpportunityStage.ClosedWon)]
     [InlineData(OpportunityStage.Qualification, "CLOSEWON", OpportunityStage.ClosedWon)]
+    [InlineData(OpportunityStage.Qualification, " closelost ", OpportunityStage.ClosedLost)] // trimmed + case-insensitive
     [InlineData(OpportunityStage.Proposal, "CLOSELOST", OpportunityStage.ClosedLost)]
     [InlineData(OpportunityStage.ClosedWon, "REOPEN", OpportunityStage.Qualification)]
     [InlineData(OpportunityStage.ClosedLost, "REOPEN", OpportunityStage.Qualification)]
@@ -297,6 +324,31 @@ public sealed class CrmPipelineLifecycleHandlerTests
         result.Succeeded.Should().BeTrue($"action '{action}' from {startStage} should succeed");
         var updated = await db.Set<Opportunity>().SingleAsync(x => x.Id == opp.Id, TestContext.Current.CancellationToken);
         updated.Stage.Should().Be(expectedStage);
+    }
+
+    [Fact]
+    public async Task UpdateOpportunityLifecycle_Should_ReturnFail_AndConcurrencyConflict_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = PipelineTestDbContext.Create();
+        var opp = MakeOpportunity(OpportunityStage.Qualification);
+        db.Set<Opportunity>().Add(opp);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new UpdateOpportunityLifecycleHandler(
+            db,
+            new FixedClock(DateTime.UtcNow),
+            Loc());
+
+        var result = await handler.HandleAsync(new UpdateOpportunityLifecycleDto
+        {
+            Id = opp.Id,
+            RowVersion = opp.RowVersion,
+            Action = "ADVANCE"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("SaveChangesConcurrency should return a failure result");
     }
 
     [Fact]
@@ -421,6 +473,19 @@ public sealed class CrmPipelineLifecycleHandlerTests
                 .UseInMemoryDatabase($"darwin_crm_pipeline_tests_{Guid.NewGuid()}")
                 .Options;
             return new PipelineTestDbContext(opts);
+        }
+
+        public bool ThrowConcurrencyOnSave { get; set; }
+
+        public override Task<int> SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (ThrowConcurrencyOnSave)
+            {
+                ThrowConcurrencyOnSave = false;
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict during save");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder mb)

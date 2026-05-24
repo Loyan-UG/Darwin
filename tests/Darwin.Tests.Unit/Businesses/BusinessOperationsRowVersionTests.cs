@@ -402,16 +402,19 @@ public sealed class BusinessOperationsRowVersionTests
             modelBuilder.Entity<ProviderCallbackInboxMessage>(builder =>
             {
                 builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<EmailDispatchOperation>(builder =>
             {
                 builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<ChannelDispatchOperation>(builder =>
             {
                 builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRequired(false);
             });
         }
     }

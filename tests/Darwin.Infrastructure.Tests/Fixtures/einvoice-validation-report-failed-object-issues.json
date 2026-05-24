@@ -1,0 +1,12 @@
+{
+  "isValid": false,
+  "issues": [
+    { "code": "BUYER-001", "message": "missing buyer tax ID" },
+    "legacy validation text",
+    { "description": "issuer line item total out of range", "details": ["line-2"] }
+  ],
+  "errors": [
+    { "text": "line 2 has invalid unit amount" }
+  ],
+  "validationMessages": "not used"
+}

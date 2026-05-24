@@ -26,7 +26,7 @@ public sealed class PostgreSqlSearchIndexCoverageTests
         var likeTrgmMatches = Regex.Matches(script, "\"IX_PG_[^\"]+?_Like_Trgm\"");
         var jsonbGinMatches = Regex.Matches(script, "\"IX_PG_[^\"]+?_JsonbGin\"");
 
-        likeTrgmMatches.Count.Should().BeGreaterOrEqualTo(88, "operational and search surface should include all required direct LIKE trigram indexes");
+        likeTrgmMatches.Count.Should().BeGreaterThanOrEqualTo(88, "operational and search surface should include all required direct LIKE trigram indexes");
         jsonbGinMatches.Count.Should().Be(14, "JSON/search-backed columns should expose exactly 14 JSONB GIN indexes in the configured provider migrations");
 
         var expectedJsonbIndexes = new[]

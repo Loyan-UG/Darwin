@@ -236,6 +236,37 @@ public sealed class BusinessLocationHandlerTests
         all.Single(x => x.IsPrimary).Id.Should().Be(target.Id);
     }
 
+    [Fact]
+    public async Task UpdateBusinessLocation_Should_ReturnConcurrencyConflict_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingBusinessLocationTestDbContext.Create();
+        var business = CreateBusiness();
+        db.Set<Business>().Add(business);
+
+        var location = new BusinessLocation
+        {
+            BusinessId = business.Id,
+            Name = "Concurrent Location",
+            RowVersion = new byte[] { 1, 2, 3 }
+        };
+        db.Set<BusinessLocation>().Add(location);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessLocationHandler(db, new BusinessLocationEditDtoValidator(), new TestLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessLocationEditDto
+        {
+            Id = location.Id,
+            BusinessId = business.Id,
+            Name = "Updated Location",
+            City = "Berlin",
+            RowVersion = location.RowVersion
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
     // ─── SoftDeleteBusinessLocationHandler ───────────────────────────────────
 
     [Fact]
@@ -331,6 +362,31 @@ public sealed class BusinessLocationHandlerTests
         result.Succeeded.Should().BeTrue("soft-deleting an already-deleted location should be idempotent");
     }
 
+    [Fact]
+    public async Task SoftDeleteBusinessLocation_Should_ReturnConcurrencyConflict_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingBusinessLocationTestDbContext.Create();
+        var location = new BusinessLocation
+        {
+            BusinessId = Guid.NewGuid(),
+            Name = "Delete Concurrently",
+            RowVersion = new byte[] { 1, 2, 3 }
+        };
+        db.Set<BusinessLocation>().Add(location);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteBusinessLocationHandler(db, new BusinessLocationDeleteDtoValidator(), new TestLocalizer());
+
+        var result = await handler.HandleAsync(new BusinessLocationDeleteDto
+        {
+            Id = location.Id,
+            RowVersion = location.RowVersion
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ItemConcurrencyConflict");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static Business CreateBusiness()
@@ -401,6 +457,71 @@ public sealed class BusinessLocationHandlerTests
                 builder.Property(x => x.Name).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingBusinessLocationTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingBusinessLocationTestDbContext(
+            DbContextOptions<ConcurrencyFailingBusinessLocationTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _hasSeeded;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingBusinessLocationTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingBusinessLocationTestDbContext>()
+                .UseInMemoryDatabase($"darwin_business_location_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingBusinessLocationTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Ignore<GeoCoordinate>();
+
+            modelBuilder.Entity<Business>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.DefaultCurrency).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.DefaultTimeZoneId).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.Members);
+                builder.Ignore(x => x.Locations);
+                builder.Ignore(x => x.Favorites);
+                builder.Ignore(x => x.Likes);
+                builder.Ignore(x => x.Reviews);
+                builder.Ignore(x => x.EngagementStats);
+                builder.Ignore(x => x.Invitations);
+                builder.Ignore(x => x.StaffQrCodes);
+                builder.Ignore(x => x.Subscriptions);
+                builder.Ignore(x => x.AnalyticsExportJobs);
+            });
+
+            modelBuilder.Entity<BusinessLocation>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 }

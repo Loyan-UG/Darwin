@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application;
 using Darwin.Application.CartCheckout.Queries;
@@ -389,6 +390,167 @@ public sealed class PlaceOrderFromCartHandlerTests
             .WithMessage("SavedAddressNotFound");
     }
 
+    [Fact]
+    public async Task HandleAsync_Should_SucceedOnce_And_BlockConcurrentCheckoutAttempts_WithPostSaveCheckoutConflict()
+    {
+        var databaseName = $"darwin_place_order_checkout_race_{Guid.NewGuid():N}";
+
+        var cartId = Guid.NewGuid();
+        var variantId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var taxCategoryId = Guid.NewGuid();
+        var shippingMethodId = Guid.NewGuid();
+
+        await using (var seedDb = PlaceOrderRaceTestDbContext.Create(databaseName))
+        {
+            seedDb.Set<ProductVariant>().Add(new ProductVariant
+            {
+                Id = variantId,
+                ProductId = productId,
+                Sku = "SKU-1001",
+                BasePriceNetMinor = 1000,
+                Currency = "EUR",
+                TaxCategoryId = taxCategoryId
+            });
+            seedDb.Set<Product>().Add(new Product
+            {
+                Id = productId,
+                IsActive = true,
+                IsVisible = true
+            });
+
+            seedDb.Set<TaxCategory>().Add(new TaxCategory
+            {
+                Id = taxCategoryId,
+                Name = "Standard",
+                VatRate = 0.19m
+            });
+
+            seedDb.Set<Cart>().Add(new Cart
+            {
+                Id = cartId,
+                Currency = "EUR",
+                Items =
+                [
+                    new CartItem
+                    {
+                        Id = Guid.NewGuid(),
+                        CartId = cartId,
+                        VariantId = variantId,
+                        Quantity = 1,
+                        UnitPriceNetMinor = 1000,
+                        VatRate = 0.19m,
+                        SelectedAddOnValueIdsJson = "[]"
+                    }
+                ]
+            });
+
+            seedDb.Set<ShippingMethod>().Add(new ShippingMethod
+            {
+                Id = shippingMethodId,
+                Name = "DHL Paket",
+                Carrier = "DHL",
+                Service = "Paket",
+                IsActive = true,
+                CountriesCsv = "DE",
+                Currency = "EUR",
+                Rates =
+                [
+                    new ShippingRate
+                    {
+                        Id = Guid.NewGuid(),
+                        ShippingMethodId = shippingMethodId,
+                        MaxShipmentMass = 5000,
+                        PriceMinor = 590,
+                        SortOrder = 1
+                    }
+                ]
+            });
+
+            await seedDb.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await using var leaderDb = PlaceOrderRaceTestDbContext.Create(databaseName, PlaceOrderRaceMode.Leader);
+        await using var followerDb = PlaceOrderRaceTestDbContext.Create(databaseName, PlaceOrderRaceMode.Follower);
+
+        var localizer = new TestStringLocalizer();
+
+        var leaderCheckoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(
+            leaderDb,
+            new ComputeCartSummaryHandler(leaderDb, localizer),
+            new RateShipmentHandler(leaderDb),
+            localizer);
+
+        var followerCheckoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(
+            followerDb,
+            new ComputeCartSummaryHandler(followerDb, localizer),
+            new RateShipmentHandler(followerDb),
+            localizer);
+
+        var leaderHandler = new PlaceOrderFromCartHandler(
+            leaderDb,
+            new ComputeCartSummaryHandler(leaderDb, localizer),
+            leaderCheckoutIntentHandler,
+            localizer);
+
+        var followerHandler = new PlaceOrderFromCartHandler(
+            followerDb,
+            new ComputeCartSummaryHandler(followerDb, localizer),
+            followerCheckoutIntentHandler,
+            localizer);
+
+        var dto = new PlaceOrderFromCartDto
+        {
+            CartId = cartId,
+            SelectedShippingMethodId = shippingMethodId,
+            ShippingTotalMinor = 590,
+            BillingAddress = new CheckoutAddressDto
+            {
+                FullName = "Concurrent User",
+                Street1 = "Waldstrasse 1",
+                PostalCode = "10115",
+                City = "Berlin",
+                CountryCode = "DE"
+            },
+            ShippingAddress = new CheckoutAddressDto
+            {
+                FullName = "Concurrent User",
+                Street1 = "Waldstrasse 1",
+                PostalCode = "10115",
+                City = "Berlin",
+                CountryCode = "DE"
+            }
+        };
+
+        var leaderResultTask = HandleOrderSafely(leaderHandler, dto);
+        var followerResultTask = HandleOrderSafely(followerHandler, dto);
+
+        await Task.WhenAll(leaderResultTask, followerResultTask);
+
+        var leaderResult = await leaderResultTask;
+        var followerResult = await followerResultTask;
+
+        var successResult = new[] { leaderResult, followerResult }.Single(r => r.IsSuccess);
+        var failure = new[] { leaderResult, followerResult }.Single(r => !r.IsSuccess);
+
+        var successCount = new[] { leaderResult, followerResult }.Count(r => r.IsSuccess);
+        successCount.Should().Be(1);
+        failure.ErrorMessage.Should().Be("CartAlreadyCheckedOut");
+        successResult.OrderNumber.Should().NotBeNullOrWhiteSpace();
+        successResult.OrderNumber.Should().MatchRegex("^D-\\d{8}-[A-Z0-9]{6}$");
+
+        await using var verifyDb = PlaceOrderRaceTestDbContext.Create(databaseName);
+        var orderCount = await verifyDb.Set<Order>().CountAsync(TestContext.Current.CancellationToken);
+        orderCount.Should().Be(1);
+
+        var order = await verifyDb.Set<Order>()
+            .SingleAsync(x => x.OrderNumber == successResult.OrderNumber, TestContext.Current.CancellationToken);
+
+        var cart = await verifyDb.Set<Cart>().SingleAsync(x => x.Id == cartId, TestContext.Current.CancellationToken);
+        cart.IsDeleted.Should().BeTrue();
+        order.OrderNumber.Should().Be(successResult.OrderNumber);
+    }
+
     private sealed class PlaceOrderFromCartTestDbContext : DbContext, IAppDbContext
     {
         private PlaceOrderFromCartTestDbContext(DbContextOptions<PlaceOrderFromCartTestDbContext> options)
@@ -404,6 +566,190 @@ public sealed class PlaceOrderFromCartHandlerTests
                 .UseInMemoryDatabase($"darwin_place_order_tests_{Guid.NewGuid()}")
                 .Options;
             return new PlaceOrderFromCartTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Cart>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.CartId);
+            });
+
+            modelBuilder.Entity<CartItem>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.SelectedAddOnValueIdsJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Order>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.OrderNumber).IsRequired();
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.BillingAddressJson).IsRequired();
+                builder.Property(x => x.ShippingAddressJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.OrderId);
+            });
+
+            modelBuilder.Entity<OrderLine>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.Sku).IsRequired();
+                builder.Property(x => x.AddOnValueIdsJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<ProductVariant>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Sku).IsRequired();
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Product>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<ProductTranslation>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Culture).IsRequired();
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.Slug).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<TaxCategory>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<AddOnOptionValue>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Label).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Address>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.FullName).IsRequired();
+                builder.Property(x => x.Street1).IsRequired();
+                builder.Property(x => x.PostalCode).IsRequired();
+                builder.Property(x => x.City).IsRequired();
+                builder.Property(x => x.CountryCode).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<ShippingMethod>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.Carrier).IsRequired();
+                builder.Property(x => x.Service).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.HasMany(x => x.Rates).WithOne().HasForeignKey(x => x.ShippingMethodId);
+            });
+
+            modelBuilder.Entity<ShippingRate>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+        }
+    }
+
+    private static async Task<(bool IsSuccess, string? ErrorMessage, string? OrderNumber)> HandleOrderSafely(
+        PlaceOrderFromCartHandler handler,
+        PlaceOrderFromCartDto dto)
+    {
+        try
+        {
+            var result = await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+            return (IsSuccess: true, ErrorMessage: null, OrderNumber: result.OrderNumber);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return (IsSuccess: false, ErrorMessage: ex.Message, OrderNumber: null);
+        }
+    }
+
+    private enum PlaceOrderRaceMode
+    {
+        Leader,
+        Follower,
+        Standard
+    }
+
+    private sealed class PlaceOrderRaceTestDbContext : DbContext, IAppDbContext
+    {
+        private readonly PlaceOrderRaceMode _raceMode;
+        private readonly string _databaseName;
+        private readonly int? _leaderDelayMs;
+        private static readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> RaceSaveSignals = new();
+
+        private PlaceOrderRaceTestDbContext(
+            DbContextOptions<PlaceOrderRaceTestDbContext> options,
+            PlaceOrderRaceMode raceMode = PlaceOrderRaceMode.Standard,
+            string? databaseName = null,
+            int? leaderDelayMs = null)
+            : base(options)
+        {
+            _raceMode = raceMode;
+            _databaseName = databaseName ?? Guid.NewGuid().ToString("N");
+            _leaderDelayMs = leaderDelayMs;
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static PlaceOrderRaceTestDbContext Create(string databaseName, PlaceOrderRaceMode raceMode = PlaceOrderRaceMode.Standard, int? leaderDelayMs = null)
+        {
+            var options = new DbContextOptionsBuilder<PlaceOrderRaceTestDbContext>()
+                .UseInMemoryDatabase(databaseName)
+                .Options;
+
+            return new PlaceOrderRaceTestDbContext(options, raceMode, databaseName, leaderDelayMs);
+        }
+
+        public static PlaceOrderRaceTestDbContext Create(string databaseName) => Create(databaseName, PlaceOrderRaceMode.Standard);
+
+        public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+        {
+            var signal = RaceSaveSignals.GetOrAdd(_databaseName, static _ => new(TaskCreationOptions.RunContinuationsAsynchronously));
+
+            if (_raceMode == PlaceOrderRaceMode.Follower)
+            {
+                await signal.Task.ConfigureAwait(false);
+                throw new DbUpdateConcurrencyException("CartAlreadyCheckedOut");
+            }
+
+            if (_leaderDelayMs.HasValue)
+            {
+                await Task.Delay(_leaderDelayMs.Value, ct).ConfigureAwait(false);
+            }
+
+            var result = await base.SaveChangesAsync(ct).ConfigureAwait(false);
+
+            if (_raceMode == PlaceOrderRaceMode.Leader)
+            {
+                signal.TrySetResult(true);
+            }
+
+            return result;
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

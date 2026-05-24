@@ -50,7 +50,7 @@ public sealed class ChannelDispatchActivityHandlerTests
                 AttemptedAtUtc = nowUtc.AddMinutes(-10),
                 RowVersion = [1]
             });
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var handler = new GetChannelDispatchActivityHandler(db, fixedClock);
         var (items, total, summary, _, _) = await handler
@@ -58,8 +58,7 @@ public sealed class ChannelDispatchActivityHandlerTests
                 1,
                 20,
                 new ChannelDispatchAuditFilterDto { AdminTestOnly = true },
-                TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+                TestContext.Current.CancellationToken);
 
         total.Should().Be(1);
         items.Should().HaveCount(1);

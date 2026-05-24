@@ -302,6 +302,10 @@ public static class AppResources
     public static string MemberCommerceViewInvoiceButton => ResourceManager.GetString(nameof(MemberCommerceViewInvoiceButton), Culture) ?? "View invoice";
     public static string MemberCommerceRetryPaymentButton => ResourceManager.GetString(nameof(MemberCommerceRetryPaymentButton), Culture) ?? "Retry payment";
     public static string MemberCommerceCopyDocumentButton => ResourceManager.GetString(nameof(MemberCommerceCopyDocumentButton), Culture) ?? "Copy document";
+    public static string MemberCommerceCopyArchiveDocumentButton => ResourceManager.GetString(nameof(MemberCommerceCopyArchiveDocumentButton), Culture) ?? "Copy archive document";
+    public static string MemberCommerceCopyStructuredDataButton => ResourceManager.GetString(nameof(MemberCommerceCopyStructuredDataButton), Culture) ?? "Copy structured data";
+    public static string MemberCommerceCopyStructuredXmlButton => ResourceManager.GetString(nameof(MemberCommerceCopyStructuredXmlButton), Culture) ?? "Copy structured XML";
+    public static string MemberCommerceStructuredInvoiceNotice => ResourceManager.GetString(nameof(MemberCommerceStructuredInvoiceNotice), Culture) ?? "Structured JSON/XML exports are operational invoice artifacts and are not compliant e-invoices by themselves.";
     public static string MemberCommerceOrderStatusFormat => ResourceManager.GetString(nameof(MemberCommerceOrderStatusFormat), Culture) ?? "Status: {0}";
     public static string MemberCommerceOrderCreatedFormat => ResourceManager.GetString(nameof(MemberCommerceOrderCreatedFormat), Culture) ?? "Created: {0:yyyy-MM-dd HH:mm}";
     public static string MemberCommerceOrderTotalFormat => ResourceManager.GetString(nameof(MemberCommerceOrderTotalFormat), Culture) ?? "Total: {0}";
@@ -333,11 +337,16 @@ public static class AppResources
     public static string MemberCommerceInvoicePaymentSummaryFormat => ResourceManager.GetString(nameof(MemberCommerceInvoicePaymentSummaryFormat), Culture) ?? "Payment: {0}";
     public static string MemberCommerceCheckoutLaunchedFormat => ResourceManager.GetString(nameof(MemberCommerceCheckoutLaunchedFormat), Culture) ?? "Hosted checkout launched for {0}.";
     public static string MemberCommerceDocumentCopiedFormat => ResourceManager.GetString(nameof(MemberCommerceDocumentCopiedFormat), Culture) ?? "Document copied for {0}.";
+    public static string MemberCommerceArchiveDocumentCopiedFormat => ResourceManager.GetString(nameof(MemberCommerceArchiveDocumentCopiedFormat), Culture) ?? "Archive document copied for {0}.";
+    public static string MemberCommerceStructuredDataCopiedFormat => ResourceManager.GetString(nameof(MemberCommerceStructuredDataCopiedFormat), Culture) ?? "Structured data copied for {0}.";
+    public static string MemberCommerceStructuredXmlCopiedFormat => ResourceManager.GetString(nameof(MemberCommerceStructuredXmlCopiedFormat), Culture) ?? "Structured XML copied for {0}.";
     public static string MemberCommerceLoadFailed => ResourceManager.GetString(nameof(MemberCommerceLoadFailed), Culture) ?? "Unable to load order and invoice history.";
     public static string MemberCommerceOrderDetailLoadFailed => ResourceManager.GetString(nameof(MemberCommerceOrderDetailLoadFailed), Culture) ?? "Unable to load order detail.";
     public static string MemberCommerceInvoiceDetailLoadFailed => ResourceManager.GetString(nameof(MemberCommerceInvoiceDetailLoadFailed), Culture) ?? "Unable to load invoice detail.";
     public static string MemberCommercePaymentIntentFailed => ResourceManager.GetString(nameof(MemberCommercePaymentIntentFailed), Culture) ?? "Unable to start a payment retry right now.";
     public static string MemberCommerceDocumentDownloadFailed => ResourceManager.GetString(nameof(MemberCommerceDocumentDownloadFailed), Culture) ?? "Unable to download the document right now.";
+    public static string MemberCommerceArchiveDocumentDownloadFailed => ResourceManager.GetString(nameof(MemberCommerceArchiveDocumentDownloadFailed), Culture) ?? "Unable to download the invoice archive document right now.";
+    public static string MemberCommerceStructuredDownloadFailed => ResourceManager.GetString(nameof(MemberCommerceStructuredDownloadFailed), Culture) ?? "Unable to download the structured invoice export right now.";
     public static string MemberCommerceTrackingOpenFailed => ResourceManager.GetString(nameof(MemberCommerceTrackingOpenFailed), Culture) ?? "Unable to open shipment tracking right now.";
     public static string MemberAddressesTitle => ResourceManager.GetString(nameof(MemberAddressesTitle), Culture) ?? "Address book";
     public static string MemberAddressesRefreshButton => ResourceManager.GetString(nameof(MemberAddressesRefreshButton), Culture) ?? "Refresh addresses";

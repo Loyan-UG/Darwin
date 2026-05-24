@@ -373,18 +373,34 @@ public sealed class SettingsHandlerTests
     }
 
     [Fact]
-<<<<<<< HEAD
     public async Task UpdateSiteSetting_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
     {
         await using var db = ConcurrencyFailingSettingsTestDbContext.Create();
         var rowVersion = new byte[] { 9, 9, 9, 9 };
         var entity = BuildSetting(rowVersion: rowVersion);
-=======
+        db.Set<SiteSetting>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        db.FailNextSaveChanges();
+
+        var handler = new UpdateSiteSettingHandler(
+            db,
+            new SiteSettingEditValidator(CreateLocalizer()),
+            CreateLocalizer());
+
+        var dto = CreateValidDto(entity.Id, rowVersion);
+        dto.Title = "Updated Shop Title";
+
+        var act = () => handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
+            .WithMessage("*SettingsModifiedByAnotherUser*");
+    }
+
+    [Fact]
     public async Task UpdateSiteSetting_Should_Throw_ValidationException_When_RowVersion_Is_Empty()
     {
         await using var db = SettingsTestDbContext.Create();
         var entity = BuildSetting(rowVersion: new byte[] { 1, 2, 3, 4 });
->>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
         db.Set<SiteSetting>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -393,22 +409,12 @@ public sealed class SettingsHandlerTests
             new SiteSettingEditValidator(CreateLocalizer()),
             CreateLocalizer());
 
-<<<<<<< HEAD
-        var dto = CreateValidDto(entity.Id, rowVersion);
-        dto.Title = "Updated Shop Title";
-
-        var act = () => handler.HandleAsync(dto, TestContext.Current.CancellationToken);
-
-        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
-            .WithMessage("*SettingsModifiedByAnotherUser*");
-=======
         var dto = CreateValidDto(entity.Id, Array.Empty<byte>()); // empty RowVersion
 
         var act = () => handler.HandleAsync(dto, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<ValidationException>(
             "an empty RowVersion must be rejected before the concurrency check");
->>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
     }
 
     [Fact]
@@ -436,6 +442,91 @@ public sealed class SettingsHandlerTests
         updated.Title.Should().Be("Updated Shop Title");
         updated.DefaultCulture.Should().Be("de-DE");
         updated.DefaultCurrency.Should().Be("EUR");
+    }
+
+    [Fact]
+    public async Task UpdateSiteSetting_Should_Persist_Stripe_Settings_Successfully()
+    {
+        await using var db = SettingsTestDbContext.Create();
+        var rowVersion = new byte[] { 11 };
+        var entity = BuildSetting(rowVersion: rowVersion);
+        db.Set<SiteSetting>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateSiteSettingHandler(
+            db,
+            new SiteSettingEditValidator(CreateLocalizer()),
+            CreateLocalizer());
+
+        var dto = CreateValidDto(entity.Id, rowVersion);
+        dto.StripeEnabled = true;
+        dto.StripePublishableKey = "pk_test_unit_publishable";
+        dto.StripeSecretKey = "sk_test_unit_secret";
+        dto.StripeWebhookSecret = "whsec_unit_secret";
+        dto.StripeMerchantDisplayName = "Darwin Stripe Smoke";
+
+        await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        var updated = db.Set<SiteSetting>().Single();
+        updated.StripeEnabled.Should().BeTrue();
+        updated.StripePublishableKey.Should().Be("pk_test_unit_publishable");
+        updated.StripeSecretKey.Should().Be("sk_test_unit_secret");
+        updated.StripeWebhookSecret.Should().Be("whsec_unit_secret");
+        updated.StripeMerchantDisplayName.Should().Be("Darwin Stripe Smoke");
+    }
+
+    [Fact]
+    public async Task UpdateSiteSetting_Should_Preserve_Existing_Secrets_When_Posted_Values_Are_Blank_Or_Masked()
+    {
+        await using var db = SettingsTestDbContext.Create();
+        var rowVersion = new byte[] { 12 };
+        var entity = BuildSetting(rowVersion: rowVersion);
+        entity.JwtSigningKey = "existing-jwt-signing-key-with-enough-length";
+        entity.JwtPreviousSigningKey = "existing-previous-jwt-key-32chars";
+        entity.StripeSecretKey = "existing-stripe-secret";
+        entity.StripeWebhookSecret = "existing-webhook-secret";
+        entity.DhlApiKey = "existing-dhl-key";
+        entity.DhlApiSecret = "existing-dhl-secret";
+        entity.WhatsAppAccessToken = "existing-whatsapp-token";
+        entity.SmtpPassword = "existing-smtp-password";
+        entity.SmsApiKey = "existing-sms-key";
+        entity.SmsApiSecret = "existing-sms-secret";
+        db.Set<SiteSetting>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateSiteSettingHandler(
+            db,
+            new SiteSettingEditValidator(CreateLocalizer()),
+            CreateLocalizer());
+
+        var dto = CreateValidDto(entity.Id, rowVersion);
+        dto.JwtSigningKey = "********";
+        dto.JwtPreviousSigningKey = "********";
+        dto.StripeEnabled = true;
+        dto.StripePublishableKey = "pk_test_unit_publishable";
+        dto.StripeSecretKey = "";
+        dto.StripeWebhookSecret = "********";
+        dto.DhlApiKey = " ";
+        dto.DhlApiSecret = "********";
+        dto.WhatsAppAccessToken = "";
+        dto.SmtpPassword = "********";
+        dto.SmsApiKey = " ";
+        dto.SmsApiSecret = "********";
+
+        await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
+
+        var updated = db.Set<SiteSetting>().Single();
+        updated.JwtSigningKey.Should().Be("existing-jwt-signing-key-with-enough-length");
+        updated.JwtPreviousSigningKey.Should().Be("existing-previous-jwt-key-32chars");
+        updated.StripeSecretKey.Should().Be("existing-stripe-secret");
+        updated.StripeWebhookSecret.Should().Be("existing-webhook-secret");
+        updated.DhlApiKey.Should().Be("existing-dhl-key");
+        updated.DhlApiSecret.Should().Be("existing-dhl-secret");
+        updated.WhatsAppAccessToken.Should().Be("existing-whatsapp-token");
+        updated.SmtpPassword.Should().Be("existing-smtp-password");
+        updated.SmsApiKey.Should().Be("existing-sms-key");
+        updated.SmsApiSecret.Should().Be("existing-sms-secret");
+        updated.StripePublishableKey.Should().Be("pk_test_unit_publishable");
     }
 
     [Fact]
@@ -554,12 +645,19 @@ public sealed class SettingsHandlerTests
 
     private sealed class ConcurrencyFailingSettingsTestDbContext : DbContext, IAppDbContext
     {
+        private bool _failNextSaveChanges;
+
         private ConcurrencyFailingSettingsTestDbContext(DbContextOptions<ConcurrencyFailingSettingsTestDbContext> options)
             : base(options)
         {
         }
 
         public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public void FailNextSaveChanges()
+        {
+            _failNextSaveChanges = true;
+        }
 
         public static ConcurrencyFailingSettingsTestDbContext Create()
         {
@@ -591,7 +689,13 @@ public sealed class SettingsHandlerTests
         public override Task<int> SaveChangesAsync(
             global::System.Threading.CancellationToken cancellationToken = default)
         {
-            return Task.FromException<int>(new DbUpdateConcurrencyException());
+            if (_failNextSaveChanges)
+            {
+                _failNextSaveChanges = false;
+                return Task.FromException<int>(new DbUpdateConcurrencyException());
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
     }
 }

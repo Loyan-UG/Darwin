@@ -79,7 +79,7 @@
                     <HorizontalStackLayout Spacing="18"
                                            HorizontalOptions="Center">
                         <Label Text="{x:Static res:AppResources.RegisterButton}"
-                               TextColor="{StaticResource BrushOnSurface}"
+                               TextColor="{StaticResource Neutral900}"
                                FontAttributes="Bold"
                                FontSize="14">
                             <Label.GestureRecognizers>
@@ -88,7 +88,7 @@
                         </Label>
 
                         <Label Text="{x:Static res:AppResources.ForgotPasswordButton}"
-                               TextColor="{StaticResource BrushOnSurface}"
+                               TextColor="{StaticResource Neutral900}"
                                FontAttributes="Bold"
                                FontSize="14">
                             <Label.GestureRecognizers>
@@ -98,7 +98,7 @@
                     </HorizontalStackLayout>
 
                     <Label Text="{x:Static res:AppResources.RequestActivationEmailButton}"
-                           TextColor="{StaticResource BrushOnSurface}"
+                           TextColor="{StaticResource Neutral900}"
                            FontAttributes="Bold"
                            FontSize="14"
                            HorizontalTextAlignment="Center"
@@ -121,7 +121,7 @@
                                Color="{StaticResource BrandGold500}" />
 
             <Label Text="{x:Static res:AppResources.LegalHubTitle}"
-                   TextColor="{StaticResource BrushOnSurfaceSecondary}"
+                   TextColor="{StaticResource Neutral700}"
                    FontSize="14"
                    HorizontalTextAlignment="Center"
                    HorizontalOptions="Center"

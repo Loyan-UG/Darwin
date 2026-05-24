@@ -374,6 +374,89 @@ jobs:
           name: mobile-shared-test-results
           path: TestResults/mobile-shared
 
+  mobile-consumer-tests:
+    name: Mobile.Consumer launch guards
+    runs-on: windows-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install MAUI workload
+        run: dotnet workload install maui --skip-manifest-update
+
+      - name: Restore mobile consumer test project
+        run: dotnet restore tests/Darwin.Mobile.Consumer.Tests/Darwin.Mobile.Consumer.Tests.csproj
+      - name: Execute mobile consumer launch guards
+        run: >
+          dotnet test tests/Darwin.Mobile.Consumer.Tests/Darwin.Mobile.Consumer.Tests.csproj
+          --configuration Release
+          --logger trx
+          --results-directory TestResults/mobile-consumer
+      - name: Upload mobile consumer test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-consumer-test-results
+          path: TestResults/mobile-consumer
+
+  mobile-business-tests:
+    name: Mobile.Business launch guards
+    runs-on: windows-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install MAUI workload
+        run: dotnet workload install maui --skip-manifest-update
+
+      - name: Restore mobile business test project
+        run: dotnet restore tests/Darwin.Mobile.Business.Tests/Darwin.Mobile.Business.Tests.csproj
+      - name: Execute mobile business launch guards
+        run: >
+          dotnet test tests/Darwin.Mobile.Business.Tests/Darwin.Mobile.Business.Tests.csproj
+          --configuration Release
+          --logger trx
+          --results-directory TestResults/mobile-business
+      - name: Upload mobile business test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-business-test-results
+          path: TestResults/mobile-business
+
+  mobile-build-validation:
+    name: Mobile release-like build validation
+    runs-on: windows-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install MAUI workload
+        run: dotnet workload install maui --skip-manifest-update
+
+      - name: Restore mobile projects
+        run: dotnet restore Darwin.MobileOnly.slnf
+      - name: Build Mobile.Shared Windows Release
+        run: dotnet build src/Darwin.Mobile.Shared/Darwin.Mobile.Shared.csproj -f net10.0-windows10.0.19041.0 -c Release --no-restore /p:UseSharedCompilation=false
+      - name: Build Mobile.Consumer Windows Release
+        run: dotnet build src/Darwin.Mobile.Consumer/Darwin.Mobile.Consumer.csproj -f net10.0-windows10.0.19041.0 -c Release --no-restore /p:SelfContained=false /p:UseSharedCompilation=false
+      - name: Build Mobile.Business Windows Release
+        run: dotnet build src/Darwin.Mobile.Business/Darwin.Mobile.Business.csproj -f net10.0-windows10.0.19041.0 -c Release --no-restore /p:SelfContained=false /p:UseSharedCompilation=false
+      - name: Build Mobile.Consumer Android Debug
+        run: dotnet build src/Darwin.Mobile.Consumer/Darwin.Mobile.Consumer.csproj -f net10.0-android -c Debug --no-restore /p:UseSharedCompilation=false
+      - name: Build Mobile.Business Android Debug
+        run: dotnet build src/Darwin.Mobile.Business/Darwin.Mobile.Business.csproj -f net10.0-android -c Debug --no-restore /p:UseSharedCompilation=false
+
   coverage-gate:
     name: Coverage threshold gate
     needs:
@@ -390,6 +473,9 @@ jobs:
       - webadmin-smoke-mutation-positive-tests
       - integration-tests
       - mobile-shared-tests
+      - mobile-consumer-tests
+      - mobile-business-tests
+      - mobile-build-validation
     runs-on: ubuntu-latest
     continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     steps:

@@ -17,6 +17,7 @@
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>darwin-mobile-consumer-local-secrets</UserSecretsId>
     <!-- Display name -->
     <ApplicationTitle>Loyan</ApplicationTitle>
     <!-- App Identifier -->
@@ -59,16 +60,16 @@
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <!--
-	Google Maps key should come from environment/user-secrets/CI variables.
+	Google Maps key should come from environment, user-secrets, or CI variables.
 	Do not hardcode production keys in source control.
 	Resolution order:
 	1) GoogleMapsApiKey (explicit MSBuild property)
 	2) GOOGLE_MAPS_API_KEY (environment)
 	3) ANDROID_GOOGLE_MAPS_API_KEY (environment)
 	-->
-    <GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
-    <GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(ANDROID_GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
-    <AndroidManifestPlaceholders>$(AndroidManifestPlaceholders);googleMapsApiKey=$(GoogleMapsApiKey)</AndroidManifestPlaceholders>
+    <GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == '' and $([System.Text.RegularExpressions.Regex]::IsMatch('$(GOOGLE_MAPS_API_KEY)', '^A[Ii]za[0-9A-Za-z_-]{20,}$'))">$(GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
+    <GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == '' and $([System.Text.RegularExpressions.Regex]::IsMatch('$(ANDROID_GOOGLE_MAPS_API_KEY)', '^A[Ii]za[0-9A-Za-z_-]{20,}$'))">$(ANDROID_GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
+    <_GoogleMapsApiKeyResourceFile>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\generated\res\values\google_maps_api_key.xml</_GoogleMapsApiKeyResourceFile>
   </PropertyGroup>
   <Target Name="ValidateAndroidPushFirebaseConfig" BeforeTargets="Build" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <Warning Condition="!Exists('google-services.json') and '$(Configuration)' != 'Release'" Text="google-services.json is missing. FCM token/bootstrap can fail at runtime. Add src/Darwin.Mobile.Consumer/google-services.json for your Firebase project." />
@@ -77,6 +78,10 @@
   <Target Name="ValidateAndroidGoogleMapsApiKey" BeforeTargets="Build" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <Warning Condition="'$(GoogleMapsApiKey)' == '' and '$(Configuration)' != 'Release'" Text="GOOGLE_MAPS_API_KEY is not set. Android map tiles may fail at runtime. Set GoogleMapsApiKey or env var GOOGLE_MAPS_API_KEY (or ANDROID_GOOGLE_MAPS_API_KEY)." />
     <Error Condition="'$(GoogleMapsApiKey)' == '' and '$(Configuration)' == 'Release'" Text="GOOGLE_MAPS_API_KEY is required for Android Release builds. Set GoogleMapsApiKey or env var GOOGLE_MAPS_API_KEY (or ANDROID_GOOGLE_MAPS_API_KEY)." />
+  </Target>
+  <Target Name="GenerateAndroidGoogleMapsApiKeyResource" BeforeTargets="PrepareForBuild" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(_GoogleMapsApiKeyResourceFile)'))" />
+    <WriteLinesToFile File="$(_GoogleMapsApiKeyResourceFile)" Overwrite="true" Lines="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#x0A;&lt;resources&gt;&#x0A;  &lt;string name=&quot;google_maps_api_key&quot; translatable=&quot;false&quot;&gt;$(GoogleMapsApiKey)&lt;/string&gt;&#x0A;&lt;/resources&gt;" />
   </Target>
   <ItemGroup>
     <!-- App Icon -->
@@ -112,6 +117,7 @@
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <PackageReference Include="Xamarin.Firebase.Messaging" Version="125.0.1.2" />
     <GoogleServicesJson Include="google-services.json" Condition="Exists('google-services.json')" />
+    <AndroidResource Include="$(_GoogleMapsApiKeyResourceFile)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="10.0.7" />
@@ -150,9 +156,6 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\ForgotPasswordPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Views\HomePage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Views\LoginPage.xaml">

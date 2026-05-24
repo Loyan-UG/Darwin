@@ -5,7 +5,10 @@
       "src/Darwin.Contracts/Darwin.Contracts.csproj",
       "src/Darwin.Mobile.Shared/Darwin.Mobile.Shared.csproj",
       "src/Darwin.Mobile.Consumer/Darwin.Mobile.Consumer.csproj",
-      "src/Darwin.Mobile.Business/Darwin.Mobile.Business.csproj"
+      "src/Darwin.Mobile.Business/Darwin.Mobile.Business.csproj",
+      "tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj",
+      "tests/Darwin.Mobile.Consumer.Tests/Darwin.Mobile.Consumer.Tests.csproj",
+      "tests/Darwin.Mobile.Business.Tests/Darwin.Mobile.Business.Tests.csproj"
     ]
   }
 }

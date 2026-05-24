@@ -111,6 +111,9 @@ namespace Darwin.Mobile.Shared.Api
             public static string GetById(Guid id) => $"api/v1/member/invoices/{id:D}";
             public static string CreatePaymentIntent(Guid id) => $"api/v1/member/invoices/{id:D}/payment-intent";
             public static string DownloadDocument(Guid id) => $"api/v1/member/invoices/{id:D}/document";
+            public static string DownloadArchiveDocument(Guid id) => $"api/v1/member/invoices/{id:D}/archive-document";
+            public static string DownloadStructuredData(Guid id) => $"api/v1/member/invoices/{id:D}/structured-data";
+            public static string DownloadStructuredXml(Guid id) => $"api/v1/member/invoices/{id:D}/structured-xml";
         }
 
         /// <summary>

@@ -176,7 +176,13 @@ var result = await service.GenerateAsync(
 
 if (!result.IsGenerated)
 {
-    throw new InvalidOperationException("E-invoice external-command smoke failed with status " + result.Status + ".");
+    var failureMessage = "E-invoice external-command smoke failed with status " + result.Status + ".";
+    if (!string.IsNullOrWhiteSpace(result.Message))
+    {
+        failureMessage += " " + result.Message;
+    }
+
+    throw new InvalidOperationException(failureMessage);
 }
 
 Console.WriteLine("E-invoice external-command smoke generated an artifact through the configured adapter.");

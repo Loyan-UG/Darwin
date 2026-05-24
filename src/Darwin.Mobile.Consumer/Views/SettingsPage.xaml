@@ -27,22 +27,22 @@
                         <buttons:SfButton Grid.Column="0"
                                           Text="{x:Static res:AppResources.SettingsProfileButton}"
                                           Style="{StaticResource SyncfusionPrimaryButtonStyle}"
-                                          Clicked="OnProfileClicked" />
+                                          Command="{Binding OpenProfileCommand}" />
                         <buttons:SfButton Grid.Column="1"
                                           Text="{x:Static res:AppResources.SettingsPreferencesButton}"
                                           Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                          Clicked="OnMemberPreferencesClicked" />
+                                          Command="{Binding OpenMemberPreferencesCommand}" />
                     </Grid>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <buttons:SfButton Grid.Column="0"
                                           Text="{x:Static res:AppResources.SettingsOrdersAndInvoicesButton}"
                                           Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                          Clicked="OnMemberCommerceClicked" />
+                                          Command="{Binding OpenMemberCommerceCommand}" />
                         <buttons:SfButton Grid.Column="1"
                                           Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
                                           Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                          Clicked="OnChangePasswordClicked" />
+                                          Command="{Binding OpenChangePasswordCommand}" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -54,11 +54,11 @@
 
                     <buttons:SfButton Text="{x:Static res:AppResources.SettingsLegalHubButton}"
                                       Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                      Clicked="OnLegalHubClicked" />
+                                      Command="{Binding OpenLegalHubCommand}" />
 
                     <buttons:SfButton Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
                                       Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                      Clicked="OnAccountDeletionClicked" />
+                                      Command="{Binding OpenAccountDeletionCommand}" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

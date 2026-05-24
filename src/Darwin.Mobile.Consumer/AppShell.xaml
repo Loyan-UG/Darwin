@@ -32,21 +32,18 @@
         <ShellContent
             Route="{x:Static constants:Routes.Discover}"
             Title="{x:Static res:AppResources.DiscoverTitle}"
-            Icon="discover_tab_icon.png"
             ContentTemplate="{DataTemplate views:DiscoverPage}" />
 
         <!-- QR tab -->
         <ShellContent
             Route="{x:Static constants:Routes.Qr}"
             Title="{x:Static res:AppResources.QrTitle}"
-            Icon="qr_tab_icon.png"
             ContentTemplate="{DataTemplate views:QrPage}" />
 
         <!-- Rewards tab -->
         <ShellContent
             Route="{x:Static constants:Routes.Rewards}"
             Title="{x:Static res:AppResources.RewardsTitle}"
-            Icon="rewards_tab_icon.png"
             ContentTemplate="{DataTemplate views:RewardsPage}" />
 
 
@@ -54,14 +51,12 @@
         <ShellContent
             Route="{x:Static constants:Routes.Feed}"
             Title="{x:Static res:AppResources.FeedTitle}"
-            Icon="discover_tab_icon.png"
             ContentTemplate="{DataTemplate views:FeedPage}" />
 
         <!-- Profile tab -->
         <ShellContent
             Route="{x:Static constants:Routes.Settings}"
             Title="{x:Static res:AppResources.SettingsTitle}"
-            Icon="profile_tab_icon.png"
             ContentTemplate="{DataTemplate views:SettingsPage}" />
 
     </TabBar>

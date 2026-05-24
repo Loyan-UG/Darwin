@@ -46,6 +46,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     private readonly GetStorefrontOrderConfirmationHandler _getStorefrontOrderConfirmationHandler;
     private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
+    private readonly ILogger<PublicCheckoutController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicCheckoutController"/> class.
@@ -57,7 +58,8 @@ public sealed class PublicCheckoutController : ApiControllerBase
         CompleteStorefrontPaymentHandler completeStorefrontPaymentHandler,
         GetStorefrontOrderConfirmationHandler getStorefrontOrderConfirmationHandler,
         StorefrontCheckoutUrlBuilder checkoutUrlBuilder,
-        IStringLocalizer<ValidationResource> validationLocalizer)
+        IStringLocalizer<ValidationResource> validationLocalizer,
+        ILogger<PublicCheckoutController> logger)
     {
         _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
         _placeOrderFromCartHandler = placeOrderFromCartHandler ?? throw new ArgumentNullException(nameof(placeOrderFromCartHandler));
@@ -66,6 +68,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
         _getStorefrontOrderConfirmationHandler = getStorefrontOrderConfirmationHandler ?? throw new ArgumentNullException(nameof(getStorefrontOrderConfirmationHandler));
         _checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -249,6 +252,11 @@ public sealed class PublicCheckoutController : ApiControllerBase
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
+            _logger.LogWarning(
+                ex,
+                "Public storefront payment intent creation failed for order {OrderId} with safe error message: {ErrorMessage}.",
+                orderId,
+                ex.Message);
             return BadRequestProblem(_validationLocalizer["PaymentIntentCreationFailed"]);
         }
     }

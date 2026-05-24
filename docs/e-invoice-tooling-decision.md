@@ -32,7 +32,7 @@ Reasoning:
 - The existing Darwin boundary already supports an out-of-process generator/validator through `--input`, `--output`, `--format`, and optional `--validation-profile`.
 - `Mustangproject` is maintained as an e-invoice focused Java library/CLI/server and documents read, write, validate, and convert support for ZUGFeRD/Factur-X and XRechnung artifacts.
 - Keeping the first slice out-of-process avoids adding provider/tooling SDK references to Domain or Application and keeps the implementation replaceable if a deployment later mandates another generator.
-- The selected path still requires a pinned artifact, wrapper hardening, deterministic fixtures, and deployment smoke before any generated artifact is exposed as compliant.
+- The selected path still requires a pinned artifact, wrapper hardening, and deployment smoke before any generated artifact is exposed as compliant. Deterministic validation-report fixture parsing is now covered by `ExternalCommandEInvoiceGenerationServiceTests` (including alternate boolean keys and failed issue-message extraction).
 
 Alternatives retained for later:
 
@@ -50,7 +50,7 @@ These notes are a shortlist for the next implementation slice, not an approved p
 - `KoSIT XRechnung validator configuration`: relevant for the later XRechnung export path and for German CIUS validation evidence. It is not by itself a ZUGFeRD/Factur-X PDF generator.
 - `FeRD ZUGFeRD/Factur-X 2.4 package`: this remains the reference specification and validation artifact source for the target format. Implementation work must align generated profile/version output with the active deployment requirement. Reference: <https://www.ferd-net.de/en/standards/zugferd/factur-x>.
 
-The next implementation slice is a proof-of-concept using the existing external-command adapter and a pinned Mustangproject CLI wrapper: first drive the wrapper through `scripts/smoke-einvoice-external-command.ps1`, then add deterministic fixtures and legal validation evidence before any WebAdmin download is treated as compliant.
+The next implementation slice is a proof-of-concept using the existing external-command adapter and a pinned Mustangproject CLI wrapper: first drive the wrapper through `scripts/smoke-einvoice-external-command.ps1`, then add deployment smoke and selected-tool legal validation evidence before any WebAdmin download is treated as compliant. Deterministic fixture coverage for report parsing now exists in infrastructure tests.
 
 ## Implementation Requirements After Selection
 

@@ -84,6 +84,9 @@ namespace Darwin.Mobile.Shared.Api
             if (string.IsNullOrWhiteSpace(route))
                 return Result<TResponse>.Fail("Route is required.");
 
+            if (IsAbsoluteRoute(route))
+                return Result<TResponse>.Fail("Route must be a relative API path.");
+
             var normalized = ApiRoutes.Normalize(route);
 
             try
@@ -113,6 +116,9 @@ namespace Darwin.Mobile.Shared.Api
         {
             if (string.IsNullOrWhiteSpace(route))
                 return Result<string>.Fail("Route is required.");
+
+            if (IsAbsoluteRoute(route))
+                return Result<string>.Fail("Route must be a relative API path.");
 
             var normalized = ApiRoutes.Normalize(route);
 
@@ -158,6 +164,9 @@ namespace Darwin.Mobile.Shared.Api
         {
             if (string.IsNullOrWhiteSpace(route))
                 return Result<TResponse>.Fail("Route is required.");
+
+            if (IsAbsoluteRoute(route))
+                return Result<TResponse>.Fail("Route must be a relative API path.");
 
             if (request is null)
                 return Result<TResponse>.Fail("Request payload is required.");
@@ -241,6 +250,9 @@ namespace Darwin.Mobile.Shared.Api
             if (string.IsNullOrWhiteSpace(route))
                 return Result<TResponse>.Fail("Route is required.");
 
+            if (IsAbsoluteRoute(route))
+                return Result<TResponse>.Fail("Route must be a relative API path.");
+
             if (request is null)
                 return Result<TResponse>.Fail("Request payload is required.");
 
@@ -280,6 +292,9 @@ namespace Darwin.Mobile.Shared.Api
         {
             if (string.IsNullOrWhiteSpace(route))
                 return Result.Fail("Route is required.");
+
+            if (IsAbsoluteRoute(route))
+                return Result.Fail("Route must be a relative API path.");
 
             if (request is null)
                 return Result.Fail("Request payload is required.");
@@ -321,6 +336,9 @@ namespace Darwin.Mobile.Shared.Api
         {
             if (string.IsNullOrWhiteSpace(route))
                 return Result.Fail("Route is required.");
+
+            if (IsAbsoluteRoute(route))
+                return Result.Fail("Route must be a relative API path.");
 
             if (request is null)
                 return Result.Fail("Request payload is required.");
@@ -437,6 +455,11 @@ namespace Darwin.Mobile.Shared.Api
             string route,
             AuthenticationHeaderValue? authorization)
         {
+            if (IsAbsoluteRoute(route))
+            {
+                throw new InvalidOperationException("Route must be a relative API path.");
+            }
+
             var request = new HttpRequestMessage(method, route);
             if (authorization is not null)
             {
@@ -499,6 +522,9 @@ namespace Darwin.Mobile.Shared.Api
             return normalized.StartsWith("api/v1/member/", StringComparison.OrdinalIgnoreCase) ||
                    normalized.StartsWith("api/v1/business/", StringComparison.OrdinalIgnoreCase);
         }
+
+        private static bool IsAbsoluteRoute(string route)
+            => Uri.TryCreate(route.Trim(), UriKind.Absolute, out _);
 
         private static async Task<Result<TResponse>> ReadAsResultAsync<TResponse>(HttpResponseMessage response, CancellationToken ct)
         {

@@ -342,6 +342,42 @@ public sealed class TransitionInvoiceStatusHandlerTests
             "null DB RowVersion must produce a safe concurrency failure, not NullReferenceException");
     }
 
+    [Fact]
+    public async Task HandleAsync_Should_ReturnFail_AndConcurrencyConflict_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = InvoiceTransitionTestDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+
+        db.Set<Invoice>().Add(new Invoice
+        {
+            Id = invoiceId,
+            Status = InvoiceStatus.Draft,
+            Currency = "EUR",
+            DueDateUtc = new DateTime(2026, 4, 1, 10, 0, 0, DateTimeKind.Utc),
+            RowVersion = rowVersion.ToArray()
+        });
+        SeedReadyInvoiceSettings(db);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new TransitionInvoiceStatusHandler(
+            db,
+            new InvoiceStatusTransitionValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new InvoiceStatusTransitionDto
+        {
+            Id = invoiceId,
+            RowVersion = rowVersion,
+            TargetStatus = InvoiceStatus.Open
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
     private sealed class InvoiceTransitionTestDbContext : DbContext, IAppDbContext
     {
         private InvoiceTransitionTestDbContext(DbContextOptions<InvoiceTransitionTestDbContext> options)
@@ -357,6 +393,19 @@ public sealed class TransitionInvoiceStatusHandlerTests
                 .UseInMemoryDatabase($"darwin_invoice_transition_tests_{Guid.NewGuid()}")
                 .Options;
             return new InvoiceTransitionTestDbContext(options);
+        }
+
+        public bool ThrowConcurrencyOnSave { get; set; }
+
+        public override Task<int> SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (ThrowConcurrencyOnSave)
+            {
+                ThrowConcurrencyOnSave = false;
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict during save");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

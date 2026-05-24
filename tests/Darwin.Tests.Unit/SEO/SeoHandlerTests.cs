@@ -220,7 +220,6 @@ public sealed class SeoHandlerTests
     }
 
     [Fact]
-<<<<<<< HEAD
     public async Task UpdateRedirectRule_Should_Rethrow_ConcurrencyException_When_SaveChanges_Detects_PostSaveConflict()
     {
         await using var db = ConcurrencyFailingSeoTestDbContext.Create();
@@ -234,7 +233,25 @@ public sealed class SeoHandlerTests
             To = "/original-target",
             IsPermanent = true,
             RowVersion = rowVersion
-=======
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateRedirectRuleHandler(db, CreateLocalizer());
+
+        var act = () => handler.HandleAsync(new RedirectRuleEditDto
+        {
+            Id = id,
+            RowVersion = rowVersion,
+            FromPath = "/updated",
+            To = "/updated-target",
+            IsPermanent = false
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateRedirectRule_Should_Throw_DbUpdateConcurrencyException_When_RowVersion_Is_Empty()
     {
         await using var db = SeoTestDbContext.Create();
@@ -245,7 +262,6 @@ public sealed class SeoHandlerTests
             FromPath = "/path",
             To = "/target",
             RowVersion = new byte[] { 1, 2, 3 }
->>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -254,23 +270,12 @@ public sealed class SeoHandlerTests
         var act = () => handler.HandleAsync(new RedirectRuleEditDto
         {
             Id = id,
-<<<<<<< HEAD
-            RowVersion = rowVersion,
-            FromPath = "/updated",
-            To = "/updated-target",
-            IsPermanent = false
-        }, TestContext.Current.CancellationToken);
-
-        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
-            .WithMessage("*ConcurrencyConflictDetected*");
-=======
             RowVersion = Array.Empty<byte>(), // empty RowVersion
             FromPath = "/path",
             To = "/other"
         }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<DbUpdateConcurrencyException>("an empty RowVersion must be treated as a concurrency conflict");
->>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
     }
 
     [Fact]
@@ -353,7 +358,6 @@ public sealed class SeoHandlerTests
     }
 
     [Fact]
-<<<<<<< HEAD
     public async Task DeleteRedirectRule_Should_Return_ItemConcurrencyConflict_When_SaveChanges_Detects_PostSaveConflict()
     {
         await using var db = ConcurrencyFailingSeoTestDbContext.Create();
@@ -372,7 +376,9 @@ public sealed class SeoHandlerTests
 
         result.Succeeded.Should().BeFalse("save-level concurrency should surface item concurrency conflict");
         result.Error.Should().Be("ItemConcurrencyConflict");
-=======
+    }
+
+    [Fact]
     public async Task DeleteRedirectRule_Should_Fail_WhenIdIsEmpty()
     {
         await using var db = SeoTestDbContext.Create();
@@ -429,7 +435,6 @@ public sealed class SeoHandlerTests
 
         result.Succeeded.Should().BeFalse("stale RowVersion must trigger a concurrency conflict");
         result.Error.Should().NotBeNullOrEmpty();
->>>>>>> 5c0164c66cf818e792e5d779e0b46491c74b8f5e
     }
 
     // ─── ResolveRedirectHandler ───────────────────────────────────────────────

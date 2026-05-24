@@ -18,6 +18,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Darwin.Worker;
 
 namespace Darwin.WebApi.Tests.Services;
 

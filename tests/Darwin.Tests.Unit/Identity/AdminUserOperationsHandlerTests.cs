@@ -128,6 +128,32 @@ public sealed class AdminUserOperationsHandlerTests
         result.Error.Should().Be("ConcurrencyConflict");
     }
 
+    [Fact]
+    public async Task UpdateUser_Should_Fail_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingAdminUserOpsTestDbContext.Create();
+        var user = CreateUser("concurrency-save@darwin.de");
+        db.Set<User>().Add(user);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateUserHandler(db, new UserEditValidator(), new TestLocalizer());
+        var result = await handler.HandleAsync(new UserEditDto
+        {
+            Id = user.Id,
+            RowVersion = user.RowVersion,
+            FirstName = "Updated",
+            LastName = "Name",
+            Locale = "en-US",
+            Timezone = "America/New_York",
+            Currency = "USD",
+            PhoneE164 = "+1234567890",
+            IsActive = false
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ConcurrencyConflict");
+    }
+
     // ─── SetUserPasswordByAdminHandler ────────────────────────────────────────
 
     [Fact]
@@ -371,6 +397,28 @@ public sealed class AdminUserOperationsHandlerTests
     }
 
     [Fact]
+    public async Task UpdateUserRoles_Should_Fail_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingAdminUserOpsTestDbContext.Create();
+        var user = CreateUser("roles-concurrency-save@darwin.de");
+        var role = new Role("valid-role", "Valid", false, null);
+        db.Set<User>().Add(user);
+        db.Set<Role>().Add(role);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateUserRolesHandler(db, new TestLocalizer());
+        var result = await handler.HandleAsync(new UserRolesUpdateDto
+        {
+            UserId = user.Id,
+            RowVersion = user.RowVersion,
+            RoleIds = [role.Id]
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ConcurrencyConflictReloadAndRetry");
+    }
+
+    [Fact]
     public async Task UpdateUserRoles_Should_ClearAllRoles_WhenEmptyListProvided()
     {
         await using var db = AdminUserOpsTestDbContext.Create();
@@ -603,6 +651,91 @@ public sealed class AdminUserOperationsHandlerTests
                 builder.Ignore(x => x.User);
                 builder.Ignore(x => x.Role);
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingAdminUserOpsTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingAdminUserOpsTestDbContext(
+            DbContextOptions<ConcurrencyFailingAdminUserOpsTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _hasSeeded;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingAdminUserOpsTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingAdminUserOpsTestDbContext>()
+                .UseInMemoryDatabase($"darwin_admin_user_ops_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingAdminUserOpsTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Ignore<GeoCoordinate>();
+
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Email).IsRequired();
+                builder.Property(x => x.NormalizedEmail).IsRequired();
+                builder.Property(x => x.UserName).IsRequired();
+                builder.Property(x => x.NormalizedUserName).IsRequired();
+                builder.Property(x => x.PasswordHash).IsRequired();
+                builder.Property(x => x.SecurityStamp).IsRequired();
+                builder.Property(x => x.Locale).IsRequired();
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.Timezone).IsRequired();
+                builder.Property(x => x.ChannelsOptInJson).IsRequired();
+                builder.Property(x => x.FirstTouchUtmJson).IsRequired();
+                builder.Property(x => x.LastTouchUtmJson).IsRequired();
+                builder.Property(x => x.ExternalIdsJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.UserRoles);
+                builder.Ignore(x => x.Logins);
+                builder.Ignore(x => x.Tokens);
+                builder.Ignore(x => x.TwoFactorSecrets);
+                builder.Ignore(x => x.Devices);
+                builder.Ignore(x => x.BusinessFavorites);
+                builder.Ignore(x => x.BusinessLikes);
+                builder.Ignore(x => x.BusinessReviews);
+                builder.Ignore(x => x.EngagementSnapshot);
+            });
+
+            modelBuilder.Entity<Role>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Key).IsRequired();
+                builder.Property(x => x.NormalizedName).IsRequired();
+                builder.Property(x => x.DisplayName).IsRequired();
+                builder.Ignore(x => x.UserRoles);
+                builder.Ignore(x => x.RolePermissions);
+            });
+
+            modelBuilder.Entity<UserRole>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.UserId).IsRequired();
+                builder.Property(x => x.RoleId).IsRequired();
+                builder.Ignore(x => x.User);
+                builder.Ignore(x => x.Role);
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 }

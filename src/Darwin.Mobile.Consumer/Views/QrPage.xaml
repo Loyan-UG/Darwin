@@ -32,23 +32,26 @@
                     <Border Style="{StaticResource MutedCardBorderStyle}"
                             Padding="20"
                             HorizontalOptions="Center">
-                        <Image Source="{Binding QrImage}"
-                               HeightRequest="220"
-                               WidthRequest="220"
-                               HorizontalOptions="Center"
-                               IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
-                        <Label Text="{x:Static res:AppResources.QrEmptyStateMessage}"
-                               Style="{StaticResource SecondaryBodyLabelStyle}"
-                               HorizontalTextAlignment="Center"
-                               IsVisible="False">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label"
-                                             Binding="{Binding QrImage}"
-                                             Value="{x:Null}">
-                                    <Setter Property="IsVisible" Value="True" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
+                        <Grid>
+                            <Image Source="{Binding QrImage}"
+                                   HeightRequest="220"
+                                   WidthRequest="220"
+                                   HorizontalOptions="Center"
+                                   IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
+                            <Label Text="{x:Static res:AppResources.QrEmptyStateMessage}"
+                                   Style="{StaticResource SecondaryBodyLabelStyle}"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalOptions="Center"
+                                   IsVisible="False">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding QrImage}"
+                                                 Value="{x:Null}">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Grid>
                     </Border>
 
                     <Label Text="{Binding ExpiresAtUtc, StringFormat='{x:Static res:AppResources.QrExpiresAtFormat}'}"

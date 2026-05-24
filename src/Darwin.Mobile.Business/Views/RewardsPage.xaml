@@ -390,7 +390,7 @@
             </Border>
 
             <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrushPrimary}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
                 </VerticalStackLayout>
             </ScrollView>
         </pullToRefresh:SfPullToRefresh.PullableContent>

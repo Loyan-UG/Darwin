@@ -262,6 +262,38 @@ public sealed class ApiClientReliabilityTests
     }
 
     /// <summary>
+    ///     Verifies that absolute routes are rejected before dispatch so bearer tokens
+    ///     cannot be sent to a caller-supplied host outside the configured API base address.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_FailFast_WhenRouteIsAbsolute()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var sendCount = 0;
+        var tokenStore = new FakeTokenStore(
+            accessToken: "valid-access-token",
+            accessExpiresUtc: DateTime.UtcNow.AddYears(1));
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            sendCount++;
+            return CreateJsonResponse(HttpStatusCode.OK, new { ok = true });
+        });
+        var client = CreateApiClient(handler, tokenStore);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, bool>>(
+            "https://attacker.example/api/v1/member/profile/me",
+            cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("Route must be a relative API path.");
+        sendCount.Should().Be(0);
+    }
+
+    /// <summary>
     ///     Verifies guard clause behavior for command APIs: null request payload
     ///     must return a failed result without issuing an HTTP request.
     /// </summary>

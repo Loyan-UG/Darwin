@@ -57,7 +57,8 @@ public partial class AppShell : Shell
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Consumer logout navigation failed: {ex}");
+                _ = ex;
+                System.Diagnostics.Debug.WriteLine("Consumer logout navigation failed.");
             }
         }
     }

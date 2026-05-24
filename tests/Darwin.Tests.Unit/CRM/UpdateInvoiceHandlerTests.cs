@@ -152,6 +152,71 @@ public sealed class UpdateInvoiceHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_Should_ThrowConcurrency_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = InvoiceTestDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var invoiceId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+
+        db.Set<Customer>().Add(new Customer
+        {
+            Id = customerId,
+            FirstName = "Anna",
+            LastName = "Schmidt",
+            Email = "anna.schmidt@example.de",
+            Phone = "+491701234567"
+        });
+
+        db.Set<Invoice>().Add(new Invoice
+        {
+            Id = invoiceId,
+            PaymentId = paymentId,
+            Status = InvoiceStatus.Paid,
+            Currency = "EUR",
+            TotalNetMinor = 1000,
+            TotalTaxMinor = 200,
+            TotalGrossMinor = 1200,
+            DueDateUtc = new DateTime(2026, 3, 26, 10, 0, 0, DateTimeKind.Utc),
+            RowVersion = rowVersion.ToArray()
+        });
+
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            AmountMinor = 1200,
+            InvoiceId = invoiceId
+        });
+        SeedReadyInvoiceSettings(db);
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new UpdateInvoiceHandler(db, new InvoiceEditValidator(), new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new InvoiceEditDto
+        {
+            Id = invoiceId,
+            RowVersion = rowVersion,
+            CustomerId = customerId,
+            Status = InvoiceStatus.Paid,
+            Currency = "EUR",
+            TotalNetMinor = 1000,
+            TotalTaxMinor = 200,
+            TotalGrossMinor = 1200,
+            DueDateUtc = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc),
+            PaidAtUtc = new DateTime(2026, 3, 26, 12, 0, 0, DateTimeKind.Utc)
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task HandleAsync_Should_RejectFinancialFieldChanges_WhenInvoiceIsIssued()
     {
         await using var db = InvoiceTestDbContext.Create();
@@ -603,6 +668,19 @@ public sealed class UpdateInvoiceHandlerTests
                 .UseInMemoryDatabase($"darwin_invoice_tests_{Guid.NewGuid()}")
                 .Options;
             return new InvoiceTestDbContext(options);
+        }
+
+        public bool ThrowConcurrencyOnSave { get; set; }
+
+        public override Task<int> SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (ThrowConcurrencyOnSave)
+            {
+                ThrowConcurrencyOnSave = false;
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict during save");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

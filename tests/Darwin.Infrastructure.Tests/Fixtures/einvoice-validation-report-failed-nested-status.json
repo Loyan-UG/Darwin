@@ -1,0 +1,21 @@
+{
+  "status": "FAILED",
+  "validationResult": {
+    "valid": false,
+    "version": "en16931:2024-03",
+    "errors": [
+      {
+        "code": "BR-CO-06"
+      }
+    ]
+  },
+  "validationMessages": [
+    {
+      "text": "validation failed for profile profile-extended"
+    },
+    "EN16931: Missing accounting party identifier"
+  ],
+  "errors": [
+    "legal identifier is required"
+  ]
+}

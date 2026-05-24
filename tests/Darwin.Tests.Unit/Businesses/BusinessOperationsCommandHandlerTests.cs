@@ -80,7 +80,7 @@ public sealed class BusinessOperationsCommandHandlerTests
         var result = await handler.HandleAsync(new BusinessLifecycleActionDto
         {
             Id = Guid.NewGuid(),
-            RowVersion = null
+            RowVersion = null!
         }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse("null RowVersion is treated as empty");
@@ -273,7 +273,7 @@ public sealed class BusinessOperationsCommandHandlerTests
     // UpdateProviderCallbackInboxMessageHandler
     // ─────────────────────────────────────────────────────────────────────────
 
-    private static UpdateProviderCallbackInboxMessageHandler CreateInboxHandler(BusinessOpsTestDbContext db) =>
+    private static UpdateProviderCallbackInboxMessageHandler CreateInboxHandler(IAppDbContext db) =>
         new(db, CreateClock(), CreateLocalizer());
 
     [Fact]
@@ -474,6 +474,27 @@ public sealed class BusinessOperationsCommandHandlerTests
         updated.AttemptCount.Should().Be(0, "REQUEUE resets the attempt count");
         updated.FailureReason.Should().BeNull("REQUEUE clears the failure reason");
         updated.ProcessedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateInboxMessage_Should_ReturnItemConcurrencyConflict_When_SaveChanges_ThrowsConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingBusinessOpsTestDbContext.Create();
+        var message = CreateInboxMessage(status: "Failed");
+        db.Set<ProviderCallbackInboxMessage>().Add(message);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateInboxHandler(db);
+
+        var result = await handler.HandleAsync(new UpdateProviderCallbackInboxMessageDto
+        {
+            Id = message.Id,
+            RowVersion = message.RowVersion,
+            Action = "REQUEUE"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("save-level concurrency conflicts must surface as ItemConcurrencyConflict");
+        result.Error.Should().Be("ItemConcurrencyConflict");
     }
 
     [Fact]
@@ -1001,6 +1022,45 @@ public sealed class BusinessOperationsCommandHandlerTests
                 b.Property(x => x.Status).IsRequired();
                 b.Property(x => x.RowVersion).IsRequired();
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingBusinessOpsTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingBusinessOpsTestDbContext(
+            DbContextOptions<ConcurrencyFailingBusinessOpsTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingBusinessOpsTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingBusinessOpsTestDbContext>()
+                .UseInMemoryDatabase($"darwin_business_ops_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingBusinessOpsTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ProviderCallbackInboxMessage>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Provider).IsRequired();
+                builder.Property(x => x.PayloadJson).IsRequired();
+                builder.Property(x => x.Status).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 }

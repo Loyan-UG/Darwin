@@ -15,6 +15,7 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -242,6 +243,106 @@ public sealed class BusinessInvitationEmailHandlersTests
     }
 
     [Fact]
+    public async Task ResendBusinessInvitation_Should_Reject_WhenRowVersionMissing()
+    {
+        await using var db = BusinessInvitationEmailTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var invitationId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business
+        {
+            Id = businessId,
+            Name = "Cafe Elbe",
+            DefaultCulture = "de-DE",
+            DefaultCurrency = "EUR",
+            IsActive = true
+        });
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = invitationId,
+            BusinessId = businessId,
+            InvitedByUserId = Guid.NewGuid(),
+            Email = "manager@elbe.de",
+            NormalizedEmail = "MANAGER@ELBE.DE",
+            Role = BusinessMemberRole.Manager,
+            Token = "old-token",
+            ExpiresAtUtc = new DateTime(2030, 2, 3, 8, 0, 0, DateTimeKind.Utc),
+            Status = BusinessInvitationStatus.Pending,
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var emailSender = new CapturingEmailSender();
+        var handler = new ResendBusinessInvitationHandler(
+            db,
+            emailSender,
+            new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
+            new NullBusinessInvitationLinkBuilder(),
+            new BusinessInvitationResendDtoValidator(),
+            new TestValidationStringLocalizer(),
+            new TestCommunicationStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessInvitationResendDto
+        {
+            Id = invitationId,
+            ExpiresInDays = 5
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>();
+    }
+
+    [Fact]
+    public async Task ResendBusinessInvitation_Should_Reject_WhenRowVersionMismatched()
+    {
+        await using var db = BusinessInvitationEmailTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var invitationId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business
+        {
+            Id = businessId,
+            Name = "Cafe Elbe",
+            DefaultCulture = "de-DE",
+            DefaultCurrency = "EUR",
+            IsActive = true
+        });
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = invitationId,
+            BusinessId = businessId,
+            InvitedByUserId = Guid.NewGuid(),
+            Email = "manager@elbe.de",
+            NormalizedEmail = "MANAGER@ELBE.DE",
+            Role = BusinessMemberRole.Manager,
+            Token = "old-token",
+            ExpiresAtUtc = new DateTime(2030, 2, 3, 8, 0, 0, DateTimeKind.Utc),
+            Status = BusinessInvitationStatus.Pending,
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var emailSender = new CapturingEmailSender();
+        var handler = new ResendBusinessInvitationHandler(
+            db,
+            emailSender,
+            new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
+            new NullBusinessInvitationLinkBuilder(),
+            new BusinessInvitationResendDtoValidator(),
+            new TestValidationStringLocalizer(),
+            new TestCommunicationStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessInvitationResendDto
+        {
+            Id = invitationId,
+            ExpiresInDays = 5,
+            RowVersion = [2]
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("ItemConcurrencyConflict");
+    }
+
+    [Fact]
     public async Task RevokeBusinessInvitation_Should_RejectAlreadyRevokedInvitation()
     {
         await using var db = BusinessInvitationEmailTestDbContext.Create();
@@ -278,6 +379,82 @@ public sealed class BusinessInvitationEmailHandlersTests
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("RevokedInvitationsCannotBeRevoked");
+    }
+
+    [Fact]
+    public async Task RevokeBusinessInvitation_Should_Reject_WhenRowVersionMissing()
+    {
+        await using var db = BusinessInvitationEmailTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var invitationId = Guid.NewGuid();
+
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = invitationId,
+            BusinessId = businessId,
+            InvitedByUserId = Guid.NewGuid(),
+            Email = "manager@revoked.de",
+            NormalizedEmail = "MANAGER@REVOKED.DE",
+            Role = BusinessMemberRole.Manager,
+            Token = "closed-token",
+            ExpiresAtUtc = new DateTime(2030, 2, 3, 8, 0, 0, DateTimeKind.Utc),
+            Status = BusinessInvitationStatus.Pending,
+            RowVersion = [1]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new RevokeBusinessInvitationHandler(
+            db,
+            new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
+            new BusinessInvitationRevokeDtoValidator(),
+            new TestValidationStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessInvitationRevokeDto
+        {
+            Id = invitationId
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>();
+    }
+
+    [Fact]
+    public async Task RevokeBusinessInvitation_Should_Reject_WhenRowVersionMismatched()
+    {
+        await using var db = BusinessInvitationEmailTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var invitationId = Guid.NewGuid();
+
+        db.Set<BusinessInvitation>().Add(new BusinessInvitation
+        {
+            Id = invitationId,
+            BusinessId = businessId,
+            InvitedByUserId = Guid.NewGuid(),
+            Email = "manager@revoked.de",
+            NormalizedEmail = "MANAGER@REVOKED.DE",
+            Role = BusinessMemberRole.Manager,
+            Token = "closed-token",
+            ExpiresAtUtc = new DateTime(2030, 2, 3, 8, 0, 0, DateTimeKind.Utc),
+            Status = BusinessInvitationStatus.Pending,
+            RowVersion = [1]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new RevokeBusinessInvitationHandler(
+            db,
+            new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
+            new BusinessInvitationRevokeDtoValidator(),
+            new TestValidationStringLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessInvitationRevokeDto
+        {
+            Id = invitationId,
+            RowVersion = [2]
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("ItemConcurrencyConflict");
     }
 
     private sealed class CapturingEmailSender : IEmailSender

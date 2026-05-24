@@ -769,6 +769,18 @@
   <data name="MemberCommerceCopyDocumentButton" xml:space="preserve">
     <value>Copy document</value>
   </data>
+  <data name="MemberCommerceCopyArchiveDocumentButton" xml:space="preserve">
+    <value>Copy archive document</value>
+  </data>
+  <data name="MemberCommerceCopyStructuredDataButton" xml:space="preserve">
+    <value>Copy structured data</value>
+  </data>
+  <data name="MemberCommerceCopyStructuredXmlButton" xml:space="preserve">
+    <value>Copy structured XML</value>
+  </data>
+  <data name="MemberCommerceStructuredInvoiceNotice" xml:space="preserve">
+    <value>Structured JSON/XML exports are operational invoice artifacts and are not compliant e-invoices by themselves.</value>
+  </data>
   <data name="MemberCommerceOrderStatusFormat" xml:space="preserve">
     <value>Status: {0}</value>
   </data>
@@ -862,6 +874,15 @@
   <data name="MemberCommerceDocumentCopiedFormat" xml:space="preserve">
     <value>Document copied for {0}.</value>
   </data>
+  <data name="MemberCommerceArchiveDocumentCopiedFormat" xml:space="preserve">
+    <value>Archive document copied for {0}.</value>
+  </data>
+  <data name="MemberCommerceStructuredDataCopiedFormat" xml:space="preserve">
+    <value>Structured data copied for {0}.</value>
+  </data>
+  <data name="MemberCommerceStructuredXmlCopiedFormat" xml:space="preserve">
+    <value>Structured XML copied for {0}.</value>
+  </data>
   <data name="MemberCommerceLoadFailed" xml:space="preserve">
     <value>Unable to load order and invoice history.</value>
   </data>
@@ -876,6 +897,12 @@
   </data>
   <data name="MemberCommerceDocumentDownloadFailed" xml:space="preserve">
     <value>Unable to download the document right now.</value>
+  </data>
+  <data name="MemberCommerceArchiveDocumentDownloadFailed" xml:space="preserve">
+    <value>Unable to download the invoice archive document right now.</value>
+  </data>
+  <data name="MemberCommerceStructuredDownloadFailed" xml:space="preserve">
+    <value>Unable to download the structured invoice export right now.</value>
   </data>
   <data name="MemberCommerceTrackingOpenFailed" xml:space="preserve">
     <value>Unable to open shipment tracking right now.</value>

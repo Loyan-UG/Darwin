@@ -14,18 +14,20 @@ internal static class PostgreSqlConnectionString
     public static string Normalize(string connectionString)
     {
         var builder = new NpgsqlConnectionStringBuilder(connectionString);
+        var hasMaxAutoPrepare = ContainsSetting(connectionString, "Max Auto Prepare", "MaxAutoPrepare");
+        var hasAutoPrepareMinUsages = ContainsSetting(connectionString, "Auto Prepare Min Usages", "AutoPrepareMinUsages");
 
         if (string.IsNullOrWhiteSpace(builder.ApplicationName))
         {
             builder.ApplicationName = DefaultApplicationName;
         }
 
-        if (builder.MaxAutoPrepare <= 0)
+        if (!hasMaxAutoPrepare || builder.MaxAutoPrepare <= 0)
         {
             builder.MaxAutoPrepare = DefaultMaxAutoPrepare;
         }
 
-        if (builder.AutoPrepareMinUsages <= 0)
+        if (!hasAutoPrepareMinUsages || builder.AutoPrepareMinUsages <= 0)
         {
             builder.AutoPrepareMinUsages = DefaultAutoPrepareMinUsages;
         }
@@ -40,11 +42,17 @@ internal static class PostgreSqlConnectionString
             builder.Timeout = DefaultTimeoutSeconds;
         }
 
-        if (builder.CommandTimeout <= 0)
+        if (!ContainsSetting(connectionString, "Command Timeout", "CommandTimeout") || builder.CommandTimeout <= 0)
         {
             builder.CommandTimeout = DefaultCommandTimeoutSeconds;
         }
 
         return builder.ConnectionString;
+    }
+
+    private static bool ContainsSetting(string connectionString, params string[] names)
+    {
+        return names.Any(name =>
+            connectionString.Contains(name, StringComparison.OrdinalIgnoreCase));
     }
 }

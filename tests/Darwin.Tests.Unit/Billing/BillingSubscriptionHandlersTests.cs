@@ -901,10 +901,10 @@ public sealed class BillingSubscriptionHandlersTests
         var businessId = Guid.NewGuid();
         var plan = MakePlan();
         var subscription = MakeSubscription(businessId, plan.Id);
-        subscription.RowVersion = null!; // simulate legacy row with null RowVersion
         db.Set<BillingPlan>().Add(plan);
         db.Set<BusinessSubscription>().Add(subscription);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        subscription.RowVersion = null!; // simulate a tracked legacy row with null RowVersion without forcing EF to persist invalid test data
 
         var handler = new SetCancelAtPeriodEndHandler(db, CreateClock(DateTime.UtcNow), CreateLocalizer());
 

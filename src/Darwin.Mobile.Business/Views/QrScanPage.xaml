@@ -16,7 +16,7 @@
                                        HorizontalOptions="Fill"
                                        VerticalOptions="Fill" />
 
-        <Grid VerticalOptions="End" Padding="16" BackgroundColor="{StaticResource BrushCameraControlScrim}">
+        <Grid VerticalOptions="End" Padding="16" BackgroundColor="{StaticResource CameraControlScrimColor}">
             <buttons:SfButton Text="{x:Static res:AppResources.ScannerManualTokenCancel}"
                               Style="{StaticResource SyncfusionPrimaryButtonStyle}"
                               Clicked="OnCancelClicked" />

@@ -342,6 +342,40 @@ public sealed class CrmEngagementHandlersTests
     }
 
     [Fact]
+    public async Task UpdateCustomerSegment_Should_ThrowConcurrency_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = CrmEngagementDbContext.Create();
+        var segmentId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+
+        db.Set<CustomerSegment>().Add(new CustomerSegment
+        {
+            Id = segmentId,
+            Name = "Segment A",
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new UpdateCustomerSegmentHandler(
+            db,
+            new CustomerSegmentEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new CustomerSegmentEditDto
+        {
+            Id = segmentId,
+            RowVersion = rowVersion,
+            Name = "Segment A Updated",
+            Description = "Updated description"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateCustomerSegment_Should_Throw_WhenRowVersionIsEmpty()
     {
         await using var db = CrmEngagementDbContext.Create();
@@ -610,6 +644,19 @@ public sealed class CrmEngagementHandlersTests
                 .UseInMemoryDatabase($"darwin_crm_engagement_tests_{Guid.NewGuid()}")
                 .Options;
             return new CrmEngagementDbContext(options);
+        }
+
+        public bool ThrowConcurrencyOnSave { get; set; }
+
+        public override Task<int> SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (ThrowConcurrencyOnSave)
+            {
+                ThrowConcurrencyOnSave = false;
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict during save");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

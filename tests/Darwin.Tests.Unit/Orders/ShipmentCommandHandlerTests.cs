@@ -49,7 +49,7 @@ public sealed class ShipmentCommandHandlerTests
     // ResolveShipmentCarrierExceptionHandler
     // ─────────────────────────────────────────────────────────────────────────
 
-    private static ResolveShipmentCarrierExceptionHandler CreateResolveHandler(ShipmentCommandTestDbContext db)
+    private static ResolveShipmentCarrierExceptionHandler CreateResolveHandler(IAppDbContext db)
         => new(db, CreateClock(), CreateLocalizer());
 
     [Fact]
@@ -222,7 +222,7 @@ public sealed class ShipmentCommandHandlerTests
     // UpdateShipmentProviderOperationHandler
     // ─────────────────────────────────────────────────────────────────────────
 
-    private static UpdateShipmentProviderOperationHandler CreateUpdateOpHandler(ShipmentCommandTestDbContext db)
+    private static UpdateShipmentProviderOperationHandler CreateUpdateOpHandler(IAppDbContext db)
         => new(db, CreateClock(), CreateLocalizer());
 
     private static ShipmentProviderOperation BuildOperation(
@@ -450,6 +450,58 @@ public sealed class ShipmentCommandHandlerTests
 
     // ─── Null database RowVersion guards ──────────────────────────────────────
 
+
+    [Fact]
+    public async Task UpdateShipmentProviderOperation_Should_ReturnItemConcurrencyConflict_When_SaveChanges_ThrowsConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingShipmentCommandTestDbContext.Create();
+        var rowVersion = new byte[] { 1 };
+        var operation = BuildOperation(status: "Pending", rowVersion: rowVersion);
+        db.Set<ShipmentProviderOperation>().Add(operation);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateOpHandler(db);
+        var result = await handler.HandleAsync(new UpdateShipmentProviderOperationDto
+        {
+            Id = operation.Id,
+            RowVersion = rowVersion,
+            Action = "MarkProcessed"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("save-level concurrency conflicts must be converted to ItemConcurrencyConflict");
+        result.Error.Should().Be("ItemConcurrencyConflict");
+    }
+
+    [Fact]
+    public async Task UpdateShipmentProviderOperation_Should_ApplyRequeue_AndResetState()
+    {
+        await using var db = CreateDb();
+        var operation = BuildOperation(status: "Failed", rowVersion: new byte[] { 1, 2, 3 });
+        operation.AttemptCount = 5;
+        operation.LastAttemptAtUtc = FixedNow;
+        operation.FailureReason = "Provider timeout";
+        db.Set<ShipmentProviderOperation>().Add(operation);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateOpHandler(db);
+        var result = await handler.HandleAsync(new UpdateShipmentProviderOperationDto
+        {
+            Id = operation.Id,
+            RowVersion = operation.RowVersion,
+            Action = "REQUEUE"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue("REQUEUE should reset retry-gating state for immediate requeue");
+
+        var updated = await db.Set<ShipmentProviderOperation>().FindAsync([operation.Id], TestContext.Current.CancellationToken);
+        updated!.IsDeleted.Should().BeFalse("REQUEUE should keep the row active");
+        updated.Status.Should().Be("Pending");
+        updated.AttemptCount.Should().Be(0);
+        updated.LastAttemptAtUtc.Should().BeNull();
+        updated.ProcessedAtUtc.Should().BeNull();
+        updated.FailureReason.Should().BeNull();
+    }
+
     [Fact]
     public async Task ResolveShipmentCarrierException_Should_Fail_WhenDatabaseRowVersionIsNull()
     {
@@ -507,6 +559,54 @@ public sealed class ShipmentCommandHandlerTests
     }
 
     // ─── Test DbContext ────────────────────────────────────────────────────────
+
+
+    private sealed class ConcurrencyFailingShipmentCommandTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingShipmentCommandTestDbContext(
+            DbContextOptions<ConcurrencyFailingShipmentCommandTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _hasSeeded;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingShipmentCommandTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingShipmentCommandTestDbContext>()
+                .UseInMemoryDatabase($"darwin_shipment_cmd_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingShipmentCommandTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ShipmentProviderOperation>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Provider).IsRequired();
+                builder.Property(x => x.OperationType).IsRequired();
+                builder.Property(x => x.Status).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
+        }
+    }
 
     private sealed class ShipmentCommandTestDbContext : DbContext, IAppDbContext
     {

@@ -36,8 +36,6 @@ namespace Darwin.Application.Settings.Commands
         /// </summary>
         public async Task HandleAsync(SiteSettingDto dto, CancellationToken ct = default)
         {
-            await _validator.ValidateAndThrowAsync(dto, ct);
-
             var s = await _db.Set<SiteSetting>().FirstOrDefaultAsync(x => !x.IsDeleted, ct);
             if (s is null)
                 throw new ValidationException(_localizer["SiteSettingRowNotFound"]);
@@ -49,6 +47,9 @@ namespace Darwin.Application.Settings.Commands
             var currentRowVersion = s.RowVersion ?? Array.Empty<byte>();
             if (!currentRowVersion.SequenceEqual(rowVersion))
                 throw new DbUpdateConcurrencyException(_localizer["SettingsModifiedByAnotherUser"]);
+
+            ResolvePostedSecrets(dto, s);
+            await _validator.ValidateAndThrowAsync(dto, ct);
 
             // -------- Basics --------
             s.Title = dto.Title.Trim();
@@ -79,8 +80,8 @@ namespace Darwin.Application.Settings.Commands
             s.JwtAudience = dto.JwtAudience.Trim();
             s.JwtAccessTokenMinutes = dto.JwtAccessTokenMinutes;
             s.JwtRefreshTokenDays = dto.JwtRefreshTokenDays;
-            s.JwtSigningKey = dto.JwtSigningKey;
-            s.JwtPreviousSigningKey = dto.JwtPreviousSigningKey;
+            s.JwtSigningKey = ResolveRequiredSecret(dto.JwtSigningKey, s.JwtSigningKey);
+            s.JwtPreviousSigningKey = ResolveSecret(dto.JwtPreviousSigningKey, s.JwtPreviousSigningKey);
             s.JwtEmitScopes = dto.JwtEmitScopes;
 
             s.JwtSingleDeviceOnly = dto.JwtSingleDeviceOnly;
@@ -98,8 +99,8 @@ namespace Darwin.Application.Settings.Commands
             s.AccountDeletionUrl = dto.AccountDeletionUrl;
             s.StripeEnabled = dto.StripeEnabled;
             s.StripePublishableKey = dto.StripePublishableKey;
-            s.StripeSecretKey = dto.StripeSecretKey;
-            s.StripeWebhookSecret = dto.StripeWebhookSecret;
+            s.StripeSecretKey = ResolveSecret(dto.StripeSecretKey, s.StripeSecretKey);
+            s.StripeWebhookSecret = ResolveSecret(dto.StripeWebhookSecret, s.StripeWebhookSecret);
             s.StripeMerchantDisplayName = dto.StripeMerchantDisplayName;
             s.VatEnabled = dto.VatEnabled;
             s.DefaultVatRatePercent = dto.DefaultVatRatePercent;
@@ -115,8 +116,8 @@ namespace Darwin.Application.Settings.Commands
             s.DhlEnabled = dto.DhlEnabled;
             s.DhlEnvironment = dto.DhlEnvironment;
             s.DhlApiBaseUrl = dto.DhlApiBaseUrl;
-            s.DhlApiKey = dto.DhlApiKey;
-            s.DhlApiSecret = dto.DhlApiSecret;
+            s.DhlApiKey = ResolveSecret(dto.DhlApiKey, s.DhlApiKey);
+            s.DhlApiSecret = ResolveSecret(dto.DhlApiSecret, s.DhlApiSecret);
             s.DhlAccountNumber = dto.DhlAccountNumber;
             s.DhlShipperName = dto.DhlShipperName;
             s.DhlShipperEmail = dto.DhlShipperEmail;
@@ -157,12 +158,12 @@ namespace Darwin.Application.Settings.Commands
             s.FeatureFlagsJson = dto.FeatureFlagsJson;
             s.WhatsAppEnabled = dto.WhatsAppEnabled;
             s.WhatsAppBusinessPhoneId = dto.WhatsAppBusinessPhoneId;
-            s.WhatsAppAccessToken = dto.WhatsAppAccessToken;
+            s.WhatsAppAccessToken = ResolveSecret(dto.WhatsAppAccessToken, s.WhatsAppAccessToken);
             s.WhatsAppFromPhoneE164 = dto.WhatsAppFromPhoneE164;
             s.WhatsAppAdminRecipientsCsv = dto.WhatsAppAdminRecipientsCsv;
 
             // -------- WebAuthn --------
-            s.WebAuthnRelyingPartyId = dto.WebAuthnRelyingPartyId?.Trim() ?? "localhost";
+            s.WebAuthnRelyingPartyId = dto.WebAuthnRelyingPartyId?.Trim() ?? SiteSettingDto.WebAuthnRelyingPartyIdDefault;
             s.WebAuthnRelyingPartyName = dto.WebAuthnRelyingPartyName?.Trim() ?? "Darwin";
             s.WebAuthnAllowedOriginsCsv = string.Join(",",
                 (dto.WebAuthnAllowedOriginsCsv ?? string.Empty)
@@ -176,7 +177,7 @@ namespace Darwin.Application.Settings.Commands
             s.SmtpPort = dto.SmtpPort;
             s.SmtpEnableSsl = dto.SmtpEnableSsl;
             s.SmtpUsername = dto.SmtpUsername;
-            s.SmtpPassword = dto.SmtpPassword;
+            s.SmtpPassword = ResolveSecret(dto.SmtpPassword, s.SmtpPassword);
             s.SmtpFromAddress = dto.SmtpFromAddress;
             s.SmtpFromDisplayName = dto.SmtpFromDisplayName;
 
@@ -184,8 +185,8 @@ namespace Darwin.Application.Settings.Commands
             s.SmsEnabled = dto.SmsEnabled;
             s.SmsProvider = dto.SmsProvider;
             s.SmsFromPhoneE164 = dto.SmsFromPhoneE164;
-            s.SmsApiKey = dto.SmsApiKey;
-            s.SmsApiSecret = dto.SmsApiSecret;
+            s.SmsApiKey = ResolveSecret(dto.SmsApiKey, s.SmsApiKey);
+            s.SmsApiSecret = ResolveSecret(dto.SmsApiSecret, s.SmsApiSecret);
             s.SmsExtraSettingsJson = dto.SmsExtraSettingsJson;
 
             // -------- Admin routing --------
@@ -218,6 +219,33 @@ namespace Darwin.Application.Settings.Commands
             {
                 throw new DbUpdateConcurrencyException(_localizer["SettingsModifiedByAnotherUser"]);
             }
+        }
+
+        private static string ResolveRequiredSecret(string? postedValue, string? currentValue)
+            => string.IsNullOrWhiteSpace(postedValue) || IsSecretPlaceholder(postedValue)
+                ? currentValue ?? string.Empty
+                : postedValue.Trim();
+
+        private static string? ResolveSecret(string? postedValue, string? currentValue)
+            => string.IsNullOrWhiteSpace(postedValue) || IsSecretPlaceholder(postedValue)
+                ? currentValue
+                : postedValue.Trim();
+
+        private static bool IsSecretPlaceholder(string value)
+            => string.Equals(value.Trim(), "********", StringComparison.Ordinal);
+
+        private static void ResolvePostedSecrets(SiteSettingDto dto, SiteSetting current)
+        {
+            dto.JwtSigningKey = ResolveRequiredSecret(dto.JwtSigningKey, current.JwtSigningKey);
+            dto.JwtPreviousSigningKey = ResolveSecret(dto.JwtPreviousSigningKey, current.JwtPreviousSigningKey);
+            dto.StripeSecretKey = ResolveSecret(dto.StripeSecretKey, current.StripeSecretKey);
+            dto.StripeWebhookSecret = ResolveSecret(dto.StripeWebhookSecret, current.StripeWebhookSecret);
+            dto.DhlApiKey = ResolveSecret(dto.DhlApiKey, current.DhlApiKey);
+            dto.DhlApiSecret = ResolveSecret(dto.DhlApiSecret, current.DhlApiSecret);
+            dto.WhatsAppAccessToken = ResolveSecret(dto.WhatsAppAccessToken, current.WhatsAppAccessToken);
+            dto.SmtpPassword = ResolveSecret(dto.SmtpPassword, current.SmtpPassword);
+            dto.SmsApiKey = ResolveSecret(dto.SmsApiKey, current.SmsApiKey);
+            dto.SmsApiSecret = ResolveSecret(dto.SmsApiSecret, current.SmsApiSecret);
         }
     }
 }

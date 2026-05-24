@@ -745,7 +745,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
 
         process.ExitCode.Should().Be(2);
-        output.Should().Contain("Brevo readiness smoke is blocked.");
+        output.Should().Contain("Brevo delivery pipeline readiness is blocked.");
         output.Should().Contain("DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED=true is required after the Brevo webhook subscription is configured.");
         output.Should().Contain("DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED=true is required after transactional webhook events are subscribed.");
         output.Should().Contain("DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true is required after ProviderCallbackWorker is enabled for the target environment.");
@@ -1157,7 +1157,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 set output=%4
                 set validationReport=%8
                 echo %%PDF-1.7>%output%
-                powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%validationReport%' -Value '{\"isValid\":false,\"issues\":[\"profile not supported\"]}'"
+                powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%validationReport%' -Value '{\"valid\":0,\"issues\":[{\"message\":\"profile not supported\"},{\"text\":\"legacy wrapper warning\"},\"invoice date is required\"],\"errors\":[{\"description\":\"line 2: invoice line totals do not match\"}],\"validationMessages\":\"signature is missing\"}'"
                 exit /b 0
                 """);
 
@@ -1193,6 +1193,213 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
             process.ExitCode.Should().NotBe(0);
             output.Should().Contain("E-invoice external-command smoke failed with status ValidationFailed.");
+            output.Should().Contain("reported failed legal validation");
+            output.Should().Contain("profile not supported");
+            output.Should().Contain("legacy wrapper warning");
+            output.Should().Contain("invoice date is required");
+            output.Should().Contain("line 2: invoice line totals do not match");
+            output.Should().Contain("signature is missing");
+            output.Should().NotContain("E-invoice external-command smoke generated an artifact through the configured adapter.");
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EInvoiceExternalCommandSmoke_Should_Fail_When_ValidationReport_ResultContainer_Reports_Failed()
+    {
+        var root = ResolveRepositoryPath();
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"darwin-einvoice-smoke-wrapper-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            var wrapperPath = Path.Combine(tempRoot, "generator.cmd");
+            File.WriteAllText(
+                wrapperPath,
+                """
+                @echo off
+                set output=%4
+                set validationReport=%8
+                echo %%PDF-1.7>%output%
+                powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%validationReport%' -Value '{\"result\":{\"status\":\"failed\",\"messages\":[{\"message\":\"selected-tool signature validation failed\"}]},\"issues\":[\"selected-tool command reported signature-related validation errors\"],\"details\":{\"tool\":\"mustang-selected-wrapper\"}}'"
+                exit /b 0
+                """);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                WorkingDirectory = root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
+            startInfo.ArgumentList.Add("-Execute");
+
+            foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                         .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                startInfo.Environment.Remove(key);
+            }
+
+            startInfo.Environment["DARWIN_EINVOICE_COMMAND_PATH"] = wrapperPath;
+
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-einvoice-external-command.ps1.");
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+            await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+            var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+            process.ExitCode.Should().NotBe(0);
+            output.Should().Contain("E-invoice external-command smoke failed with status ValidationFailed.");
+            output.Should().Contain("reported failed legal validation");
+            output.Should().Contain("selected-tool command reported signature-related validation errors");
+            output.Should().Contain("selected-tool signature validation failed");
+            output.Should().NotContain("E-invoice external-command smoke generated an artifact through the configured adapter.");
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EInvoiceExternalCommandSmoke_Should_Fail_When_ValidationReport_RootStatus_Reports_Failed()
+    {
+        var root = ResolveRepositoryPath();
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"darwin-einvoice-smoke-wrapper-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            var wrapperPath = Path.Combine(tempRoot, "generator.cmd");
+            File.WriteAllText(
+                wrapperPath,
+                """
+                @echo off
+                set output=%4
+                set validationReport=%8
+                echo %%PDF-1.7>%output%
+                powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%validationReport%' -Value '{\"status\":\"failed\",\"issues\":[\"selected-tool command reported signature-related validation errors\"],\"result\":{\"status\":\"passed\",\"messages\":[{\"message\":\"must be ignored\"}]},\"signature\":{\"status\":\"failed\",\"messages\":[{\"message\":\"selected-tool signature validation failed\"}]}}'"
+                exit /b 0
+                """);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                WorkingDirectory = root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
+            startInfo.ArgumentList.Add("-Execute");
+
+            foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                         .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                startInfo.Environment.Remove(key);
+            }
+
+            startInfo.Environment["DARWIN_EINVOICE_COMMAND_PATH"] = wrapperPath;
+
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-einvoice-external-command.ps1.");
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+            await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+            var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+            process.ExitCode.Should().NotBe(0);
+            output.Should().Contain("E-invoice external-command smoke failed with status ValidationFailed.");
+            output.Should().Contain("reported failed legal validation");
+            output.Should().Contain("selected-tool command reported signature-related validation errors");
+            output.Should().Contain("selected-tool signature validation failed");
+            output.Should().NotContain("E-invoice external-command smoke generated an artifact through the configured adapter.");
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EInvoiceExternalCommandSmoke_Should_Fail_When_ValidationReport_RootStatus_Reports_Failed_Uppercase()
+    {
+        var root = ResolveRepositoryPath();
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"darwin-einvoice-smoke-wrapper-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            var wrapperPath = Path.Combine(tempRoot, "generator.cmd");
+            File.WriteAllText(
+                wrapperPath,
+                """
+                @echo off
+                set output=%4
+                set validationReport=%8
+                echo %%PDF-1.7>%output%
+                powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Content -Path '%validationReport%' -Value '{\"status\":\"FAILED\",\"issues\":[\"selected-tool command reported signature-related validation errors\"],\"signature\":{\"status\":\"FAILED\",\"messages\":[{\"message\":\"selected-tool signature validation failed\"}]}}'"
+                exit /b 0
+                """);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                WorkingDirectory = root,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"));
+            startInfo.ArgumentList.Add("-Execute");
+
+            foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                         .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                startInfo.Environment.Remove(key);
+            }
+
+            startInfo.Environment["DARWIN_EINVOICE_COMMAND_PATH"] = wrapperPath;
+
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-einvoice-external-command.ps1.");
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+            await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+            var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+            process.ExitCode.Should().NotBe(0);
+            output.Should().Contain("E-invoice external-command smoke failed with status ValidationFailed.");
+            output.Should().Contain("reported failed legal validation");
+            output.Should().Contain("selected-tool command reported signature-related validation errors");
+            output.Should().Contain("selected-tool signature validation failed");
             output.Should().NotContain("E-invoice external-command smoke generated an artifact through the configured adapter.");
         }
         finally

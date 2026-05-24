@@ -74,7 +74,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrushPrimary}" HeightRequest="40" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandGold500}" HeightRequest="40" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

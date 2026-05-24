@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensionsSqlServerPersistence
         {
             options.UseSqlServer(connectionString, sql =>
             {
+                sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                 sql.EnableRetryOnFailure();
                 sql.MigrationsAssembly(typeof(ServiceCollectionExtensionsSqlServerPersistence).Assembly.FullName);
             });

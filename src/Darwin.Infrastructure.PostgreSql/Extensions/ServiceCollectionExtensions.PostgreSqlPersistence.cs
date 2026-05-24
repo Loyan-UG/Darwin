@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensionsPostgreSqlPersistence
             opt.UseNpgsql(conn, npgsql =>
             {
                 npgsql.CommandTimeout(60);
+                npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                 npgsql.EnableRetryOnFailure(
                     maxRetryCount: 5,
                     maxRetryDelay: TimeSpan.FromSeconds(10),

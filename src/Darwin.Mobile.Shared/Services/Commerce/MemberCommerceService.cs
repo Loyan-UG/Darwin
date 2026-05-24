@@ -168,6 +168,39 @@ namespace Darwin.Mobile.Shared.Services.Commerce
             return await ExecuteGetStringAsync(ApiRoutes.Invoices.DownloadDocument(invoiceId), "invoice document", ct).ConfigureAwait(false);
         }
 
+        /// <inheritdoc />
+        public async Task<Result<string>> DownloadInvoiceArchiveDocumentAsync(Guid invoiceId, CancellationToken ct)
+        {
+            if (invoiceId == Guid.Empty)
+            {
+                return Result<string>.Fail("InvoiceId is required.");
+            }
+
+            return await ExecuteGetStringAsync(ApiRoutes.Invoices.DownloadArchiveDocument(invoiceId), "invoice archive document", ct).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<string>> DownloadInvoiceStructuredDataAsync(Guid invoiceId, CancellationToken ct)
+        {
+            if (invoiceId == Guid.Empty)
+            {
+                return Result<string>.Fail("InvoiceId is required.");
+            }
+
+            return await ExecuteGetStringAsync(ApiRoutes.Invoices.DownloadStructuredData(invoiceId), "invoice structured data", ct).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<string>> DownloadInvoiceStructuredXmlAsync(Guid invoiceId, CancellationToken ct)
+        {
+            if (invoiceId == Guid.Empty)
+            {
+                return Result<string>.Fail("InvoiceId is required.");
+            }
+
+            return await ExecuteGetStringAsync(ApiRoutes.Invoices.DownloadStructuredXml(invoiceId), "invoice structured XML", ct).ConfigureAwait(false);
+        }
+
         private async Task<Result<TResponse>> ExecuteGetAsync<TResponse>(string route, string operation, CancellationToken ct)
         {
             try

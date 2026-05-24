@@ -119,6 +119,12 @@ public sealed class ProcessStripeWebhookHandler
             case "refund.updated":
                 await ApplyRefundObjectAsync(stripeObject, occurredAtUtc, result, ct).ConfigureAwait(false);
                 break;
+            case "charge.dispute.created":
+            case "charge.dispute.updated":
+            case "charge.dispute.funds_withdrawn":
+            case "charge.dispute.closed":
+                await ApplyChargeDisputeAsync(stripeObject, occurredAtUtc, eventType, result, ct).ConfigureAwait(false);
+                break;
             case "invoice.paid":
                 await ApplyInvoicePaidAsync(stripeObject, occurredAtUtc, result, ct).ConfigureAwait(false);
                 break;
@@ -477,6 +483,48 @@ public sealed class ProcessStripeWebhookHandler
                     ? OrderStatus.Refunded
                     : OrderStatus.PartiallyRefunded;
             }
+        }
+    }
+
+    private async Task ApplyChargeDisputeAsync(
+        JsonElement stripeObject,
+        DateTime occurredAtUtc,
+        string eventType,
+        StripeWebhookProcessingResultDto result,
+        CancellationToken ct)
+    {
+        var disputeId = NormalizeProviderReference(GetString(stripeObject, "id"));
+        var chargeId = NormalizeProviderReference(GetString(stripeObject, "charge"));
+        var paymentIntentId = NormalizeProviderReference(GetString(stripeObject, "payment_intent"));
+        var status = NormalizeNullable(GetString(stripeObject, "status")) ?? "unknown";
+        var reason = NormalizeNullable(GetString(stripeObject, "reason"));
+
+        var payment = await FindPaymentAsync(paymentIntentId, null, chargeId, ct).ConfigureAwait(false);
+        if (payment is null)
+        {
+            return;
+        }
+
+        result.MatchedPaymentId = payment.Id;
+        payment.ProviderPaymentIntentRef ??= paymentIntentId;
+        payment.ProviderTransactionRef ??= chargeId ?? paymentIntentId;
+        payment.FailureReason = BuildStripeDisputeFailureReason(disputeId, status, reason, eventType, occurredAtUtc);
+
+        if (IsClosedWonDisputeStatus(status))
+        {
+            if (payment.Status == PaymentStatus.Failed)
+            {
+                payment.Status = PaymentStatus.Completed;
+            }
+
+            return;
+        }
+
+        if (IsClosedLostDisputeStatus(status) ||
+            IsOpenChargebackDisputeStatus(status) ||
+            string.Equals(eventType, "charge.dispute.funds_withdrawn", StringComparison.OrdinalIgnoreCase))
+        {
+            payment.Status = PaymentStatus.Failed;
         }
     }
 
@@ -1058,6 +1106,59 @@ public sealed class ProcessStripeWebhookHandler
         var value = string.IsNullOrWhiteSpace(sanitized) ? fallback : sanitized.Trim();
         return value.Length <= maxLength ? value : value[..maxLength];
     }
+
+    private string BuildStripeDisputeFailureReason(
+        string? disputeId,
+        string status,
+        string? reason,
+        string eventType,
+        DateTime occurredAtUtc)
+    {
+        var reviewState = IsClosedWonDisputeStatus(status)
+            ? "Won"
+            : IsClosedLostDisputeStatus(status)
+                ? "Lost"
+                : "UnderReview";
+        var noteParts = new List<string>
+        {
+            $"Stripe dispute {status}",
+            $"event {eventType}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(disputeId))
+        {
+            noteParts.Add($"id {disputeId}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            noteParts.Add($"reason {reason}");
+        }
+
+        var note = string.Join("; ", noteParts);
+        var marker = $"[DisputeReview:{reviewState};{occurredAtUtc:O};{NormalizeDisputeReviewNote(note)}]";
+        return BuildProviderFailureReason($"{note} {marker}", MaxPaymentFailureReasonLength);
+    }
+
+    private static string NormalizeDisputeReviewNote(string value)
+        => value.Trim()
+            .Replace("[", "(", StringComparison.Ordinal)
+            .Replace("]", ")", StringComparison.Ordinal)
+            .Replace("\r\n", " ", StringComparison.Ordinal)
+            .Replace("\n", " ", StringComparison.Ordinal)
+            .Replace("\r", " ", StringComparison.Ordinal);
+
+    private static bool IsOpenChargebackDisputeStatus(string status)
+        => string.Equals(status, "needs_response", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(status, "under_review", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsClosedWonDisputeStatus(string status)
+        => string.Equals(status, "won", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(status, "warning_closed", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(status, "prevented", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsClosedLostDisputeStatus(string status)
+        => string.Equals(status, "lost", StringComparison.OrdinalIgnoreCase);
 
     private static string BuildEventLogType(string eventType) => $"{EventLogTypePrefix}{eventType}";
 

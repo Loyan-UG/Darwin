@@ -1213,6 +1213,27 @@
   <data name="DashboardRedeemedPointsFormat" xml:space="preserve">
     <value>Eingelöste Punkte: {0}</value>
   </data>
+  <data name="DashboardSessionsTitle" xml:space="preserve">
+    <value>Sitzungen</value>
+  </data>
+  <data name="DashboardAccrualsTitle" xml:space="preserve">
+    <value>Gutschriften</value>
+  </data>
+  <data name="DashboardRedemptionsTitle" xml:space="preserve">
+    <value>Einloesungen</value>
+  </data>
+  <data name="DashboardAccruedPointsTitle" xml:space="preserve">
+    <value>Gutgeschriebene Punkte</value>
+  </data>
+  <data name="DashboardRedeemedPointsTitle" xml:space="preserve">
+    <value>Eingeloeste Punkte</value>
+  </data>
+  <data name="DashboardSubscriptionIssuesTitle" xml:space="preserve">
+    <value>Abonnementprobleme</value>
+  </data>
+  <data name="DashboardCampaignTargetingTitle" xml:space="preserve">
+    <value>Kampagnen-Targeting</value>
+  </data>
   <data name="DashboardSubscriptionRefreshFailuresFormat" xml:space="preserve">
     <value>Fehlgeschlagene Abonnement-Aktualisierungen: {0}</value>
   </data>

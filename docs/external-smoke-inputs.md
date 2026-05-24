@@ -51,11 +51,50 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmod
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -Execute -CreateSmokeOrder -CheckReturnRoute -OpenCheckout -WaitForWebhookFinalization
 ```
 
+Latest staging note: on 2026-05-24 the `https://api.loyan.de` smoke created a disposable public checkout order, received a Stripe-hosted Checkout Session, confirmed the return route left the payment `Pending`, completed the hosted test-card payment, received signed `payment_intent.succeeded` and `checkout.session.completed` events, and processed both callback inbox rows with `ProviderCallbackWorker`. The matching Darwin payment moved to captured/provider-finalized state with `PaidAtUtc` set. The webhook public URL preflight also passed. The business subscription Checkout Session was also paid in test mode; signed `checkout.session.completed` and `invoice.paid` events were processed, and the matching `BusinessSubscription` received provider checkout, customer, subscription references, and `StartedAtUtc`. WebAdmin `Orders/AddRefund` then created a provider-backed Stripe refund, stored provider status `succeeded`, received signed `charge.refunded`, and processed it through `ProviderCallbackWorker`. Live-mode smoke remains a separate follow-up validation.
+
+The same 2026-05-24 test-mode run updated the Stripe Dashboard endpoint to include the dispute events `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.funds_withdrawn`, and `charge.dispute.closed`. A real test-mode disputed charge then delivered signed `charge.dispute.created`; `ProviderCallbackWorker` processed it and the matched Darwin payment was marked for dispute follow-up with an `UnderReview` dispute marker. Live-mode smoke remains a separate production-readiness validation.
+
 The final provider result must still come from verified Stripe webhooks, not from the storefront return route.
 Use `-CreateSmokeOrder` to create a disposable storefront order through public cart/checkout before the Stripe handoff. Use `-CheckBusinessSubscriptionCheckout` with a business API bearer token and an active billing-plan id to verify the authenticated business subscription endpoint creates a Stripe-hosted subscription Checkout Session. Use `-OpenCheckout` when you are ready to pay the Stripe test Checkout Session in a browser. The script opens the hosted checkout URL but does not print the URL or provider references. Use `-WaitForWebhookFinalization` after webhook delivery is configured; the script now blocks before creating the checkout session unless Stripe Dashboard delivery or Stripe CLI forwarding has been confirmed, then polls Darwin WebApi confirmation state until the verified webhook updates the payment to `Captured` or `Completed`.
 If using Stripe CLI, forward events to `DARWIN_WEBAPI_BASE_URL/api/v1/public/billing/stripe/webhooks` and enter the CLI-provided webhook signing secret securely in Site Settings for the same database used by WebApi. The forwarding preflight never accepts or prints that secret.
 
 The current WebApi source rejects local/mock Stripe handoff fallback. If execute mode does not return a Stripe-hosted URL, rebuild/restart WebApi and verify that `StripeEnabled` plus the test server-side key are configured for the same database/settings source used by that WebApi instance.
+
+## Mobile Maps And Push Production Inputs
+
+These inputs are required for signed mobile release artifacts and device smoke. They must not be committed as real production secrets or credentials.
+
+Android maps:
+
+- `Darwin.Mobile.Consumer` reads the Google Maps key from the MSBuild property `GoogleMapsApiKey`, then `GOOGLE_MAPS_API_KEY`, then `ANDROID_GOOGLE_MAPS_API_KEY`. Local developers can store the same value in `.NET User Secrets` for `src/Darwin.Mobile.Consumer/Darwin.Mobile.Consumer.csproj` and run `scripts/sync-mobile-google-maps-user-secret.ps1` to synchronize the build-time environment variables without printing the key.
+- The key should be restricted in Google Cloud to the Android package name and the release signing certificate SHA fingerprint.
+- Android Release builds fail if no Google Maps key is supplied, because the discovery map can otherwise render as a broken production feature.
+
+Android push:
+
+- `src/Darwin.Mobile.Consumer/google-services.json` is required for Android Release builds with FCM push integration.
+- The file is Firebase project configuration, not a service-account private key, but it still identifies the Firebase project and must come from the approved production Firebase project.
+- Keep production Firebase service-account keys and server credentials outside the repository. Darwin only needs the mobile app config file at build time and server-side push credentials in secure deployment configuration.
+
+iOS and MacCatalyst push:
+
+- Release entitlements already select `aps-environment=production`, but a signed build still needs the matching Apple Developer App ID, provisioning profile, and Push Notifications capability.
+- APNS provider credentials, such as key id, team id, bundle id, and APNS auth key, belong in secure provider/server configuration, not in source control.
+- Run device smoke after installing a signed build: request notification permission, register a device token, verify Darwin stores the registration, send a controlled notification, and verify logout/account switch clears local registration state where applicable.
+
+Local check without printing secrets:
+
+```powershell
+$names = 'GoogleMapsApiKey','GOOGLE_MAPS_API_KEY','ANDROID_GOOGLE_MAPS_API_KEY','FIREBASE_CONFIG','GOOGLE_APPLICATION_CREDENTIALS','APNS_AUTH_KEY','APPLE_TEAM_ID','APPLE_BUNDLE_ID'
+foreach ($name in $names) {
+    $value = [Environment]::GetEnvironmentVariable($name)
+    [pscustomobject]@{ Name = $name; Present = -not [string]::IsNullOrWhiteSpace($value) }
+}
+Get-ChildItem -Path src/Darwin.Mobile.Consumer -Filter google-services.json -Force
+```
+
+Current local check on 2026-05-23: the local Consumer `google-services.json` file is present and ignored by Git, local `.NET User Secrets` exist for the Consumer Google Maps build key, and `scripts/sync-mobile-google-maps-user-secret.ps1` can synchronize the MSBuild environment variables for Visual Studio after restart. Signed Android Release and push smoke still require approved production Firebase/APNS credentials, signing, and device validation.
 
 ## DHL Live Smoke
 

@@ -1,0 +1,6 @@
+{
+  "passed": false,
+  "issues": [
+    "boolean failed flag"
+  ]
+}

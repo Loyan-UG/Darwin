@@ -1,0 +1,17 @@
+{
+  "status": "FAILED",
+  "issues": [
+    "selected-tool command reported signature-related validation errors"
+  ],
+  "result": {
+    "status": "passed"
+  },
+  "signature": {
+    "status": "FAILED",
+    "messages": [
+      {
+        "message": "selected-tool signature validation failed"
+      }
+    ]
+  }
+}

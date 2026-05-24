@@ -373,6 +373,26 @@ public sealed class ConfirmLoyaltyRewardRedemptionHandlerTests
         result.Error.Should().Be("RedemptionConcurrencyConflict");
     }
 
+    [Fact]
+    public async Task ConfirmRedemption_Should_Fail_WhenPostSaveConcurrencyConflictDetected()
+    {
+        await using var db = RedemptionTestDbContext.Create(throwConcurrencyOnSecondSave: true);
+        var businessId = Guid.NewGuid();
+        var (accountId, redemptionId) = await SeedPendingRedemption(db, businessId, pointsBalance: 400, pointsSpent: 50);
+        var oldAccount = await db.Set<LoyaltyAccount>().SingleAsync(x => x.Id == accountId, TestContext.Current.CancellationToken);
+        oldAccount.PointsBalance.Should().Be(400);
+
+        var handler = new ConfirmLoyaltyRewardRedemptionHandler(db, new TestLocalizer());
+        var result = await handler.HandleAsync(new ConfirmLoyaltyRewardRedemptionDto
+        {
+            RedemptionId = redemptionId,
+            BusinessId = businessId
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("RedemptionConcurrencyConflict");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static async Task<(Guid AccountId, Guid RedemptionId)> SeedPendingRedemption(
@@ -419,16 +439,36 @@ public sealed class ConfirmLoyaltyRewardRedemptionHandlerTests
 
     private sealed class RedemptionTestDbContext : DbContext, IAppDbContext
     {
-        private RedemptionTestDbContext(DbContextOptions<RedemptionTestDbContext> options) : base(options) { }
+        private readonly bool _throwConcurrencyOnSecondSave;
+        private int _saveChangesCallCount;
+
+        private RedemptionTestDbContext(
+            DbContextOptions<RedemptionTestDbContext> options,
+            bool throwConcurrencyOnSecondSave)
+            : base(options)
+        {
+            _throwConcurrencyOnSecondSave = throwConcurrencyOnSecondSave;
+        }
 
         public new DbSet<T> Set<T>() where T : class => base.Set<T>();
 
-        public static RedemptionTestDbContext Create()
+        public static RedemptionTestDbContext Create(bool throwConcurrencyOnSecondSave = false)
         {
             var options = new DbContextOptionsBuilder<RedemptionTestDbContext>()
                 .UseInMemoryDatabase($"darwin_redemption_confirm_tests_{Guid.NewGuid()}")
                 .Options;
-            return new RedemptionTestDbContext(options);
+            return new RedemptionTestDbContext(options, throwConcurrencyOnSecondSave);
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            _saveChangesCallCount++;
+            if (_throwConcurrencyOnSecondSave && _saveChangesCallCount > 1)
+            {
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

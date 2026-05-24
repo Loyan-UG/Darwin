@@ -20,14 +20,14 @@
                            Aspect="AspectFill"
                            IsVisible="{Binding Business.PrimaryImageUrl, Converter={StaticResource NullCheckConverter}}" />
 
-                    <Grid BackgroundColor="{StaticResource BrushImagePlaceholderOverlay}"
+                    <Grid BackgroundColor="{StaticResource BrandGoldSurfaceOverlay}"
                           Padding="16"
                           VerticalOptions="End">
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{Binding Business.Name}"
                                    FontSize="24"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource BrushOnSurface}"
+                                   TextColor="{StaticResource Neutral900}"
                                    LineBreakMode="WordWrap" />
                             <Label Text="{Binding Business.ShortDescription}"
                                    Style="{StaticResource SecondaryBodyLabelStyle}"

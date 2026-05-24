@@ -1,5 +1,7 @@
 # Darwin Backlog & Roadmap
 
+Historical note: this is an archived roadmap snapshot. It is not the current planning source of truth. Use [BACKLOG.md](BACKLOG.md) for the active roadmap and [docs/README.md](docs/README.md) for the documentation map.
+
 This document defines the **current status, active work, and planned roadmap**
 for the Darwin Platform:
 
@@ -9,7 +11,7 @@ for the Darwin Platform:
 - Mobile Suite (Business + Consumer)
 - Shared packages (Contracts + Mobile.Shared)
 
-It is designed as the **single source of truth** for development planning.
+At the time it was written, this file was designed as the planning source of truth. It is now preserved only as historical context.
 
 
 ---

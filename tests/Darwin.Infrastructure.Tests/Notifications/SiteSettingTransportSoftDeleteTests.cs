@@ -57,7 +57,7 @@ public sealed class SiteSettingTransportSoftDeleteTests
 
         var capturedRequest = new CapturingHttpMessageHandler();
         capturedRequest.Configure(
-            (request, _) =>
+            (request, ct) =>
             {
                 request!.Headers.TryGetValues("Authorization", out _).Should().BeTrue();
                 return new HttpResponseMessage(HttpStatusCode.OK)

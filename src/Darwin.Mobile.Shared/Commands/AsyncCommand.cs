@@ -92,13 +92,22 @@ namespace Darwin.Mobile.Shared.Commands
         /// </summary>
         public void RaiseCanExecuteChanged()
         {
-            if (MainThread.IsMainThread)
+            try
             {
-                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-                return;
-            }
+                if (MainThread.IsMainThread)
+                {
+                    CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+                    return;
+                }
 
-            MainThread.BeginInvokeOnMainThread(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
+                MainThread.BeginInvokeOnMainThread(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
+            }
+            catch
+            {
+                // Pure unit-test hosts can load commands without a MAUI dispatcher. In that case
+                // raise inline so command state remains testable without platform activation.
+                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 
@@ -208,13 +217,22 @@ namespace Darwin.Mobile.Shared.Commands
         /// </summary>
         public void RaiseCanExecuteChanged()
         {
-            if (MainThread.IsMainThread)
+            try
             {
-                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-                return;
-            }
+                if (MainThread.IsMainThread)
+                {
+                    CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+                    return;
+                }
 
-            MainThread.BeginInvokeOnMainThread(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
+                MainThread.BeginInvokeOnMainThread(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
+            }
+            catch
+            {
+                // Pure unit-test hosts can load commands without a MAUI dispatcher. In that case
+                // raise inline so command state remains testable without platform activation.
+                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 }

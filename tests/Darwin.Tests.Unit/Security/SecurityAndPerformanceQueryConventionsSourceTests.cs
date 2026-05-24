@@ -92,7 +92,7 @@ public sealed class SecurityAndPerformanceQueryConventionsSourceTests : Security
 
     private static int GetLineNumber(string source, int index)
     {
-        return source[..index].Count('\n') + 1;
+        return source.AsSpan(0, index).Count('\n') + 1;
     }
 
     private static string BuildViolation(SourceViolation violation)

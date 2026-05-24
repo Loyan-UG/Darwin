@@ -112,7 +112,7 @@
                                                 <VerticalStackLayout Grid.Column="0" Spacing="3">
                                                     <Label Text="{Binding BusinessName}"
                                                            FontAttributes="Bold"
-                                                           TextColor="{StaticResource BrushOnSurface}"
+                                                           TextColor="{StaticResource Neutral900}"
                                                            LineBreakMode="WordWrap" />
                                                     <Label Text="{Binding PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
                                                            Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -127,7 +127,7 @@
                                                                HorizontalTextAlignment="Center" />
                                                         <Label Text="{Binding PointsBalance}"
                                                                FontAttributes="Bold"
-                                                               TextColor="{StaticResource BrushPrimaryPressed}"
+                                                               TextColor="{StaticResource BrandGold600}"
                                                                HorizontalTextAlignment="Center" />
                                                     </VerticalStackLayout>
                                                 </Border>
@@ -208,7 +208,7 @@
                                                 <Label Text="{Binding Name}"
                                                        FontSize="16"
                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource BrushOnSurface}"
+                                                       TextColor="{StaticResource Neutral900}"
                                                        LineBreakMode="WordWrap" />
                                                 <Label Text="{Binding RequiredPoints, StringFormat='{x:Static res:AppResources.RewardCostFormat}'}"
                                                        Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -223,7 +223,7 @@
                                                            HorizontalTextAlignment="Center" />
                                                     <Label Text="{Binding RequiredPoints}"
                                                            FontAttributes="Bold"
-                                                           TextColor="{StaticResource BrushPrimaryPressed}"
+                                                           TextColor="{StaticResource BrandGold600}"
                                                            HorizontalTextAlignment="Center" />
                                                 </VerticalStackLayout>
                                             </Border>
@@ -263,13 +263,13 @@
                                                     Padding="10,8">
                                                 <Label Text="{Binding Type, Converter={StaticResource PointsTransactionTypeConverter}}"
                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource BrushPrimaryPressed}" />
+                                                       TextColor="{StaticResource BrandGold600}" />
                                             </Border>
 
                                             <Label Grid.Column="1"
                                                    Text="{Binding Notes}"
                                                    FontAttributes="Bold"
-                                                   TextColor="{StaticResource BrushOnSurface}"
+                                                   TextColor="{StaticResource Neutral900}"
                                                    LineBreakMode="WordWrap" />
 
                                             <VerticalStackLayout Grid.Column="2"
@@ -282,7 +282,7 @@
                                                        HorizontalTextAlignment="End" />
                                                 <Label Text="{Binding Delta, StringFormat='{0:+#;-#;0}'}"
                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource BrushOnSurface}"
+                                                       TextColor="{StaticResource Neutral900}"
                                                        HorizontalTextAlignment="End" />
                                                 <Label Text="{Binding Reference}"
                                                        Style="{StaticResource SecondaryBodyLabelStyle}"
@@ -316,7 +316,7 @@
             </pullToRefresh:SfPullToRefresh.PullableContent>
         </pullToRefresh:SfPullToRefresh>
 
-        <Grid BackgroundColor="{StaticResource BrushBusyOverlay}"
+        <Grid BackgroundColor="{StaticResource BusyOverlayColor}"
               IsVisible="{Binding IsBusy}"
               InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center"
@@ -324,7 +324,7 @@
                                  Spacing="12">
                 <ActivityIndicator IsVisible="{Binding IsBusy}"
                                    IsRunning="{Binding IsBusy}"
-                                   Color="{StaticResource BrushPrimary}" />
+                                   Color="{StaticResource BrandGold500}" />
                 <Label Text="{x:Static res:AppResources.RewardsTitle}"
                        Style="{StaticResource SecondaryBodyLabelStyle}"
                        HorizontalTextAlignment="Center" />

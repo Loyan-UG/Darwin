@@ -29,10 +29,25 @@ The actual priority is:
 
 Practical consequence:
 
-- `Darwin.Mobile.Business` is usable enough that missing onboarding/admin support is now a platform blocker
-- WebAdmin and backend must support business user lifecycle and operational troubleshooting
+- implemented Consumer and Business mobile workflows are operationally usable in the current code-backed scope
+- WebAdmin and backend must continue to support business user lifecycle, operational troubleshooting, provider readiness, and release support before a store-launch claim is made
 
 ## 3. Current Mobile Status
+
+The mobile apps are conditionally launch-ready for the workflows that are already implemented and guarded by tests. They are not yet final store-launch artifacts because external provider smoke, production mobile configuration, signing/package validation, and several product-scope decisions remain open.
+
+Code-backed status as of 2026-05-24:
+
+- `Darwin.Mobile.Shared.Tests`: `228` passed, `0` skipped.
+- `Darwin.Mobile.Consumer.Tests`: `119` passed, `0` skipped.
+- `Darwin.Mobile.Business.Tests`: `11` passed, `0` skipped.
+- CI runs the shared, Consumer, and Business mobile guard lanes on Windows with the MAUI workload installed, plus release-like Windows target build validation and Android Debug build validation.
+- Android cleartext traffic and Android platform backup are disabled for both mobile apps.
+- Unsafe certificate trust remains debug-only guarded.
+- Consumer and Business English/German resource parity is guarded.
+- Tizen is out-of-scope for the current mobile launch; Tizen placeholder manifests are not release blockers for Android, iOS, MacCatalyst, or the Windows validation target.
+- Android emulator runtime smoke on 2026-05-24 validated Consumer login, Discover, Google Maps rendering, Consumer QR generation, Business login, Business Home, and the Business Scan tab without runtime crashes.
+- The loyalty QR non-camera path passed against `https://api.loyan.de` with a real member/business token flow: Consumer prepared an accrual scan session, Business processed the token, and Business confirmed accrual. Camera-based QR scan from a second device/emulator remains required before treating the physical scanner path as launch-complete.
 
 ### `Darwin.Mobile.Consumer`
 
@@ -43,7 +58,17 @@ Current usable areas include:
 - member addresses
 - loyalty views
 - orders and invoices
+- invoice document, archive document, and structured JSON/XML source-model copy actions where WebApi exposes those artifacts
 - CRM-linked customer context
+- local Android emulator validation for login, Discover, Google Maps, and QR generation
+
+Launch conditions still open:
+
+- Google Maps and Firebase/APNS production configuration must be supplied through secure local/CI/provider configuration. `Darwin.Mobile.Consumer` expects the Android Google Maps key through `GoogleMapsApiKey`, `GOOGLE_MAPS_API_KEY`, or `ANDROID_GOOGLE_MAPS_API_KEY`; local developers may store it in `.NET User Secrets` and synchronize the build-time variables with `scripts/sync-mobile-google-maps-user-secret.ps1`. Android Release builds require `src/Darwin.Mobile.Consumer/google-services.json` for Firebase Cloud Messaging. iOS/MacCatalyst Release entitlements already use production APNS, but signed builds still require Apple Developer provisioning and APNS provider configuration outside the repository.
+- Android/iOS/MacCatalyst release artifacts, signing, store metadata, and device smoke must be validated.
+- Product scope must confirm whether Consumer checkout remains hosted/web-payment handoff or requires full in-app checkout.
+- More end-to-end UI/device coverage is still needed beyond the current source-contract and ViewModel guard lanes.
+- Camera-based QR validation still requires a real device/emulator-to-device scan. The API path is validated, but the physical camera path is not launch-complete until the Business app scans a QR displayed on a second screen/device.
 
 ### `Darwin.Mobile.Business`
 
@@ -53,6 +78,17 @@ Current usable areas include:
 - dashboard and business-side workflows already implemented in the app
 - account/profile/password flows that now depend on cleaner backend and admin support
 - business invitation preview plus token-entry and configurable magic-link acceptance for phase-1 onboarding
+- Android cleartext traffic and platform backup are disabled for release hardening; local HTTP testing must stay debug-only if it is ever reintroduced.
+- local Android emulator validation for login, Home, and Scan tab startup
+- non-camera scan-session processing and accrual confirmation through the business WebApi path
+
+Launch conditions still open:
+
+- Product scope must confirm whether Business subscription management remains read-only status plus HTTPS management-website handoff or expands to full in-app checkout/cancel management.
+- Production Stripe, Brevo, DHL, VIES, object-storage, push, and app-link configuration must be smoke-tested with real deployment settings before production claims.
+- Android/iOS/MacCatalyst signing, entitlement, package, and device validation remain required.
+- Broader Business UI/device coverage is still needed beyond source-contract soft-gate guards.
+- Camera-based QR scanning must be validated with a second device/emulator camera feed before scanner hardware behavior is considered launch-complete.
 
 ### `Darwin.Mobile.Shared`
 
@@ -61,6 +97,8 @@ Shared responsibilities include:
 - API route catalog
 - auth/profile/loyalty/member-commerce service abstractions
 - contract-aligned shared client logic
+- launch-readiness guards for canonical routes, resource parity, cleartext-traffic hardening, and committed mobile key checks
+- local cache support is active for scoped read models; the SQLite outbox repository is inactive scaffolding until an offline mutation processor and account/business-switch lifecycle policy are implemented
 
 ## 4. Business User Lifecycle
 
@@ -187,6 +225,11 @@ Important cross-cutting concerns for mobile-backed flows:
 - safe reset and activation flows
 - PII protection
 - auditability for support-sensitive actions
+- Android manifests must not enable app-wide cleartext HTTP. Future local HTTP testing must use a debug-only network-security path instead of weakening Release.
+- Both MAUI apps disable Android platform backup in their manifests so token-adjacent local state, cached preferences, and app data are not included in broad OS backup/restore flows.
+- Google Maps and Firebase/APNS configuration must come from secure local, CI, or provider-managed configuration. Real production keys must not be committed.
+- Mobile maps/push input names and device-smoke steps are tracked in `docs/external-smoke-inputs.md`. The repository must not be treated as the source of truth for production provider credentials.
+- Structured invoice JSON/XML downloads are operational artifacts only. They are not compliant e-invoices until the selected ZUGFeRD/Factur-X generator path is completed and validated.
 
 The admin and backend systems must expose enough operator visibility to support these flows without leaking sensitive internals into the mobile clients.
 
@@ -208,6 +251,11 @@ The admin and backend systems must expose enough operator visibility to support 
 - ensure backend/admin onboarding support is sufficient for business app usage
 - keep `Darwin.Mobile.Shared` aligned whenever contracts or canonical routes change
 - avoid introducing drift between mobile route assumptions and WebApi ownership
+- keep the Business subscription mobile surface as status plus HTTPS management-website handoff until the product owner approves full in-app billing management
+- keep `Darwin.Mobile.Consumer.Tests` green for Consumer release guards, resource parity, push-registration orchestration, and settings navigation command coverage
+- keep `Darwin.Mobile.Business.Tests` green for Business release guards, resource parity, read-only subscription handoff, WebAdmin support-surface guards, and source-contract soft-gate coverage
+- keep shared package versions aligned between Consumer and Business to avoid UI/runtime drift across the two MAUI apps
+- keep customer-facing Consumer surfaces free of WebAdmin/operator diagnostics; operational diagnostics belong in WebAdmin and support tooling
 
 ## 12.1 Review Checklist for the Dedicated Mobile Audit
 

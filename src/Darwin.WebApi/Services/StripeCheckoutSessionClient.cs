@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Darwin.Application.Abstractions.Payments;
+using Microsoft.Extensions.Logging;
 
 namespace Darwin.WebApi.Services;
 
@@ -14,10 +15,12 @@ public sealed class StripeCheckoutSessionClient : IStorefrontPaymentSessionClien
     private static readonly Uri DefaultStripeApiBaseUri = new("https://api.stripe.com/");
 
     private readonly HttpClient _httpClient;
+    private readonly ILogger<StripeCheckoutSessionClient> _logger;
 
-    public StripeCheckoutSessionClient(HttpClient httpClient)
+    public StripeCheckoutSessionClient(HttpClient httpClient, ILogger<StripeCheckoutSessionClient> logger)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClient.BaseAddress ??= DefaultStripeApiBaseUri;
         _httpClient.Timeout = _httpClient.Timeout == Timeout.InfiniteTimeSpan
             ? TimeSpan.FromSeconds(30)
@@ -52,6 +55,12 @@ public sealed class StripeCheckoutSessionClient : IStorefrontPaymentSessionClien
         var responseBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
+            var (errorType, errorCode) = ReadStripeError(responseBody);
+            _logger.LogWarning(
+                "Stripe checkout session creation failed with HTTP {StatusCode}. StripeErrorType={StripeErrorType}; StripeErrorCode={StripeErrorCode}.",
+                (int)response.StatusCode,
+                errorType,
+                errorCode);
             throw new InvalidOperationException($"Stripe checkout session creation failed with HTTP {(int)response.StatusCode}.");
         }
 
@@ -122,5 +131,31 @@ public sealed class StripeCheckoutSessionClient : IStorefrontPaymentSessionClien
         }
 
         return null;
+    }
+
+    private static (string ErrorType, string ErrorCode) ReadStripeError(string responseBody)
+    {
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return ("unknown", "unknown");
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(responseBody);
+            if (!document.RootElement.TryGetProperty("error", out var error) ||
+                error.ValueKind != JsonValueKind.Object)
+            {
+                return ("unknown", "unknown");
+            }
+
+            return (
+                GetString(error, "type") ?? "unknown",
+                GetString(error, "code") ?? "unknown");
+        }
+        catch (JsonException)
+        {
+            return ("invalid-json", "unknown");
+        }
     }
 }

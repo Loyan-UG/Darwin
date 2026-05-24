@@ -298,14 +298,108 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
     private static bool TryGetValidationResult(JsonElement report, out bool isValid)
     {
         isValid = false;
+        var parsedResults = new List<bool>();
+
+        if (TryCollectValidationIndicators(report, parsedResults))
+        {
+            // continue collecting; explicit nested indicators can only narrow confidence.
+        }
+
+        if (TryCollectValidationIndicatorsFromContainer(report, "validationResult", parsedResults))
+        {
+            // keeps behavior aligned for existing nested output.
+        }
+
+        if (TryCollectValidationIndicatorsFromContainer(report, "signature", parsedResults))
+        {
+            // signature-level failures should fail the legal validation path.
+        }
+
+        if (TryCollectValidationIndicatorsFromContainer(report, "result", parsedResults))
+        {
+            // generic command result wrappers are supported.
+        }
+
+        if (parsedResults.Count == 0)
+        {
+            return false;
+        }
+
+        isValid = !parsedResults.Any(result => !result);
+        return true;
+    }
+
+    private static bool TryCollectValidationIndicatorsFromContainer(JsonElement report, string containerName, List<bool> values)
+    {
+        if (!report.TryGetProperty(containerName, out var containerElement))
+        {
+            return false;
+        }
+
+        return containerElement.ValueKind == JsonValueKind.Object &&
+            TryCollectValidationIndicators(containerElement, values);
+    }
+
+    private static bool TryCollectValidationIndicators(JsonElement report, List<bool> values)
+    {
+        var foundValue = false;
+        var foundStatus = false;
 
         foreach (var propertyName in new[] { "isValid", "valid", "passed", "success", "succeeded" })
         {
             if (report.TryGetProperty(propertyName, out var value) &&
-                TryGetBooleanValue(value, out isValid))
+                TryGetBooleanValue(value, out var parsed))
             {
-                return true;
+                values.Add(parsed);
+                foundValue = true;
             }
+        }
+
+        foreach (var statusName in new[] { "status", "state" })
+        {
+            if (!report.TryGetProperty(statusName, out var value) ||
+                value.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            var status = value.GetString()?.Trim();
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                continue;
+            }
+
+            if (TryGetValidationStatusValue(status, out var parsedStatus))
+            {
+                values.Add(parsedStatus);
+                foundStatus = true;
+            }
+        }
+
+        return foundValue || foundStatus;
+    }
+
+    private static bool TryGetValidationStatusValue(string status, out bool parsed)
+    {
+        parsed = false;
+
+        if (string.Equals(status, "ok", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "passed", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "pass", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "success", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "valid", StringComparison.OrdinalIgnoreCase))
+        {
+            parsed = true;
+            return true;
+        }
+
+        if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "fail", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "error", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "invalid", StringComparison.OrdinalIgnoreCase))
+        {
+            parsed = false;
+            return true;
         }
 
         return false;
@@ -328,6 +422,24 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
     private static string? ExtractValidationIssues(JsonElement report)
     {
         var messages = new List<string>();
+        CollectValidationIssueMessages(report, messages);
+        return messages.Count == 0 ? null : string.Join("; ", messages);
+    }
+
+    private static void CollectValidationIssueMessages(JsonElement report, List<string> messages)
+    {
+        foreach (var issueName in new[] { "result", "signature" })
+        {
+            if (!report.TryGetProperty(issueName, out var issueElement))
+            {
+                continue;
+            }
+
+            if (issueElement.ValueKind == JsonValueKind.Object)
+            {
+                CollectValidationIssueMessages(issueElement, messages);
+            }
+        }
 
         foreach (var issueName in new[] { "issues", "errors", "messages", "validationMessages" })
         {
@@ -336,31 +448,71 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
                 continue;
             }
 
-            if (value.ValueKind == JsonValueKind.Array)
+            CollectValidationIssueMessagesFromValue(value, messages);
+        }
+
+        if (report.TryGetProperty("validationResult", out var nestedValidationResult) &&
+            nestedValidationResult.ValueKind == JsonValueKind.Object)
+        {
+            CollectValidationIssueMessages(nestedValidationResult, messages);
+        }
+    }
+
+    private static void CollectValidationIssueMessagesFromValue(JsonElement value, List<string> messages)
+    {
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in value.EnumerateArray())
             {
-                foreach (var item in value.EnumerateArray())
+                if (item.ValueKind == JsonValueKind.String)
                 {
-                    if (item.ValueKind == JsonValueKind.String)
+                    var message = item.GetString()?.Trim();
+                    if (!string.IsNullOrWhiteSpace(message))
                     {
-                        var message = item.GetString()?.Trim();
-                        if (!string.IsNullOrWhiteSpace(message))
-                        {
-                            messages.Add(message);
-                        }
+                        messages.Add(message);
                     }
                 }
+                else if (item.ValueKind == JsonValueKind.Object)
+                {
+                    TryAddIssueObjectMessage(item, messages);
+                }
             }
-            else if (value.ValueKind == JsonValueKind.String)
+            return;
+        }
+
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            var message = value.GetString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(message))
             {
-                var message = value.GetString()?.Trim();
+                messages.Add(message);
+            }
+
+            return;
+        }
+
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            TryAddIssueObjectMessage(value, messages);
+        }
+    }
+
+    private static void TryAddIssueObjectMessage(JsonElement item, List<string> messages)
+    {
+        foreach (var messageField in new[] { "message", "text", "description" })
+        {
+            if (item.TryGetProperty(messageField, out var messageProperty) &&
+                messageProperty.ValueKind == JsonValueKind.String)
+            {
+                var message = messageProperty.GetString()?.Trim();
                 if (!string.IsNullOrWhiteSpace(message))
                 {
                     messages.Add(message);
                 }
+
+                return;
             }
         }
-
-        return messages.Count == 0 ? null : string.Join("; ", messages);
     }
 
     private static bool LooksLikePdf(byte[] content)

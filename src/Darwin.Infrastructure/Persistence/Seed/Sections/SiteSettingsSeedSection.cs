@@ -1,4 +1,4 @@
-﻿using Darwin.Domain.Entities.Settings;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Common;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
@@ -139,9 +139,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 FeatureFlagsJson = "{}",
 
                 // WebAuthn (Passkeys)
-                WebAuthnRelyingPartyId = "vafadar.pro",
+                WebAuthnRelyingPartyId = "loyan.de",
                 WebAuthnRelyingPartyName = "Darwin",
-                WebAuthnAllowedOriginsCsv = "https://admin.vafadar.pro,https://vafadar.pro",
+                WebAuthnAllowedOriginsCsv = "https://admin.loyan.de,https://web.loyan.de",
                 WebAuthnRequireUserVerification = false,
 
                 // SMTP (disabled by default in seed; configured later via Admin)

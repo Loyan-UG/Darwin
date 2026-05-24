@@ -38,7 +38,7 @@
                 </Grid>
 
                 <Label Text="{Binding ErrorMessage}" Style="{StaticResource ErrorLabelStyle}" IsVisible="{Binding HasError}" />
-                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrushPrimary}" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
 
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="12">
@@ -96,7 +96,7 @@
             </pullToRefresh:SfPullToRefresh.PullableContent>
         </pullToRefresh:SfPullToRefresh>
 
-        <Grid BackgroundColor="{StaticResource BrushBusyOverlay}" IsVisible="{Binding IsBusy}" InputTransparent="False">
+        <Grid BackgroundColor="{StaticResource BusyOverlayColor}" IsVisible="{Binding IsBusy}" InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" WidthRequest="280" Spacing="14">
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="12">
@@ -105,7 +105,7 @@
                         <Border Style="{StaticResource SkeletonBlockBorderStyle}" HeightRequest="14" WidthRequest="220" />
                     </VerticalStackLayout>
                 </Border>
-                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrushPrimary}" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
                 <Label Text="{x:Static res:AppResources.HomeLoadingMessage}" Style="{StaticResource SecondaryBodyLabelStyle}" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </Grid>

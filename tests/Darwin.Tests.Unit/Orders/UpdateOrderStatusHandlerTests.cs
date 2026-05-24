@@ -126,6 +126,27 @@ public sealed class UpdateOrderStatusHandlerTests
         await act.Should().ThrowAsync<ValidationException>("stale RowVersion indicates concurrent modification");
     }
 
+    [Fact]
+    public async Task Should_Throw_ValidationException_When_SaveChanges_ReportsConcurrencyConflict()
+    {
+        await using var db = UpdateOrderStatusTestDbContext.Create(throwConcurrencyOnSecondSave: true);
+        var orderId = Guid.NewGuid();
+        var rowVersion = new byte[] { 11 };
+        db.Set<Order>().Add(BuildOrder(orderId, OrderStatus.Created, rowVersion));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateHandler(db);
+
+        var act = async () => await handler.HandleAsync(new UpdateOrderStatusDto
+        {
+            OrderId = orderId,
+            RowVersion = rowVersion,
+            NewStatus = OrderStatus.Confirmed
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ValidationException>("DbUpdateConcurrencyException should be translated to concurrency validation");
+    }
+
     // ─── Guard: invalid state machine transition ──────────────────────────────
 
     [Fact]
@@ -586,7 +607,7 @@ public sealed class UpdateOrderStatusHandlerTests
             Id = orderId,
             OrderNumber = $"ORD-{orderId:N}",
             Currency = "EUR",
-            Status = OrderStatus.Placed,
+            Status = OrderStatus.Created,
             BillingAddressJson = "{}",
             ShippingAddressJson = "{}"
         };
@@ -600,7 +621,7 @@ public sealed class UpdateOrderStatusHandlerTests
         {
             OrderId = orderId,
             RowVersion = new byte[] { 1 }, // non-empty DTO RowVersion vs null DB value
-            TargetStatus = OrderStatus.Processing
+            NewStatus = OrderStatus.Confirmed
         }, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<ValidationException>(
@@ -689,17 +710,36 @@ public sealed class UpdateOrderStatusHandlerTests
 
     internal sealed class UpdateOrderStatusTestDbContext : DbContext, IAppDbContext
     {
-        private UpdateOrderStatusTestDbContext(DbContextOptions<UpdateOrderStatusTestDbContext> options)
-            : base(options) { }
+        private readonly bool _throwConcurrencyOnSecondSave;
+        private int _saveChangesCallCount;
+
+        private UpdateOrderStatusTestDbContext(
+            DbContextOptions<UpdateOrderStatusTestDbContext> options,
+            bool throwConcurrencyOnSecondSave)
+            : base(options)
+        {
+            _throwConcurrencyOnSecondSave = throwConcurrencyOnSecondSave;
+        }
 
         public new DbSet<T> Set<T>() where T : class => base.Set<T>();
 
-        public static UpdateOrderStatusTestDbContext Create()
+        public static UpdateOrderStatusTestDbContext Create(bool throwConcurrencyOnSecondSave = false)
         {
             var options = new DbContextOptionsBuilder<UpdateOrderStatusTestDbContext>()
                 .UseInMemoryDatabase($"darwin_update_order_status_tests_{Guid.NewGuid()}")
                 .Options;
-            return new UpdateOrderStatusTestDbContext(options);
+            return new UpdateOrderStatusTestDbContext(options, throwConcurrencyOnSecondSave);
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            _saveChangesCallCount++;
+            if (_throwConcurrencyOnSecondSave && _saveChangesCallCount > 1)
+            {
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

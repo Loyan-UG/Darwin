@@ -73,13 +73,13 @@ export function getSiteRuntimeConfig(): SiteRuntimeConfig {
     process.env.DARWIN_WEB_SUPPORTED_CULTURES,
   );
   const webApiBaseUrl = trimTrailingSlash(
-    process.env.DARWIN_WEBAPI_BASE_URL ?? "https://api.vafadar.pro",
+    process.env.DARWIN_WEBAPI_BASE_URL ?? "https://api.loyan.de",
   );
 
   return {
     webApiBaseUrl,
     siteUrl: trimTrailingSlash(
-      process.env.DARWIN_WEB_SITE_URL ?? "https://vafadar.pro",
+      process.env.DARWIN_WEB_SITE_URL ?? "https://web.loyan.de",
     ),
     mainMenuName: process.env.DARWIN_WEB_MAIN_MENU_NAME ?? "main-navigation",
     footerMenuName: process.env.DARWIN_WEB_FOOTER_MENU_NAME ?? "Footer",

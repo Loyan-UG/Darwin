@@ -1,9 +1,6 @@
-using Darwin.Mobile.Consumer.Constants;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using Darwin.Mobile.Consumer.ViewModels;
+using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Consumer.Views;
 
@@ -12,74 +9,12 @@ namespace Darwin.Mobile.Consumer.Views;
 /// </summary>
 public partial class SettingsPage : ContentPage
 {
-    private int _navigationInProgress;
+    private readonly SettingsViewModel _viewModel;
 
-    public SettingsPage()
+    public SettingsPage(SettingsViewModel viewModel)
     {
         InitializeComponent();
-    }
-
-    private async void OnProfileClicked(object sender, EventArgs e)
-    {
-        await NavigateSafelyAsync(Routes.ProfileEdit);
-    }
-
-    private async void OnChangePasswordClicked(object sender, EventArgs e)
-    {
-        await NavigateSafelyAsync(Routes.ChangePassword);
-    }
-
-    private async void OnMemberCommerceClicked(object sender, EventArgs e)
-    {
-        await NavigateSafelyAsync(Routes.MemberCommerce);
-    }
-
-    private async void OnMemberPreferencesClicked(object sender, EventArgs e)
-    {
-        await NavigateSafelyAsync(Routes.MemberPreferences);
-    }
-
-    private async void OnLegalHubClicked(object sender, EventArgs e)
-    {
-        await NavigateSafelyAsync(Routes.LegalHub);
-    }
-
-    private async void OnAccountDeletionClicked(object sender, EventArgs e)
-    {
-        await NavigateSafelyAsync(Routes.AccountDeletion);
-    }
-
-    private Task NavigateSafelyAsync(string route)
-    {
-        if (string.IsNullOrWhiteSpace(route))
-        {
-            return Task.CompletedTask;
-        }
-
-        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
-        {
-            return Task.CompletedTask;
-        }
-
-        return MainThread.InvokeOnMainThreadAsync(async () =>
-        {
-            try
-            {
-                if (Shell.Current is null)
-                {
-                    return;
-                }
-
-                await Shell.Current.GoToAsync(route);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Settings navigation to '{route}' failed: {ex}");
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _navigationInProgress, 0);
-            }
-        });
+        _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        BindingContext = _viewModel;
     }
 }

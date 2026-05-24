@@ -88,7 +88,7 @@ public sealed class NotificationDispatchAuditIndexProviderSpecificTests
         return new DarwinDbContext(options);
     }
 
-    private static IMutableIndex FindChannelDispatchAuditIndex(DarwinDbContext context)
+    private static IIndex FindChannelDispatchAuditIndex(DarwinDbContext context)
     {
         var entityType = context.Model.FindEntityType(typeof(ChannelDispatchAudit));
         entityType.Should().NotBeNull();
@@ -97,7 +97,7 @@ public sealed class NotificationDispatchAuditIndexProviderSpecificTests
             .Single(index => index.GetDatabaseName() == "UX_ChannelDispatchAudits_ActiveChannelCorrelation");
     }
 
-    private static IMutableIndex FindEmailDispatchAuditIndex(DarwinDbContext context)
+    private static IIndex FindEmailDispatchAuditIndex(DarwinDbContext context)
     {
         var entityType = context.Model.FindEntityType(typeof(EmailDispatchAudit));
         entityType.Should().NotBeNull();

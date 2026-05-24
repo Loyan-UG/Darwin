@@ -29,17 +29,23 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
     private readonly ITokenStore _tokenStore;
     private readonly IConsumerPushTokenProvider _tokenProvider;
     private readonly IDeviceIdProvider _deviceIdProvider;
+    private readonly IConsumerPushRuntimeInfo _runtimeInfo;
+    private readonly IConsumerPushRegistrationStateStore _registrationStateStore;
 
     public ConsumerPushRegistrationCoordinator(
         IPushRegistrationService pushRegistrationService,
         ITokenStore tokenStore,
         IConsumerPushTokenProvider tokenProvider,
-        IDeviceIdProvider deviceIdProvider)
+        IDeviceIdProvider deviceIdProvider,
+        IConsumerPushRuntimeInfo runtimeInfo,
+        IConsumerPushRegistrationStateStore registrationStateStore)
     {
         _pushRegistrationService = pushRegistrationService ?? throw new ArgumentNullException(nameof(pushRegistrationService));
         _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
         _tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
         _deviceIdProvider = deviceIdProvider ?? throw new ArgumentNullException(nameof(deviceIdProvider));
+        _runtimeInfo = runtimeInfo ?? throw new ArgumentNullException(nameof(runtimeInfo));
+        _registrationStateStore = registrationStateStore ?? throw new ArgumentNullException(nameof(registrationStateStore));
     }
 
     public async Task<Result> TryRegisterCurrentDeviceAsync(CancellationToken cancellationToken)
@@ -61,9 +67,9 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
 
         var pushTokenState = pushTokenStateResult.Value;
         var deviceId = await _deviceIdProvider.GetDeviceIdAsync().ConfigureAwait(false);
-        var platform = MapPlatform(DeviceInfo.Current.Platform);
-        var appVersion = AppInfo.Current?.VersionString;
-        var deviceModel = DeviceInfo.Current?.Model;
+        var platform = _runtimeInfo.Platform;
+        var appVersion = _runtimeInfo.AppVersion;
+        var deviceModel = _runtimeInfo.DeviceModel;
 
         var signature = BuildRegistrationSignature(
             deviceId,
@@ -73,7 +79,7 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
             appVersion,
             deviceModel);
 
-        var previousSignature = Preferences.Default.Get(LastRegistrationSignatureStorageKey, string.Empty);
+        var previousSignature = _registrationStateStore.GetLastRegistrationSignature();
         if (string.Equals(previousSignature, signature, StringComparison.Ordinal))
         {
             return Result.Ok();
@@ -95,14 +101,14 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
             return Result.Fail(result.Error ?? "Push-device registration request failed.");
         }
 
-        Preferences.Default.Set(LastRegistrationSignatureStorageKey, signature);
+        _registrationStateStore.SetLastRegistrationSignature(signature);
         return Result.Ok();
     }
 
 
     public void ResetCachedRegistrationState()
     {
-        Preferences.Default.Remove(LastRegistrationSignatureStorageKey);
+        _registrationStateStore.Reset();
     }
 
     private static string BuildRegistrationSignature(
@@ -135,5 +141,32 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
         }
 
         return MobileDevicePlatform.Unknown;
+    }
+
+    /// <summary>
+    /// Reads MAUI runtime metadata needed for backend device registration.
+    /// </summary>
+    public sealed class MauiConsumerPushRuntimeInfo : IConsumerPushRuntimeInfo
+    {
+        public MobileDevicePlatform Platform => MapPlatform(DeviceInfo.Current.Platform);
+
+        public string? AppVersion => AppInfo.Current?.VersionString;
+
+        public string? DeviceModel => DeviceInfo.Current?.Model;
+    }
+
+    /// <summary>
+    /// Stores the latest registration signature in platform preferences.
+    /// </summary>
+    public sealed class PreferencesConsumerPushRegistrationStateStore : IConsumerPushRegistrationStateStore
+    {
+        public string GetLastRegistrationSignature()
+            => Preferences.Default.Get(LastRegistrationSignatureStorageKey, string.Empty);
+
+        public void SetLastRegistrationSignature(string signature)
+            => Preferences.Default.Set(LastRegistrationSignatureStorageKey, signature);
+
+        public void Reset()
+            => Preferences.Default.Remove(LastRegistrationSignatureStorageKey);
     }
 }

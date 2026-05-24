@@ -230,6 +230,425 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
     }
 
     [Fact]
+    public async Task GenerateAsync_Should_Succeed_When_Validation_Report_File_Is_Omitted()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, """
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+            result.Artifact.Should().NotBeNull();
+            result.Artifact!.Format.Should().Be(EInvoiceArtifactFormat.ZugferdFacturX);
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Accept_Validation_Report_Without_Recognized_Validation_Flags()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-no-recognized-keys.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+            result.Artifact.Should().NotBeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Reject_False_Numeric_Validation_Flag()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-numeric-flag.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("reported failed legal validation");
+            result.Message.Should().Contain("numeric false flag");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Reject_False_Boolean_Validation_Flag()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-bool-false.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("reported failed legal validation");
+            result.Message.Should().Contain("boolean failed flag");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Theory]
+    [InlineData("einvoice-validation-report-valid-alt-key.json")]
+    [InlineData("einvoice-validation-report-valid-string-boolean.json")]
+    [InlineData("einvoice-validation-report-valid-number-flag.json")]
+    public async Task GenerateAsync_Should_Accept_Validation_Report_Truth_Alternate_Flags(string fixtureName)
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath(fixtureName);
+            File.Exists(fixturePath).Should().BeTrue();
+            var command = WriteGeneratorScript(root, $$"""
+            if not exist "{{fixturePath}}" exit /b 14
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+            result.Artifact.Should().NotBeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Emit_Detailed_Message_When_Report_Fails_With_String_Validation_Message()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-string-message.json");
+            File.Exists(fixturePath).Should().BeTrue();
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("The configured e-invoice command reported failed legal validation: missing accounting customer party identifier");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Theory]
+    [InlineData("einvoice-validation-report-failed-array-issues.json", "malformed line-level totals; missing buyer country; buyer missing postal code")]
+    [InlineData("einvoice-validation-report-failed-mixed-error-fields.json", "xml structure not compliant; legal block missing; missing accounting supplier trade party")]
+    public async Task GenerateAsync_Should_Emit_Joined_Issue_Messages_From_Alternate_Fields_When_Report_Fails(
+        string fixtureName,
+        string expectedIssueText)
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath(fixtureName);
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("The configured e-invoice command reported failed legal validation:");
+            result.Message.Should().Contain(expectedIssueText);
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Ignore_NonString_Issue_Entries_And_Keep_Only_NonEmpty_Text()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-non-string-issues.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Be("The configured e-invoice command reported failed legal validation: malformed issue array entry");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Extract_Message_From_Object_Typed_Issue_Entries()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-object-issues.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("missing buyer tax ID");
+            result.Message.Should().Contain("issuer line item total out of range");
+            result.Message.Should().Contain("line 2 has invalid unit amount");
+            result.Message.Should().Contain("legacy validation text");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Reject_When_Validation_Status_Reports_Failed_With_Nested_Result()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-nested-status.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("validation failed for profile profile-extended");
+            result.Message.Should().Contain("EN16931: Missing accounting party identifier");
+            result.Message.Should().Contain("legal identifier is required");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Extract_Issues_From_Nested_Validation_Result_Containers()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-nested-containers.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("line-level validation failed");
+            result.Message.Should().Contain("tax ID missing in nested issue");
+            result.Message.Should().Contain("nested container object message");
+            result.Message.Should().Contain("root message");
+            result.Message.Should().Contain("top level error object message");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Reject_When_Validation_Result_Container_Reports_Failed()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-selected-tool-result.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("reported failed legal validation");
+            result.Message.Should().Contain("selected-tool command reported signature-related validation errors");
+            result.Message.Should().Contain("selected-tool signature validation failed");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Reject_When_Validation_Report_RootStatus_Reports_Failed_Uppercase()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-failed-root-status-uppercase.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("reported failed legal validation");
+            result.Message.Should().Contain("selected-tool command reported signature-related validation errors");
+            result.Message.Should().Contain("selected-tool signature validation failed");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
     public async Task GenerateAsync_Should_Return_UnsupportedFormat_When_XRechnung_Is_Not_Enabled()
     {
         var root = CreateTempRoot();
@@ -395,5 +814,29 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
         {
             Directory.Delete(root, recursive: true);
         }
+    }
+
+    private static string GetFixturePath(string fileName)
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        return Path.Combine(repositoryRoot, "tests", "Darwin.Infrastructure.Tests", "Fixtures", fileName);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "Darwin.sln")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException(
+            $"Could not locate the Darwin repository root from '{AppContext.BaseDirectory}'.");
     }
 }

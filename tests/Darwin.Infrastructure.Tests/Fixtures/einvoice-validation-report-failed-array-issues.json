@@ -1,0 +1,8 @@
+{
+  "valid": false,
+  "issues": [
+    "malformed line-level totals",
+    "missing buyer country",
+    "buyer missing postal code"
+  ]
+}

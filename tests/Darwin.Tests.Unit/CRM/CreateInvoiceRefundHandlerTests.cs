@@ -213,6 +213,35 @@ public sealed class CreateInvoiceRefundHandlerTests
     }
 
     [Fact]
+    public async Task CreateRefund_Should_ThrowConcurrency_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = RefundTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+        var invoice = MakeInvoice(paymentId: paymentId, rowVersion: rowVersion);
+
+        db.Set<Payment>().Add(MakePayment(id: paymentId));
+        db.Set<Invoice>().Add(invoice);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = MakeHandler(db);
+
+        var act = () => handler.HandleAsync(new InvoiceRefundCreateDto
+        {
+            InvoiceId = invoice.Id,
+            RowVersion = rowVersion,
+            AmountMinor = 500,
+            Currency = "EUR",
+            Reason = "Concurrency test"
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task CreateRefund_Should_Throw_InvalidOperationException_When_Invoice_Has_No_Payment()
     {
         await using var db = RefundTestDbContext.Create();
@@ -634,6 +663,19 @@ public sealed class CreateInvoiceRefundHandlerTests
                 .UseInMemoryDatabase($"darwin_refund_tests_{Guid.NewGuid()}")
                 .Options;
             return new RefundTestDbContext(options);
+        }
+
+        public bool ThrowConcurrencyOnSave { get; set; }
+
+        public override Task<int> SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (ThrowConcurrencyOnSave)
+            {
+                ThrowConcurrencyOnSave = false;
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict during save");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

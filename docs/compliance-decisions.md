@@ -66,7 +66,7 @@ Near-term implementation design:
 
 Open decision:
 
-- The first ZUGFeRD/Factur-X tooling path is selected as Mustangproject CLI through the existing external-command adapter, but generation is not production-ready until a pinned artifact, wrapper hardening, deterministic fixtures, and deployment smoke are complete.
+- The first ZUGFeRD/Factur-X tooling path is selected as Mustangproject CLI through the existing external-command adapter, but generation is not production-ready until a pinned artifact, wrapper hardening, deterministic report fixture parsing coverage, and deployment smoke are complete.
 - See `docs/e-invoice-tooling-decision.md` for the selected path, retained alternatives, and implementation requirements.
 
 ## Invoice Archive Storage

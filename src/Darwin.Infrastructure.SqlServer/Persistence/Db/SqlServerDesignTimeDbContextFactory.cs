@@ -21,6 +21,7 @@ public sealed class SqlServerDesignTimeDbContextFactory : IDesignTimeDbContextFa
         var options = new DbContextOptionsBuilder<DarwinDbContext>()
             .UseSqlServer(connectionString, sql =>
             {
+                sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                 sql.EnableRetryOnFailure();
                 sql.MigrationsAssembly(typeof(SqlServerDesignTimeDbContextFactory).Assembly.FullName);
             })

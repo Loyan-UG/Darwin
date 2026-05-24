@@ -1,5 +1,6 @@
 using Darwin.Mobile.Shared.Api;
 using FluentAssertions;
+using System.Reflection;
 
 namespace Darwin.Mobile.Shared.Tests.Api;
 
@@ -40,6 +41,12 @@ public sealed class ApiRoutesCanonicalRouteTests
         ApiRoutes.Profile.GetAddresses.Should().Be("api/v1/member/profile/addresses");
         ApiRoutes.Orders.GetMyOrders.Should().Be("api/v1/member/orders");
         ApiRoutes.Invoices.GetMyInvoices.Should().Be("api/v1/member/invoices");
+        ApiRoutes.Invoices.DownloadArchiveDocument(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+            .Should().Be("api/v1/member/invoices/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/archive-document");
+        ApiRoutes.Invoices.DownloadStructuredData(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+            .Should().Be("api/v1/member/invoices/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/structured-data");
+        ApiRoutes.Invoices.DownloadStructuredXml(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+            .Should().Be("api/v1/member/invoices/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/structured-xml");
         ApiRoutes.Notifications.RegisterDevice.Should().Be("api/v1/member/notifications/devices/register");
         ApiRoutes.Loyalty.GetMyAccounts.Should().Be("api/v1/member/loyalty/my/accounts");
         ApiRoutes.Loyalty.GetMyBusinesses.Should().Be("api/v1/member/loyalty/my/businesses");
@@ -84,4 +91,68 @@ public sealed class ApiRoutesCanonicalRouteTests
         businessRoute.Should().EndWith(expected);
         loyaltyRoute.Should().Contain($"/{expected}/");
     }
+
+    /// <summary>
+    /// Verifies every route exposed by the mobile catalog remains a relative
+    /// audience-first route and does not regress to a legacy non-audience alias.
+    /// </summary>
+    [Fact]
+    public void AllMobileRoutes_Should_UseCanonicalRelativeAudienceFirstShape()
+    {
+        var routes = EnumerateKnownRoutes().ToList();
+
+        routes.Should().NotBeEmpty();
+        routes.Should().OnlyContain(route => !IsAbsoluteRoute(route));
+        routes.Should().OnlyContain(route => route.StartsWith("api/v1/", StringComparison.Ordinal));
+
+        var legacyPrefixes = new[]
+        {
+            "api/v1/auth/",
+            "api/v1/profile/",
+            "api/v1/orders",
+            "api/v1/invoices",
+            "api/v1/businesses",
+            "api/v1/loyalty",
+            "api/v1/billing",
+            "api/v1/notifications"
+        };
+
+        routes.Should().OnlyContain(route =>
+            !legacyPrefixes.Any(prefix => route.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static IEnumerable<string> EnumerateKnownRoutes()
+    {
+        var sampleGuid = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+
+        foreach (var nestedType in typeof(ApiRoutes).GetNestedTypes(BindingFlags.Public))
+        {
+            foreach (var field in nestedType.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (field.FieldType == typeof(string) &&
+                    field.GetValue(null) is string value &&
+                    !string.IsNullOrWhiteSpace(value))
+                {
+                    yield return value;
+                }
+            }
+
+            foreach (var method in nestedType.GetMethods(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (method.ReturnType != typeof(string))
+                {
+                    continue;
+                }
+
+                var parameters = method.GetParameters();
+                if (parameters.Length == 1 && parameters[0].ParameterType == typeof(Guid))
+                {
+                    yield return (string)method.Invoke(null, new object[] { sampleGuid })!;
+                }
+            }
+        }
+    }
+
+    private static bool IsAbsoluteRoute(string route)
+        => Uri.TryCreate(route, UriKind.Absolute, out _);
 }

@@ -77,7 +77,7 @@
                                     <Border Grid.Column="2" Style="{StaticResource MutedCardBorderStyle}">
                                         <VerticalStackLayout Spacing="4">
                                             <Label Text="{x:Static res:AppResources.DiscoverTopBusinessTitle}" Style="{StaticResource CaptionLabelStyle}" />
-                                            <Label Text="{Binding TopJoinedBusinessName}" FontAttributes="Bold" FontSize="15" LineBreakMode="WordWrap" TextColor="{StaticResource BrushOnSurface}" />
+                                            <Label Text="{Binding TopJoinedBusinessName}" FontAttributes="Bold" FontSize="15" LineBreakMode="WordWrap" TextColor="{StaticResource Neutral900}" />
                                         </VerticalStackLayout>
                                     </Border>
                                 </Grid>
@@ -120,7 +120,7 @@
                                             <VerticalStackLayout Spacing="10">
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                                     <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                                        <Label Text="{x:Static res:AppResources.DiscoverNearbyOnlyLabel}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                                        <Label Text="{x:Static res:AppResources.DiscoverNearbyOnlyLabel}" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" />
                                                         <Label Text="{x:Static res:AppResources.DiscoverNearbyRadiusLabel}" Style="{StaticResource CaptionLabelStyle}" />
                                                     </VerticalStackLayout>
                                                     <Switch Grid.Column="1" IsToggled="{Binding IsNearbyOnly}" OnColor="{StaticResource BrandGold500}" />
@@ -185,12 +185,12 @@
                                                     <Label Text="{Binding JoinedAccount.PointsBalance}"
                                                            FontAttributes="Bold"
                                                            FontSize="16"
-                                                           TextColor="{StaticResource BrushPrimaryPressed}"
+                                                           TextColor="{StaticResource BrandGold600}"
                                                            HorizontalTextAlignment="Center" />
                                                 </VerticalStackLayout>
                                             </Border>
                                             <VerticalStackLayout Spacing="3" HorizontalOptions="FillAndExpand">
-                                                <Label Text="{Binding JoinedAccount.BusinessName}" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                                <Label Text="{Binding JoinedAccount.BusinessName}" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
                                                 <Label Text="{Binding JoinedAccount.PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" />
                                             </VerticalStackLayout>
                                         </HorizontalStackLayout>
@@ -206,7 +206,7 @@
                                     <VerticalStackLayout Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                             <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                                <Label Text="{Binding ExploreItem.Business.Name}" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                                <Label Text="{Binding ExploreItem.Business.Name}" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
                                                 <Label Text="{Binding ExploreItem.Business.Category, StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding ExploreItem.Business.Category, Converter={StaticResource NullCheckConverter}}" />
                                                 <Label Text="{Binding ExploreItem.Business.City}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding ExploreItem.Business.City, Converter={StaticResource NullCheckConverter}}" />
                                             </VerticalStackLayout>

@@ -957,6 +957,40 @@ public sealed class BrevoWebhooksControllerTests
     }
 
     [Fact]
+    public async Task ReceiveAsync_Should_PersistInboxMessage_OnFirstValidPayload()
+    {
+        await using var db = BrevoWebhookControllerTestDbContext.Create();
+        var payload = CreatePayload();
+        var controller = CreateController(db, new BrevoEmailOptions
+        {
+            WebhookUsername = BrevoUserName,
+            WebhookPassword = BrevoPassword
+        });
+
+        SetRequestBody(controller, payload, BuildBasicAuth(BrevoUserName, BrevoPassword));
+        var result = await controller.ReceiveAsync(TestContext.Current.CancellationToken);
+
+        var (received, duplicate) = AssertOk(result);
+        received.Should().BeTrue();
+        duplicate.Should().BeFalse();
+
+        var persistedCount = await db.Set<ProviderCallbackInboxMessage>()
+            .CountAsync(TestContext.Current.CancellationToken);
+        persistedCount.Should().Be(1);
+
+        var persistedMessage = await db.Set<ProviderCallbackInboxMessage>()
+            .SingleAsync(TestContext.Current.CancellationToken);
+
+        persistedMessage.Provider.Should().Be("Brevo");
+        persistedMessage.CallbackType.Should().Be("delivered");
+        persistedMessage.PayloadJson.Should().Be(payload);
+        persistedMessage.Status.Should().Be("Pending");
+        persistedMessage.IdempotencyKey.Should().MatchRegex("^brevo::[0-9a-f]{64}$");
+        persistedMessage.IdempotencyKey.Should().StartWith("brevo::");
+        persistedMessage.IsDeleted.Should().BeFalse();
+    }
+
+    [Fact]
     public void ReceiveAsyncClass_Should_Throw_WhenInboxWriterIsNull()
     {
         var act = () => new BrevoWebhooksController(

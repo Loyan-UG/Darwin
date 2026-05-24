@@ -1,0 +1,18 @@
+{
+  "result": {
+    "status": "failed",
+    "code": "SIGNATURE_INVALID",
+    "messages": [
+      {
+        "message": "selected-tool signature validation failed"
+      }
+    ]
+  },
+  "issues": [
+    "selected-tool command reported signature-related validation errors"
+  ],
+  "details": {
+    "tool": "mustang-selected-wrapper",
+    "signatureId": "sig-123"
+  }
+}

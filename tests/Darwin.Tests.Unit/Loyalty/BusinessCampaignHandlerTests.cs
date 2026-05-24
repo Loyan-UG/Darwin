@@ -912,13 +912,14 @@ public sealed class BusinessCampaignHandlerTests
         db.Set<CampaignDelivery>().Add(delivery);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new UpdateCampaignDeliveryStatusHandler(db, new TestLocalizer());
+        var clock = new FakeClock(new DateTime(2030, 6, 1, 0, 0, 0, DateTimeKind.Utc));
+        var handler = new UpdateCampaignDeliveryStatusHandler(db, clock, new TestLocalizer());
 
         var result = await handler.HandleAsync(new UpdateCampaignDeliveryStatusDto
         {
             Id = delivery.Id,
             BusinessId = businessId,
-            Status = CampaignDeliveryStatus.Delivered,
+            Status = (short)CampaignDeliveryStatus.Succeeded,
             RowVersion = [1] // non-empty DTO RowVersion vs null DB value
         }, TestContext.Current.CancellationToken);
 

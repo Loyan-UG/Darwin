@@ -405,6 +405,66 @@ public sealed class WebhookDeliveryBackgroundServiceTests
         });
     }
 
+    [Fact]
+    public async Task ProcessPendingDeliveriesAsync_Should_PersistCompletionAndSkipResend_When_FinalCompletionSave_IsConcurrencyFailure()
+    {
+        var nowUtc = new DateTime(2026, 1, 6, 12, 0, 0, DateTimeKind.Utc);
+        var databaseName = $"darwin_webhook_delivery_worker_tests_{Guid.NewGuid()}";
+
+        var setupDb = WebhookDeliveryWorkerTestDbContext.Create(databaseName);
+        var subscription = new WebhookSubscription
+        {
+            Id = Guid.NewGuid(),
+            EventType = "order.created",
+            CallbackUrl = "https://example.com/webhook",
+            Secret = "concurrency-secret"
+        };
+        setupDb.Set<WebhookSubscription>().Add(subscription);
+        var deliveryId = Guid.NewGuid();
+        setupDb.Set<WebhookDelivery>().Add(new WebhookDelivery
+        {
+            Id = deliveryId,
+            SubscriptionId = subscription.Id,
+            Status = "Pending"
+        });
+        await setupDb.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await setupDb.DisposeAsync();
+
+        await using var db = WebhookDeliveryWorkerThrowingSaveDbContext.Create(
+            databaseName,
+            failFromCallNumber: 1,
+            failCompletionOnly: true,
+            failWithConcurrency: true);
+
+        var requestHandler = new RecordingWebhookDeliveryHandler(new[] { HttpStatusCode.OK });
+        var service = CreateService(db, CreateHttpClientFactory(requestHandler), CreateFixedClock(nowUtc));
+        var options = new WebhookDeliveryWorkerOptions
+        {
+            Enabled = true,
+            PollIntervalSeconds = 5,
+            RetryCooldownSeconds = 5,
+            MaxAttempts = 5
+        };
+
+        await InvokeAsync(service, options, TestContext.Current.CancellationToken);
+
+        requestHandler.Requests.Should().HaveCount(1);
+        var completed = await db.Set<WebhookDelivery>()
+            .SingleAsync(x => x.Id == deliveryId, TestContext.Current.CancellationToken);
+        completed.Status.Should().Be("Succeeded");
+        completed.ResponseCode.Should().Be((int)HttpStatusCode.OK);
+        completed.PayloadHash.Should().NotBeNullOrEmpty();
+        completed.RetryCount.Should().Be(1);
+        completed.LastAttemptAtUtc.Should().Be(nowUtc);
+
+        await using var rerunDb = WebhookDeliveryWorkerTestDbContext.Create(databaseName);
+        var rerunRequestHandler = new RecordingWebhookDeliveryHandler(new[] { HttpStatusCode.OK });
+        var rerunService = CreateService(rerunDb, CreateHttpClientFactory(rerunRequestHandler), CreateFixedClock(nowUtc));
+        await InvokeAsync(rerunService, options, TestContext.Current.CancellationToken);
+
+        rerunRequestHandler.Requests.Should().BeEmpty();
+    }
+
     private static async Task InvokeAsync(
         WebhookDeliveryBackgroundService service,
         WebhookDeliveryWorkerOptions options,

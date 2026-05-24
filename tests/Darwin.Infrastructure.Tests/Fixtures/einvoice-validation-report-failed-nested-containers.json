@@ -1,0 +1,24 @@
+{
+  "status": "error",
+  "validationResult": {
+    "valid": false,
+    "errors": [
+      {
+        "message": "line-level validation failed"
+      },
+      {
+        "text": "tax ID missing in nested issue"
+      }
+    ],
+    "validationMessages": {
+      "message": "nested container object message"
+    },
+    "details": {
+      "code": "IGNORED"
+    }
+  },
+  "validationMessages": ["root message"],
+  "errors": {
+    "message": "top level error object message"
+  }
+}

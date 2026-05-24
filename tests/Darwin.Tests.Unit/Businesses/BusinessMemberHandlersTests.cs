@@ -193,6 +193,32 @@ public sealed class BusinessMemberHandlersTests
     }
 
     [Fact]
+    public async Task UpdateMember_Should_Throw_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingBusinessMemberTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var member = CreateMember(businessId, Guid.NewGuid(), BusinessMemberRole.Staff, rowVersion: [1, 2, 3]);
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Concurrent Business" });
+        db.Set<BusinessMember>().Add(member);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessMemberHandler(db, new BusinessMemberEditDtoValidator(), new TestLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessMemberEditDto
+        {
+            Id = member.Id,
+            BusinessId = businessId,
+            UserId = member.UserId,
+            Role = BusinessMemberRole.Manager,
+            IsActive = true,
+            RowVersion = member.RowVersion
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateMember_Should_Throw_WhenDemotingLastOwner_WithoutOverride()
     {
         await using var db = MemberTestDbContext.Create();
@@ -340,6 +366,28 @@ public sealed class BusinessMemberHandlersTests
         audit.Reason.Should().Be("Final offboarding");
     }
 
+    [Fact]
+    public async Task DeleteMember_Should_Throw_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingBusinessMemberTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+        var member = CreateMember(businessId, Guid.NewGuid(), BusinessMemberRole.Staff, rowVersion: [1, 2, 3]);
+        db.Set<Business>().Add(new Business { Id = businessId, Name = "Concurrent Delete" });
+        db.Set<BusinessMember>().Add(member);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new DeleteBusinessMemberHandler(db, new BusinessMemberDeleteDtoValidator(), new TestLocalizer());
+
+        var act = () => handler.HandleAsync(new BusinessMemberDeleteDto
+        {
+            Id = member.Id,
+            RowVersion = member.RowVersion
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static User CreateUser(Guid id, string email) =>
@@ -455,6 +503,102 @@ public sealed class BusinessMemberHandlersTests
             {
                 builder.HasKey(x => x.Id);
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingBusinessMemberTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingBusinessMemberTestDbContext(
+            DbContextOptions<ConcurrencyFailingBusinessMemberTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _hasSeeded;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingBusinessMemberTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingBusinessMemberTestDbContext>()
+                .UseInMemoryDatabase($"darwin_business_member_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingBusinessMemberTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Ignore<GeoCoordinate>();
+
+            modelBuilder.Entity<Business>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.DefaultCurrency).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.DefaultTimeZoneId).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.Members);
+                builder.Ignore(x => x.Locations);
+                builder.Ignore(x => x.Favorites);
+                builder.Ignore(x => x.Likes);
+                builder.Ignore(x => x.Reviews);
+                builder.Ignore(x => x.EngagementStats);
+                builder.Ignore(x => x.Invitations);
+                builder.Ignore(x => x.StaffQrCodes);
+                builder.Ignore(x => x.Subscriptions);
+                builder.Ignore(x => x.AnalyticsExportJobs);
+            });
+
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Email).IsRequired();
+                builder.Property(x => x.NormalizedEmail).IsRequired();
+                builder.Property(x => x.UserName).IsRequired();
+                builder.Property(x => x.NormalizedUserName).IsRequired();
+                builder.Property(x => x.PasswordHash).IsRequired();
+                builder.Property(x => x.SecurityStamp).IsRequired();
+                builder.Property(x => x.Locale).IsRequired();
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.Timezone).IsRequired();
+                builder.Property(x => x.ChannelsOptInJson).IsRequired();
+                builder.Property(x => x.FirstTouchUtmJson).IsRequired();
+                builder.Property(x => x.LastTouchUtmJson).IsRequired();
+                builder.Property(x => x.ExternalIdsJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.UserRoles);
+                builder.Ignore(x => x.Logins);
+                builder.Ignore(x => x.Tokens);
+                builder.Ignore(x => x.TwoFactorSecrets);
+                builder.Ignore(x => x.Devices);
+                builder.Ignore(x => x.BusinessFavorites);
+                builder.Ignore(x => x.BusinessLikes);
+                builder.Ignore(x => x.BusinessReviews);
+                builder.Ignore(x => x.EngagementSnapshot);
+            });
+
+            modelBuilder.Entity<BusinessMember>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+            });
+
+            modelBuilder.Entity<BusinessOwnerOverrideAudit>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 }

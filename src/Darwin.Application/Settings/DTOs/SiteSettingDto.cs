@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using Darwin.Domain.Common;
 
@@ -20,6 +20,8 @@ namespace Darwin.Application.Settings.DTOs
         public const string TimeZoneDefault = DomainDefaults.DefaultTimezone;
         public const string DateFormatDefault = "yyyy-MM-dd";
         public const string TimeFormatDefault = "HH:mm";
+        public const string WebAuthnRelyingPartyIdDefault = "loyan.de";
+        public const string WebAuthnAllowedOriginsCsvDefault = "https://admin.loyan.de,https://web.loyan.de";
 
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -209,9 +211,9 @@ namespace Darwin.Application.Settings.DTOs
         public string? WhatsAppAdminRecipientsCsv { get; set; }
 
         // -------- WebAuthn (Passkeys) --------
-        public string WebAuthnRelyingPartyId { get; set; } = "vafadar.pro";
+        public string WebAuthnRelyingPartyId { get; set; } = WebAuthnRelyingPartyIdDefault;
         public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
-        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://admin.vafadar.pro,https://vafadar.pro";
+        public string WebAuthnAllowedOriginsCsv { get; set; } = WebAuthnAllowedOriginsCsvDefault;
         public bool WebAuthnRequireUserVerification { get; set; } = false;
 
         // -------- Email (SMTP) --------

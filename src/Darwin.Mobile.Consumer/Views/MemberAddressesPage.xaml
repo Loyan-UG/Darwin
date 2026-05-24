@@ -39,7 +39,7 @@
                             <DataTemplate x:DataType="vm:MemberAddressItemViewModel">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <VerticalStackLayout Spacing="8">
-                                        <Label Text="{Binding FullName}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
+                                        <Label Text="{Binding FullName}" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" />
                                         <Label Text="{Binding Summary}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding Company}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasCompany}" />
                                         <HorizontalStackLayout Spacing="8">

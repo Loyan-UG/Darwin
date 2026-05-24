@@ -75,7 +75,7 @@
                                                 <buttons:SfButton.Triggers>
                                                     <DataTrigger TargetType="buttons:SfButton" Binding="{Binding IsPromotionScopeSelectedBusiness}" Value="True">
                                                         <Setter Property="Background" Value="{StaticResource BrushPrimary}" />
-                                                        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
+                                                        <Setter Property="TextColor" Value="{StaticResource Neutral0}" />
                                                         <Setter Property="StrokeThickness" Value="0" />
                                                     </DataTrigger>
                                                 </buttons:SfButton.Triggers>
@@ -87,7 +87,7 @@
                                                 <buttons:SfButton.Triggers>
                                                     <DataTrigger TargetType="buttons:SfButton" Binding="{Binding IsPromotionScopeAllBusinesses}" Value="True">
                                                         <Setter Property="Background" Value="{StaticResource BrushPrimary}" />
-                                                        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
+                                                        <Setter Property="TextColor" Value="{StaticResource Neutral0}" />
                                                         <Setter Property="StrokeThickness" Value="0" />
                                                     </DataTrigger>
                                                 </buttons:SfButton.Triggers>
@@ -104,7 +104,7 @@
                                             <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
                                                 <VerticalStackLayout Spacing="8">
                                                     <Label Text="{Binding BusinessName}" Style="{StaticResource SectionEyebrowLabelStyle}" LineBreakMode="WordWrap" />
-                                                    <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                                    <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
                                                     <Label Text="{Binding Description}" Style="{StaticResource BodyLabelStyle}" LineBreakMode="WordWrap" MaxLines="4" />
                                                     <buttons:SfButton Text="{x:Static res:AppResources.FeedOpenPromotionButton}"
                                                                       Command="{Binding Source={x:Reference FeedRoot}, Path=BindingContext.OpenPromotionCommand}"
@@ -116,21 +116,6 @@
                                     </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>
 
-                                <Border Style="{StaticResource MutedCardBorderStyle}" IsVisible="{Binding HasPromotionDiagnosticsSnapshotAt}">
-                                    <VerticalStackLayout Spacing="6">
-                                        <Label Text="{x:Static res:AppResources.FeedPromotionDiagnosticsTitle}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" />
-                                        <Label Text="{Binding PromotionPolicyDiagnosticsSummaryText}" Style="{StaticResource CaptionLabelStyle}" />
-                                        <Label Text="{Binding PromotionDiagnosticsVisiblePromotionsPreview}" Style="{StaticResource CaptionLabelStyle}" />
-                                        <Label Text="{Binding PromotionDiagnosticsSnapshotAtText}" Style="{StaticResource CaptionLabelStyle}" />
-                                        <Label Text="{Binding PromotionDiagnosticsFreshnessText}" FontSize="12" TextColor="{StaticResource Danger500}" IsVisible="{Binding IsPromotionDiagnosticsSnapshotStale}" />
-                                        <Label Text="{Binding PromotionDiagnosticsFreshnessText}" FontSize="12" TextColor="{StaticResource BrushPrimaryPressed}" IsVisible="{Binding IsPromotionDiagnosticsSnapshotStale, Converter={StaticResource InverseBoolConverter}}" />
-                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                            <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.FeedCopyPromotionDiagnosticsButton}" FontSize="12" Command="{Binding CopyPromotionDiagnosticsCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
-                                            <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.FeedPromotionDiagnosticsClearStatusButton}" FontSize="12" Command="{Binding ClearPromotionDiagnosticsStatusCommand}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
-                                        </Grid>
-                                        <Label Text="{Binding PromotionDiagnosticsCopyStatus}" FontSize="12" TextColor="{StaticResource BrushPrimaryPressed}" IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
-                                    </VerticalStackLayout>
-                                </Border>
                             </VerticalStackLayout>
 
                             <Border Style="{StaticResource CardBorderStyle}" IsVisible="{Binding HasItems}">
@@ -163,14 +148,14 @@
                             <Border Style="{StaticResource CardBorderStyle}" Margin="20,0,20,2">
                                 <VerticalStackLayout Spacing="8">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                        <Label Text="{Binding Kind, Converter={StaticResource LoyaltyTimelineKindConverter}}" FontAttributes="Bold" TextColor="{StaticResource BrushOnSurface}" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Kind, Converter={StaticResource LoyaltyTimelineKindConverter}}" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
                                         <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="10,8">
                                             <VerticalStackLayout Spacing="2" IsVisible="{Binding PointsDelta, Converter={StaticResource NullCheckConverter}}">
                                                 <Label Text="{x:Static res:AppResources.PointsLabel}"
                                                        Style="{StaticResource CaptionLabelStyle}"
                                                        HorizontalTextAlignment="Center" />
                                                 <Label Text="{Binding PointsDelta, StringFormat='{x:Static res:AppResources.FeedPointsDeltaFormat}'}"
-                                                       TextColor="{StaticResource BrushPrimaryPressed}"
+                                                       TextColor="{StaticResource BrandGold600}"
                                                        HorizontalTextAlignment="Center" />
                                             </VerticalStackLayout>
                                         </Border>

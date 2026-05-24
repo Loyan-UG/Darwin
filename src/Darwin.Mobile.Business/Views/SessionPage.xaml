@@ -76,7 +76,7 @@
                                Keyboard="Numeric"
                                Placeholder="{x:Static res:AppResources.PointsPlaceholder}"
                                Style="{StaticResource FormEntryStyle}"
-                               TextColor="{StaticResource BrushOnSurface}" />
+                               TextColor="{StaticResource Neutral900}" />
                     </inputLayout:SfTextInputLayout>
                     <buttons:SfButton Text="{x:Static res:AppResources.ConfirmAccrualButton}"
                                       Style="{StaticResource SyncfusionPrimaryButtonStyle}"
@@ -101,7 +101,7 @@
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrushPrimary}" />
+                               Color="{StaticResource BrandGold500}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

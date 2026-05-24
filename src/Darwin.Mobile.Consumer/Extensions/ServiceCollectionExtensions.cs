@@ -51,6 +51,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IConsumerLoyaltySnapshotCache, ConsumerLoyaltySnapshotCache>();
         services.AddSingleton<IConsumerStartupWarmupCoordinator, ConsumerStartupWarmupCoordinator>();
         services.AddSingleton<IConsumerPushTokenProvider, ConsumerPlatformPushTokenProvider>();
+        services.AddSingleton<IConsumerPushRuntimeInfo, ConsumerPushRegistrationCoordinator.MauiConsumerPushRuntimeInfo>();
+        services.AddSingleton<IConsumerPushRegistrationStateStore, ConsumerPushRegistrationCoordinator.PreferencesConsumerPushRegistrationStateStore>();
         services.AddSingleton<IConsumerPushRegistrationCoordinator, ConsumerPushRegistrationCoordinator>();
         services.AddSingleton<IConsumerNotificationPermissionService, ConsumerNotificationPermissionService>();
 
@@ -68,6 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<MemberPreferencesViewModel>();
         services.AddTransient<MemberCustomerContextViewModel>();
         services.AddTransient<ChangePasswordViewModel>();
+        services.AddTransient<SettingsViewModel>();
         services.AddTransient<BusinessDetailViewModel>();
         services.AddTransient<RegisterViewModel>();
         services.AddTransient<ActivationViewModel>();

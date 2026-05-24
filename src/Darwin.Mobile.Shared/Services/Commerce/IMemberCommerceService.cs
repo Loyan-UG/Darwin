@@ -58,5 +58,20 @@ namespace Darwin.Mobile.Shared.Services.Commerce
         /// Downloads a member-friendly plain-text invoice document.
         /// </summary>
         Task<Result<string>> DownloadInvoiceDocumentAsync(Guid invoiceId, CancellationToken ct);
+
+        /// <summary>
+        /// Downloads the archived invoice artifact when the server has one available.
+        /// </summary>
+        Task<Result<string>> DownloadInvoiceArchiveDocumentAsync(Guid invoiceId, CancellationToken ct);
+
+        /// <summary>
+        /// Downloads the current structured invoice data export. This is not a compliant e-invoice artifact by itself.
+        /// </summary>
+        Task<Result<string>> DownloadInvoiceStructuredDataAsync(Guid invoiceId, CancellationToken ct);
+
+        /// <summary>
+        /// Downloads the current structured invoice XML export. This is not a compliant e-invoice artifact by itself.
+        /// </summary>
+        Task<Result<string>> DownloadInvoiceStructuredXmlAsync(Guid invoiceId, CancellationToken ct);
     }
 }

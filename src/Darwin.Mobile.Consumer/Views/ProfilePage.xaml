@@ -118,7 +118,6 @@
                                                           CornerRadius="8"
                                                           SegmentCornerRadius="8"
                                                           SegmentBackground="{StaticResource BrushSurface}"
-                                                          SelectedSegmentTextColor="{StaticResource Neutral0}"
                                                           Stroke="{StaticResource BrandGold50}"
                                                           StrokeThickness="1">
                                 <segmented:SfSegmentedControl.SelectionIndicatorSettings>
@@ -174,7 +173,7 @@
                                     <Label Text="{x:Static res:AppResources.ProfileManagePreferencesButton}"
                                            FontAttributes="Bold"
                                            FontSize="14"
-                                           TextColor="{StaticResource BrushOnSurface}" />
+                                           TextColor="{StaticResource Neutral900}" />
                                 </VerticalStackLayout>
                             </Border>
                         </Grid>
@@ -270,7 +269,7 @@
             </pullToRefresh:SfPullToRefresh.PullableContent>
         </pullToRefresh:SfPullToRefresh>
 
-        <Grid BackgroundColor="{StaticResource BrushBusyOverlay}"
+        <Grid BackgroundColor="{StaticResource BusyOverlayColor}"
               IsVisible="{Binding IsBusy}"
               InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center"
@@ -278,7 +277,7 @@
                                  Spacing="12">
                 <ActivityIndicator IsVisible="{Binding IsBusy}"
                                    IsRunning="{Binding IsBusy}"
-                                   Color="{StaticResource BrushPrimary}" />
+                                   Color="{StaticResource BrandGold500}" />
                 <Label Text="{x:Static res:AppResources.ProfileTitle}"
                        Style="{StaticResource SecondaryBodyLabelStyle}"
                        HorizontalTextAlignment="Center" />

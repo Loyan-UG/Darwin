@@ -1,0 +1,8 @@
+{
+  "isValid": "false",
+  "errors": "xml structure not compliant",
+  "messages": [
+    "legal block missing",
+    "missing accounting supplier trade party"
+  ]
+}

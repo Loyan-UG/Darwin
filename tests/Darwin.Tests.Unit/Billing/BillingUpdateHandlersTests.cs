@@ -201,6 +201,33 @@ public sealed class BillingUpdateHandlersTests
     }
 
     [Fact]
+    public async Task UpdateBillingWebhookDeliveryHandler_Should_ReturnItemConcurrencyConflict_When_SaveChanges_ThrowsConcurrencyException()
+    {
+        await using var db = BillingConcurrencyFailingTestDbContext.Create();
+        var deliveryId = Guid.NewGuid();
+        db.Set<WebhookDelivery>().Add(new WebhookDelivery
+        {
+            Id = deliveryId,
+            Status = "Pending",
+            RetryCount = 2,
+            ResponseCode = 500,
+            RowVersion = [1]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBillingWebhookDeliveryHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync(new UpdateBillingWebhookDeliveryDto
+        {
+            Id = deliveryId,
+            RowVersion = [1],
+            Action = "Requeue"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse("save-level concurrency conflicts must be converted to ItemConcurrencyConflict");
+        result.Error.Should().Be("ItemConcurrencyConflict");
+    }
+
+    [Fact]
     public async Task UpdateBillingWebhookDeliveryHandler_Should_ReturnUnsupportedActionError()
     {
         await using var db = BillingUpdateTestDbContext.Create();
@@ -603,7 +630,7 @@ public sealed class BillingUpdateHandlersTests
         updated.FailureReason.Should().Be("initial payment failed");
     }
 
-    // ─── Null database RowVersion guards ──────────────────────────────────────
+    // Null database RowVersion guards.
 
     [Fact]
     public async Task UpdateBillingWebhookDeliveryHandler_Should_Fail_WhenDatabaseRowVersionIsNull()
@@ -684,15 +711,60 @@ public sealed class BillingUpdateHandlersTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Provider).IsRequired();
                 builder.Property(x => x.Currency).IsRequired();
-                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<WebhookDelivery>(builder =>
             {
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Status).IsRequired();
-                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired(false);
             });
+        }
+    }
+
+    private sealed class BillingConcurrencyFailingTestDbContext : DbContext, IAppDbContext
+    {
+        private BillingConcurrencyFailingTestDbContext(
+            DbContextOptions<BillingConcurrencyFailingTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _failNextSave;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static BillingConcurrencyFailingTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<BillingConcurrencyFailingTestDbContext>()
+                .UseInMemoryDatabase($"darwin_billing_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new BillingConcurrencyFailingTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<WebhookDelivery>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Status).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired(false);
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            if (!_failNextSave)
+            {
+                _failNextSave = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 

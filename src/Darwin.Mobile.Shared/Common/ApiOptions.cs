@@ -53,6 +53,36 @@ public sealed class ApiOptions
     /// Useful in Release test builds to identify DNS/TLS/connectivity root cause quickly.
     /// </summary>
     public bool EnableVerboseNetworkDiagnostics { get; set; } = false;
+
+    /// <summary>
+    /// Validates the minimum API endpoint shape required by mobile clients.
+    /// </summary>
+    /// <param name="requireHttps">When true, the base URL must use HTTPS.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the configured base URL is missing or unsafe.</exception>
+    public void ValidateForMobileClient(bool requireHttps)
+    {
+        if (string.IsNullOrWhiteSpace(BaseUrl))
+        {
+            throw new InvalidOperationException("ApiOptions:BaseUrl is required for mobile API clients.");
+        }
+
+        if (!Uri.TryCreate(BaseUrl.Trim(), UriKind.Absolute, out var baseUri))
+        {
+            throw new InvalidOperationException("ApiOptions:BaseUrl must be an absolute URL.");
+        }
+
+        if (!string.Equals(baseUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(baseUri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("ApiOptions:BaseUrl must use HTTP or HTTPS.");
+        }
+
+        if (requireHttps &&
+            !string.Equals(baseUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("ApiOptions:BaseUrl must use HTTPS for Release/production mobile clients.");
+        }
+    }
 }
 
 /// <summary>

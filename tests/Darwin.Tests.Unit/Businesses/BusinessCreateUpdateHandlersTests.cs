@@ -135,6 +135,34 @@ public sealed class BusinessCreateUpdateHandlersTests
     }
 
     [Fact]
+    public async Task UpdateBusiness_Should_ReturnConcurrencyConflict_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingBusinessCreateUpdateTestDbContext.Create();
+        var localizer = new TestStringLocalizer();
+        var entity = CreateBusiness(BusinessOperationalStatus.Approved, isActive: true);
+        db.Set<Business>().Add(entity);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessHandler(db, new BusinessEditDtoValidator(localizer), localizer);
+
+        var act = () => handler.HandleAsync(new BusinessEditDto
+        {
+            Id = entity.Id,
+            RowVersion = entity.RowVersion,
+            Name = entity.Name,
+            LegalName = entity.LegalName,
+            Category = entity.Category,
+            DefaultCurrency = entity.DefaultCurrency,
+            DefaultCulture = entity.DefaultCulture,
+            DefaultTimeZoneId = entity.DefaultTimeZoneId,
+            IsActive = true
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateBusiness_Should_AllowApprovedBusiness_ToRemainActive()
     {
         await using var db = BusinessCreateUpdateTestDbContext.Create();
@@ -386,6 +414,76 @@ public sealed class BusinessCreateUpdateHandlersTests
                 builder.Property(x => x.WebAuthnAllowedOriginsCsv).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingBusinessCreateUpdateTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingBusinessCreateUpdateTestDbContext(
+            DbContextOptions<ConcurrencyFailingBusinessCreateUpdateTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _hasSeeded;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingBusinessCreateUpdateTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingBusinessCreateUpdateTestDbContext>()
+                .UseInMemoryDatabase($"darwin_business_create_update_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingBusinessCreateUpdateTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Ignore<GeoCoordinate>();
+
+            modelBuilder.Entity<Business>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.DefaultCurrency).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.DefaultTimeZoneId).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<SiteSetting>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Title).IsRequired();
+                builder.Property(x => x.ContactEmail).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.DefaultCurrency).IsRequired();
+                builder.Property(x => x.TimeZone).IsRequired();
+                builder.Property(x => x.HomeSlug).IsRequired();
+                builder.Property(x => x.SupportedCulturesCsv).IsRequired();
+                builder.Property(x => x.DefaultCountry).IsRequired();
+                builder.Property(x => x.DateFormat).IsRequired();
+                builder.Property(x => x.TimeFormat).IsRequired();
+                builder.Property(x => x.MeasurementSystem).IsRequired();
+                builder.Property(x => x.DisplayWeightUnit).IsRequired();
+                builder.Property(x => x.DisplayLengthUnit).IsRequired();
+                builder.Property(x => x.WebAuthnRelyingPartyId).IsRequired();
+                builder.Property(x => x.WebAuthnRelyingPartyName).IsRequired();
+                builder.Property(x => x.WebAuthnAllowedOriginsCsv).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 }

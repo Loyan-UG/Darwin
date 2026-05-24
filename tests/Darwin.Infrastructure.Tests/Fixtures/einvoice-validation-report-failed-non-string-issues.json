@@ -1,0 +1,10 @@
+{
+  "isValid": false,
+  "issues": [
+    12,
+    null,
+    {},
+    " malformed issue array entry ",
+    ""
+  ]
+}

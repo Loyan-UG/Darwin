@@ -54,6 +54,7 @@ namespace Darwin.Mobile.Shared.Extensions
             if (options is null) throw new ArgumentNullException(nameof(options));
             if (legalLinksOptions is null) throw new ArgumentNullException(nameof(legalLinksOptions));
 
+            ValidateApiOptionsConfiguration(options);
             services.AddSingleton(options);
             services.AddSingleton(legalLinksOptions);
             services.AddSingleton(TimeProvider.System);
@@ -175,6 +176,15 @@ namespace Darwin.Mobile.Shared.Extensions
                 throw new InvalidOperationException(
                     $"Legal link configuration is invalid: {string.Join(" | ", errors.Where(static error => !string.IsNullOrWhiteSpace(error)))}");
             }
+        }
+
+        private static void ValidateApiOptionsConfiguration(ApiOptions options)
+        {
+#if DEBUG
+            options.ValidateForMobileClient(requireHttps: false);
+#else
+            options.ValidateForMobileClient(requireHttps: true);
+#endif
         }
     }
 }

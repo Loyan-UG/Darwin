@@ -66,7 +66,7 @@ public sealed class ShippingMethodCarrierServiceIndexProviderSpecificTests
         return new DarwinDbContext(options);
     }
 
-    private static IMutableIndex FindCarrierServiceCarrierIndex(DarwinDbContext context)
+    private static IIndex FindCarrierServiceCarrierIndex(DarwinDbContext context)
     {
         var entityType = context.Model.FindEntityType(typeof(ShippingMethod));
         entityType.Should().NotBeNull();

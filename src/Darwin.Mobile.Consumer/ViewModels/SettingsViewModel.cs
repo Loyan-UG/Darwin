@@ -20,39 +20,43 @@ public sealed class SettingsViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         OpenProfileCommand = new AsyncCommand(OpenProfileAsync, () => !IsBusy);
         OpenChangePasswordCommand = new AsyncCommand(OpenChangePasswordAsync, () => !IsBusy);
+        OpenMemberCommerceCommand = new AsyncCommand(OpenMemberCommerceAsync, () => !IsBusy);
+        OpenMemberPreferencesCommand = new AsyncCommand(OpenMemberPreferencesAsync, () => !IsBusy);
+        OpenLegalHubCommand = new AsyncCommand(OpenLegalHubAsync, () => !IsBusy);
+        OpenAccountDeletionCommand = new AsyncCommand(OpenAccountDeletionAsync, () => !IsBusy);
     }
 
     public AsyncCommand OpenProfileCommand { get; }
 
     public AsyncCommand OpenChangePasswordCommand { get; }
 
-    private async Task OpenProfileAsync()
-    {
-        if (IsBusy)
-        {
-            return;
-        }
+    public AsyncCommand OpenMemberCommerceCommand { get; }
 
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            RaiseCommandStates();
-        });
-        try
-        {
-            await _navigationService.GoToAsync(Routes.ProfileEdit);
-        }
-        finally
-        {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RaiseCommandStates();
-            });
-        }
-    }
+    public AsyncCommand OpenMemberPreferencesCommand { get; }
+
+    public AsyncCommand OpenLegalHubCommand { get; }
+
+    public AsyncCommand OpenAccountDeletionCommand { get; }
+
+    private async Task OpenProfileAsync()
+        => await NavigateAsync(Routes.ProfileEdit);
 
     private async Task OpenChangePasswordAsync()
+        => await NavigateAsync(Routes.ChangePassword);
+
+    private async Task OpenMemberCommerceAsync()
+        => await NavigateAsync(Routes.MemberCommerce);
+
+    private async Task OpenMemberPreferencesAsync()
+        => await NavigateAsync(Routes.MemberPreferences);
+
+    private async Task OpenLegalHubAsync()
+        => await NavigateAsync(Routes.LegalHub);
+
+    private async Task OpenAccountDeletionAsync()
+        => await NavigateAsync(Routes.AccountDeletion);
+
+    private async Task NavigateAsync(string route)
     {
         if (IsBusy)
         {
@@ -66,7 +70,7 @@ public sealed class SettingsViewModel : BaseViewModel
         });
         try
         {
-            await _navigationService.GoToAsync(Routes.ChangePassword);
+            await _navigationService.GoToAsync(route);
         }
         finally
         {
@@ -85,5 +89,9 @@ public sealed class SettingsViewModel : BaseViewModel
     {
         OpenProfileCommand.RaiseCanExecuteChanged();
         OpenChangePasswordCommand.RaiseCanExecuteChanged();
+        OpenMemberCommerceCommand.RaiseCanExecuteChanged();
+        OpenMemberPreferencesCommand.RaiseCanExecuteChanged();
+        OpenLegalHubCommand.RaiseCanExecuteChanged();
+        OpenAccountDeletionCommand.RaiseCanExecuteChanged();
     }
 }

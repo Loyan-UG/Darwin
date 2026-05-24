@@ -242,6 +242,38 @@ public sealed class UserAddressHandlerTests
     }
 
     [Fact]
+    public async Task UpdateUserAddress_Should_Fail_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingAddressTestDbContext.Create();
+        var address = new Address
+        {
+            FullName = "Concurrent",
+            Street1 = "Concurrent Street",
+            PostalCode = "33333",
+            City = "Dresden",
+            CountryCode = "DE",
+            RowVersion = new byte[] { 1, 2, 3 }
+        };
+        db.Set<Address>().Add(address);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateUserAddressHandler(db, new AddressEditValidator(), new TestLocalizer());
+        var result = await handler.HandleAsync(new AddressEditDto
+        {
+            Id = address.Id,
+            RowVersion = address.RowVersion,
+            FullName = "Updated Name",
+            Street1 = "Updated Street",
+            PostalCode = "44444",
+            City = "Leipzig",
+            CountryCode = "DE"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ConcurrencyConflict");
+    }
+
+    [Fact]
     public async Task UpdateUserAddress_Should_SetDefaultBilling_AndClearPreviousDefault()
     {
         await using var db = AddressTestDbContext.Create();
@@ -365,6 +397,33 @@ public sealed class UserAddressHandlerTests
         {
             Id = address.Id,
             RowVersion = new byte[] { 99, 88 } // stale
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ConcurrencyConflict");
+    }
+
+    [Fact]
+    public async Task SoftDeleteUserAddress_Should_Fail_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingAddressTestDbContext.Create();
+        var address = new Address
+        {
+            FullName = "Concurrent Delete",
+            Street1 = "Delete Street",
+            PostalCode = "33333",
+            City = "Dresden",
+            CountryCode = "DE",
+            RowVersion = new byte[] { 4, 5, 6 }
+        };
+        db.Set<Address>().Add(address);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SoftDeleteUserAddressHandler(db, new AddressDeleteValidator(), new TestLocalizer());
+        var result = await handler.HandleAsync(new AddressDeleteDto
+        {
+            Id = address.Id,
+            RowVersion = address.RowVersion
         }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
@@ -507,6 +566,38 @@ public sealed class UserAddressHandlerTests
         result.Error.Should().Be("AddressIdRequired");
     }
 
+    [Fact]
+    public async Task SetDefaultUserAddress_Should_Fail_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingAddressTestDbContext.Create();
+        var userId = Guid.NewGuid();
+        var address = new Address
+        {
+            UserId = userId,
+            FullName = "Old",
+            Street1 = "St 1",
+            PostalCode = "11111",
+            City = "Berlin",
+            CountryCode = "DE",
+            RowVersion = new byte[] { 1 }
+        };
+        db.Set<User>().Add(CreateUser(userId));
+        db.Set<Address>().Add(address);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new SetDefaultUserAddressHandler(db, new TestLocalizer());
+        var result = await handler.HandleAsync(
+            userId,
+            address.Id,
+            asBilling: true,
+            asShipping: false,
+            rowVersion: address.RowVersion,
+            ct: TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ItemConcurrencyConflict");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static User CreateUser(Guid id)
@@ -588,6 +679,78 @@ public sealed class UserAddressHandlerTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.RowVersion).IsRequired();
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingAddressTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingAddressTestDbContext(
+            DbContextOptions<ConcurrencyFailingAddressTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _hasSeeded;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingAddressTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingAddressTestDbContext>()
+                .UseInMemoryDatabase($"darwin_address_handler_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingAddressTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Ignore<GeoCoordinate>();
+
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Email).IsRequired();
+                builder.Property(x => x.NormalizedEmail).IsRequired();
+                builder.Property(x => x.UserName).IsRequired();
+                builder.Property(x => x.NormalizedUserName).IsRequired();
+                builder.Property(x => x.PasswordHash).IsRequired();
+                builder.Property(x => x.SecurityStamp).IsRequired();
+                builder.Property(x => x.Locale).IsRequired();
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.Timezone).IsRequired();
+                builder.Property(x => x.ChannelsOptInJson).IsRequired();
+                builder.Property(x => x.FirstTouchUtmJson).IsRequired();
+                builder.Property(x => x.LastTouchUtmJson).IsRequired();
+                builder.Property(x => x.ExternalIdsJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.UserRoles);
+                builder.Ignore(x => x.Logins);
+                builder.Ignore(x => x.Tokens);
+                builder.Ignore(x => x.TwoFactorSecrets);
+                builder.Ignore(x => x.Devices);
+                builder.Ignore(x => x.BusinessFavorites);
+                builder.Ignore(x => x.BusinessLikes);
+                builder.Ignore(x => x.BusinessReviews);
+                builder.Ignore(x => x.EngagementSnapshot);
+            });
+
+            modelBuilder.Entity<Address>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 }

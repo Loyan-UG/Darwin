@@ -133,6 +133,30 @@ public sealed class RoleAndPermissionHandlerTests
         result.Error.Should().Be("RoleNotFound");
     }
 
+    [Fact]
+    public async Task UpdateRole_Should_ReturnConcurrencyConflict_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingRolePermissionTestDbContext.Create();
+        var role = new Role("editor", "Old Name", isSystem: false, description: null)
+        {
+            RowVersion = [1, 2, 3]
+        };
+        db.Set<Role>().Add(role);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateRoleHandler(db, new RoleEditValidator(), new TestLocalizer());
+        var result = await handler.HandleAsync(new RoleEditDto
+        {
+            Id = role.Id,
+            RowVersion = role.RowVersion,
+            DisplayName = "Content Editor",
+            Description = "updated"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ConcurrencyConflictReloadAndRetry");
+    }
+
     // ─── DeleteRoleHandler ────────────────────────────────────────────────────
 
     [Fact]
@@ -256,6 +280,30 @@ public sealed class RoleAndPermissionHandlerTests
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("PermissionNotFound");
+    }
+
+    [Fact]
+    public async Task UpdatePermission_Should_ReturnConcurrencyConflict_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingRolePermissionTestDbContext.Create();
+        var permission = new Permission("catalog.write", "Old Name", false, "Old description")
+        {
+            RowVersion = [1, 2, 3]
+        };
+        db.Set<Permission>().Add(permission);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdatePermissionHandler(db, new PermissionEditValidator(), new TestLocalizer());
+        var result = await handler.HandleAsync(new PermissionEditDto
+        {
+            Id = permission.Id,
+            RowVersion = permission.RowVersion,
+            DisplayName = "Catalog Write",
+            Description = "Updated"
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ConcurrencyConflict");
     }
 
     // ─── SoftDeletePermissionHandler ─────────────────────────────────────────
@@ -443,7 +491,7 @@ public sealed class RoleAndPermissionHandlerTests
 
     // ─── UpdateRolePermissionsHandler ─────────────────────────────────────────
 
-    private static UpdateRolePermissionsHandler CreateUpdateRolePermissionsHandler(RolePermissionTestDbContext db) =>
+    private static UpdateRolePermissionsHandler CreateUpdateRolePermissionsHandler(IAppDbContext db) =>
         new(db, new FixedClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)), new TestLocalizer());
 
     [Fact]
@@ -635,6 +683,34 @@ public sealed class RoleAndPermissionHandlerTests
         link.IsDeleted.Should().BeFalse("restored link should be active");
     }
 
+    [Fact]
+    public async Task UpdateRolePermissions_Should_ReturnConcurrencyConflict_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingRolePermissionTestDbContext.Create();
+        var role = new Role("editor", "Editor", false, null)
+        {
+            RowVersion = [1, 2, 3]
+        };
+        var permission = new Permission("catalog.read", "Catalog Read", false, null)
+        {
+            RowVersion = [1, 2, 3]
+        };
+        db.Set<Role>().Add(role);
+        db.Set<Permission>().Add(permission);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = CreateUpdateRolePermissionsHandler(db);
+        var result = await handler.HandleAsync(new RolePermissionsUpdateDto
+        {
+            RoleId = role.Id,
+            RowVersion = role.RowVersion,
+            PermissionIds = new List<Guid> { permission.Id }
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ConcurrencyConflictReloadAndRetry");
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static User CreateUser(string email)
@@ -763,6 +839,111 @@ public sealed class RoleAndPermissionHandlerTests
                 builder.Ignore(x => x.BusinessReviews);
                 builder.Ignore(x => x.EngagementSnapshot);
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingRolePermissionTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingRolePermissionTestDbContext(
+            DbContextOptions<ConcurrencyFailingRolePermissionTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _hasSeeded;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingRolePermissionTestDbContext Create()
+        {
+            var options = new DbContextOptionsBuilder<ConcurrencyFailingRolePermissionTestDbContext>()
+                .UseInMemoryDatabase($"darwin_role_permission_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingRolePermissionTestDbContext(options);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Ignore<GeoCoordinate>();
+
+            modelBuilder.Entity<Role>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Key).IsRequired();
+                builder.Property(x => x.NormalizedName).IsRequired();
+                builder.Property(x => x.DisplayName).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.UserRoles);
+                builder.Ignore(x => x.RolePermissions);
+            });
+
+            modelBuilder.Entity<Permission>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Key).IsRequired();
+                builder.Property(x => x.DisplayName).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<RolePermission>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.RoleId).IsRequired();
+                builder.Property(x => x.PermissionId).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.Role);
+                builder.Ignore(x => x.Permission);
+            });
+
+            modelBuilder.Entity<UserRole>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.UserId).IsRequired();
+                builder.Property(x => x.RoleId).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.User);
+                builder.Ignore(x => x.Role);
+            });
+
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Email).IsRequired();
+                builder.Property(x => x.NormalizedEmail).IsRequired();
+                builder.Property(x => x.UserName).IsRequired();
+                builder.Property(x => x.NormalizedUserName).IsRequired();
+                builder.Property(x => x.PasswordHash).IsRequired();
+                builder.Property(x => x.SecurityStamp).IsRequired();
+                builder.Property(x => x.Locale).IsRequired();
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.Timezone).IsRequired();
+                builder.Property(x => x.ChannelsOptInJson).IsRequired();
+                builder.Property(x => x.FirstTouchUtmJson).IsRequired();
+                builder.Property(x => x.LastTouchUtmJson).IsRequired();
+                builder.Property(x => x.ExternalIdsJson).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Ignore(x => x.UserRoles);
+                builder.Ignore(x => x.Logins);
+                builder.Ignore(x => x.Tokens);
+                builder.Ignore(x => x.TwoFactorSecrets);
+                builder.Ignore(x => x.Devices);
+                builder.Ignore(x => x.BusinessFavorites);
+                builder.Ignore(x => x.BusinessLikes);
+                builder.Ignore(x => x.BusinessReviews);
+                builder.Ignore(x => x.EngagementSnapshot);
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 }

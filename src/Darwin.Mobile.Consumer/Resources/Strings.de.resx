@@ -274,6 +274,21 @@
   <data name="RewardsAvailableRewardsCountFormat" xml:space="preserve">
     <value>Konfigurierte Prämien: {0}</value>
   </data>
+  <data name="RewardsCurrentPointsTitle" xml:space="preserve">
+    <value>Aktuelle Punkte</value>
+  </data>
+  <data name="RewardsJoinedBusinessesTitle" xml:space="preserve">
+    <value>Beigetretene Unternehmen</value>
+  </data>
+  <data name="RewardsTotalPointsTitle" xml:space="preserve">
+    <value>Gesamtpunkte</value>
+  </data>
+  <data name="RewardsConfiguredRewardsTitle" xml:space="preserve">
+    <value>Konfigurierte Prämien</value>
+  </data>
+  <data name="RewardsRedeemableRewardsTitle" xml:space="preserve">
+    <value>Einlösbare Prämien</value>
+  </data>
   <data name="RewardsRedeemableRewardsCountFormat" xml:space="preserve">
     <value>Derzeit einlösbare Prämien: {0}</value>
   </data>
@@ -757,6 +772,18 @@
   <data name="MemberCommerceCopyDocumentButton" xml:space="preserve">
     <value>Dokument kopieren</value>
   </data>
+  <data name="MemberCommerceCopyArchiveDocumentButton" xml:space="preserve">
+    <value>Archivdokument kopieren</value>
+  </data>
+  <data name="MemberCommerceCopyStructuredDataButton" xml:space="preserve">
+    <value>Strukturierte Daten kopieren</value>
+  </data>
+  <data name="MemberCommerceCopyStructuredXmlButton" xml:space="preserve">
+    <value>Strukturiertes XML kopieren</value>
+  </data>
+  <data name="MemberCommerceStructuredInvoiceNotice" xml:space="preserve">
+    <value>Strukturierte JSON/XML-Exporte sind operative Rechnungsartefakte und fuer sich allein keine konformen E-Rechnungen.</value>
+  </data>
   <data name="MemberCommerceOrderStatusFormat" xml:space="preserve">
     <value>Status: {0}</value>
   </data>
@@ -850,6 +877,15 @@
   <data name="MemberCommerceDocumentCopiedFormat" xml:space="preserve">
     <value>Dokument für {0} wurde in die Zwischenablage kopiert.</value>
   </data>
+  <data name="MemberCommerceArchiveDocumentCopiedFormat" xml:space="preserve">
+    <value>Archivdokument fuer {0} wurde in die Zwischenablage kopiert.</value>
+  </data>
+  <data name="MemberCommerceStructuredDataCopiedFormat" xml:space="preserve">
+    <value>Strukturierte Daten fuer {0} wurden in die Zwischenablage kopiert.</value>
+  </data>
+  <data name="MemberCommerceStructuredXmlCopiedFormat" xml:space="preserve">
+    <value>Strukturiertes XML fuer {0} wurde in die Zwischenablage kopiert.</value>
+  </data>
   <data name="MemberCommerceLoadFailed" xml:space="preserve">
     <value>Bestell- und Rechnungsverlauf konnte nicht geladen werden.</value>
   </data>
@@ -864,6 +900,12 @@
   </data>
   <data name="MemberCommerceDocumentDownloadFailed" xml:space="preserve">
     <value>Das Dokument konnte derzeit nicht geladen werden.</value>
+  </data>
+  <data name="MemberCommerceArchiveDocumentDownloadFailed" xml:space="preserve">
+    <value>Das Rechnungsarchivdokument konnte derzeit nicht geladen werden.</value>
+  </data>
+  <data name="MemberCommerceStructuredDownloadFailed" xml:space="preserve">
+    <value>Der strukturierte Rechnungsexport konnte derzeit nicht geladen werden.</value>
   </data>
   <data name="MemberCommerceTrackingOpenFailed" xml:space="preserve">
     <value>Das Sendungs-Tracking kann derzeit nicht geoeffnet werden.</value>
@@ -1329,6 +1371,15 @@
   </data>
   <data name="DiscoverTopBalanceBusinessFormat" xml:space="preserve">
     <value>Höchster Punktestand bei: {0}</value>
+  </data>
+  <data name="DiscoverJoinedBusinessesTitle" xml:space="preserve">
+    <value>Beigetretene Unternehmen</value>
+  </data>
+  <data name="DiscoverTotalPointsTitle" xml:space="preserve">
+    <value>Gesamtpunkte</value>
+  </data>
+  <data name="DiscoverTopBusinessTitle" xml:space="preserve">
+    <value>Top-Unternehmen</value>
   </data>
   <data name="AuthLegalSectionTitle" xml:space="preserve">
     <value>Rechtliches &amp; Datenschutz</value>

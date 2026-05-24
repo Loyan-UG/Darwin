@@ -283,6 +283,47 @@ public sealed class OpportunityHandlerTests
     }
 
     [Fact]
+    public async Task UpdateOpportunity_Should_ThrowConcurrency_WhenSaveChangesThrowsConcurrencyException()
+    {
+        await using var db = OpportunityDbContext.Create();
+        var customerId = Guid.NewGuid();
+        var opportunityId = Guid.NewGuid();
+        var rowVersion = new byte[] { 1, 2, 3, 4 };
+
+        db.Set<Customer>().Add(MakeCustomer(customerId));
+        db.Set<Opportunity>().Add(new Opportunity
+        {
+            Id = opportunityId,
+            CustomerId = customerId,
+            Title = "Opportunity",
+            EstimatedValueMinor = 100000,
+            Stage = OpportunityStage.Qualification,
+            RowVersion = rowVersion.ToArray()
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        db.ThrowConcurrencyOnSave = true;
+
+        var handler = new UpdateOpportunityHandler(
+            db,
+            new OpportunityEditValidator(),
+            new TestStringLocalizer());
+
+        var act = () => handler.HandleAsync(new OpportunityEditDto
+        {
+            Id = opportunityId,
+            RowVersion = rowVersion,
+            CustomerId = customerId,
+            Title = "Updated Opportunity",
+            EstimatedValueMinor = 200000,
+            Stage = OpportunityStage.Qualification
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
+    [Fact]
     public async Task UpdateOpportunity_Should_Throw_WhenRowVersionIsEmpty()
     {
         await using var db = OpportunityDbContext.Create();
@@ -383,6 +424,19 @@ public sealed class OpportunityHandlerTests
                 .UseInMemoryDatabase($"darwin_opportunity_tests_{Guid.NewGuid()}")
                 .Options;
             return new OpportunityDbContext(options);
+        }
+
+        public bool ThrowConcurrencyOnSave { get; set; }
+
+        public override Task<int> SaveChangesAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (ThrowConcurrencyOnSave)
+            {
+                ThrowConcurrencyOnSave = false;
+                throw new DbUpdateConcurrencyException("Simulated concurrency conflict during save");
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

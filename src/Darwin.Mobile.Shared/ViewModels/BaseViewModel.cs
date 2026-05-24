@@ -95,16 +95,10 @@ namespace Darwin.Mobile.Shared.ViewModels
                 return;
             }
 
-            if (MainThread.IsMainThread)
+            if (TryRunOnMainThread(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName))))
             {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
                 return;
             }
-
-            // Always marshal notifications that can affect UI-bound properties.
-            // This prevents MAUI platform controls from being updated by background
-            // thread continuations after asynchronous operations.
-            MainThread.BeginInvokeOnMainThread(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
         }
 
         /// <summary>
@@ -149,13 +143,39 @@ namespace Darwin.Mobile.Shared.ViewModels
         {
             if (action is null) return;
 
-            if (MainThread.IsMainThread)
+            _ = TryRunOnMainThread(action);
+        }
+
+        /// <summary>
+        /// Executes UI-bound work through MAUI's main-thread dispatcher when it is available.
+        /// Test hosts that load view models without a platform dispatcher can throw while resolving
+        /// <see cref="MainThread.IsMainThread"/>; in that case the action runs inline so pure view-model
+        /// tests can still validate state transitions without booting a MAUI window.
+        /// </summary>
+        /// <param name="action">Action to execute.</param>
+        /// <returns><c>true</c> when the action was executed or scheduled.</returns>
+        private static bool TryRunOnMainThread(Action action)
+        {
+            try
+            {
+                if (MainThread.IsMainThread)
+                {
+                    action();
+                }
+                else
+                {
+                    // Always marshal notifications that can affect UI-bound properties.
+                    // This prevents MAUI platform controls from being updated by background
+                    // thread continuations after asynchronous operations.
+                    MainThread.BeginInvokeOnMainThread(action);
+                }
+
+                return true;
+            }
+            catch
             {
                 action();
-            }
-            else
-            {
-                MainThread.BeginInvokeOnMainThread(action);
+                return true;
             }
         }
     }

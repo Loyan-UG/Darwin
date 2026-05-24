@@ -179,6 +179,39 @@ public sealed class BusinessMediaHandlerTests
         updated.Caption.Should().BeNull("whitespace-only caption must be normalized to null");
     }
 
+    [Fact]
+    public async Task UpdateBusinessMedia_Should_Throw_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingBusinessMediaTestDbContext.Create();
+        var mediaId = Guid.NewGuid();
+        var businessId = Guid.NewGuid();
+        db.Set<BusinessMedia>().Add(new BusinessMedia
+        {
+            Id = mediaId,
+            BusinessId = businessId,
+            Url = "https://cdn.test/old.jpg",
+            Caption = "Old caption",
+            SortOrder = 0,
+            RowVersion = [1, 2, 3]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new UpdateBusinessMediaHandler(db, new BusinessMediaEditDtoValidator(), Loc());
+
+        var act = () => handler.HandleAsync(new BusinessMediaEditDto
+        {
+            Id = mediaId,
+            BusinessId = businessId,
+            Url = "https://cdn.test/new.jpg",
+            Caption = "Updated",
+            SortOrder = 1,
+            RowVersion = [1, 2, 3]
+        }, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>()
+            .WithMessage("*ConcurrencyConflictDetected*");
+    }
+
     // ─── DeleteBusinessMediaHandler ───────────────────────────────────────────
 
     [Fact]
@@ -287,6 +320,32 @@ public sealed class BusinessMediaHandlerTests
         await act.Should().NotThrowAsync("id-only delete of non-existent entity must be a silent no-op");
     }
 
+    [Fact]
+    public async Task DeleteBusinessMedia_Should_ReturnConcurrencyConflict_When_SaveChanges_Throws_DbUpdateConcurrencyException()
+    {
+        await using var db = ConcurrencyFailingBusinessMediaTestDbContext.Create();
+        var mediaId = Guid.NewGuid();
+        db.Set<BusinessMedia>().Add(new BusinessMedia
+        {
+            Id = mediaId,
+            BusinessId = Guid.NewGuid(),
+            Url = "https://cdn.test/throw.jpg",
+            RowVersion = [2, 3, 4]
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new DeleteBusinessMediaHandler(db, new BusinessMediaDeleteDtoValidator(), Loc());
+
+        var result = await handler.HandleAsync(new BusinessMediaDeleteDto
+        {
+            Id = mediaId,
+            RowVersion = [2, 3, 4]
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ItemConcurrencyConflict");
+    }
+
     // ─── Test DbContext ───────────────────────────────────────────────────────
 
     private sealed class BusinessMediaTestDbContext : DbContext, IAppDbContext
@@ -317,6 +376,49 @@ public sealed class BusinessMediaHandlerTests
                 b.Property(x => x.Url).IsRequired();
                 b.Property(x => x.RowVersion).IsRequired();
             });
+        }
+    }
+
+    private sealed class ConcurrencyFailingBusinessMediaTestDbContext : DbContext, IAppDbContext
+    {
+        private ConcurrencyFailingBusinessMediaTestDbContext(
+            DbContextOptions<ConcurrencyFailingBusinessMediaTestDbContext> options)
+            : base(options)
+        {
+        }
+
+        private bool _hasSeeded;
+
+        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        public static ConcurrencyFailingBusinessMediaTestDbContext Create()
+        {
+            var opts = new DbContextOptionsBuilder<ConcurrencyFailingBusinessMediaTestDbContext>()
+                .UseInMemoryDatabase($"darwin_business_media_concurrency_tests_{Guid.NewGuid()}")
+                .Options;
+            return new ConcurrencyFailingBusinessMediaTestDbContext(opts);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<BusinessMedia>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Url).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }
 }

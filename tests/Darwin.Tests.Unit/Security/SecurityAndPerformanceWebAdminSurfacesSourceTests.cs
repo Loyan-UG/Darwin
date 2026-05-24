@@ -355,7 +355,7 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         startupSource.Should().NotContain("https://");
         startupSource.Should().NotContain("http://");
         dependencyInjectionSource.Should().Contain("services.Configure<ForwardedHeadersOptions>(options =>");
-        dependencyInjectionSource.Should().Contain("options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;");
+        dependencyInjectionSource.Should().Contain("options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;");
         dependencyInjectionSource.Should().Contain("options.ForwardLimit = 1;");
         dependencyInjectionSource.Should().Contain("config.GetSection(\"ForwardedHeaders:KnownProxies\").Get<string[]>()");
         dependencyInjectionSource.Should().Contain("config.GetSection(\"ForwardedHeaders:KnownNetworks\").Get<string[]>()");
@@ -2792,9 +2792,9 @@ public sealed class SecurityAndPerformanceWebAdminSurfacesSourceTests : Security
         siteSettingVmSource.Should().Contain("public string MeasurementSystem { get; set; } = \"Metric\";");
         siteSettingVmSource.Should().Contain("public bool EnableCanonical { get; set; } = true;");
         siteSettingVmSource.Should().Contain("public bool HreflangEnabled { get; set; } = true;");
-        siteSettingVmSource.Should().Contain("public string WebAuthnRelyingPartyId { get; set; } = \"localhost\";");
+        siteSettingVmSource.Should().Contain("public string WebAuthnRelyingPartyId { get; set; } = \"loyan.de\";");
         siteSettingVmSource.Should().Contain("public string WebAuthnRelyingPartyName { get; set; } = \"Darwin\";");
-        siteSettingVmSource.Should().Contain("public string WebAuthnAllowedOriginsCsv { get; set; } = \"https://localhost:5001\";");
+        siteSettingVmSource.Should().Contain("public string WebAuthnAllowedOriginsCsv { get; set; } = \"https://admin.loyan.de,https://web.loyan.de\";");
         siteSettingVmSource.Should().Contain("public bool SmtpEnableSsl { get; set; } = true;");
         siteSettingVmSource.Should().Contain("public bool PhoneVerificationAllowFallback { get; set; }");
 

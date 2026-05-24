@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Darwin.Application;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing;
+using Darwin.Application.Billing.Commands;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
@@ -158,8 +159,8 @@ public sealed class ProcessStripeWebhookHandlerTests
 
         await Task.WhenAll(firstTask, secondTask);
 
-        var firstResult = firstTask.Result;
-        var secondResult = secondTask.Result;
+        var firstResult = await firstTask;
+        var secondResult = await secondTask;
 
         firstResult.Succeeded.Should().BeTrue();
         secondResult.Succeeded.Should().BeTrue();
@@ -917,6 +918,154 @@ public sealed class ProcessStripeWebhookHandlerTests
 
         var refundCount = await db.Set<Refund>().CountAsync(TestContext.Current.CancellationToken);
         refundCount.Should().Be(0, "no refund record should be created when the payment is not found");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_MarkPaymentForDisputeFollowUp_OnChargeDisputeCreated()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            AmountMinor = 4500,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderPaymentIntentRef = "pi_dispute001",
+            ProviderTransactionRef = "ch_dispute001",
+            Status = PaymentStatus.Captured,
+            PaidAtUtc = new DateTime(2026, 5, 24, 10, 0, 0, DateTimeKind.Utc)
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        var result = await handler.HandleAsync("""
+            {
+              "id": "evt_dispute_created",
+              "type": "charge.dispute.created",
+              "created": 1710700000,
+              "data": {
+                "object": {
+                  "id": "du_created001",
+                  "object": "dispute",
+                  "charge": "ch_dispute001",
+                  "payment_intent": "pi_dispute001",
+                  "amount": 4500,
+                  "currency": "eur",
+                  "reason": "product_not_received",
+                  "status": "needs_response"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var eventLog = await db.Set<EventLog>().SingleAsync(x => x.IdempotencyKey == "evt_dispute_created", TestContext.Current.CancellationToken);
+
+        result.Value!.MatchedPaymentId.Should().Be(paymentId);
+        payment.Status.Should().Be(PaymentStatus.Failed,
+            "a chargeback dispute with funds at risk must enter the operator dispute follow-up queue");
+        payment.FailureReason.Should().Contain("Stripe dispute needs_response");
+        payment.FailureReason.Should().Contain("[DisputeReview:UnderReview;");
+        payment.FailureReason.Should().Contain("du_created001");
+        eventLog.Type.Should().Be("StripeWebhook:charge.dispute.created");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_RecordWonDisputeMarker_OnChargeDisputeClosed()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            AmountMinor = 4500,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderPaymentIntentRef = "pi_dispute_won",
+            ProviderTransactionRef = "ch_dispute_won",
+            Status = PaymentStatus.Failed,
+            FailureReason = "Stripe dispute needs_response [DisputeReview:UnderReview;2026-05-24T10:00:00.0000000Z;previous]"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync("""
+            {
+              "id": "evt_dispute_closed_won",
+              "type": "charge.dispute.closed",
+              "created": 1710800000,
+              "data": {
+                "object": {
+                  "id": "du_won001",
+                  "object": "dispute",
+                  "charge": "ch_dispute_won",
+                  "payment_intent": "pi_dispute_won",
+                  "amount": 4500,
+                  "currency": "eur",
+                  "reason": "fraudulent",
+                  "status": "won"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+
+        payment.Status.Should().Be(PaymentStatus.Completed,
+            "a provider-won dispute should clear failed state while preserving provider evidence");
+        payment.FailureReason.Should().Contain("Stripe dispute won");
+        payment.FailureReason.Should().Contain("[DisputeReview:Won;");
+        UpdatePaymentDisputeReviewHandler.IsDisputeReviewResolved(payment.FailureReason).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_RecordLostDisputeMarker_OnChargeDisputeClosed()
+    {
+        await using var db = StripeWebhookTestDbContext.Create();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            AmountMinor = 4500,
+            Currency = "EUR",
+            Provider = "Stripe",
+            ProviderPaymentIntentRef = "pi_dispute_lost",
+            ProviderTransactionRef = "ch_dispute_lost",
+            Status = PaymentStatus.Captured
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new ProcessStripeWebhookHandler(db, new TestStringLocalizer());
+        await handler.HandleAsync("""
+            {
+              "id": "evt_dispute_closed_lost",
+              "type": "charge.dispute.closed",
+              "created": 1710900000,
+              "data": {
+                "object": {
+                  "id": "du_lost001",
+                  "object": "dispute",
+                  "charge": "ch_dispute_lost",
+                  "payment_intent": "pi_dispute_lost",
+                  "amount": 4500,
+                  "currency": "eur",
+                  "reason": "unrecognized",
+                  "status": "lost"
+                }
+              }
+            }
+            """, TestContext.Current.CancellationToken);
+
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+
+        payment.Status.Should().Be(PaymentStatus.Failed);
+        payment.FailureReason.Should().Contain("Stripe dispute lost");
+        payment.FailureReason.Should().Contain("[DisputeReview:Lost;");
+        UpdatePaymentDisputeReviewHandler.IsDisputeReviewResolved(payment.FailureReason).Should().BeTrue();
     }
 
     private enum StripeWebhookRaceMode
