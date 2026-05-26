@@ -1,10 +1,10 @@
 # Darwin Documentation Map
 
-This is the navigation hub for Darwin documentation. Keep this file short and use it to decide which document is authoritative for each topic.
+This is the navigation hub for Darwin documentation. Keep this file short and use it to decide which document is authoritative for each topic. The root README is the product and platform entry point; this file is the map for deeper architecture, operations, compliance, and testing material.
 
 ## Start Here
 
-- [README.md](../README.md): product overview, architecture summary, current direction, and quick start.
+- [README.md](../README.md): product overview, platform capabilities, architecture summary, current direction, and quick start.
 - [BACKLOG.md](../BACKLOG.md): active roadmap, blockers, near-term tasks, later-phase tasks, and open decisions.
 - [docs/go-live-status.md](go-live-status.md): code-backed readiness status and production blockers.
 - [docs/module-audit.md](module-audit.md): cross-module implementation and coverage matrix.
@@ -13,7 +13,7 @@ This is the navigation hub for Darwin documentation. Keep this file short and us
 
 | Topic | Canonical document | Supporting documents | Update when |
 | --- | --- | --- | --- |
-| Product overview | [README.md](../README.md) | [BACKLOG.md](../BACKLOG.md) | Platform scope, delivery surfaces, or strategic direction changes. |
+| Product overview and value proposition | [README.md](../README.md) | [BACKLOG.md](../BACKLOG.md) | Platform scope, delivery surfaces, business value, or strategic direction changes. |
 | Roadmap and blockers | [BACKLOG.md](../BACKLOG.md) | [docs/go-live-status.md](go-live-status.md) | A blocker, near-term task, later-phase task, or open decision changes. |
 | Go-live readiness | [docs/go-live-status.md](go-live-status.md) | [docs/module-audit.md](module-audit.md), [docs/external-smoke-inputs.md](external-smoke-inputs.md) | Verified status, provider readiness, or production blocker changes. |
 | Module coverage | [docs/module-audit.md](module-audit.md) | [docs/go-live-status.md](go-live-status.md) | Domain, application, UI, API, worker, docs, or tests change for a module. |
@@ -85,6 +85,7 @@ This is the navigation hub for Darwin documentation. Keep this file short and us
 ## Do Not Duplicate
 
 - Current status belongs in `docs/go-live-status.md` and `docs/module-audit.md`.
+- Product positioning belongs in `README.md`; avoid repeating the full capability overview in runbooks.
 - Tasks belong in `BACKLOG.md`.
 - Smoke input names and commands belong in `docs/external-smoke-inputs.md`.
 - Production setup steps belong in `docs/production-setup.md`.

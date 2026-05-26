@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-05-26
 
-This document records code-backed readiness. It deliberately separates implemented plumbing from production-complete provider behavior. External smoke inputs and command shapes are documented in [docs/external-smoke-inputs.md](external-smoke-inputs.md).
+This document records code-backed readiness. It is not a product overview or marketing status page; use [README.md](../README.md) for the platform summary. This document deliberately separates implemented plumbing from production-complete provider behavior. External smoke inputs and command shapes are documented in [docs/external-smoke-inputs.md](external-smoke-inputs.md).
 
 ## Executive Status
 
@@ -10,6 +10,7 @@ This document records code-backed readiness. It deliberately separates implement
 | --- | --- | --- |
 | WebAdmin | Operational surfaces are implemented for the current launch slice. | Continue hosted smoke coverage as workflows evolve. |
 | WebApi | Public/member/business/admin/provider route boundaries are implemented. | Keep contract drift tests green. |
+| Web | Front-office/member shell exists and is customer-facing. | Keep public/member wording free from internal diagnostics and complete checkout smoke when that scope is enabled. |
 | Worker | Provider callback, email/channel, shipment, archive, and retry workers exist. | Deployment enablement and monitoring per provider. |
 | Persistence | PostgreSQL preferred/default; SQL Server supported. | Production grants, backups, and migration validation per deployment. |
 | Stripe | Test/staging paths for hosted checkout, webhook finalization, subscription finalization, refund reconciliation, and dispute follow-up exist. | Live-readiness preflight and approved live-mode smoke. |
