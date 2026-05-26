@@ -5053,7 +5053,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location.Should().NotBeNull();
-        response.Headers.Location!.ToString().Should().Be($"/Crm/EditInvoice?id={invoiceId}");
+        response.Headers.Location!.ToString().Should().Be($"/Crm/EditInvoice/{invoiceId}");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -5105,6 +5105,62 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         generator.LastFormat.Should().Be(EInvoiceArtifactFormat.ZugferdFacturX);
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
+    }
+
+    [Fact]
+    public async Task AuthenticatedInvoiceEInvoiceDownload_WithGeneratedSnapshot_ShouldPersistGeneratedArtifactBeforeReturningFile()
+    {
+        var invoiceId = Guid.NewGuid();
+        var expectedContent = new byte[] { 9, 8, 7, 6 };
+        var generatedAtUtc = new DateTime(2026, 5, 10, 0, 0, 0, DateTimeKind.Utc);
+        var generator = new RecordingEInvoiceGenerationService(new EInvoiceGenerationResult(
+            EInvoiceGenerationStatus.Generated,
+            "Generated",
+            new EInvoiceArtifact(
+                invoiceId,
+                EInvoiceArtifactFormat.ZugferdFacturX,
+                "application/pdf",
+                "invoice-factur-x.pdf",
+                expectedContent,
+                "factur-x-storage-profile",
+                generatedAtUtc)));
+        var storage = new RecordingEInvoiceArtifactStorage();
+        using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
+            seedDatabase: db =>
+            {
+                db.Set<Invoice>().Add(new Invoice
+                {
+                    Id = invoiceId,
+                    Status = InvoiceStatus.Open,
+                    Currency = "EUR",
+                    DueDateUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedAtUtc = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IssuedSnapshotJson = BuildReadyInvoiceSnapshot(invoiceId),
+                    RowVersion = new byte[] { 1 }
+                });
+            },
+            configureServices: services =>
+            {
+                services.RemoveAll<IEInvoiceGenerationService>();
+                services.RemoveAll<IEInvoiceArtifactStorage>();
+                services.AddSingleton<IEInvoiceGenerationService>(generator);
+                services.AddSingleton<IEInvoiceArtifactStorage>(storage);
+            });
+
+        using var response = await client.GetAsync($"/Crm/DownloadInvoiceEInvoiceArtifact?id={invoiceId}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+        response.Content.Headers.ContentDisposition!.FileNameStar.Should().Be("invoice-factur-x.pdf");
+        var content = await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
+        content.Should().Equal(expectedContent);
+        storage.Calls.Should().Be(1);
+        storage.Artifact.Should().NotBeNull();
+        storage.Artifact!.InvoiceId.Should().Be(invoiceId);
+        storage.Artifact.Format.Should().Be(EInvoiceArtifactFormat.ZugferdFacturX);
+        storage.Artifact.Content.Should().Equal(expectedContent);
+        storage.Artifact.ValidationProfile.Should().Be("factur-x-storage-profile");
+        storage.Artifact.GeneratedAtUtc.Should().Be(generatedAtUtc);
     }
 
     [Fact]
@@ -5187,7 +5243,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location.Should().NotBeNull();
-        response.Headers.Location!.ToString().Should().Be($"/Crm/EditInvoice?id={invoiceId}");
+        response.Headers.Location!.ToString().Should().Be($"/Crm/EditInvoice/{invoiceId}");
         generator.Calls.Should().Be(0);
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
@@ -5801,8 +5857,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("Concurrency")
-            .Or.Contain("Unable to remove the business");
+        responseHtml.Should().Match(
+            html => html.Contains("Concurrency", StringComparison.Ordinal)
+                || html.Contains("Unable to remove the business", StringComparison.Ordinal));
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -5958,8 +6015,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("Concurrency")
-            .Or.Contain("Failed to archive location.");
+        responseHtml.Should().Match(
+            html => html.Contains("Concurrency", StringComparison.Ordinal)
+                || html.Contains("Failed to archive location.", StringComparison.Ordinal));
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -6043,8 +6101,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("Concurrency")
-            .Or.Contain("Unable to update the business member");
+        responseHtml.Should().Match(
+            html => html.Contains("Concurrency", StringComparison.Ordinal)
+                || html.Contains("Unable to update the business member", StringComparison.Ordinal));
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -6120,8 +6179,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("Concurrency")
-            .Or.Contain("Unable to remove the business member");
+        responseHtml.Should().Match(
+            html => html.Contains("Concurrency", StringComparison.Ordinal)
+                || html.Contains("Unable to remove the business member", StringComparison.Ordinal));
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -9306,6 +9366,28 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             LastFormat = request.Format;
             LastInvoiceId = invoice.Id;
             return Task.FromResult(_result);
+        }
+    }
+
+    private sealed class RecordingEInvoiceArtifactStorage : IEInvoiceArtifactStorage
+    {
+        public int Calls { get; private set; }
+        public EInvoiceArtifact? Artifact { get; private set; }
+
+        public Task<EInvoiceArtifactStorageResult> SaveAsync(EInvoiceArtifact artifact, CancellationToken ct = default)
+        {
+            Calls++;
+            Artifact = artifact;
+            return Task.FromResult(new EInvoiceArtifactStorageResult(
+                "TestStorage",
+                "invoice-archive",
+                $"invoices/{artifact.InvoiceId}/e-invoice/{artifact.FileName}",
+                "version-1",
+                "sha256-test",
+                artifact.Content.LongLength,
+                artifact.GeneratedAtUtc,
+                artifact.GeneratedAtUtc.AddYears(10),
+                true));
         }
     }
 

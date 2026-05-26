@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Integration;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Infrastructure.Notifications;
 using Darwin.Infrastructure.Notifications.Brevo;
 using Darwin.Infrastructure.Notifications.Smtp;
@@ -69,6 +70,7 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
         var clock = new FixedClock(nowUtc);
 
         await using var db = EmailDispatchOperationBackgroundServiceTestDbContext.Create();
+        SeedEmailSettings(db, sandboxMode: false);
         db.Set<EmailDispatchOperation>().Add(new EmailDispatchOperation
         {
             Id = Guid.NewGuid(),
@@ -78,6 +80,7 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
             HtmlBody = "<p>Welcome</p>",
             FlowKey = "WelcomeFlow",
             TemplateKey = "WelcomeTemplate",
+            SenderRole = "Billing",
             CorrelationKey = "corr-brevo-1",
             Status = "Pending"
         });
@@ -97,7 +100,6 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
             httpClient,
             Options.Create(new BrevoEmailOptions
             {
-                ApiKey = "api-key",
                 SenderEmail = "noreply@darwin.de"
             }),
             NullLogger<BrevoEmailSender>.Instance,
@@ -147,6 +149,7 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
 
         var audit = await db.Set<EmailDispatchAudit>().SingleAsync(x => x.CorrelationKey == "corr-brevo-1", TestContext.Current.CancellationToken);
         audit.Provider.Should().Be(EmailProviderNames.Brevo);
+        audit.SenderRole.Should().Be("Billing");
         audit.Status.Should().Be("Sent");
         audit.ProviderMessageId.Should().Be("brevo-msg-1");
         audit.CompletedAtUtc.Should().Be(nowUtc);
@@ -159,6 +162,7 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
         var clock = new FixedClock(nowUtc);
 
         await using var db = EmailDispatchOperationBackgroundServiceTestDbContext.Create();
+        SeedEmailSettings(db, sandboxMode: true);
         db.Set<EmailDispatchOperation>().Add(new EmailDispatchOperation
         {
             Id = Guid.NewGuid(),
@@ -187,9 +191,7 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
             httpClient,
             Options.Create(new BrevoEmailOptions
             {
-                ApiKey = "api-key",
-                SenderEmail = "noreply@darwin.de",
-                SandboxMode = true
+                SenderEmail = "noreply@darwin.de"
             }),
             NullLogger<BrevoEmailSender>.Instance,
             db,
@@ -242,6 +244,8 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
         requestHandler.CapturedBody.Should().NotBeNullOrWhiteSpace();
         requestHandler.CapturedBody.Should().Contain("\"X-Sib-Sandbox\":\"drop\"");
         requestHandler.CapturedBody.Should().Contain("\"X-Correlation-Key\":\"corr-brevo-sandbox-1\"");
+        requestHandler.CapturedBody.Should().Contain("\"sender\":{\"email\":\"no-reply@loyan.de\",\"name\":\"Loyan\"}");
+        requestHandler.CapturedBody.Should().Contain("\"replyTo\":{\"email\":\"support@loyan.de\",\"name\":\"Loyan\"}");
     }
 
     [Fact]
@@ -251,6 +255,7 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
         var clock = new FixedClock(nowUtc);
 
         await using var db = EmailDispatchOperationBackgroundServiceTestDbContext.Create();
+        SeedEmailSettings(db, sandboxMode: false);
         db.Set<EmailDispatchOperation>().Add(new EmailDispatchOperation
         {
             Id = Guid.NewGuid(),
@@ -337,6 +342,26 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
         return task!;
     }
 
+    private static void SeedEmailSettings(EmailDispatchOperationBackgroundServiceTestDbContext db, bool sandboxMode)
+    {
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Title = "Loyan",
+            ContactEmail = "support@loyan.de",
+            TransactionalEmailProvider = EmailProviderNames.Brevo,
+            SupportEmail = "support@loyan.de",
+            BillingEmail = "billing@loyan.de",
+            NoReplyEmail = "no-reply@loyan.de",
+            SystemAdminEmail = "dev@loyan.de",
+            BrevoBaseUrl = "https://api.brevo.com/v3/",
+            BrevoApiKey = "test-api-key",
+            BrevoWebhookUsername = "webhook-user",
+            BrevoWebhookPassword = "webhook-password",
+            BrevoSandboxMode = sandboxMode
+        });
+        db.SaveChanges();
+    }
+
     private sealed class FixedClock(DateTime utcNow) : IClock
     {
         public DateTime UtcNow { get; } = utcNow;
@@ -376,6 +401,7 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
         public DbSet<EmailDispatchOperation> EmailDispatchOperations { get; set; } = null!;
         public DbSet<EmailDispatchAudit> EmailDispatchAudits { get; set; } = null!;
         public DbSet<Business> Businesses { get; set; } = null!;
+        public DbSet<SiteSetting> SiteSettings { get; set; } = null!;
 
         private EmailDispatchOperationBackgroundServiceTestDbContext(
             DbContextOptions<EmailDispatchOperationBackgroundServiceTestDbContext> options)
@@ -423,6 +449,11 @@ public sealed class EmailDispatchOperationBackgroundServiceTests
             });
 
             modelBuilder.Entity<EmailDispatchAudit>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+            });
+
+            modelBuilder.Entity<SiteSetting>(builder =>
             {
                 builder.HasKey(x => x.Id);
             });

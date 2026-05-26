@@ -1895,13 +1895,16 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         validatorSource.Should().Contain("Email:Brevo:BaseUrl must be an absolute HTTPS URL when Email:Provider is Brevo.");
         validatorSource.Should().Contain("Email:Brevo:SenderEmail must be a valid email address.");
         validatorSource.Should().Contain("Email:Brevo:ReplyToEmail must be a valid email address.");
-        validatorSource.Should().Contain("Email:Brevo:WebhookUsername is required when Email:Provider is Brevo.");
-        validatorSource.Should().Contain("Email:Brevo:WebhookPassword is required when Email:Provider is Brevo.");
         validatorSource.Should().Contain("Email:Brevo:TemplateIds keys must not be empty.");
         validatorSource.Should().Contain("Email:Brevo:TemplateIds:{pair.Key} must be a positive Brevo template id.");
         validatorSource.Should().Contain("private static bool IsHttpsAbsoluteUrl");
         validatorSource.Should().Contain("private static bool IsEmailAddress");
+        senderSource.Should().Contain("ValidateSettings(settings);");
+        senderSource.Should().Contain("settings!.BrevoApiKey!.Trim()");
+        senderSource.Should().Contain("EmailSenderIdentityResolver.ResolveFromEmail(settings, senderRole)");
+        senderSource.Should().Contain("EmailSenderIdentityResolver.ResolveReplyToEmail(settings)");
         dispatchContextSource.Should().Contain("public IReadOnlyDictionary<string, string?> TemplateParameters { get; set; }");
+        dispatchContextSource.Should().Contain("public EmailSenderRole SenderRole { get; set; } = EmailSenderRole.NoReply;");
 
         senderSource.Should().Contain("var templateId = ResolveTemplateId(context);");
         senderSource.Should().Contain("payload[\"templateId\"] = templateId.Value;");
@@ -1911,12 +1914,16 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         senderSource.Should().Contain("if (!string.IsNullOrWhiteSpace(context.FlowKey)");
 
         invitationCreateSource.Should().Contain("TemplateKey = \"BusinessInvitationEmail\"");
+        invitationCreateSource.Should().Contain("SenderRole = EmailSenderRole.NoReply");
         invitationCreateSource.Should().Contain("TemplateParameters = bodyParameters");
         invitationResendSource.Should().Contain("TemplateKey = \"BusinessInvitationEmail\"");
+        invitationResendSource.Should().Contain("SenderRole = EmailSenderRole.NoReply");
         invitationResendSource.Should().Contain("TemplateParameters = bodyParameters");
         emailConfirmationSource.Should().Contain("TemplateKey = \"AccountActivationEmail\"");
+        emailConfirmationSource.Should().Contain("SenderRole = EmailSenderRole.NoReply");
         emailConfirmationSource.Should().Contain("TemplateParameters = bodyParameters");
         passwordResetSource.Should().Contain("TemplateKey = \"PasswordResetEmail\"");
+        passwordResetSource.Should().Contain("SenderRole = EmailSenderRole.NoReply");
         passwordResetSource.Should().Contain("TemplateParameters = bodyParameters");
     }
 

@@ -115,7 +115,32 @@ namespace Darwin.Application.Identity.Commands
             {
                 ["email"] = user.Email,
                 ["token"] = tokenValue,
-                ["expires_at_utc"] = expiresAtUtc.ToString("u")
+                ["expires_at_utc"] = expiresAtUtc.ToString("u"),
+                ["activation_link"] = CommunicationTemplateDefaults.BuildAccountActionUrl(
+                    "/account/activation",
+                    new Dictionary<string, string?>
+                    {
+                        ["email"] = user.Email,
+                        ["token"] = tokenValue
+                    }),
+                ["activation_link_html"] = CommunicationTemplateDefaults.BuildActionButtonHtml(
+                    CommunicationTemplateDefaults.BuildAccountActionUrl(
+                        "/account/activation",
+                        new Dictionary<string, string?>
+                        {
+                            ["email"] = user.Email,
+                            ["token"] = tokenValue
+                        }),
+                    "Confirm email"),
+                ["manual_link_html"] = CommunicationTemplateDefaults.BuildManualLinkHtml(
+                    CommunicationTemplateDefaults.BuildAccountActionUrl(
+                        "/account/activation",
+                        new Dictionary<string, string?>
+                        {
+                            ["email"] = user.Email,
+                            ["token"] = tokenValue
+                        }),
+                    "If the button does not work, copy this link into your browser:")
             };
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
@@ -129,6 +154,11 @@ namespace Darwin.Application.Identity.Commands
                 bodyParameters);
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, user.Email, recipient, body);
+            body = CommunicationTemplateDefaults.WrapTransactionalEmail(
+                "Confirm your Loyan email",
+                "Confirm your email address to finish account setup.",
+                body,
+                siteSettings?.SupportEmail);
 
             await _email.SendAsync(
                 recipient,
@@ -139,6 +169,7 @@ namespace Darwin.Application.Identity.Commands
                 {
                     FlowKey = "AccountActivation",
                     TemplateKey = "AccountActivationEmail",
+                    SenderRole = EmailSenderRole.NoReply,
                     CorrelationKey = tokenEntity.Id.ToString("N"),
                     IntendedRecipientEmail = user.Email,
                     TemplateParameters = bodyParameters

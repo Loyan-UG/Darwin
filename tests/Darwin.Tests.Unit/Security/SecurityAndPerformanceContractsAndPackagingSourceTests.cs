@@ -237,10 +237,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         {
             "smoke-stripe-testmode.ps1",
             "check-stripe-webhook-forwarding.ps1",
+            "check-stripe-live-readiness.ps1",
             "smoke-dhl-live.ps1",
             "smoke-vies-live.ps1",
             "smoke-brevo-readiness.ps1",
             "smoke-object-storage.ps1",
+            "check-minio-production-readiness.ps1",
             "smoke-einvoice-external-command.ps1",
             "check-go-live-readiness.ps1"
         };
@@ -274,6 +276,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("scripts\\check-secrets.ps1")
             .And.Contain("scripts\\smoke-stripe-testmode.ps1")
             .And.Contain("scripts\\check-stripe-webhook-forwarding.ps1")
+            .And.Contain("scripts\\check-stripe-live-readiness.ps1")
             .And.Contain("\"-CreateSmokeOrder\"")
             .And.Contain("\"-RequireRuntimePipeline\"")
             .And.Contain("scripts\\smoke-dhl-live.ps1")
@@ -281,6 +284,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("\"-RequireDeliveryPipeline\"")
             .And.Contain("scripts\\smoke-vies-live.ps1")
             .And.Contain("scripts\\smoke-object-storage.ps1")
+            .And.Contain("scripts\\check-minio-production-readiness.ps1")
             .And.Contain("scripts\\smoke-einvoice-external-command.ps1")
             .And.Contain("docs\\archive-storage-provider-decision.md")
             .And.Contain("docs\\e-invoice-tooling-decision.md")
@@ -291,12 +295,16 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         externalSmokeInputsSource.Should().Contain("scripts\\check-go-live-readiness.ps1");
         externalSmokeInputsSource.Should().Contain("DARWIN_WEBAPI_BASE_URL");
         externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_WEBHOOK_PUBLIC_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL");
+        externalSmokeInputsSource.Should().Contain("DARWIN_STRIPE_MONITORING_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_DHL_API_BASE_URL");
         externalSmokeInputsSource.Should().Contain("DARWIN_BREVO_API_KEY");
         externalSmokeInputsSource.Should().Contain("DARWIN_VIES_VALID_VAT_ID");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_PROVIDER");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_S3_BUCKET");
         externalSmokeInputsSource.Should().Contain("DARWIN_OBJECT_STORAGE_AZURE_CONTAINER");
+        externalSmokeInputsSource.Should().Contain("DARWIN_MINIO_PRODUCTION_ENDPOINT");
+        externalSmokeInputsSource.Should().Contain("DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED");
         externalSmokeInputsSource.Should().Contain("DARWIN_EINVOICE_COMMAND_PATH");
         externalSmokeInputsSource.Should().Contain("Provider failures must remain `Unknown`");
         externalSmokeInputsSource.Should().NotContain("sk_live_");
@@ -341,6 +349,24 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED")
             .And.Contain("/api/v1/public/billing/stripe/webhooks")
             .And.Contain("No webhook signing secret is accepted or printed")
+            .And.NotContain("whsec_")
+            .And.NotContain("StripeSecretKey");
+
+        ReadRepositoryFile(Path.Combine("scripts", "check-stripe-live-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL")
+            .And.Contain("DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_WEBADMIN_VISIBILITY_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_MONITORING_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_ALERTING_CONFIRMED")
+            .And.Contain("DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED")
+            .And.Contain("/api/v1/public/billing/stripe/webhooks")
+            .And.Contain("No live Stripe API call")
+            .And.NotContain("Invoke-RestMethod")
+            .And.NotContain("Invoke-WebRequest")
             .And.NotContain("whsec_")
             .And.NotContain("StripeSecretKey");
 
@@ -390,6 +416,24 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_S3_SECRET_KEY")
             .And.NotContain("Write-Host $env:DARWIN_OBJECT_STORAGE_AZURE_CONNECTION_STRING");
 
+        ReadRepositoryFile(Path.Combine("scripts", "check-minio-production-readiness.ps1"))
+            .Should()
+            .Contain("DARWIN_MINIO_PRODUCTION_ENDPOINT")
+            .And.Contain("DARWIN_MINIO_PRODUCTION_BUCKET")
+            .And.Contain("DARWIN_MINIO_TLS_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_DEDICATED_KEYS_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_LEAST_PRIVILEGE_POLICY_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_BUCKET_OBJECT_LOCK_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_BUCKET_VERSIONING_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_DEFAULT_RETENTION_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_RESTORE_TEST_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_MONITORING_CONFIRMED")
+            .And.Contain("No MinIO access key, secret key")
+            .And.NotContain("Invoke-RestMethod")
+            .And.NotContain("Invoke-WebRequest")
+            .And.NotContain("MINIO_ROOT_PASSWORD");
+
         ReadRepositoryFile(Path.Combine("scripts", "smoke-einvoice-external-command.ps1"))
             .Should()
             .Contain("IEInvoiceGenerationService")
@@ -428,11 +472,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         output.Should().Contain("Secrets scan: Ready");
         output.Should().Contain("Stripe test-mode smoke prerequisites");
         output.Should().Contain("Stripe webhook forwarding prerequisites");
+        output.Should().Contain("Stripe live readiness prerequisites");
         output.Should().Contain("DHL live smoke prerequisites");
         output.Should().Contain("Brevo readiness smoke prerequisites");
         output.Should().Contain("VIES live smoke prerequisites");
         output.Should().Contain("Object storage MediaAssets profile prerequisites");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites");
+        output.Should().Contain("MinIO production readiness prerequisites");
         output.Should().Contain("E-invoice external-command smoke prerequisites");
         output.Should().NotContain("System.Management.Automation.RemoteException");
 
@@ -478,12 +524,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         process.ExitCode.Should().Be(0);
         output.Should().Contain("Stripe test-mode smoke prerequisites: Ready");
         output.Should().Contain("Stripe webhook forwarding prerequisites: Ready");
+        output.Should().Contain("Stripe live readiness prerequisites: Ready");
         output.Should().Contain("DHL live smoke prerequisites: Ready");
         output.Should().Contain("Brevo readiness smoke prerequisites: Ready");
         output.Should().Contain("VIES live smoke prerequisites: Ready");
         output.Should().Contain("Object storage smoke prerequisites: Ready");
         output.Should().Contain("Object storage MediaAssets profile prerequisites: Ready");
         output.Should().Contain("Object storage ShipmentLabels profile prerequisites: Ready");
+        output.Should().Contain("MinIO production readiness prerequisites: Ready");
         output.Should().Contain("E-invoice external-command smoke prerequisites: Ready");
         output.Should().Contain("Invoice archive object-storage provider decision: Ready");
         output.Should().Contain("E-invoice tooling decision: Ready");
@@ -497,10 +545,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     [Theory]
     [InlineData("smoke-stripe-testmode.ps1", "Stripe test-mode smoke is blocked.")]
     [InlineData("check-stripe-webhook-forwarding.ps1", "Stripe webhook forwarding is blocked.")]
+    [InlineData("check-stripe-live-readiness.ps1", "Stripe live readiness is blocked.")]
     [InlineData("smoke-dhl-live.ps1", "DHL live smoke is blocked.")]
     [InlineData("smoke-brevo-readiness.ps1", "Brevo readiness smoke is blocked.")]
     [InlineData("smoke-vies-live.ps1", "VIES live smoke is blocked.")]
     [InlineData("smoke-object-storage.ps1", "Object storage smoke is blocked.")]
+    [InlineData("check-minio-production-readiness.ps1", "MinIO production readiness is blocked.")]
     [InlineData("smoke-einvoice-external-command.ps1", "E-invoice external-command smoke is blocked.")]
     public async Task ProviderSmokeScripts_Should_BlockDryRunWhenPrerequisitesAreMissing(
         string scriptName,
@@ -587,6 +637,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         if (string.Equals(scriptName, "check-stripe-webhook-forwarding.ps1", StringComparison.Ordinal))
         {
             output.Should().Contain("smoke-stripe-testmode.ps1 -Execute");
+        }
+        else if (string.Equals(scriptName, "check-stripe-live-readiness.ps1", StringComparison.Ordinal))
+        {
+            output.Should().Contain("No live Stripe API call");
+        }
+        else if (string.Equals(scriptName, "check-minio-production-readiness.ps1", StringComparison.Ordinal))
+        {
+            output.Should().Contain("No MinIO access key, secret key");
         }
         else
         {
@@ -1484,6 +1542,24 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         yield return new object[]
         {
+            "check-stripe-live-readiness.ps1",
+            "Stripe live readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+                ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
+                ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
+                ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
+                ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
+                ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_CONFIRMED"] = "true",
+                ["DARWIN_STRIPE_MONITORING_CONFIRMED"] = "true",
+                ["DARWIN_STRIPE_ALERTING_CONFIRMED"] = "true",
+                ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
             "smoke-dhl-live.ps1",
             "DHL live smoke configuration is present.",
             new Dictionary<string, string>
@@ -1545,6 +1621,31 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
 
         yield return new object[]
         {
+            "check-minio-production-readiness.ps1",
+            "MinIO production readiness prerequisites are present.",
+            new Dictionary<string, string>
+            {
+                ["DARWIN_MINIO_PRODUCTION_ENDPOINT"] = "https://minio.example.test",
+                ["DARWIN_MINIO_PRODUCTION_BUCKET"] = "darwin-invoice-archive",
+                ["DARWIN_MINIO_PRODUCTION_PROVIDER_SELECTED_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_TLS_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_DEDICATED_KEYS_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_BUCKET_OBJECT_LOCK_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_BUCKET_VERSIONING_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_DEFAULT_RETENTION_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_RETENTION_MODE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_RESTORE_TEST_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_MONITORING_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_ALERTING_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true"
+            }
+        };
+
+        yield return new object[]
+        {
             "smoke-einvoice-external-command.ps1",
             "E-invoice external-command smoke configuration is present",
             new Dictionary<string, string>
@@ -1563,6 +1664,14 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_STRIPE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
             ["DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED"] = "true",
             ["DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL"] = "https://stripe-webhook.example.test/api/v1/public/billing/stripe/webhooks",
+            ["DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_WEBADMIN_VISIBILITY_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED"] = "true",
             ["DARWIN_DHL_API_BASE_URL"] = "http://127.0.0.1:5135",
             ["DARWIN_DHL_API_KEY"] = "local-api-key",
             ["DARWIN_DHL_API_SECRET"] = "local-api-secret",
@@ -1596,6 +1705,22 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_OBJECT_STORAGE_PROVIDER"] = "FileSystem",
             ["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke",
             ["DARWIN_OBJECT_STORAGE_FILE_ROOT"] = Path.Combine(Path.GetTempPath(), "darwin-object-storage-ready-dry-run"),
+            ["DARWIN_MINIO_PRODUCTION_ENDPOINT"] = "https://minio.example.test",
+            ["DARWIN_MINIO_PRODUCTION_BUCKET"] = "darwin-invoice-archive",
+            ["DARWIN_MINIO_PRODUCTION_PROVIDER_SELECTED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_TLS_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DEDICATED_KEYS_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_LEAST_PRIVILEGE_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BUCKET_OBJECT_LOCK_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BUCKET_VERSIONING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DEFAULT_RETENTION_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RETENTION_MODE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_LEGAL_HOLD_POLICY_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RESTORE_TEST_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_MONITORING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_ALERTING_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
             ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe"
         };
 

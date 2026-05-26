@@ -311,6 +311,39 @@ namespace Darwin.Domain.Entities.Settings
         /// <summary>Default From display name for outgoing emails.</summary>
         public string? SmtpFromDisplayName { get; set; }
 
+        /// <summary>Runtime transactional email provider selected from Site Settings.</summary>
+        public string TransactionalEmailProvider { get; set; } = "Brevo";
+
+        /// <summary>General support address used for human replies and public Reply-To.</summary>
+        public string SupportEmail { get; set; } = "support@loyan.de";
+
+        /// <summary>Billing address used for subscriptions, contracts, invoices, and payments.</summary>
+        public string BillingEmail { get; set; } = "billing@loyan.de";
+
+        /// <summary>No-reply sender used for transactional and security messages.</summary>
+        public string NoReplyEmail { get; set; } = "no-reply@loyan.de";
+
+        /// <summary>Primary system administrator address used for critical internal alerts.</summary>
+        public string SystemAdminEmail { get; set; } = "dev@loyan.de";
+
+        /// <summary>Brevo API base URL for transactional email delivery.</summary>
+        public string BrevoBaseUrl { get; set; } = "https://api.brevo.com/v3/";
+
+        /// <summary>Brevo API key used for transactional email delivery.</summary>
+        public string? BrevoApiKey { get; set; }
+
+        /// <summary>Brevo webhook Basic Auth username.</summary>
+        public string? BrevoWebhookUsername { get; set; }
+
+        /// <summary>Brevo webhook Basic Auth password.</summary>
+        public string? BrevoWebhookPassword { get; set; }
+
+        /// <summary>When true, Brevo sends use sandbox/drop mode.</summary>
+        public bool BrevoSandboxMode { get; set; } = true;
+
+        /// <summary>Controlled inbox used for Brevo smoke validation.</summary>
+        public string? BrevoTestRecipientEmail { get; set; }
+
         // SMS (provider-agnostic)
         /// <summary>Enable SMS notifications globally.</summary>
         public bool SmsEnabled { get; set; } = false;

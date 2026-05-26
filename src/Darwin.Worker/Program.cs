@@ -11,7 +11,7 @@ using Darwin.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddApplication(builder.Configuration);
-builder.Services.AddLocalization();
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.Configure<MediaStorageOptions>(builder.Configuration.GetSection(MediaStorageOptions.SectionName));
 builder.Services.AddConfiguredPersistence(builder.Configuration);

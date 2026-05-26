@@ -64,6 +64,39 @@ public sealed class RequestPasswordResetHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_Should_Not_Send_Raw_ResourceKeys_WhenLocalizedDefaultsAreUsed()
+    {
+        await using var db = PasswordResetTestDbContext.Create();
+        var user = CreateUser("reset-default@darwin.de");
+
+        db.Set<User>().Add(user);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var email = new FakeEmailSender();
+        var handler = new RequestPasswordResetHandler(
+            db,
+            email,
+            new FakeClock(new DateTime(2030, 3, 1, 10, 0, 0, DateTimeKind.Utc)),
+            new RequestPasswordResetValidator(),
+            new TestStringLocalizer<CommunicationResource>(),
+            NullLogger<RequestPasswordResetHandler>.Instance);
+
+        var result = await handler.HandleAsync(
+            new RequestPasswordResetDto { Email = user.Email },
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        email.Messages.Should().HaveCount(1);
+        email.Messages[0].Subject.Should().Be("Reset your Loyan password");
+        email.Messages[0].Subject.Should().NotContain("PasswordResetSubjectTemplateDefault");
+        email.Messages[0].Body.Should().Contain("Reset your password");
+        email.Messages[0].Body.Should().Contain("Reset password");
+        email.Messages[0].Body.Should().Contain("If the button does not work");
+        email.Messages[0].Body.Should().NotContain("PasswordResetBodyTemplateDefault");
+        email.Messages[0].Body.Should().NotContain("RecipientOverrideNoticeHtml");
+    }
+
+    [Fact]
     public async Task HandleAsync_Should_Ignore_SoftDeleted_Settings_When_Active_Row_Exists()
     {
         await using var db = PasswordResetTestDbContext.Create();

@@ -117,6 +117,17 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.SmtpPassword).HasMaxLength(512);          // consider at-rest protection later
             builder.Property(x => x.SmtpFromAddress).HasMaxLength(256);
             builder.Property(x => x.SmtpFromDisplayName).HasMaxLength(200);
+            builder.Property(x => x.TransactionalEmailProvider).IsRequired().HasMaxLength(32);
+            builder.Property(x => x.SupportEmail).IsRequired().HasMaxLength(256);
+            builder.Property(x => x.BillingEmail).IsRequired().HasMaxLength(256);
+            builder.Property(x => x.NoReplyEmail).IsRequired().HasMaxLength(256);
+            builder.Property(x => x.SystemAdminEmail).IsRequired().HasMaxLength(256);
+            builder.Property(x => x.BrevoBaseUrl).IsRequired().HasMaxLength(500);
+            builder.Property(x => x.BrevoApiKey).HasMaxLength(512);
+            builder.Property(x => x.BrevoWebhookUsername).HasMaxLength(256);
+            builder.Property(x => x.BrevoWebhookPassword).HasMaxLength(512);
+            builder.Property(x => x.BrevoSandboxMode).IsRequired();
+            builder.Property(x => x.BrevoTestRecipientEmail).HasMaxLength(256);
 
             // --- SMS ---
             builder.Property(x => x.SmsEnabled).IsRequired();

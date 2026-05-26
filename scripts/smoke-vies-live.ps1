@@ -5,6 +5,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+Add-Type -AssemblyName System.Net.Http
+
 $endpoint = [Environment]::GetEnvironmentVariable("DARWIN_VIES_ENDPOINT_URL")
 if ([string]::IsNullOrWhiteSpace($endpoint)) {
     $endpoint = "https://ec.europa.eu/taxation_customs/vies/services/checkVatService"
@@ -115,14 +117,25 @@ function Invoke-ViesCheck {
 </soapenv:Envelope>
 "@
 
+    $client = [System.Net.Http.HttpClient]::new()
     try {
-        $response = Invoke-WebRequest -Method Post -Uri $EndpointUrl -Body $body -ContentType "text/xml" -Headers @{ SOAPAction = "" } -TimeoutSec $timeoutSeconds
-        if ($response.StatusCode -lt 200 -or $response.StatusCode -gt 299) {
-            return @{ Status = "Unknown"; Source = "vies.unavailable"; Message = "VIES returned HTTP $($response.StatusCode)." }
+        $client.Timeout = [TimeSpan]::FromSeconds($timeoutSeconds)
+        $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Post, $EndpointUrl)
+        $request.Content = [System.Net.Http.StringContent]::new($body, [System.Text.Encoding]::UTF8, "text/xml")
+        $request.Headers.TryAddWithoutValidation("SOAPAction", "") | Out-Null
+
+        $response = $client.SendAsync($request).GetAwaiter().GetResult()
+        $responseBody = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        if (-not $response.IsSuccessStatusCode) {
+            return @{ Status = "Unknown"; Source = "vies.unavailable"; Message = "VIES returned HTTP $([int]$response.StatusCode)." }
         }
 
-        [xml]$xml = $response.Content
-        $validNode = $xml.GetElementsByTagName("valid") | Select-Object -First 1
+        [xml]$xml = $responseBody
+        $validNode = $xml.GetElementsByTagName("valid", "urn:ec.europa.eu:taxud:vies:services:checkVat:types") | Select-Object -First 1
+        if ($null -eq $validNode) {
+            $validNode = $xml.SelectNodes("//*[local-name()='valid']") | Select-Object -First 1
+        }
+
         if ($null -eq $validNode) {
             return @{ Status = "Unknown"; Source = "vies.unavailable"; Message = "VIES response did not include a valid result." }
         }
@@ -139,6 +152,9 @@ function Invoke-ViesCheck {
     }
     catch {
         return @{ Status = "Unknown"; Source = "vies.unavailable"; Message = "VIES VAT validation request failed." }
+    }
+    finally {
+        $client.Dispose()
     }
 }
 

@@ -23,6 +23,10 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
             builder.Property(x => x.TemplateKey)
                 .HasMaxLength(128);
 
+            builder.Property(x => x.SenderRole)
+                .IsRequired()
+                .HasMaxLength(32);
+
             builder.Property(x => x.CorrelationKey)
                 .HasMaxLength(128);
 

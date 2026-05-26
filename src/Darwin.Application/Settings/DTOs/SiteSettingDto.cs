@@ -225,6 +225,17 @@ namespace Darwin.Application.Settings.DTOs
         public string? SmtpPassword { get; set; }
         public string? SmtpFromAddress { get; set; }
         public string? SmtpFromDisplayName { get; set; }
+        public string TransactionalEmailProvider { get; set; } = "Brevo";
+        public string SupportEmail { get; set; } = "support@loyan.de";
+        public string BillingEmail { get; set; } = "billing@loyan.de";
+        public string NoReplyEmail { get; set; } = "no-reply@loyan.de";
+        public string SystemAdminEmail { get; set; } = "dev@loyan.de";
+        public string BrevoBaseUrl { get; set; } = "https://api.brevo.com/v3/";
+        public string? BrevoApiKey { get; set; }
+        public string? BrevoWebhookUsername { get; set; }
+        public string? BrevoWebhookPassword { get; set; }
+        public bool BrevoSandboxMode { get; set; } = true;
+        public string? BrevoTestRecipientEmail { get; set; }
 
         // -------- SMS --------
         public bool SmsEnabled { get; set; } = false;

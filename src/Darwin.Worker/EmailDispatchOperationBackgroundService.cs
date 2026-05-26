@@ -155,6 +155,7 @@ public sealed class EmailDispatchOperationBackgroundService : BackgroundService
             {
                 FlowKey = item.FlowKey,
                 TemplateKey = item.TemplateKey,
+                SenderRole = EmailSenderIdentityResolver.ParseRole(item.SenderRole),
                 CorrelationKey = item.CorrelationKey,
                 BusinessId = item.BusinessId,
                 IntendedRecipientEmail = item.IntendedRecipientEmail

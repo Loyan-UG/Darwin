@@ -102,16 +102,18 @@
     bool localizationReadiness = localizationDefaultsReady && localizationOverridesReady && localizationHandoffReady;
 
     var emailDeliveryOptions = EmailDeliveryOptionsAccessor.Value;
-    var activeEmailProvider = Darwin.Infrastructure.Notifications.EmailProviderNames.Normalize(emailDeliveryOptions.Provider);
+    var activeEmailProvider = Darwin.Infrastructure.Notifications.EmailProviderNames.Normalize(Model.TransactionalEmailProvider ?? emailDeliveryOptions.Provider);
     bool emailProviderIsBrevo = string.Equals(activeEmailProvider, Darwin.Infrastructure.Notifications.EmailProviderNames.Brevo, StringComparison.OrdinalIgnoreCase);
     var brevoEmailOptions = BrevoEmailOptionsAccessor.Value;
-    bool brevoBaseUrlReady = Uri.TryCreate(brevoEmailOptions.BaseUrl, UriKind.Absolute, out var brevoBaseUrl)
+    bool brevoBaseUrlReady = Uri.TryCreate(Model.BrevoBaseUrl, UriKind.Absolute, out var brevoBaseUrl)
         && string.Equals(brevoBaseUrl.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
-    bool brevoApiReady = !string.IsNullOrWhiteSpace(brevoEmailOptions.ApiKey)
+    bool brevoApiReady = !string.IsNullOrWhiteSpace(Model.BrevoApiKey)
         && brevoBaseUrlReady;
-    bool brevoSenderReady = !string.IsNullOrWhiteSpace(brevoEmailOptions.SenderEmail);
-    bool brevoWebhookReady = !string.IsNullOrWhiteSpace(brevoEmailOptions.WebhookUsername)
-        && !string.IsNullOrWhiteSpace(brevoEmailOptions.WebhookPassword);
+    bool brevoSenderReady = !string.IsNullOrWhiteSpace(Model.NoReplyEmail)
+        && !string.IsNullOrWhiteSpace(Model.SupportEmail)
+        && !string.IsNullOrWhiteSpace(Model.BillingEmail);
+    bool brevoWebhookReady = !string.IsNullOrWhiteSpace(Model.BrevoWebhookUsername)
+        && !string.IsNullOrWhiteSpace(Model.BrevoWebhookPassword);
     bool providerCallbackWorkerReady = string.Equals(Configuration["ProviderCallbackWorker:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
     bool shipmentProviderOperationWorkerReady = string.Equals(Configuration["ShipmentProviderOperationWorker:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
     bool brevoEmailDispatchWorkerReady = string.Equals(Configuration["EmailDispatchOperationWorker:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
@@ -119,7 +121,7 @@
         && brevoApiReady
         && brevoSenderReady
         && brevoWebhookReady
-        && !brevoEmailOptions.SandboxMode
+        && !Model.BrevoSandboxMode
         && providerCallbackWorkerReady
         && brevoEmailDispatchWorkerReady;
     bool smtpTransportReady = Model.SmtpEnabled
@@ -1940,7 +1942,7 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                         </tr>
                         <tr>
                             <th scope="row">@T.T("BrevoSandboxMode")</th>
-                            <td>@(brevoEmailOptions.SandboxMode ? T.T("Enabled") : T.T("Disabled"))</td>
+                            <td>@(Model.BrevoSandboxMode ? T.T("Enabled") : T.T("Disabled"))</td>
                             <td class="text-muted small">@T.T("BrevoSandboxModeHelp")</td>
                         </tr>
                         <tr>
@@ -1965,6 +1967,58 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 <input class="form-check-input" asp-for="SmtpEnabled" />
                 <label class="form-check-label" asp-for="SmtpEnabled"></label>
                 <field-help title="@T.T("SiteSettingSmtpEnabled")" content="@T.T("SiteSettingsSmtpEnabledHelp")" placement="right"></field-help>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label asp-for="TransactionalEmailProvider" class="form-label"></label>
+                    <select asp-for="TransactionalEmailProvider" class="form-select">
+                        <option value="Brevo">Brevo</option>
+                        <option value="SMTP">SMTP</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="NoReplyEmail" class="form-label"></label>
+                    <input asp-for="NoReplyEmail" class="form-control" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="SupportEmail" class="form-label"></label>
+                    <input asp-for="SupportEmail" class="form-control" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="BillingEmail" class="form-label"></label>
+                    <input asp-for="BillingEmail" class="form-control" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="SystemAdminEmail" class="form-label"></label>
+                    <input asp-for="SystemAdminEmail" class="form-control" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="BrevoBaseUrl" class="form-label"></label>
+                    <input asp-for="BrevoBaseUrl" class="form-control" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="BrevoApiKey" class="form-label"></label>
+                    <input asp-for="BrevoApiKey" class="form-control" type="password" autocomplete="new-password" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="BrevoWebhookUsername" class="form-label"></label>
+                    <input asp-for="BrevoWebhookUsername" class="form-control" type="password" autocomplete="new-password" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="BrevoWebhookPassword" class="form-label"></label>
+                    <input asp-for="BrevoWebhookPassword" class="form-control" type="password" autocomplete="new-password" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="BrevoTestRecipientEmail" class="form-label"></label>
+                    <input asp-for="BrevoTestRecipientEmail" class="form-control" />
+                </div>
+                <div class="col-md-3 mb-3 d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="BrevoSandboxMode" />
+                        <label class="form-check-label" asp-for="BrevoSandboxMode"></label>
+                    </div>
+                </div>
             </div>
 
             <div class="row">

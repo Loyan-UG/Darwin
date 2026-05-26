@@ -580,6 +580,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             EInvoiceArtifactFormat format = EInvoiceArtifactFormat.ZugferdFacturX,
             CancellationToken ct = default)
         {
+            if (!ModelState.IsValid || !Enum.IsDefined(format))
+            {
+                SetErrorMessage(GetEInvoiceArtifactErrorMessageKey(EInvoiceGenerationStatus.UnsupportedFormat));
+                return RedirectOrHtmx(nameof(EditInvoice), new { id });
+            }
+
             var result = await _generateInvoiceEInvoiceArtifact
                 .HandleAsync(id, format, ct)
                 .ConfigureAwait(false);

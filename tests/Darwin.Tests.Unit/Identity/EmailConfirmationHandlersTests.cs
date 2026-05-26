@@ -52,6 +52,12 @@ public sealed class EmailConfirmationHandlersTests
         email.SentMessages.Should().HaveCount(1);
         email.SentMessages[0].Context.Should().NotBeNull();
         email.SentMessages[0].Context!.FlowKey.Should().Be("AccountActivation");
+        email.SentMessages[0].Subject.Should().Be("Confirm your Loyan email address");
+        email.SentMessages[0].Body.Should().Contain("Confirm your email");
+        email.SentMessages[0].Body.Should().Contain("Confirm email");
+        email.SentMessages[0].Body.Should().Contain("If the button does not work");
+        email.SentMessages[0].Subject.Should().NotContain("AccountActivationSubjectTemplateDefault");
+        email.SentMessages[0].Body.Should().NotContain("AccountActivationBodyTemplateDefault");
 
         var token = await db.Set<UserToken>()
             .SingleAsync(x => x.UserId == user.Id && x.Purpose == "EmailConfirmation", TestContext.Current.CancellationToken);

@@ -14,6 +14,7 @@ public sealed class EmailDispatchOperation : BaseEntity
     public string HtmlBody { get; set; } = string.Empty;
     public string? FlowKey { get; set; }
     public string? TemplateKey { get; set; }
+    public string SenderRole { get; set; } = "NoReply";
     public string? CorrelationKey { get; set; }
     public Guid? BusinessId { get; set; }
     public string Status { get; set; } = "Pending";

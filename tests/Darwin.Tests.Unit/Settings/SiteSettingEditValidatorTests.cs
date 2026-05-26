@@ -50,6 +50,15 @@ public sealed class SiteSettingEditValidatorTests
         WebAuthnRelyingPartyId = "localhost",
         WebAuthnRelyingPartyName = "Darwin",
         WebAuthnAllowedOriginsCsv = "https://localhost:5001",
+        TransactionalEmailProvider = "Brevo",
+        SupportEmail = "support@loyan.de",
+        BillingEmail = "billing@loyan.de",
+        NoReplyEmail = "no-reply@loyan.de",
+        SystemAdminEmail = "dev@loyan.de",
+        BrevoBaseUrl = "https://api.brevo.com/v3/",
+        BrevoApiKey = "brevo-test-key",
+        BrevoWebhookUsername = "brevo-webhook-user",
+        BrevoWebhookPassword = "brevo-webhook-password",
     };
 
     // ─── Identity ─────────────────────────────────────────────────────────────
@@ -415,6 +424,36 @@ public sealed class SiteSettingEditValidatorTests
         var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
 
         result.IsValid.Should().BeFalse("DefaultVatRatePercent must be >= 0");
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Fail_When_BrevoProvider_MissingRequiredBrevoSecrets()
+    {
+        var dto = CreateValidDto();
+        dto.BrevoApiKey = "";
+        dto.BrevoWebhookUsername = "";
+        dto.BrevoWebhookPassword = "";
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.BrevoApiKey));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.BrevoWebhookUsername));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(dto.BrevoWebhookPassword));
+    }
+
+    [Fact]
+    public void SiteSetting_Should_Pass_For_SmtpProvider_WithoutBrevoSecrets()
+    {
+        var dto = CreateValidDto();
+        dto.TransactionalEmailProvider = "SMTP";
+        dto.BrevoApiKey = null;
+        dto.BrevoWebhookUsername = null;
+        dto.BrevoWebhookPassword = null;
+
+        var result = new SiteSettingEditValidator(CreateLocalizer()).Validate(dto);
+
+        result.IsValid.Should().BeTrue();
     }
 
     [Fact]

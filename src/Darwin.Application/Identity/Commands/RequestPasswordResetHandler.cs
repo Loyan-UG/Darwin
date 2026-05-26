@@ -131,7 +131,32 @@ namespace Darwin.Application.Identity.Commands
             {
                 ["email"] = user.Email,
                 ["token"] = token,
-                ["expires_at_utc"] = expires.ToString("u")
+                ["expires_at_utc"] = expires.ToString("u"),
+                ["reset_link"] = CommunicationTemplateDefaults.BuildAccountActionUrl(
+                    "/account/password",
+                    new Dictionary<string, string?>
+                    {
+                        ["email"] = user.Email,
+                        ["token"] = token
+                    }),
+                ["reset_link_html"] = CommunicationTemplateDefaults.BuildActionButtonHtml(
+                    CommunicationTemplateDefaults.BuildAccountActionUrl(
+                        "/account/password",
+                        new Dictionary<string, string?>
+                        {
+                            ["email"] = user.Email,
+                            ["token"] = token
+                        }),
+                    "Reset password"),
+                ["manual_link_html"] = CommunicationTemplateDefaults.BuildManualLinkHtml(
+                    CommunicationTemplateDefaults.BuildAccountActionUrl(
+                        "/account/password",
+                        new Dictionary<string, string?>
+                        {
+                            ["email"] = user.Email,
+                            ["token"] = token
+                        }),
+                    "If the button does not work, copy this link into your browser:")
             };
             var subject = ApplySubjectPrefix(
                 siteSettings?.TransactionalEmailSubjectPrefix,
@@ -145,6 +170,11 @@ namespace Darwin.Application.Identity.Commands
                 bodyParameters);
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, user.Email, recipient, body);
+            body = CommunicationTemplateDefaults.WrapTransactionalEmail(
+                "Reset your Loyan password",
+                "Use the secure password reset link. It expires in two hours.",
+                body,
+                siteSettings?.SupportEmail);
 
 
             var maskedEmail = MaskEmail(user.Email);
@@ -164,6 +194,7 @@ namespace Darwin.Application.Identity.Commands
                     {
                         FlowKey = "PasswordReset",
                         TemplateKey = "PasswordResetEmail",
+                        SenderRole = EmailSenderRole.NoReply,
                         CorrelationKey = tokenEntity.Id.ToString("N"),
                         IntendedRecipientEmail = user.Email,
                         TemplateParameters = bodyParameters

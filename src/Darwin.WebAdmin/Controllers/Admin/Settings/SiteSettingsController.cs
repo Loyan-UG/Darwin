@@ -358,6 +358,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             SmtpPassword = ToSecretPlaceholder(dto.SmtpPassword),
             SmtpFromAddress = dto.SmtpFromAddress,
             SmtpFromDisplayName = dto.SmtpFromDisplayName,
+            TransactionalEmailProvider = dto.TransactionalEmailProvider,
+            SupportEmail = dto.SupportEmail,
+            BillingEmail = dto.BillingEmail,
+            NoReplyEmail = dto.NoReplyEmail,
+            SystemAdminEmail = dto.SystemAdminEmail,
+            BrevoBaseUrl = dto.BrevoBaseUrl,
+            BrevoApiKey = ToSecretPlaceholder(dto.BrevoApiKey),
+            BrevoWebhookUsername = ToSecretPlaceholder(dto.BrevoWebhookUsername),
+            BrevoWebhookPassword = ToSecretPlaceholder(dto.BrevoWebhookPassword),
+            BrevoSandboxMode = dto.BrevoSandboxMode,
+            BrevoTestRecipientEmail = dto.BrevoTestRecipientEmail,
 
             // SMS
             SmsEnabled = dto.SmsEnabled,
@@ -518,6 +529,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             SmtpPassword = ResolveSecret(vm.SmtpPassword, current.SmtpPassword),
             SmtpFromAddress = vm.SmtpFromAddress,
             SmtpFromDisplayName = vm.SmtpFromDisplayName,
+            TransactionalEmailProvider = vm.TransactionalEmailProvider,
+            SupportEmail = vm.SupportEmail,
+            BillingEmail = vm.BillingEmail,
+            NoReplyEmail = vm.NoReplyEmail,
+            SystemAdminEmail = vm.SystemAdminEmail,
+            BrevoBaseUrl = vm.BrevoBaseUrl,
+            BrevoApiKey = ResolveSecret(vm.BrevoApiKey, current.BrevoApiKey),
+            BrevoWebhookUsername = ResolveSecret(vm.BrevoWebhookUsername, current.BrevoWebhookUsername),
+            BrevoWebhookPassword = ResolveSecret(vm.BrevoWebhookPassword, current.BrevoWebhookPassword),
+            BrevoSandboxMode = vm.BrevoSandboxMode,
+            BrevoTestRecipientEmail = vm.BrevoTestRecipientEmail,
 
             // SMS
             SmsEnabled = vm.SmsEnabled,
@@ -611,6 +633,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             MaskSecret(nameof(SiteSettingVm.DhlApiSecret), value => vm.DhlApiSecret = value, vm.DhlApiSecret);
             MaskSecret(nameof(SiteSettingVm.WhatsAppAccessToken), value => vm.WhatsAppAccessToken = value, vm.WhatsAppAccessToken);
             MaskSecret(nameof(SiteSettingVm.SmtpPassword), value => vm.SmtpPassword = value, vm.SmtpPassword);
+            MaskSecret(nameof(SiteSettingVm.BrevoApiKey), value => vm.BrevoApiKey = value, vm.BrevoApiKey);
+            MaskSecret(nameof(SiteSettingVm.BrevoWebhookUsername), value => vm.BrevoWebhookUsername = value, vm.BrevoWebhookUsername);
+            MaskSecret(nameof(SiteSettingVm.BrevoWebhookPassword), value => vm.BrevoWebhookPassword = value, vm.BrevoWebhookPassword);
             MaskSecret(nameof(SiteSettingVm.SmsApiKey), value => vm.SmsApiKey = value, vm.SmsApiKey);
             MaskSecret(nameof(SiteSettingVm.SmsApiSecret), value => vm.SmsApiSecret = value, vm.SmsApiSecret);
         }

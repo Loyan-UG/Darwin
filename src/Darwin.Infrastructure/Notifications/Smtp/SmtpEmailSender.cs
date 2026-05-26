@@ -7,6 +7,7 @@ using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Domain.Entities.Integration;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Infrastructure.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -59,6 +60,11 @@ namespace Darwin.Infrastructure.Notifications.Smtp
             EmailDispatchContext? context = null)
         {
             if (string.IsNullOrWhiteSpace(toEmail)) throw new ArgumentNullException(nameof(toEmail));
+            var settings = await _db.Set<SiteSetting>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            var senderRole = EmailSenderIdentityResolver.NormalizeRole(context?.SenderRole ?? EmailSenderRole.NoReply);
             var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
             var pendingDuplicateCutoffUtc = _clock.UtcNow.AddMinutes(-15);
             if (!string.IsNullOrWhiteSpace(correlationKey) &&
@@ -81,6 +87,7 @@ namespace Darwin.Infrastructure.Notifications.Smtp
                 Provider = "SMTP",
                 FlowKey = string.IsNullOrWhiteSpace(context?.FlowKey) ? null : context.FlowKey.Trim(),
                 TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim(),
+                SenderRole = EmailSenderIdentityResolver.RoleName(senderRole),
                 CorrelationKey = correlationKey,
                 BusinessId = context?.BusinessId,
                 RecipientEmail = toEmail,
@@ -112,12 +119,13 @@ namespace Darwin.Infrastructure.Notifications.Smtp
             {
                 using var message = new MailMessage
                 {
-                    From = new MailAddress(_options.FromAddress, _options.FromDisplayName),
+                    From = new MailAddress(EmailSenderIdentityResolver.ResolveFromEmail(settings, senderRole), EmailSenderIdentityResolver.DefaultDisplayName),
                     Subject = subject ?? string.Empty,
                     Body = htmlBody ?? string.Empty,
                     IsBodyHtml = true
                 };
                 message.To.Add(new MailAddress(toEmail));
+                message.ReplyToList.Add(new MailAddress(EmailSenderIdentityResolver.ResolveReplyToEmail(settings), EmailSenderIdentityResolver.DefaultDisplayName));
 
                 using var client = new SmtpClient(_options.Host, _options.Port)
                 {

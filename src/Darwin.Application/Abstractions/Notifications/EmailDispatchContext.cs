@@ -10,6 +10,7 @@ namespace Darwin.Application.Abstractions.Notifications
     {
         public string? FlowKey { get; set; }
         public string? TemplateKey { get; set; }
+        public EmailSenderRole SenderRole { get; set; } = EmailSenderRole.NoReply;
         public string? CorrelationKey { get; set; }
         public Guid? BusinessId { get; set; }
         public string? IntendedRecipientEmail { get; set; }

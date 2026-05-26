@@ -64,6 +64,15 @@ public sealed class SettingsHandlerTests
         WebAuthnRelyingPartyId = "localhost",
         WebAuthnRelyingPartyName = "Darwin",
         WebAuthnAllowedOriginsCsv = "https://localhost:5001",
+        TransactionalEmailProvider = "Brevo",
+        SupportEmail = "support@loyan.de",
+        BillingEmail = "billing@loyan.de",
+        NoReplyEmail = "no-reply@loyan.de",
+        SystemAdminEmail = "dev@loyan.de",
+        BrevoBaseUrl = "https://api.brevo.com/v3/",
+        BrevoApiKey = "brevo-test-key",
+        BrevoWebhookUsername = "brevo-webhook-user",
+        BrevoWebhookPassword = "brevo-webhook-password",
     };
 
     private static SiteSetting BuildSetting(
@@ -77,6 +86,12 @@ public sealed class SettingsHandlerTests
             DefaultCulture = defaultCulture,
             SupportedCulturesCsv = supportedCulturesCsv,
             DefaultCurrency = "EUR",
+            TransactionalEmailProvider = "Brevo",
+            SupportEmail = "support@loyan.de",
+            BillingEmail = "billing@loyan.de",
+            NoReplyEmail = "no-reply@loyan.de",
+            SystemAdminEmail = "dev@loyan.de",
+            BrevoBaseUrl = "https://api.brevo.com/v3/",
             RowVersion = rowVersion ?? new byte[] { 1 }
         };
 
@@ -198,6 +213,12 @@ public sealed class SettingsHandlerTests
         dto.DefaultCulture.Should().Be("de-DE");
         dto.SupportedCulturesCsv.Should().Be("de-DE,en-US");
         dto.DefaultCurrency.Should().Be("EUR");
+        dto.TransactionalEmailProvider.Should().Be("Brevo");
+        dto.SupportEmail.Should().Be("support@loyan.de");
+        dto.BillingEmail.Should().Be("billing@loyan.de");
+        dto.NoReplyEmail.Should().Be("no-reply@loyan.de");
+        dto.SystemAdminEmail.Should().Be("dev@loyan.de");
+        dto.BrevoBaseUrl.Should().Be("https://api.brevo.com/v3/");
     }
 
     [Fact]
@@ -491,6 +512,9 @@ public sealed class SettingsHandlerTests
         entity.SmtpPassword = "existing-smtp-password";
         entity.SmsApiKey = "existing-sms-key";
         entity.SmsApiSecret = "existing-sms-secret";
+        entity.BrevoApiKey = "existing-brevo-api-key";
+        entity.BrevoWebhookUsername = "existing-brevo-webhook-user";
+        entity.BrevoWebhookPassword = "existing-brevo-webhook-password";
         db.Set<SiteSetting>().Add(entity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -512,6 +536,9 @@ public sealed class SettingsHandlerTests
         dto.SmtpPassword = "********";
         dto.SmsApiKey = " ";
         dto.SmsApiSecret = "********";
+        dto.BrevoApiKey = "";
+        dto.BrevoWebhookUsername = "********";
+        dto.BrevoWebhookPassword = "********";
 
         await handler.HandleAsync(dto, TestContext.Current.CancellationToken);
 
@@ -526,6 +553,9 @@ public sealed class SettingsHandlerTests
         updated.SmtpPassword.Should().Be("existing-smtp-password");
         updated.SmsApiKey.Should().Be("existing-sms-key");
         updated.SmsApiSecret.Should().Be("existing-sms-secret");
+        updated.BrevoApiKey.Should().Be("existing-brevo-api-key");
+        updated.BrevoWebhookUsername.Should().Be("existing-brevo-webhook-user");
+        updated.BrevoWebhookPassword.Should().Be("existing-brevo-webhook-password");
         updated.StripePublishableKey.Should().Be("pk_test_unit_publishable");
     }
 

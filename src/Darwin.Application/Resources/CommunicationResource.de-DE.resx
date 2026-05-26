@@ -13,13 +13,13 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="BusinessInvitationSubjectTemplateDefault" xml:space="preserve">
-    <value>Einladung fuer {business_name} bei Darwin</value>
+    <value>Ihre Loyan-Einladung fuer {business_name}</value>
   </data>
   <data name="BusinessInvitationBodyTemplateDefault" xml:space="preserve">
-    <value>&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;{invitation_intro_html}&lt;/p&gt;{acceptance_link_html}&lt;p&gt;Ihr Einladungstoken lautet:&lt;/p&gt;&lt;p&gt;&lt;code&gt;{token}&lt;/code&gt;&lt;/p&gt;&lt;p&gt;Diese Einladung laeuft am &lt;strong&gt;{expires_at_utc}&lt;/strong&gt; ab.&lt;/p&gt;&lt;p&gt;Verwenden Sie dieses Token im Darwin-Business-Onboarding oder wenden Sie sich an Ihre Administration, wenn Sie Unterstuetzung benoetigen.&lt;/p&gt;</value>
+    <value>&lt;h1 style="margin:0 0 14px 0;color:#1f3327;font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:34px;"&gt;Sie sind zu Loyan eingeladen&lt;/h1&gt;&lt;p style="margin:0 0 16px 0;color:#36483d;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;"&gt;{invitation_intro_html}&lt;/p&gt;&lt;p style="margin:0 0 18px 0;color:#36483d;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;"&gt;Oeffnen Sie die Einladung ueber die Schaltflaeche unten und setzen Sie das Onboarding fort. Die Einladung laeuft am &lt;strong&gt;{expires_at_utc}&lt;/strong&gt; ab.&lt;/p&gt;{acceptance_link_html}&lt;p style="margin:16px 0 8px 0;color:#5d6b61;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;"&gt;Einladungstoken:&lt;/p&gt;&lt;p style="margin:0 0 18px 0;padding:12px 14px;border-radius:8px;background:#f3f6ef;color:#1f3327;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:18px;word-break:break-all;"&gt;{token}&lt;/p&gt;&lt;p style="margin:0;color:#5d6b61;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;"&gt;Wenn Sie diese Einladung nicht erwartet haben, koennen Sie diese E-Mail ignorieren oder den Support kontaktieren.&lt;/p&gt;</value>
   </data>
   <data name="BusinessInvitationAcceptanceLinkHtml" xml:space="preserve">
-    <value>&lt;p&gt;&lt;a href="{acceptance_link}"&gt;Einladung oeffnen&lt;/a&gt;&lt;/p&gt;</value>
+    <value>{acceptance_button_html}{manual_link_html}</value>
   </data>
   <data name="BusinessInvitationIntroInvitedHtml" xml:space="preserve">
     <value>Sie wurden eingeladen, &lt;strong&gt;{business_name}&lt;/strong&gt; bei Darwin als &lt;strong&gt;{role}&lt;/strong&gt; beizutreten.</value>
@@ -28,16 +28,16 @@
     <value>Ihre Einladung, &lt;strong&gt;{business_name}&lt;/strong&gt; bei Darwin als &lt;strong&gt;{role}&lt;/strong&gt; beizutreten, wurde erneut ausgestellt.</value>
   </data>
   <data name="AccountActivationSubjectTemplateDefault" xml:space="preserve">
-    <value>Bestaetigen Sie Ihre Darwin-Konto-E-Mail</value>
+    <value>Bestaetigen Sie Ihre Loyan-E-Mail-Adresse</value>
   </data>
   <data name="AccountActivationBodyTemplateDefault" xml:space="preserve">
-    <value>&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;Verwenden Sie das folgende Token, um die Darwin-Konto-E-Mail fuer &lt;strong&gt;{email}&lt;/strong&gt; zu bestaetigen:&lt;/p&gt;&lt;p&gt;&lt;code&gt;{token}&lt;/code&gt;&lt;/p&gt;&lt;p&gt;Dieses Token laeuft am &lt;strong&gt;{expires_at_utc}&lt;/strong&gt; ab.&lt;/p&gt;</value>
+    <value>&lt;h1 style="margin:0 0 14px 0;color:#1f3327;font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:34px;"&gt;E-Mail-Adresse bestaetigen&lt;/h1&gt;&lt;p style="margin:0 0 16px 0;color:#36483d;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;"&gt;Bestaetigen Sie &lt;strong&gt;{email}&lt;/strong&gt;, um Ihr Loyan-Konto fertig einzurichten.&lt;/p&gt;&lt;p style="margin:0 0 18px 0;color:#36483d;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;"&gt;Dieser sichere Bestaetigungslink laeuft am &lt;strong&gt;{expires_at_utc}&lt;/strong&gt; ab.&lt;/p&gt;{activation_link_html}{manual_link_html}&lt;p style="margin:16px 0 8px 0;color:#5d6b61;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;"&gt;Bestaetigungstoken:&lt;/p&gt;&lt;p style="margin:0 0 18px 0;padding:12px 14px;border-radius:8px;background:#f3f6ef;color:#1f3327;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:18px;word-break:break-all;"&gt;{token}&lt;/p&gt;&lt;p style="margin:0;color:#5d6b61;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;"&gt;Wenn Sie kein Loyan-Konto erstellt haben, koennen Sie diese E-Mail ignorieren.&lt;/p&gt;</value>
   </data>
   <data name="PasswordResetSubjectTemplateDefault" xml:space="preserve">
-    <value>Setzen Sie Ihr Darwin-Konto-Passwort zurueck</value>
+    <value>Setzen Sie Ihr Loyan-Passwort zurueck</value>
   </data>
   <data name="PasswordResetBodyTemplateDefault" xml:space="preserve">
-    <value>&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;Verwenden Sie das folgende Token, um das Darwin-Konto-Passwort fuer &lt;strong&gt;{email}&lt;/strong&gt; zurueckzusetzen:&lt;/p&gt;&lt;p&gt;&lt;code&gt;{token}&lt;/code&gt;&lt;/p&gt;&lt;p&gt;Dieses Token laeuft am &lt;strong&gt;{expires_at_utc}&lt;/strong&gt; ab.&lt;/p&gt;</value>
+    <value>&lt;h1 style="margin:0 0 14px 0;color:#1f3327;font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:34px;"&gt;Passwort zuruecksetzen&lt;/h1&gt;&lt;p style="margin:0 0 16px 0;color:#36483d;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;"&gt;Wir haben eine Anfrage zum Zuruecksetzen des Passworts fuer &lt;strong&gt;{email}&lt;/strong&gt; erhalten.&lt;/p&gt;&lt;p style="margin:0 0 18px 0;color:#36483d;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;"&gt;Verwenden Sie die Schaltflaeche unten, um ein neues Passwort festzulegen. Dieser Link laeuft am &lt;strong&gt;{expires_at_utc}&lt;/strong&gt; ab.&lt;/p&gt;{reset_link_html}{manual_link_html}&lt;p style="margin:16px 0 8px 0;color:#5d6b61;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;"&gt;Reset-Token:&lt;/p&gt;&lt;p style="margin:0 0 18px 0;padding:12px 14px;border-radius:8px;background:#f3f6ef;color:#1f3327;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:18px;word-break:break-all;"&gt;{token}&lt;/p&gt;&lt;p style="margin:0;color:#5d6b61;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;"&gt;Wenn Sie diese Passwortzuruecksetzung nicht angefordert haben, koennen Sie diese E-Mail ignorieren. Ihr Passwort bleibt unveraendert.&lt;/p&gt;</value>
   </data>
   <data name="PhoneVerificationSmsTemplateDefault" xml:space="preserve">
     <value>Ihr Darwin-Bestaetigungscode lautet {token}. Er laeuft am {expires_at_utc} UTC ab.</value>
@@ -46,7 +46,7 @@
     <value>Bestaetigen Sie Ihre Darwin-Mobilnummer mit dem Code {token}. Er laeuft am {expires_at_utc} UTC ab.</value>
   </data>
   <data name="RecipientOverrideNoticeHtml" xml:space="preserve">
-    <value>&lt;p&gt;&lt;strong&gt;Urspruenglicher Empfaenger:&lt;/strong&gt; {original_recipient}&lt;/p&gt;</value>
+    <value>&lt;div style="margin:0 0 18px 0;padding:12px 14px;border-radius:8px;background:#fff6df;color:#6b4d12;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;"&gt;&lt;strong&gt;Testzustellhinweis:&lt;/strong&gt; urspruenglicher Empfaenger war {original_recipient}.&lt;/div&gt;</value>
   </data>
   <data name="PhoneVerificationSmsUnavailable" xml:space="preserve">
     <value>Die SMS-Verifizierung ist derzeit nicht verfuegbar.</value>

@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Entities.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -45,7 +46,10 @@ public sealed class BrevoEmailSender : IEmailSender
         EmailDispatchContext? context = null)
     {
         if (string.IsNullOrWhiteSpace(toEmail)) throw new ArgumentNullException(nameof(toEmail));
-        ValidateOptions();
+        var settings = await LoadSettingsAsync(ct).ConfigureAwait(false);
+        ValidateSettings(settings);
+        ConfigureClient(settings);
+        var senderRole = EmailSenderIdentityResolver.NormalizeRole(context?.SenderRole ?? EmailSenderRole.NoReply);
 
         var correlationKey = NormalizeCorrelationKey(context?.CorrelationKey);
         var pendingDuplicateCutoffUtc = _clock.UtcNow.AddMinutes(-15);
@@ -62,6 +66,7 @@ public sealed class BrevoEmailSender : IEmailSender
             Provider = EmailProviderNames.Brevo,
             FlowKey = string.IsNullOrWhiteSpace(context?.FlowKey) ? null : context.FlowKey.Trim(),
             TemplateKey = string.IsNullOrWhiteSpace(context?.TemplateKey) ? null : context.TemplateKey.Trim(),
+            SenderRole = EmailSenderIdentityResolver.RoleName(senderRole),
             CorrelationKey = correlationKey,
             BusinessId = context?.BusinessId,
             RecipientEmail = toEmail,
@@ -94,9 +99,9 @@ public sealed class BrevoEmailSender : IEmailSender
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "smtp/email")
             {
-                Content = JsonContent.Create(BuildPayload(toEmail, subject ?? string.Empty, htmlBody, context, correlationKey))
+                Content = JsonContent.Create(BuildPayload(toEmail, subject ?? string.Empty, htmlBody, context, correlationKey, settings, senderRole))
             };
-            request.Headers.Add("api-key", _options.ApiKey!.Trim());
+            request.Headers.Add("api-key", settings!.BrevoApiKey!.Trim());
             request.Headers.Accept.ParseAdd("application/json");
 
             using var response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
@@ -136,7 +141,9 @@ public sealed class BrevoEmailSender : IEmailSender
         string subject,
         string htmlBody,
         EmailDispatchContext? context,
-        string? correlationKey)
+        string? correlationKey,
+        SiteSetting? settings,
+        EmailSenderRole senderRole)
     {
         var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (!string.IsNullOrWhiteSpace(correlationKey))
@@ -145,14 +152,18 @@ public sealed class BrevoEmailSender : IEmailSender
             headers["X-Correlation-Key"] = correlationKey;
         }
 
-        if (_options.SandboxMode)
+        if (settings?.BrevoSandboxMode == true)
         {
             headers["X-Sib-Sandbox"] = "drop";
         }
 
         var payload = new Dictionary<string, object?>
         {
-            ["sender"] = new { email = _options.SenderEmail.Trim(), name = TrimToNull(_options.SenderName) },
+            ["sender"] = new
+            {
+                email = EmailSenderIdentityResolver.ResolveFromEmail(settings, senderRole),
+                name = EmailSenderIdentityResolver.DefaultDisplayName
+            },
             ["to"] = new[] { new { email = toEmail.Trim() } },
             ["tags"] = BuildTags(context)
         };
@@ -170,10 +181,10 @@ public sealed class BrevoEmailSender : IEmailSender
             payload["textContent"] = HtmlToText(htmlBody);
         }
 
-        var replyToEmail = TrimToNull(_options.ReplyToEmail);
+        var replyToEmail = TrimToNull(EmailSenderIdentityResolver.ResolveReplyToEmail(settings));
         if (replyToEmail is not null)
         {
-            payload["replyTo"] = new { email = replyToEmail, name = TrimToNull(_options.ReplyToName) };
+            payload["replyTo"] = new { email = replyToEmail, name = EmailSenderIdentityResolver.DefaultDisplayName };
         }
 
         if (headers.Count > 0)
@@ -250,16 +261,32 @@ public sealed class BrevoEmailSender : IEmailSender
         }
     }
 
-    private void ValidateOptions()
+    private async Task<SiteSetting?> LoadSettingsAsync(CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        return await _db.Set<SiteSetting>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => !x.IsDeleted, ct)
+            .ConfigureAwait(false);
+    }
+
+    private void ConfigureClient(SiteSetting? settings)
+    {
+        var baseUrl = string.IsNullOrWhiteSpace(settings?.BrevoBaseUrl)
+            ? _options.BaseUrl
+            : settings.BrevoBaseUrl.Trim();
+        _httpClient.BaseAddress = new Uri(baseUrl.EndsWith("/", StringComparison.Ordinal) ? baseUrl : baseUrl + "/");
+    }
+
+    private static void ValidateSettings(SiteSetting? settings)
+    {
+        if (string.IsNullOrWhiteSpace(settings?.BrevoApiKey))
         {
-            throw new InvalidOperationException("Brevo API key is not configured. Set Email:Brevo:ApiKey.");
+            throw new InvalidOperationException("Brevo API key is not configured in Site Settings.");
         }
 
-        if (string.IsNullOrWhiteSpace(_options.SenderEmail))
+        if (string.IsNullOrWhiteSpace(settings.NoReplyEmail))
         {
-            throw new InvalidOperationException("Brevo sender email is not configured. Set Email:Brevo:SenderEmail.");
+            throw new InvalidOperationException("No-reply sender email is not configured in Site Settings.");
         }
     }
 

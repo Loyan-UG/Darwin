@@ -18,7 +18,7 @@ namespace Darwin.Infrastructure.Tests.Notifications;
 public sealed class ServiceCollectionExtensionsNotificationsTests
 {
     [Fact]
-    public void AddNotificationsInfrastructure_Should_Resolve_IEmailSender_AsBrevoSender_WhenProviderIsBrevo()
+    public void AddNotificationsInfrastructure_Should_Resolve_IEmailSender_AsSiteSettingSender()
     {
         var services = new ServiceCollection();
         var configuration = BuildConfiguration(
@@ -36,27 +36,11 @@ public sealed class ServiceCollectionExtensionsNotificationsTests
         using var scope = provider.CreateScope();
 
         var sender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
-        sender.Should().BeOfType<BrevoEmailSender>();
+        sender.Should().BeOfType<SiteSettingEmailSender>();
     }
 
     [Fact]
-    public void AddNotificationsInfrastructure_Should_Resolve_IEmailSender_AsSmtpSender_WhenProviderIsSmtp()
-    {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(("Email:Provider", EmailProviderNames.Smtp));
-
-        AddNotificationDependencies(services);
-        services.AddNotificationsInfrastructure(configuration);
-
-        using var provider = services.BuildServiceProvider();
-        using var scope = provider.CreateScope();
-
-        var sender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
-        sender.Should().BeOfType<SmtpEmailSender>();
-    }
-
-    [Fact]
-    public void AddNotificationsInfrastructure_Should_Throw_WhenUnsupportedEmailProviderIsConfigured()
+    public void AddNotificationsInfrastructure_Should_Validate_UnsupportedFallbackEmailProvider()
     {
         var services = new ServiceCollection();
         var configuration = BuildConfiguration(("Email:Provider", "Postmark"));
@@ -67,13 +51,13 @@ public sealed class ServiceCollectionExtensionsNotificationsTests
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
-        var action = () => scope.ServiceProvider.GetRequiredService<IEmailSender>();
-        action.Should().Throw<InvalidOperationException>()
-            .WithMessage("Unsupported email provider 'Postmark'.");
+        var action = () => scope.ServiceProvider.GetRequiredService<IOptions<EmailDeliveryOptions>>().Value;
+        action.Should().Throw<OptionsValidationException>()
+            .WithMessage("*Email:Provider 'Postmark' is not supported*");
     }
 
     [Fact]
-    public void AddNotificationsInfrastructure_Should_FailStartup_WhenBrevoIsConfiguredWithoutRequiredBrevoOptions()
+    public void AddNotificationsInfrastructure_Should_NotRequireConfigBrevoSecret_WhenSiteSettingsOwnSecrets()
     {
         var services = new ServiceCollection();
         var configuration = BuildConfiguration(
@@ -88,9 +72,8 @@ public sealed class ServiceCollectionExtensionsNotificationsTests
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
-        var action = () => scope.ServiceProvider.GetRequiredService<IOptions<BrevoEmailOptions>>().Value;
-        action.Should().Throw<OptionsValidationException>()
-            .WithMessage("*Email:Brevo:ApiKey is required when Email:Provider is Brevo.*");
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<BrevoEmailOptions>>().Value;
+        options.SenderEmail.Should().Be("noreply@darwin.de");
     }
 
     private static void AddNotificationDependencies(IServiceCollection services)
@@ -120,7 +103,7 @@ public sealed class ServiceCollectionExtensionsNotificationsTests
 
     private sealed class NotificationServiceCollectionTestDbContext : DbContext, IAppDbContext
     {
-        private NotificationServiceCollectionTestDbContext(DbContextOptions<NotificationServiceCollectionTestDbContext> options)
+        public NotificationServiceCollectionTestDbContext(DbContextOptions<NotificationServiceCollectionTestDbContext> options)
             : base(options)
         {
         }

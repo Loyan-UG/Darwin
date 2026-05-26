@@ -3,12 +3,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Darwin.Application;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Infrastructure.Notifications.Brevo;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 
@@ -23,15 +25,18 @@ namespace Darwin.WebApi.Controllers.Public;
 public sealed class BrevoWebhooksController : ApiControllerBase
 {
     private readonly ProviderCallbackInboxWriter _inboxWriter;
+    private readonly IAppDbContext _db;
     private readonly BrevoEmailOptions _options;
     private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
 
     public BrevoWebhooksController(
         ProviderCallbackInboxWriter inboxWriter,
+        IAppDbContext db,
         IOptions<BrevoEmailOptions> options,
         IStringLocalizer<ValidationResource> validationLocalizer)
     {
         _inboxWriter = inboxWriter ?? throw new ArgumentNullException(nameof(inboxWriter));
+        _db = db ?? throw new ArgumentNullException(nameof(db));
         _options = (options ?? throw new ArgumentNullException(nameof(options))).Value;
         _validationLocalizer = validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
     }
@@ -43,12 +48,13 @@ public sealed class BrevoWebhooksController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ReceiveAsync(CancellationToken ct = default)
     {
-        if (!HasWebhookCredentials())
+        var credentials = await ResolveWebhookCredentialsAsync(ct).ConfigureAwait(false);
+        if (!credentials.IsConfigured)
         {
             return BadRequestProblem(_validationLocalizer["BrevoWebhookAuthenticationNotConfigured"]);
         }
 
-        if (!TryVerifyBasicAuth(Request.Headers.Authorization.ToString()))
+        if (!TryVerifyBasicAuth(Request.Headers.Authorization.ToString(), credentials.Username!, credentials.Password!))
         {
             return BadRequestProblem(_validationLocalizer["BrevoWebhookAuthenticationInvalid"]);
         }
@@ -80,13 +86,34 @@ public sealed class BrevoWebhooksController : ApiControllerBase
         });
     }
 
-    private bool HasWebhookCredentials()
+    private async Task<(bool IsConfigured, string? Username, string? Password)> ResolveWebhookCredentialsAsync(CancellationToken ct)
     {
-        return !string.IsNullOrWhiteSpace(_options.WebhookUsername) &&
-               !string.IsNullOrWhiteSpace(_options.WebhookPassword);
+        var settings = await _db.Set<Darwin.Domain.Entities.Settings.SiteSetting>()
+            .AsNoTracking()
+            .OrderBy(x => x.CreatedAtUtc)
+            .Select(x => new
+            {
+                x.BrevoWebhookUsername,
+                x.BrevoWebhookPassword
+            })
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false);
+
+        var username = settings?.BrevoWebhookUsername;
+        var password = settings?.BrevoWebhookPassword;
+
+        if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(password))
+        {
+            username = _options.WebhookUsername;
+            password = _options.WebhookPassword;
+        }
+
+        return !string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password)
+            ? (true, username.Trim(), password.Trim())
+            : (false, null, null);
     }
 
-    private bool TryVerifyBasicAuth(string authorizationHeader)
+    private static bool TryVerifyBasicAuth(string authorizationHeader, string expectedUsername, string expectedPassword)
     {
         if (!AuthenticationHeaderValue.TryParse(authorizationHeader, out var header) ||
             !string.Equals(header.Scheme, "Basic", StringComparison.OrdinalIgnoreCase) ||
@@ -113,8 +140,8 @@ public sealed class BrevoWebhooksController : ApiControllerBase
 
         var username = decoded[..separatorIndex];
         var password = decoded[(separatorIndex + 1)..];
-        return FixedTimeEquals(username, _options.WebhookUsername!) &&
-               FixedTimeEquals(password, _options.WebhookPassword!);
+        return FixedTimeEquals(username, expectedUsername) &&
+               FixedTimeEquals(password, expectedPassword);
     }
 
     private static bool FixedTimeEquals(string left, string right)

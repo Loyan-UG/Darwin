@@ -61,6 +61,9 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
         try
         {
             await File.WriteAllTextAsync(inputPath, invoice.IssuedSnapshotJson, Encoding.UTF8, ct).ConfigureAwait(false);
+            await using (File.Create(validationReportPath))
+            {
+            }
             var result = await RunCommandAsync(
                 options,
                 request.Format,
@@ -156,9 +159,7 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
         process.StartInfo.ArgumentList.Add(outputPath);
         process.StartInfo.ArgumentList.Add("--format");
         process.StartInfo.ArgumentList.Add(ResolveFormatArgument(format));
-        process.StartInfo.ArgumentList.Add("--validation-profile");
         process.StartInfo.ArgumentList.Add(options.ValidationProfile);
-        process.StartInfo.ArgumentList.Add("--validation-report");
         process.StartInfo.ArgumentList.Add(validationReportPath);
 
         if (!string.IsNullOrWhiteSpace(options.WorkingDirectory))
@@ -260,6 +261,12 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
     private static string? ValidateValidationReport(string validationReportPath)
     {
         if (!File.Exists(validationReportPath))
+        {
+            return null;
+        }
+
+        if (new FileInfo(validationReportPath).Length == 0 ||
+            string.IsNullOrWhiteSpace(File.ReadAllText(validationReportPath, Encoding.UTF8)))
         {
             return null;
         }
@@ -414,7 +421,7 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
             JsonValueKind.True => (parsed = true, true).Item2,
             JsonValueKind.False => true,
             JsonValueKind.String => bool.TryParse(value.GetString(), out parsed),
-            JsonValueKind.Number => value.TryGetDouble(out var valueAsDouble) && (parsed = Math.Abs(valueAsDouble) > double.Epsilon),
+            JsonValueKind.Number when value.TryGetDouble(out var valueAsDouble) => (parsed = Math.Abs(valueAsDouble) > double.Epsilon, true).Item2,
             _ => false
         };
     }

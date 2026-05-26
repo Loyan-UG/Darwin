@@ -28,16 +28,7 @@ public sealed class BrevoEmailOptionsValidator : IValidateOptions<BrevoEmailOpti
             failures.Add("Email:Brevo:BaseUrl must be an absolute HTTPS URL when Email:Provider is Brevo.");
         }
 
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
-        {
-            failures.Add("Email:Brevo:ApiKey is required when Email:Provider is Brevo.");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.SenderEmail))
-        {
-            failures.Add("Email:Brevo:SenderEmail is required when Email:Provider is Brevo.");
-        }
-        else if (!IsEmailAddress(options.SenderEmail))
+        if (!string.IsNullOrWhiteSpace(options.SenderEmail) && !IsEmailAddress(options.SenderEmail))
         {
             failures.Add("Email:Brevo:SenderEmail must be a valid email address.");
         }
@@ -45,16 +36,6 @@ public sealed class BrevoEmailOptionsValidator : IValidateOptions<BrevoEmailOpti
         if (!string.IsNullOrWhiteSpace(options.ReplyToEmail) && !IsEmailAddress(options.ReplyToEmail))
         {
             failures.Add("Email:Brevo:ReplyToEmail must be a valid email address.");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.WebhookUsername))
-        {
-            failures.Add("Email:Brevo:WebhookUsername is required when Email:Provider is Brevo.");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.WebhookPassword))
-        {
-            failures.Add("Email:Brevo:WebhookPassword is required when Email:Provider is Brevo.");
         }
 
         if (options.TimeoutSeconds is < 5 or > 120)

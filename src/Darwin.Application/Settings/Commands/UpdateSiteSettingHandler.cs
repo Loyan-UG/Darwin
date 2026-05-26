@@ -180,6 +180,17 @@ namespace Darwin.Application.Settings.Commands
             s.SmtpPassword = ResolveSecret(dto.SmtpPassword, s.SmtpPassword);
             s.SmtpFromAddress = dto.SmtpFromAddress;
             s.SmtpFromDisplayName = dto.SmtpFromDisplayName;
+            s.TransactionalEmailProvider = string.IsNullOrWhiteSpace(dto.TransactionalEmailProvider) ? "Brevo" : dto.TransactionalEmailProvider.Trim();
+            s.SupportEmail = dto.SupportEmail.Trim();
+            s.BillingEmail = dto.BillingEmail.Trim();
+            s.NoReplyEmail = dto.NoReplyEmail.Trim();
+            s.SystemAdminEmail = dto.SystemAdminEmail.Trim();
+            s.BrevoBaseUrl = string.IsNullOrWhiteSpace(dto.BrevoBaseUrl) ? "https://api.brevo.com/v3/" : dto.BrevoBaseUrl.Trim();
+            s.BrevoApiKey = ResolveSecret(dto.BrevoApiKey, s.BrevoApiKey);
+            s.BrevoWebhookUsername = ResolveSecret(dto.BrevoWebhookUsername, s.BrevoWebhookUsername);
+            s.BrevoWebhookPassword = ResolveSecret(dto.BrevoWebhookPassword, s.BrevoWebhookPassword);
+            s.BrevoSandboxMode = dto.BrevoSandboxMode;
+            s.BrevoTestRecipientEmail = dto.BrevoTestRecipientEmail;
 
             // -------- SMS --------
             s.SmsEnabled = dto.SmsEnabled;
@@ -246,6 +257,9 @@ namespace Darwin.Application.Settings.Commands
             dto.SmtpPassword = ResolveSecret(dto.SmtpPassword, current.SmtpPassword);
             dto.SmsApiKey = ResolveSecret(dto.SmsApiKey, current.SmsApiKey);
             dto.SmsApiSecret = ResolveSecret(dto.SmsApiSecret, current.SmsApiSecret);
+            dto.BrevoApiKey = ResolveSecret(dto.BrevoApiKey, current.BrevoApiKey);
+            dto.BrevoWebhookUsername = ResolveSecret(dto.BrevoWebhookUsername, current.BrevoWebhookUsername);
+            dto.BrevoWebhookPassword = ResolveSecret(dto.BrevoWebhookPassword, current.BrevoWebhookPassword);
         }
     }
 }

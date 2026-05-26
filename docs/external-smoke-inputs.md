@@ -1,118 +1,129 @@
 # External Smoke Inputs
 
-Reviewed: 2026-05-10
+Reviewed: 2026-05-26
 
-This file lists the inputs needed to run external provider smoke checks. Do not store real secret values in this file or any committed configuration.
+This file lists non-committed inputs for external smoke checks. Do not store real secret values in this file or any committed configuration. Do not store real provider secrets, API keys, webhook secrets, access keys, or private signing material in this file.
 
-Run the dry-run aggregator first:
+Run the aggregate dry-run first:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readiness.ps1
 ```
 
-Exit code `2` means one or more external smoke checks are blocked by missing account or deployment inputs. That is expected until the provider settings are available.
+Exit code `2` means one or more checks are blocked by missing operator inputs. That is expected before a provider is fully configured.
 
 ## Stripe Test Mode
 
-Secrets and account settings must be entered through Site Settings or secure configuration:
+Secrets must be entered through Site Settings or secure deployment configuration:
 
-- Stripe test secret key.
-- Stripe test publishable key for the front-office client.
-- Stripe webhook signing secret.
+- Test publishable key.
+- Test server-side key.
+- Test webhook signing secret.
 - Stripe enabled flag.
 
-Local smoke environment variables:
+Smoke variables:
 
 - `DARWIN_WEBAPI_BASE_URL`
 - `DARWIN_STRIPE_SMOKE_ORDER_ID`, unless using `-CreateSmokeOrder`
 - `DARWIN_STRIPE_SMOKE_ORDER_NUMBER`, unless using `-CreateSmokeOrder`
 - `DARWIN_BUSINESS_API_BEARER_TOKEN`, when using `-CheckBusinessSubscriptionCheckout`
 - `DARWIN_STRIPE_SMOKE_BILLING_PLAN_ID`, when using `-CheckBusinessSubscriptionCheckout`
-
-Webhook forwarding variables:
-
-- `DARWIN_STRIPE_WEBHOOK_PUBLIC_URL`, when using a Stripe Dashboard endpoint or HTTPS tunnel. It must end with `/api/v1/public/billing/stripe/webhooks`.
-- `DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED=true`, after Stripe Dashboard delivery or Stripe CLI forwarding is configured.
-- `DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`, after ProviderCallbackWorker is enabled for the target environment.
+- `DARWIN_STRIPE_WEBHOOK_PUBLIC_URL`, when using a public HTTPS endpoint for webhook delivery
+- `DARWIN_STRIPE_WEBHOOK_FORWARDING_CONFIRMED=true`, after Dashboard delivery or Stripe CLI forwarding is confirmed
+- `DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`, after callback processing is enabled
 
 Commands:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-stripe-webhook-forwarding.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -CreateSmokeOrder
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -Execute
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -Execute -CreateSmokeOrder
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -Execute -CheckReturnRoute
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -Execute -CheckReturnRoute -OpenCheckout
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -CheckBusinessSubscriptionCheckout
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -Execute -CreateSmokeOrder -CheckReturnRoute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -Execute -CheckBusinessSubscriptionCheckout
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -RequireRuntimePipeline
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-stripe-testmode.ps1 -Execute -CreateSmokeOrder -CheckReturnRoute -OpenCheckout -WaitForWebhookFinalization
 ```
 
-Latest staging note: on 2026-05-24 the `https://api.loyan.de` smoke created a disposable public checkout order, received a Stripe-hosted Checkout Session, confirmed the return route left the payment `Pending`, completed the hosted test-card payment, received signed `payment_intent.succeeded` and `checkout.session.completed` events, and processed both callback inbox rows with `ProviderCallbackWorker`. The matching Darwin payment moved to captured/provider-finalized state with `PaidAtUtc` set. The webhook public URL preflight also passed. The business subscription Checkout Session was also paid in test mode; signed `checkout.session.completed` and `invoice.paid` events were processed, and the matching `BusinessSubscription` received provider checkout, customer, subscription references, and `StartedAtUtc`. WebAdmin `Orders/AddRefund` then created a provider-backed Stripe refund, stored provider status `succeeded`, received signed `charge.refunded`, and processed it through `ProviderCallbackWorker`. Live-mode smoke remains a separate follow-up validation.
+Acceptance:
 
-The same 2026-05-24 test-mode run updated the Stripe Dashboard endpoint to include the dispute events `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.funds_withdrawn`, and `charge.dispute.closed`. A real test-mode disputed charge then delivered signed `charge.dispute.created`; `ProviderCallbackWorker` processed it and the matched Darwin payment was marked for dispute follow-up with an `UnderReview` dispute marker. Live-mode smoke remains a separate production-readiness validation.
+- The checkout URL comes from Stripe-hosted Checkout.
+- Browser return routes do not mark payments or subscriptions successful.
+- Verified webhook processing finalizes payment/subscription state.
+- Provider references and secrets are not printed.
 
-The final provider result must still come from verified Stripe webhooks, not from the storefront return route.
-Use `-CreateSmokeOrder` to create a disposable storefront order through public cart/checkout before the Stripe handoff. Use `-CheckBusinessSubscriptionCheckout` with a business API bearer token and an active billing-plan id to verify the authenticated business subscription endpoint creates a Stripe-hosted subscription Checkout Session. Use `-OpenCheckout` when you are ready to pay the Stripe test Checkout Session in a browser. The script opens the hosted checkout URL but does not print the URL or provider references. Use `-WaitForWebhookFinalization` after webhook delivery is configured; the script now blocks before creating the checkout session unless Stripe Dashboard delivery or Stripe CLI forwarding has been confirmed, then polls Darwin WebApi confirmation state until the verified webhook updates the payment to `Captured` or `Completed`.
-If using Stripe CLI, forward events to `DARWIN_WEBAPI_BASE_URL/api/v1/public/billing/stripe/webhooks` and enter the CLI-provided webhook signing secret securely in Site Settings for the same database used by WebApi. The forwarding preflight never accepts or prints that secret.
+## Stripe Live Readiness
 
-The current WebApi source rejects local/mock Stripe handoff fallback. If execute mode does not return a Stripe-hosted URL, rebuild/restart WebApi and verify that `StripeEnabled` plus the test server-side key are configured for the same database/settings source used by that WebApi instance.
+This is a checklist before approved live-mode execution. It does not call Stripe or create live charges.
 
-## Mobile Maps And Push Production Inputs
+Required confirmations:
 
-These inputs are required for signed mobile release artifacts and device smoke. They must not be committed as real production secrets or credentials.
+- `DARWIN_STRIPE_LIVE_WEBHOOK_PUBLIC_URL`
+- `DARWIN_STRIPE_LIVE_KEYS_CONFIGURED_CONFIRMED=true`
+- `DARWIN_STRIPE_LIVE_WEBHOOK_ENDPOINT_CONFIRMED=true`
+- `DARWIN_STRIPE_LIVE_WEBHOOK_EVENTS_CONFIRMED=true`
+- `DARWIN_STRIPE_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`
+- `DARWIN_STRIPE_WEBADMIN_VISIBILITY_CONFIRMED=true`
+- `DARWIN_STRIPE_MONITORING_CONFIRMED=true`
+- `DARWIN_STRIPE_ALERTING_CONFIRMED=true`
+- `DARWIN_STRIPE_REFUND_DISPUTE_PLAYBOOK_CONFIRMED=true`
 
-Android maps:
-
-- `Darwin.Mobile.Consumer` reads the Google Maps key from the MSBuild property `GoogleMapsApiKey`, then `GOOGLE_MAPS_API_KEY`, then `ANDROID_GOOGLE_MAPS_API_KEY`. Local developers can store the same value in `.NET User Secrets` for `src/Darwin.Mobile.Consumer/Darwin.Mobile.Consumer.csproj` and run `scripts/sync-mobile-google-maps-user-secret.ps1` to synchronize the build-time environment variables without printing the key.
-- The key should be restricted in Google Cloud to the Android package name and the release signing certificate SHA fingerprint.
-- Android Release builds fail if no Google Maps key is supplied, because the discovery map can otherwise render as a broken production feature.
-
-Android push:
-
-- `src/Darwin.Mobile.Consumer/google-services.json` is required for Android Release builds with FCM push integration.
-- The file is Firebase project configuration, not a service-account private key, but it still identifies the Firebase project and must come from the approved production Firebase project.
-- Keep production Firebase service-account keys and server credentials outside the repository. Darwin only needs the mobile app config file at build time and server-side push credentials in secure deployment configuration.
-
-iOS and MacCatalyst push:
-
-- Release entitlements already select `aps-environment=production`, but a signed build still needs the matching Apple Developer App ID, provisioning profile, and Push Notifications capability.
-- APNS provider credentials, such as key id, team id, bundle id, and APNS auth key, belong in secure provider/server configuration, not in source control.
-- Run device smoke after installing a signed build: request notification permission, register a device token, verify Darwin stores the registration, send a controlled notification, and verify logout/account switch clears local registration state where applicable.
-
-Local check without printing secrets:
+Command:
 
 ```powershell
-$names = 'GoogleMapsApiKey','GOOGLE_MAPS_API_KEY','ANDROID_GOOGLE_MAPS_API_KEY','FIREBASE_CONFIG','GOOGLE_APPLICATION_CREDENTIALS','APNS_AUTH_KEY','APPLE_TEAM_ID','APPLE_BUNDLE_ID'
-foreach ($name in $names) {
-    $value = [Environment]::GetEnvironmentVariable($name)
-    [pscustomobject]@{ Name = $name; Present = -not [string]::IsNullOrWhiteSpace($value) }
-}
-Get-ChildItem -Path src/Darwin.Mobile.Consumer -Filter google-services.json -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-stripe-live-readiness.ps1
 ```
 
-Current local check on 2026-05-23: the local Consumer `google-services.json` file is present and ignored by Git, local `.NET User Secrets` exist for the Consumer Google Maps build key, and `scripts/sync-mobile-google-maps-user-secret.ps1` can synchronize the MSBuild environment variables for Visual Studio after restart. Signed Android Release and push smoke still require approved production Firebase/APNS credentials, signing, and device validation.
+Live-mode execution still requires explicit operator approval.
 
-## DHL Live Smoke
+## Brevo
 
-Secrets and account settings must be entered through Site Settings or secure configuration:
+Runtime application settings are DB-backed through Site Settings. This script is a direct operator harness and expects environment variables in the current shell.
 
-- DHL API key.
-- DHL API secret.
-- DHL account number.
-- DHL base URL. Non-local endpoints must use HTTPS.
-- Product code confirmed for the target account.
+Required variables:
 
-Local smoke environment variables:
+- `DARWIN_BREVO_API_KEY`
+- `DARWIN_BREVO_SENDER_EMAIL`
+- `DARWIN_BREVO_TEST_RECIPIENT_EMAIL`
+
+Optional variables:
+
+- `DARWIN_BREVO_BASE_URL`
+- `DARWIN_BREVO_SENDER_NAME`
+- `DARWIN_BREVO_REPLY_TO_EMAIL`
+
+Delivery-pipeline confirmations:
+
+- `DARWIN_BREVO_WEBHOOK_PUBLIC_URL`
+- `DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED=true`
+- `DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED=true`
+- `DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`
+- `DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true`
+
+Commands:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -Execute -Sandbox
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -RequireDeliveryPipeline
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -Execute
+```
+
+Acceptance:
+
+- Sandbox mode verifies account authentication and request shape without delivering a message.
+- Non-sandbox controlled-inbox smoke is run only after webhook and worker confirmations.
+- Webhook events are visible in provider callback processing.
+- Secrets and raw provider responses are not printed.
+
+## DHL
+
+Secrets and account settings must be entered through Site Settings or secure configuration.
+
+Required variables:
 
 - `DARWIN_DHL_API_BASE_URL`
 - `DARWIN_DHL_API_KEY`
 - `DARWIN_DHL_API_SECRET`
 - `DARWIN_DHL_ACCOUNT_NUMBER`
-- `DARWIN_DHL_PRODUCT_CODE` optional; defaults to `V01PAK`.
+- `DARWIN_DHL_PRODUCT_CODE` optional; defaults to the script value
 - `DARWIN_DHL_SHIPPER_NAME`
 - `DARWIN_DHL_SHIPPER_STREET`
 - `DARWIN_DHL_SHIPPER_POSTAL_CODE`
@@ -125,10 +136,13 @@ Local smoke environment variables:
 - `DARWIN_DHL_TEST_RECEIVER_POSTAL_CODE`
 - `DARWIN_DHL_TEST_RECEIVER_CITY`
 - `DARWIN_DHL_TEST_RECEIVER_COUNTRY`
-- `DARWIN_DHL_TEST_RECEIVER_PHONE_E164` optional.
-- `DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED=true`, after ShipmentProviderOperationWorker is enabled.
-- `DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`, after ProviderCallbackWorker is enabled.
-- `DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED=true`, after the ShipmentLabels object-storage profile or shared media fallback is validated.
+- `DARWIN_DHL_TEST_RECEIVER_PHONE_E164` optional
+
+Runtime confirmations:
+
+- `DARWIN_DHL_SHIPMENT_PROVIDER_OPERATION_WORKER_CONFIRMED=true`
+- `DARWIN_DHL_PROVIDER_CALLBACK_WORKER_CONFIRMED=true`
+- `DARWIN_DHL_SHIPMENT_LABELS_STORAGE_CONFIRMED=true`
 
 Commands:
 
@@ -139,56 +153,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-dhl-live.ps1 -
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-dhl-live.ps1 -Execute -IncludeReturn
 ```
 
-Use `-IncludeReturn` after outbound validation is approved to validate the return-shipment sender/receiver mapping against the same account and product code. Do not create fake DHL labels, references, or tracking URLs. Carrier-integrated RMA remains a separate implementation slice.
+Acceptance:
 
-## Brevo
-
-Secrets and account settings must be entered through secure configuration:
-
-- Brevo API key.
-- Webhook Basic Auth username/password.
-- Sender domain verification.
-- DKIM and DMARC.
-- Sandbox mode off only for production delivery.
-
-Local smoke environment variables:
-
-- `DARWIN_BREVO_API_KEY`
-- `DARWIN_BREVO_SENDER_EMAIL`
-- `DARWIN_BREVO_TEST_RECIPIENT_EMAIL`
-- `DARWIN_BREVO_BASE_URL` optional; non-local endpoints must use HTTPS.
-- `DARWIN_BREVO_SENDER_NAME` optional.
-- `DARWIN_BREVO_REPLY_TO_EMAIL` optional.
-- `DARWIN_BREVO_WEBHOOK_PUBLIC_URL` for production pipeline readiness; must end with `/api/v1/public/notifications/brevo/webhooks`.
-- `DARWIN_BREVO_WEBHOOK_CONFIGURED_CONFIRMED=true` after the webhook is configured in Brevo.
-- `DARWIN_BREVO_TRANSACTIONAL_EVENTS_CONFIRMED=true` after transactional webhook events are subscribed.
-- `DARWIN_BREVO_PROVIDER_CALLBACK_WORKER_CONFIRMED=true` after ProviderCallbackWorker is enabled.
-- `DARWIN_BREVO_EMAIL_DISPATCH_WORKER_CONFIRMED=true` after EmailDispatchOperationWorker is enabled.
-
-Commands:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -RequireDeliveryPipeline
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -Execute -Sandbox
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -Execute
-```
-
-Run the controlled-inbox send only after DNS, sender approval, webhook subscription, and worker enablement are complete. Non-sandbox execute mode requires the delivery pipeline confirmations and does not accept or print webhook Basic Auth credentials.
+- Provider references, tracking values, and labels come from DHL.
+- No fake labels, references, or tracking URLs are generated.
+- Labels are stored through configured storage.
+- WebAdmin can inspect and recover failed/stale provider operations.
 
 ## VIES
 
-Configuration:
-
-- `Compliance:VatValidation:Vies:Enabled=true`.
-- Endpoint URL and timeout confirmed for the deployment.
-
-Local smoke environment variables:
+Required variables:
 
 - `DARWIN_VIES_VALID_VAT_ID`
 - `DARWIN_VIES_INVALID_VAT_ID`
-- `DARWIN_VIES_ENDPOINT_URL` optional; if set, it must be an absolute URL and non-local endpoints must use HTTPS.
-- `DARWIN_VIES_TIMEOUT_SECONDS` optional; if set, it must be between 1 and 120 seconds.
+
+Optional variables:
+
+- `DARWIN_VIES_ENDPOINT_URL`
+- `DARWIN_VIES_TIMEOUT_SECONDS`
 
 Commands:
 
@@ -198,74 +180,77 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-vies-live.ps1 
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-vies-live.ps1 -Execute -CheckProviderFailure
 ```
 
-Provider failures must remain `Unknown` with manual review, not false `Valid` or `Invalid`.
+Acceptance:
 
-## Object Storage
+- Clear provider valid response maps to `Valid`.
+- Clear provider invalid response maps to `Invalid`.
+- Provider timeout, malformed response, unavailable service, or exception maps to `Unknown`/manual review.
+- Provider failures must remain `Unknown` and require manual review.
 
-Use this smoke only after the selected storage provider and disposable smoke container/bucket are configured. The script creates, reads, inspects, optionally generates a temporary URL for, and deletes one disposable object unless retention smoke is enabled.
+## Object Storage And MinIO
 
-Common environment variables:
+Generic object-storage smoke variables:
 
-- `DARWIN_OBJECT_STORAGE_PROVIDER`: `S3Compatible`, `AzureBlob`, or `FileSystem`.
-- `DARWIN_OBJECT_STORAGE_PROFILE` optional; defaults to `Smoke`.
+- `DARWIN_OBJECT_STORAGE_PROVIDER`
 - `DARWIN_OBJECT_STORAGE_CONTAINER`
-- `DARWIN_OBJECT_STORAGE_PREFIX` optional; use it to verify profile-level object-key prefix behavior before routing CMS media, DHL labels, invoice archive, or export artifacts to that provider.
-- `DARWIN_OBJECT_STORAGE_MEDIA_CONTAINER` optional; overrides the common container for the `MediaAssets` readiness check.
-- `DARWIN_OBJECT_STORAGE_MEDIA_PREFIX` optional; overrides the common prefix for the `MediaAssets` readiness check.
-- `DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_CONTAINER` optional; overrides the common container for the `ShipmentLabels` readiness check.
-- `DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_PREFIX` optional; overrides the common prefix for the `ShipmentLabels` readiness check.
-- `DARWIN_OBJECT_STORAGE_PUBLIC_BASE_URL` optional.
-- `DARWIN_OBJECT_STORAGE_REQUIRE_OBJECT_LOCK` optional.
-- `DARWIN_OBJECT_STORAGE_RETENTION_MODE` optional.
-- `DARWIN_OBJECT_STORAGE_LEGAL_HOLD_ENABLED` optional.
-- `DARWIN_OBJECT_STORAGE_VALIDATION_MODE` optional.
-- `DARWIN_OBJECT_STORAGE_SMOKE_RETENTION` optional; when `true`, delete cleanup is skipped to let operators inspect retention behavior.
-
-S3-compatible / MinIO / AWS S3 variables:
-
 - `DARWIN_OBJECT_STORAGE_S3_BUCKET`
-- `DARWIN_OBJECT_STORAGE_S3_ENDPOINT` or `DARWIN_OBJECT_STORAGE_S3_REGION`
 - `DARWIN_OBJECT_STORAGE_S3_ACCESS_KEY`
 - `DARWIN_OBJECT_STORAGE_S3_SECRET_KEY`
-- `DARWIN_OBJECT_STORAGE_S3_USE_SSL` optional.
-- `DARWIN_OBJECT_STORAGE_S3_USE_PATH_STYLE` optional.
-- `DARWIN_OBJECT_STORAGE_S3_FORCE_PATH_STYLE` optional.
-
-Azure Blob variables:
-
+- `DARWIN_OBJECT_STORAGE_S3_ENDPOINT_OR_REGION`
 - `DARWIN_OBJECT_STORAGE_AZURE_CONTAINER`
-- `DARWIN_OBJECT_STORAGE_AZURE_CONNECTION_STRING`, or managed identity with:
-- `DARWIN_OBJECT_STORAGE_AZURE_ACCOUNT_NAME`
-- `DARWIN_OBJECT_STORAGE_AZURE_USE_MANAGED_IDENTITY=true`
-- `DARWIN_OBJECT_STORAGE_AZURE_CLIENT_ID` optional for user-assigned managed identity.
+- Provider-specific endpoint, region, access key, secret key, bucket/container, and profile values required by the selected provider.
 
-File-system fallback variable:
+Local MinIO smoke variables:
 
-- `DARWIN_OBJECT_STORAGE_FILE_ROOT`
+- `DARWIN_RUN_MINIO_SMOKE=true`
+- `DARWIN_MINIO_ENDPOINT`
+- `DARWIN_MINIO_REGION`
+- `DARWIN_MINIO_ACCESS_KEY`
+- `DARWIN_MINIO_SECRET_KEY`
+- `DARWIN_MINIO_BUCKET`
+
+Production MinIO readiness confirmations:
+
+- `DARWIN_MINIO_PRODUCTION_ENDPOINT`
+- `DARWIN_MINIO_PRODUCTION_BUCKET`
+- `DARWIN_MINIO_PRODUCTION_PROVIDER_SELECTED_CONFIRMED=true`
+- `DARWIN_MINIO_TLS_CONFIRMED=true`
+- `DARWIN_MINIO_DEDICATED_KEYS_CONFIRMED=true`
+- `DARWIN_MINIO_LEAST_PRIVILEGE_POLICY_CONFIRMED=true`
+- `DARWIN_MINIO_BUCKET_OBJECT_LOCK_CONFIRMED=true`
+- `DARWIN_MINIO_BUCKET_VERSIONING_CONFIRMED=true`
+- `DARWIN_MINIO_DEFAULT_RETENTION_CONFIRMED=true`
+- `DARWIN_MINIO_RETENTION_MODE_CONFIRMED=true`
+- `DARWIN_MINIO_LEGAL_HOLD_POLICY_CONFIRMED=true`
+- `DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED=true`
+- `DARWIN_MINIO_RESTORE_TEST_CONFIRMED=true`
+- `DARWIN_MINIO_MONITORING_CONFIRMED=true`
+- `DARWIN_MINIO_ALERTING_CONFIRMED=true`
+- `DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED=true`
 
 Commands:
 
 ```powershell
+dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Minio"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Provider FileSystem -ContainerName smoke -FileRoot C:\DarwinStorageSmoke -Execute
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -ProfileName MediaAssets
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -ProfileName ShipmentLabels
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
 
-Do not run the execute mode against an invoice archive production container until retention/legal-hold policy and cleanup expectations are explicit. Use a disposable smoke container or object prefix first. Use `-SmokeRetention` only when the selected provider/container is expected to keep the disposable retained object for operator inspection; the script intentionally skips delete cleanup in that mode.
+Acceptance:
+
+- Local smoke is optional and does not prove production immutability.
+- Production immutability requires provider-level validation on the real bucket/container.
 
 ## E-Invoice External Command
 
-Use this smoke only after an operator has selected a deployment-approved ZUGFeRD/Factur-X or XRechnung generator/validator wrapper. The smoke runs Darwin's disabled-by-default `IEInvoiceGenerationService` external-command adapter and verifies process execution plus artifact shape. It may also surface legal-validation report failures when the wrapper writes `--validation-report`. It does not prove legal compliance, PDF/A-3 validity, EN16931 validation, or XRechnung profile validation.
+Required variable:
 
-Environment variables:
+- `DARWIN_EINVOICE_COMMAND_PATH`
 
-- `DARWIN_EINVOICE_COMMAND_PATH`: absolute path to the approved wrapper executable.
-- `DARWIN_EINVOICE_FORMAT` optional; defaults to `ZugferdFacturX`. Accepted values are `ZugferdFacturX` and `XRechnung`.
-- `DARWIN_EINVOICE_VALIDATION_PROFILE` optional; defaults to `external-command-smoke`.
-- `DARWIN_EINVOICE_TEMP_DIRECTORY` optional; use an approved local temp root when the default OS temp directory is unsuitable.
+Optional variables:
+
+- `DARWIN_EINVOICE_FORMAT`
+- `DARWIN_EINVOICE_VALIDATION_PROFILE`
 
 Commands:
 
@@ -275,4 +260,30 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-exter
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Format XRechnung -Execute
 ```
 
-The configured command receives `--input <issued-snapshot-json> --output <artifact-path> --format <zugferd-factur-x|xrechnung> --validation-profile <profile-name> --validation-report <path-to-json>`. The smoke does not print invoice payloads, generated artifacts, command stdout/stderr, executable path, or provider credentials. A passed smoke only means the adapter can call the selected wrapper and Darwin's local artifact-shape guard accepted the output. Full release readiness still requires validator evidence from the selected tooling and production download/storage smoke.
+Acceptance:
+
+- The adapter can call the approved wrapper.
+- Output shape and validation-report handling pass.
+- Smoke success does not by itself prove legal e-invoice compliance.
+
+## Mobile Maps And Push
+
+Android maps:
+
+- Provide `GoogleMapsApiKey`, `GOOGLE_MAPS_API_KEY`, or `ANDROID_GOOGLE_MAPS_API_KEY` at build time.
+- Restrict the key to the Android package and signing certificate fingerprint.
+
+Android push:
+
+- Provide approved Firebase `google-services.json` at build time.
+- Keep Firebase service-account credentials outside the repository.
+
+iOS/MacCatalyst push:
+
+- Provide Apple Developer App ID, provisioning profile, Push Notifications capability, and APNS provider credentials through secure configuration.
+
+Acceptance:
+
+- Signed release builds include production mobile configuration.
+- Device smoke registers push tokens and verifies logout/account-switch behavior.
+- Physical camera QR scanning is validated with real device/camera input.

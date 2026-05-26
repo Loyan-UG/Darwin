@@ -96,6 +96,16 @@ Latest local result:
 - Bucket validation: bucket existed, versioning was enabled, and default Object Lock retention reported `COMPLIANCE` for `1DAYS`.
 - Note: smoke objects remain in the local bucket until retention permits deletion. This is expected for the local Object Lock setup and is not a production retention-policy validation.
 
+Latest local recheck:
+
+- Date: 2026-05-26
+- Docker validation: `darwin-minio` was healthy; `mc version info` reported versioning enabled; `mc retention info --default` reported Object Lock `COMPLIANCE` for `1DAYS`.
+- Test command: `dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Minio" --no-restore /p:UseSharedCompilation=false`
+- Test result: `3` passed, `0` skipped, `3` total.
+- Provider smoke command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention`
+- Provider smoke result: save/read/metadata/temporary-url checks completed against the local S3-compatible provider path; cleanup was skipped because retention smoke was enabled.
+- Local configuration: WebApi, WebAdmin, and Worker User Secrets route `InvoiceArchive` and `ShipmentLabels` profiles to the local MinIO bucket through a dedicated bucket-scoped app user. These secrets are machine-local and must not be copied to repository files.
+
 ## WebAdmin Local Smoke Action
 
 WebAdmin Site Settings includes an object-storage smoke action that writes a small test object, reads it back, verifies the hash and metadata, then attempts cleanup. When the local MinIO bucket has default COMPLIANCE retention, the smoke action can report success with cleanup blocked; that is expected because provider-level retention prevents deletion.
@@ -124,5 +134,13 @@ Before using MinIO for production invoice archive traffic:
 - Test backup, restore, and offsite copy before go-live.
 - Monitor disk usage, failed writes, and retention-related failures.
 - Run Darwin WebAdmin object-storage smoke against a disposable profile before routing invoice archive traffic to the production bucket.
+
+Run the production readiness preflight after the operator has confirmed the final deployment settings:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
+```
+
+The preflight checks only non-secret confirmations. It does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight means the deployment checklist is complete enough to run the selected-provider smoke and WebAdmin smoke against the production bucket; it is not a production immutability claim by itself.
 
 Application-level overwrite protection is not the same as provider-level immutable retention. Production immutability can only be claimed after the selected provider bucket/container enforces retention, Object Lock or legal hold, and that behavior has been validated.

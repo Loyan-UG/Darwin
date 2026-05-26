@@ -18,7 +18,7 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.6")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
@@ -4976,6 +4976,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .IsRequired()
                         .HasColumnType("bytea");
 
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -5082,6 +5087,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("bytea");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -7248,6 +7258,35 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<bool>("AllowReverseCharge")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("BillingEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("BrevoApiKey")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("BrevoBaseUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("BrevoSandboxMode")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BrevoTestRecipientEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("BrevoWebhookPassword")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("BrevoWebhookUsername")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("BusinessInvitationEmailBodyTemplate")
                         .HasMaxLength(8000)
                         .HasColumnType("character varying(8000)");
@@ -7507,6 +7546,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                     b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("NoReplyEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("NumberFormattingOverridesJson")
                         .HasMaxLength(2000)
                         .HasColumnType("jsonb");
@@ -7644,10 +7688,20 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("SupportEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("SupportedCulturesCsv")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("SystemAdminEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("TimeFormat")
                         .IsRequired()
@@ -7663,6 +7717,11 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TransactionalEmailProvider")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("TransactionalEmailSubjectPrefix")
                         .HasMaxLength(120)

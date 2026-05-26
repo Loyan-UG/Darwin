@@ -19,6 +19,7 @@ _shared_keys/
 **/_shared_keys/
 _shared_media/
 **/_shared_media/
+.darwin-tools/
 
 # Allow committed development baseline configs (no real secrets, used by structure tests)
 !/src/Darwin.WebAdmin/appsettings.Development.json

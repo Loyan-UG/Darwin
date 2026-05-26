@@ -324,6 +324,39 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "SiteSettingSmtpFromDisplayName")]
         public string? SmtpFromDisplayName { get; set; }
 
+        [Display(Name = "SiteSettingTransactionalEmailProvider")]
+        public string TransactionalEmailProvider { get; set; } = "Brevo";
+
+        [Display(Name = "SiteSettingSupportEmail"), EmailAddress]
+        public string SupportEmail { get; set; } = "support@loyan.de";
+
+        [Display(Name = "SiteSettingBillingEmail"), EmailAddress]
+        public string BillingEmail { get; set; } = "billing@loyan.de";
+
+        [Display(Name = "SiteSettingNoReplyEmail"), EmailAddress]
+        public string NoReplyEmail { get; set; } = "no-reply@loyan.de";
+
+        [Display(Name = "SiteSettingSystemAdminEmail"), EmailAddress]
+        public string SystemAdminEmail { get; set; } = "dev@loyan.de";
+
+        [Display(Name = "SiteSettingBrevoBaseUrl")]
+        public string BrevoBaseUrl { get; set; } = "https://api.brevo.com/v3/";
+
+        [Display(Name = "SiteSettingBrevoApiKey")]
+        public string? BrevoApiKey { get; set; }
+
+        [Display(Name = "SiteSettingBrevoWebhookUsername")]
+        public string? BrevoWebhookUsername { get; set; }
+
+        [Display(Name = "SiteSettingBrevoWebhookPassword")]
+        public string? BrevoWebhookPassword { get; set; }
+
+        [Display(Name = "SiteSettingBrevoSandboxMode")]
+        public bool BrevoSandboxMode { get; set; } = true;
+
+        [Display(Name = "SiteSettingBrevoTestRecipientEmail"), EmailAddress]
+        public string? BrevoTestRecipientEmail { get; set; }
+
         // ---------- SMS ----------
         [Display(Name = "SiteSettingSmsEnabled")]
         public bool SmsEnabled { get; set; }

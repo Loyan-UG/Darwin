@@ -237,7 +237,7 @@ public sealed class CreateInvoiceRefundHandlerTests
             Reason = "Concurrency test"
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
     }
 

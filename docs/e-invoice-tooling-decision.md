@@ -25,14 +25,14 @@ Evaluate candidate libraries or tooling against these requirements:
 
 ## Selected Tooling Path
 
-Selected first implementation path: `Mustangproject` CLI behind Darwin's disabled-by-default `ExternalCommandEInvoiceGenerationService`.
+Selected first implementation path: `Mustangproject` CLI behind Darwin's `ExternalCommandEInvoiceGenerationService`.
 
 Reasoning:
 
 - The existing Darwin boundary already supports an out-of-process generator/validator through `--input`, `--output`, `--format`, and optional `--validation-profile`.
 - `Mustangproject` is maintained as an e-invoice focused Java library/CLI/server and documents read, write, validate, and convert support for ZUGFeRD/Factur-X and XRechnung artifacts.
 - Keeping the first slice out-of-process avoids adding provider/tooling SDK references to Domain or Application and keeps the implementation replaceable if a deployment later mandates another generator.
-- The selected path still requires a pinned artifact, wrapper hardening, and deployment smoke before any generated artifact is exposed as compliant. Deterministic validation-report fixture parsing is now covered by `ExternalCommandEInvoiceGenerationServiceTests` (including alternate boolean keys and failed issue-message extraction).
+- The selected path now has a local pinned-tooling installer (`scripts/install-mustang-cli.ps1`) and wrapper (`scripts/mustang-einvoice-wrapper.cmd`). Local smoke passed on 2026-05-26 for both XRechnung XML and ZUGFeRD/Factur-X PDF artifact generation through Darwin's external-command adapter. Generated artifact storage is guarded through `IEInvoiceArtifactStorage`; tests verify the `InvoiceArchive` object-storage profile, SHA-256 hash, validation-profile metadata, compliance retention, retention horizon, and overwrite-disallow policy. Hosted WebAdmin smoke also verifies that generated artifacts are persisted through `IEInvoiceArtifactStorage` before file download responses are returned, and that invalid format requests do not call the generator. The selected path still requires a pinned artifact in production packaging, approved deterministic fixtures, legal validation evidence, production artifact download/storage smoke, and deployment sign-off before any generated artifact is exposed as compliant. Deterministic validation-report fixture parsing is covered by `ExternalCommandEInvoiceGenerationServiceTests` (including alternate boolean keys and failed issue-message extraction).
 
 Alternatives retained for later:
 
@@ -61,7 +61,7 @@ The next implementation slice is a proof-of-concept using the existing external-
 - Extend the existing issued-snapshot to structured source-model mapping into the selected e-invoice model.
 - Validate the structured XML before artifact exposure.
 - Generate or attach the structured XML to a PDF/A-3 artifact where required by the selected format.
-- Store the generated artifact through `IInvoiceArchiveStorage` or a compatible archive artifact boundary.
+- Store the generated artifact through `IEInvoiceArtifactStorage`, which routes to the reusable object-storage `InvoiceArchive` profile when configured.
 - Expose a WebAdmin download action only after generation and validation succeed.
 - Add tests for mapping, validation failure, successful artifact generation, and download authorization.
 - Keep XRechnung as a later export until the primary ZUGFeRD/Factur-X path is stable.

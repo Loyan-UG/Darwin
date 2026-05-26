@@ -172,6 +172,7 @@ public sealed class UpdateInvoiceHandlerTests
         db.Set<Invoice>().Add(new Invoice
         {
             Id = invoiceId,
+            CustomerId = customerId,
             PaymentId = paymentId,
             Status = InvoiceStatus.Paid,
             Currency = "EUR",
@@ -208,11 +209,11 @@ public sealed class UpdateInvoiceHandlerTests
             TotalNetMinor = 1000,
             TotalTaxMinor = 200,
             TotalGrossMinor = 1200,
-            DueDateUtc = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc),
+            DueDateUtc = new DateTime(2026, 3, 26, 10, 0, 0, DateTimeKind.Utc),
             PaidAtUtc = new DateTime(2026, 3, 26, 12, 0, 0, DateTimeKind.Utc)
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
     }
 

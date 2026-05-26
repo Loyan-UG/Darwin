@@ -477,6 +477,54 @@ namespace Darwin.Application.Settings.Validators
                 .When(x => x.SmtpEnabled)
                 .WithMessage(localizer["SiteSettingSmtpFromDisplayNameRequiredWhenEnabled"]);
 
+            RuleFor(x => x.TransactionalEmailProvider)
+                .Must(provider => string.Equals(provider, "Brevo", StringComparison.OrdinalIgnoreCase) ||
+                                  string.Equals(provider, "SMTP", StringComparison.OrdinalIgnoreCase))
+                .WithMessage("TransactionalEmailProvider must be Brevo or SMTP.");
+
+            RuleFor(x => x.SupportEmail).NotEmpty().EmailAddress().MaximumLength(256);
+            RuleFor(x => x.BillingEmail).NotEmpty().EmailAddress().MaximumLength(256);
+            RuleFor(x => x.NoReplyEmail).NotEmpty().EmailAddress().MaximumLength(256);
+            RuleFor(x => x.SystemAdminEmail).NotEmpty().EmailAddress().MaximumLength(256);
+
+            RuleFor(x => x.BrevoBaseUrl)
+                .NotEmpty()
+                .MaximumLength(500)
+                .Must(BeHttpsAbsoluteUrl)
+                .WithMessage("BrevoBaseUrl must be an absolute HTTPS URL.");
+
+            RuleFor(x => x.BrevoApiKey)
+                .MaximumLength(512)
+                .When(x => !string.IsNullOrWhiteSpace(x.BrevoApiKey));
+
+            RuleFor(x => x.BrevoApiKey)
+                .NotEmpty()
+                .When(x => string.Equals(x.TransactionalEmailProvider, "Brevo", StringComparison.OrdinalIgnoreCase))
+                .WithMessage("BrevoApiKey is required when transactional email provider is Brevo.");
+
+            RuleFor(x => x.BrevoWebhookUsername)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.BrevoWebhookUsername));
+
+            RuleFor(x => x.BrevoWebhookPassword)
+                .MaximumLength(512)
+                .When(x => !string.IsNullOrWhiteSpace(x.BrevoWebhookPassword));
+
+            RuleFor(x => x.BrevoWebhookUsername)
+                .NotEmpty()
+                .When(x => string.Equals(x.TransactionalEmailProvider, "Brevo", StringComparison.OrdinalIgnoreCase))
+                .WithMessage("BrevoWebhookUsername is required when transactional email provider is Brevo.");
+
+            RuleFor(x => x.BrevoWebhookPassword)
+                .NotEmpty()
+                .When(x => string.Equals(x.TransactionalEmailProvider, "Brevo", StringComparison.OrdinalIgnoreCase))
+                .WithMessage("BrevoWebhookPassword is required when transactional email provider is Brevo.");
+
+            RuleFor(x => x.BrevoTestRecipientEmail)
+                .EmailAddress()
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.BrevoTestRecipientEmail));
+
             // -------- SMS --------
             RuleFor(x => x.SmsProvider)
                 .MaximumLength(100)

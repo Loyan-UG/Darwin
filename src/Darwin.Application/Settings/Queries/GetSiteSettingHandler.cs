@@ -155,6 +155,17 @@ namespace Darwin.Application.Settings.Queries
                 SmtpPassword = s.SmtpPassword,
                 SmtpFromAddress = s.SmtpFromAddress,
                 SmtpFromDisplayName = s.SmtpFromDisplayName,
+                TransactionalEmailProvider = string.IsNullOrWhiteSpace(s.TransactionalEmailProvider) ? "Brevo" : s.TransactionalEmailProvider,
+                SupportEmail = string.IsNullOrWhiteSpace(s.SupportEmail) ? "support@loyan.de" : s.SupportEmail,
+                BillingEmail = string.IsNullOrWhiteSpace(s.BillingEmail) ? "billing@loyan.de" : s.BillingEmail,
+                NoReplyEmail = string.IsNullOrWhiteSpace(s.NoReplyEmail) ? "no-reply@loyan.de" : s.NoReplyEmail,
+                SystemAdminEmail = string.IsNullOrWhiteSpace(s.SystemAdminEmail) ? "dev@loyan.de" : s.SystemAdminEmail,
+                BrevoBaseUrl = string.IsNullOrWhiteSpace(s.BrevoBaseUrl) ? "https://api.brevo.com/v3/" : s.BrevoBaseUrl,
+                BrevoApiKey = s.BrevoApiKey,
+                BrevoWebhookUsername = s.BrevoWebhookUsername,
+                BrevoWebhookPassword = s.BrevoWebhookPassword,
+                BrevoSandboxMode = s.BrevoSandboxMode,
+                BrevoTestRecipientEmail = s.BrevoTestRecipientEmail,
 
                 // SMS
                 SmsEnabled = s.SmsEnabled,

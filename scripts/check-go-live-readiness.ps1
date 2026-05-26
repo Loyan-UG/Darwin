@@ -23,12 +23,14 @@ $checks = @(
     @{ Name = "Secrets scan"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-secrets.ps1"); ExpectedBlockedExitCode = $null },
     @{ Name = "Stripe test-mode smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-stripe-testmode.ps1", "-CreateSmokeOrder", "-RequireRuntimePipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Stripe webhook forwarding prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-stripe-webhook-forwarding.ps1"); ExpectedBlockedExitCode = 2 },
+    @{ Name = "Stripe live readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-stripe-live-readiness.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "DHL live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-dhl-live.ps1", "-RequireRuntimePipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Brevo readiness smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-brevo-readiness.ps1", "-RequireDeliveryPipeline"); ExpectedBlockedExitCode = 2 },
     @{ Name = "VIES live smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-vies-live.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-object-storage.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage MediaAssets profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "MediaAssets" -ContainerName $env:DARWIN_OBJECT_STORAGE_MEDIA_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_MEDIA_PREFIX; ExpectedBlockedExitCode = 2 },
     @{ Name = "Object storage ShipmentLabels profile prerequisites"; Command = New-ObjectStorageProfileCommand -ProfileName "ShipmentLabels" -ContainerName $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_CONTAINER -Prefix $env:DARWIN_OBJECT_STORAGE_SHIPMENT_LABELS_PREFIX; ExpectedBlockedExitCode = 2 },
+    @{ Name = "MinIO production readiness prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\check-minio-production-readiness.ps1"); ExpectedBlockedExitCode = 2 },
     @{ Name = "E-invoice external-command smoke prerequisites"; Command = @("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\smoke-einvoice-external-command.ps1"); ExpectedBlockedExitCode = 2 }
 )
 

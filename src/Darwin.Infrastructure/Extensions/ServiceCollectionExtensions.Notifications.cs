@@ -49,16 +49,7 @@ namespace Darwin.Infrastructure.Extensions
                 client.BaseAddress = new Uri(baseUrl.EndsWith("/", StringComparison.Ordinal) ? baseUrl : baseUrl + "/");
                 client.Timeout = TimeSpan.FromSeconds(Math.Clamp(options.TimeoutSeconds, 5, 120));
             });
-            services.AddScoped<IEmailSender>(serviceProvider =>
-            {
-                var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailDeliveryOptions>>().Value;
-                return EmailProviderNames.Normalize(options.Provider) switch
-                {
-                    EmailProviderNames.Brevo => serviceProvider.GetRequiredService<BrevoEmailSender>(),
-                    EmailProviderNames.Smtp => serviceProvider.GetRequiredService<SmtpEmailSender>(),
-                    var provider => throw new InvalidOperationException($"Unsupported email provider '{provider}'.")
-                };
-            });
+            services.AddScoped<IEmailSender, SiteSettingEmailSender>();
             services.AddHttpClient(nameof(ProviderBackedSmsSender));
             services.AddScoped<ProviderBackedSmsSender>();
             services.AddScoped<ISmsSender, ProviderBackedSmsSender>();

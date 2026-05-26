@@ -126,7 +126,17 @@ namespace Darwin.Application.Businesses.Commands
                 ["acceptance_link"] = acceptanceLink,
                 ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
                     ? string.Empty
-                    : TransactionalEmailTemplateRenderer.Render(acceptanceLinkTemplate, acceptanceLinkTemplate, new Dictionary<string, string?> { ["acceptance_link"] = acceptanceLink }),
+                    : TransactionalEmailTemplateRenderer.Render(
+                        acceptanceLinkTemplate,
+                        acceptanceLinkTemplate,
+                        new Dictionary<string, string?>
+                        {
+                            ["acceptance_link"] = acceptanceLink,
+                            ["acceptance_button_html"] = CommunicationTemplateDefaults.BuildActionButtonHtml(acceptanceLink, "Accept invitation"),
+                            ["manual_link_html"] = CommunicationTemplateDefaults.BuildManualLinkHtml(
+                                acceptanceLink,
+                                "If the button does not work, copy this link into your browser:")
+                        }),
                 ["invitation_action"] = "reissued",
                 ["invitation_intro_html"] = TransactionalEmailTemplateRenderer.Render(
                     reissuedIntroTemplate,
@@ -145,6 +155,11 @@ namespace Darwin.Application.Businesses.Commands
                 bodyParameters);
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? invitation.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(_communicationLocalizer, communicationCulture, invitation.Email, recipient, body);
+            body = CommunicationTemplateDefaults.WrapTransactionalEmail(
+                "Invitation reissued",
+                "Your Loyan business workspace invitation has been reissued.",
+                body,
+                siteSettings?.SupportEmail);
 
             await _emailSender.SendAsync(
                 recipient,
@@ -155,6 +170,7 @@ namespace Darwin.Application.Businesses.Commands
                 {
                     FlowKey = "BusinessInvitation",
                     TemplateKey = "BusinessInvitationEmail",
+                    SenderRole = EmailSenderRole.NoReply,
                     CorrelationKey = invitation.Id.ToString("N"),
                     BusinessId = invitation.BusinessId,
                     IntendedRecipientEmail = invitation.Email,

@@ -15,6 +15,7 @@ Current planning belongs in [BACKLOG.md](../BACKLOG.md). Code-backed go-live sta
 
 ## Documentation Cleanup Ledger
 
+- 2026-05-26: Reworked the active documentation set into deployment-neutral, professional guides. `README.md`, `docs/README.md`, `BACKLOG.md`, `docs/go-live-status.md`, `docs/external-smoke-inputs.md`, `docs/production-setup.md`, `DarwinTesting.md`, `docs/module-audit.md`, `DarwinWebAdmin.md`, `DarwinFrontEnd.md`, and `DarwinMobile.md` were normalized around current architecture, status, and active blockers instead of chronological implementation logs. Duplicate historical backlog files and stale localized mobile guides were removed from active documentation. Deployment-specific tenant domains, tenant email addresses, and pilot-smoke details were removed from active docs and should remain in secure operational notes outside the repository.
 - 2026-05-19: Added [docs/README.md](README.md) as the central documentation map and source-of-truth matrix.
 - 2026-05-19: Removed a stale README handoff link for the old WebAdmin subscription workspace because the target file is not present. The active WebAdmin guide now links to this ledger for historical progress context.
 - 2026-05-19: Normalized [README.md](../README.md) into a concise project entry point and moved detailed provider/status/runbook navigation to the documentation map.

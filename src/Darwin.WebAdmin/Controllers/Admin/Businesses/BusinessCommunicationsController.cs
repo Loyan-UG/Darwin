@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
@@ -1356,6 +1357,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 HtmlBody = htmlBody,
                 FlowKey = "AdminCommunicationTest",
                 TemplateKey = "AdminCommunicationTestEmail",
+                SenderRole = EmailSenderRole.Admin.ToString(),
                 CorrelationKey = Guid.NewGuid().ToString("N"),
                 Status = "Pending"
             });
@@ -1971,23 +1973,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         private bool IsEmailTransportConfigured(SiteSettingDto settings)
         {
-            return IsBrevoTransportConfigured() ||
+            return IsBrevoTransportConfigured(settings) ||
                    (settings.SmtpEnabled &&
                     !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
                     settings.SmtpPort.HasValue &&
                     !string.IsNullOrWhiteSpace(settings.SmtpFromAddress));
         }
 
-        private bool IsBrevoTransportConfigured()
+        private bool IsBrevoTransportConfigured(SiteSettingDto settings)
         {
-            return string.Equals(GetConfiguredEmailProvider(), EmailProviderNames.Brevo, StringComparison.OrdinalIgnoreCase) &&
-                   !string.IsNullOrWhiteSpace(_brevoEmailOptions.ApiKey) &&
-                   !string.IsNullOrWhiteSpace(_brevoEmailOptions.SenderEmail);
+            return string.Equals(GetConfiguredEmailProvider(settings), EmailProviderNames.Brevo, StringComparison.OrdinalIgnoreCase) &&
+                   !string.IsNullOrWhiteSpace(settings.BrevoApiKey) &&
+                   !string.IsNullOrWhiteSpace(settings.NoReplyEmail);
         }
 
-        private string GetConfiguredEmailProvider()
+        private string GetConfiguredEmailProvider(SiteSettingDto? settings = null)
         {
-            return EmailProviderNames.Normalize(_emailDeliveryOptions.Provider);
+            return EmailProviderNames.Normalize(settings?.TransactionalEmailProvider ?? _emailDeliveryOptions.Provider);
         }
 
         private IEnumerable<SelectListItem> BuildFilterItems(BusinessCommunicationSetupFilter selectedFilter)

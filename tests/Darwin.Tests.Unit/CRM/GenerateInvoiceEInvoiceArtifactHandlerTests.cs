@@ -1,11 +1,14 @@
 using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Storage;
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.Services;
 using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace Darwin.Tests.Unit.CRM;
 
@@ -289,6 +292,66 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
         result.Storage!.Provider.Should().Be("InMemoryTest");
     }
 
+    [Fact]
+    public async Task ObjectStorageEInvoiceArtifactStorage_Should_Save_With_Archive_Profile_Retention_Metadata_And_Hash()
+    {
+        await using var db = EInvoiceArtifactDbContext.Create();
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Darwin",
+            ContactEmail = "support@example.test",
+            InvoiceArchiveRetentionYears = 12,
+            RowVersion = new byte[] { 1 }
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var objectStorage = new RecordingObjectStorageService();
+        var storage = new ObjectStorageEInvoiceArtifactStorage(
+            db,
+            objectStorage,
+            new InvoiceArchiveStorageSelection
+            {
+                ObjectStorageContainerName = "invoice-archive"
+            });
+        var invoiceId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+        var content = new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37 };
+        var generatedAtUtc = new DateTime(2026, 5, 26, 10, 15, 0, DateTimeKind.Utc);
+        var artifact = new EInvoiceArtifact(
+            invoiceId,
+            EInvoiceArtifactFormat.ZugferdFacturX,
+            "application/pdf",
+            "invoice.pdf",
+            content,
+            "mustang-cius-profile",
+            generatedAtUtc);
+
+        var result = await storage.SaveAsync(artifact, TestContext.Current.CancellationToken);
+
+        objectStorage.Request.Should().NotBeNull();
+        objectStorage.CapturedContent.Should().Equal(content);
+        objectStorage.Request!.ContainerName.Should().Be("invoice-archive");
+        objectStorage.Request.ProfileName.Should().Be("InvoiceArchive");
+        objectStorage.Request.ObjectKey.Should().Contain("e-invoice");
+        objectStorage.Request.ObjectKey.Should().Contain("ZugferdFacturX");
+        objectStorage.Request.ContentType.Should().Be("application/pdf");
+        objectStorage.Request.FileName.Should().Be("invoice.pdf");
+        objectStorage.Request.OverwritePolicy.Should().Be(ObjectOverwritePolicy.Disallow);
+        objectStorage.Request.RetentionMode.Should().Be(ObjectRetentionMode.Compliance);
+        objectStorage.Request.RetentionUntilUtc.Should().Be(generatedAtUtc.AddYears(12));
+        objectStorage.Request.ExpectedSha256Hash.Should().Be(Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant());
+        objectStorage.Request.Metadata.Should().ContainKey("invoice-id").WhoseValue.Should().Be(invoiceId.ToString("N"));
+        objectStorage.Request.Metadata.Should().ContainKey("artifact-type").WhoseValue.Should().Be("e-invoice");
+        objectStorage.Request.Metadata.Should().ContainKey("artifact-format").WhoseValue.Should().Be("ZugferdFacturX");
+        objectStorage.Request.Metadata.Should().ContainKey("validation-profile").WhoseValue.Should().Be("mustang-cius-profile");
+        result.Provider.Should().Be(ObjectStorageProviderKind.S3Compatible.ToString());
+        result.ContainerName.Should().Be("invoice-archive");
+        result.ObjectKey.Should().Be(objectStorage.Request.ObjectKey);
+        result.Sha256Hash.Should().Be(objectStorage.Request.ExpectedSha256Hash);
+        result.RetentionUntilUtc.Should().Be(generatedAtUtc.AddYears(12));
+        result.IsImmutable.Should().BeTrue();
+    }
+
     private static GenerateInvoiceEInvoiceArtifactHandler CreateHandler(
         IAppDbContext db,
         IEInvoiceGenerationService generator,
@@ -387,6 +450,7 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Invoice>();
+            modelBuilder.Entity<SiteSetting>();
         }
 
         public static EInvoiceArtifactDbContext Create()
@@ -397,5 +461,62 @@ public sealed class GenerateInvoiceEInvoiceArtifactHandlerTests
 
             return new EInvoiceArtifactDbContext(options);
         }
+    }
+
+    private sealed class RecordingObjectStorageService : IObjectStorageService
+    {
+        public ObjectStorageWriteRequest? Request { get; private set; }
+        public byte[]? CapturedContent { get; private set; }
+
+        public async Task<ObjectStorageWriteResult> SaveAsync(ObjectStorageWriteRequest request, CancellationToken ct = default)
+        {
+            Request = request;
+            await using var memory = new MemoryStream();
+            await request.Content.CopyToAsync(memory, ct);
+            CapturedContent = memory.ToArray();
+
+            return new ObjectStorageWriteResult(
+                ObjectStorageProviderKind.S3Compatible,
+                request.ContainerName,
+                request.ObjectKey,
+                VersionId: "version-1",
+                ETag: "etag-1",
+                request.ExpectedSha256Hash ?? Convert.ToHexString(SHA256.HashData(CapturedContent)).ToLowerInvariant(),
+                CapturedContent.Length,
+                new DateTime(2026, 5, 26, 10, 16, 0, DateTimeKind.Utc),
+                request.RetentionUntilUtc,
+                request.RetentionMode,
+                request.LegalHold,
+                StorageUri: null,
+                IsImmutable: true,
+                request.Metadata);
+        }
+
+        public Task<ObjectStorageReadResult?> ReadAsync(ObjectStorageObjectReference reference, CancellationToken ct = default)
+            => Task.FromResult<ObjectStorageReadResult?>(null);
+
+        public Task<bool> ExistsAsync(ObjectStorageObjectReference reference, CancellationToken ct = default)
+            => Task.FromResult(false);
+
+        public Task<ObjectStorageObjectMetadata?> GetMetadataAsync(ObjectStorageObjectReference reference, CancellationToken ct = default)
+            => Task.FromResult<ObjectStorageObjectMetadata?>(null);
+
+        public Task DeleteAsync(ObjectStorageDeleteRequest request, CancellationToken ct = default)
+            => Task.CompletedTask;
+
+        public Task<Uri?> GetTemporaryReadUrlAsync(ObjectStorageTemporaryUrlRequest request, CancellationToken ct = default)
+            => Task.FromResult<Uri?>(null);
+
+        public ObjectStorageCapabilities GetCapabilities(ObjectStorageContainerSelection selection)
+            => new(
+                ObjectStorageProviderKind.S3Compatible,
+                SupportsVersioning: true,
+                SupportsObjectLock: true,
+                SupportsRetention: true,
+                SupportsLegalHold: true,
+                SupportsTemporaryUrls: true,
+                SupportsServerSideEncryption: true,
+                SupportsConditionalWrites: true,
+                SupportsNativeImmutability: true);
     }
 }

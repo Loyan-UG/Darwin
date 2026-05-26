@@ -12,6 +12,7 @@ namespace Darwin.Domain.Entities.Integration
         public string Provider { get; set; } = "SMTP";
         public string? FlowKey { get; set; }
         public string? TemplateKey { get; set; }
+        public string SenderRole { get; set; } = "NoReply";
         public string? CorrelationKey { get; set; }
         public Guid? BusinessId { get; set; }
         public string RecipientEmail { get; set; } = string.Empty;

@@ -991,10 +991,13 @@ public sealed class BrevoWebhooksControllerTests
     }
 
     [Fact]
-    public void ReceiveAsyncClass_Should_Throw_WhenInboxWriterIsNull()
+    public async Task ReceiveAsyncClass_Should_Throw_WhenInboxWriterIsNull()
     {
+        await using var db = BrevoWebhookControllerTestDbContext.Create();
+
         var act = () => new BrevoWebhooksController(
             null!,
+            db,
             Microsoft.Extensions.Options.Options.Create(new BrevoEmailOptions()),
             new TestValidationLocalizer());
 
@@ -1008,6 +1011,7 @@ public sealed class BrevoWebhooksControllerTests
 
         var act = () => new BrevoWebhooksController(
             new ProviderCallbackInboxWriter(db),
+            db,
             null!,
             new TestValidationLocalizer());
 
@@ -1021,6 +1025,7 @@ public sealed class BrevoWebhooksControllerTests
 
         var act = () => new BrevoWebhooksController(
             new ProviderCallbackInboxWriter(db),
+            db,
             Microsoft.Extensions.Options.Options.Create(new BrevoEmailOptions()),
             null!);
 
@@ -1033,6 +1038,7 @@ public sealed class BrevoWebhooksControllerTests
     {
         var controller = new BrevoWebhooksController(
             new ProviderCallbackInboxWriter(db),
+            db,
             Options.Create(options),
             new TestValidationLocalizer());
 
