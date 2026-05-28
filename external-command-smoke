@@ -1,1 +1,0 @@
-{"valid":0,"issues":[{"message":"profile not supported"},{"text":"legacy wrapper warning"},"invoice date is required"],"errors":[{"description":"line 2: invoice line totals do not match"}],"validationMessages":"signature is missing"}

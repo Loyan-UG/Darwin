@@ -20,6 +20,16 @@ _shared_keys/
 _shared_media/
 **/_shared_media/
 .darwin-tools/
+.codex-runtime/
+.codex-build/
+.codex-obj/
+.local-logs/
+.tmp-test-bin/
+TemplateEngineHost/
+external-command-smoke
+invoice_smoke.patch
+tmp-webadmin-session.xml
+_unit_test_errors.txt
 
 # Allow committed development baseline configs (no real secrets, used by structure tests)
 !/src/Darwin.WebAdmin/appsettings.Development.json
