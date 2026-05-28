@@ -367,7 +367,7 @@ test("OrderConfirmationPage renders order result and next actions without mercha
           providerReference: "pi_1",
           amountMinor: 1500,
           currency: "EUR",
-          status: "Paid",
+          status: "Captured",
           paidAtUtc: "2026-04-10T10:02:00Z",
         },
       ],
@@ -375,7 +375,7 @@ test("OrderConfirmationPage renders order result and next actions without mercha
     status: "ok",
     checkoutStatus: "order-placed",
     paymentCompletionStatus: "completed",
-    paymentOutcome: "Paid",
+    paymentOutcome: "Captured",
     cancelled: false,
     hasMemberSession: false,
   });
@@ -384,6 +384,8 @@ test("OrderConfirmationPage renders order result and next actions without mercha
   assert.match(html, /ORD-1001/);
   assert.match(html, /What happens next/);
   assert.match(html, /Continue shopping/);
+  assert.match(html, /Payment is already recorded/);
+  assert.doesNotMatch(html, /Continue to payment/);
   assertNoBackOfficeCustomerUi(html);
 });
 

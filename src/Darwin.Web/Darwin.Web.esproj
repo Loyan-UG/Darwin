@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.586930">
+  <PropertyGroup>
+    <StartupCommand>npm run dev</StartupCommand>
+    <BuildCommand>npm run build</BuildCommand>
+    <CleanCommand>if exist .next rmdir /s /q .next</CleanCommand>
+    <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+    <DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**;.next\**;certificates\**;.env.local;.env.*</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

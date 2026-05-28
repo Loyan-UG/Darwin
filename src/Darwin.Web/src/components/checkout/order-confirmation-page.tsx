@@ -59,6 +59,7 @@ function hasSuccessfulPayment(confirmation: PublicStorefrontOrderConfirmation) {
     const currentStatus = payment.status.toLowerCase();
     return currentStatus === "paid" ||
       currentStatus === "succeeded" ||
+      currentStatus === "captured" ||
       currentStatus === "completed";
   });
 }
@@ -71,6 +72,7 @@ function getRecordedPaymentAmountMinor(
     const isRecorded =
       currentStatus === "paid" ||
       currentStatus === "succeeded" ||
+      currentStatus === "captured" ||
       currentStatus === "completed";
 
     return isRecorded ? total + payment.amountMinor : total;
@@ -115,6 +117,7 @@ function localizePaymentStatus(status: string | undefined, culture: string) {
     authorized: { de: "Autorisiert", en: "Authorized" },
     paid: { de: "Bezahlt", en: "Paid" },
     succeeded: { de: "Erfolgreich", en: "Succeeded" },
+    captured: { de: "Erfasst", en: "Captured" },
     completed: { de: "Abgeschlossen", en: "Completed" },
     failed: { de: "Fehlgeschlagen", en: "Failed" },
     cancelled: { de: "Abgebrochen", en: "Cancelled" },
