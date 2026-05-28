@@ -57,12 +57,12 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = QueryLikePattern.Contains(query);
+                var term = QueryLikePattern.ContainsInvariant(query);
                 baseQuery = baseQuery.Where(x =>
-                    EF.Functions.Like(x.user.Email, term, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)), term, QueryLikePattern.EscapeCharacter) ||
-                    (x.rewardTier != null && x.rewardTier.Description != null && EF.Functions.Like(x.rewardTier.Description, term, QueryLikePattern.EscapeCharacter)) ||
-                    (x.scan != null && EF.Functions.Like(x.scan.Outcome, term, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.user.Email.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(((x.user.FirstName ?? string.Empty) + " " + (x.user.LastName ?? string.Empty)).ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    (x.rewardTier != null && x.rewardTier.Description != null && EF.Functions.Like(x.rewardTier.Description.ToUpper(), term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.scan != null && EF.Functions.Like(x.scan.Outcome.ToUpper(), term, QueryLikePattern.EscapeCharacter)));
             }
 
             if (status.HasValue)

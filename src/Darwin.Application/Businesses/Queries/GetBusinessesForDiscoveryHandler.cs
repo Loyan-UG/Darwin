@@ -61,11 +61,11 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(request.Query))
             {
-                var q = QueryLikePattern.Contains(request.Query);
+                var q = QueryLikePattern.ContainsInvariant(request.Query);
                 businessQuery = businessQuery.Where(x =>
-                    EF.Functions.Like(x.Name, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.ShortDescription != null && EF.Functions.Like(x.ShortDescription, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.AdminTextOverridesJson != null && EF.Functions.Like(x.AdminTextOverridesJson, q, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.Name.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.ShortDescription != null && EF.Functions.Like(x.ShortDescription.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.AdminTextOverridesJson != null && EF.Functions.Like(x.AdminTextOverridesJson.ToUpper(), q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (request.HasActiveLoyaltyProgram.HasValue)

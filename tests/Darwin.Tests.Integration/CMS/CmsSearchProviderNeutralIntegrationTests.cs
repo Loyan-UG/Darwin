@@ -64,6 +64,7 @@ public sealed class CmsSearchProviderNeutralIntegrationTests
             pageSize: 20,
             culture: "en-US",
             query: exactMatchSlug,
+            filter: null,
             ct: TestContext.Current.CancellationToken);
 
         var upperCaseResult = await handler.HandleAsync(
@@ -71,13 +72,13 @@ public sealed class CmsSearchProviderNeutralIntegrationTests
             pageSize: 20,
             culture: "en-US",
             query: exactMatchSlug.ToUpperInvariant(),
+            filter: null,
             ct: TestContext.Current.CancellationToken);
 
         lowerCaseResult.Total.Should().Be(1);
-        lowerCaseResult.Items.Should().ContainSingle(x => x.Slug == exactMatchSlug);
+        lowerCaseResult.Items.Should().ContainSingle(x => x.Title == "Exact CMS page");
 
         upperCaseResult.Total.Should().Be(1);
-        upperCaseResult.Items.Should().ContainSingle(x => x.Slug == exactMatchSlug);
+        upperCaseResult.Items.Should().ContainSingle(x => x.Title == "Exact CMS page");
     }
 }
-

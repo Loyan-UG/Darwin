@@ -77,12 +77,12 @@ public sealed class GetShipmentsPageHandler
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            var term = QueryLikePattern.Contains(query);
+            var term = QueryLikePattern.ContainsInvariant(query);
             shipments = shipments.Where(s =>
-                EF.Functions.Like(s.Carrier, term, QueryLikePattern.EscapeCharacter) ||
-                (s.Service != null && EF.Functions.Like(s.Service, term, QueryLikePattern.EscapeCharacter)) ||
-                (s.TrackingNumber != null && EF.Functions.Like(s.TrackingNumber, term, QueryLikePattern.EscapeCharacter)) ||
-                _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && EF.Functions.Like(o.OrderNumber, term, QueryLikePattern.EscapeCharacter)));
+                EF.Functions.Like(s.Carrier.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                (s.Service != null && EF.Functions.Like(s.Service.ToUpper(), term, QueryLikePattern.EscapeCharacter)) ||
+                (s.TrackingNumber != null && EF.Functions.Like(s.TrackingNumber.ToUpper(), term, QueryLikePattern.EscapeCharacter)) ||
+                _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && EF.Functions.Like(o.OrderNumber.ToUpper(), term, QueryLikePattern.EscapeCharacter)));
         }
 
         var total = await shipments.CountAsync(ct);

@@ -16,6 +16,11 @@ internal static class QueryLikePattern
         return $"%{Escape(trimmed)}%";
     }
 
+    public static string ContainsInvariant(string value)
+    {
+        return Contains(value.ToUpperInvariant());
+    }
+
     private static string Escape(string value)
     {
         return value

@@ -36,12 +36,12 @@ namespace Darwin.Application.Shipping.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = QueryLikePattern.Contains(query);
+                var term = QueryLikePattern.ContainsInvariant(query);
                 baseQuery = baseQuery.Where(m =>
-                    EF.Functions.Like(m.Name, term, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(m.Carrier, term, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(m.Service, term, QueryLikePattern.EscapeCharacter) ||
-                    (m.CountriesCsv != null && EF.Functions.Like(m.CountriesCsv, term, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(m.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(m.Carrier.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(m.Service.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    (m.CountriesCsv != null && EF.Functions.Like(m.CountriesCsv.ToUpper(), term, QueryLikePattern.EscapeCharacter)));
             }
 
             baseQuery = filter switch

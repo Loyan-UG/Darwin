@@ -83,12 +83,12 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = QueryLikePattern.Contains(filter.Query);
+                var q = QueryLikePattern.ContainsInvariant(filter.Query);
                 query = query.Where(x =>
-                    EF.Functions.Like(x.Provider, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.CallbackType, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.IdempotencyKey != null && EF.Functions.Like(x.IdempotencyKey, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason, q, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.Provider.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.CallbackType.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.IdempotencyKey != null && EF.Functions.Like(x.IdempotencyKey.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason.ToUpper(), q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))

@@ -31,13 +31,13 @@ namespace Darwin.Application.CMS.Media.Queries
             var baseQuery = _db.Set<MediaAsset>().AsNoTracking().Where(m => !m.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = QueryLikePattern.Contains(query);
+                var term = QueryLikePattern.ContainsInvariant(query);
                 baseQuery = baseQuery.Where(m =>
-                    EF.Functions.Like(m.Url, term, QueryLikePattern.EscapeCharacter) ||
-                    (m.Alt != null && EF.Functions.Like(m.Alt, term, QueryLikePattern.EscapeCharacter)) ||
-                    EF.Functions.Like(m.OriginalFileName, term, QueryLikePattern.EscapeCharacter) ||
-                    (m.Title != null && EF.Functions.Like(m.Title, term, QueryLikePattern.EscapeCharacter)) ||
-                    (m.Role != null && EF.Functions.Like(m.Role, term, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(m.Url.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    (m.Alt != null && EF.Functions.Like(m.Alt.ToUpper(), term, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(m.OriginalFileName.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    (m.Title != null && EF.Functions.Like(m.Title.ToUpper(), term, QueryLikePattern.EscapeCharacter)) ||
+                    (m.Role != null && EF.Functions.Like(m.Role.ToUpper(), term, QueryLikePattern.EscapeCharacter)));
             }
 
             baseQuery = filter switch

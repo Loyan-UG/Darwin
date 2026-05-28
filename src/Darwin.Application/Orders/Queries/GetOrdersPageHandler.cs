@@ -31,15 +31,15 @@ namespace Darwin.Application.Orders.Queries
             if (pageSize < 1) pageSize = 20;
             if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-            query = string.IsNullOrWhiteSpace(query) ? null : QueryLikePattern.Contains(query);
+            query = string.IsNullOrWhiteSpace(query) ? null : QueryLikePattern.ContainsInvariant(query);
 
             var baseQuery = _db.Set<Order>()
                 .AsNoTracking()
                 .Where(o => !o.IsDeleted)
                 .Where(o =>
                     query == null ||
-                    EF.Functions.Like(o.OrderNumber, query, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(o.Currency, query, QueryLikePattern.EscapeCharacter));
+                    EF.Functions.Like(o.OrderNumber.ToUpper(), query, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(o.Currency.ToUpper(), query, QueryLikePattern.EscapeCharacter));
 
             baseQuery = filter switch
             {

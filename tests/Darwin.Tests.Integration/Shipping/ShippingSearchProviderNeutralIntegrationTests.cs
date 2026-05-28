@@ -1,3 +1,4 @@
+using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Queries;
 using Darwin.Domain.Entities.Shipping;
 using Darwin.Infrastructure.Persistence.Db;
@@ -51,14 +52,14 @@ public sealed class ShippingSearchProviderNeutralIntegrationTests
             page: 1,
             pageSize: 20,
             query: $"dhl_%_probe[{marker}]",
-            filter: Darwin.Domain.Enums.ShippingMethodQueueFilter.All,
+            filter: ShippingMethodQueueFilter.All,
             ct: TestContext.Current.CancellationToken);
 
         var upperCaseResult = await handler.HandleAsync(
             page: 1,
             pageSize: 20,
             query: $"DHL_%_PROBE[{marker}]",
-            filter: Darwin.Domain.Enums.ShippingMethodQueueFilter.All,
+            filter: ShippingMethodQueueFilter.All,
             ct: TestContext.Current.CancellationToken);
 
         lowerCaseResult.Total.Should().Be(1);

@@ -121,6 +121,10 @@ public sealed class LoyaltySearchProviderNeutralIntegrationTests
             Status = LoyaltyAccountStatus.Active
         };
 
+        db.Set<LoyaltyRewardTier>().Add(rewardTier);
+        db.Set<LoyaltyAccount>().AddRange(exactMatchAccount, unrelatedAccount);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         var exactMatchRedemption = new LoyaltyRewardRedemption
         {
             LoyaltyAccountId = exactMatchAccount.Id,
@@ -137,10 +141,6 @@ public sealed class LoyaltySearchProviderNeutralIntegrationTests
             PointsSpent = 6,
             Status = LoyaltyRedemptionStatus.Pending
         };
-
-        db.Set<LoyaltyRewardTier>().Add(rewardTier);
-        db.Set<LoyaltyAccount>().AddRange(exactMatchAccount, unrelatedAccount);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         db.Set<LoyaltyRewardRedemption>().AddRange(exactMatchRedemption, unrelatedRedemption);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);

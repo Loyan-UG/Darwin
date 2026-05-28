@@ -26,7 +26,7 @@ public sealed class BusinessCommunicationSearchProviderNeutralIntegrationTests
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DarwinDbContext>();
 
-        var marker = Guid.NewGuid().ToString("N");
+        var marker = Guid.NewGuid().ToString("N")[..12];
         var exactMatchName = $"comm_%_probe[{marker}]";
         var unrelatedName = $"commXprobe[{marker.Substring(0, 6)}]";
 
@@ -158,7 +158,7 @@ public sealed class BusinessCommunicationSearchProviderNeutralIntegrationTests
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DarwinDbContext>();
 
-        var marker = Guid.NewGuid().ToString("N");
+        var marker = Guid.NewGuid().ToString("N")[..12];
         var exactMatchProvider = $"provider_%_probe[{marker}]";
         var unrelatedProvider = $"providerXprobe[{marker.Substring(0, 6)}]";
 

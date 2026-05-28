@@ -1,3 +1,4 @@
+using Darwin.Application.Inventory.DTOs;
 using Darwin.Application.Inventory.Queries;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Inventory;

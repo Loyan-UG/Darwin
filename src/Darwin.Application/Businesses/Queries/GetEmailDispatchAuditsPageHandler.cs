@@ -72,18 +72,18 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = QueryLikePattern.Contains(query);
+                var q = QueryLikePattern.ContainsInvariant(query);
                 baseQuery = baseQuery.Where(x =>
-                    EF.Functions.Like(x.Audit.RecipientEmail, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.Audit.IntendedRecipientEmail != null && EF.Functions.Like(x.Audit.IntendedRecipientEmail, q, QueryLikePattern.EscapeCharacter)) ||
-                    EF.Functions.Like(x.Audit.Subject, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.Audit.Status, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.Audit.Provider, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.Audit.FlowKey != null && EF.Functions.Like(x.Audit.FlowKey, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.Audit.TemplateKey != null && EF.Functions.Like(x.Audit.TemplateKey, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.Audit.CorrelationKey != null && EF.Functions.Like(x.Audit.CorrelationKey, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.Audit.ProviderMessageId != null && EF.Functions.Like(x.Audit.ProviderMessageId, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.BusinessName != null && EF.Functions.Like(x.BusinessName, q, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.Audit.RecipientEmail.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.Audit.IntendedRecipientEmail != null && EF.Functions.Like(x.Audit.IntendedRecipientEmail.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(x.Audit.Subject.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Audit.Status.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Audit.Provider.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.Audit.FlowKey != null && EF.Functions.Like(x.Audit.FlowKey.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Audit.TemplateKey != null && EF.Functions.Like(x.Audit.TemplateKey.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Audit.CorrelationKey != null && EF.Functions.Like(x.Audit.CorrelationKey.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Audit.ProviderMessageId != null && EF.Functions.Like(x.Audit.ProviderMessageId.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.BusinessName != null && EF.Functions.Like(x.BusinessName.ToUpper(), q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (!string.IsNullOrWhiteSpace(recipientEmail))

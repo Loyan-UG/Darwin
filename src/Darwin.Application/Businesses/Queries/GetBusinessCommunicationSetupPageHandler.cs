@@ -41,13 +41,13 @@ namespace Darwin.Application.Businesses.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = QueryLikePattern.Contains(query);
+                var q = QueryLikePattern.ContainsInvariant(query);
                 baseQuery = baseQuery.Where(x =>
-                    EF.Functions.Like(x.Name, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.LegalName != null && EF.Functions.Like(x.LegalName, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.SupportEmail != null && EF.Functions.Like(x.SupportEmail, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.CommunicationSenderName != null && EF.Functions.Like(x.CommunicationSenderName, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.CommunicationReplyToEmail != null && EF.Functions.Like(x.CommunicationReplyToEmail, q, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.Name.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.LegalName != null && EF.Functions.Like(x.LegalName.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.SupportEmail != null && EF.Functions.Like(x.SupportEmail.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.CommunicationSenderName != null && EF.Functions.Like(x.CommunicationSenderName.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.CommunicationReplyToEmail != null && EF.Functions.Like(x.CommunicationReplyToEmail.ToUpper(), q, QueryLikePattern.EscapeCharacter)));
             }
 
             if (setupOnly)

@@ -29,6 +29,16 @@ public static class IntegrationTestHostFactory
             throw new ArgumentNullException(nameof(factory));
         }
 
+        Environment.SetEnvironmentVariable("DataProtection__RequireKeyEncryption", "false");
+        Environment.SetEnvironmentVariable(
+            "DataProtection__KeysPath",
+            Path.Combine(Path.GetTempPath(), "Darwin", "IntegrationTests", "DataProtectionKeys"));
+        Environment.SetEnvironmentVariable("Email__Provider", "SMTP");
+        Environment.SetEnvironmentVariable("Email__Smtp__Host", "smtp.example.test");
+        Environment.SetEnvironmentVariable("Email__Smtp__Port", "587");
+        Environment.SetEnvironmentVariable("Email__Smtp__FromAddress", "noreply@example.test");
+        Environment.SetEnvironmentVariable("Email__Smtp__FromDisplayName", "Darwin Integration Tests");
+
         return factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Testing");
@@ -37,13 +47,17 @@ public static class IntegrationTestHostFactory
             {
                 config.AddJsonFile("appsettings.Testing.json", optional: true, reloadOnChange: false);
                 config.AddJsonFile("appsettings.Testing.Development.json", optional: true, reloadOnChange: false);
+                config.AddEnvironmentVariables();
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["Email:Provider"] = "SMTP",
+                    ["Email:Smtp:Host"] = "smtp.example.test",
+                    ["Email:Smtp:Port"] = "587",
+                    ["Email:Smtp:FromAddress"] = "noreply@example.test",
+                    ["Email:Smtp:FromDisplayName"] = "Darwin Integration Tests",
                     ["DataProtection:RequireKeyEncryption"] = "false",
                     ["DataProtection:KeysPath"] = Path.Combine(Path.GetTempPath(), "Darwin", "IntegrationTests", "DataProtectionKeys")
                 });
-                config.AddEnvironmentVariables();
             });
 
             builder.ConfigureTestServices(services =>

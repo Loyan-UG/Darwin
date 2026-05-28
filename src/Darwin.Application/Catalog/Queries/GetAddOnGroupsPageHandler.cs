@@ -56,7 +56,7 @@ namespace Darwin.Application.Catalog.Queries
         {
             return _db.Set<AddOnGroup>()
                 .AsNoTracking()
-                .Where(g => !g.IsDeleted && (q == null || EF.Functions.Like(g.Name, q, QueryLikePattern.EscapeCharacter)))
+                .Where(g => !g.IsDeleted && (q == null || EF.Functions.Like(g.Name.ToUpper(), q, QueryLikePattern.EscapeCharacter)))
                 .Select(g => new AddOnGroupListItemDto
                 {
                     Id = g.Id,
@@ -88,7 +88,7 @@ namespace Darwin.Application.Catalog.Queries
 
             var groups = _db.Set<AddOnGroup>()
                 .AsNoTracking()
-                .Where(g => !g.IsDeleted && (q == null || EF.Functions.Like(g.Name, q, QueryLikePattern.EscapeCharacter)))
+                .Where(g => !g.IsDeleted && (q == null || EF.Functions.Like(g.Name.ToUpper(), q, QueryLikePattern.EscapeCharacter)))
                 .Select(g => new
                 {
                     g.IsActive,
@@ -119,7 +119,7 @@ namespace Darwin.Application.Catalog.Queries
     {
         public static string? NormalizeQuery(string? q)
         {
-            return string.IsNullOrWhiteSpace(q) ? null : QueryLikePattern.Contains(q);
+            return string.IsNullOrWhiteSpace(q) ? null : QueryLikePattern.ContainsInvariant(q);
         }
     }
 }

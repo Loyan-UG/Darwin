@@ -1,3 +1,4 @@
+using Darwin.Domain.Entities.Integration;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
 using Darwin.Domain.Entities.Orders;
@@ -25,7 +26,7 @@ public sealed class OrdersSearchProviderNeutralIntegrationTests
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DarwinDbContext>();
 
-        var marker = Guid.NewGuid().ToString("N");
+        var marker = Guid.NewGuid().ToString("N")[..12];
         var exactMatchNumber = $"order_%_probe[{marker}]";
         var unrelatedNumber = $"orderXprobe[{marker.Substring(0, 6)}]";
         var matchOrder = new Order { OrderNumber = exactMatchNumber, Currency = "EUR" };
@@ -113,7 +114,7 @@ public sealed class OrdersSearchProviderNeutralIntegrationTests
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DarwinDbContext>();
 
-        var marker = Guid.NewGuid().ToString("N");
+        var marker = Guid.NewGuid().ToString("N")[..12];
         var exactMatchProvider = $"provider_%_probe[{marker}]";
         var unrelatedProvider = $"providerXprobe[{marker.Substring(0, 6)}]";
         var order = new Order { OrderNumber = $"op-{marker}", Currency = "EUR" };

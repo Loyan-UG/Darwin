@@ -50,11 +50,11 @@ namespace Darwin.Application.Inventory.Queries
             var warehousesQuery = _db.Set<Warehouse>().AsNoTracking().Where(x => x.BusinessId == businessId && !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = QueryLikePattern.Contains(query);
+                var term = QueryLikePattern.ContainsInvariant(query);
                 warehousesQuery = warehousesQuery.Where(x =>
-                    EF.Functions.Like(x.Name, term, QueryLikePattern.EscapeCharacter) ||
-                    (x.Description != null && EF.Functions.Like(x.Description, term, QueryLikePattern.EscapeCharacter)) ||
-                    (x.Location != null && EF.Functions.Like(x.Location, term, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    (x.Description != null && EF.Functions.Like(x.Description.ToUpper(), term, QueryLikePattern.EscapeCharacter)) ||
+                    (x.Location != null && EF.Functions.Like(x.Location.ToUpper(), term, QueryLikePattern.EscapeCharacter)));
             }
 
             warehousesQuery = filter switch
@@ -149,12 +149,12 @@ namespace Darwin.Application.Inventory.Queries
             var suppliersQuery = _db.Set<Supplier>().AsNoTracking().Where(x => x.BusinessId == businessId && !x.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = QueryLikePattern.Contains(query);
+                var term = QueryLikePattern.ContainsInvariant(query);
                 suppliersQuery = suppliersQuery.Where(x =>
-                    EF.Functions.Like(x.Name, term, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.Email, term, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.Phone, term, QueryLikePattern.EscapeCharacter) ||
-                    (x.Address != null && EF.Functions.Like(x.Address, term, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Email.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.Phone.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    (x.Address != null && EF.Functions.Like(x.Address.ToUpper(), term, QueryLikePattern.EscapeCharacter)));
             }
 
             suppliersQuery = filter switch
@@ -258,10 +258,10 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = QueryLikePattern.Contains(query);
+                var term = QueryLikePattern.ContainsInvariant(query);
                 stockLevelsQuery = stockLevelsQuery.Where(x =>
-                    EF.Functions.Like(x.variant.Sku, term, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.warehouse.Name, term, QueryLikePattern.EscapeCharacter));
+                    EF.Functions.Like(x.variant.Sku.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.warehouse.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter));
             }
 
             stockLevelsQuery = filter switch
@@ -358,11 +358,11 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = QueryLikePattern.Contains(query);
+                var term = QueryLikePattern.ContainsInvariant(query);
                 var statusMatches = InventorySearchTermResolver.ResolveTransferStatusSearch(query);
                 stockTransfersQuery = stockTransfersQuery.Where(x =>
-                    EF.Functions.Like(x.fromWarehouse.Name, term, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.toWarehouse.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.fromWarehouse.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.toWarehouse.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
                     statusMatches.Contains(x.transfer.Status));
             }
 
@@ -509,11 +509,11 @@ namespace Darwin.Application.Inventory.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var term = QueryLikePattern.Contains(query);
+                var term = QueryLikePattern.ContainsInvariant(query);
                 var statusMatches = InventorySearchTermResolver.ResolvePurchaseOrderStatusSearch(query);
                 purchaseOrdersQuery = purchaseOrdersQuery.Where(x =>
-                    EF.Functions.Like(x.order.OrderNumber, term, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.supplier.Name, term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.order.OrderNumber.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.supplier.Name.ToUpper(), term, QueryLikePattern.EscapeCharacter) ||
                     statusMatches.Contains(x.order.Status));
             }
 

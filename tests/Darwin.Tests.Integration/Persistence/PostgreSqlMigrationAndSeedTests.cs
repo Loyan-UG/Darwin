@@ -39,26 +39,26 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                 "Skipping PostgreSQL migration smoke. Configure a PostgreSQL Testing provider for this run.");
         }
 
-        await db.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await db.Database.MigrateAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await db.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken);
+        await db.Database.MigrateAsync(TestContext.Current.CancellationToken);
 
-        var pendingMigrations = await db.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var pendingMigrations = await db.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         pendingMigrations.Should().BeEmpty();
 
         var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-        await seeder.SeedAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await seeder.SeedAsync(TestContext.Current.CancellationToken);
 
         var seedExists = await db.SiteSettings.AnyAsync(
             setting => setting.Title == "Darwin" && setting.ContactEmail == "admin@darwin.de",
-            TestContext.Current.CancellationToken).ConfigureAwait(false);
+            TestContext.Current.CancellationToken);
 
         var webhookSubscriptionExists = await db.WebhookSubscriptions.AnyAsync(
             sub => sub.EventType == "order.created" && sub.IsActive,
-            TestContext.Current.CancellationToken).ConfigureAwait(false);
+            TestContext.Current.CancellationToken);
 
         var webhookDeliveryExists = await db.WebhookDeliveries.AnyAsync(
             delivery => delivery.Status == "Pending",
-            TestContext.Current.CancellationToken).ConfigureAwait(false);
+            TestContext.Current.CancellationToken);
 
         seedExists.Should().BeTrue();
         webhookSubscriptionExists.Should().BeTrue();
@@ -77,10 +77,10 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                 "Skipping SQL Server migration smoke. Configure a SQL Server Testing provider for this run.");
         }
 
-        await db.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await db.Database.MigrateAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await db.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken);
+        await db.Database.MigrateAsync(TestContext.Current.CancellationToken);
 
-        var pendingMigrations = await db.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var pendingMigrations = await db.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         pendingMigrations.Should().BeEmpty();
 
         using (var command = db.Database.GetDbConnection().CreateCommand())
@@ -89,13 +89,13 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
 
             if (command.Connection is not null && command.Connection.State != ConnectionState.Open)
             {
-                await command.Connection.OpenAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+                await command.Connection.OpenAsync(TestContext.Current.CancellationToken);
             }
 
-            using var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+            using var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
             var actualTables = new List<(string Schema, string Name)>();
 
-            while (await reader.ReadAsync(TestContext.Current.CancellationToken).ConfigureAwait(false))
+            while (await reader.ReadAsync(TestContext.Current.CancellationToken))
             {
                 actualTables.Add((reader.GetString(0), reader.GetString(1)));
             }
@@ -120,19 +120,19 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
         }
 
         var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-        await seeder.SeedAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await seeder.SeedAsync(TestContext.Current.CancellationToken);
 
         var seedExists = await db.SiteSettings.AnyAsync(
             setting => setting.Title == "Darwin" && setting.ContactEmail == "admin@darwin.de",
-            TestContext.Current.CancellationToken).ConfigureAwait(false);
+            TestContext.Current.CancellationToken);
 
         var webhookSubscriptionExists = await db.WebhookSubscriptions.AnyAsync(
             sub => sub.EventType == "order.created" && sub.IsActive,
-            TestContext.Current.CancellationToken).ConfigureAwait(false);
+            TestContext.Current.CancellationToken);
 
         var webhookDeliveryExists = await db.WebhookDeliveries.AnyAsync(
             delivery => delivery.Status == "Pending",
-            TestContext.Current.CancellationToken).ConfigureAwait(false);
+            TestContext.Current.CancellationToken);
 
         seedExists.Should().BeTrue();
         webhookSubscriptionExists.Should().BeTrue();
@@ -165,7 +165,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     PriceMinor = 100,
                     FeaturesJson = invalidJson
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_Businesses_AdminTextOverridesJson_ValidJson",
@@ -176,10 +176,10 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     Name = $"JSON Validity Business {Guid.NewGuid():N}",
                     AdminTextOverridesJson = invalidJson
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
-            "CK_PG_Carts_SelectedAddOnValueIdsJson_ValidJson",
+            "CK_PG_CartItems_SelectedAddOnValueIdsJson_ValidJson",
             async context =>
             {
                 var cart = new Cart { Currency = DomainDefaults.DefaultCurrency };
@@ -194,7 +194,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                 });
 
                 context.Set<Cart>().Add(cart);
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_EventLogs_PropertiesJson_ValidJson",
@@ -207,7 +207,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     PropertiesJson = invalidJson,
                     UtmSnapshotJson = "{}"
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_EventLogs_UtmSnapshotJson_ValidJson",
@@ -220,7 +220,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     PropertiesJson = "{}",
                     UtmSnapshotJson = invalidJson
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_ProviderCallbackInboxMessages_PayloadJson_ValidJson",
@@ -233,13 +233,13 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     PayloadJson = invalidJson,
                     Status = "Pending"
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_LoyaltyPrograms_RulesJson_ValidJson",
             async context =>
             {
-                var businessId = await EnsureBusinessIdAsync(context, ct).ConfigureAwait(false);
+                var businessId = await EnsureBusinessIdAsync(context, ct);
 
                 context.Set<LoyaltyProgram>().Add(new LoyaltyProgram
                 {
@@ -247,16 +247,16 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     Name = $"JSON Validity Program {Guid.NewGuid():N}",
                     RulesJson = invalidJson
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_LoyaltyRewardRedemptions_MetadataJson_ValidJson",
             async context =>
             {
-                var businessId = await EnsureBusinessIdAsync(context, ct).ConfigureAwait(false);
-                var accountId = await EnsureLoyaltyAccountIdAsync(context, businessId, ct).ConfigureAwait(false);
-                var programId = await EnsureLoyaltyProgramIdAsync(context, businessId, ct).ConfigureAwait(false);
-                var rewardTierId = await EnsureLoyaltyRewardTierIdAsync(context, programId, ct).ConfigureAwait(false);
+                var businessId = await EnsureBusinessIdAsync(context, ct);
+                var accountId = await EnsureLoyaltyAccountIdAsync(context, businessId, ct);
+                var programId = await EnsureLoyaltyProgramIdAsync(context, businessId, ct);
+                var rewardTierId = await EnsureLoyaltyRewardTierIdAsync(context, programId, ct);
 
                 context.Set<LoyaltyRewardRedemption>().Add(new LoyaltyRewardRedemption
                 {
@@ -266,14 +266,14 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     PointsSpent = 1,
                     MetadataJson = invalidJson
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_LoyaltyRewardTiers_MetadataJson_ValidJson",
             async context =>
             {
-                var businessId = await EnsureBusinessIdAsync(context, ct).ConfigureAwait(false);
-                var programId = await EnsureLoyaltyProgramIdAsync(context, businessId, ct).ConfigureAwait(false);
+                var businessId = await EnsureBusinessIdAsync(context, ct);
+                var programId = await EnsureLoyaltyProgramIdAsync(context, businessId, ct);
 
                 context.Set<LoyaltyRewardTier>().Add(new LoyaltyRewardTier
                 {
@@ -282,14 +282,14 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     RewardType = LoyaltyRewardType.FreeItem,
                     MetadataJson = invalidJson
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_ScanSessions_SelectedRewardsJson_ValidJson",
             async context =>
             {
-                var businessId = await EnsureBusinessIdAsync(context, ct).ConfigureAwait(false);
-                var accountId = await EnsureLoyaltyAccountIdAsync(context, businessId, ct).ConfigureAwait(false);
+                var businessId = await EnsureBusinessIdAsync(context, ct);
+                var accountId = await EnsureLoyaltyAccountIdAsync(context, businessId, ct);
 
                 var token = new QrCodeToken
                 {
@@ -309,15 +309,15 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
                     ExpiresAtUtc = DateTime.UtcNow.AddMinutes(5),
                     SelectedRewardsJson = invalidJson
                 });
-            }).ConfigureAwait(false);
+            });
 
         await AssertInvalidJsonWriteAsync(
             "CK_PG_SiteSettings_AdminTextOverridesJson_ValidJson",
             async context =>
             {
-                var siteSetting = await EnsureSiteSettingAsync(context, ct).ConfigureAwait(false);
+                var siteSetting = await EnsureSiteSettingAsync(context, ct);
                 siteSetting.AdminTextOverridesJson = invalidJson;
-            }).ConfigureAwait(false);
+            });
 
         async Task AssertInvalidJsonWriteAsync(
             string expectedConstraintName,
@@ -326,10 +326,10 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
             using var writeScope = Factory.Services.CreateScope();
             var attemptDb = writeScope.ServiceProvider.GetRequiredService<DarwinDbContext>();
 
-            await arrangeInvalidWrite(attemptDb).ConfigureAwait(false);
+            await arrangeInvalidWrite(attemptDb);
 
-            var act = async () => await attemptDb.SaveChangesAsync(ct).ConfigureAwait(false);
-            var assertion = await act.Should().ThrowAsync<DbUpdateException>(ct).ConfigureAwait(false);
+            var act = async () => await attemptDb.SaveChangesAsync(ct);
+            var assertion = await act.Should().ThrowAsync<DbUpdateException>();
 
             assertion.Which.InnerException.Should().NotBeNull();
             assertion.Which.InnerException!.Message.Should().Contain(expectedConstraintName);
@@ -341,7 +341,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
         var businessId = await db.Set<Business>()
             .Select(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
+            ;
 
         if (businessId != Guid.Empty)
         {
@@ -366,7 +366,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
             .Where(program => program.BusinessId == businessId)
             .Select(program => program.Id)
             .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
+            ;
 
         if (programId != Guid.Empty)
         {
@@ -393,7 +393,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
             .Where(rewardTier => rewardTier.LoyaltyProgramId == programId)
             .Select(rewardTier => rewardTier.Id)
             .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
+            ;
 
         if (rewardTierId != Guid.Empty)
         {
@@ -421,7 +421,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
             .Where(account => account.BusinessId == businessId)
             .Select(account => account.Id)
             .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
+            ;
 
         if (accountId != Guid.Empty)
         {
@@ -442,7 +442,7 @@ public sealed class PostgreSqlMigrationAndSeedTests : DeterministicIntegrationTe
     {
         var setting = await db.Set<SiteSetting>()
             .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
+            ;
 
         if (setting is not null)
         {

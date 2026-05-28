@@ -77,16 +77,16 @@ namespace Darwin.Application.Orders.Queries
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
-                var q = QueryLikePattern.Contains(filter.Query);
+                var q = QueryLikePattern.ContainsInvariant(filter.Query);
                 query = query.Where(x =>
-                    EF.Functions.Like(x.Provider, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.OperationType, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason, q, QueryLikePattern.EscapeCharacter)) ||
+                    EF.Functions.Like(x.Provider.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.OperationType.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.FailureReason != null && EF.Functions.Like(x.FailureReason.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
                     _db.Set<Shipment>().Any(s => s.Id == x.ShipmentId &&
                         !s.IsDeleted &&
-                        ((s.TrackingNumber != null && EF.Functions.Like(s.TrackingNumber, q, QueryLikePattern.EscapeCharacter)) ||
-                         (s.ProviderShipmentReference != null && EF.Functions.Like(s.ProviderShipmentReference, q, QueryLikePattern.EscapeCharacter)) ||
-                         _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && EF.Functions.Like(o.OrderNumber, q, QueryLikePattern.EscapeCharacter)))));
+                        ((s.TrackingNumber != null && EF.Functions.Like(s.TrackingNumber.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                         (s.ProviderShipmentReference != null && EF.Functions.Like(s.ProviderShipmentReference.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                         _db.Set<Order>().Any(o => o.Id == s.OrderId && !o.IsDeleted && EF.Functions.Like(o.OrderNumber.ToUpper(), q, QueryLikePattern.EscapeCharacter)))));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Provider))

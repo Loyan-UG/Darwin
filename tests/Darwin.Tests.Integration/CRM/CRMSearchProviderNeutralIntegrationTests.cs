@@ -1,3 +1,4 @@
+using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Queries;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Infrastructure.Persistence.Db;
@@ -108,10 +109,12 @@ public sealed class CRMSearchProviderNeutralIntegrationTests
         var unrelatedTitle = $"dealprobe[{marker.Substring(0, 6)}]";
 
         var customer = new Customer { FirstName = "Customer", LastName = "One" };
+        db.Set<Customer>().Add(customer);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         var exactMatchOpportunity = new Opportunity { CustomerId = customer.Id, Title = exactMatchTitle };
         var unrelatedOpportunity = new Opportunity { CustomerId = customer.Id, Title = unrelatedTitle };
 
-        db.Set<Customer>().Add(customer);
         db.Set<Opportunity>().AddRange(exactMatchOpportunity, unrelatedOpportunity);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 

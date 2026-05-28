@@ -38,15 +38,15 @@ namespace Darwin.Application.CRM.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = QueryLikePattern.Contains(query);
+                var q = QueryLikePattern.ContainsInvariant(query);
                 baseQuery = baseQuery.Where(x =>
-                    EF.Functions.Like(x.customer.FirstName, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.customer.LastName, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.customer.Email, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.customer.CompanyName != null && EF.Functions.Like(x.customer.CompanyName, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.user != null && EF.Functions.Like(x.user.Email, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.user != null && x.user.FirstName != null && EF.Functions.Like(x.user.FirstName, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.user != null && x.user.LastName != null && EF.Functions.Like(x.user.LastName, q, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.customer.FirstName.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.customer.LastName.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.customer.Email.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.customer.CompanyName != null && EF.Functions.Like(x.customer.CompanyName.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.user != null && EF.Functions.Like(x.user.Email.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.user != null && x.user.FirstName != null && EF.Functions.Like(x.user.FirstName.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.user != null && x.user.LastName != null && EF.Functions.Like(x.user.LastName.ToUpper(), q, QueryLikePattern.EscapeCharacter)));
             }
 
             baseQuery = filter switch
@@ -267,16 +267,16 @@ namespace Darwin.Application.CRM.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = QueryLikePattern.Contains(query);
+                var q = QueryLikePattern.ContainsInvariant(query);
                 baseQuery = baseQuery.Where(x =>
-                    EF.Functions.Like(x.lead.FirstName, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.lead.LastName, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.lead.Email, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.lead.Phone, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.lead.CompanyName != null && EF.Functions.Like(x.lead.CompanyName, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.assignedUser != null && EF.Functions.Like(x.assignedUser.Email, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.assignedUser != null && x.assignedUser.FirstName != null && EF.Functions.Like(x.assignedUser.FirstName, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.assignedUser != null && x.assignedUser.LastName != null && EF.Functions.Like(x.assignedUser.LastName, q, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.lead.FirstName.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.lead.LastName.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.lead.Email.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.lead.Phone.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.lead.CompanyName != null && EF.Functions.Like(x.lead.CompanyName.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.assignedUser != null && EF.Functions.Like(x.assignedUser.Email.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.assignedUser != null && x.assignedUser.FirstName != null && EF.Functions.Like(x.assignedUser.FirstName.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.assignedUser != null && x.assignedUser.LastName != null && EF.Functions.Like(x.assignedUser.LastName.ToUpper(), q, QueryLikePattern.EscapeCharacter)));
             }
 
             baseQuery = filter switch

@@ -47,14 +47,14 @@ namespace Darwin.Application.CRM.Queries
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                var q = QueryLikePattern.Contains(query);
+                var q = QueryLikePattern.ContainsInvariant(query);
                 baseQuery = baseQuery.Where(x =>
-                    EF.Functions.Like(x.opportunity.Title, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.customer.FirstName, q, QueryLikePattern.EscapeCharacter) ||
-                    EF.Functions.Like(x.customer.LastName, q, QueryLikePattern.EscapeCharacter) ||
-                    (x.user != null && EF.Functions.Like(x.user.Email, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.user != null && x.user.FirstName != null && EF.Functions.Like(x.user.FirstName, q, QueryLikePattern.EscapeCharacter)) ||
-                    (x.user != null && x.user.LastName != null && EF.Functions.Like(x.user.LastName, q, QueryLikePattern.EscapeCharacter)));
+                    EF.Functions.Like(x.opportunity.Title.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.customer.FirstName.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    EF.Functions.Like(x.customer.LastName.ToUpper(), q, QueryLikePattern.EscapeCharacter) ||
+                    (x.user != null && EF.Functions.Like(x.user.Email.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.user != null && x.user.FirstName != null && EF.Functions.Like(x.user.FirstName.ToUpper(), q, QueryLikePattern.EscapeCharacter)) ||
+                    (x.user != null && x.user.LastName != null && EF.Functions.Like(x.user.LastName.ToUpper(), q, QueryLikePattern.EscapeCharacter)));
             }
 
             var closingSoonThreshold = _clock.UtcNow.Date.AddDays(14);

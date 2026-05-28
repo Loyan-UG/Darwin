@@ -1,3 +1,4 @@
+using Darwin.Application.CMS.Media.DTOs;
 using Darwin.Application.CMS.Media.Queries;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Infrastructure.Persistence.Db;
@@ -47,14 +48,14 @@ public sealed class MediaSearchProviderNeutralIntegrationTests
             page: 1,
             pageSize: 20,
             query: $"asset_%_probe[{marker}].jpg",
-            filter: Darwin.Domain.Enums.MediaAssetQueueFilter.All,
+            filter: MediaAssetQueueFilter.All,
             ct: TestContext.Current.CancellationToken);
 
         var upperCaseResult = await handler.HandleAsync(
             page: 1,
             pageSize: 20,
             query: $"ASSET_%_PROBE[{marker}].JPG",
-            filter: Darwin.Domain.Enums.MediaAssetQueueFilter.All,
+            filter: MediaAssetQueueFilter.All,
             ct: TestContext.Current.CancellationToken);
 
         lowerCaseResult.Total.Should().Be(1);
