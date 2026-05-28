@@ -374,7 +374,7 @@ public sealed class TransitionInvoiceStatusHandlerTests
             TargetStatus = InvoiceStatus.Open
         }, TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>()
             .WithMessage("*ConcurrencyConflictDetected*");
     }
 

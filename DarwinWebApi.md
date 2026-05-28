@@ -378,6 +378,6 @@ Storefront payment completion is provider-webhook authoritative. Public return/c
 
 ## Provider Smoke Status
 
-- Stripe: real Checkout Session creation exists. Test keys are used first; live keys are entered later through Settings or secure configuration. Remaining work is test-mode smoke, then live-mode smoke before production traffic.
+- Stripe: real Checkout Session creation exists and test/staging webhook-authoritative smoke is validated. Remaining work is live-mode preflight, monitoring/alerting, and explicit live smoke approval before production traffic.
 - DHL: real client-backed shipment/label operation path exists. Remaining work is live smoke against the target DHL account and later carrier-integrated RMA automation.
 - Brevo: webhook and dispatch plumbing exists. Remaining work is production DNS, sender, sandbox, webhook, and worker verification.

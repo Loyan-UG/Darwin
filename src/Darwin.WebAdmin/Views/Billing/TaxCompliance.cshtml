@@ -516,6 +516,10 @@
                                     {
                                         <div class="small text-muted">@item.VatValidationMessage</div>
                                     }
+                                    @if (!string.IsNullOrWhiteSpace(item.VatValidationFormatHint))
+                                    {
+                                        <div class="small @(item.VatValidationFormatHintIsPositive ? "text-info" : "text-warning")">@T.T(item.VatValidationFormatHint)</div>
+                                    }
                                 }
                             </td>
                             <td>@item.Email</td>

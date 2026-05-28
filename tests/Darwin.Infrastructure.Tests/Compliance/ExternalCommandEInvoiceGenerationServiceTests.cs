@@ -257,6 +257,94 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
     }
 
     [Fact]
+    public async Task GenerateAsync_Should_Reject_When_Validation_Report_Is_Required_And_Omitted()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var command = WriteGeneratorScript(root, """
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root, requireValidationReport: true);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("did not produce the required validation report");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Reject_When_Required_Validation_Report_Has_No_Result_Flag()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-no-recognized-keys.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root, requireValidationReport: true);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.ValidationFailed);
+            result.Message.Should().Contain("without a recognized pass/fail result");
+            result.Artifact.Should().BeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_Should_Accept_When_Required_Validation_Report_Is_Positive()
+    {
+        var root = CreateTempRoot();
+        try
+        {
+            var fixturePath = GetFixturePath("einvoice-validation-report-valid-alt-key.json");
+            File.Exists(fixturePath).Should().BeTrue();
+
+            var command = WriteGeneratorScript(root, $$"""
+            copy "{{fixturePath}}" "%8" >nul
+            echo %%PDF-1.7>%output%
+            """);
+
+            var service = CreateService(command, root, requireValidationReport: true);
+
+            var result = await service.GenerateAsync(
+                CreateInvoice(),
+                new EInvoiceGenerationRequest(EInvoiceArtifactFormat.ZugferdFacturX),
+                TestContext.Current.CancellationToken);
+
+            result.Status.Should().Be(EInvoiceGenerationStatus.Generated);
+            result.Artifact.Should().NotBeNull();
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Fact]
     public async Task GenerateAsync_Should_Accept_Validation_Report_Without_Recognized_Validation_Flags()
     {
         var root = CreateTempRoot();
@@ -768,7 +856,8 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
         string tempDirectory,
         bool supportsXRechnung = false,
         long maxArtifactBytes = 1024 * 1024,
-        string validationProfile = "test-profile")
+        string validationProfile = "test-profile",
+        bool requireValidationReport = false)
         => new(Options.Create(new ExternalCommandEInvoiceOptions
         {
             Enabled = true,
@@ -778,7 +867,8 @@ public sealed class ExternalCommandEInvoiceGenerationServiceTests
             SupportsZugferdFacturX = true,
             SupportsXRechnung = supportsXRechnung,
             MaxArtifactBytes = maxArtifactBytes,
-            ValidationProfile = validationProfile
+            ValidationProfile = validationProfile,
+            RequireValidationReport = requireValidationReport
         }));
 
     private static Invoice CreateInvoice()

@@ -163,6 +163,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime? VatValidationCheckedAtUtc { get; set; }
         public string? VatValidationSource { get; set; }
         public string? VatValidationMessage { get; set; }
+        public string? VatValidationFormatHint { get; set; }
+        public bool VatValidationFormatHintIsPositive { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }

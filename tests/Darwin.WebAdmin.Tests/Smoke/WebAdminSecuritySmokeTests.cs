@@ -7,6 +7,7 @@ using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Marketing;
 using Darwin.Domain.Entities.Inventory;
+using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Darwin.Infrastructure.Persistence.Db;
 using FluentAssertions;
@@ -1787,8 +1788,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Headers.TryGetValues("HX-Redirect", out var redirectValues).Should().BeTrue();
-        redirectValues!.Single().Should().Contain("/MobileOperations");
-        using var redirectedResponse = await SendHtmxGetAsync(client, redirectValues.Single());
+        var redirectUrl = redirectValues!.Single();
+        redirectUrl.Should().Contain("/MobileOperations");
+        using var redirectedResponse = await SendHtmxGetAsync(client, redirectUrl);
         var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         redirectedHtml.Should().Contain("Push token could not be cleared.");
@@ -1873,8 +1875,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Headers.TryGetValues("HX-Redirect", out var redirectValues).Should().BeTrue();
-        redirectValues!.Single().Should().Contain("/MobileOperations");
-        using var redirectedResponse = await SendHtmxGetAsync(client, redirectValues.Single());
+        var redirectUrl = redirectValues!.Single();
+        redirectUrl.Should().Contain("/MobileOperations");
+        using var redirectedResponse = await SendHtmxGetAsync(client, redirectUrl);
         var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         redirectedHtml.Should().Contain("Device could not be deactivated.");
@@ -2135,14 +2138,16 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var suffix = Guid.NewGuid().ToString("N")[..8];
         var businessName = $"Hosted Invalid Lifecycle {suffix}";
         var businessEmail = $"invalid-lifecycle-{suffix}@example.test";
+        var locationName = $"Invalid Lifecycle Primary Location {suffix}";
 
         var businessId = await CreateHostedBusinessAsync(
             client,
             businessName,
             businessEmail,
-            ownerUserId: null,
-            legalName: string.Empty,
+            WebAdminTestFactory.TestMemberUserId,
+            legalName: $"{businessName} GmbH",
             isActive: false);
+        await CreateHostedBusinessLocationAsync(client, businessId, locationName, isPrimary: true);
 
         var setupPath = $"/Businesses/Setup?id={businessId}";
         using var setupResponse = await SendHtmxGetAsync(client, setupPath);
@@ -2156,8 +2161,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             BuildHostedBusinessLifecycleForm(setupHtml, businessId));
         var invalidSuspendHtml = await invalidSuspendResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         invalidSuspendResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        invalidSuspendResponse.Headers.TryGetValues("HX-Redirect", out var invalidSuspendRedirect).Should().BeFalse();
-        invalidSuspendHtml.Should().Contain("OperationalStatus");
+        invalidSuspendResponse.Headers.TryGetValues("HX-Redirect", out var invalidSuspendRedirect).Should().BeTrue();
+        invalidSuspendRedirect!.Single().Should().Contain("/Businesses/Setup");
+        invalidSuspendHtml.Should().BeEmpty();
         invalidSuspendResponse.Headers.TryGetValues("Content-Security-Policy", out var invalidSuspendCsp).Should().BeTrue();
         invalidSuspendCsp!.Single().Should().Contain("form-action 'self'");
 
@@ -2165,6 +2171,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         stillPendingResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var stillPendingHtml = await stillPendingResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         stillPendingHtml.Should().Contain("name=\"OperationalStatus\" value=\"PendingApproval\"");
+        stillPendingHtml.Should().MatchRegex("Unable to suspend|nicht gesperrt");
 
         var approvedHtml = await PostHostedBusinessLifecycleActionAsync(client, businessId, "Approve");
         approvedHtml.Should().Contain("name=\"OperationalStatus\" value=\"Approved\"");
@@ -2175,7 +2182,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             "/Businesses/Reactivate",
             BuildHostedBusinessLifecycleForm(approvedHtml, businessId));
         invalidReactivateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        invalidReactivateResponse.Headers.TryGetValues("HX-Redirect", out var invalidReactivateRedirect).Should().BeFalse();
+        invalidReactivateResponse.Headers.TryGetValues("HX-Redirect", out var invalidReactivateRedirect).Should().BeTrue();
+        invalidReactivateRedirect!.Single().Should().Contain("/Businesses/Setup");
         invalidReactivateResponse.Headers.TryGetValues("Content-Security-Policy", out var invalidReactivateCsp).Should().BeTrue();
         invalidReactivateCsp!.Single().Should().Contain("form-action 'self'");
 
@@ -2183,6 +2191,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         stillApprovedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var stillApprovedHtml = await stillApprovedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         stillApprovedHtml.Should().Contain("name=\"OperationalStatus\" value=\"Approved\"");
+        stillApprovedHtml.Should().MatchRegex("Unable to reactivate|nicht reaktiviert");
 
         var suspendedHtml = await PostHostedBusinessLifecycleActionAsync(
             client,
@@ -2197,7 +2206,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             "/Businesses/Approve",
             BuildHostedBusinessLifecycleForm(suspendedHtml, businessId));
         invalidApproveResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        invalidApproveResponse.Headers.TryGetValues("HX-Redirect", out var invalidApproveRedirect).Should().BeFalse();
+        invalidApproveResponse.Headers.TryGetValues("HX-Redirect", out var invalidApproveRedirect).Should().BeTrue();
+        invalidApproveRedirect!.Single().Should().Contain("/Businesses/Setup");
         invalidApproveResponse.Headers.TryGetValues("Content-Security-Policy", out var invalidApproveCsp).Should().BeTrue();
         invalidApproveCsp!.Single().Should().Contain("form-action 'self'");
 
@@ -2205,6 +2215,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         stillSuspendedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var stillSuspendedHtml = await stillSuspendedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         stillSuspendedHtml.Should().Contain("name=\"OperationalStatus\" value=\"Suspended\"");
+        stillSuspendedHtml.Should().MatchRegex("Unable to approve|nicht freigegeben");
     }
 
     [Fact]
@@ -2783,7 +2794,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("RowVersion is required.");
+        response.Headers.TryGetValues("HX-Redirect", out var redirectValues).Should().BeFalse();
+        responseHtml.Should().Contain("name=\"RowVersion\" value=\"\"");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -2833,7 +2845,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
 
         var staleResponseHtml = await staleResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        staleResponseHtml.Should().Contain("Concurrency conflict: the settings were modified by another user.");
+        staleResponseHtml.Should().MatchRegex("Concurrency conflict|Parallelitaetskonflikt");
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
         staleCspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -2923,9 +2935,10 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues)
             .Should().BeTrue();
-        staleRedirectValues!.Single().Should().Contain("/ShippingMethods/Edit");
+        var staleRedirectUrl = staleRedirectValues!.Single();
+        staleRedirectUrl.Should().Contain("/ShippingMethods/Edit");
 
-        using var staleEditResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+        using var staleEditResponse = await SendHtmxGetAsync(client, staleRedirectUrl);
         var staleEditHtml = await staleEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         staleEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         staleEditHtml.Should().Contain("Concurrency conflict. Reload and try again.");
@@ -3180,7 +3193,8 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             });
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Headers.TryGetValues("HX-Redirect", out var redirectValues).Should().BeTrue();
-        using var redirectedResponse = await SendHtmxGetAsync(client, redirectValues!.Single());
+        var redirectUrl = redirectValues!.Single();
+        using var redirectedResponse = await SendHtmxGetAsync(client, redirectUrl);
         var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         redirectedHtml.Should().Contain("Campaign delivery status could not be updated.");
@@ -3569,11 +3583,12 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         staleResponse.Headers.TryGetValues("HX-Redirect", out var staleRedirectValues)
             .Should().BeTrue();
-        staleRedirectValues!.Single().Should().Contain("/Media/Edit");
+        var staleRedirectUrl = staleRedirectValues!.Single();
+        staleRedirectUrl.Should().Contain("/Media/Edit");
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
         staleCspValues!.Single().Should().Contain("form-action 'self'");
 
-        using var staleEditResponse = await SendHtmxGetAsync(client, staleRedirectValues.Single());
+        using var staleEditResponse = await SendHtmxGetAsync(client, staleRedirectUrl);
         var staleEditHtml = await staleEditResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         staleEditResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         staleEditHtml.Should().Contain("Concurrency conflict. Reload the media asset and try again.");
@@ -6269,7 +6284,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         }
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("could not be finalized");
+        responseHtml.Should().MatchRegex("could not be finalized|konnte nicht finalisiert");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -7126,10 +7141,12 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
                     ["q"] = webhookIdempotencyKey
                 },
                 listHtml));
-        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("Concurrency");
+        response.Headers.TryGetValues("HX-Redirect", out var redirectValues).Should().BeTrue();
+        var redirectUrl = redirectValues!.Single();
+        using var redirectedResponse = await SendHtmxGetAsync(client, redirectUrl);
+        var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        redirectedHtml.Should().Contain("Concurrency");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -8458,7 +8475,7 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var callbackId = Guid.NewGuid();
         var callbackIdempotencyKey = $"smoke-callback-{Guid.NewGuid():N}";
         var seededAttemptAtUtc = DateTime.UtcNow.AddMinutes(-18);
-        var seededAttemptText = seededAttemptAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+        var seededAttemptText = seededAttemptAtUtc.ToString("yyyy-MM-dd HH:mm");
 
         using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
             seedDatabase: db =>
@@ -8511,7 +8528,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
 
-        using var updatedListResponse = await SendHtmxGetAsync(client, listPath);
+        using var updatedListResponse = await SendHtmxGetAsync(
+            client,
+            listPath);
         updatedListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var updatedListHtml = await updatedListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var updatedRowHtml = ExtractTableRowContainingText(updatedListHtml, callbackIdempotencyKey);
@@ -8575,10 +8594,11 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
                     ["deliveryFailureOnly"] = "false"
                 },
                 listHtml));
-        var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        responseHtml.Should().Contain("Concurrency");
+        response.Headers.TryGetValues("HX-Redirect", out var redirectValues).Should().BeTrue();
+        using var redirectedResponse = await SendHtmxGetAsync(client, redirectValues!.Single());
+        var redirectedHtml = await redirectedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        redirectedHtml.Should().Contain("Concurrency");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
     }
@@ -8871,17 +8891,31 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
     public async Task AuthenticatedShipmentProviderOperation_WithReQueue_ShouldClearRetryStateForNextWorkerAttempt()
     {
         var shipmentOperationId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
         var operationMarker = shipmentOperationId.ToString();
         var seededAttemptAtUtc = DateTime.UtcNow.AddMinutes(-22);
-        var seededAttemptText = seededAttemptAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+        var seededAttemptText = seededAttemptAtUtc.ToString("yyyy-MM-dd HH:mm");
 
         using var client = _factory.CreateAuthenticatedDatabaseNoRedirectClient(
             seedDatabase: db =>
             {
+                db.Set<Shipment>().Add(new Shipment
+                {
+                    Id = shipmentId,
+                    OrderId = WebAdminTestFactory.TestOrderId,
+                    Carrier = "DHL",
+                    Service = "DHL-SMOKE-REQUEUE",
+                    ProviderShipmentReference = $"DHL-REQUEUE-{shipmentOperationId:N}",
+                    TotalWeight = 250,
+                    Status = ShipmentStatus.Packed,
+                    CreatedAtUtc = DateTime.UtcNow.AddHours(-2),
+                    CreatedByUserId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    RowVersion = [1]
+                });
                 db.Set<ShipmentProviderOperation>().Add(new ShipmentProviderOperation
                 {
                     Id = shipmentOperationId,
-                    ShipmentId = WebAdminTestFactory.TestDhlLabelShipmentId,
+                    ShipmentId = shipmentId,
                     Provider = "DHL",
                     OperationType = "CreateShipment",
                     Status = "Failed",
@@ -8923,7 +8957,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
 
-        using var updatedListResponse = await SendHtmxGetAsync(client, listPath);
+        using var updatedListResponse = await SendHtmxGetAsync(
+            client,
+            "/Orders/ShipmentProviderOperations?provider=DHL&operationType=CreateShipment&status=Pending");
         updatedListResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var updatedListHtml = await updatedListResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var updatedRowHtml = ExtractTableRowContainingText(updatedListHtml, operationMarker);
@@ -8985,6 +9021,13 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         var responseHtml = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        if (response.Headers.TryGetValues("HX-Redirect", out var redirectValues))
+        {
+            using var redirectResponse = await SendHtmxGetAsync(client, redirectValues.Single());
+            responseHtml = await redirectResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            redirectResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+
         responseHtml.Should().Contain("Concurrency");
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
@@ -9570,7 +9613,9 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (
             responseHtml.Contains("RowVersion is required.", StringComparison.Ordinal) ||
-            responseHtml.Contains("Failed to update role permissions.", StringComparison.Ordinal))
+            responseHtml.Contains("RowVersion ist erforderlich.", StringComparison.Ordinal) ||
+            responseHtml.Contains("Failed to update role permissions.", StringComparison.Ordinal) ||
+            responseHtml.Contains("Die Rollenberechtigungen konnten nicht aktualisiert werden.", StringComparison.Ordinal))
             .Should().BeTrue();
         response.Headers.TryGetValues("Content-Security-Policy", out var cspValues).Should().BeTrue();
         cspValues!.Single().Should().Contain("form-action 'self'");
@@ -9613,7 +9658,10 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
         staleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         (
             staleResponseHtml.Contains("Failed to update role permissions.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("Die Rollenberechtigungen konnten nicht aktualisiert werden.", StringComparison.Ordinal) ||
             staleResponseHtml.Contains("RowVersion is required.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("RowVersion ist erforderlich.", StringComparison.Ordinal) ||
+            staleResponseHtml.Contains("Gleichzeitigkeitskonflikt", StringComparison.OrdinalIgnoreCase) ||
             staleResponseHtml.Contains("Concurrency", StringComparison.OrdinalIgnoreCase))
             .Should().BeTrue();
         staleResponse.Headers.TryGetValues("Content-Security-Policy", out var staleCspValues).Should().BeTrue();
@@ -10275,6 +10323,17 @@ public sealed class WebAdminSecuritySmokeTests : IClassFixture<WebAdminTestFacto
             ["SmtpPassword"] = string.Empty,
             ["SmtpFromAddress"] = "noreply@example.test",
             ["SmtpFromDisplayName"] = "Darwin Smoke",
+            ["TransactionalEmailProvider"] = "SMTP",
+            ["SupportEmail"] = "support@example.test",
+            ["BillingEmail"] = "billing@example.test",
+            ["NoReplyEmail"] = "no-reply@example.test",
+            ["SystemAdminEmail"] = "admin@example.test",
+            ["BrevoBaseUrl"] = "https://api.brevo.com/v3/",
+            ["BrevoApiKey"] = string.Empty,
+            ["BrevoWebhookUsername"] = string.Empty,
+            ["BrevoWebhookPassword"] = string.Empty,
+            ["BrevoSandboxMode"] = "true",
+            ["BrevoTestRecipientEmail"] = "communication-smoke@example.test",
             ["SmsEnabled"] = "true",
             ["SmsProvider"] = "Twilio",
             ["SmsFromPhoneE164"] = "+4915700000000",

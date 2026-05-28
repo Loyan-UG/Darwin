@@ -1231,7 +1231,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
             else
             {
-                SetErrorMessage("ShipmentProviderOperationUpdateFailedMessage");
+                SetErrorMessage(
+                    IsConcurrencyFailure(result.Error)
+                        ? "ConcurrencyConflictDetected"
+                        : "ShipmentProviderOperationUpdateFailedMessage");
             }
 
             return RedirectOrHtmx(nameof(ShipmentProviderOperations), new
@@ -1520,6 +1523,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 .OrderByDescending(x => x.CapturedAtUtc ?? DateTime.MinValue)
                 .Select(x => (Guid?)x.Id)
                 .FirstOrDefault();
+        }
+
+        private static bool IsConcurrencyFailure(string? error)
+        {
+            return !string.IsNullOrWhiteSpace(error) &&
+                   (error.Contains("Concurrency", StringComparison.OrdinalIgnoreCase) ||
+                    error.Contains("Gleichzeitig", StringComparison.OrdinalIgnoreCase));
         }
 
         private static OrderHeaderVm CreateHeader(OrderDetailDto dto)

@@ -106,6 +106,17 @@ Latest local recheck:
 - Provider smoke result: save/read/metadata/temporary-url checks completed against the local S3-compatible provider path; cleanup was skipped because retention smoke was enabled.
 - Local configuration: WebApi, WebAdmin, and Worker User Secrets route `InvoiceArchive` and `ShipmentLabels` profiles to the local MinIO bucket through a dedicated bucket-scoped app user. These secrets are machine-local and must not be copied to repository files.
 
+Latest local recheck:
+
+- Date: 2026-05-27
+- Docker validation: `darwin-minio` was healthy; init logs showed the smoke bucket created with Object Lock, versioning enabled, and default `COMPLIANCE` retention for `1DAYS`.
+- Test command: `dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Minio" --no-restore /p:UseSharedCompilation=false`
+- Test result: `3` passed, `0` skipped, `3` total.
+- Provider smoke command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute -SmokeRetention`
+- Provider smoke result: save/read/metadata checks completed through the S3-compatible provider path; temporary URL generation was available; cleanup was skipped because retention smoke was enabled.
+- Guarded smoke behavior: local loopback MinIO smoke can execute without production confirmation; production-like endpoints are blocked unless `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true` or `-AllowProductionEndpoint` is supplied.
+- Production readiness preflight result: blocked until the real production endpoint, bucket, TLS, dedicated least-privilege keys, Object Lock, versioning, retention, legal-hold policy, backup, restore, monitoring, alerting, and Darwin profile confirmations are supplied. This is expected and prevents claiming production immutability from local smoke alone.
+
 ## WebAdmin Local Smoke Action
 
 WebAdmin Site Settings includes an object-storage smoke action that writes a small test object, reads it back, verifies the hash and metadata, then attempts cleanup. When the local MinIO bucket has default COMPLIANCE retention, the smoke action can report success with cleanup blocked; that is expected because provider-level retention prevents deletion.
@@ -118,6 +129,56 @@ To validate the WebAdmin action manually against local MinIO:
 4. Open WebAdmin Site Settings, confirm object-storage status shows `S3Compatible`, configured container/profile status, and no provider credentials.
 5. Run the object-storage smoke action. A retained local bucket may show the cleanup-blocked success warning.
 6. Treat this only as a local provider-path smoke. Production still needs the real MinIO deployment validation checklist below.
+
+## Configure App Profiles With User Secrets
+
+For local or staging validation, configure WebApi, WebAdmin, and Worker through `.NET User Secrets` or deployment secrets. Do not copy these values into `appsettings` files.
+
+Use the same provider profile names across the processes that need object storage:
+
+- `InvoiceArchive` for invoice archive and e-invoice artifacts.
+- `ShipmentLabels` for DHL or carrier label artifacts.
+- `MediaAssets` for CMS/media uploads when external object storage is selected.
+
+Example local/staging command shape:
+
+```powershell
+$projects = @(
+  "src\Darwin.WebApi\Darwin.WebApi.csproj",
+  "src\Darwin.WebAdmin\Darwin.WebAdmin.csproj",
+  "src\Darwin.Worker\Darwin.Worker.csproj"
+)
+
+foreach ($project in $projects) {
+  dotnet user-secrets --project $project set "ObjectStorage:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:Endpoint" "https://object-storage.example.com"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:Region" "us-east-1"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:BucketName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:UseSsl" "true"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:UsePathStyle" "true"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:ForcePathStyle" "true"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:RequireObjectLock" "true"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:DefaultRetentionMode" "Compliance"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:LegalHoldEnabled" "true"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:ObjectLockValidationMode" "FailFast"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:AccessKey" "<set-in-secret-store>"
+  dotnet user-secrets --project $project set "ObjectStorage:S3Compatible:SecretKey" "<set-in-secret-store>"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:InvoiceArchive:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:InvoiceArchive:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:InvoiceArchive:Prefix" "invoices"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:ShipmentLabels:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:ShipmentLabels:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:ShipmentLabels:Prefix" "shipment-labels"
+
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:Provider" "S3Compatible"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:ContainerName" "darwin-invoice-archive"
+  dotnet user-secrets --project $project set "ObjectStorage:Profiles:MediaAssets:Prefix" "media"
+}
+```
+
+Replace placeholder values through the secret store used by the target environment. For production, prefer a deployment vault and least-privilege credentials over developer user-secrets.
 
 ## Manual Validation Checklist
 
@@ -142,5 +203,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-producti
 ```
 
 The preflight checks only non-secret confirmations. It does not accept MinIO access keys, secret keys, bucket policy JSON, object payloads, object keys, or provider responses. A passing preflight means the deployment checklist is complete enough to run the selected-provider smoke and WebAdmin smoke against the production bucket; it is not a production immutability claim by itself.
+
+The preflight requires separate confirmation that:
+
+- `InvoiceArchive`, `ShipmentLabels`, and `MediaAssets` profiles are configured or deliberately decided for the deployment.
+- The disposable production smoke prefix is approved before any production-like write is executed.
+- Retention/delete behavior is understood before retained smoke objects are written.
+- The operator runbook, ownership, and escalation path are available outside source control.
+
+After the preflight is complete and a disposable production smoke prefix is approved, run the selected-provider smoke with an explicit production confirmation:
+
+```powershell
+$env:DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED = "true"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute
+```
+
+For production-like endpoints, `scripts\smoke-object-storage.ps1 -Execute` is intentionally blocked unless `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true` is present or `-AllowProductionEndpoint` is passed. Use this only after the target bucket, profile, retention policy, and cleanup behavior are approved for a disposable smoke object. The smoke confirms Darwin can save, read, inspect metadata, optionally create a temporary URL, and delete or intentionally retain a smoke object through the configured provider path; it still does not replace Object Lock, legal-hold, backup, restore, monitoring, or operator sign-off.
 
 Application-level overwrite protection is not the same as provider-level immutable retention. Production immutability can only be claimed after the selected provider bucket/container enforces retention, Object Lock or legal hold, and that behavior has been validated.

@@ -1827,12 +1827,14 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         controllerSource.Should().Contain("[Route(\"api/v1/public/notifications/brevo/webhooks\")]");
         controllerSource.Should().Contain("[AllowAnonymous]");
         controllerSource.Should().Contain("private readonly IStringLocalizer<ValidationResource> _validationLocalizer;");
-        controllerSource.Should().Contain("private bool HasWebhookCredentials()");
-        controllerSource.Should().Contain("if (!HasWebhookCredentials())");
+        controllerSource.Should().Contain("ResolveWebhookCredentialsAsync(CancellationToken ct)");
+        controllerSource.Should().Contain("if (!credentials.IsConfigured)");
         controllerSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BrevoWebhookAuthenticationNotConfigured\"]);");
-        controllerSource.Should().Contain("private bool TryVerifyBasicAuth(string authorizationHeader)");
-        controllerSource.Should().Contain("if (!TryVerifyBasicAuth(Request.Headers.Authorization.ToString()))");
+        controllerSource.Should().Contain("private static bool TryVerifyBasicAuth(string authorizationHeader, string expectedUsername, string expectedPassword)");
+        controllerSource.Should().Contain("if (!TryVerifyBasicAuth(Request.Headers.Authorization.ToString(), credentials.Username!, credentials.Password!))");
         controllerSource.Should().Contain("return BadRequestProblem(_validationLocalizer[\"BrevoWebhookAuthenticationInvalid\"]);");
+        controllerSource.Should().Contain("FixedTimeEquals(username, expectedUsername)");
+        controllerSource.Should().Contain("FixedTimeEquals(password, expectedPassword)");
     }
 
     [Fact]
@@ -1843,8 +1845,8 @@ public sealed class SecurityAndPerformanceApiAndInfrastructureSourceTests : Secu
         var payloadIndex = controllerSource.IndexOf("var payloadRead = await ProviderWebhookPayloadReader.ReadAsync(Request, ct).ConfigureAwait(false);", StringComparison.Ordinal);
         var parseIndex = controllerSource.IndexOf("if (!TryParseEnvelope(rawPayload, out var eventName, out var messageId, out var eventTimestamp))", StringComparison.Ordinal);
 
-        payloadIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (!HasWebhookCredentials())", StringComparison.Ordinal));
-        payloadIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (!TryVerifyBasicAuth(Request.Headers.Authorization.ToString())", StringComparison.Ordinal));
+        payloadIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (!credentials.IsConfigured)", StringComparison.Ordinal));
+        payloadIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (!TryVerifyBasicAuth(Request.Headers.Authorization.ToString(), credentials.Username!, credentials.Password!))", StringComparison.Ordinal));
         parseIndex.Should().BeGreaterThan(payloadIndex);
         parseIndex.Should().BeGreaterThan(controllerSource.IndexOf("if (payloadRead.PayloadTooLarge)", StringComparison.Ordinal));
         controllerSource.Should().Contain("if (payloadRead.PayloadTooLarge)");

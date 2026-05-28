@@ -11484,6 +11484,9 @@
   <data name="ShipmentProviderOperationUpdateFailedMessage" xml:space="preserve">
     <value>Die Versand-Provider-Operation konnte nicht aktualisiert werden.</value>
   </data>
+  <data name="ConcurrencyConflictDetected" xml:space="preserve">
+    <value>Concurrency conflict. Bitte neu laden und erneut versuchen.</value>
+  </data>
   <data name="ShipmentProviderOperationMarkedFailedByOperator" xml:space="preserve">
     <value>Durch WebAdmin-Operator als fehlgeschlagen markiert.</value>
   </data>
@@ -13880,5 +13883,11 @@
   </data>
   <data name="BusinessesOpen" xml:space="preserve">
     <value>Geschaeft oeffnen</value>
+  </data>
+  <data name="VatValidationFormatHintPositive" xml:space="preserve">
+    <value>Formathinweis: Diese USt-IdNr. passt zum erwarteten Laendermuster. Das ist keine VIES- oder rechtliche Bestaetigung; pruefen Sie das offizielle Ergebnis, bevor Sie sie als gueltig markieren.</value>
+  </data>
+  <data name="VatValidationFormatHintNegative" xml:space="preserve">
+    <value>Formathinweis: Diese USt-IdNr. passt nicht zum erwarteten Laendermuster. Behalten Sie sie in manueller Pruefung, bis ein offizieller Nachweis die richtige Entscheidung bestaetigt.</value>
   </data>
 </root>

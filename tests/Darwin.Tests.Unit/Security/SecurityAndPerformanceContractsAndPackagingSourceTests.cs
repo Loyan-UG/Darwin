@@ -409,7 +409,9 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_OBJECT_STORAGE_PREFIX")
             .And.Contain("[string]$FileRoot")
             .And.Contain("[switch]$SmokeRetention")
+            .And.Contain("[switch]$AllowProductionEndpoint")
             .And.Contain("DARWIN_OBJECT_STORAGE_SMOKE_RETENTION")
+            .And.Contain("DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED")
             .And.Contain("Add -SmokeRetention")
             .And.Contain("ObjectStorageKeyBuilder.Build")
             .And.Contain("ObjectStorage:AzureBlob:ConnectionString")
@@ -429,6 +431,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             .And.Contain("DARWIN_MINIO_BACKUP_CONFIGURED_CONFIRMED")
             .And.Contain("DARWIN_MINIO_RESTORE_TEST_CONFIRMED")
             .And.Contain("DARWIN_MINIO_MONITORING_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED")
+            .And.Contain("DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED")
             .And.Contain("No MinIO access key, secret key")
             .And.NotContain("Invoke-RestMethod")
             .And.NotContain("Invoke-WebRequest")
@@ -949,6 +957,53 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         process.ExitCode.Should().Be(2);
         output.Should().Contain("Object storage smoke is blocked. Configure these environment variables first:");
         output.Should().Contain("DARWIN_OBJECT_STORAGE_S3_ENDPOINT_OR_REGION");
+        output.Should().NotContain("System.Management.Automation.RemoteException");
+    }
+
+    [Fact]
+    public async Task ObjectStorageSmoke_Should_BlockProductionLikeS3ExecuteWithoutExplicitConfirmation()
+    {
+        var root = ResolveRepositoryPath();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(Path.Combine("scripts", "smoke-object-storage.ps1"));
+        startInfo.ArgumentList.Add("-Execute");
+
+        foreach (var key in startInfo.Environment.Keys.Cast<string>()
+                     .Where(key => key.StartsWith("DARWIN_", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            startInfo.Environment.Remove(key);
+        }
+
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_PROVIDER"] = "S3Compatible";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_CONTAINER"] = "smoke";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_S3_BUCKET"] = "smoke-bucket";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_S3_ACCESS_KEY"] = "smoke-access";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_S3_SECRET_KEY"] = "smoke-secret";
+        startInfo.Environment["DARWIN_OBJECT_STORAGE_S3_ENDPOINT"] = "https://minio.example.test";
+
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start smoke-object-storage.ps1.");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+
+        await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+        var output = $"{await stdoutTask}{Environment.NewLine}{await stderrTask}";
+
+        process.ExitCode.Should().Be(2);
+        output.Should().Contain("Object storage smoke is blocked.");
+        output.Should().Contain("DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true");
+        output.Should().Contain("production-like object-storage endpoint");
+        output.Should().NotContain("smoke-secret");
         output.Should().NotContain("System.Management.Automation.RemoteException");
     }
 
@@ -1640,7 +1695,13 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
                 ["DARWIN_MINIO_RESTORE_TEST_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_MONITORING_CONFIRMED"] = "true",
                 ["DARWIN_MINIO_ALERTING_CONFIRMED"] = "true",
-                ["DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true"
+                ["DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+                ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true"
             }
         };
 
@@ -1721,6 +1782,12 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
             ["DARWIN_MINIO_MONITORING_CONFIRMED"] = "true",
             ["DARWIN_MINIO_ALERTING_CONFIRMED"] = "true",
             ["DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED"] = "true",
+            ["DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"] = "true",
             ["DARWIN_EINVOICE_COMMAND_PATH"] = Environment.ProcessPath ?? "powershell.exe"
         };
 
@@ -1852,6 +1919,10 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
     {
         var complianceDecisionSource = ReadRepositoryFile(Path.Combine("docs", "compliance-decisions.md"));
         var toolingDecisionSource = ReadRepositoryFile(Path.Combine("docs", "e-invoice-tooling-decision.md"));
+        var acceptanceChecklistSource = ReadRepositoryFile(Path.Combine("docs", "e-invoice-acceptance-checklist.md"));
+        var fixturePolicySource = ReadRepositoryFile(Path.Combine("docs", "e-invoice-validation-fixtures.md"));
+        var customerOnboardingSource = ReadRepositoryFile(Path.Combine("docs", "customer-deployment-onboarding-checklist.md"));
+        var docsIndexSource = ReadRepositoryFile(Path.Combine("docs", "README.md"));
         var goLiveStatusSource = ReadRepositoryFile(Path.Combine("docs", "go-live-status.md"));
         var productionSetupSource = ReadRepositoryFile(Path.Combine("docs", "production-setup.md"));
         var backlogSource = ReadRepositoryFile("BACKLOG.md");
@@ -1860,6 +1931,7 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         var defaultServiceSource = ReadApplicationFile(Path.Combine("CRM", "Services", "NotConfiguredEInvoiceGenerationService.cs"));
         var readinessValidatorSource = ReadApplicationFile(Path.Combine("CRM", "Services", "EInvoiceSourceReadinessValidator.cs"));
         var applicationCompositionSource = ReadApplicationFile(Path.Combine("Extensions", "ServiceCollectionExtensions.Application.cs"));
+        var mustangWrapperSource = ReadRepositoryFile(Path.Combine("scripts", "mustang-einvoice-wrapper.ps1"));
 
         complianceDecisionSource.Should().Contain("Primary target: ZUGFeRD/Factur-X");
         complianceDecisionSource.Should().Contain("Secondary target: XRechnung export");
@@ -1882,6 +1954,24 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         toolingDecisionSource.Should().Contain("The selected path still requires a pinned artifact");
         toolingDecisionSource.Should().NotContain("Full e-invoice compliance is complete");
 
+        acceptanceChecklistSource.Should().Contain("Current German Baseline");
+        acceptanceChecklistSource.Should().Contain("1 January 2025");
+        acceptanceChecklistSource.Should().Contain("EN 16931");
+        acceptanceChecklistSource.Should().Contain("ZUGFeRD/Factur-X `MINIMUM` and `BASIC-WL` profiles must not be accepted");
+        acceptanceChecklistSource.Should().Contain("The structured XML part is authoritative");
+        acceptanceChecklistSource.Should().Contain("Tax advisor or accounting lead");
+        acceptanceChecklistSource.Should().Contain("Legal-approved fixtures");
+        acceptanceChecklistSource.Should().Contain("This checklist does not replace advice from a tax advisor or legal reviewer.");
+        acceptanceChecklistSource.Should().Contain("https://www.bundesfinanzministerium.de/Content/DE/FAQ/e-rechnung.html");
+
+        fixturePolicySource.Should().Contain("Parser fixtures");
+        fixturePolicySource.Should().Contain("Smoke fixtures");
+        fixturePolicySource.Should().Contain("Legal-approved fixtures");
+        fixturePolicySource.Should().Contain("No compliance claim.");
+        fixturePolicySource.Should().Contain("einvoice-validation-report-valid-alt-key.json");
+        fixturePolicySource.Should().Contain("einvoice-validation-report-failed-nested-containers.json");
+        fixturePolicySource.Should().Contain("Do not label parser fixtures as legal-approved fixtures.");
+
         goLiveStatusSource.Should().Contain("Full e-invoicing compliance is not implemented.");
         goLiveStatusSource.Should().Contain("Current JSON/HTML/CSV/source-model exports are not full e-invoice compliance.");
         goLiveStatusSource.Should().Contain("E-invoice phase 1 now has a structured invoice source-model export from issued snapshots, a minimum source-readiness validator");
@@ -1890,9 +1980,19 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         goLiveStatusSource.Should().Contain("docs/e-invoice-tooling-decision.md");
 
         productionSetupSource.Should().Contain("\"MaxArtifactBytes\": 20971520");
+        productionSetupSource.Should().Contain("\"RequireValidationReport\": true");
         productionSetupSource.Should().Contain("non-PDF ZUGFeRD/Factur-X outputs");
         productionSetupSource.Should().Contain("malformed XRechnung XML outputs");
         productionSetupSource.Should().Contain("not full legal validation");
+        productionSetupSource.Should().Contain("e-invoice-acceptance-checklist.md");
+        productionSetupSource.Should().Contain("customer-deployment-onboarding-checklist.md");
+
+        customerOnboardingSource.Should().Contain("Approval Roles");
+        customerOnboardingSource.Should().Contain("Phase 7: Compliance And E-Invoice");
+        customerOnboardingSource.Should().Contain("Critical provider smokes are passed or explicitly deferred.");
+        customerOnboardingSource.Should().Contain("Customer approvals are recorded outside source control.");
+        docsIndexSource.Should().Contain("docs/customer-deployment-onboarding-checklist.md");
+        docsIndexSource.Should().Contain("docs/e-invoice-acceptance-checklist.md");
 
         backlogSource.Should().Contain("structured invoice source-model JSON, minimum source-readiness validation, and a provider-neutral `IEInvoiceGenerationService` boundary now exist");
         backlogSource.Should().Contain("The first tooling path is selected as Mustangproject CLI through the external-command adapter");
@@ -1932,15 +2032,23 @@ public sealed class SecurityAndPerformanceContractsAndPackagingSourceTests : Sec
         var externalCommandOptionsSource = ReadInfrastructureFile(Path.Combine("Compliance", "ExternalCommandEInvoiceOptions.cs"));
         var externalCommandServiceSource = ReadInfrastructureFile(Path.Combine("Compliance", "ExternalCommandEInvoiceGenerationService.cs"));
         externalCommandOptionsSource.Should().Contain("MaxArtifactBytes");
+        externalCommandOptionsSource.Should().Contain("RequireValidationReport");
         externalCommandServiceSource.Should().Contain("ValidateArtifactContent");
+        externalCommandServiceSource.Should().Contain("did not produce the required validation report");
         externalCommandServiceSource.Should().Contain("LooksLikePdf");
         externalCommandServiceSource.Should().Contain("LooksLikeXml");
         externalCommandServiceSource.Should().Contain("Math.Clamp(options.MaxArtifactBytes");
+        mustangWrapperSource.Should().Contain("Darwin Smoke Seller");
+        mustangWrapperSource.Should().NotContain("Loyan");
+        mustangWrapperSource.Should().NotContain("loyan.de");
 
         var guardedSources = new[]
         {
             complianceDecisionSource,
             toolingDecisionSource,
+            acceptanceChecklistSource,
+            fixturePolicySource,
+            customerOnboardingSource,
             goLiveStatusSource,
             productionSetupSource,
             backlogSource

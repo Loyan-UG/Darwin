@@ -232,7 +232,7 @@ public sealed class BusinessContractsMapperTests
         var dto = new BusinessDiscoveryListItemDto
         {
             Id = Guid.NewGuid(),
-            Name = null,
+            Name = null!,
             Category = BusinessCategoryKind.Cafe
         };
 
@@ -549,7 +549,7 @@ public sealed class BusinessContractsMapperTests
         var dto = new BusinessPublicLocationDto
         {
             Id = Guid.NewGuid(),
-            Name = null,
+            Name = null!,
             City = "Leipzig",
             IsPrimary = false
         };

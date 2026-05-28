@@ -555,6 +555,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     VatValidationCheckedAtUtc = x.VatValidationCheckedAtUtc,
                     VatValidationSource = x.VatValidationSource,
                     VatValidationMessage = x.VatValidationMessage,
+                    VatValidationFormatHint = BuildVatValidationFormatHint(x.VatId, out var vatFormatHintIsPositive),
+                    VatValidationFormatHintIsPositive = vatFormatHintIsPositive,
                     OpportunityCount = x.OpportunityCount,
                     CreatedAtUtc = x.CreatedAtUtc,
                     ModifiedAtUtc = x.ModifiedAtUtc
@@ -879,7 +881,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
             else
             {
-                SetErrorMessage("WebhookDeliveryUpdateFailedMessage");
+                SetErrorMessage(IsConcurrencyFailure(result.Error)
+                    ? "ConcurrencyConflictDetected"
+                    : "WebhookDeliveryUpdateFailedMessage");
             }
 
             return RedirectOrHtmx(nameof(Webhooks), new { page, pageSize, q, queue });
@@ -2380,6 +2384,58 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         private bool IsHtmxRequest()
         {
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsConcurrencyFailure(string? error)
+        {
+            return !string.IsNullOrWhiteSpace(error) &&
+                   (error.Contains("Concurrency", StringComparison.OrdinalIgnoreCase) ||
+                    error.Contains("Gleichzeitigkeitskonflikt", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string? BuildVatValidationFormatHint(string? vatId, out bool isPositive)
+        {
+            isPositive = false;
+            var normalized = NormalizeVatId(vatId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return null;
+            }
+
+            var countryCode = normalized.Length >= 2 ? normalized[..2] : string.Empty;
+            var localPart = normalized.Length > 2 ? normalized[2..] : string.Empty;
+            var generalFormatLooksPlausible =
+                countryCode.Length == 2 &&
+                countryCode.All(char.IsLetter) &&
+                localPart.Length is >= 2 and <= 12 &&
+                localPart.All(char.IsLetterOrDigit);
+            var countrySpecificFormatLooksPlausible = countryCode switch
+            {
+                "DE" => localPart.Length == 9 && localPart.All(char.IsDigit),
+                _ => generalFormatLooksPlausible
+            };
+
+            isPositive = generalFormatLooksPlausible && countrySpecificFormatLooksPlausible;
+            return isPositive ? "VatValidationFormatHintPositive" : "VatValidationFormatHintNegative";
+        }
+
+        private static string NormalizeVatId(string? vatId)
+        {
+            if (string.IsNullOrWhiteSpace(vatId))
+            {
+                return string.Empty;
+            }
+
+            var builder = new StringBuilder(vatId.Length);
+            foreach (var character in vatId.Trim())
+            {
+                if (!char.IsWhiteSpace(character) && character != '-' && character != '.')
+                {
+                    builder.Append(char.ToUpperInvariant(character));
+                }
+            }
+
+            return builder.ToString();
         }
     }
 }

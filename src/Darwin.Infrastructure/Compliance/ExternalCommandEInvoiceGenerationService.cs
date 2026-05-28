@@ -111,7 +111,7 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
                     validationMessage);
             }
 
-            var reportMessage = ValidateValidationReport(validationReportPath);
+            var reportMessage = ValidateValidationReport(validationReportPath, options.RequireValidationReport);
             if (!string.IsNullOrWhiteSpace(reportMessage))
             {
                 return new EInvoiceGenerationResult(
@@ -208,7 +208,8 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
             MaxArtifactBytes = Math.Clamp(options.MaxArtifactBytes, 1024, 100 * 1024 * 1024),
             SupportsZugferdFacturX = options.SupportsZugferdFacturX,
             SupportsXRechnung = options.SupportsXRechnung,
-            ValidationProfile = string.IsNullOrWhiteSpace(options.ValidationProfile) ? "external-command" : options.ValidationProfile.Trim()
+            ValidationProfile = string.IsNullOrWhiteSpace(options.ValidationProfile) ? "external-command" : options.ValidationProfile.Trim(),
+            RequireValidationReport = options.RequireValidationReport
         };
     }
 
@@ -258,17 +259,21 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
         };
     }
 
-    private static string? ValidateValidationReport(string validationReportPath)
+    private static string? ValidateValidationReport(string validationReportPath, bool requireValidationReport)
     {
         if (!File.Exists(validationReportPath))
         {
-            return null;
+            return requireValidationReport
+                ? "The configured e-invoice command did not produce the required validation report."
+                : null;
         }
 
         if (new FileInfo(validationReportPath).Length == 0 ||
             string.IsNullOrWhiteSpace(File.ReadAllText(validationReportPath, Encoding.UTF8)))
         {
-            return null;
+            return requireValidationReport
+                ? "The configured e-invoice command did not produce the required validation report."
+                : null;
         }
 
         try
@@ -283,7 +288,9 @@ public sealed class ExternalCommandEInvoiceGenerationService : IEInvoiceGenerati
 
             if (!TryGetValidationResult(document.RootElement, out var isValid))
             {
-                return null;
+                return requireValidationReport
+                    ? "The configured e-invoice command produced a validation report without a recognized pass/fail result."
+                    : null;
             }
 
             if (isValid)

@@ -88,6 +88,7 @@ namespace Darwin.WebApi.Mappers
                 Description = dto.Description,
                 RequiredPoints = dto.RequiredPoints,
                 IsActive = dto.IsActive,
+                RequiresConfirmation = dto.RequiresConfirmation,
                 IsSelectable = dto.IsSelectable
             };
         }

@@ -403,7 +403,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
             else
             {
-                SetErrorMessage("ProviderCallbackUpdateFailedMessage");
+                SetErrorMessage(IsConcurrencyFailure(result.Error)
+                    ? "ConcurrencyConflictDetected"
+                    : "ProviderCallbackUpdateFailedMessage");
             }
 
             return RedirectOrHtmx(nameof(ProviderCallbacks), new
@@ -3155,6 +3157,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     EscalationRule = T("CommunicationAuditPlaybookAdminTestEscalation")
                 }
             };
+        }
+
+        private static bool IsConcurrencyFailure(string? error)
+        {
+            return !string.IsNullOrWhiteSpace(error) &&
+                   (error.Contains("Concurrency", StringComparison.OrdinalIgnoreCase) ||
+                    error.Contains("Gleichzeitigkeitskonflikt", StringComparison.OrdinalIgnoreCase));
         }
     }
 }

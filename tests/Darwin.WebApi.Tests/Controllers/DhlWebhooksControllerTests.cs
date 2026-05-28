@@ -702,8 +702,8 @@ public sealed class DhlWebhooksControllerTests
         var secondTask = secondController.ReceiveAsync(TestContext.Current.CancellationToken);
         await Task.WhenAll(firstTask, secondTask);
 
-        var firstResult = AssertOk(firstTask.Result);
-        var secondResult = AssertOk(secondTask.Result);
+        var firstResult = AssertOk(await firstTask);
+        var secondResult = AssertOk(await secondTask);
         new[] { firstResult.Duplicate, secondResult.Duplicate }.Count(x => x).Should().Be(1);
         new[] { firstResult.Duplicate, secondResult.Duplicate }.Count(x => !x).Should().Be(1);
 

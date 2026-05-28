@@ -1,8 +1,10 @@
 # Darwin Production Setup
 
-Reviewed: 2026-05-26
+Reviewed: 2026-05-27
 
 This runbook describes production setup at a deployment-neutral level. Do not commit deployment-specific domains, customer names, credentials, keys, webhook secrets, access keys, or signing material.
+
+For repeatable customer rollout steps, approval ownership, and manual sign-off gates, use [docs/customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md).
 
 ## Configuration Principles
 
@@ -71,6 +73,7 @@ Smoke:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -UseSiteSettings
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -Execute -Sandbox
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -RequireDeliveryPipeline
 ```
@@ -135,6 +138,9 @@ Policy:
 - Clear provider valid response may record `Valid`.
 - Clear provider invalid response may record `Invalid`.
 - Provider failures, unavailable service, timeouts, malformed responses, and exceptions must remain `Unknown` with manual review.
+- Provider-generated `Unknown` outcomes are handled by the scheduled retry worker when enabled.
+- WebAdmin may show country/VAT-format hints to help manual review, but these hints are never official validation and must not auto-mark a VAT ID valid.
+- Critical retry-failure thresholds send admin email alerts; normal review items remain visible in WebAdmin Tax Compliance.
 
 Smoke:
 
@@ -144,7 +150,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-vies-live.ps1 
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-vies-live.ps1 -Execute -CheckProviderFailure
 ```
 
-Enable retry workers only after support ownership, cadence, and monitoring are approved.
+Enable retry workers only when the deployment has an operator who owns the manual-review queue and alert response.
 
 ## Object Storage
 
@@ -166,6 +172,17 @@ Run:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
 
+The readiness preflight requires explicit confirmation for the archive, shipment-label, and media profile decisions, the disposable smoke prefix, retention/delete behavior, and the operator runbook. It does not accept or print access keys, secret keys, bucket policy JSON, object keys, or provider responses.
+
+Run the selected-provider object-storage smoke against a production-like endpoint only after an operator approves the disposable smoke prefix and cleanup or retention behavior:
+
+```powershell
+$env:DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED = "true"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute
+```
+
+Do not set the production smoke confirmation for routine local validation. It exists to prevent accidental writes to a real bucket/container.
+
 See [docs/minio-storage-runbook.md](minio-storage-runbook.md).
 
 ## E-Invoice
@@ -179,8 +196,11 @@ Current direction:
 Production readiness requires:
 
 - Configure the external-command adapter with a bounded artifact size, for example `"MaxArtifactBytes": 20971520`.
+- Configure `"RequireValidationReport": true` for production so the adapter rejects artifacts when the selected tool does not produce a recognized positive validation report.
 - Reject non-PDF ZUGFeRD/Factur-X outputs and malformed XRechnung XML outputs before storage.
 - Treat adapter smoke as not full legal validation.
+- Use [docs/e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md) for German B2B/B2G scope, reviewer approvals, deterministic fixture scenarios, and evidence requirements.
+- Keep parser fixtures, smoke fixtures, and future legal-approved fixtures separated; see [docs/e-invoice-validation-fixtures.md](e-invoice-validation-fixtures.md).
 - Pinned approved generator artifact.
 - Runtime/JVM packaging where applicable.
 - Deterministic fixtures.

@@ -21,4 +21,6 @@ public sealed class ExternalCommandEInvoiceOptions
     public bool SupportsXRechnung { get; set; }
 
     public string ValidationProfile { get; set; } = "external-command";
+
+    public bool RequireValidationReport { get; set; }
 }

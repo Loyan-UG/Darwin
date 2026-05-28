@@ -176,7 +176,7 @@ public sealed class LoyaltyContractsMapperTests
         {
             LoyaltyRewardTierId = Guid.NewGuid(),
             BusinessId = Guid.NewGuid(),
-            Name = null,
+            Name = null!,
             Description = null,
             RequiredPoints = 50,
             IsActive = true,

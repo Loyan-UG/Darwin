@@ -59,7 +59,13 @@ $requiredConfirmations = @(
     "DARWIN_MINIO_RESTORE_TEST_CONFIRMED",
     "DARWIN_MINIO_MONITORING_CONFIRMED",
     "DARWIN_MINIO_ALERTING_CONFIRMED",
-    "DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED"
+    "DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED",
+    "DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED",
+    "DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED",
+    "DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED",
+    "DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED",
+    "DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED",
+    "DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED"
 )
 
 $missing = @()
@@ -92,4 +98,4 @@ Assert-AbsoluteHttpsEndpoint -Name "DARWIN_MINIO_PRODUCTION_ENDPOINT" -Value $en
 
 Write-Host "MinIO production readiness prerequisites are present."
 Write-Host "No MinIO access key, secret key, object payload, bucket policy, or provider response was accepted or printed."
-Write-Host "After this preflight passes, run the selected-provider smoke and WebAdmin smoke against the production bucket before claiming provider-level archive immutability."
+Write-Host "After this preflight passes, run the selected-provider smoke and WebAdmin smoke against the approved disposable production prefix before claiming provider-level archive immutability."

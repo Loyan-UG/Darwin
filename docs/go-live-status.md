@@ -1,6 +1,6 @@
 # Darwin Go-Live Status
 
-Last reviewed: 2026-05-26
+Last reviewed: 2026-05-27
 
 This document records code-backed readiness. It is not a product overview or marketing status page; use [README.md](../README.md) for the platform summary. This document deliberately separates implemented plumbing from production-complete provider behavior. External smoke inputs and command shapes are documented in [docs/external-smoke-inputs.md](external-smoke-inputs.md).
 
@@ -13,12 +13,12 @@ This document records code-backed readiness. It is not a product overview or mar
 | Web | Front-office/member shell exists and is customer-facing. | Keep public/member wording free from internal diagnostics and complete checkout smoke when that scope is enabled. |
 | Worker | Provider callback, email/channel, shipment, archive, and retry workers exist. | Deployment enablement and monitoring per provider. |
 | Persistence | PostgreSQL preferred/default; SQL Server supported. | Production grants, backups, and migration validation per deployment. |
-| Stripe | Test/staging paths for hosted checkout, webhook finalization, subscription finalization, refund reconciliation, and dispute follow-up exist. | Live-readiness preflight and approved live-mode smoke. |
-| DHL | Real client path, provider-operation queue, label storage, return-label queueing, callbacks, and WebAdmin recovery surfaces exist. | Final account/product details and live validation. |
-| Brevo | DB-backed transactional email routing, role senders, masked secrets, branded templates, webhook ingestion, and callback processing exist. | Production monitoring, inbox-placement checks, and operational alerting. |
-| VIES | Soft `Unknown`/manual-review policy and live smoke harness exist. | Retry-worker ownership, monitoring, and support cadence. |
-| Object storage | Reusable abstraction and providers are implemented; local MinIO smoke exists. | Production Object Lock/retention/legal-hold, backup/restore, monitoring, and selected-provider smoke. |
-| E-invoice | Generation boundary, external-command adapter, local Mustangproject wrapper, storage boundary, and WebAdmin download guard exist. | Legal validation fixtures, production artifact smoke, and sign-off. |
+| Stripe | Test/staging paths for hosted checkout, webhook finalization, subscription finalization, refund reconciliation, and dispute follow-up exist. Local handoff and public-webhook finalized test-mode smoke passed on 2026-05-27. | Live-readiness preflight, monitoring, and approved live-mode smoke. |
+| DHL | Real client path, provider-operation queue, label storage, return-label queueing, callbacks, WebAdmin recovery surfaces, and focused internal DHL/shipment tests are green. | Final account/product details and live validation. |
+| Brevo | DB-backed transactional email routing, role senders, masked secrets, branded templates, webhook ingestion, callback processing, and Site Settings-backed smoke loading exist. | Production monitoring, periodic inbox-placement checks, and alert ownership. |
+| VIES | `Manual Review + Scheduled Retry` policy exists. Controlled valid/invalid/provider-failure live smoke passed on 2026-05-27. | Production monitoring ownership and periodic smoke after provider or policy changes. |
+| Object storage | Reusable abstraction and providers are implemented; local MinIO smoke passed again on 2026-05-27 against the S3-compatible provider path. Production-like provider smoke execution is guarded behind explicit operator confirmation for profiles, disposable prefix, retention/delete behavior, and operator runbook readiness. | Production Object Lock/retention/legal-hold, backup/restore, monitoring, and selected-provider smoke. |
+| E-invoice | Generation boundary, external-command adapter, local Mustangproject wrapper, storage boundary, WebAdmin download guard, validation-report enforcement option, and local adapter smoke for XRechnung XML plus ZUGFeRD/Factur-X PDF exist. | Legal validation fixtures, production artifact smoke, and sign-off. |
 | Mobile | Implemented Consumer and Business workflows are guarded and usable. | Signed release artifacts, production mobile config, device/camera smoke, and broader UI coverage. |
 
 ## Implemented Baseline
@@ -26,10 +26,14 @@ This document records code-backed readiness. It is not a product overview or mar
 - Source-contract cleanup is complete for the current focused lanes, with zero skipped tests in the documented lanes.
 - WebAdmin exposes compact operational surfaces for onboarding, business readiness, billing, communication, mobile operations, CRM, inventory, returns, shipping, and provider status.
 - Site Settings preserves masked/blank secrets instead of clearing existing values, and WebAdmin avoids exposing provider credentials.
+- WebAdmin shipment provider-operation mutations now surface concurrency conflicts safely and the focused DHL/shipment WebAdmin smoke lane is green.
 - WebApi payment and subscription flows require provider-hosted Stripe sessions and verified webhooks for final state.
 - DHL operations do not generate fake labels, tracking numbers, provider references, or return labels.
 - Brevo email routing is role-based and DB-backed. Transactional/security, billing, support, and admin-alert sender roles are configurable per deployment.
+- Brevo readiness smoke can load Site Settings directly for local/staging validation without printing secrets.
+- VIES provider failures stay `Unknown`/manual review, are retried by the scheduled retry path, and include operator-only format hints that do not replace official validation.
 - Invoice archive/object storage uses provider-neutral abstractions. MinIO is the recommended self-hosted production target; AWS S3 and Azure Blob remain supported alternatives.
+- Local MinIO smoke validates the development S3-compatible path, Object Lock-enabled bucket creation, versioning, metadata/hash behavior, temporary URL support, and retained-object cleanup boundaries. It does not prove production immutability.
 - E-invoice generated artifacts route through the invoice archive storage boundary when a generator is configured. Current JSON/HTML/source-model outputs are operational artifacts, not compliant e-invoices.
 - Mobile apps reject broad Android cleartext traffic, avoid Release unsafe certificate trust, and keep mobile-used API routes under source-contract guard.
 
@@ -44,6 +48,9 @@ Implemented:
 - Refund reconciliation and dispute follow-up visibility.
 - WebAdmin subscription, payment, refund, dispute, and webhook visibility.
 - Guarded smoke scripts for test mode, webhook forwarding, runtime pipeline checks, and live readiness.
+- Local test-mode storefront handoff smoke passed on 2026-05-27: a disposable order was created, the checkout handoff returned a Stripe-hosted URL, the payment stayed `Pending`, and the browser return route did not finalize the payment.
+- Public-webhook finalized test-mode smoke passed on 2026-05-27: a browser checkout used a Stripe-hosted test payment, signed `checkout.session.completed` and `payment_intent.succeeded` callbacks were processed by the provider callback worker, and final payment state was recorded by verified webhook processing.
+- The front-office order confirmation page treats captured Stripe payments as recorded payments and no longer offers another payment handoff when the provider has finalized the order.
 
 Not production-complete until:
 
@@ -61,6 +68,7 @@ Implemented:
 - Provider-operation queue and WebAdmin recovery actions.
 - Label persistence through shared storage paths.
 - Webhook/callback ingestion and failure visibility.
+- Focused Unit/WebApi/WebAdmin DHL and shipment lanes pass without using fake provider references.
 
 Not production-complete until:
 
@@ -80,12 +88,13 @@ Implemented:
 - Brevo outbound webhook ingestion with Basic Auth.
 - Branded HTML templates for default transactional flows.
 - Email dispatch and provider callback worker integration.
+- Site Settings-backed smoke loading for local/staging validation.
 
 Not production-complete until:
 
 - DNS and sender verification are monitored over time.
 - Inbox placement is periodically checked after DNS, sender, template, or provider changes.
-- Webhook delivery, callback backlog, and failed-send alerts have operational owners.
+- Webhook delivery, callback backlog, failed-send alerts, and inbox-placement checks have operational owners.
 
 ### VIES
 
@@ -93,18 +102,22 @@ Implemented:
 
 - VIES-backed VAT lookup path.
 - Policy that provider failures remain `Unknown` and require manual review.
+- Scheduled retry for provider-generated `Unknown` outcomes.
+- Operator VAT-format hints that never auto-confirm validity.
+- Critical admin alert email when retry failures exceed the configured threshold.
 - Guarded smoke script for valid, invalid, and provider-failure checks.
-- Disabled-by-default retry worker for provider-generated `Unknown` decisions.
+- Controlled live smoke for valid, invalid, and provider-failure behavior passed on 2026-05-27.
 
 Not production-complete until:
 
-- Retry cadence and support ownership are accepted.
-- Monitoring and manual-review handling are operational.
+- Monitoring and manual-review handling are operational in the target deployment.
+- Periodic smoke is repeated after VIES provider, retry, or policy changes.
 
 ## Compliance And Archive
 
 - Full e-invoicing compliance is not implemented.
 - E-invoice phase 1 now has a structured invoice source-model export from issued snapshots, a minimum source-readiness validator, JSON/XML source-model downloads, a provider-neutral `IEInvoiceGenerationService` boundary, an external-command adapter, and guarded artifact storage/download paths.
+- Local external-command smoke passed on 2026-05-27 for both XRechnung XML and ZUGFeRD/Factur-X PDF artifact shape through the Mustangproject wrapper, including `RequireValidationReport`.
 - Invoice issue-readiness guards and immutable issued snapshots exist.
 - Archive metadata includes hash, generated time, retention horizon, policy version, and purge metadata.
 - Archive purge worker is explicit opt-in.
@@ -135,7 +148,7 @@ Not production-complete until:
 - Stripe live-readiness preflight and approved live smoke.
 - DHL live account/product validation.
 - Brevo production monitoring and periodic inbox-placement checks.
-- VIES retry-worker operational policy.
+- VIES production monitoring ownership and periodic controlled smoke.
 - Production object-storage bucket/container validation.
 - E-invoice legal validation and production artifact smoke.
 - Signed mobile release and device/provider smoke.

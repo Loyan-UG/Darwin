@@ -1,6 +1,6 @@
 # E-Invoice Tooling Decision
 
-Reviewed: 2026-05-13
+Reviewed: 2026-05-27
 
 Darwin does not yet implement full e-invoice compliance. Current invoice outputs are issued JSON snapshots, printable HTML archive output, structured invoice source-model JSON, and CSV export. The primary target for the next implementation slice is a downloadable ZUGFeRD/Factur-X invoice artifact. XRechnung remains a secondary export target.
 
@@ -32,7 +32,7 @@ Reasoning:
 - The existing Darwin boundary already supports an out-of-process generator/validator through `--input`, `--output`, `--format`, and optional `--validation-profile`.
 - `Mustangproject` is maintained as an e-invoice focused Java library/CLI/server and documents read, write, validate, and convert support for ZUGFeRD/Factur-X and XRechnung artifacts.
 - Keeping the first slice out-of-process avoids adding provider/tooling SDK references to Domain or Application and keeps the implementation replaceable if a deployment later mandates another generator.
-- The selected path now has a local pinned-tooling installer (`scripts/install-mustang-cli.ps1`) and wrapper (`scripts/mustang-einvoice-wrapper.cmd`). Local smoke passed on 2026-05-26 for both XRechnung XML and ZUGFeRD/Factur-X PDF artifact generation through Darwin's external-command adapter. Generated artifact storage is guarded through `IEInvoiceArtifactStorage`; tests verify the `InvoiceArchive` object-storage profile, SHA-256 hash, validation-profile metadata, compliance retention, retention horizon, and overwrite-disallow policy. Hosted WebAdmin smoke also verifies that generated artifacts are persisted through `IEInvoiceArtifactStorage` before file download responses are returned, and that invalid format requests do not call the generator. The selected path still requires a pinned artifact in production packaging, approved deterministic fixtures, legal validation evidence, production artifact download/storage smoke, and deployment sign-off before any generated artifact is exposed as compliant. Deterministic validation-report fixture parsing is covered by `ExternalCommandEInvoiceGenerationServiceTests` (including alternate boolean keys and failed issue-message extraction).
+- The selected path now has a local pinned-tooling installer (`scripts/install-mustang-cli.ps1`) and wrapper (`scripts/mustang-einvoice-wrapper.cmd`). Local smoke passed again on 2026-05-27 for both XRechnung XML and ZUGFeRD/Factur-X PDF artifact generation through Darwin's external-command adapter, including the production-like `RequireValidationReport` path. Generated artifact storage is guarded through `IEInvoiceArtifactStorage`; tests verify the `InvoiceArchive` object-storage profile, SHA-256 hash, validation-profile metadata, compliance retention, retention horizon, and overwrite-disallow policy. Hosted WebAdmin smoke also verifies that generated artifacts are persisted through `IEInvoiceArtifactStorage` before file download responses are returned, and that invalid format requests do not call the generator. The selected path still requires a pinned artifact in production packaging, approved deterministic fixtures, legal validation evidence, production artifact download/storage smoke, and deployment sign-off before any generated artifact is exposed as compliant. Deterministic validation-report fixture parsing is covered by `ExternalCommandEInvoiceGenerationServiceTests` (including alternate boolean keys and failed issue-message extraction).
 
 Alternatives retained for later:
 
@@ -50,13 +50,16 @@ These notes are a shortlist for the next implementation slice, not an approved p
 - `KoSIT XRechnung validator configuration`: relevant for the later XRechnung export path and for German CIUS validation evidence. It is not by itself a ZUGFeRD/Factur-X PDF generator.
 - `FeRD ZUGFeRD/Factur-X 2.4 package`: this remains the reference specification and validation artifact source for the target format. Implementation work must align generated profile/version output with the active deployment requirement. Reference: <https://www.ferd-net.de/en/standards/zugferd/factur-x>.
 
-The next implementation slice is a proof-of-concept using the existing external-command adapter and a pinned Mustangproject CLI wrapper: first drive the wrapper through `scripts/smoke-einvoice-external-command.ps1`, then add deployment smoke and selected-tool legal validation evidence before any WebAdmin download is treated as compliant. Deterministic fixture coverage for report parsing now exists in infrastructure tests.
+The next implementation slice is a production-evidence package for the selected external-command path: pin the deployment artifact, record deterministic source-to-artifact fixtures, collect selected-tool validation reports, and run artifact storage/download smoke in the target deployment before any WebAdmin download is treated as compliant. Local adapter smoke is already green and confirms process execution plus artifact-shape checks only.
 
 ## Implementation Requirements After Selection
 
 - Keep the default `NotConfigured` implementation for unconfigured deployments and enable the selected Mustangproject external-command path only through secure deployment configuration.
 - If the selected tool is operated out-of-process, configure `Compliance:EInvoice:ExternalCommand` with an absolute executable path, bounded timeout, supported formats, and an approved working/temp directory.
+- Set `RequireValidationReport=true` in production so a generated artifact is rejected when the selected tool does not write a recognized positive validation result.
 - Use `scripts/smoke-einvoice-external-command.ps1` to verify the selected external command can be called through Darwin's adapter before wiring it to operator-facing flows. A successful smoke confirms process execution and artifact-shape checks only; it is not legal validation.
+- Keep parser fixtures, smoke fixtures, and future legal-approved fixtures separated; see [docs/e-invoice-validation-fixtures.md](e-invoice-validation-fixtures.md).
+- Use [docs/e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md) for German deployment approval, reviewer ownership, fixture scenarios, and evidence requirements.
 - Reuse or extend `EInvoiceSourceReadinessValidator` so missing source fields fail before provider-specific generation.
 - Extend the existing issued-snapshot to structured source-model mapping into the selected e-invoice model.
 - Validate the structured XML before artifact exposure.

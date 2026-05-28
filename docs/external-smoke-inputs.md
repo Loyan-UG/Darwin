@@ -1,6 +1,6 @@
 # External Smoke Inputs
 
-Reviewed: 2026-05-26
+Reviewed: 2026-05-27
 
 This file lists non-committed inputs for external smoke checks. Do not store real secret values in this file or any committed configuration. Do not store real provider secrets, API keys, webhook secrets, access keys, or private signing material in this file.
 
@@ -11,6 +11,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-go-live-readin
 ```
 
 Exit code `2` means one or more checks are blocked by missing operator inputs. That is expected before a provider is fully configured.
+The aggregate dry-run loads Brevo Site Settings from the local PostgreSQL Docker container when available, but still requires non-secret delivery-pipeline confirmations before marking Brevo production-readiness prerequisites complete.
 
 ## Stripe Test Mode
 
@@ -75,7 +76,7 @@ Live-mode execution still requires explicit operator approval.
 
 ## Brevo
 
-Runtime application settings are DB-backed through Site Settings. This script is a direct operator harness and expects environment variables in the current shell.
+Runtime application settings are DB-backed through Site Settings. The script can either read non-secret inputs from environment variables or load Brevo Site Settings from a local PostgreSQL Docker container for local/staging validation. Secrets are not printed.
 
 Required variables:
 
@@ -101,7 +102,9 @@ Commands:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -UseSiteSettings
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -Execute -Sandbox
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -UseSiteSettings -Execute -Sandbox
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -RequireDeliveryPipeline
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-brevo-readiness.ps1 -Execute
 ```
@@ -186,6 +189,8 @@ Acceptance:
 - Clear provider invalid response maps to `Invalid`.
 - Provider timeout, malformed response, unavailable service, or exception maps to `Unknown`/manual review.
 - Provider failures must remain `Unknown` and require manual review.
+- Scheduled retry may retry provider-generated `Unknown` outcomes, but operator decisions remain authoritative.
+- WebAdmin may show format hints during manual review; format hints are not official VIES confirmation and must not mark a VAT ID valid.
 
 ## Object Storage And MinIO
 
@@ -199,6 +204,7 @@ Generic object-storage smoke variables:
 - `DARWIN_OBJECT_STORAGE_S3_ENDPOINT_OR_REGION`
 - `DARWIN_OBJECT_STORAGE_AZURE_CONTAINER`
 - Provider-specific endpoint, region, access key, secret key, bucket/container, and profile values required by the selected provider.
+- `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true`, required before executing a smoke against a non-local S3-compatible endpoint, AWS-style region-only configuration, or Azure Blob container. This confirmation allows a disposable smoke object to be written to the selected target; it does not claim production immutability.
 
 Local MinIO smoke variables:
 
@@ -227,12 +233,19 @@ Production MinIO readiness confirmations:
 - `DARWIN_MINIO_MONITORING_CONFIRMED=true`
 - `DARWIN_MINIO_ALERTING_CONFIRMED=true`
 - `DARWIN_MINIO_DARWIN_PROFILE_CONFIGURED_CONFIRMED=true`
+- `DARWIN_MINIO_INVOICE_ARCHIVE_PROFILE_CONFIRMED=true`
+- `DARWIN_MINIO_SHIPMENT_LABELS_PROFILE_CONFIRMED=true`
+- `DARWIN_MINIO_MEDIA_ASSETS_PROFILE_DECIDED_CONFIRMED=true`
+- `DARWIN_MINIO_DISPOSABLE_SMOKE_PREFIX_CONFIRMED=true`
+- `DARWIN_MINIO_RETENTION_DELETE_BEHAVIOR_CONFIRMED=true`
+- `DARWIN_MINIO_OPERATOR_RUNBOOK_CONFIRMED=true`
 
 Commands:
 
 ```powershell
 dotnet test tests\Darwin.Infrastructure.Tests\Darwin.Infrastructure.Tests.csproj --filter "FullyQualifiedName~Minio"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-object-storage.ps1 -Execute
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-minio-production-readiness.ps1
 ```
 
@@ -240,6 +253,7 @@ Acceptance:
 
 - Local smoke is optional and does not prove production immutability.
 - Production immutability requires provider-level validation on the real bucket/container.
+- Production-like smoke execution is guarded; set `DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true` or pass `-AllowProductionEndpoint` only after the disposable test prefix, cleanup behavior, retention mode, and operational approval are confirmed.
 
 ## E-Invoice External Command
 
@@ -252,13 +266,18 @@ Optional variables:
 - `DARWIN_EINVOICE_FORMAT`
 - `DARWIN_EINVOICE_VALIDATION_PROFILE`
 
+Production configuration should set `Compliance:EInvoice:ExternalCommand:RequireValidationReport=true` so generated artifacts are rejected unless the selected tool writes a recognized positive validation report.
+
 Commands:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Execute -RequireValidationReport
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-einvoice-external-command.ps1 -Format XRechnung -Execute
 ```
+
+For the repository-local Mustangproject wrapper, set `DARWIN_EINVOICE_COMMAND_PATH` to an absolute path for `scripts\mustang-einvoice-wrapper.cmd`. Run `scripts\install-mustang-cli.ps1` first if the pinned local jar is missing.
 
 Acceptance:
 

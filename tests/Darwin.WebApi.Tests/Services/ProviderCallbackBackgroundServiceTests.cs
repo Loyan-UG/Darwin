@@ -8077,7 +8077,7 @@ public sealed class ProviderCallbackBackgroundServiceTests
             new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
 
         await service.StartAsync(cancellationTokenSource.Token);
-        await completionSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await completionSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         cancellationTokenSource.Cancel();
         await service.StopAsync(TestContext.Current.CancellationToken);
 
@@ -8168,7 +8168,7 @@ public sealed class ProviderCallbackBackgroundServiceTests
             new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
 
         await service.StartAsync(cancellationTokenSource.Token);
-        await processingStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await processingStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         cancellationTokenSource.Cancel();
         await service.StopAsync(TestContext.Current.CancellationToken);
 
@@ -8285,7 +8285,7 @@ public sealed class ProviderCallbackBackgroundServiceTests
             new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
 
         await service.StartAsync(cancellationTokenSource.Token);
-        await processingStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await processingStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         cancellationTokenSource.Cancel();
         await service.StopAsync(TestContext.Current.CancellationToken);
 
@@ -8369,7 +8369,7 @@ public sealed class ProviderCallbackBackgroundServiceTests
             new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
 
         await service.StartAsync(cancellationTokenSource.Token);
-        await claimSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await claimSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         cancellationTokenSource.Cancel();
         await service.StopAsync(TestContext.Current.CancellationToken);
 
@@ -8454,7 +8454,7 @@ public sealed class ProviderCallbackBackgroundServiceTests
             new Mock<ILogger<ProviderCallbackBackgroundService>>().Object);
 
         await service.StartAsync(cancellationTokenSource.Token);
-        await completionSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await completionSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         cancellationTokenSource.Cancel();
         await service.StopAsync(TestContext.Current.CancellationToken);
 

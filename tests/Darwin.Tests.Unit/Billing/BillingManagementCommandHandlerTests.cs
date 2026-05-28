@@ -1100,14 +1100,14 @@ public sealed class BillingManagementCommandHandlerTests
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Currency).IsRequired();
                 b.Property(x => x.Provider).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<FinancialAccount>(b =>
             {
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Name).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<Expense>(b =>
@@ -1115,7 +1115,7 @@ public sealed class BillingManagementCommandHandlerTests
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Category).IsRequired();
                 b.Property(x => x.Description).IsRequired();
-                b.Property(x => x.RowVersion).IsRequired();
+                b.Property(x => x.RowVersion).IsRequired(false);
             });
 
             modelBuilder.Entity<JournalEntry>(b =>

@@ -499,9 +499,10 @@ public sealed class WebhookDeliveryBackgroundServiceTests
 
     private static IHttpClientFactory CreateHttpClientFactory(HttpMessageHandler handler)
     {
-        var client = new HttpClient(handler);
         var httpClientFactory = new Mock<IHttpClientFactory>(MockBehavior.Strict);
-        httpClientFactory.Setup(x => x.CreateClient(nameof(WebhookDeliveryBackgroundService))).Returns(client);
+        httpClientFactory
+            .Setup(x => x.CreateClient(nameof(WebhookDeliveryBackgroundService)))
+            .Returns(() => new HttpClient(handler, disposeHandler: false));
         return httpClientFactory.Object;
     }
 

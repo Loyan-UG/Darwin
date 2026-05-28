@@ -21,7 +21,7 @@ public sealed class ProtectedAuthAntiBotVerifierTests
             ChallengeToken = null
         };
 
-        var result = await verifier.VerifyAsync(check);
+        var result = await verifier.VerifyAsync(check, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.FailureReason.Should().BeNull();
@@ -36,7 +36,7 @@ public sealed class ProtectedAuthAntiBotVerifierTests
         {
             HoneypotValue = "I am a bot",
             ChallengeToken = "ignore"
-        });
+        }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.FailureReason.Should().Be("Honeypot was filled.");
@@ -55,7 +55,7 @@ public sealed class ProtectedAuthAntiBotVerifierTests
         var result = await verifier.VerifyAsync(new AuthAntiBotCheck
         {
             ChallengeToken = null
-        });
+        }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.FailureReason.Should().BeNull();
@@ -74,7 +74,7 @@ public sealed class ProtectedAuthAntiBotVerifierTests
         var result = await verifier.VerifyAsync(new AuthAntiBotCheck
         {
             ChallengeToken = null
-        });
+        }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.FailureReason.Should().Be("Missing challenge token.");
@@ -88,7 +88,7 @@ public sealed class ProtectedAuthAntiBotVerifierTests
         var result = await verifier.VerifyAsync(new AuthAntiBotCheck
         {
             ChallengeToken = "not-a-valid-token"
-        });
+        }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.FailureReason.Should().Be("Invalid challenge token.");
@@ -108,7 +108,7 @@ public sealed class ProtectedAuthAntiBotVerifierTests
         var result = await verifier.VerifyAsync(new AuthAntiBotCheck
         {
             ChallengeToken = CreateChallengeToken(issuedAt, protector)
-        });
+        }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.FailureReason.Should().Be("Form submitted too quickly.");
@@ -127,7 +127,7 @@ public sealed class ProtectedAuthAntiBotVerifierTests
         var result = await verifier.VerifyAsync(new AuthAntiBotCheck
         {
             ChallengeToken = CreateChallengeToken(DateTimeOffset.UtcNow.AddMinutes(-2), protector)
-        });
+        }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.FailureReason.Should().Be("Challenge token expired.");
@@ -146,7 +146,7 @@ public sealed class ProtectedAuthAntiBotVerifierTests
         var result = await verifier.VerifyAsync(new AuthAntiBotCheck
         {
             ChallengeToken = CreateChallengeToken(DateTimeOffset.UtcNow.AddSeconds(-30), protector)
-        });
+        }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.FailureReason.Should().BeNull();

@@ -749,8 +749,8 @@ public sealed class StripeWebhooksControllerTests
         var secondTask = secondController.ReceiveAsync(TestContext.Current.CancellationToken);
         await Task.WhenAll(firstTask, secondTask);
 
-        var firstOk = AssertOk(firstTask.Result);
-        var secondOk = AssertOk(secondTask.Result);
+        var firstOk = AssertOk(await firstTask);
+        var secondOk = AssertOk(await secondTask);
         new[] { firstOk.Duplicate, secondOk.Duplicate }.Count(x => x).Should().Be(1);
         new[] { firstOk.Duplicate, secondOk.Duplicate }.Count(x => !x).Should().Be(1);
 

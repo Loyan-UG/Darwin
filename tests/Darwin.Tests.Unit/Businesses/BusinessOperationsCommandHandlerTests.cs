@@ -1033,6 +1033,8 @@ public sealed class BusinessOperationsCommandHandlerTests
         {
         }
 
+        private bool _hasSeeded;
+
         public new DbSet<T> Set<T>() where T : class => base.Set<T>();
 
         public static ConcurrencyFailingBusinessOpsTestDbContext Create()
@@ -1060,6 +1062,12 @@ public sealed class BusinessOperationsCommandHandlerTests
         public override Task<int> SaveChangesAsync(
             CancellationToken cancellationToken = default)
         {
+            if (!_hasSeeded)
+            {
+                _hasSeeded = true;
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
             return Task.FromException<int>(new DbUpdateConcurrencyException("ItemConcurrencyConflict"));
         }
     }

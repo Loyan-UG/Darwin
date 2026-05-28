@@ -75,8 +75,8 @@ function New-CiiInvoiceXml {
     $issuedAt = Convert-DateToCii (Get-JsonString $Source @("issuedAtUtc") ([DateTimeOffset]::UtcNow.ToString("O")))
     $seller = $Source.issuer
     $buyer = $Source.customer
-    $sellerName = Get-JsonString $seller @("legalName", "companyName", "name") "Loyan"
-    $sellerTaxId = Get-JsonString $seller @("taxId", "vatId") "DE460909374"
+    $sellerName = Get-JsonString $seller @("legalName", "companyName", "name") "Darwin Smoke Seller"
+    $sellerTaxId = Get-JsonString $seller @("taxId", "vatId") "DE123456789"
     $sellerStreet = Get-JsonString $seller @("addressLine1") "Seller Street 1"
     $sellerPostal = Get-JsonString $seller @("postalCode") "10115"
     $sellerCity = Get-JsonString $seller @("city") "Berlin"

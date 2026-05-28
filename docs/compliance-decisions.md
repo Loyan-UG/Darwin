@@ -1,26 +1,29 @@
 # Darwin Compliance Decisions
 
-Reviewed: 2026-05-10
+Reviewed: 2026-05-27
 
 This document records compliance-related decisions that affect implementation planning. It does not claim legal compliance by itself; production readiness still depends on provider smoke checks, deployment configuration, and legal review where required.
 
 ## VAT Validation / VIES
 
-Phase 1 policy:
+Operational policy:
 
 - Disabled VIES returns `Unknown` with operator-visible manual review.
 - Unavailable, rate-limited, timeout, malformed response, and provider exceptions return `Unknown` with operator-visible source/message.
 - Only clear provider responses may record `Valid` or `Invalid`.
 - Customer, invoice, and operator workflows must not be blocked only because VIES is unavailable.
 - Manual operator decisions remain auditable and must preserve source/message context.
+- The selected production workflow is `Manual Review + Scheduled Retry`.
 
 Current async retry workflow:
 
 - Store `Unknown` VIES outcomes with provider source, message, timestamp, customer id, and attempted VAT id.
-- `RetryUnknownCustomerVatValidationBatchHandler` and the disabled-by-default `VatValidationRetryWorker` retry only provider-failure outcomes (`provider.unavailable`, `vies.disabled`, `vies.unavailable`), not operator decisions.
+- `RetryUnknownCustomerVatValidationBatchHandler` and `VatValidationRetryWorker` retry only provider-failure outcomes (`provider.unavailable`, `vies.disabled`, `vies.unavailable`), not operator decisions.
 - Use the configured minimum retry age and batch size to keep retries bounded.
 - Keep operator override higher priority than automatic retry results.
 - Surface stale `Unknown` results in `Billing/TaxCompliance` without turning the dashboard into a diagnostics workspace.
+- Show an operator-only VAT format hint for manual review. This hint may say that a VAT ID matches the expected country pattern, but it must also state that this is not VIES confirmation, not legal validation, and not enough to mark the VAT ID valid.
+- Send a critical admin email only when repeated retry failures exceed the configured threshold. Lower-priority review items stay visible in WebAdmin.
 
 Future hardening:
 

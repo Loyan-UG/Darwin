@@ -1,7 +1,9 @@
 param(
     [switch]$Execute,
     [switch]$Sandbox,
-    [switch]$RequireDeliveryPipeline
+    [switch]$RequireDeliveryPipeline,
+    [switch]$UseSiteSettings,
+    [string]$PostgresContainerName = "darwin-postgres"
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,6 +16,66 @@ function Test-Truthy {
     }
 
     return @("1", "true", "yes", "y") -contains $Value.Trim().ToLowerInvariant()
+}
+
+function Set-EnvIfMissing {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [string]$Value
+    )
+
+    if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($Name)) -and
+        -not [string]::IsNullOrWhiteSpace($Value)) {
+        [Environment]::SetEnvironmentVariable($Name, $Value, "Process")
+    }
+}
+
+function Import-BrevoSiteSettings {
+    param([string]$ContainerName)
+
+    $query = @'
+select
+  coalesce("BrevoApiKey",'') as api_key,
+  coalesce("NoReplyEmail",'') as sender_email,
+  coalesce("SupportEmail",'') as reply_to_email,
+  coalesce("BrevoBaseUrl",'') as base_url,
+  coalesce("BrevoTestRecipientEmail",'') as test_recipient_email
+from "Settings"."SiteSettings"
+where "IsDeleted" = false
+limit 1;
+'@
+
+    try {
+        $raw = $query | docker exec -i $ContainerName psql -U darwin -d darwin_dev -A -t -F "`t" 2>$null
+    }
+    catch {
+        return $false
+    }
+
+    if ([string]::IsNullOrWhiteSpace($raw)) {
+        return $false
+    }
+
+    $parts = $raw.Trim() -split "`t", 5
+    if ($parts.Count -lt 5) {
+        return $false
+    }
+
+    Set-EnvIfMissing "DARWIN_BREVO_API_KEY" $parts[0]
+    Set-EnvIfMissing "DARWIN_BREVO_SENDER_EMAIL" $parts[1]
+    Set-EnvIfMissing "DARWIN_BREVO_REPLY_TO_EMAIL" $parts[2]
+    Set-EnvIfMissing "DARWIN_BREVO_BASE_URL" $parts[3]
+    Set-EnvIfMissing "DARWIN_BREVO_TEST_RECIPIENT_EMAIL" $parts[4]
+    return $true
+}
+
+if ($UseSiteSettings) {
+    if (Import-BrevoSiteSettings $PostgresContainerName) {
+        Write-Host "Brevo readiness smoke loaded Site Settings for this process. Secrets are not printed."
+    }
+    else {
+        Write-Host "Brevo readiness smoke could not load Site Settings from the local PostgreSQL container."
+    }
 }
 
 function Assert-BrevoDeliveryPipelineReady {

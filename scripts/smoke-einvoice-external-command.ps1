@@ -4,6 +4,7 @@ param(
     [string]$Format = $env:DARWIN_EINVOICE_FORMAT,
     [string]$ValidationProfile = $env:DARWIN_EINVOICE_VALIDATION_PROFILE,
     [string]$TempDirectory = $env:DARWIN_EINVOICE_TEMP_DIRECTORY,
+    [switch]$RequireValidationReport,
     [int]$TimeoutSeconds = 60,
     [long]$MaxArtifactBytes = 20971520
 )
@@ -16,6 +17,11 @@ if ([string]::IsNullOrWhiteSpace($Format)) {
 
 if ([string]::IsNullOrWhiteSpace($ValidationProfile)) {
     $ValidationProfile = "external-command-smoke"
+}
+
+if (-not $RequireValidationReport -and
+    [string]::Equals($env:DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT, "true", [StringComparison]::OrdinalIgnoreCase)) {
+    $RequireValidationReport = $true
 }
 
 $normalizedFormat = $Format.Trim()
@@ -65,7 +71,7 @@ if ($MaxArtifactBytes -lt 1024 -or $MaxArtifactBytes -gt 104857600) {
 
 if (-not $Execute) {
     Write-Host "E-invoice external-command smoke configuration is present for format '$normalizedFormat'."
-    Write-Host "Run with -Execute to call the configured command through Darwin's IEInvoiceGenerationService adapter. The smoke verifies process execution plus artifact shape only; it can also fail if `--validation-report` reports a negative legal validation result. It is not a substitute for ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation."
+    Write-Host "Run with -Execute to call the configured command through Darwin's IEInvoiceGenerationService adapter. Add -RequireValidationReport to reject commands that do not write a recognized positive validation report. The smoke verifies process execution plus artifact shape only; it can also fail if `--validation-report` reports a negative legal validation result. It is not a substitute for ZUGFeRD/Factur-X, XRechnung, PDF/A-3, EN16931, or legal validation."
     exit 0
 }
 
@@ -162,7 +168,8 @@ var service = new ExternalCommandEInvoiceGenerationService(Options.Create(new Ex
     MaxArtifactBytes = long.Parse(Env("DARWIN_EINVOICE_MAX_ARTIFACT_BYTES")),
     SupportsZugferdFacturX = true,
     SupportsXRechnung = true,
-    ValidationProfile = Env("DARWIN_EINVOICE_VALIDATION_PROFILE")
+    ValidationProfile = Env("DARWIN_EINVOICE_VALIDATION_PROFILE"),
+    RequireValidationReport = string.Equals(Env("DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT"), "true", StringComparison.OrdinalIgnoreCase)
 }));
 
 var result = await service.GenerateAsync(
@@ -195,6 +202,8 @@ Console.WriteLine("Validation profile: " + result.Artifact.ValidationProfile);
     Set-Item -Path Env:DARWIN_EINVOICE_FORMAT -Value $normalizedFormat
     Set-Item -Path Env:DARWIN_EINVOICE_VALIDATION_PROFILE -Value $ValidationProfile.Trim()
     Set-Item -Path Env:DARWIN_EINVOICE_TEMP_DIRECTORY -Value $tempRoot
+    $requireValidationReportValue = if ($RequireValidationReport.IsPresent) { "true" } else { "false" }
+    Set-Item -Path Env:DARWIN_EINVOICE_REQUIRE_VALIDATION_REPORT -Value $requireValidationReportValue
     Set-Item -Path Env:DARWIN_EINVOICE_TIMEOUT_SECONDS -Value $TimeoutSeconds.ToString()
     Set-Item -Path Env:DARWIN_EINVOICE_MAX_ARTIFACT_BYTES -Value $MaxArtifactBytes.ToString()
 

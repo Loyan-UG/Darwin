@@ -1,5 +1,6 @@
 param(
     [switch]$Execute,
+    [switch]$AllowProductionEndpoint,
     [string]$Provider = $env:DARWIN_OBJECT_STORAGE_PROVIDER,
     [string]$ProfileName = $env:DARWIN_OBJECT_STORAGE_PROFILE,
     [string]$ContainerName = $env:DARWIN_OBJECT_STORAGE_CONTAINER,
@@ -9,6 +10,50 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+function Test-Truthy {
+    param([string]$Value)
+
+    return $Value -in @("1", "true", "yes", "y")
+}
+
+function Test-LocalEndpoint {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $false
+    }
+
+    $parsed = $null
+    if (-not [Uri]::TryCreate($Value.Trim(), [UriKind]::Absolute, [ref]$parsed)) {
+        return $false
+    }
+
+    return $parsed.Host -in @("localhost", "127.0.0.1", "::1")
+}
+
+function Assert-ProductionSmokeConfirmed {
+    param([Parameter(Mandatory = $true)][string]$Reason)
+
+    if ($AllowProductionEndpoint) {
+        return
+    }
+
+    $confirmation = [Environment]::GetEnvironmentVariable("DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED")
+    if ($null -eq $confirmation) {
+        $confirmation = ""
+    }
+
+    if (Test-Truthy ($confirmation.Trim().ToLowerInvariant())) {
+        return
+    }
+
+    Write-Host "Object storage smoke is blocked."
+    Write-Host $Reason
+    Write-Host "Set DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true or pass -AllowProductionEndpoint only after the target bucket/container, retention policy, and cleanup behavior are approved for a disposable smoke object."
+    Write-Host "This guard prevents accidentally writing to a production-like object-storage endpoint during local validation."
+    exit 2
+}
 
 if ([string]::IsNullOrWhiteSpace($Provider)) {
     $Provider = "S3Compatible"
@@ -98,8 +143,20 @@ if ($missing.Count -gt 0) {
 
 if (-not $Execute) {
     Write-Host "Object storage smoke configuration is present for provider '$providerName'."
-    Write-Host "Run with -Execute to create, read, inspect, optionally generate a temporary URL for, and delete a disposable smoke object through the selected profile. Add -SmokeRetention to write a retained smoke object and skip cleanup for provider-level retention inspection. No secrets, object payloads, object keys, or provider credentials are printed."
+    Write-Host "Run with -Execute to create, read, inspect, optionally generate a temporary URL for, and delete a disposable smoke object through the selected profile. Add -SmokeRetention to write a retained smoke object and skip cleanup for provider-level retention inspection. Production-like endpoints also require DARWIN_OBJECT_STORAGE_PRODUCTION_SMOKE_CONFIRMED=true or -AllowProductionEndpoint. No secrets, object payloads, object keys, or provider credentials are printed."
     exit 0
+}
+
+switch ($providerName.ToLowerInvariant()) {
+    "s3compatible" {
+        $endpoint = [Environment]::GetEnvironmentVariable("DARWIN_OBJECT_STORAGE_S3_ENDPOINT")
+        if (-not (Test-LocalEndpoint $endpoint)) {
+            Assert-ProductionSmokeConfirmed -Reason "The selected S3-compatible endpoint is not a local loopback endpoint, or AWS-style region-only configuration is being used."
+        }
+    }
+    "azureblob" {
+        Assert-ProductionSmokeConfirmed -Reason "Azure Blob smoke uses a managed cloud or production-like container unless explicitly confirmed."
+    }
 }
 
 if ([string]::IsNullOrWhiteSpace($ContainerName)) {

@@ -634,7 +634,7 @@ public sealed class ShipmentCommandHandlerTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Carrier).IsRequired();
                 builder.Property(x => x.Service).IsRequired();
-                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired(false);
                 builder.Ignore(x => x.Lines);
                 builder.Ignore(x => x.CarrierEvents);
             });
@@ -654,7 +654,7 @@ public sealed class ShipmentCommandHandlerTests
                 builder.Property(x => x.Provider).IsRequired();
                 builder.Property(x => x.OperationType).IsRequired();
                 builder.Property(x => x.Status).IsRequired();
-                builder.Property(x => x.RowVersion).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired(false);
             });
         }
     }

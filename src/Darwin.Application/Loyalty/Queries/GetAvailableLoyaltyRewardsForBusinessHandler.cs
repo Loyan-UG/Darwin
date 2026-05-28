@@ -156,14 +156,18 @@ namespace Darwin.Application.Loyalty.Queries
                 // Derive a human-friendly name. Until the domain model exposes a
                 // dedicated title field for tiers, we fall back to the description
                 // or, if that is not available, to the program's name.
-                var localizedDescription = LoyaltyLocalizedTextResolver.Resolve(
+                var resolvedDescription = LoyaltyLocalizedTextResolver.Resolve(
                     tier.MetadataJson,
                     culture,
                     "description",
-                    tier.Description ?? program.Name);
+                    tier.Description ?? string.Empty);
 
-                var name = !string.IsNullOrWhiteSpace(localizedDescription)
-                    ? localizedDescription
+                var description = !string.IsNullOrWhiteSpace(resolvedDescription)
+                    ? resolvedDescription
+                    : null;
+
+                var name = !string.IsNullOrWhiteSpace(description)
+                    ? description
                     : !string.IsNullOrWhiteSpace(tier.Description)
                     ? tier.Description
                     : program.Name;
@@ -177,7 +181,7 @@ namespace Darwin.Application.Loyalty.Queries
                     LoyaltyRewardTierId = tier.Id,
                     BusinessId = program.BusinessId,
                     Name = name,
-                    Description = localizedDescription,
+                    Description = description,
                     RequiredPoints = tier.PointsRequired,
                     IsActive = program.IsActive,
                     RequiresConfirmation = !tier.AllowSelfRedemption,

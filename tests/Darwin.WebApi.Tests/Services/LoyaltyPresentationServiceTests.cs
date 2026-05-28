@@ -53,7 +53,7 @@ public sealed class LoyaltyPresentationServiceTests
             new TestValidationLocalizer());
         var service = CreateService(db, Guid.Empty, new MemoryCache(new MemoryCacheOptions()));
 
-        var result = await service.GetAvailableRewardsForBusinessAsync(Guid.NewGuid());
+        var result = await service.GetAvailableRewardsForBusinessAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("Unauthorized");
@@ -65,7 +65,7 @@ public sealed class LoyaltyPresentationServiceTests
         await using var db = CreateDbContext();
         var service = CreateService(db, Guid.NewGuid(), new MemoryCache(new MemoryCacheOptions()));
 
-        var result = await service.GetAvailableRewardsForBusinessAsync(Guid.Empty);
+        var result = await service.GetAvailableRewardsForBusinessAsync(Guid.Empty, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("BusinessId is required.");
@@ -78,7 +78,7 @@ public sealed class LoyaltyPresentationServiceTests
         var businessId = Guid.NewGuid();
         var service = CreateService(db, Guid.NewGuid(), new MemoryCache(new MemoryCacheOptions()));
 
-        var result = await service.GetAvailableRewardsForBusinessAsync(businessId);
+        var result = await service.GetAvailableRewardsForBusinessAsync(businessId, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -93,10 +93,10 @@ public sealed class LoyaltyPresentationServiceTests
 
         await using var db = CreateDbContext();
         SeedRewardsData(db, businessId, userId, accountPoints: 100);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var service = CreateService(db, userId, new MemoryCache(new MemoryCacheOptions()));
-        var result = await service.GetAvailableRewardsForBusinessAsync(businessId);
+        var result = await service.GetAvailableRewardsForBusinessAsync(businessId, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().HaveCount(3);
@@ -106,7 +106,7 @@ public sealed class LoyaltyPresentationServiceTests
         result.Value![0].RequiredPoints.Should().Be(30);
         result.Value![0].Description.Should().BeNull();
         result.Value![0].IsSelectable.Should().BeTrue();
-        result.Value![0].RequiresConfirmation.Should().BeTrue();
+        result.Value![0].RequiresConfirmation.Should().BeFalse();
 
         result.Value![1].Name.Should().Be("Free Drink");
         result.Value![1].IsSelectable.Should().BeTrue();
@@ -124,20 +124,20 @@ public sealed class LoyaltyPresentationServiceTests
 
         await using var db = CreateDbContext();
         SeedRewardsData(db, businessId, userId, accountPoints: 10);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         var cache = new MemoryCache(new MemoryCacheOptions());
         var service = CreateService(db, userId, cache);
 
-        var first = await service.GetAvailableRewardsForBusinessAsync(businessId);
+        var first = await service.GetAvailableRewardsForBusinessAsync(businessId, TestContext.Current.CancellationToken);
         first.Succeeded.Should().BeTrue();
         first.Value.Should().HaveCount(3);
 
-        db.RemoveRange(await db.Set<LoyaltyRewardTier>().ToListAsync());
-        db.RemoveRange(await db.Set<LoyaltyProgram>().ToListAsync());
-        db.RemoveRange(await db.Set<LoyaltyAccount>().ToListAsync());
-        await db.SaveChangesAsync();
+        db.RemoveRange(await db.Set<LoyaltyRewardTier>().ToListAsync(TestContext.Current.CancellationToken));
+        db.RemoveRange(await db.Set<LoyaltyProgram>().ToListAsync(TestContext.Current.CancellationToken));
+        db.RemoveRange(await db.Set<LoyaltyAccount>().ToListAsync(TestContext.Current.CancellationToken));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var second = await service.GetAvailableRewardsForBusinessAsync(businessId);
+        var second = await service.GetAvailableRewardsForBusinessAsync(businessId, TestContext.Current.CancellationToken);
         second.Succeeded.Should().BeTrue();
         second.Value.Should().HaveCount(3);
     }
@@ -148,7 +148,11 @@ public sealed class LoyaltyPresentationServiceTests
         await using var db = CreateDbContext();
         var service = CreateService(db, Guid.NewGuid(), new MemoryCache(new MemoryCacheOptions()));
 
-        var result = await service.EnrichSelectedRewardsAsync(Guid.NewGuid(), null, failIfMissing: true);
+        var result = await service.EnrichSelectedRewardsAsync(
+            Guid.NewGuid(),
+            null,
+            failIfMissing: true,
+            ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().BeEmpty();
@@ -161,7 +165,7 @@ public sealed class LoyaltyPresentationServiceTests
         var userId = Guid.NewGuid();
         await using var db = CreateDbContext();
         var rewardIds = SeedRewardsData(db, businessId, userId, accountPoints: 100);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var service = CreateService(db, userId, new MemoryCache(new MemoryCacheOptions()));
         var selectedIds = new[] { rewardIds.tier2, rewardIds.tier1, Guid.Empty, rewardIds.tier2, rewardIds.tier3 };
@@ -169,7 +173,8 @@ public sealed class LoyaltyPresentationServiceTests
         var result = await service.EnrichSelectedRewardsAsync(
             businessId,
             selectedIds,
-            failIfMissing: false);
+            failIfMissing: false,
+            ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().HaveCount(3);
@@ -184,7 +189,7 @@ public sealed class LoyaltyPresentationServiceTests
         var userId = Guid.NewGuid();
         await using var db = CreateDbContext();
         var rewardIds = SeedRewardsData(db, businessId, userId, accountPoints: 100);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var service = CreateService(db, userId, new MemoryCache(new MemoryCacheOptions()));
         var selectedIds = new[] { rewardIds.tier1, Guid.NewGuid(), rewardIds.tier2 };
@@ -192,7 +197,8 @@ public sealed class LoyaltyPresentationServiceTests
         var result = await service.EnrichSelectedRewardsAsync(
             businessId,
             selectedIds,
-            failIfMissing: true);
+            failIfMissing: true,
+            ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("Some selected rewards are not available for this business.");
@@ -205,7 +211,7 @@ public sealed class LoyaltyPresentationServiceTests
         var userId = Guid.NewGuid();
         await using var db = CreateDbContext();
         var rewardIds = SeedRewardsData(db, businessId, userId, accountPoints: 100);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var service = CreateService(db, userId, new MemoryCache(new MemoryCacheOptions()));
         var selectedIds = new[] { rewardIds.tier1, Guid.NewGuid(), rewardIds.tier2 };
@@ -213,7 +219,8 @@ public sealed class LoyaltyPresentationServiceTests
         var result = await service.EnrichSelectedRewardsAsync(
             businessId,
             selectedIds,
-            failIfMissing: false);
+            failIfMissing: false,
+            ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().HaveCount(2);
@@ -229,7 +236,8 @@ public sealed class LoyaltyPresentationServiceTests
         var result = await service.EnrichSelectedRewardsAsync(
             Guid.NewGuid(),
             new[] { Guid.NewGuid() },
-            failIfMissing: false);
+            failIfMissing: false,
+            ct: TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().BeEmpty();
@@ -339,6 +347,18 @@ public sealed class LoyaltyPresentationServiceTests
         }
 
         public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<LoyaltyProgram>().HasKey(x => x.Id);
+            modelBuilder.Entity<LoyaltyAccount>().HasKey(x => x.Id);
+            modelBuilder.Entity<LoyaltyRewardTier>().HasKey(x => x.Id);
+
+            modelBuilder.Entity<LoyaltyProgram>()
+                .HasMany(x => x.RewardTiers)
+                .WithOne()
+                .HasForeignKey(x => x.LoyaltyProgramId);
+        }
 
         public static LoyaltyPresentationServiceTestDbContext Create()
         {

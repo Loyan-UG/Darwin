@@ -18,13 +18,14 @@ This is the navigation hub for Darwin documentation. Keep this file short and us
 | Go-live readiness | [docs/go-live-status.md](go-live-status.md) | [docs/module-audit.md](module-audit.md), [docs/external-smoke-inputs.md](external-smoke-inputs.md) | Verified status, provider readiness, or production blocker changes. |
 | Module coverage | [docs/module-audit.md](module-audit.md) | [docs/go-live-status.md](go-live-status.md) | Domain, application, UI, API, worker, docs, or tests change for a module. |
 | Production setup | [docs/production-setup.md](production-setup.md) | [docs/external-smoke-inputs.md](external-smoke-inputs.md), [docs/minio-storage-runbook.md](minio-storage-runbook.md) | Deployment prerequisites, secure configuration, provider setup, or smoke order changes. |
+| Customer onboarding | [docs/customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md) | [docs/production-setup.md](production-setup.md), [docs/external-smoke-inputs.md](external-smoke-inputs.md) | A repeatable deployment step, approval owner, go-live sequence, or customer handoff changes. |
 | External smoke inputs | [docs/external-smoke-inputs.md](external-smoke-inputs.md) | [docs/production-setup.md](production-setup.md) | Smoke scripts, environment variable names, commands, or acceptance criteria change. |
 | Persistence | [docs/persistence-providers.md](persistence-providers.md) | [docs/postgresql-migration-runbook.md](postgresql-migration-runbook.md) | PostgreSQL/SQL Server provider behavior, migrations, or runtime selection changes. |
 | PostgreSQL migration | [docs/postgresql-migration-runbook.md](postgresql-migration-runbook.md) | [docs/persistence-providers.md](persistence-providers.md) | PostgreSQL roles, grants, migration execution, or validation steps change. |
 | Compliance decisions | [docs/compliance-decisions.md](compliance-decisions.md) | [docs/e-invoice-tooling-decision.md](e-invoice-tooling-decision.md), [docs/archive-storage-provider-decision.md](archive-storage-provider-decision.md) | VAT/VIES, archive, retention, or e-invoice policy changes. |
 | Object storage | [docs/archive-storage-provider-decision.md](archive-storage-provider-decision.md) | [docs/minio-storage-runbook.md](minio-storage-runbook.md), [docs/production-setup.md](production-setup.md) | Provider support, immutability assumptions, or deployment rules change. |
 | MinIO runbook | [docs/minio-storage-runbook.md](minio-storage-runbook.md) | [docs/archive-storage-provider-decision.md](archive-storage-provider-decision.md) | Local smoke, bucket setup, Object Lock, retention, or production checklist changes. |
-| E-invoice tooling | [docs/e-invoice-tooling-decision.md](e-invoice-tooling-decision.md) | [docs/compliance-decisions.md](compliance-decisions.md) | Generator, wrapper, validation profile, evidence, or retained alternatives change. |
+| E-invoice tooling | [docs/e-invoice-tooling-decision.md](e-invoice-tooling-decision.md) | [docs/e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md), [docs/e-invoice-validation-fixtures.md](e-invoice-validation-fixtures.md), [docs/compliance-decisions.md](compliance-decisions.md) | Generator, wrapper, validation profile, evidence, fixtures, or retained alternatives change. |
 | Domain model | [DarwinDomainDesign.md](../DarwinDomainDesign.md) | [DarwinWebApi.md](../DarwinWebApi.md) | Entity, aggregate, lifecycle, or cross-module domain rules change. |
 | WebAdmin | [DarwinWebAdmin.md](../DarwinWebAdmin.md) | [howto-identity-access.md](../howto-identity-access.md) | Back-office workflows, HTMX conventions, or operational support surfaces change. |
 | Front-office | [DarwinFrontEnd.md](../DarwinFrontEnd.md) | [src/Darwin.Web/README.md](../src/Darwin.Web/README.md), [DarwinWebApi.md](../DarwinWebApi.md) | Public/member UX, API consumption, or customer-facing boundaries change. |
@@ -63,6 +64,7 @@ This is the navigation hub for Darwin documentation. Keep this file short and us
 ### Operations And Runbooks
 
 - [docs/production-setup.md](production-setup.md)
+- [docs/customer-deployment-onboarding-checklist.md](customer-deployment-onboarding-checklist.md)
 - [docs/external-smoke-inputs.md](external-smoke-inputs.md)
 - [docs/minio-storage-runbook.md](minio-storage-runbook.md)
 - [docs/postgresql-migration-runbook.md](postgresql-migration-runbook.md)
@@ -72,6 +74,8 @@ This is the navigation hub for Darwin documentation. Keep this file short and us
 - [docs/compliance-decisions.md](compliance-decisions.md)
 - [docs/archive-storage-provider-decision.md](archive-storage-provider-decision.md)
 - [docs/e-invoice-tooling-decision.md](e-invoice-tooling-decision.md)
+- [docs/e-invoice-acceptance-checklist.md](e-invoice-acceptance-checklist.md)
+- [docs/e-invoice-validation-fixtures.md](e-invoice-validation-fixtures.md)
 
 ### Testing
 

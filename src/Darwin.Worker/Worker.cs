@@ -145,14 +145,34 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         int maxAttempts,
         CancellationToken ct)
     {
-        await db.Set<WebhookDelivery>()
-            .Where(x => deliveryIds.Contains(x.Id) && !x.IsDeleted)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(x => x.LastAttemptAtUtc, nowUtc)
-                .SetProperty(x => x.RetryCount, maxAttempts)
-                .SetProperty(x => x.Status, "Failed"),
-                ct)
-            .ConfigureAwait(false);
+        try
+        {
+            await db.Set<WebhookDelivery>()
+                .Where(x => deliveryIds.Contains(x.Id) && !x.IsDeleted)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.LastAttemptAtUtc, nowUtc)
+                    .SetProperty(x => x.RetryCount, maxAttempts)
+                    .SetProperty(x => x.Status, "Failed"),
+                    ct)
+                .ConfigureAwait(false);
+        }
+        catch (InvalidOperationException) when (db is DbContext efContext)
+        {
+            efContext.ChangeTracker.Clear();
+            var deliveries = await db.Set<WebhookDelivery>()
+                .Where(x => deliveryIds.Contains(x.Id) && !x.IsDeleted)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            foreach (var delivery in deliveries)
+            {
+                delivery.LastAttemptAtUtc = nowUtc;
+                delivery.RetryCount = maxAttempts;
+                delivery.Status = "Failed";
+            }
+
+            await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
     }
 
     private async Task DispatchAsync(
@@ -164,10 +184,19 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         DateTime nowUtc,
         CancellationToken ct)
     {
+        var originalLastAttemptAtUtc = delivery.LastAttemptAtUtc;
+        var originalRetryCount = delivery.RetryCount;
         delivery.LastAttemptAtUtc = nowUtc;
         delivery.RetryCount += 1;
         if (!await QueueSaveResilience.TrySaveClaimAsync(db, _logger, "webhook delivery", delivery.Id, ct).ConfigureAwait(false))
         {
+            delivery.LastAttemptAtUtc = originalLastAttemptAtUtc;
+            delivery.RetryCount = originalRetryCount;
+            if (db is DbContext efContext)
+            {
+                efContext.Entry(delivery).State = EntityState.Unchanged;
+            }
+
             return;
         }
 
@@ -249,16 +278,46 @@ public sealed class WebhookDeliveryBackgroundService : BackgroundService
         WebhookDelivery delivery,
         CancellationToken ct)
     {
-        await db.Set<WebhookDelivery>()
-            .Where(x => x.Id == delivery.Id && !x.IsDeleted)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(x => x.Status, delivery.Status)
-                .SetProperty(x => x.ResponseCode, delivery.ResponseCode)
-                .SetProperty(x => x.PayloadHash, delivery.PayloadHash)
-                .SetProperty(x => x.LastAttemptAtUtc, delivery.LastAttemptAtUtc)
-                .SetProperty(x => x.RetryCount, delivery.RetryCount),
-                ct)
-            .ConfigureAwait(false);
+        try
+        {
+            await db.Set<WebhookDelivery>()
+                .Where(x => x.Id == delivery.Id && !x.IsDeleted)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.Status, delivery.Status)
+                    .SetProperty(x => x.ResponseCode, delivery.ResponseCode)
+                    .SetProperty(x => x.PayloadHash, delivery.PayloadHash)
+                    .SetProperty(x => x.LastAttemptAtUtc, delivery.LastAttemptAtUtc)
+                    .SetProperty(x => x.RetryCount, delivery.RetryCount),
+                    ct)
+                .ConfigureAwait(false);
+        }
+        catch (InvalidOperationException) when (db is DbContext efContext)
+        {
+            var completion = new
+            {
+                delivery.Status,
+                delivery.ResponseCode,
+                delivery.PayloadHash,
+                delivery.LastAttemptAtUtc,
+                delivery.RetryCount
+            };
+
+            efContext.ChangeTracker.Clear();
+            var persisted = await db.Set<WebhookDelivery>()
+                .SingleOrDefaultAsync(x => x.Id == delivery.Id && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+            if (persisted is null)
+            {
+                return;
+            }
+
+            persisted.Status = completion.Status;
+            persisted.ResponseCode = completion.ResponseCode;
+            persisted.PayloadHash = completion.PayloadHash;
+            persisted.LastAttemptAtUtc = completion.LastAttemptAtUtc;
+            persisted.RetryCount = completion.RetryCount;
+            await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
     }
 
     private static WebhookEnvelope BuildEnvelope(
