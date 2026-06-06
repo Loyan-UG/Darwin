@@ -42,6 +42,17 @@ namespace Darwin.Contracts.Businesses
         public string? Description { get; set; }
 
         /// <summary>
+        /// Gets or sets a non-exact, social-style member count label (for example, "100+" or "1k+").
+        /// Exact loyalty membership counts are intentionally not exposed in the public detail contract.
+        /// </summary>
+        public string? MemberCountDisplay { get; set; }
+
+        /// <summary>
+        /// Gets or sets the business profile/logo image URL.
+        /// </summary>
+        public string? ProfileImageUrl { get; set; }
+
+        /// <summary>
         /// Gets or sets the primary image URL (logo/cover).
         /// This maps to Application's BusinessPublicDetailDto.PrimaryImageUrl.
         /// </summary>

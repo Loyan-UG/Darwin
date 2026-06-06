@@ -12,13 +12,12 @@
     Title="{x:Static res:AppResources.MemberAddressesTitle}">
 
     <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
-                                   IsRefreshing="{Binding IsBusy}"
-                                   ProgressColor="{StaticResource BrandGold500}"
+                                   ProgressColor="{StaticResource InternalPrimaryButton}"
                                    ProgressBackground="{StaticResource Neutral0}">
         <pullToRefresh:SfPullToRefresh.PullableContent>
             <ScrollView>
                 <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.MemberAddressesTitle}" Style="{StaticResource TitleLabelStyle}" />
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
@@ -37,7 +36,7 @@
                     <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Addresses}" IsVisible="{Binding HasAddresses}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberAddressItemViewModel">
-                                <Border Style="{StaticResource MutedCardBorderStyle}">
+                                <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                     <VerticalStackLayout Spacing="8">
                                         <Label Text="{Binding FullName}" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" />
                                         <Label Text="{Binding Summary}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" />
@@ -150,7 +149,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
+            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource InternalPrimaryButton}" />
                 </VerticalStackLayout>
             </ScrollView>
         </pullToRefresh:SfPullToRefresh.PullableContent>

@@ -80,6 +80,7 @@ namespace Darwin.WebApi.Extensions
             // several singleton security services depend on IClock.
             services.AddSingleton<IClock, SystemClock>();
             services.Configure<MediaStorageOptions>(configuration.GetSection(MediaStorageOptions.SectionName));
+            services.AddScoped<IUploadedImageStorageService, UploadedImageStorageService>();
 
             // HttpContextAccessor and a CurrentUser service used by handlers to obtain caller id.
             services.AddHttpContextAccessor();

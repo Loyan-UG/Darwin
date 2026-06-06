@@ -25,6 +25,9 @@ namespace Darwin.Application.Identity.DTOs
         /// <summary>The user's family name; may be null.</summary>
         public string? LastName { get; set; }
 
+        /// <summary>Public URL of the user's profile image/avatar; may be null.</summary>
+        public string? ProfileImageUrl { get; set; }
+
         /// <summary>The preferred culture code (IETF tag), e.g. "de-DE".</summary>
         public string Locale { get; set; } = SiteSettingDto.DefaultCultureDefault;
 

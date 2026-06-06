@@ -185,7 +185,7 @@
     <value>Last token</value>
   </data>
   <data name="LoginButton" xml:space="preserve">
-    <value>Sign in</value>
+    <value>Login</value>
   </data>
   <data name="LoginTitle" xml:space="preserve">
     <value>Login</value>
@@ -339,6 +339,30 @@
   </data>
   <data name="ProfileSectionTitle" xml:space="preserve">
     <value>My profile</value>
+  </data>
+  <data name="ProfileAvatarTitle" xml:space="preserve">
+    <value>Profile photo</value>
+  </data>
+  <data name="ProfileAvatarUploadButton" xml:space="preserve">
+    <value>Upload photo</value>
+  </data>
+  <data name="ProfileAvatarRemoveButton" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="ProfileAvatarUploadFailed" xml:space="preserve">
+    <value>Unable to upload profile photo.</value>
+  </data>
+  <data name="ProfileAvatarSaveFailed" xml:space="preserve">
+    <value>Unable to save profile photo.</value>
+  </data>
+  <data name="ProfileAvatarSaveSuccess" xml:space="preserve">
+    <value>Profile photo updated.</value>
+  </data>
+  <data name="ProfileAvatarRemoveFailed" xml:space="preserve">
+    <value>Unable to remove profile photo.</value>
+  </data>
+  <data name="ProfileAvatarRemoveSuccess" xml:space="preserve">
+    <value>Profile photo removed.</value>
   </data>
   <data name="ProfilePhonePlaceholder" xml:space="preserve">
     <value>+49123456789</value>
@@ -1195,6 +1219,27 @@
   <data name="BusinessRecentReviewsTitle" xml:space="preserve">
     <value>Recent reviews</value>
   </data>
+  <data name="BusinessProfileGalleryTitle" xml:space="preserve">
+    <value>Gallery</value>
+  </data>
+  <data name="BusinessProfileAboutTitle" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="BusinessMembersCountFormat" xml:space="preserve">
+    <value>{0} members</value>
+  </data>
+  <data name="BusinessMembersLabel" xml:space="preserve">
+    <value>Members</value>
+  </data>
+  <data name="BusinessProfileStatsTitle" xml:space="preserve">
+    <value>Community</value>
+  </data>
+  <data name="BusinessProfileExperienceTitle" xml:space="preserve">
+    <value>Share your experience</value>
+  </data>
+  <data name="BusinessProfileNoGalleryMessage" xml:space="preserve">
+    <value>Photos will appear here soon.</value>
+  </data>
   <data name="BusinessJoinFailed" xml:space="preserve">
     <value>Unable to join the loyalty program.</value>
   </data>
@@ -1526,10 +1571,10 @@
     <value>Notification permission could not be requested right now. Please try again.</value>
   </data>
   <data name="LoginEmailPlaceholder" xml:space="preserve">
-    <value>user@example.com</value>
+    <value>Username or email</value>
   </data>
   <data name="LoginPasswordPlaceholder" xml:space="preserve">
-    <value>••••••</value>
+    <value>Password</value>
   </data>
   <data name="BusinessActiveFormat" xml:space="preserve">
     <value>Active: {0}</value>
@@ -1542,6 +1587,15 @@
   </data>
   <data name="DiscoverNearbyRadiusMetersFormat" xml:space="preserve">
     <value>{0} m</value>
+  </data>
+  <data name="DiscoverGreetingFormat" xml:space="preserve">
+    <value>Hi, {0} 👋</value>
+  </data>
+  <data name="DiscoverGreetingSubtitle" xml:space="preserve">
+    <value>Good to see you!</value>
+  </data>
+  <data name="DiscoverGreetingFallbackName" xml:space="preserve">
+    <value>there</value>
   </data>
   <data name="FeedPointsDeltaFormat" xml:space="preserve">
     <value>{0:+#;-#;0} pts</value>
@@ -1561,14 +1615,45 @@
   <data name="QrBusinessFormat" xml:space="preserve">
     <value>Business: {0}</value>
   </data>
+  <data name="QrScreenHeadline" xml:space="preserve">
+    <value>Scan to earn
+or redeem</value>
+  </data>
   <data name="QrExpiresAtFormat" xml:space="preserve">
     <value>Expires at: {0:HH:mm:ss}</value>
   </data>
   <data name="QrAccrualHelpText" xml:space="preserve">
-    <value>Use this when the business should add new points to your account.</value>
+    <value>Earn points.</value>
   </data>
   <data name="QrRedemptionHelpText" xml:space="preserve">
-    <value>Use this when you want to redeem points or claim an available reward.</value>
+    <value>Spend points.</value>
+  </data>
+  <data name="QrAccrualModeTitle" xml:space="preserve">
+    <value>Earning points QR</value>
+  </data>
+  <data name="QrRedemptionModeTitle" xml:space="preserve">
+    <value>Redemption QR</value>
+  </data>
+  <data name="QrHowItWorksTitle" xml:space="preserve">
+    <value>How it works</value>
+  </data>
+  <data name="QrHowItWorksShowTitle" xml:space="preserve">
+    <value>Show QR</value>
+  </data>
+  <data name="QrHowItWorksShowBody" xml:space="preserve">
+    <value>Open this screen and show your QR.</value>
+  </data>
+  <data name="QrHowItWorksScanTitle" xml:space="preserve">
+    <value>Scan at checkout</value>
+  </data>
+  <data name="QrHowItWorksScanBody" xml:space="preserve">
+    <value>The cashier scans your code.</value>
+  </data>
+  <data name="QrHowItWorksEarnTitle" xml:space="preserve">
+    <value>Earn or redeem</value>
+  </data>
+  <data name="QrHowItWorksEarnBody" xml:space="preserve">
+    <value>Earn points or redeem rewards.</value>
   </data>
   <data name="QrDiscoverGuidanceMessage" xml:space="preserve">
     <value>To generate a QR code, first go to Discover, open a business, and join its loyalty program.</value>

@@ -15,8 +15,7 @@
 
     <Grid>
         <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
-                                       IsRefreshing="{Binding IsBusy}"
-                                       ProgressColor="{StaticResource BrandGold500}"
+                                       ProgressColor="{StaticResource InternalPrimaryButton}"
                                        ProgressBackground="{StaticResource Neutral0}">
             <pullToRefresh:SfPullToRefresh.PullableContent>
                 <CollectionView ItemsSource="{Binding Items}"
@@ -25,7 +24,7 @@
                                 ItemsUpdatingScrollMode="KeepScrollOffset">
                     <CollectionView.Header>
                         <VerticalStackLayout Padding="20,18,20,12" Spacing="16">
-                            <Border Style="{StaticResource CardBorderStyle}">
+                            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                                 <VerticalStackLayout Spacing="10">
                                     <Label Text="{x:Static res:AppResources.FeedTitle}" Style="{StaticResource TitleLabelStyle}" />
                                     <Label Text="{Binding SelectedPointsText}" Style="{StaticResource BodyLabelStyle}" IsVisible="{Binding CanNavigateWithSelection}" />
@@ -45,8 +44,8 @@
                                                            ChipTextColor="{StaticResource Neutral900}"
                                                            ChipTextSize="13"
                                                            SelectedChipBackground="{StaticResource BrushPrimary}"
-                                                           SelectedChipTextColor="{StaticResource Neutral0}"
-                                                           SelectionIndicatorColor="{StaticResource BrandGold500}" />
+                                                           SelectedChipTextColor="{StaticResource Neutral900}"
+                                                           SelectionIndicatorColor="{StaticResource InternalPrimaryButton}" />
                                     </VerticalStackLayout>
 
                                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" IsVisible="{Binding HasAccounts}">
@@ -75,7 +74,7 @@
                                                 <buttons:SfButton.Triggers>
                                                     <DataTrigger TargetType="buttons:SfButton" Binding="{Binding IsPromotionScopeSelectedBusiness}" Value="True">
                                                         <Setter Property="Background" Value="{StaticResource BrushPrimary}" />
-                                                        <Setter Property="TextColor" Value="{StaticResource Neutral0}" />
+                                                        <Setter Property="TextColor" Value="{StaticResource Neutral900}" />
                                                         <Setter Property="StrokeThickness" Value="0" />
                                                     </DataTrigger>
                                                 </buttons:SfButton.Triggers>
@@ -87,7 +86,7 @@
                                                 <buttons:SfButton.Triggers>
                                                     <DataTrigger TargetType="buttons:SfButton" Binding="{Binding IsPromotionScopeAllBusinesses}" Value="True">
                                                         <Setter Property="Background" Value="{StaticResource BrushPrimary}" />
-                                                        <Setter Property="TextColor" Value="{StaticResource Neutral0}" />
+                                                        <Setter Property="TextColor" Value="{StaticResource Neutral900}" />
                                                         <Setter Property="StrokeThickness" Value="0" />
                                                     </DataTrigger>
                                                 </buttons:SfButton.Triggers>
@@ -101,7 +100,7 @@
                                                      BindableLayout.ItemsSource="{Binding PromotionItems}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="contracts:PromotionFeedItem">
-                                            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
+                                            <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                                 <VerticalStackLayout Spacing="8">
                                                     <Label Text="{Binding BusinessName}" Style="{StaticResource SectionEyebrowLabelStyle}" LineBreakMode="WordWrap" />
                                                     <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
@@ -145,7 +144,7 @@
 
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="contracts:LoyaltyTimelineEntry">
-                            <Border Style="{StaticResource CardBorderStyle}" Margin="20,0,20,2">
+                            <Border Style="{StaticResource ElevatedListCardBorderStyle}" Margin="20,4">
                                 <VerticalStackLayout Spacing="8">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                         <Label Text="{Binding Kind, Converter={StaticResource LoyaltyTimelineKindConverter}}" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
@@ -155,7 +154,7 @@
                                                        Style="{StaticResource CaptionLabelStyle}"
                                                        HorizontalTextAlignment="Center" />
                                                 <Label Text="{Binding PointsDelta, StringFormat='{x:Static res:AppResources.FeedPointsDeltaFormat}'}"
-                                                       TextColor="{StaticResource BrandGold600}"
+                                                       TextColor="{StaticResource Neutral900}"
                                                        HorizontalTextAlignment="Center" />
                                             </VerticalStackLayout>
                                         </Border>

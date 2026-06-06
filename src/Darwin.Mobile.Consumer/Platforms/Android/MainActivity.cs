@@ -27,8 +27,8 @@ namespace Darwin.Mobile.Consumer;
                            ConfigChanges.Density)]
 public sealed class MainActivity : MauiAppCompatActivity
 {
-    private const string AndroidStatusBarColor = "#F4B223";
-    private const string AndroidNavigationBarColor = "#FFF8E7";
+    private const string AndroidStatusBarColor = "#FEDB42";
+    private const string AndroidNavigationBarColor = "#FFFFFF";
 
     /// <summary>
     /// Applies brand-consistent Android system bar colors so no legacy template chrome remains.
@@ -38,26 +38,47 @@ public sealed class MainActivity : MauiAppCompatActivity
     {
         base.OnCreate(savedInstanceState);
 
+        ApplySystemBarColors();
+    }
+
+    protected override void OnResume()
+    {
+        base.OnResume();
+        ApplySystemBarColors();
+    }
+
+    private void ApplySystemBarColors()
+    {
         var brandStatusColor = Android.Graphics.Color.ParseColor(AndroidStatusBarColor);
         var brandNavigationColor = Android.Graphics.Color.ParseColor(AndroidNavigationBarColor);
 
-        if (Build.VERSION.SdkInt < BuildVersionCodes.VanillaIceCream)
+        if (Window is null)
         {
-#pragma warning disable CA1422
-            // The legacy color APIs are only used below Android 15; newer versions keep MAUI/edge-to-edge defaults.
-            Window?.SetStatusBarColor(brandStatusColor);
-            Window?.SetNavigationBarColor(brandNavigationColor);
-#pragma warning restore CA1422
+            return;
         }
 
-        if (Window is not null)
+#pragma warning disable CA1422
+        WindowCompat.SetDecorFitsSystemWindows(Window, true);
+        Window.SetStatusBarColor(brandStatusColor);
+        Window.SetNavigationBarColor(brandNavigationColor);
+#pragma warning restore CA1422
+
+        Window.DecorView.SetBackgroundColor(brandStatusColor);
+
+        var insetsController = WindowCompat.GetInsetsController(Window, Window.DecorView);
+        if (insetsController is not null)
         {
-            var insetsController = WindowCompat.GetInsetsController(Window, Window.DecorView);
-            if (insetsController is not null)
-            {
-                insetsController.AppearanceLightStatusBars = true;
-                insetsController.AppearanceLightNavigationBars = true;
-            }
+            insetsController.AppearanceLightStatusBars = true;
+            insetsController.AppearanceLightNavigationBars = true;
         }
+
+        ConsumerShellPlatformStyler.Apply(Window.DecorView);
+
+        Window.DecorView.PostDelayed(() =>
+        {
+#pragma warning disable CA1422
+            Window.SetStatusBarColor(brandStatusColor);
+#pragma warning restore CA1422
+        }, 250);
     }
 }

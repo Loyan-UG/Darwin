@@ -25,6 +25,7 @@
                         <buttons:SfButton Grid.Column="0" Text="{x:Static res:AppResources.SettingsProfileButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding OpenProfileCommand}" />
                         <buttons:SfButton Grid.Column="1" Text="{x:Static res:AppResources.SettingsChangePasswordButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding OpenChangePasswordCommand}" />
                     </Grid>
+                    <buttons:SfButton Text="Business media" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding OpenBusinessMediaCommand}" />
                 </VerticalStackLayout>
             </Border>
 

@@ -11,13 +11,12 @@
     Title="{x:Static res:AppResources.MemberCustomerContextTitle}">
 
     <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
-                                   IsRefreshing="{Binding IsBusy}"
-                                   ProgressColor="{StaticResource BrandGold500}"
+                                   ProgressColor="{StaticResource InternalPrimaryButton}"
                                    ProgressBackground="{StaticResource Neutral0}">
         <pullToRefresh:SfPullToRefresh.PullableContent>
             <ScrollView>
                 <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.MemberCustomerContextTitle}" Style="{StaticResource TitleLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.MemberCustomerContextSubtitle}" Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -49,7 +48,7 @@
                     <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Segments}" IsVisible="{Binding HasSegments}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCustomerSegmentItemViewModel">
-                                <Border Style="{StaticResource MutedCardBorderStyle}">
+                                <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
                                         <Label Text="{Binding Name}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding Description}" Style="{StaticResource SecondaryBodyLabelStyle}" LineBreakMode="WordWrap" IsVisible="{Binding HasDescription}" />
@@ -68,7 +67,7 @@
                     <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Consents}" IsVisible="{Binding HasConsents}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCustomerConsentItemViewModel">
-                                <Border Style="{StaticResource MutedCardBorderStyle}">
+                                <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
                                         <Label Text="{Binding Type}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -89,7 +88,7 @@
                     <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding RecentInteractions}" IsVisible="{Binding HasRecentInteractions}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCustomerInteractionItemViewModel">
-                                <Border Style="{StaticResource MutedCardBorderStyle}">
+                                <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
                                         <Label Text="{Binding TypeChannelText}" Style="{StaticResource BodyLabelStyle}" FontAttributes="Bold" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding SubjectText}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasSubject}" />
@@ -103,7 +102,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
+            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource InternalPrimaryButton}" />
                 </VerticalStackLayout>
             </ScrollView>
         </pullToRefresh:SfPullToRefresh.PullableContent>

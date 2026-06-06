@@ -102,7 +102,12 @@ namespace Darwin.Application.Businesses.DTOs
         public GeoCoordinateDto? Coordinate { get; set; }
 
         /// <summary>
-        /// Optional URL of a primary image/logo.
+        /// Optional URL of the profile/logo image.
+        /// </summary>
+        public string? ProfileImageUrl { get; set; }
+
+        /// <summary>
+        /// Optional URL of a primary gallery image.
         /// </summary>
         public string? PrimaryImageUrl { get; set; }
 
@@ -173,6 +178,8 @@ namespace Darwin.Application.Businesses.DTOs
 
         public string? ContactPhoneE164 { get; set; }
 
+        public string? MemberCountDisplay { get; set; }
+
         public BusinessCategoryKind Category { get; set; }
 
         public bool IsActive { get; set; }
@@ -180,6 +187,8 @@ namespace Darwin.Application.Businesses.DTOs
         public string DefaultCurrency { get; set; } = string.Empty;
 
         public string DefaultCulture { get; set; } = string.Empty;
+
+        public string? ProfileImageUrl { get; set; }
 
         public string? PrimaryImageUrl { get; set; }
 

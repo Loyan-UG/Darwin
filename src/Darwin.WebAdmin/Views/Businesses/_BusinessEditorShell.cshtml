@@ -456,6 +456,118 @@
         }
     }
 
+    @if (!isCreate)
+    {
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                    <h2 class="h5 mb-1">Business media</h2>
+                    <p class="text-muted mb-0">Profile image and 1-10 gallery images used by Consumer discovery and profile pages.</p>
+                </div>
+                <span class="badge text-bg-secondary">@Model.MediaLibrary.Gallery.Count / 10</span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">Profile image</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.MediaLibrary.ProfileImageUrl))
+                        {
+                            <img src="@Model.MediaLibrary.ProfileImageUrl" alt="@Model.Name profile" class="rounded-circle border mb-3" style="width:72px;height:72px;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <div class="rounded-circle border d-flex align-items-center justify-content-center mb-3" style="width:72px;height:72px;">@Model.Name.Take(2).Aggregate("", (s, c) => s + c).ToUpperInvariant()</div>
+                        }
+                        <form asp-action="UploadBusinessProfileImage" method="post" enctype="multipart/form-data" class="d-grid gap-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="businessId" value="@Model.Id" />
+                            <input type="file" name="file" class="form-control" accept="image/*" />
+                            <button type="submit" class="btn btn-sm btn-primary">Upload profile image</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">Gallery images</div>
+                        <form asp-action="AddBusinessGalleryImage" method="post" enctype="multipart/form-data" class="row g-2 align-items-end mb-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="businessId" value="@Model.Id" />
+                            <div class="col-md-5">
+                                <label class="form-label small">Image</label>
+                                <input type="file" name="file" class="form-control" accept="image/*" @(Model.MediaLibrary.Gallery.Count >= 10 ? "disabled" : "") />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Caption</label>
+                                <input type="text" name="caption" class="form-control" maxlength="500" @(Model.MediaLibrary.Gallery.Count >= 10 ? "disabled" : "") />
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="isPrimary" value="true" class="form-check-input" id="business-media-primary" @(Model.MediaLibrary.Gallery.Count == 0 ? "checked" : "") @(Model.MediaLibrary.Gallery.Count >= 10 ? "disabled" : "") />
+                                    <label for="business-media-primary" class="form-check-label small">Main image</label>
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-primary w-100" @(Model.MediaLibrary.Gallery.Count >= 10 ? "disabled" : "")>Add image</button>
+                            </div>
+                        </form>
+
+                        @if (Model.MediaLibrary.Gallery.Count == 0)
+                        {
+                            <div class="text-muted small">No gallery images uploaded yet.</div>
+                        }
+                        else
+                        {
+                            <div class="row g-2">
+                                @foreach (var item in Model.MediaLibrary.Gallery.OrderByDescending(x => x.IsPrimary).ThenBy(x => x.SortOrder))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="border rounded p-2 h-100">
+                                            <img src="@item.Url" alt="@item.Caption" class="rounded mb-2" style="width:100%;height:120px;object-fit:cover;" />
+                                            <div class="d-flex justify-content-between align-items-center gap-2">
+                                                <div class="small text-truncate">
+                                                    <span class="fw-semibold">#@item.SortOrder</span>
+                                                    @if (item.IsPrimary)
+                                                    {
+                                                        <span class="badge text-bg-warning ms-1">Main</span>
+                                                    }
+                                                </div>
+                                                <div class="d-flex gap-1">
+                                                    @if (!item.IsPrimary)
+                                                    {
+                                                        <form asp-action="SetBusinessGalleryPrimary" method="post">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="businessId" value="@Model.Id" />
+                                                            <input type="hidden" name="mediaId" value="@item.Id" />
+                                                            <input type="hidden" name="url" value="@item.Url" />
+                                                            <input type="hidden" name="caption" value="@item.Caption" />
+                                                            <input type="hidden" name="sortOrder" value="@item.SortOrder" />
+                                                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Set main</button>
+                                                        </form>
+                                                    }
+                                                    <form asp-action="DeleteBusinessGalleryImage" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="businessId" value="@Model.Id" />
+                                                        <input type="hidden" name="mediaId" value="@item.Id" />
+                                                        <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" @(Model.MediaLibrary.Gallery.Count <= 1 ? "disabled" : "")>Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(item.Caption))
+                                            {
+                                                <div class="small text-muted mt-1">@item.Caption</div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <form asp-action="@(isCreate ? "Create" : "Edit")"
           method="post"
           hx-post="@Url.Action(isCreate ? "Create" : "Edit", "Businesses")"

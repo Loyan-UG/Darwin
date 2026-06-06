@@ -7,35 +7,63 @@
     xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
     x:Class="Darwin.Mobile.Consumer.Views.QrPage"
     x:DataType="vm:QrViewModel"
-    Title="{x:Static res:AppResources.QrTitle}">
+    Title="{x:Static res:AppResources.QrTitle}"
+    BackgroundColor="{StaticResource DiscoverHeaderYellow}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="{x:Static res:AppResources.QrTitle}" Style="{StaticResource TitleLabelStyle}" />
-                    <Label Text="{Binding GuidanceMessage}" Style="{StaticResource BodyLabelStyle}" />
-                    <Label Text="{Binding BusinessDisplayName, StringFormat='{x:Static res:AppResources.QrBusinessFormat}'}"
-                           Style="{StaticResource SecondaryBodyLabelStyle}"
-                           IsVisible="{Binding BusinessDisplayName, Converter={StaticResource NullCheckConverter}}" />
-                    <Label Text="{Binding StatusMessage}"
-                           Style="{StaticResource SuccessLabelStyle}"
-                           IsVisible="{Binding StatusMessage, Converter={StaticResource NullCheckConverter}}" />
-                    <Label Text="{Binding ErrorMessage}"
-                           Style="{StaticResource ErrorLabelStyle}"
-                           IsVisible="{Binding HasError}" />
+    <Grid RowDefinitions="2*,*">
+        <BoxView Grid.RowSpan="2"
+                 Color="{StaticResource DiscoverHeaderYellow}"
+                 InputTransparent="True" />
+        <BoxView Grid.Row="1"
+                 InputTransparent="True">
+            <BoxView.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="{StaticResource DiscoverHeaderYellow}" Offset="0" />
+                    <GradientStop Color="{StaticResource Neutral0}" Offset="1" />
+                </LinearGradientBrush>
+            </BoxView.Background>
+        </BoxView>
+
+        <ScrollView Grid.RowSpan="2"
+                    BackgroundColor="Transparent">
+            <VerticalStackLayout Padding="18,8,18,24" Spacing="8">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{x:Static res:AppResources.QrScreenHeadline}"
+                           FontSize="31"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Neutral900}"
+                           HorizontalTextAlignment="Center"
+                           LineBreakMode="WordWrap" />
+                        <Label Text="{Binding BusinessDisplayName, StringFormat='{x:Static res:AppResources.QrBusinessFormat}'}"
+                               Style="{StaticResource SecondaryBodyLabelStyle}"
+                               HorizontalTextAlignment="Center"
+                               IsVisible="{Binding BusinessDisplayName, Converter={StaticResource NullCheckConverter}}" />
+                        <Label Text="{Binding StatusMessage}"
+                               Style="{StaticResource SuccessLabelStyle}"
+                               HorizontalTextAlignment="Center"
+                               IsVisible="{Binding StatusMessage, Converter={StaticResource NullCheckConverter}}" />
+                        <Label Text="{Binding ErrorMessage}"
+                               Style="{StaticResource ErrorLabelStyle}"
+                               HorizontalTextAlignment="Center"
+                               IsVisible="{Binding HasError}" />
                 </VerticalStackLayout>
-            </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}">
-                <VerticalStackLayout Spacing="10">
-                    <Border Style="{StaticResource MutedCardBorderStyle}"
-                            Padding="20"
-                            HorizontalOptions="Center">
+                <Border Style="{StaticResource CardBorderStyle}"
+                        Padding="14"
+                        StrokeThickness="0"
+                        Margin="8,0">
+                    <VerticalStackLayout Spacing="3">
+                        <Label Text="{Binding ModeTitle}"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Neutral900}"
+                               HorizontalTextAlignment="Center"
+                               IsVisible="{Binding HasBusinessContext}" />
+
                         <Grid>
                             <Image Source="{Binding QrImage}"
-                                   HeightRequest="220"
-                                   WidthRequest="220"
+                                   HeightRequest="252"
+                                   WidthRequest="252"
                                    HorizontalOptions="Center"
                                    IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
                             <Label Text="{x:Static res:AppResources.QrEmptyStateMessage}"
@@ -52,42 +80,121 @@
                                 </Label.Triggers>
                             </Label>
                         </Grid>
-                    </Border>
 
-                    <Label Text="{Binding ExpiresAtUtc, StringFormat='{x:Static res:AppResources.QrExpiresAtFormat}'}"
-                           Style="{StaticResource BodyLabelStyle}"
-                           HorizontalTextAlignment="Center"
-                           IsVisible="{Binding HasBusinessContext}" />
-                    <Label Text="{Binding ExpiresInText}"
-                           Style="{StaticResource SecondaryBodyLabelStyle}"
-                           HorizontalTextAlignment="Center"
-                           IsVisible="{Binding HasBusinessContext}" />
+                        <Label Text="{Binding ExpiresAtUtc, StringFormat='{x:Static res:AppResources.QrExpiresAtFormat}'}"
+                               Style="{StaticResource BodyLabelStyle}"
+                               HorizontalTextAlignment="Center"
+                               IsVisible="{Binding HasBusinessContext}" />
+                        <Label Text="{Binding ExpiresInText}"
+                               Style="{StaticResource SecondaryBodyLabelStyle}"
+                               HorizontalTextAlignment="Center"
+                               IsVisible="{Binding HasBusinessContext}" />
+                    </VerticalStackLayout>
+                </Border>
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <VerticalStackLayout Grid.Column="0" Spacing="8">
-                            <Label Text="{x:Static res:AppResources.QrAccrualHelpText}"
-                                   Style="{StaticResource SecondaryBodyLabelStyle}" />
-                            <buttons:SfButton Text="{x:Static res:AppResources.RefreshAccrualButton}"
-                                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
-                                              Command="{Binding RefreshAccrualSessionCommand}"
-                                              IsEnabled="{Binding HasBusinessContext}" />
-                        </VerticalStackLayout>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                        <buttons:SfButton Text="{x:Static res:AppResources.RefreshAccrualButton}"
+                                          Style="{StaticResource QrActionButtonStyle}"
+                                          Command="{Binding RefreshAccrualSessionCommand}"
+                                          IsEnabled="{Binding HasBusinessContext}" />
+                        <Label Text="{x:Static res:AppResources.QrAccrualHelpText}"
+                               Style="{StaticResource SecondaryBodyLabelStyle}"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Column="1" Spacing="8">
-                            <Label Text="{x:Static res:AppResources.QrRedemptionHelpText}"
-                                   Style="{StaticResource SecondaryBodyLabelStyle}" />
-                            <buttons:SfButton Text="{x:Static res:AppResources.RefreshRedemptionButton}"
-                                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                                              Command="{Binding RefreshRedemptionSessionCommand}"
-                                              IsEnabled="{Binding HasBusinessContext}" />
-                        </VerticalStackLayout>
-                    </Grid>
-                </VerticalStackLayout>
-            </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
+                        <buttons:SfButton Text="{x:Static res:AppResources.RefreshRedemptionButton}"
+                                          Style="{StaticResource QrActionButtonStyle}"
+                                          Command="{Binding RefreshRedemptionSessionCommand}"
+                                          IsEnabled="{Binding HasBusinessContext}" />
+                        <Label Text="{x:Static res:AppResources.QrRedemptionHelpText}"
+                               Style="{StaticResource SecondaryBodyLabelStyle}"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Grid>
 
-            <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrandGold500}" />
-        </VerticalStackLayout>
-    </ScrollView>
+                <Border Background="{StaticResource BrushSurface}"
+                        StrokeThickness="0"
+                        Padding="16,14">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="{x:Static res:AppResources.QrHowItWorksTitle}"
+                               FontSize="17"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Neutral900}" />
+
+                        <Grid ColumnDefinitions="*,Auto,*,Auto,*" ColumnSpacing="4">
+                            <VerticalStackLayout Grid.Column="0" Spacing="6" HorizontalOptions="Center">
+                                <Border WidthRequest="50" HeightRequest="50" Padding="13" Background="{StaticResource BrushDiscoverHeaderButton}">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="25" />
+                                    </Border.StrokeShape>
+                                    <Image Source="icon_qr_black.svg" Aspect="AspectFit" />
+                                </Border>
+                                <HorizontalStackLayout Spacing="5" HorizontalOptions="Center">
+                                    <Border WidthRequest="18" HeightRequest="18" Background="{StaticResource BrushDarkAction}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+                                        <Label Text="1" FontSize="9" FontAttributes="Bold" TextColor="{StaticResource Neutral0}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <Label Text="{x:Static res:AppResources.QrHowItWorksShowTitle}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" HorizontalTextAlignment="Center" MaxLines="2" />
+                                </HorizontalStackLayout>
+                                <Label Text="{x:Static res:AppResources.QrHowItWorksShowBody}" FontSize="11" TextColor="{StaticResource Neutral700}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="1" Text="..." FontSize="16" TextColor="{StaticResource Neutral700}" Opacity="0.35" VerticalOptions="Start" Margin="0,22,0,0" />
+
+                            <VerticalStackLayout Grid.Column="2" Spacing="6" HorizontalOptions="Center">
+                                <Border WidthRequest="50" HeightRequest="50" Padding="13" Background="{StaticResource BrushDiscoverHeaderButton}">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="25" />
+                                    </Border.StrokeShape>
+                                    <Image Source="icon_checkout_black.svg" Aspect="AspectFit" />
+                                </Border>
+                                <HorizontalStackLayout Spacing="5" HorizontalOptions="Center">
+                                    <Border WidthRequest="18" HeightRequest="18" Background="{StaticResource BrushDarkAction}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+                                        <Label Text="2" FontSize="9" FontAttributes="Bold" TextColor="{StaticResource Neutral0}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <Label Text="{x:Static res:AppResources.QrHowItWorksScanTitle}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" HorizontalTextAlignment="Center" MaxLines="2" />
+                                </HorizontalStackLayout>
+                                <Label Text="{x:Static res:AppResources.QrHowItWorksScanBody}" FontSize="11" TextColor="{StaticResource Neutral700}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="3" Text="..." FontSize="16" TextColor="{StaticResource Neutral700}" Opacity="0.35" VerticalOptions="Start" Margin="0,22,0,0" />
+
+                            <VerticalStackLayout Grid.Column="4" Spacing="6" HorizontalOptions="Center">
+                                <Border WidthRequest="50" HeightRequest="50" Padding="13" Background="{StaticResource BrushDiscoverHeaderButton}">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="25" />
+                                    </Border.StrokeShape>
+                                    <Image Source="icon_gift_black.svg" Aspect="AspectFit" />
+                                </Border>
+                                <HorizontalStackLayout Spacing="5" HorizontalOptions="Center">
+                                    <Border WidthRequest="18" HeightRequest="18" Background="{StaticResource BrushDarkAction}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+                                        <Label Text="3" FontSize="9" FontAttributes="Bold" TextColor="{StaticResource Neutral0}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <Label Text="{x:Static res:AppResources.QrHowItWorksEarnTitle}" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" HorizontalTextAlignment="Center" MaxLines="2" />
+                                </HorizontalStackLayout>
+                                <Label Text="{x:Static res:AppResources.QrHowItWorksEarnBody}" FontSize="11" TextColor="{StaticResource Neutral700}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                   IsRunning="{Binding IsBusy}"
+                                   Color="{StaticResource Neutral900}" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

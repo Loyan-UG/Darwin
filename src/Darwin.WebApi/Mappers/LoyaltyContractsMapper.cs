@@ -62,6 +62,8 @@ namespace Darwin.WebApi.Mappers
                 LoyaltyAccountId = dto.Id,
                 BusinessId = dto.BusinessId,
                 BusinessName = dto.BusinessName ?? string.Empty,
+                ProfileImageUrl = dto.ProfileImageUrl,
+                PrimaryImageUrl = dto.PrimaryImageUrl,
                 Status = dto.Status.ToString(),
                 PointsBalance = dto.PointsBalance,
                 LifetimePoints = dto.LifetimePoints,
@@ -146,6 +148,7 @@ namespace Darwin.WebApi.Mappers
                         Longitude = dto.Coordinate.Longitude,
                         AltitudeMeters = dto.Coordinate.AltitudeMeters
                     },
+                ProfileImageUrl = dto.ProfileImageUrl,
                 PrimaryImageUrl = dto.PrimaryImageUrl,
                 PointsBalance = dto.PointsBalance,
                 LifetimePoints = dto.LifetimePoints,

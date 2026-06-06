@@ -38,7 +38,9 @@ namespace Darwin.WebApi.Mappers
                 Id = dto.Id,
                 Name = dto.Name ?? string.Empty,
                 ShortDescription = dto.ShortDescription,
-                LogoUrl = dto.PrimaryImageUrl,
+                ProfileImageUrl = dto.ProfileImageUrl,
+                PrimaryImageUrl = dto.PrimaryImageUrl,
+                LogoUrl = dto.ProfileImageUrl,
                 Category = dto.Category.ToString(),
                 Location = dto.Coordinate is null ? null : new GeoCoordinateModel
                 {
@@ -79,7 +81,9 @@ namespace Darwin.WebApi.Mappers
                 // Prefer explicit short description; do not fabricate long description.
                 ShortDescription = dto.ShortDescription,
                 Description = null,
+                MemberCountDisplay = dto.MemberCountDisplay,
 
+                ProfileImageUrl = dto.ProfileImageUrl,
                 PrimaryImageUrl = dto.PrimaryImageUrl,
                 GalleryImageUrls = dto.GalleryImageUrls,
 
@@ -205,6 +209,8 @@ namespace Darwin.WebApi.Mappers
                 LoyaltyAccountId = dto.Id,
                 BusinessId = dto.BusinessId,
                 BusinessName = dto.BusinessName ?? string.Empty,
+                ProfileImageUrl = dto.ProfileImageUrl,
+                PrimaryImageUrl = dto.PrimaryImageUrl,
                 Status = dto.Status.ToString(),
                 PointsBalance = dto.PointsBalance,
                 LifetimePoints = dto.LifetimePoints,

@@ -36,6 +36,16 @@ namespace Darwin.Application.Loyalty.DTOs
         public string? BusinessDefaultCulture { get; set; }
 
         /// <summary>
+        /// Gets or sets the business profile/logo image URL.
+        /// </summary>
+        public string? ProfileImageUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the primary gallery image URL.
+        /// </summary>
+        public string? PrimaryImageUrl { get; set; }
+
+        /// <summary>
         /// Gets or sets the current spendable points balance for this account.
         /// </summary>
         public int PointsBalance { get; set; }

@@ -405,6 +405,58 @@ namespace Darwin.Mobile.Shared.Api
             return null;
         }
 
+        /// <inheritdoc />
+        public async Task<Result<TResponse>> PostFileResultAsync<TResponse>(
+            string route,
+            Stream fileStream,
+            string formFieldName,
+            string fileName,
+            string contentType,
+            CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(route))
+                return Result<TResponse>.Fail("Route is required.");
+
+            if (IsAbsoluteRoute(route))
+                return Result<TResponse>.Fail("Route must be a relative API path.");
+
+            if (fileStream is null)
+                return Result<TResponse>.Fail("File stream is required.");
+
+            var normalized = ApiRoutes.Normalize(route);
+            await using var buffered = new MemoryStream();
+            await fileStream.CopyToAsync(buffered, ct).ConfigureAwait(false);
+            var bytes = buffered.ToArray();
+
+            try
+            {
+                return await _retry.ExecuteAsync(async token =>
+                {
+                    using var response = await SendWithAuthenticationRetryAsync(
+                        normalized,
+                        (authorization, retryToken) =>
+                        {
+                            var content = new MultipartFormDataContent();
+                            var fileContent = new ByteArrayContent(bytes);
+                            fileContent.Headers.ContentType = new MediaTypeHeaderValue(string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType);
+                            content.Add(fileContent, string.IsNullOrWhiteSpace(formFieldName) ? "file" : formFieldName, string.IsNullOrWhiteSpace(fileName) ? "upload" : fileName);
+                            return SendContentAsync(HttpMethod.Post, normalized, content, authorization, retryToken);
+                        },
+                        token).ConfigureAwait(false);
+
+                    return await ReadAsResultAsync<TResponse>(response, token).ConfigureAwait(false);
+                }, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                return Result<TResponse>.Fail(NetworkFailureMessage);
+            }
+        }
+
         private async Task<HttpResponseMessage> SendWithAuthenticationRetryAsync(
             string route,
             Func<AuthenticationHeaderValue?, CancellationToken, Task<HttpResponseMessage>> sendAsync,
@@ -447,6 +499,18 @@ namespace Darwin.Mobile.Shared.Api
         {
             using var request = CreateRequest(method, route, authorization);
             request.Content = JsonContent.Create(payload, options: _jsonOptions);
+            return await _http.SendAsync(request, ct).ConfigureAwait(false);
+        }
+
+        private async Task<HttpResponseMessage> SendContentAsync(
+            HttpMethod method,
+            string route,
+            HttpContent content,
+            AuthenticationHeaderValue? authorization,
+            CancellationToken ct)
+        {
+            using var request = CreateRequest(method, route, authorization);
+            request.Content = content;
             return await _http.SendAsync(request, ct).ConfigureAwait(false);
         }
 

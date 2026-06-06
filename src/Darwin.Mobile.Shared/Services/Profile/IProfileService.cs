@@ -21,6 +21,16 @@ namespace Darwin.Mobile.Shared.Services.Profile
         Task<Result> UpdateMeAsync(CustomerProfile profile, CancellationToken ct);
 
         /// <summary>
+        /// Uploads a profile avatar image for the current user.
+        /// </summary>
+        Task<Result<ProfileImageUploadResponse>> UploadAvatarAsync(Stream stream, string fileName, string contentType, CancellationToken ct);
+
+        /// <summary>
+        /// Sets or clears the current user's avatar URL.
+        /// </summary>
+        Task<Result> SetAvatarAsync(string? profileImageUrl, CancellationToken ct);
+
+        /// <summary>
         /// Requests a phone verification code for the current authenticated user.
         /// </summary>
         Task<Result> RequestPhoneVerificationAsync(RequestPhoneVerificationRequest request, CancellationToken ct);

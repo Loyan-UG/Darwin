@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Darwin.Contracts.Loyalty;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
@@ -38,6 +40,22 @@ public sealed class DiscoverDisplayItem
     /// </summary>
     public bool IsExploreBusiness => ExploreItem is not null;
 
+    public Guid BusinessId => JoinedAccount?.BusinessId ?? ExploreItem?.BusinessId ?? Guid.Empty;
+
+    public string BusinessName => JoinedAccount?.BusinessName ?? ExploreItem?.Business.Name ?? string.Empty;
+
+    public string? MainImageUrl => JoinedAccount?.PrimaryImageUrl ?? ExploreItem?.Business.PrimaryImageUrl;
+
+    public string? ProfileImageUrl => JoinedAccount?.ProfileImageUrl ?? ExploreItem?.Business.ProfileImageUrl ?? ExploreItem?.Business.LogoUrl;
+
+    public bool HasMainImage => !string.IsNullOrWhiteSpace(MainImageUrl);
+
+    public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImageUrl);
+
+    public string BusinessInitials => BuildInitials(BusinessName);
+
+    public int? PointsBalance => JoinedAccount?.PointsBalance;
+
     /// <summary>
     /// Creates a display row for an existing joined loyalty account.
     /// </summary>
@@ -58,5 +76,25 @@ public sealed class DiscoverDisplayItem
     {
         ArgumentNullException.ThrowIfNull(item);
         return new DiscoverDisplayItem(null, item);
+    }
+
+    private static string BuildInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "--";
+        }
+
+        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (words.Length == 0)
+        {
+            return "--";
+        }
+
+        var chars = words.Length == 1
+            ? words[0].Take(2)
+            : new[] { words[0][0], words[1][0] };
+
+        return new string(chars.ToArray()).ToUpperInvariant();
     }
 }

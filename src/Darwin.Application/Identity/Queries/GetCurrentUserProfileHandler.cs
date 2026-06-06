@@ -65,6 +65,7 @@ namespace Darwin.Application.Identity.Queries
                     // Names and contact fields
                     FirstName = u.FirstName,
                     LastName = u.LastName,
+                    ProfileImageUrl = u.ProfileImageUrl,
                     PhoneE164 = u.PhoneE164,
                     PhoneNumberConfirmed = u.PhoneNumberConfirmed,
                     Email = u.Email,

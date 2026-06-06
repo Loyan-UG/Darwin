@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -69,6 +70,34 @@ public partial class ForgotPasswordPage : ContentPage
         catch
         {
             // Intentionally suppressed to avoid hard crash on edge navigation failure.
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _navigationInProgress, 0);
+        }
+    }
+
+    private async void OnReturnToLoginClicked(object? sender, EventArgs e)
+    {
+        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
+        {
+            return;
+        }
+
+        try
+        {
+            if (Navigation.NavigationStack.Count > 1)
+            {
+                await Navigation.PopToRootAsync();
+                return;
+            }
+
+            var rootNavigator = _serviceProvider.GetRequiredService<IAppRootNavigator>();
+            await rootNavigator.NavigateToLoginAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Forgot password return-to-login navigation failed: {ex}");
         }
         finally
         {

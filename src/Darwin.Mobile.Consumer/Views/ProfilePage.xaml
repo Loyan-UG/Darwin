@@ -14,13 +14,12 @@
 
     <Grid>
         <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
-                                       IsRefreshing="{Binding IsBusy}"
-                                       ProgressColor="{StaticResource BrandGold500}"
+                                       ProgressColor="{StaticResource InternalPrimaryButton}"
                                        ProgressBackground="{StaticResource Neutral0}">
             <pullToRefresh:SfPullToRefresh.PullableContent>
                 <ScrollView>
                     <VerticalStackLayout Padding="20,16,20,22" Spacing="14">
-                <Border Style="{StaticResource CardBorderStyle}">
+                <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{x:Static res:AppResources.ProfileSectionTitle}"
                                Style="{StaticResource TitleLabelStyle}" />
@@ -37,6 +36,47 @@
 
                 <Border Style="{StaticResource CardBorderStyle}">
                     <VerticalStackLayout Spacing="10">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Border Grid.Column="0"
+                                    WidthRequest="64"
+                                    HeightRequest="64"
+                                    Padding="0"
+                                    Background="{StaticResource BrushDarkAction}"
+                                    Stroke="{StaticResource BrandGold50}"
+                                    StrokeThickness="1"
+                                    VerticalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="32" />
+                                </Border.StrokeShape>
+                                <Grid>
+                                    <Image Source="{Binding ProfileImageUrl}"
+                                           Aspect="AspectFill"
+                                           IsVisible="{Binding HasProfileImage}" />
+                                    <Label Text="{Binding ProfileInitials}"
+                                           IsVisible="{Binding HasProfileImage, Converter={StaticResource InverseBoolConverter}}"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           FontAttributes="Bold"
+                                           FontSize="18"
+                                           TextColor="{StaticResource Neutral0}" />
+                                </Grid>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                                <Label Text="{x:Static res:AppResources.ProfileAvatarTitle}"
+                                       Style="{StaticResource SectionHeadingLabelStyle}" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <buttons:SfButton Grid.Column="0"
+                                                      Text="{x:Static res:AppResources.ProfileAvatarUploadButton}"
+                                                      Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                                                      Command="{Binding UploadProfileImageCommand}" />
+                                    <buttons:SfButton Grid.Column="1"
+                                                      Text="{x:Static res:AppResources.ProfileAvatarRemoveButton}"
+                                                      Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                                      Command="{Binding RemoveProfileImageCommand}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Grid>
+
                         <Label Text="{x:Static res:AppResources.ProfileSectionTitle}"
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
@@ -123,7 +163,7 @@
                                 <segmented:SfSegmentedControl.SelectionIndicatorSettings>
                                     <segmented:SelectionIndicatorSettings Background="{StaticResource BrushPrimary}"
                                                                          TextColor="{StaticResource Neutral0}"
-                                                                         Stroke="{StaticResource BrandGold500}" />
+                                                                         Stroke="{StaticResource InternalPrimaryButton}" />
                                 </segmented:SfSegmentedControl.SelectionIndicatorSettings>
                             </segmented:SfSegmentedControl>
 
@@ -157,7 +197,7 @@
                                Style="{StaticResource SectionHeadingLabelStyle}" />
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                            <Border Grid.Column="0" Style="{StaticResource StatTileBorderStyle}">
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="{x:Static res:AppResources.ProfileSavedAddressesTitle}"
                                            Style="{StaticResource CaptionLabelStyle}" />
@@ -166,7 +206,7 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                            <Border Grid.Column="1" Style="{StaticResource StatTileBorderStyle}">
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="{x:Static res:AppResources.ProfileManageAddressesButton}"
                                            Style="{StaticResource CaptionLabelStyle}" />
@@ -231,7 +271,7 @@
 
                         <ActivityIndicator IsVisible="{Binding IsPushSyncBusy}"
                                            IsRunning="{Binding IsPushSyncBusy}"
-                                           Color="{StaticResource BrandGold500}" />
+                                           Color="{StaticResource InternalPrimaryButton}" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -277,7 +317,7 @@
                                  Spacing="12">
                 <ActivityIndicator IsVisible="{Binding IsBusy}"
                                    IsRunning="{Binding IsBusy}"
-                                   Color="{StaticResource BrandGold500}" />
+                                   Color="{StaticResource InternalPrimaryButton}" />
                 <Label Text="{x:Static res:AppResources.ProfileTitle}"
                        Style="{StaticResource SecondaryBodyLabelStyle}"
                        HorizontalTextAlignment="Center" />

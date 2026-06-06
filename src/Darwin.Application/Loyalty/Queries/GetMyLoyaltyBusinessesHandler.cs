@@ -106,6 +106,7 @@ namespace Darwin.Application.Loyalty.Queries
                     Category = b.Category,
                     IsBusinessActive = b.IsActive,
                     City = l != null ? l.City : null,
+                    ProfileImageUrl = b.BrandLogoUrl,
                     Coordinate = l != null && l.Coordinate != null
                         ? new GeoCoordinateDto
                         {

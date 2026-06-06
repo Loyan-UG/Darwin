@@ -51,6 +51,7 @@ namespace Darwin.Domain.Entities.Identity
         // Profile (merged from previous UserProfile)
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+        public string? ProfileImageUrl { get; set; }
         public string? Company { get; set; }
         public string? VatId { get; set; }
 

@@ -73,6 +73,13 @@ namespace Darwin.Application.Loyalty.Queries
                     Id = account.Id,
                     BusinessId = account.BusinessId,
                     BusinessName = business.Name,
+                    ProfileImageUrl = business.BrandLogoUrl,
+                    PrimaryImageUrl = _dbContext.Set<BusinessMedia>()
+                        .AsNoTracking()
+                        .Where(m => m.BusinessId == business.Id && m.IsPrimary && !m.IsDeleted)
+                        .OrderBy(m => m.SortOrder)
+                        .Select(m => m.Url)
+                        .FirstOrDefault(),
                     PointsBalance = account.PointsBalance,
                     LifetimePoints = account.LifetimePoints,
                     Status = account.Status,

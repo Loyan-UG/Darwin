@@ -8,9 +8,12 @@ using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
+#if ANDROID || IOS || MACCATALYST
 using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Devices.Sensors;
 using Microsoft.Maui.Maps;
+using MauiMap = Microsoft.Maui.Controls.Maps.Map;
+#endif
 
 namespace Darwin.Mobile.Consumer.Views;
 
@@ -28,7 +31,11 @@ public partial class DiscoverPage : ContentPage
 {
     private readonly DiscoverViewModel _viewModel;
     private readonly IServiceProvider _serviceProvider;
+#if ANDROID || IOS || MACCATALYST
     private readonly Dictionary<Pin, DiscoverExploreItem> _pinLookup = new();
+    private MauiMap? _exploreMap;
+    private int _mapInitializationScheduled;
+#endif
     private int _navigationInProgress;
 
     public DiscoverPage(DiscoverViewModel viewModel, IServiceProvider serviceProvider)
@@ -50,7 +57,7 @@ public partial class DiscoverPage : ContentPage
         try
         {
             await _viewModel.OnAppearingAsync();
-            RebuildExploreMapPins();
+            ScheduleExploreMapRefresh();
         }
         catch
         {
@@ -171,7 +178,7 @@ public partial class DiscoverPage : ContentPage
     {
         try
         {
-            RebuildExploreMapPins();
+            ScheduleExploreMapRefresh();
         }
         catch
         {
@@ -180,18 +187,66 @@ public partial class DiscoverPage : ContentPage
     }
 
     /// <summary>
+    /// Schedules map work after the list/header has had a chance to render.
+    /// Creating the native Google map during page construction can block Android's UI thread for several seconds.
+    /// </summary>
+    private void ScheduleExploreMapRefresh()
+    {
+#if ANDROID || IOS || MACCATALYST
+        if (!_viewModel.IsExploreTabSelected || !_viewModel.HasExploreResults)
+        {
+            ExploreMapFrame.IsVisible = false;
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _mapInitializationScheduled, 1) == 1)
+        {
+            return;
+        }
+
+        Dispatcher.Dispatch(async () =>
+        {
+            try
+            {
+                await Task.Delay(350);
+
+                if (!_viewModel.IsExploreTabSelected || !_viewModel.HasExploreResults)
+                {
+                    ExploreMapFrame.IsVisible = false;
+                    return;
+                }
+
+                InitializeExploreMap();
+                RebuildExploreMapPins();
+            }
+            catch
+            {
+                ExploreMapFrame.IsVisible = false;
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _mapInitializationScheduled, 0);
+            }
+        });
+#else
+        ExploreMapFrame.IsVisible = false;
+#endif
+    }
+
+    /// <summary>
     /// Rebuilds map pins from Explore businesses with coordinates and recenters map.
     /// </summary>
     private void RebuildExploreMapPins()
     {
-        if (ExploreMap is null)
+#if ANDROID || IOS || MACCATALYST
+        if (_exploreMap is null)
         {
             return;
         }
 
         DetachExploreMapPins();
         _pinLookup.Clear();
-        ExploreMap.Pins.Clear();
+        _exploreMap.Pins.Clear();
 
         Location? firstLocation = null;
 
@@ -212,7 +267,7 @@ public partial class DiscoverPage : ContentPage
             };
 
             pin.MarkerClicked += OnExploreMapPinClicked;
-            ExploreMap.Pins.Add(pin);
+            _exploreMap.Pins.Add(pin);
             _pinLookup[pin] = item;
 
             firstLocation ??= pin.Location;
@@ -221,10 +276,12 @@ public partial class DiscoverPage : ContentPage
         if (firstLocation is not null)
         {
             // Keep map centered around loaded results. Radius is intentionally broad to include nearby pins.
-            ExploreMap.MoveToRegion(MapSpan.FromCenterAndRadius(firstLocation, Distance.FromKilometers(2.5)));
+            _exploreMap.MoveToRegion(MapSpan.FromCenterAndRadius(firstLocation, Distance.FromKilometers(2.5)));
         }
+#endif
     }
 
+#if ANDROID || IOS || MACCATALYST
     /// <summary>
     /// Opens the same destination used by list selection when a map marker is tapped.
     /// </summary>
@@ -246,18 +303,13 @@ public partial class DiscoverPage : ContentPage
             // Marker navigation follows the same best-effort policy as list navigation.
         }
     }
+#endif
 
     /// <summary>
     /// Centralized navigation policy for Explore entries to keep map/list behavior identical.
     /// </summary>
     private async Task NavigateFromExploreSelectionAsync(DiscoverExploreItem selected)
     {
-        if (selected.IsJoined)
-        {
-            await OpenRewardsAsync(selected.BusinessId);
-            return;
-        }
-
         await OpenBusinessDetailAsync(selected.BusinessId);
     }
 
@@ -302,6 +354,29 @@ public partial class DiscoverPage : ContentPage
         }
     }
 
+    private void InitializeExploreMap()
+    {
+#if ANDROID || IOS || MACCATALYST
+        if (_exploreMap is not null)
+        {
+            ExploreMapFrame.IsVisible = _viewModel.HasExploreResults && _viewModel.IsExploreTabSelected;
+            return;
+        }
+
+        _exploreMap = new MauiMap
+        {
+            HeightRequest = 220,
+            MapType = MapType.Street
+        };
+        _exploreMap.SetBinding(IsVisibleProperty, nameof(DiscoverViewModel.HasExploreResults));
+        _exploreMap.SetBinding(MauiMap.IsShowingUserProperty, nameof(DiscoverViewModel.IsNearbyOnly));
+        ExploreMapFrame.IsVisible = _viewModel.HasExploreResults && _viewModel.IsExploreTabSelected;
+        ExploreMapHost.Content = _exploreMap;
+#else
+        ExploreMapFrame.IsVisible = false;
+#endif
+    }
+
     /// <summary>
     /// Resolves business id from native MAUI and Syncfusion button senders.
     /// </summary>
@@ -320,9 +395,11 @@ public partial class DiscoverPage : ContentPage
     /// </summary>
     private void DetachExploreMapPins()
     {
+#if ANDROID || IOS || MACCATALYST
         foreach (var pin in _pinLookup.Keys)
         {
             pin.MarkerClicked -= OnExploreMapPinClicked;
         }
+#endif
     }
 }

@@ -9,110 +9,142 @@
     x:Class="Darwin.Mobile.Consumer.Views.RegisterPage"
     x:DataType="vm:RegisterViewModel"
     NavigationPage.HasNavigationBar="False"
-    Title="{x:Static res:AppResources.RegisterTitle}">
+    Title="{x:Static res:AppResources.RegisterTitle}"
+    BackgroundColor="{StaticResource BrandGold500}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24,12,24,24" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
+        <VerticalStackLayout Padding="24,12,24,24" Spacing="18">
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Background="Transparent"
+                    StrokeThickness="0"
+                    Padding="0">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.RegisterTitle}"
-                           Style="{StaticResource TitleLabelStyle}" />
+                           Style="{StaticResource TitleLabelStyle}"
+                           TextColor="{StaticResource Neutral900}" />
                     <Label Text="{x:Static res:AppResources.RegisterDescription}"
-                           Style="{StaticResource BodyLabelStyle}" />
+                           Style="{StaticResource BodyLabelStyle}"
+                           TextColor="{StaticResource Neutral900}" />
                 </VerticalStackLayout>
             </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Background="Transparent"
+                    StrokeThickness="0"
+                    Padding="0">
                 <VerticalStackLayout Spacing="14">
                     <Label Text="{x:Static res:AppResources.ProfileSectionTitle}"
-                           Style="{StaticResource SectionEyebrowLabelStyle}" />
+                           Style="{StaticResource SectionEyebrowLabelStyle}"
+                           TextColor="{StaticResource Neutral900}" />
 
                     <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.FirstNameLabel}"
-                                                   ContainerType="Outlined"
-                                                   Stroke="{StaticResource Neutral100}"
-                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   ContainerType="Filled"
+                                                   Stroke="{StaticResource LoginFieldYellow}"
+                                                   ContainerBackground="{StaticResource LoginFieldYellow}"
                                                    OutlineCornerRadius="8"
-                                                   FocusedStrokeThickness="2"
-                                                   UnfocusedStrokeThickness="1"
-                                                   InputViewPadding="14,6">
+                                                   FocusedStrokeThickness="0"
+                                                   UnfocusedStrokeThickness="0"
+                                                   InputViewPadding="12,2">
                         <Entry Text="{Binding FirstName}"
                                Placeholder="{x:Static res:AppResources.FirstNamePlaceholder}"
-                               Style="{StaticResource FormEntryStyle}" />
+                               TextColor="{StaticResource Neutral900}"
+                               PlaceholderColor="{StaticResource Neutral900}"
+                               BackgroundColor="Transparent"
+                               HeightRequest="40"
+                               ClearButtonVisibility="WhileEditing" />
                     </inputLayout:SfTextInputLayout>
 
                     <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.LastNameLabel}"
-                                                   ContainerType="Outlined"
-                                                   Stroke="{StaticResource Neutral100}"
-                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   ContainerType="Filled"
+                                                   Stroke="{StaticResource LoginFieldYellow}"
+                                                   ContainerBackground="{StaticResource LoginFieldYellow}"
                                                    OutlineCornerRadius="8"
-                                                   FocusedStrokeThickness="2"
-                                                   UnfocusedStrokeThickness="1"
-                                                   InputViewPadding="14,6">
+                                                   FocusedStrokeThickness="0"
+                                                   UnfocusedStrokeThickness="0"
+                                                   InputViewPadding="12,2">
                         <Entry Text="{Binding LastName}"
                                Placeholder="{x:Static res:AppResources.LastNamePlaceholder}"
-                               Style="{StaticResource FormEntryStyle}" />
+                               TextColor="{StaticResource Neutral900}"
+                               PlaceholderColor="{StaticResource Neutral900}"
+                               BackgroundColor="Transparent"
+                               HeightRequest="40"
+                               ClearButtonVisibility="WhileEditing" />
                     </inputLayout:SfTextInputLayout>
 
                     <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.EmailLabel}"
-                                                   ContainerType="Outlined"
-                                                   Stroke="{StaticResource Neutral100}"
-                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   ContainerType="Filled"
+                                                   Stroke="{StaticResource LoginFieldYellow}"
+                                                   ContainerBackground="{StaticResource LoginFieldYellow}"
                                                    OutlineCornerRadius="8"
-                                                   FocusedStrokeThickness="2"
-                                                   UnfocusedStrokeThickness="1"
-                                                   InputViewPadding="14,6">
+                                                   FocusedStrokeThickness="0"
+                                                   UnfocusedStrokeThickness="0"
+                                                   InputViewPadding="12,2">
                         <Entry Text="{Binding Email}"
                                Keyboard="Email"
                                Placeholder="{x:Static res:AppResources.EmailPlaceholder}"
-                               Style="{StaticResource FormEntryStyle}" />
+                               TextColor="{StaticResource Neutral900}"
+                               PlaceholderColor="{StaticResource Neutral900}"
+                               BackgroundColor="Transparent"
+                               HeightRequest="40"
+                               ClearButtonVisibility="WhileEditing" />
                     </inputLayout:SfTextInputLayout>
 
                     <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.PasswordLabel}"
-                                                   ContainerType="Outlined"
-                                                   Stroke="{StaticResource Neutral100}"
-                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   ContainerType="Filled"
+                                                   Stroke="{StaticResource LoginFieldYellow}"
+                                                   ContainerBackground="{StaticResource LoginFieldYellow}"
                                                    OutlineCornerRadius="8"
-                                                   FocusedStrokeThickness="2"
-                                                   UnfocusedStrokeThickness="1"
+                                                   FocusedStrokeThickness="0"
+                                                   UnfocusedStrokeThickness="0"
                                                    EnablePasswordVisibilityToggle="True"
-                                                   InputViewPadding="14,6">
+                                                   InputViewPadding="12,2">
                         <Entry Text="{Binding Password}"
                                IsPassword="True"
                                Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
-                               Style="{StaticResource FormEntryStyle}" />
+                               TextColor="{StaticResource Neutral900}"
+                               PlaceholderColor="{StaticResource Neutral900}"
+                               BackgroundColor="Transparent"
+                               HeightRequest="40" />
                     </inputLayout:SfTextInputLayout>
 
                     <inputLayout:SfTextInputLayout Hint="{x:Static res:AppResources.ConfirmNewPasswordLabel}"
-                                                   ContainerType="Outlined"
-                                                   Stroke="{StaticResource Neutral100}"
-                                                   ContainerBackground="{StaticResource Neutral0}"
+                                                   ContainerType="Filled"
+                                                   Stroke="{StaticResource LoginFieldYellow}"
+                                                   ContainerBackground="{StaticResource LoginFieldYellow}"
                                                    OutlineCornerRadius="8"
-                                                   FocusedStrokeThickness="2"
-                                                   UnfocusedStrokeThickness="1"
+                                                   FocusedStrokeThickness="0"
+                                                   UnfocusedStrokeThickness="0"
                                                    EnablePasswordVisibilityToggle="True"
-                                                   InputViewPadding="14,6">
+                                                   InputViewPadding="12,2">
                         <Entry Text="{Binding ConfirmPassword}"
                                IsPassword="True"
                                Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
-                               Style="{StaticResource FormEntryStyle}" />
+                               TextColor="{StaticResource Neutral900}"
+                               PlaceholderColor="{StaticResource Neutral900}"
+                               BackgroundColor="Transparent"
+                               HeightRequest="40" />
                     </inputLayout:SfTextInputLayout>
                 </VerticalStackLayout>
             </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Background="{StaticResource BrushLoginField}"
+                    StrokeThickness="0">
                 <VerticalStackLayout Spacing="14">
                     <Label Text="{x:Static res:AppResources.RegisterAcknowledgementsTitle}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                           Style="{StaticResource SectionHeadingLabelStyle}"
+                           TextColor="{StaticResource Neutral900}" />
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                         <CheckBox IsChecked="{Binding AcceptConsumerTerms}"
-                                  Color="{StaticResource BrandGold500}"
+                                  Color="{StaticResource Neutral0}"
                                   VerticalOptions="Start" />
                         <VerticalStackLayout Grid.Column="1" Spacing="6">
                             <Label Text="{x:Static res:AppResources.RegisterTermsAcknowledgementLabel}"
-                                   Style="{StaticResource BodyLabelStyle}" />
+                                   Style="{StaticResource BodyLabelStyle}"
+                                   TextColor="{StaticResource Neutral900}" />
                             <Button Text="{x:Static res:AppResources.LegalTermsButton}"
-                                    Style="{StaticResource LinkButtonStyle}"
+                                    Style="{StaticResource AuthSecondaryButtonStyle}"
                                     HorizontalOptions="Start"
                                     Command="{Binding OpenTermsCommand}" />
                         </VerticalStackLayout>
@@ -120,20 +152,21 @@
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                         <CheckBox IsChecked="{Binding AcknowledgePrivacyNotice}"
-                                  Color="{StaticResource BrandGold500}"
+                                  Color="{StaticResource Neutral0}"
                                   VerticalOptions="Start" />
                         <VerticalStackLayout Grid.Column="1" Spacing="6">
                             <Label Text="{x:Static res:AppResources.RegisterPrivacyAcknowledgementLabel}"
-                                   Style="{StaticResource BodyLabelStyle}" />
+                                   Style="{StaticResource BodyLabelStyle}"
+                                   TextColor="{StaticResource Neutral900}" />
                             <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
-                                    Style="{StaticResource LinkButtonStyle}"
+                                    Style="{StaticResource AuthSecondaryButtonStyle}"
                                     HorizontalOptions="Start"
                                     Command="{Binding OpenPrivacyPolicyCommand}" />
                         </VerticalStackLayout>
                     </Grid>
 
                     <Button Text="{x:Static res:AppResources.LegalHubTitle}"
-                            Style="{StaticResource LegalLinkButtonStyle}"
+                            Style="{StaticResource AuthSecondaryButtonStyle}"
                             HorizontalOptions="Start"
                             Clicked="OnLegalHubClicked" />
                 </VerticalStackLayout>
@@ -144,36 +177,42 @@
                    IsVisible="{Binding HasError}" />
 
             <Label Text="{Binding InfoMessage}"
-                   Style="{StaticResource InfoLabelStyle}"
+                   TextColor="{StaticResource Neutral900}"
+                   FontSize="13"
                    IsVisible="{Binding HasInfo}" />
 
-            <Border Style="{StaticResource MutedCardBorderStyle}">
+            <Border Style="{StaticResource MutedCardBorderStyle}"
+                    Background="{StaticResource BrushLoginField}"
+                    StrokeThickness="0">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="{x:Static res:AppResources.RegisterButton}"
-                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                           Style="{StaticResource SectionHeadingLabelStyle}"
+                           TextColor="{StaticResource Neutral900}" />
                     <Label Text="{Binding RegistrationReadinessMessage}"
-                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                           Style="{StaticResource SecondaryBodyLabelStyle}"
+                           TextColor="{StaticResource Neutral900}" />
                 </VerticalStackLayout>
             </Border>
 
             <buttons:SfButton Text="{x:Static res:AppResources.RegisterButton}"
-                              Style="{StaticResource SyncfusionPrimaryButtonStyle}"
+                              Style="{StaticResource AuthPrimaryButtonStyle}"
+                              Margin="0,18,0,0"
                               Command="{Binding RegisterCommand}"
                               IsEnabled="{Binding IsRegistrationReady}" />
 
             <Button Text="{x:Static res:AppResources.RegisterReturnToLoginButton}"
-                    Style="{StaticResource LinkButtonStyle}"
+                    Style="{StaticResource AuthSecondaryButtonStyle}"
                     HorizontalOptions="Center"
                     Clicked="OnReturnToLoginClicked" />
             <Button Text="{x:Static res:AppResources.ActivationOpenFlowButton}"
-                    Style="{StaticResource LinkButtonStyle}"
+                    Style="{StaticResource AuthSecondaryButtonStyle}"
                     HorizontalOptions="Center"
                     IsVisible="{Binding HasPendingEmailConfirmation}"
                     Clicked="OnOpenActivationClicked" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrandGold500}" />
+                               Color="{StaticResource Neutral900}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

@@ -9,7 +9,7 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="20,18,20,28" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static res:AppResources.SettingsTitle}"
                            Style="{StaticResource TitleLabelStyle}" />
@@ -18,7 +18,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.SettingsProfileButton}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
@@ -47,7 +47,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.SettingsLegalHubButton}"
                            Style="{StaticResource SectionHeadingLabelStyle}" />
@@ -59,6 +59,17 @@
                     <buttons:SfButton Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
                                       Style="{StaticResource SyncfusionOutlinedButtonStyle}"
                                       Command="{Binding OpenAccountDeletionCommand}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource ElevatedListCardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{x:Static res:AppResources.LogoutButtonText}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+
+                    <buttons:SfButton Text="{x:Static res:AppResources.LogoutButtonText}"
+                                      Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                      Clicked="OnLogoutClicked" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

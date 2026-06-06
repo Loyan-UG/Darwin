@@ -19,6 +19,7 @@ public sealed class SettingsViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         OpenProfileCommand = new AsyncCommand(OpenProfileAsync, () => !IsBusy);
+        OpenBusinessMediaCommand = new AsyncCommand(OpenBusinessMediaAsync, () => !IsBusy);
         OpenChangePasswordCommand = new AsyncCommand(OpenChangePasswordAsync, () => !IsBusy);
         OpenStaffAccessBadgeCommand = new AsyncCommand(OpenStaffAccessBadgeAsync, () => !IsBusy);
         OpenSubscriptionCommand = new AsyncCommand(OpenSubscriptionAsync, () => !IsBusy);
@@ -27,6 +28,8 @@ public sealed class SettingsViewModel : BaseViewModel
     }
 
     public AsyncCommand OpenProfileCommand { get; }
+
+    public AsyncCommand OpenBusinessMediaCommand { get; }
 
     public AsyncCommand OpenChangePasswordCommand { get; }
 
@@ -39,6 +42,8 @@ public sealed class SettingsViewModel : BaseViewModel
     public AsyncCommand OpenAccountDeletionCommand { get; }
 
     private async Task OpenProfileAsync() => await NavigateAsync(Routes.SettingsProfile).ConfigureAwait(false);
+
+    private async Task OpenBusinessMediaAsync() => await NavigateAsync(Routes.SettingsBusinessMedia).ConfigureAwait(false);
 
     private async Task OpenChangePasswordAsync() => await NavigateAsync(Routes.SettingsChangePassword).ConfigureAwait(false);
 
@@ -82,6 +87,7 @@ public sealed class SettingsViewModel : BaseViewModel
     private void RaiseCommandStates()
     {
         OpenProfileCommand.RaiseCanExecuteChanged();
+        OpenBusinessMediaCommand.RaiseCanExecuteChanged();
         OpenChangePasswordCommand.RaiseCanExecuteChanged();
         OpenStaffAccessBadgeCommand.RaiseCanExecuteChanged();
         OpenSubscriptionCommand.RaiseCanExecuteChanged();

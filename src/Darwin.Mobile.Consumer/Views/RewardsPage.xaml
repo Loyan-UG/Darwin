@@ -14,14 +14,13 @@
 
     <Grid>
         <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
-                                       IsRefreshing="{Binding IsBusy}"
-                                       ProgressColor="{StaticResource BrandGold500}"
+                                       ProgressColor="{StaticResource InternalPrimaryButton}"
                                        ProgressBackground="{StaticResource Neutral0}">
             <pullToRefresh:SfPullToRefresh.PullableContent>
                 <ScrollView>
                     <VerticalStackLayout Padding="20,16,20,22" Spacing="14">
 
-                <Border Style="{StaticResource CardBorderStyle}">
+                <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{x:Static res:AppResources.RewardsTitle}"
                                Style="{StaticResource SectionEyebrowLabelStyle}" />
@@ -37,7 +36,7 @@
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10"
                               IsVisible="{Binding HasAccounts}">
-                            <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                            <Border Grid.Column="0" Style="{StaticResource HeaderStatTileBorderStyle}">
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="{x:Static res:AppResources.RewardsJoinedBusinessesTitle}"
                                            Style="{StaticResource CaptionLabelStyle}" />
@@ -46,7 +45,7 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                            <Border Grid.Column="1" Style="{StaticResource HeaderStatTileBorderStyle}">
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="{x:Static res:AppResources.RewardsTotalPointsTitle}"
                                            Style="{StaticResource CaptionLabelStyle}" />
@@ -100,14 +99,14 @@
                                                ChipTextColor="{StaticResource Neutral900}"
                                                ChipTextSize="13"
                                                SelectedChipBackground="{StaticResource BrushPrimary}"
-                                               SelectedChipTextColor="{StaticResource Neutral0}"
-                                               SelectionIndicatorColor="{StaticResource BrandGold500}" />
+                                               SelectedChipTextColor="{StaticResource Neutral900}"
+                                               SelectionIndicatorColor="{StaticResource InternalPrimaryButton}" />
 
                             <VerticalStackLayout Spacing="10"
                                                  BindableLayout.ItemsSource="{Binding Accounts}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="contracts:LoyaltyAccountSummary">
-                                        <Border Style="{StaticResource MutedCardBorderStyle}" Margin="0,0,0,2">
+                                        <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                                 <VerticalStackLayout Grid.Column="0" Spacing="3">
                                                     <Label Text="{Binding BusinessName}"
@@ -119,7 +118,7 @@
                                                 </VerticalStackLayout>
 
                                                 <Border Grid.Column="1"
-                                                        Style="{StaticResource CardBorderStyle}"
+                                                        Style="{StaticResource StatTileBorderStyle}"
                                                         Padding="10,8">
                                                     <VerticalStackLayout Spacing="2">
                                                         <Label Text="{x:Static res:AppResources.PointsLabel}"
@@ -127,7 +126,7 @@
                                                                HorizontalTextAlignment="Center" />
                                                         <Label Text="{Binding PointsBalance}"
                                                                FontAttributes="Bold"
-                                                               TextColor="{StaticResource BrandGold600}"
+                                                               TextColor="{StaticResource Neutral900}"
                                                                HorizontalTextAlignment="Center" />
                                                     </VerticalStackLayout>
                                                 </Border>
@@ -145,7 +144,7 @@
                                    Style="{StaticResource SectionHeadingLabelStyle}" />
 
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                                <Border Grid.Column="0" Style="{StaticResource StatTileBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
                                         <Label Text="{x:Static res:AppResources.RewardsConfiguredRewardsTitle}"
                                                Style="{StaticResource CaptionLabelStyle}" />
@@ -154,7 +153,7 @@
                                     </VerticalStackLayout>
                                 </Border>
 
-                                <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                                <Border Grid.Column="1" Style="{StaticResource StatTileBorderStyle}">
                                     <VerticalStackLayout Spacing="4">
                                         <Label Text="{x:Static res:AppResources.RewardsRedeemableRewardsTitle}"
                                                Style="{StaticResource CaptionLabelStyle}" />
@@ -202,7 +201,7 @@
                                              BindableLayout.ItemsSource="{Binding AvailableRewards}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="contracts:LoyaltyRewardSummary">
-                                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
+                                    <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                                             <VerticalStackLayout Grid.Column="0" Spacing="4">
                                                 <Label Text="{Binding Name}"
@@ -223,7 +222,7 @@
                                                            HorizontalTextAlignment="Center" />
                                                     <Label Text="{Binding RequiredPoints}"
                                                            FontAttributes="Bold"
-                                                           TextColor="{StaticResource BrandGold600}"
+                                                           TextColor="{StaticResource Neutral900}"
                                                            HorizontalTextAlignment="Center" />
                                                 </VerticalStackLayout>
                                             </Border>
@@ -252,7 +251,7 @@
                                              BindableLayout.ItemsSource="{Binding RewardHistory}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="contracts:PointsTransaction">
-                                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
+                                    <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                         <Grid ColumnDefinitions="Auto,*,Auto"
                                               RowDefinitions="Auto,Auto"
                                               ColumnSpacing="10"
@@ -263,7 +262,7 @@
                                                     Padding="10,8">
                                                 <Label Text="{Binding Type, Converter={StaticResource PointsTransactionTypeConverter}}"
                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource BrandGold600}" />
+                                                       TextColor="{StaticResource Neutral900}" />
                                             </Border>
 
                                             <Label Grid.Column="1"
@@ -324,7 +323,7 @@
                                  Spacing="12">
                 <ActivityIndicator IsVisible="{Binding IsBusy}"
                                    IsRunning="{Binding IsBusy}"
-                                   Color="{StaticResource BrandGold500}" />
+                                   Color="{StaticResource InternalPrimaryButton}" />
                 <Label Text="{x:Static res:AppResources.RewardsTitle}"
                        Style="{StaticResource SecondaryBodyLabelStyle}"
                        HorizontalTextAlignment="Center" />

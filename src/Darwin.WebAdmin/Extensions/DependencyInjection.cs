@@ -87,6 +87,7 @@ namespace Darwin.WebAdmin.Extensions
         {
             services.AddSingleton<IClock, SystemClock>();
             services.Configure<MediaStorageOptions>(config.GetSection(MediaStorageOptions.SectionName));
+            services.AddScoped<IUploadedImageStorageService, UploadedImageStorageService>();
 
             // Identity handlers required for Auth flows
             services.AddScoped<SignInHandler>();

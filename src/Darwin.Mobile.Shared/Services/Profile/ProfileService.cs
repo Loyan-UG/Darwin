@@ -73,6 +73,22 @@ public sealed class ProfileService : IProfileService
         return result;
     }
 
+    public Task<Result<ProfileImageUploadResponse>> UploadAvatarAsync(Stream stream, string fileName, string contentType, CancellationToken ct)
+        => _api.PostFileResultAsync<ProfileImageUploadResponse>(ApiRoutes.Profile.UploadAvatar, stream, "file", fileName, contentType, ct);
+
+    public async Task<Result> SetAvatarAsync(string? profileImageUrl, CancellationToken ct)
+    {
+        var result = await _api.PostNoContentAsync(ApiRoutes.Profile.SetAvatar, new SetProfileImageRequest { ProfileImageUrl = profileImageUrl }, ct)
+            .ConfigureAwait(false);
+
+        if (result.Succeeded)
+        {
+            await RemoveProfileReadCachesAsync(ct).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
     /// <summary>
     /// Requests a phone verification code using the canonical member-profile endpoint.
     /// </summary>

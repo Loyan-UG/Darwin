@@ -185,8 +185,28 @@ public sealed class MerchantReadinessPlaybookVm
         public string? SupportCustomerProvisioningCompanyName { get; set; }
         public BusinessCommunicationReadinessVm CommunicationReadiness { get; set; } = new();
         public BusinessSubscriptionSnapshotVm Subscription { get; set; } = new();
+        public BusinessMediaLibraryVm MediaLibrary { get; set; } = new();
         public IEnumerable<SelectListItem> OwnerUserOptions { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> CategoryOptions { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class BusinessMediaLibraryVm
+    {
+        public Guid BusinessId { get; set; }
+        public string? ProfileImageUrl { get; set; }
+        public List<BusinessMediaItemVm> Gallery { get; set; } = new();
+    }
+
+    public sealed class BusinessMediaItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Guid? BusinessLocationId { get; set; }
+        public string Url { get; set; } = string.Empty;
+        public string? Caption { get; set; }
+        public int SortOrder { get; set; }
+        public bool IsPrimary { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     public sealed class BusinessSubscriptionSnapshotVm

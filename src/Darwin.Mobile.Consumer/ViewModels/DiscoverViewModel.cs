@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
+using Darwin.Contracts.Profile;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Caching;
 using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Integration;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
@@ -44,6 +46,7 @@ public sealed class DiscoverViewModel : BaseViewModel
 
     private readonly IBusinessService _businessService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
+    private readonly IProfileService _profileService;
     private readonly ILocation _location;
     private CancellationTokenSource? _loadCancellation;
 
@@ -52,6 +55,10 @@ public sealed class DiscoverViewModel : BaseViewModel
     private string? _searchQuery;
     private bool _isNearbyOnly;
     private BusinessCategoryKindItem? _selectedCategory;
+    private string _currentUserFirstName = string.Empty;
+    private string _currentUserLastName = string.Empty;
+    private string _currentUserEmail = string.Empty;
+    private string? _currentUserProfileImageUrl;
     private int _selectedNearbyRadiusMeters = DefaultNearbyRadiusMeters;
     private NearbyRadiusOption? _selectedNearbyRadiusOption;
 
@@ -60,10 +67,12 @@ public sealed class DiscoverViewModel : BaseViewModel
     public DiscoverViewModel(
         IBusinessService businessService,
         IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
+        IProfileService profileService,
         ILocation location)
     {
         _businessService = businessService ?? throw new ArgumentNullException(nameof(businessService));
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
+        _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
         _location = location ?? throw new ArgumentNullException(nameof(location));
 
         JoinedAccounts = new RangeObservableCollection<LoyaltyAccountSummary>();
@@ -219,6 +228,59 @@ public sealed class DiscoverViewModel : BaseViewModel
 
     public bool HasExploreResults => ExploreBusinesses.Count > 0;
 
+    public string CurrentUserFirstName
+    {
+        get => _currentUserFirstName;
+        private set
+        {
+            if (SetProperty(ref _currentUserFirstName, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(CurrentUserInitials));
+                OnPropertyChanged(nameof(DiscoverGreetingText));
+            }
+        }
+    }
+
+    public string CurrentUserProfileImageUrl
+    {
+        get => _currentUserProfileImageUrl ?? string.Empty;
+        private set
+        {
+            if (SetProperty(ref _currentUserProfileImageUrl, string.IsNullOrWhiteSpace(value) ? null : value))
+            {
+                OnPropertyChanged(nameof(HasCurrentUserProfileImage));
+            }
+        }
+    }
+
+    public bool HasCurrentUserProfileImage => !string.IsNullOrWhiteSpace(CurrentUserProfileImageUrl);
+
+    public string CurrentUserInitials => BuildInitials(_currentUserFirstName, _currentUserLastName, _currentUserEmail);
+
+    public string DiscoverGreetingText => string.Format(CultureInfo.CurrentCulture, AppResources.DiscoverGreetingFormat, CurrentUserGreetingName);
+
+    public string DiscoverGreetingSubtitle => AppResources.DiscoverGreetingSubtitle;
+
+    private string CurrentUserGreetingName
+    {
+        get
+        {
+            var first = Normalize(_currentUserFirstName);
+            if (!string.IsNullOrWhiteSpace(first))
+            {
+                return first;
+            }
+
+            var email = Normalize(_currentUserEmail);
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                return email.Split('@')[0];
+            }
+
+            return AppResources.DiscoverGreetingFallbackName;
+        }
+    }
+
     /// <summary>
     /// Tab command: switch to joined businesses and refresh that section.
     /// </summary>
@@ -370,6 +432,8 @@ public sealed class DiscoverViewModel : BaseViewModel
         try
         {
             var cancellationToken = loadCancellation.Token;
+            await LoadProfileHeaderAsync(cancellationToken);
+
             // Joined accounts are loaded first so Explore can label each business as joined/not-joined.
             await LoadJoinedAccountsAsync(cancellationToken);
 
@@ -525,6 +589,38 @@ public sealed class DiscoverViewModel : BaseViewModel
         });
     }
 
+    private async Task LoadProfileHeaderAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var profile = await _profileService.GetMeAsync(cancellationToken).ConfigureAwait(false);
+            if (profile is null)
+            {
+                return;
+            }
+
+            RunOnMain(() => ApplyProfileHeader(profile));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            // Discover should remain usable even when the profile header cannot be refreshed.
+        }
+    }
+
+    private void ApplyProfileHeader(CustomerProfile profile)
+    {
+        _currentUserLastName = profile.LastName ?? string.Empty;
+        _currentUserEmail = profile.Email ?? string.Empty;
+        CurrentUserFirstName = profile.FirstName ?? string.Empty;
+        CurrentUserProfileImageUrl = profile.ProfileImageUrl ?? string.Empty;
+        OnPropertyChanged(nameof(CurrentUserInitials));
+        OnPropertyChanged(nameof(DiscoverGreetingText));
+    }
+
     /// <summary>
     /// Rebuilds the single virtualized list from the currently selected tab's backing collection.
     /// </summary>
@@ -594,5 +690,38 @@ public sealed class DiscoverViewModel : BaseViewModel
             IsBusy = false;
             RaiseCommandStates();
         });
+    }
+
+    private static string? Normalize(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string BuildInitials(string? firstName, string? lastName, string? email)
+    {
+        var first = Normalize(firstName);
+        var last = Normalize(lastName);
+        if (!string.IsNullOrWhiteSpace(first) && !string.IsNullOrWhiteSpace(last))
+        {
+            return string.Concat(TakeFirstTextElement(first), TakeFirstTextElement(last)).ToUpperInvariant();
+        }
+
+        var fallback = first ?? last ?? Normalize(email)?.Split('@')[0];
+        if (string.IsNullOrWhiteSpace(fallback))
+        {
+            return "US";
+        }
+
+        var chars = fallback.Where(char.IsLetterOrDigit).Take(2).ToArray();
+        return chars.Length == 0 ? "US" : new string(chars).ToUpperInvariant();
+    }
+
+    private static string TakeFirstTextElement(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var enumerator = StringInfo.GetTextElementEnumerator(value.Trim());
+        return enumerator.MoveNext() ? enumerator.GetTextElement() ?? string.Empty : string.Empty;
     }
 }

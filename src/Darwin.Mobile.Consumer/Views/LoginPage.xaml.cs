@@ -157,22 +157,22 @@ public partial class LoginPage
 
     private void OnEmailEntryFocused(object? sender, FocusEventArgs e)
     {
-        EmailInputLayout.Stroke = (Color)Application.Current!.Resources["BrandGold500"];
+        EmailInputLayout.Stroke = (Color)Application.Current!.Resources["LoginFieldYellow"];
     }
 
     private void OnEmailEntryUnfocused(object? sender, FocusEventArgs e)
     {
-        EmailInputLayout.Stroke = (Color)Application.Current!.Resources["Neutral100"];
+        EmailInputLayout.Stroke = (Color)Application.Current!.Resources["LoginFieldYellow"];
     }
 
     private void OnPasswordEntryFocused(object? sender, FocusEventArgs e)
     {
-        PasswordInputLayout.Stroke = (Color)Application.Current!.Resources["BrandGold500"];
+        PasswordInputLayout.Stroke = (Color)Application.Current!.Resources["LoginFieldYellow"];
     }
 
     private void OnPasswordEntryUnfocused(object? sender, FocusEventArgs e)
     {
-        PasswordInputLayout.Stroke = (Color)Application.Current!.Resources["Neutral100"];
+        PasswordInputLayout.Stroke = (Color)Application.Current!.Resources["LoginFieldYellow"];
     }
 
     private async Task PushPageSafelyAsync<TPage>() where TPage : Page

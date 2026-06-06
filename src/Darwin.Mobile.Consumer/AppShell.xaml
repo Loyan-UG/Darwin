@@ -7,23 +7,15 @@
     xmlns:constants="clr-namespace:Darwin.Mobile.Consumer.Constants"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     Shell.FlyoutBehavior="Disabled"
-    Shell.BackgroundColor="{StaticResource Neutral0}"
+    Shell.NavBarIsVisible="False"
+    Shell.BackgroundColor="{StaticResource Neutral50}"
     Shell.ForegroundColor="{StaticResource Neutral900}"
     Shell.TitleColor="{StaticResource Neutral900}"
     Shell.UnselectedColor="{StaticResource Neutral700}"
     Shell.TabBarBackgroundColor="{StaticResource Neutral0}"
-    Shell.TabBarForegroundColor="{StaticResource BrandGold500}"
-    Shell.TabBarTitleColor="{StaticResource BrandGold500}"
+    Shell.TabBarForegroundColor="{StaticResource InternalPrimaryButton}"
+    Shell.TabBarTitleColor="{StaticResource InternalPrimaryButton}"
     Shell.TabBarUnselectedColor="{StaticResource Neutral700}">
-
-    <!-- Toolbar item for logout -->
-    <Shell.ToolbarItems>
-        <ToolbarItem Text="{x:Static res:AppResources.LogoutButtonText}"
-                     Priority="0"
-                     Order="Primary"
-                     Clicked="OnLogoutClicked" />
-    </Shell.ToolbarItems>
-
 
     <!-- Tab bar ordering: Discover is the default tab, followed by QR, Rewards and Profile -->
     <TabBar>
@@ -32,18 +24,21 @@
         <ShellContent
             Route="{x:Static constants:Routes.Discover}"
             Title="{x:Static res:AppResources.DiscoverTitle}"
+            Icon="icon_tab_discover.svg"
             ContentTemplate="{DataTemplate views:DiscoverPage}" />
 
         <!-- QR tab -->
         <ShellContent
             Route="{x:Static constants:Routes.Qr}"
             Title="{x:Static res:AppResources.QrTitle}"
+            Icon="icon_tab_qr.svg"
             ContentTemplate="{DataTemplate views:QrPage}" />
 
         <!-- Rewards tab -->
         <ShellContent
             Route="{x:Static constants:Routes.Rewards}"
             Title="{x:Static res:AppResources.RewardsTitle}"
+            Icon="icon_tab_rewards.svg"
             ContentTemplate="{DataTemplate views:RewardsPage}" />
 
 
@@ -51,12 +46,14 @@
         <ShellContent
             Route="{x:Static constants:Routes.Feed}"
             Title="{x:Static res:AppResources.FeedTitle}"
+            Icon="icon_tab_feed.svg"
             ContentTemplate="{DataTemplate views:FeedPage}" />
 
         <!-- Profile tab -->
         <ShellContent
             Route="{x:Static constants:Routes.Settings}"
             Title="{x:Static res:AppResources.SettingsTitle}"
+            Icon="icon_tab_settings.svg"
             ContentTemplate="{DataTemplate views:SettingsPage}" />
 
     </TabBar>

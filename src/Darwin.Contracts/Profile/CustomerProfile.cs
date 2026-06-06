@@ -29,6 +29,11 @@ namespace Darwin.Contracts.Profile
         public string? LastName { get; init; }
 
         /// <summary>
+        /// Public URL of the user's profile image/avatar.
+        /// </summary>
+        public string? ProfileImageUrl { get; init; }
+
+        /// <summary>
         /// Phone number in E.164 format (e.g., +49123456789).
         /// </summary>
         public string? PhoneE164 { get; init; }
@@ -59,5 +64,21 @@ namespace Darwin.Contracts.Profile
         /// Clients must round-trip this value on updates.
         /// </summary>
         public byte[]? RowVersion { get; init; }
+    }
+
+    /// <summary>
+    /// Request used to set or clear the current user's avatar URL.
+    /// </summary>
+    public sealed class SetProfileImageRequest
+    {
+        public string? ProfileImageUrl { get; init; }
+    }
+
+    /// <summary>
+    /// Response returned after uploading a profile image.
+    /// </summary>
+    public sealed class ProfileImageUploadResponse
+    {
+        public string Url { get; init; } = string.Empty;
     }
 }

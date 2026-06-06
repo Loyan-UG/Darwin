@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.ViewModels;
 using Microsoft.Maui.Controls;
 
@@ -10,13 +12,16 @@ namespace Darwin.Mobile.Consumer.Views;
 /// </summary>
 public partial class ResetPasswordPage : ContentPage, IQueryAttributable
 {
+    private readonly IAppRootNavigator _rootNavigator;
     private readonly ResetPasswordViewModel _viewModel;
+    private int _navigationInProgress;
 
-    public ResetPasswordPage(ResetPasswordViewModel viewModel)
+    public ResetPasswordPage(ResetPasswordViewModel viewModel, IAppRootNavigator rootNavigator)
     {
         InitializeComponent();
 
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _rootNavigator = rootNavigator ?? throw new ArgumentNullException(nameof(rootNavigator));
 
         // Injected view model keeps navigation and business logic outside of code-behind.
         BindingContext = _viewModel;
@@ -95,6 +100,33 @@ public partial class ResetPasswordPage : ContentPage, IQueryAttributable
         catch (UriFormatException)
         {
             return raw.Trim();
+        }
+    }
+
+    private async void OnReturnToLoginClicked(object? sender, EventArgs e)
+    {
+        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
+        {
+            return;
+        }
+
+        try
+        {
+            if (Navigation.NavigationStack.Count > 1)
+            {
+                await Navigation.PopToRootAsync();
+                return;
+            }
+
+            await _rootNavigator.NavigateToLoginAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Reset password return-to-login navigation failed: {ex}");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _navigationInProgress, 0);
         }
     }
 }

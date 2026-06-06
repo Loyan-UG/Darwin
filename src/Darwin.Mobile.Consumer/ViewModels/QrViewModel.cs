@@ -136,8 +136,18 @@ public sealed class QrViewModel : BaseViewModel
     public LoyaltyScanMode Mode
     {
         get => _mode;
-        private set => SetProperty(ref _mode, value);
+        private set
+        {
+            if (SetProperty(ref _mode, value))
+            {
+                OnPropertyChanged(nameof(ModeTitle));
+            }
+        }
     }
+
+    public string ModeTitle => Mode == LoyaltyScanMode.Redemption
+        ? AppResources.QrRedemptionModeTitle
+        : AppResources.QrAccrualModeTitle;
 
     public string BusinessDisplayName
     {

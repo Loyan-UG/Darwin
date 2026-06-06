@@ -56,6 +56,22 @@ namespace Darwin.Application.Businesses.Commands
                 return Result.Fail(_localizer["ItemConcurrencyConflict"]);
             }
 
+            var remaining = await _db.Set<BusinessMedia>()
+                .Where(x => x.BusinessId == entity.BusinessId && x.Id != entity.Id && !x.IsDeleted)
+                .OrderBy(x => x.SortOrder)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            if (remaining.Count == 0)
+            {
+                return Result.Fail(_localizer["BusinessMediaAtLeastOneImageRequired"]);
+            }
+
+            if (entity.IsPrimary)
+            {
+                remaining[0].IsPrimary = true;
+            }
+
             _db.Set<BusinessMedia>().Remove(entity);
             try
             {

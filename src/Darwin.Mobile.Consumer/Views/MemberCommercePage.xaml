@@ -11,13 +11,12 @@
     Title="{x:Static res:AppResources.MemberCommerceTitle}">
 
     <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
-                                   IsRefreshing="{Binding IsBusy}"
-                                   ProgressColor="{StaticResource BrandGold500}"
+                                   ProgressColor="{StaticResource InternalPrimaryButton}"
                                    ProgressBackground="{StaticResource Neutral0}">
         <pullToRefresh:SfPullToRefresh.PullableContent>
             <ScrollView>
                 <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
-            <Border Style="{StaticResource CardBorderStyle}">
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.MemberCommerceTitle}" Style="{StaticResource TitleLabelStyle}" />
                     <Label Text="{x:Static res:AppResources.MemberCommerceSubtitle}" Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -34,7 +33,7 @@
                     <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Orders}" IsVisible="{Binding HasOrders}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCommerceOrderItemViewModel">
-                                <Border Style="{StaticResource MutedCardBorderStyle}">
+                                <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                     <VerticalStackLayout Spacing="6">
                                         <Label Text="{Binding OrderNumber}" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -59,7 +58,7 @@
                             <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding SelectedOrder.ShipmentSummaries}" IsVisible="{Binding SelectedOrder.HasShipments}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:MemberCommerceShipmentSummaryViewModel">
-                                        <Border Style="{StaticResource MutedCardBorderStyle}">
+                                        <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                             <VerticalStackLayout Spacing="4">
                                                 <Label Text="{Binding TitleText}" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
                                                 <Label Text="{Binding StatusText}" Style="{StaticResource SecondaryBodyLabelStyle}" />
@@ -95,7 +94,7 @@
                     <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Invoices}" IsVisible="{Binding HasInvoices}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:MemberCommerceInvoiceItemViewModel">
-                                <Border Style="{StaticResource MutedCardBorderStyle}">
+                                <Border Style="{StaticResource ElevatedListCardBorderStyle}">
                                     <VerticalStackLayout Spacing="6">
                                         <Label Text="{Binding ReferenceNumber}" FontAttributes="Bold" TextColor="{StaticResource Neutral900}" LineBreakMode="WordWrap" />
                                         <Label Text="{Binding BusinessName}" Style="{StaticResource SecondaryBodyLabelStyle}" IsVisible="{Binding HasBusinessName}" LineBreakMode="WordWrap" />
@@ -140,7 +139,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource BrandGold500}" />
+            <ActivityIndicator IsVisible="{Binding IsBusy}" IsRunning="{Binding IsBusy}" Color="{StaticResource InternalPrimaryButton}" />
                 </VerticalStackLayout>
             </ScrollView>
         </pullToRefresh:SfPullToRefresh.PullableContent>

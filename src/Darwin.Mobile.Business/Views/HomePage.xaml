@@ -12,7 +12,6 @@
 
     <Grid>
         <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding LoadContextCommand}"
-                                       IsRefreshing="{Binding IsBusy}"
                                        ProgressColor="{StaticResource BrandGold500}"
                                        ProgressBackground="{StaticResource Neutral0}">
             <pullToRefresh:SfPullToRefresh.PullableContent>

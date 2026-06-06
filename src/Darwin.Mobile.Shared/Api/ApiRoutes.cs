@@ -65,6 +65,12 @@ namespace Darwin.Mobile.Shared.Api
         public static class BusinessAccount
         {
             public const string GetAccessState = "api/v1/business/account/access-state";
+            public const string GetMedia = "api/v1/business/account/media";
+            public const string UploadMedia = "api/v1/business/account/media/upload";
+            public const string SetProfileImage = "api/v1/business/account/media/profile-image";
+            public const string CreateGalleryImage = "api/v1/business/account/media/gallery";
+            public static string UpdateGalleryImage(Guid id) => $"api/v1/business/account/media/gallery/{id:D}";
+            public static string DeleteGalleryImage(Guid id) => $"api/v1/business/account/media/gallery/{id:D}/delete";
         }
 
         /// <summary>
@@ -77,6 +83,8 @@ namespace Darwin.Mobile.Shared.Api
         {
             public const string GetMe = "api/v1/member/profile/me";
             public const string UpdateMe = "api/v1/member/profile/me";
+            public const string UploadAvatar = "api/v1/member/profile/me/avatar/upload";
+            public const string SetAvatar = "api/v1/member/profile/me/avatar";
             public const string RequestPhoneVerification = "api/v1/member/profile/me/phone/request-verification";
             public const string ConfirmPhoneVerification = "api/v1/member/profile/me/phone/confirm";
             public const string GetAddresses = "api/v1/member/profile/addresses";

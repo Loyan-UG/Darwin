@@ -1,6 +1,4 @@
-﻿using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Consumer.Views;
-using Darwin.Mobile.Shared.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
 using System;
@@ -19,13 +17,11 @@ namespace Darwin.Mobile.Consumer.Services.Navigation;
 /// </summary>
 public sealed class AppRootNavigator : IAppRootNavigator
 {
-    private readonly IAuthService _authService;
     private readonly IServiceProvider _serviceProvider;
     private Window? _primaryWindow;
 
-    public AppRootNavigator(IAuthService authService, IServiceProvider serviceProvider)
+    public AppRootNavigator(IServiceProvider serviceProvider)
     {
-        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
 
@@ -37,8 +33,7 @@ public sealed class AppRootNavigator : IAppRootNavigator
     public Task NavigateToAuthenticatedShellAsync()
     {
         // Build a fresh shell when entering authenticated mode to ensure clean navigation state.
-        var pushCoordinator = _serviceProvider.GetRequiredService<IConsumerPushRegistrationCoordinator>();
-        return SwitchRootAsync(new AppShell(_authService, this, pushCoordinator));
+        return SwitchRootAsync(new AppShell());
     }
 
     public Task NavigateToLoginAsync()

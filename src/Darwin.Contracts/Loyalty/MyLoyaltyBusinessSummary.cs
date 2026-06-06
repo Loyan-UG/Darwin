@@ -48,7 +48,12 @@ namespace Darwin.Contracts.Loyalty
         public GeoCoordinateModel? Location { get; init; }
 
         /// <summary>
-        /// Gets or sets the primary image URL (best-effort; may be null).
+        /// Gets or sets the business profile/logo image URL (best-effort; may be null).
+        /// </summary>
+        public string? ProfileImageUrl { get; init; }
+
+        /// <summary>
+        /// Gets or sets the primary gallery image URL (best-effort; may be null).
         /// </summary>
         public string? PrimaryImageUrl { get; init; }
 

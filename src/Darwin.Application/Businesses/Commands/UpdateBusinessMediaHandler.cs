@@ -37,7 +37,7 @@ namespace Darwin.Application.Businesses.Commands
             var entity = await _db.Set<BusinessMedia>()
                 .FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
 
-            if (entity is null)
+            if (entity is null || entity.BusinessId != dto.BusinessId)
                 throw new InvalidOperationException(_localizer["BusinessMediaNotFound"]);
 
             var currentVersion = entity.RowVersion ?? Array.Empty<byte>();
@@ -50,6 +50,30 @@ namespace Darwin.Application.Businesses.Commands
             entity.Caption = string.IsNullOrWhiteSpace(dto.Caption) ? null : dto.Caption.Trim();
             entity.SortOrder = dto.SortOrder;
             entity.IsPrimary = dto.IsPrimary;
+
+            if (dto.IsPrimary)
+            {
+                var siblings = await _db.Set<BusinessMedia>()
+                    .Where(x => x.BusinessId == entity.BusinessId && x.Id != entity.Id && !x.IsDeleted)
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false);
+
+                foreach (var sibling in siblings)
+                {
+                    sibling.IsPrimary = false;
+                }
+            }
+            else
+            {
+                var hasAnotherPrimary = await _db.Set<BusinessMedia>()
+                    .AnyAsync(x => x.BusinessId == entity.BusinessId && x.Id != entity.Id && x.IsPrimary && !x.IsDeleted, ct)
+                    .ConfigureAwait(false);
+
+                if (!hasAnotherPrimary)
+                {
+                    entity.IsPrimary = true;
+                }
+            }
 
             try
             {

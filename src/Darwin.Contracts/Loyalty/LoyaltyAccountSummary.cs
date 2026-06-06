@@ -30,6 +30,16 @@ namespace Darwin.Contracts.Loyalty
         public string BusinessName { get; init; } = string.Empty;
 
         /// <summary>
+        /// Gets the business profile/logo image URL, when configured.
+        /// </summary>
+        public string? ProfileImageUrl { get; init; }
+
+        /// <summary>
+        /// Gets the business primary gallery image URL, when configured.
+        /// </summary>
+        public string? PrimaryImageUrl { get; init; }
+
+        /// <summary>
         /// Gets the current spendable points balance for the account.
         /// </summary>
         public int PointsBalance { get; init; }

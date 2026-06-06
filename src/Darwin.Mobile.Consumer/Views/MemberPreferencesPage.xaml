@@ -11,29 +11,32 @@
     Title="{x:Static res:AppResources.MemberPreferencesTitle}">
 
     <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
-                                   IsRefreshing="{Binding IsBusy}"
-                                   ProgressColor="{StaticResource BrandGold500}"
+                                   ProgressColor="{StaticResource InternalPrimaryButton}"
                                    ProgressBackground="{StaticResource Neutral0}">
         <pullToRefresh:SfPullToRefresh.PullableContent>
             <ScrollView>
                 <VerticalStackLayout Padding="24" Spacing="16">
-            <Label Text="{x:Static res:AppResources.MemberPreferencesTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{x:Static res:AppResources.MemberPreferencesTitle}"
+                           Style="{StaticResource TitleLabelStyle}" />
 
-            <Label Text="{x:Static res:AppResources.MemberPreferencesSubtitle}"
-                   Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.MemberPreferencesSubtitle}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
 
-            <Label Text="{Binding SuccessMessage}"
-                   Style="{StaticResource SuccessLabelStyle}"
-                   IsVisible="{Binding HasSuccess}" />
+                    <Label Text="{Binding SuccessMessage}"
+                           Style="{StaticResource SuccessLabelStyle}"
+                           IsVisible="{Binding HasSuccess}" />
 
-            <Label Text="{Binding ErrorMessage}"
-                   Style="{StaticResource ErrorLabelStyle}"
-                   IsVisible="{Binding HasError}" />
+                    <Label Text="{Binding ErrorMessage}"
+                           Style="{StaticResource ErrorLabelStyle}"
+                           IsVisible="{Binding HasError}" />
 
-            <buttons:SfButton Text="{x:Static res:AppResources.MemberPreferencesRefreshButton}"
-                              Style="{StaticResource SyncfusionOutlinedButtonStyle}"
-                              Command="{Binding RefreshCommand}" />
+                    <buttons:SfButton Text="{x:Static res:AppResources.MemberPreferencesRefreshButton}"
+                                      Style="{StaticResource SyncfusionOutlinedButtonStyle}"
+                                      Command="{Binding RefreshCommand}" />
+                </VerticalStackLayout>
+            </Border>
 
             <Border Style="{StaticResource CardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="12">
@@ -91,7 +94,7 @@
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrandGold500}" />
+                               Color="{StaticResource InternalPrimaryButton}" />
                 </VerticalStackLayout>
             </ScrollView>
         </pullToRefresh:SfPullToRefresh.PullableContent>

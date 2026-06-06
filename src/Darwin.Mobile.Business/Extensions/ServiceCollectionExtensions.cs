@@ -86,6 +86,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.ProfileViewModel>();
         services.AddTransient<Views.ProfilePage>();
 
+        services.AddTransient<ViewModels.BusinessMediaViewModel>();
+        services.AddTransient<Views.BusinessMediaPage>();
+
         services.AddTransient<ViewModels.ChangePasswordViewModel>();
         services.AddTransient<Views.ChangePasswordPage>();
 

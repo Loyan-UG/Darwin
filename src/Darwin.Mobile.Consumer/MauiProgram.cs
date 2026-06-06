@@ -34,7 +34,6 @@ public static class MauiProgram
             .ConfigureSyncfusionToolkit()
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
-            .UseMauiMaps()
             .UseUraniumUI()
             .UseBarcodeReader() // Registers ZXing barcode scanner services
             .ConfigureFonts(fonts =>
@@ -45,6 +44,10 @@ public static class MauiProgram
                 fonts.AddFontAwesomeIconFonts();
                 fonts.AddMaterialIconFonts();
             });
+
+#if ANDROID || IOS || MACCATALYST
+        builder.UseMauiMaps();
+#endif
 
         // Register Consumer services, pages, and view models.
         builder.Services.AddConsumerApp();

@@ -11,10 +11,12 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
-            <Label Text="{x:Static res:AppResources.AccountDeletionTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
+            <Border Style="{StaticResource InternalPageHeaderBorderStyle}">
+                <Label Text="{x:Static res:AppResources.AccountDeletionTitle}"
+                       Style="{StaticResource TitleLabelStyle}" />
+            </Border>
 
-            <Border Style="{StaticResource CardBorderStyle}" Padding="16">
+            <Border Style="{StaticResource ElevatedListCardBorderStyle}" Padding="16">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.AccountDeletionWarningTitle}"
                            Style="{StaticResource SectionHeadingLabelStyle}"
@@ -50,7 +52,7 @@
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}"
-                                       Color="{StaticResource BrandGold500}" />
+                                       Color="{StaticResource InternalPrimaryButton}" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

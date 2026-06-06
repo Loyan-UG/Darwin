@@ -9,6 +9,7 @@ using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Media;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
@@ -36,6 +37,7 @@ public sealed class ProfileViewModel : BaseViewModel
     private readonly TimeProvider _timeProvider;
     private CancellationTokenSource? _operationCancellation;
     private CancellationTokenSource? _pushOperationCancellation;
+    private int _pushRuntimeRefreshScheduled;
 
     private Guid _profileId;
     private byte[]? _rowVersion;
@@ -44,6 +46,7 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _email = string.Empty;
     private string _firstName = string.Empty;
     private string _lastName = string.Empty;
+    private string? _profileImageUrl;
     private string _phoneE164 = string.Empty;
     private string _locale = ProfileContractDefaults.DefaultLocale;
     private string _timezone = ProfileContractDefaults.DefaultTimezone;
@@ -101,6 +104,8 @@ public sealed class ProfileViewModel : BaseViewModel
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
+        UploadProfileImageCommand = new AsyncCommand(UploadProfileImageAsync, () => !IsBusy);
+        RemoveProfileImageCommand = new AsyncCommand(RemoveProfileImageAsync, () => !IsBusy && HasProfileImage);
         RequestPhoneVerificationCommand = new AsyncCommand(RequestPhoneVerificationAsync, CanRunPhoneVerificationAction);
         ConfirmPhoneVerificationCommand = new AsyncCommand(ConfirmPhoneVerificationAsync, CanRunPhoneVerificationAction);
         SyncPushRegistrationCommand = new AsyncCommand(SyncPushRegistrationAsync, () => !IsPushSyncBusy);
@@ -109,6 +114,8 @@ public sealed class ProfileViewModel : BaseViewModel
 
     public AsyncCommand RefreshCommand { get; }
     public AsyncCommand SaveProfileCommand { get; }
+    public AsyncCommand UploadProfileImageCommand { get; }
+    public AsyncCommand RemoveProfileImageCommand { get; }
     public AsyncCommand RequestPhoneVerificationCommand { get; }
     public AsyncCommand ConfirmPhoneVerificationCommand { get; }
     public AsyncCommand SyncPushRegistrationCommand { get; }
@@ -123,14 +130,43 @@ public sealed class ProfileViewModel : BaseViewModel
     public string FirstName
     {
         get => _firstName;
-        set => SetProperty(ref _firstName, value);
+        set
+        {
+            if (SetProperty(ref _firstName, value))
+            {
+                OnPropertyChanged(nameof(ProfileInitials));
+            }
+        }
     }
 
     public string LastName
     {
         get => _lastName;
-        set => SetProperty(ref _lastName, value);
+        set
+        {
+            if (SetProperty(ref _lastName, value))
+            {
+                OnPropertyChanged(nameof(ProfileInitials));
+            }
+        }
     }
+
+    public string? ProfileImageUrl
+    {
+        get => _profileImageUrl;
+        private set
+        {
+            if (SetProperty(ref _profileImageUrl, string.IsNullOrWhiteSpace(value) ? null : value))
+            {
+                OnPropertyChanged(nameof(HasProfileImage));
+                RemoveProfileImageCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImageUrl);
+
+    public string ProfileInitials => BuildInitials(FirstName, LastName, Email);
 
     public string PhoneE164
     {
@@ -407,18 +443,15 @@ public sealed class ProfileViewModel : BaseViewModel
 
     public override async Task OnAppearingAsync()
     {
-        // Always refresh push runtime diagnostics because permission/token state can change
-        // while the app was in background or after returning from system settings.
-        await RefreshPushRuntimeStateAsync();
-
         if (_isLoaded)
         {
+            SchedulePushRuntimeStateRefresh();
             return;
         }
 
         await RefreshAsync();
-        await RefreshPushRuntimeStateAsync();
         _isLoaded = true;
+        SchedulePushRuntimeStateRefresh();
     }
 
     /// <summary>
@@ -497,6 +530,7 @@ public sealed class ProfileViewModel : BaseViewModel
             Email = profile.Email ?? string.Empty;
             FirstName = profile.FirstName ?? string.Empty;
             LastName = profile.LastName ?? string.Empty;
+            ProfileImageUrl = profile.ProfileImageUrl;
             PhoneE164 = profile.PhoneE164 ?? string.Empty;
             PhoneNumberConfirmed = profile.PhoneNumberConfirmed;
             Locale = string.IsNullOrWhiteSpace(profile.Locale) ? ProfileContractDefaults.DefaultLocale : profile.Locale;
@@ -716,6 +750,141 @@ public sealed class ProfileViewModel : BaseViewModel
         }
     }
 
+    private async Task UploadProfileImageAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        FileResult? picked;
+        try
+        {
+            var pickedPhotos = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
+            {
+                Title = AppResources.ProfileAvatarUploadButton
+            }).ConfigureAwait(false);
+            picked = pickedPhotos.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfileAvatarUploadFailed));
+            return;
+        }
+
+        if (picked is null)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            SuccessMessage = null;
+        });
+
+        var operationCancellation = BeginCurrentOperation();
+        try
+        {
+            await using var stream = await picked.OpenReadAsync().ConfigureAwait(false);
+            var upload = await _profileService.UploadAvatarAsync(
+                stream,
+                string.IsNullOrWhiteSpace(picked.FileName) ? "avatar.jpg" : picked.FileName,
+                string.IsNullOrWhiteSpace(picked.ContentType) ? "image/jpeg" : picked.ContentType,
+                operationCancellation.Token).ConfigureAwait(false);
+
+            if (!upload.Succeeded || upload.Value is null || string.IsNullOrWhiteSpace(upload.Value.Url))
+            {
+                RunOnMain(() => ErrorMessage = AppResources.ProfileAvatarUploadFailed);
+                return;
+            }
+
+            var setResult = await _profileService.SetAvatarAsync(upload.Value.Url, operationCancellation.Token).ConfigureAwait(false);
+            if (!setResult.Succeeded)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.ProfileAvatarSaveFailed);
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                ProfileImageUrl = upload.Value.Url;
+                SuccessMessage = AppResources.ProfileAvatarSaveSuccess;
+            });
+
+            await LoadProfileSnapshotAsync(operationCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from profile intentionally cancels stale avatar uploads.
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfileAvatarUploadFailed));
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseProfileCommandStates();
+            });
+            EndCurrentOperation(operationCancellation);
+        }
+    }
+
+    private async Task RemoveProfileImageAsync()
+    {
+        if (IsBusy || !HasProfileImage)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            SuccessMessage = null;
+        });
+
+        var operationCancellation = BeginCurrentOperation();
+        try
+        {
+            var result = await _profileService.SetAvatarAsync(null, operationCancellation.Token).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.ProfileAvatarRemoveFailed);
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                ProfileImageUrl = null;
+                SuccessMessage = AppResources.ProfileAvatarRemoveSuccess;
+            });
+
+            await LoadProfileSnapshotAsync(operationCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away from profile intentionally cancels stale avatar updates.
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfileAvatarRemoveFailed));
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseProfileCommandStates();
+            });
+            EndCurrentOperation(operationCancellation);
+        }
+    }
+
     private async Task ConfirmPhoneVerificationAsync()
     {
         if (!CanRunPhoneVerificationAction())
@@ -771,10 +940,7 @@ public sealed class ProfileViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
-                SaveProfileCommand.RaiseCanExecuteChanged();
-                RefreshCommand.RaiseCanExecuteChanged();
-                RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
-                ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
+                RaiseProfileCommandStates();
             });
             EndCurrentOperation(operationCancellation);
         }
@@ -859,6 +1025,33 @@ public sealed class ProfileViewModel : BaseViewModel
     /// This is used by appearance refreshes where the UI should report current device state independently from edits.
     /// </summary>
     private Task RefreshPushRuntimeStateAsync() => RefreshPushRuntimeStateAsync(CancellationToken.None);
+
+    private void SchedulePushRuntimeStateRefresh()
+    {
+        if (Interlocked.Exchange(ref _pushRuntimeRefreshScheduled, 1) == 1)
+        {
+            return;
+        }
+
+        _ = RefreshPushRuntimeStateDeferredAsync();
+    }
+
+    private async Task RefreshPushRuntimeStateDeferredAsync()
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+            await RefreshPushRuntimeStateAsync().ConfigureAwait(false);
+        }
+        catch
+        {
+            // Push diagnostics are non-critical and must never affect profile responsiveness.
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _pushRuntimeRefreshScheduled, 0);
+        }
+    }
 
     private async Task RefreshPushRuntimeStateAsync(CancellationToken cancellationToken)
     {
@@ -1008,11 +1201,18 @@ public sealed class ProfileViewModel : BaseViewModel
         RunOnMain(() =>
         {
             IsBusy = false;
-            SaveProfileCommand.RaiseCanExecuteChanged();
-            RefreshCommand.RaiseCanExecuteChanged();
-            RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
-            ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
+            RaiseProfileCommandStates();
         });
+    }
+
+    private void RaiseProfileCommandStates()
+    {
+        SaveProfileCommand.RaiseCanExecuteChanged();
+        RefreshCommand.RaiseCanExecuteChanged();
+        UploadProfileImageCommand.RaiseCanExecuteChanged();
+        RemoveProfileImageCommand.RaiseCanExecuteChanged();
+        RequestPhoneVerificationCommand.RaiseCanExecuteChanged();
+        ConfirmPhoneVerificationCommand.RaiseCanExecuteChanged();
     }
 
     private bool ValidateProfileFields()
@@ -1061,6 +1261,35 @@ public sealed class ProfileViewModel : BaseViewModel
         }
 
         return value.Trim();
+    }
+
+    private static string BuildInitials(string? firstName, string? lastName, string? email)
+    {
+        var first = Normalize(firstName);
+        var last = Normalize(lastName);
+        if (!string.IsNullOrWhiteSpace(first) && !string.IsNullOrWhiteSpace(last))
+        {
+            return string.Concat(TakeFirstTextElement(first), TakeFirstTextElement(last)).ToUpperInvariant();
+        }
+
+        var fallback = Normalize(first) ?? Normalize(last) ?? Normalize(email)?.Split('@')[0];
+        if (string.IsNullOrWhiteSpace(fallback))
+        {
+            return "US";
+        }
+
+        return new string(fallback.Where(char.IsLetterOrDigit).Take(2).ToArray()).ToUpperInvariant();
+    }
+
+    private static string TakeFirstTextElement(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var enumerator = System.Globalization.StringInfo.GetTextElementEnumerator(value.Trim());
+        return enumerator.MoveNext() ? enumerator.GetTextElement() ?? string.Empty : string.Empty;
     }
 
     private static string? FormatAddressSummary(MemberAddress? address)

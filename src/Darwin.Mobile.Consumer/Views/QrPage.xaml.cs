@@ -12,7 +12,7 @@ namespace Darwin.Mobile.Consumer.Views;
 ///
 /// Navigation contract:
 /// - Accepts a `businessId` query parameter (GUID).
-/// - Accepts optional `businessName` and `joined` parameters for user context messaging.
+/// - Accepts optional `businessName` and `justJoined` parameters for user context messaging.
 /// - Sets the business context on the view model before OnAppearing refresh.
 /// </summary>
 public partial class QrPage : IQueryAttributable
@@ -53,20 +53,20 @@ public partial class QrPage : IQueryAttributable
             }
         }
 
-        var joined = false;
-        if (query.TryGetValue("joined", out var rawJoined))
+        var justJoined = false;
+        if (query.TryGetValue("justJoined", out var rawJustJoined))
         {
             // Accept both typed bool and string values to make navigation robust across callers.
-            joined = rawJoined switch
+            justJoined = rawJustJoined switch
             {
                 bool b => b,
-                string joinedText => string.Equals(joinedText, "true", StringComparison.OrdinalIgnoreCase)
-                                   || string.Equals(joinedText, "1", StringComparison.OrdinalIgnoreCase),
+                string justJoinedText => string.Equals(justJoinedText, "true", StringComparison.OrdinalIgnoreCase)
+                                      || string.Equals(justJoinedText, "1", StringComparison.OrdinalIgnoreCase),
                 _ => false
             };
         }
 
-        _viewModel.SetJoinedStatus(joined);
+        _viewModel.SetJoinedStatus(justJoined);
 
         // Trigger immediate first-load session creation after navigation parameters are applied.
         // This prevents a blank QR state when navigation timing causes OnAppearing to run earlier.

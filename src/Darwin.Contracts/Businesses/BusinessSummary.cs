@@ -12,6 +12,14 @@ public sealed class BusinessSummary
     /// <summary>Business name.</summary>
     public string Name { get; init; } = default!;
     public string? ShortDescription { get; init; }
+
+    /// <summary>Business profile/logo image URL.</summary>
+    public string? ProfileImageUrl { get; init; }
+
+    /// <summary>Primary gallery image URL used as the card cover.</summary>
+    public string? PrimaryImageUrl { get; init; }
+
+    /// <summary>Legacy logo URL. New clients should prefer <see cref="ProfileImageUrl"/>.</summary>
     public string? LogoUrl { get; init; }
 
     /// <summary>Primary category (e.g., "Cafe", "Restaurant").</summary>

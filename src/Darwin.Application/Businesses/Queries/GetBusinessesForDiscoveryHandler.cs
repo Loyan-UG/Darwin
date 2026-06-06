@@ -150,6 +150,7 @@ namespace Darwin.Application.Businesses.Queries
                     Category = b.Category,
                     IsActive = b.IsActive,
                     City = l != null ? l.City : null,
+                    ProfileImageUrl = b.BrandLogoUrl,
                     Coordinate = l != null && l.Coordinate != null
                         ? new GeoCoordinateDto
                         {
@@ -160,7 +161,7 @@ namespace Darwin.Application.Businesses.Queries
                         : null,
                     PrimaryImageUrl = _db.Set<BusinessMedia>()
                         .AsNoTracking()
-                        .Where(m => m.BusinessId == b.Id && m.IsPrimary)
+                        .Where(m => m.BusinessId == b.Id && m.IsPrimary && !m.IsDeleted)
                         .OrderBy(m => m.SortOrder)
                         .Select(m => m.Url)
                         .FirstOrDefault(),

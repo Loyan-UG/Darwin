@@ -40,6 +40,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
             builder.Property(u => u.PasswordHash).HasMaxLength(512);
             builder.Property(u => u.SecurityStamp).HasMaxLength(128);
             builder.Property(u => u.PhoneE164).HasMaxLength(32);
+            builder.Property(u => u.ProfileImageUrl).HasMaxLength(1024);
             builder.Property(u => u.Locale).HasMaxLength(16);
             builder.Property(u => u.Currency).HasMaxLength(3);
             builder.Property(u => u.Timezone).HasMaxLength(64);

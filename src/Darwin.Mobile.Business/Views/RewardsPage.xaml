@@ -13,7 +13,6 @@
              Title="{x:Static res:AppResources.RewardsTitle}">
 
     <pullToRefresh:SfPullToRefresh RefreshCommand="{Binding RefreshCommand}"
-                                   IsRefreshing="{Binding IsBusy}"
                                    ProgressColor="{StaticResource BrandGold500}"
                                    ProgressBackground="{StaticResource Neutral0}">
         <pullToRefresh:SfPullToRefresh.PullableContent>

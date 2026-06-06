@@ -64,7 +64,8 @@ namespace Darwin.Application.Businesses.Queries
                     b.Category,
                     b.IsActive,
                     b.DefaultCurrency,
-                    b.DefaultCulture
+                    b.DefaultCulture,
+                    b.BrandLogoUrl
                 })
                 .SingleOrDefaultAsync(ct)
                 .ConfigureAwait(false);
@@ -107,7 +108,7 @@ namespace Darwin.Application.Businesses.Queries
             // Media: primary first, then ordered gallery.
             var media = await _db.Set<BusinessMedia>()
                 .AsNoTracking()
-                .Where(m => m.BusinessId == businessId)
+                .Where(m => m.BusinessId == businessId && !m.IsDeleted)
                 .OrderByDescending(m => m.IsPrimary)
                 .ThenBy(m => m.SortOrder)
                 .Select(m => new { m.Url, m.IsPrimary })
@@ -116,6 +117,12 @@ namespace Darwin.Application.Businesses.Queries
 
             var primaryImageUrl = media.FirstOrDefault(x => x.IsPrimary)?.Url;
             var gallery = media.Select(x => x.Url).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+
+            var activeMemberCount = await _db.Set<LoyaltyAccount>()
+                .AsNoTracking()
+                .Where(a => a.BusinessId == businessId && !a.IsDeleted && a.Status == LoyaltyAccountStatus.Active)
+                .CountAsync(ct)
+                .ConfigureAwait(false);
 
             // Loyalty program (public): only active program is returned.
             var program = await _db.Set<LoyaltyProgram>()
@@ -161,14 +168,29 @@ namespace Darwin.Application.Businesses.Queries
                 WebsiteUrl = business.WebsiteUrl,
                 ContactEmail = business.ContactEmail,
                 ContactPhoneE164 = business.ContactPhoneE164,
+                MemberCountDisplay = FormatMemberCount(activeMemberCount),
                 Category = business.Category,
                 IsActive = business.IsActive,
                 DefaultCurrency = business.DefaultCurrency,
                 DefaultCulture = business.DefaultCulture,
+                ProfileImageUrl = business.BrandLogoUrl,
                 PrimaryImageUrl = primaryImageUrl,
                 GalleryImageUrls = gallery,
                 Locations = locations,
                 LoyaltyProgram = program
+            };
+        }
+
+        private static string FormatMemberCount(int count)
+        {
+            return count switch
+            {
+                <= 0 => "0",
+                < 100 => "<100",
+                < 1_000 => "100+",
+                < 10_000 => "1k+",
+                < 100_000 => "10k+",
+                _ => "100k+"
             };
         }
     }

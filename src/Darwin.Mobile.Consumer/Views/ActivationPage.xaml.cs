@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.ViewModels;
 using Microsoft.Maui.Controls;
 
@@ -10,12 +12,15 @@ namespace Darwin.Mobile.Consumer.Views;
 /// </summary>
 public partial class ActivationPage : ContentPage, IQueryAttributable
 {
+    private readonly IAppRootNavigator _rootNavigator;
     private readonly ActivationViewModel _viewModel;
+    private int _navigationInProgress;
 
-    public ActivationPage(ActivationViewModel viewModel)
+    public ActivationPage(ActivationViewModel viewModel, IAppRootNavigator rootNavigator)
     {
         InitializeComponent();
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _rootNavigator = rootNavigator ?? throw new ArgumentNullException(nameof(rootNavigator));
         BindingContext = _viewModel;
         NavigationPage.SetHasNavigationBar(this, false);
     }
@@ -88,6 +93,33 @@ public partial class ActivationPage : ContentPage, IQueryAttributable
         catch (UriFormatException)
         {
             return raw.Trim();
+        }
+    }
+
+    private async void OnReturnToLoginClicked(object? sender, EventArgs e)
+    {
+        if (Interlocked.Exchange(ref _navigationInProgress, 1) == 1)
+        {
+            return;
+        }
+
+        try
+        {
+            if (Navigation.NavigationStack.Count > 1)
+            {
+                await Navigation.PopToRootAsync();
+                return;
+            }
+
+            await _rootNavigator.NavigateToLoginAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Activation return-to-login navigation failed: {ex}");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _navigationInProgress, 0);
         }
     }
 }

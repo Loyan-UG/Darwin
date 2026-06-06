@@ -36,7 +36,7 @@ public static class AppResources
     public static string PasswordLabel =>
         ResourceManager.GetString(nameof(PasswordLabel), Culture) ?? "Password";
     public static string LoginButton =>
-        ResourceManager.GetString(nameof(LoginButton), Culture) ?? "Sign in";
+        ResourceManager.GetString(nameof(LoginButton), Culture) ?? "Login";
     public static string LoginEmailPlaceholder =>
         ResourceManager.GetString(nameof(LoginEmailPlaceholder), Culture) ?? "user@example.com";
     public static string LoginPasswordPlaceholder =>
@@ -155,8 +155,18 @@ public static class AppResources
     public static string BusinessDetailsPlaceholder => ResourceManager.GetString(nameof(BusinessDetailsPlaceholder), Culture) ?? "Additional details coming soon.";
     public static string JoinProgramButton => ResourceManager.GetString(nameof(JoinProgramButton), Culture) ?? "Join Loyalty Program";
     public static string LogoutButtonText => ResourceManager.GetString(nameof(LogoutButtonText), Culture) ?? "Logout";
+    public static string LogoutConfirmationTitle => ResourceManager.GetString(nameof(LogoutConfirmationTitle), Culture) ?? "Logout";
+    public static string LogoutConfirmationMessage => ResourceManager.GetString(nameof(LogoutConfirmationMessage), Culture) ?? "Are you sure you want to logout?";
 
     public static string ProfileSectionTitle => ResourceManager.GetString(nameof(ProfileSectionTitle), Culture) ?? "My profile";
+    public static string ProfileAvatarTitle => ResourceManager.GetString(nameof(ProfileAvatarTitle), Culture) ?? "Profile photo";
+    public static string ProfileAvatarUploadButton => ResourceManager.GetString(nameof(ProfileAvatarUploadButton), Culture) ?? "Upload photo";
+    public static string ProfileAvatarRemoveButton => ResourceManager.GetString(nameof(ProfileAvatarRemoveButton), Culture) ?? "Remove";
+    public static string ProfileAvatarUploadFailed => ResourceManager.GetString(nameof(ProfileAvatarUploadFailed), Culture) ?? "Unable to upload profile photo.";
+    public static string ProfileAvatarSaveFailed => ResourceManager.GetString(nameof(ProfileAvatarSaveFailed), Culture) ?? "Unable to save profile photo.";
+    public static string ProfileAvatarSaveSuccess => ResourceManager.GetString(nameof(ProfileAvatarSaveSuccess), Culture) ?? "Profile photo updated.";
+    public static string ProfileAvatarRemoveFailed => ResourceManager.GetString(nameof(ProfileAvatarRemoveFailed), Culture) ?? "Unable to remove profile photo.";
+    public static string ProfileAvatarRemoveSuccess => ResourceManager.GetString(nameof(ProfileAvatarRemoveSuccess), Culture) ?? "Profile photo removed.";
     public static string FirstNameLabel => ResourceManager.GetString(nameof(FirstNameLabel), Culture) ?? "First name";
     public static string FirstNamePlaceholder => ResourceManager.GetString(nameof(FirstNamePlaceholder), Culture) ?? "Enter your first name";
     public static string LastNameLabel => ResourceManager.GetString(nameof(LastNameLabel), Culture) ?? "Last name";
@@ -446,6 +456,9 @@ public static class AppResources
     public static string DiscoverLocationUnavailable => ResourceManager.GetString(nameof(DiscoverLocationUnavailable), Culture) ?? "Location is unavailable. Showing broad results instead.";
     public static string DiscoverNearbyRadiusLabel => ResourceManager.GetString(nameof(DiscoverNearbyRadiusLabel), Culture) ?? "Radius";
     public static string DiscoverNearbyRadiusMetersFormat => ResourceManager.GetString(nameof(DiscoverNearbyRadiusMetersFormat), Culture) ?? "{0} m";
+    public static string DiscoverGreetingFormat => ResourceManager.GetString(nameof(DiscoverGreetingFormat), Culture) ?? "Hi, {0} 👋";
+    public static string DiscoverGreetingSubtitle => ResourceManager.GetString(nameof(DiscoverGreetingSubtitle), Culture) ?? "Good to see you!";
+    public static string DiscoverGreetingFallbackName => ResourceManager.GetString(nameof(DiscoverGreetingFallbackName), Culture) ?? "there";
     public static string FeedTitle => ResourceManager.GetString(nameof(FeedTitle), Culture) ?? "Feed";
     public static string FeedEmptyMessage => ResourceManager.GetString(nameof(FeedEmptyMessage), Culture) ?? "No feed items yet.";
     public static string FeedLoadFailed => ResourceManager.GetString(nameof(FeedLoadFailed), Culture) ?? "Unable to load feed right now.";
@@ -466,6 +479,13 @@ public static class AppResources
     public static string BusinessSaveReviewButton => ResourceManager.GetString(nameof(BusinessSaveReviewButton), Culture) ?? "Save review";
     public static string BusinessReviewSaveFailed => ResourceManager.GetString(nameof(BusinessReviewSaveFailed), Culture) ?? "Unable to save your review.";
     public static string BusinessRecentReviewsTitle => ResourceManager.GetString(nameof(BusinessRecentReviewsTitle), Culture) ?? "Recent reviews";
+    public static string BusinessProfileGalleryTitle => ResourceManager.GetString(nameof(BusinessProfileGalleryTitle), Culture) ?? "Gallery";
+    public static string BusinessProfileAboutTitle => ResourceManager.GetString(nameof(BusinessProfileAboutTitle), Culture) ?? "About";
+    public static string BusinessMembersCountFormat => ResourceManager.GetString(nameof(BusinessMembersCountFormat), Culture) ?? "{0} members";
+    public static string BusinessMembersLabel => ResourceManager.GetString(nameof(BusinessMembersLabel), Culture) ?? "Members";
+    public static string BusinessProfileStatsTitle => ResourceManager.GetString(nameof(BusinessProfileStatsTitle), Culture) ?? "Community";
+    public static string BusinessProfileExperienceTitle => ResourceManager.GetString(nameof(BusinessProfileExperienceTitle), Culture) ?? "Share your experience";
+    public static string BusinessProfileNoGalleryMessage => ResourceManager.GetString(nameof(BusinessProfileNoGalleryMessage), Culture) ?? "Photos will appear here soon.";
     public static string BusinessJoinFailed => ResourceManager.GetString(nameof(BusinessJoinFailed), Culture) ?? "Unable to join the loyalty program.";
     public static string BusinessScanSessionPrepareFailed => ResourceManager.GetString(nameof(BusinessScanSessionPrepareFailed), Culture) ?? "Unable to create scan session.";
     public static string BusinessCityFormat => ResourceManager.GetString(nameof(BusinessCityFormat), Culture) ?? "City: {0}";
@@ -519,9 +539,19 @@ public static class AppResources
     public static string FeedTimelineKindUnknown => ResourceManager.GetString(nameof(FeedTimelineKindUnknown), Culture) ?? "Timeline activity";
 
     public static string QrBusinessFormat => ResourceManager.GetString(nameof(QrBusinessFormat), Culture) ?? "Business: {0}";
+    public static string QrScreenHeadline => ResourceManager.GetString(nameof(QrScreenHeadline), Culture) ?? "Scan to earn\nor redeem";
     public static string QrExpiresAtFormat => ResourceManager.GetString(nameof(QrExpiresAtFormat), Culture) ?? "Expires at: {0:HH:mm:ss}";
-    public static string QrAccrualHelpText => ResourceManager.GetString(nameof(QrAccrualHelpText), Culture) ?? "Use this when the business should add new points to your account.";
-    public static string QrRedemptionHelpText => ResourceManager.GetString(nameof(QrRedemptionHelpText), Culture) ?? "Use this when you want to redeem points or claim an available reward.";
+    public static string QrAccrualHelpText => ResourceManager.GetString(nameof(QrAccrualHelpText), Culture) ?? "Earn points.";
+    public static string QrRedemptionHelpText => ResourceManager.GetString(nameof(QrRedemptionHelpText), Culture) ?? "Spend points.";
+    public static string QrAccrualModeTitle => ResourceManager.GetString(nameof(QrAccrualModeTitle), Culture) ?? "Earning points QR";
+    public static string QrRedemptionModeTitle => ResourceManager.GetString(nameof(QrRedemptionModeTitle), Culture) ?? "Redemption QR";
+    public static string QrHowItWorksTitle => ResourceManager.GetString(nameof(QrHowItWorksTitle), Culture) ?? "How it works";
+    public static string QrHowItWorksShowTitle => ResourceManager.GetString(nameof(QrHowItWorksShowTitle), Culture) ?? "Show QR";
+    public static string QrHowItWorksShowBody => ResourceManager.GetString(nameof(QrHowItWorksShowBody), Culture) ?? "Open this screen and show your QR.";
+    public static string QrHowItWorksScanTitle => ResourceManager.GetString(nameof(QrHowItWorksScanTitle), Culture) ?? "Scan at checkout";
+    public static string QrHowItWorksScanBody => ResourceManager.GetString(nameof(QrHowItWorksScanBody), Culture) ?? "The cashier scans your code.";
+    public static string QrHowItWorksEarnTitle => ResourceManager.GetString(nameof(QrHowItWorksEarnTitle), Culture) ?? "Earn or redeem";
+    public static string QrHowItWorksEarnBody => ResourceManager.GetString(nameof(QrHowItWorksEarnBody), Culture) ?? "Earn points or redeem rewards.";
     public static string QrDiscoverGuidanceMessage => ResourceManager.GetString(nameof(QrDiscoverGuidanceMessage), Culture) ?? "To generate a QR code, first go to Discover, open a business, and join its loyalty program.";
     public static string QrEmptyStateMessage => ResourceManager.GetString(nameof(QrEmptyStateMessage), Culture) ?? "Your QR code will appear here after a business context is selected and a session is created.";
     public static string QrRefreshGuidanceMessage => ResourceManager.GetString(nameof(QrRefreshGuidanceMessage), Culture) ?? "Accrual creates a QR for earning points. Redemption creates a QR for spending points or rewards.";

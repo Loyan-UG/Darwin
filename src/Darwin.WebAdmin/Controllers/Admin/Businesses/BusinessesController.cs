@@ -16,6 +16,7 @@ using Darwin.Application.Common.DTOs;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Enums;
+using Darwin.Infrastructure.Media;
 using Darwin.Shared.Results;
 using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Security;
@@ -40,6 +41,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
     {
         private readonly GetBusinessesPageHandler _getBusinessesPage;
         private readonly GetBusinessForEditHandler _getBusinessForEdit;
+        private readonly GetBusinessMediaLibraryHandler _getBusinessMediaLibrary;
         private readonly GetBusinessOnboardingCustomerProfileHandler _getBusinessOnboardingCustomerProfile;
         private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
         private readonly GetBusinessSubscriptionStatusHandler _getBusinessSubscriptionStatus;
@@ -53,6 +55,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly EnsureBusinessOnboardingCustomerProfileHandler _ensureBusinessOnboardingCustomerProfile;
         private readonly ProvisionBusinessOnboardingHandler _provisionBusinessOnboarding;
         private readonly UpdateBusinessHandler _updateBusiness;
+        private readonly UpdateBusinessProfileImageHandler _updateBusinessProfileImage;
+        private readonly CreateBusinessMediaHandler _createBusinessMedia;
+        private readonly UpdateBusinessMediaHandler _updateBusinessMedia;
+        private readonly DeleteBusinessMediaHandler _deleteBusinessMedia;
         private readonly SoftDeleteBusinessHandler _deleteBusiness;
         private readonly GetBusinessLocationsPageHandler _getBusinessLocationsPage;
         private readonly GetBusinessLocationForEditHandler _getBusinessLocationForEdit;
@@ -80,11 +86,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly AdminReferenceDataService _referenceData;
         private readonly ISiteSettingCache _siteSettingCache;
         private readonly IBusinessEffectiveSettingsCache _businessEffectiveSettingsCache;
+        private readonly IUploadedImageStorageService _uploads;
         private readonly IClock _clock;
 
         public BusinessesController(
             GetBusinessesPageHandler getBusinessesPage,
             GetBusinessForEditHandler getBusinessForEdit,
+            GetBusinessMediaLibraryHandler getBusinessMediaLibrary,
             GetBusinessOnboardingCustomerProfileHandler getBusinessOnboardingCustomerProfile,
             GetBusinessSupportSummaryHandler getBusinessSupportSummary,
             GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatus,
@@ -98,6 +106,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             EnsureBusinessOnboardingCustomerProfileHandler ensureBusinessOnboardingCustomerProfile,
             ProvisionBusinessOnboardingHandler provisionBusinessOnboarding,
             UpdateBusinessHandler updateBusiness,
+            UpdateBusinessProfileImageHandler updateBusinessProfileImage,
+            CreateBusinessMediaHandler createBusinessMedia,
+            UpdateBusinessMediaHandler updateBusinessMedia,
+            DeleteBusinessMediaHandler deleteBusinessMedia,
             SoftDeleteBusinessHandler deleteBusiness,
             GetBusinessLocationsPageHandler getBusinessLocationsPage,
             GetBusinessLocationForEditHandler getBusinessLocationForEdit,
@@ -125,10 +137,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             AdminReferenceDataService referenceData,
             ISiteSettingCache siteSettingCache,
             IBusinessEffectiveSettingsCache businessEffectiveSettingsCache,
+            IUploadedImageStorageService uploads,
             IClock clock)
         {
             _getBusinessesPage = getBusinessesPage;
             _getBusinessForEdit = getBusinessForEdit;
+            _getBusinessMediaLibrary = getBusinessMediaLibrary;
             _getBusinessOnboardingCustomerProfile = getBusinessOnboardingCustomerProfile;
             _getBusinessSupportSummary = getBusinessSupportSummary;
             _getBusinessSubscriptionStatus = getBusinessSubscriptionStatus;
@@ -142,6 +156,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _ensureBusinessOnboardingCustomerProfile = ensureBusinessOnboardingCustomerProfile;
             _provisionBusinessOnboarding = provisionBusinessOnboarding;
             _updateBusiness = updateBusiness;
+            _updateBusinessProfileImage = updateBusinessProfileImage;
+            _createBusinessMedia = createBusinessMedia;
+            _updateBusinessMedia = updateBusinessMedia;
+            _deleteBusinessMedia = deleteBusinessMedia;
             _deleteBusiness = deleteBusiness;
             _getBusinessLocationsPage = getBusinessLocationsPage;
             _getBusinessLocationForEdit = getBusinessLocationForEdit;
@@ -169,6 +187,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _referenceData = referenceData;
             _siteSettingCache = siteSettingCache;
             _businessEffectiveSettingsCache = businessEffectiveSettingsCache;
+            _uploads = uploads;
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
@@ -606,6 +625,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var vm = MapBusinessEditVm(dto);
+            await PopulateBusinessMediaAsync(vm, ct).ConfigureAwait(false);
             await PopulateBusinessFormOptionsAsync(vm, ct);
             return RenderBusinessEditor(vm, isCreate: false);
         }
@@ -628,6 +648,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var vm = MapBusinessEditVm(dto);
+            await PopulateBusinessMediaAsync(vm, ct).ConfigureAwait(false);
             await PopulateBusinessFormOptionsAsync(vm, ct);
             return RenderBusinessSetupEditor(vm);
         }
@@ -650,6 +671,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var business = MapBusinessEditVm(dto);
+            await PopulateBusinessMediaAsync(business, ct).ConfigureAwait(false);
             await PopulateBusinessFormOptionsAsync(business, ct);
 
             return RenderOnboardingWizardWorkspace(BuildOnboardingWizardVm(business, step));
@@ -906,6 +928,93 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 await PopulateBusinessFormOptionsAsync(vm, ct);
                 return RenderBusinessEditor(vm, isCreate: false);
             }
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> UploadBusinessProfileImage(Guid businessId, IFormFile? file, CancellationToken ct = default)
+        {
+            if (businessId == Guid.Empty || file is null || file.Length == 0)
+            {
+                SetErrorMessage("MediaUploadFileRequired");
+                return RedirectOrHtmx(nameof(Edit), new { id = businessId });
+            }
+
+            await using var stream = file.OpenReadStream();
+            var stored = await _uploads.SaveAsync(stream, file.FileName, file.ContentType, ct).ConfigureAwait(false);
+            await _updateBusinessProfileImage.HandleAsync(new BusinessProfileImageEditDto
+            {
+                BusinessId = businessId,
+                ProfileImageUrl = stored.PublicUrl
+            }, ct).ConfigureAwait(false);
+
+            SetSuccessMessage("BusinessMediaUpdated");
+            return RedirectOrHtmx(nameof(Edit), new { id = businessId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> AddBusinessGalleryImage(Guid businessId, IFormFile? file, string? caption, bool isPrimary = false, CancellationToken ct = default)
+        {
+            if (businessId == Guid.Empty || file is null || file.Length == 0)
+            {
+                SetErrorMessage("MediaUploadFileRequired");
+                return RedirectOrHtmx(nameof(Edit), new { id = businessId });
+            }
+
+            await using var stream = file.OpenReadStream();
+            var stored = await _uploads.SaveAsync(stream, file.FileName, file.ContentType, ct).ConfigureAwait(false);
+            await _createBusinessMedia.HandleAsync(new BusinessMediaCreateDto
+            {
+                BusinessId = businessId,
+                Url = stored.PublicUrl,
+                Caption = caption,
+                IsPrimary = isPrimary
+            }, ct).ConfigureAwait(false);
+
+            SetSuccessMessage("BusinessMediaUpdated");
+            return RedirectOrHtmx(nameof(Edit), new { id = businessId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> SetBusinessGalleryPrimary(Guid businessId, Guid mediaId, string url, string? caption, int sortOrder, byte[] rowVersion, CancellationToken ct = default)
+        {
+            await _updateBusinessMedia.HandleAsync(new BusinessMediaEditDto
+            {
+                Id = mediaId,
+                BusinessId = businessId,
+                Url = url,
+                Caption = caption,
+                SortOrder = sortOrder,
+                IsPrimary = true,
+                RowVersion = rowVersion ?? Array.Empty<byte>()
+            }, ct).ConfigureAwait(false);
+
+            SetSuccessMessage("BusinessMediaUpdated");
+            return RedirectOrHtmx(nameof(Edit), new { id = businessId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> DeleteBusinessGalleryImage(Guid businessId, Guid mediaId, byte[] rowVersion, CancellationToken ct = default)
+        {
+            var result = await _deleteBusinessMedia.HandleAsync(new BusinessMediaDeleteDto
+            {
+                Id = mediaId,
+                RowVersion = rowVersion ?? Array.Empty<byte>()
+            }, ct).ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                SetSuccessMessage("BusinessMediaUpdated");
+            }
+            else
+            {
+                SetErrorMessage(result.Error ?? "BusinessMediaDeleteFailed");
+            }
+
+            return RedirectOrHtmx(nameof(Edit), new { id = businessId });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -2212,6 +2321,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 vm.SupportCustomerProvisioningCompanyName = string.IsNullOrWhiteSpace(vm.LegalName) ? vm.Name : vm.LegalName;
                 vm.SupportCustomerProvisioningIssue = vm.CanProvisionSupportCustomer ? null : T("BusinessSupportCustomerProvisioningPending");
             }
+        }
+
+        private async Task PopulateBusinessMediaAsync(BusinessEditVm vm, CancellationToken ct)
+        {
+            if (vm.Id == Guid.Empty)
+            {
+                vm.MediaLibrary = new BusinessMediaLibraryVm();
+                return;
+            }
+
+            var media = await _getBusinessMediaLibrary.HandleAsync(vm.Id, ct).ConfigureAwait(false);
+            vm.MediaLibrary = media is null
+                ? new BusinessMediaLibraryVm { BusinessId = vm.Id, ProfileImageUrl = vm.BrandLogoUrl }
+                : new BusinessMediaLibraryVm
+                {
+                    BusinessId = media.BusinessId,
+                    ProfileImageUrl = media.ProfileImageUrl,
+                    Gallery = media.Gallery.Select(x => new BusinessMediaItemVm
+                    {
+                        Id = x.Id,
+                        BusinessId = x.BusinessId,
+                        BusinessLocationId = x.BusinessLocationId,
+                        Url = x.Url,
+                        Caption = x.Caption,
+                        SortOrder = x.SortOrder,
+                        IsPrimary = x.IsPrimary,
+                        RowVersion = x.RowVersion ?? Array.Empty<byte>()
+                    }).ToList()
+                };
         }
 
         private async Task SyncBusinessOnboardingCustomerProfileAsync(Guid businessId, CancellationToken ct)

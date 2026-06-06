@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    x:Class="Darwin.Mobile.Business.Views.BusinessMediaPage"
+    x:Name="Root"
+    x:DataType="vm:BusinessMediaViewModel"
+    Title="Business media">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,18,20,24" Spacing="14">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Business media" Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="Manage the profile image and up to 10 gallery images shown to customers." Style="{StaticResource BodyLabelStyle}" />
+                    <buttons:SfButton Text="Refresh" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding RefreshCommand}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red" IsVisible="{Binding HasError}" />
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Profile image" Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border WidthRequest="76" HeightRequest="76" Padding="0" BackgroundColor="#F4F4F4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="38" />
+                            </Border.StrokeShape>
+                            <Image Source="{Binding ProfileImageUrl}" Aspect="AspectFill" IsVisible="{Binding HasProfileImage}" />
+                        </Border>
+                        <buttons:SfButton Grid.Column="1" Text="Upload profile image" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding UploadProfileImageCommand}" VerticalOptions="Center" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="Gallery" Style="{StaticResource SectionHeadingLabelStyle}" />
+                        <Label Grid.Column="1" Text="{Binding Gallery.Count, StringFormat='{0}/10'}" Style="{StaticResource BodyLabelStyle}" />
+                    </Grid>
+                    <buttons:SfButton Text="Add gallery image" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding AddGalleryImageCommand}" IsEnabled="{Binding CanAddGalleryImage}" />
+                    <CollectionView ItemsSource="{Binding Gallery}" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="businesses:BusinessMediaItem" xmlns:businesses="clr-namespace:Darwin.Contracts.Businesses;assembly=Darwin.Contracts">
+                                <Border Style="{StaticResource CardBorderStyle}" Margin="0,6">
+                                    <Grid ColumnDefinitions="96,*" ColumnSpacing="12">
+                                        <Image Source="{Binding Url}" Aspect="AspectFill" HeightRequest="86" WidthRequest="96" />
+                                        <VerticalStackLayout Grid.Column="1" Spacing="8">
+                                            <Label Text="{Binding Caption}" Style="{StaticResource BodyLabelStyle}" />
+                                            <Label Text="{Binding IsPrimary, StringFormat='Main image: {0}'}" Style="{StaticResource BodyLabelStyle}" />
+                                            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                                <buttons:SfButton Text="Set main" Command="{Binding Source={x:Reference Root}, Path=BindingContext.SetPrimaryCommand}" CommandParameter="{Binding .}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+                                                <buttons:SfButton Grid.Column="1" Text="Delete" Command="{Binding Source={x:Reference Root}, Path=BindingContext.DeleteImageCommand}" CommandParameter="{Binding .}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+                                            </Grid>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

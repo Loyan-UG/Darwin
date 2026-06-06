@@ -73,7 +73,12 @@ namespace Darwin.Application.Loyalty.DTOs
         public GeoCoordinateDto? Coordinate { get; set; }
 
         /// <summary>
-        /// Optional URL of the primary image/logo.
+        /// Optional URL of the profile/logo image.
+        /// </summary>
+        public string? ProfileImageUrl { get; set; }
+
+        /// <summary>
+        /// Optional URL of the primary gallery image.
         /// </summary>
         public string? PrimaryImageUrl { get; set; }
 

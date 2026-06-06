@@ -54,6 +54,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         Reviews = new RangeObservableCollection<BusinessReviewItem>();
+        BusinessGalleryImages = new RangeObservableCollection<string>();
 
         JoinCommand = new AsyncRelayCommand(JoinAsync, () => !IsBusy && BusinessId != Guid.Empty);
         ToggleLikeCommand = new AsyncRelayCommand(ToggleLikeAsync, () => !IsBusy && BusinessId != Guid.Empty);
@@ -72,13 +73,24 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     public BusinessDetail? Business
     {
         get => _business;
-        private set => SetProperty(ref _business, value);
+        private set
+        {
+            if (SetProperty(ref _business, value))
+            {
+                RefreshBusinessPresentation();
+            }
+        }
     }
 
     /// <summary>
     /// Recent public reviews (up to 5 records) returned by engagement endpoint.
     /// </summary>
     public RangeObservableCollection<BusinessReviewItem> Reviews { get; }
+
+    /// <summary>
+    /// Gallery images for the profile carousel. Primary image is first when available.
+    /// </summary>
+    public RangeObservableCollection<string> BusinessGalleryImages { get; }
 
     public bool IsLikedByMe
     {
@@ -199,6 +211,36 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     }
 
     public bool HasReviews => Reviews.Count > 0;
+
+    public bool HasProfileImage => !string.IsNullOrWhiteSpace(Business?.ProfileImageUrl);
+
+    public string BusinessInitials => BuildInitials(Business?.Name);
+
+    public bool HasGalleryImages => BusinessGalleryImages.Count > 0;
+
+    public bool HasBusinessDescription => !string.IsNullOrWhiteSpace(Business?.ShortDescription)
+        || !string.IsNullOrWhiteSpace(Business?.Description);
+
+    public string BusinessDescriptionText => !string.IsNullOrWhiteSpace(Business?.Description)
+        ? Business.Description!
+        : Business?.ShortDescription ?? string.Empty;
+
+    public string MemberCountText => string.Format(
+        Resources.AppResources.BusinessMembersCountFormat,
+        MemberCountDisplayText);
+
+    public string MemberCountDisplayText => string.IsNullOrWhiteSpace(Business?.MemberCountDisplay)
+        ? "0"
+        : Business.MemberCountDisplay;
+
+    public bool HasBusinessInfo => !string.IsNullOrWhiteSpace(Business?.Category)
+        || !string.IsNullOrWhiteSpace(Business?.City)
+        || !string.IsNullOrWhiteSpace(Business?.WebsiteUrl)
+        || !string.IsNullOrWhiteSpace(Business?.ContactPhoneE164)
+        || !string.IsNullOrWhiteSpace(Business?.ContactEmail)
+        || (Business?.Locations?.Count ?? 0) > 0;
+
+    public bool HasLoyaltyProgram => Business?.LoyaltyProgramPublic is not null;
 
     public IAsyncRelayCommand JoinCommand { get; }
     public IAsyncRelayCommand ToggleLikeCommand { get; }
@@ -465,7 +507,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
             {
                 ["businessId"] = BusinessId,
                 ["businessName"] = Business?.Name,
-                ["joined"] = true
+                ["justJoined"] = true
             };
 
             await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
@@ -549,5 +591,64 @@ public sealed class BusinessDetailViewModel : BaseViewModel
         ToggleLikeCommand.NotifyCanExecuteChanged();
         ToggleFavoriteCommand.NotifyCanExecuteChanged();
         SaveReviewCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RefreshBusinessPresentation()
+    {
+        var imageUrls = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(Business?.PrimaryImageUrl))
+        {
+            imageUrls.Add(Business.PrimaryImageUrl.Trim());
+        }
+
+        if (Business?.GalleryImageUrls is { Count: > 0 })
+        {
+            imageUrls.AddRange(Business.GalleryImageUrls.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()));
+        }
+
+        if (Business?.ImageUrls is { Count: > 0 })
+        {
+            imageUrls.AddRange(Business.ImageUrls.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()));
+        }
+
+        BusinessGalleryImages.ReplaceRange(imageUrls.Distinct(StringComparer.OrdinalIgnoreCase).Take(10));
+
+        OnPropertyChanged(nameof(HasProfileImage));
+        OnPropertyChanged(nameof(BusinessInitials));
+        OnPropertyChanged(nameof(HasGalleryImages));
+        OnPropertyChanged(nameof(HasBusinessDescription));
+        OnPropertyChanged(nameof(BusinessDescriptionText));
+        OnPropertyChanged(nameof(MemberCountText));
+        OnPropertyChanged(nameof(MemberCountDisplayText));
+        OnPropertyChanged(nameof(HasBusinessInfo));
+        OnPropertyChanged(nameof(HasLoyaltyProgram));
+    }
+
+    private static string BuildInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "LO";
+        }
+
+        var parts = name
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(p => p.Length > 0)
+            .ToArray();
+
+        if (parts.Length == 0)
+        {
+            return "LO";
+        }
+
+        if (parts.Length == 1)
+        {
+            return parts[0].Length == 1
+                ? parts[0].ToUpperInvariant()
+                : parts[0][..2].ToUpperInvariant();
+        }
+
+        return string.Concat(parts[0][0], parts[1][0]).ToUpperInvariant();
     }
 }

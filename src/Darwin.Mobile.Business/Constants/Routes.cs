@@ -22,6 +22,7 @@ public static class Routes
 
     // Settings leaf routes
     public const string SettingsProfile = "SettingsProfile";
+    public const string SettingsBusinessMedia = "SettingsBusinessMedia";
     public const string SettingsChangePassword = "SettingsChangePassword";
     public const string SettingsStaffAccessBadge = "SettingsStaffAccessBadge";
     public const string SettingsSubscription = "SettingsSubscription";

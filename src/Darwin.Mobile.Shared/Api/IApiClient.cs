@@ -35,6 +35,17 @@ namespace Darwin.Mobile.Shared.Api
         Task<Result<TResponse>> PostResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct);
 
         /// <summary>
+        /// Uploads a single file through multipart/form-data and returns a typed JSON response.
+        /// </summary>
+        Task<Result<TResponse>> PostFileResultAsync<TResponse>(
+            string route,
+            Stream fileStream,
+            string formFieldName,
+            string fileName,
+            string contentType,
+            CancellationToken ct);
+
+        /// <summary>
         /// Issues a GET request and attempts to unwrap ApiEnvelope&lt;TResponse&gt;.
         /// </summary>
         Task<Result<TResponse>> GetEnvelopeResultAsync<TResponse>(string route, CancellationToken ct);

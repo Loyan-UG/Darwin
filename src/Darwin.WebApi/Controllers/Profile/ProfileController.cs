@@ -4,6 +4,7 @@ using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Contracts.Profile;
+using Darwin.Infrastructure.Media;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
@@ -27,7 +28,10 @@ namespace Darwin.WebApi.Controllers.Profile
         private readonly RequestCurrentUserAccountDeletionHandler _requestCurrentUserAccountDeletionHandler;
         private readonly RequestPhoneVerificationHandler _requestPhoneVerificationHandler;
         private readonly ConfirmPhoneVerificationHandler _confirmPhoneVerificationHandler;
+        private readonly UpdateCurrentUserProfileImageHandler _updateCurrentUserProfileImageHandler;
+        private readonly IUploadedImageStorageService _uploads;
         private readonly IStringLocalizer<ValidationResource> _validationLocalizer;
+        private const long MaxAvatarUploadBytes = 5 * 1024 * 1024;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProfileController"/> class.
@@ -43,6 +47,8 @@ namespace Darwin.WebApi.Controllers.Profile
             RequestCurrentUserAccountDeletionHandler requestCurrentUserAccountDeletionHandler,
             RequestPhoneVerificationHandler requestPhoneVerificationHandler,
             ConfirmPhoneVerificationHandler confirmPhoneVerificationHandler,
+            UpdateCurrentUserProfileImageHandler updateCurrentUserProfileImageHandler,
+            IUploadedImageStorageService uploads,
             IStringLocalizer<ValidationResource> validationLocalizer)
         {
             _getCurrentUserProfileHandler =
@@ -65,6 +71,11 @@ namespace Darwin.WebApi.Controllers.Profile
 
             _confirmPhoneVerificationHandler =
                 confirmPhoneVerificationHandler ?? throw new ArgumentNullException(nameof(confirmPhoneVerificationHandler));
+
+            _updateCurrentUserProfileImageHandler =
+                updateCurrentUserProfileImageHandler ?? throw new ArgumentNullException(nameof(updateCurrentUserProfileImageHandler));
+
+            _uploads = uploads ?? throw new ArgumentNullException(nameof(uploads));
 
             _validationLocalizer =
                 validationLocalizer ?? throw new ArgumentNullException(nameof(validationLocalizer));
@@ -105,6 +116,7 @@ namespace Darwin.WebApi.Controllers.Profile
 
                 FirstName = value.FirstName,
                 LastName = value.LastName,
+                ProfileImageUrl = value.ProfileImageUrl,
                 PhoneE164 = value.PhoneE164,
                 PhoneNumberConfirmed = value.PhoneNumberConfirmed,
 
@@ -219,6 +231,56 @@ namespace Darwin.WebApi.Controllers.Profile
             return NoContent();
         }
 
+        [HttpPost("me/avatar/upload")]
+        [HttpPost("/api/v1/profile/me/avatar/upload")]
+        [RequestSizeLimit(MaxAvatarUploadBytes)]
+        [ProducesResponseType(typeof(ProfileImageUploadResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UploadAvatarAsync(IFormFile? file, CancellationToken ct)
+        {
+            if (file is null || file.Length == 0)
+            {
+                return BadRequestProblem(_validationLocalizer["MediaUploadFileRequired"]);
+            }
+
+            if (file.Length > MaxAvatarUploadBytes)
+            {
+                return BadRequestProblem(_validationLocalizer["MediaUploadFileTooLarge"]);
+            }
+
+            if (!IsSupportedImage(file.ContentType))
+            {
+                return BadRequestProblem(_validationLocalizer["MediaUploadImageRequired"]);
+            }
+
+            await using var stream = file.OpenReadStream();
+            var stored = await _uploads.SaveAsync(stream, file.FileName, file.ContentType, ct).ConfigureAwait(false);
+            return Ok(new ProfileImageUploadResponse { Url = stored.PublicUrl });
+        }
+
+        [HttpPost("me/avatar")]
+        [HttpPost("/api/v1/profile/me/avatar")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> SetAvatarAsync([FromBody] SetProfileImageRequest? request, CancellationToken ct)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
+            }
+
+            var result = await _updateCurrentUserProfileImageHandler
+                .HandleAsync(NormalizeText(request.ProfileImageUrl), ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
+
+            return NoContent();
+        }
+
         [HttpPost("me/phone/request-verification")]
         [HttpPost("/api/v1/profile/me/phone/request-verification")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -269,6 +331,10 @@ namespace Darwin.WebApi.Controllers.Profile
 
         private static string? NormalizeText(string? value)
             => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        private static bool IsSupportedImage(string? contentType)
+            => !string.IsNullOrWhiteSpace(contentType)
+               && contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Updates the current user's privacy and communication preferences using optimistic concurrency.
