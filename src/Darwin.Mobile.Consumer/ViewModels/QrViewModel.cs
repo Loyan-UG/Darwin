@@ -88,7 +88,6 @@ public sealed class QrViewModel : BaseViewModel
             if (SetProperty(ref _qrToken, value))
             {
                 QrTokenDisplay = ToSafeTokenDisplay(value);
-                GenerateQrImage();
             }
         }
     }
@@ -186,6 +185,7 @@ public sealed class QrViewModel : BaseViewModel
                 _lastSuccessfulSessionRefreshUtc = null;
 
                 QrToken = string.Empty;
+                QrImage = null;
                 ExpiresAtUtc = null;
                 ErrorMessage = null;
 
@@ -272,7 +272,11 @@ public sealed class QrViewModel : BaseViewModel
                 selectedRewardIds: null,
                 requestCts.Token).ConfigureAwait(false);
 
-            RunOnMain(() => ApplySessionResult(result));
+            var qrPngBytes = result.Succeeded && result.Value is not null
+                ? await Task.Run(() => GenerateQrPngBytes(result.Value.Token), requestCts.Token).ConfigureAwait(false)
+                : null;
+
+            RunOnMain(() => ApplySessionResult(result, qrPngBytes));
         }
         catch (OperationCanceledException)
         {
@@ -299,12 +303,13 @@ public sealed class QrViewModel : BaseViewModel
         RefreshRedemptionSessionCommand.RaiseCanExecuteChanged();
     }
 
-    private void ApplySessionResult(Result<ScanSessionClientModel> result)
+    private void ApplySessionResult(Result<ScanSessionClientModel> result, byte[]? qrPngBytes)
     {
         if (!result.Succeeded || result.Value is null)
         {
             ErrorMessage = result.Error ?? AppResources.BusinessScanSessionPrepareFailed;
             QrToken = string.Empty;
+            QrImage = null;
             ExpiresAtUtc = null;
             return;
         }
@@ -312,6 +317,9 @@ public sealed class QrViewModel : BaseViewModel
         var session = result.Value;
         Mode = session.Mode;
         QrToken = session.Token;
+        QrImage = qrPngBytes is null
+            ? null
+            : ImageSource.FromStream(() => new MemoryStream(qrPngBytes));
         ExpiresAtUtc = session.ExpiresAtUtc;
         _lastSuccessfulSessionRefreshUtc = _timeProvider.GetUtcNow();
 
@@ -364,25 +372,27 @@ public sealed class QrViewModel : BaseViewModel
         return new CancellationTokenSource(PromotionTrackingTimeout);
     }
 
-    private void GenerateQrImage()
+    private static byte[]? GenerateQrPngBytes(string token)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(_qrToken))
+            if (string.IsNullOrWhiteSpace(token))
             {
-                RunOnMain(() => QrImage = null);
-                return;
+                return null;
             }
 
             using var generator = new QRCodeGenerator();
-            using var data = generator.CreateQrCode(_qrToken, QRCodeGenerator.ECCLevel.Q);
+            using var data = generator.CreateQrCode(token, QRCodeGenerator.ECCLevel.Q);
             var png = new PngByteQRCode(data);
-            var bytes = png.GetGraphic(20);
-            RunOnMain(() => QrImage = ImageSource.FromStream(() => new MemoryStream(bytes)));
+            return png.GetGraphic(
+                pixelsPerModule: 20,
+                darkColorRgba: [0, 0, 0, 255],
+                lightColorRgba: [255, 255, 255, 255],
+                drawQuietZones: true);
         }
         catch
         {
-            RunOnMain(() => QrImage = null);
+            return null;
         }
     }
 

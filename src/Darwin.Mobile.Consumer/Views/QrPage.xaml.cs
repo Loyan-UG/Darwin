@@ -1,4 +1,5 @@
 using Darwin.Mobile.Consumer.ViewModels;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,17 +19,22 @@ namespace Darwin.Mobile.Consumer.Views;
 public partial class QrPage : IQueryAttributable
 {
     private readonly QrViewModel _viewModel;
+    private readonly IQrNavigationContext _navigationContext;
     private int _appearanceRefreshInProgress;
+    private int _pendingAppearanceRefresh;
 
-    public QrPage(QrViewModel viewModel)
+    public QrPage(QrViewModel viewModel, IQrNavigationContext navigationContext)
     {
         InitializeComponent();
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _navigationContext = navigationContext ?? throw new ArgumentNullException(nameof(navigationContext));
         BindingContext = _viewModel;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
+        var appliedBusinessContext = false;
+
         if (query.TryGetValue("businessId", out var rawBusinessId))
         {
             // Shell may pass query values either as typed objects (Guid) or as strings,
@@ -36,11 +42,18 @@ public partial class QrPage : IQueryAttributable
             if (rawBusinessId is Guid businessId)
             {
                 _viewModel.SetBusiness(businessId);
+                appliedBusinessContext = true;
             }
-            else if (rawBusinessId is string businessIdText && Guid.TryParse(businessIdText, out var parsedBusinessId))
+            else if (rawBusinessId is string businessIdText && Guid.TryParse(SafeUnescape(businessIdText), out var parsedBusinessId))
             {
                 _viewModel.SetBusiness(parsedBusinessId);
+                appliedBusinessContext = true;
             }
+        }
+
+        if (appliedBusinessContext)
+        {
+            _navigationContext.Clear();
         }
 
         if (query.TryGetValue("businessName", out var rawBusinessName))
@@ -53,20 +66,27 @@ public partial class QrPage : IQueryAttributable
             }
         }
 
-        var justJoined = false;
-        if (query.TryGetValue("justJoined", out var rawJustJoined))
+        var joined = false;
+        if (query.TryGetValue("joined", out var rawJoined) ||
+            query.TryGetValue("justJoined", out rawJoined))
         {
-            // Accept both typed bool and string values to make navigation robust across callers.
-            justJoined = rawJustJoined switch
+            // Accept both the canonical joined query key and the older justJoined key
+            // so QR navigation remains compatible across Discover, Rewards, and post-join flows.
+            joined = rawJoined switch
             {
                 bool b => b,
-                string justJoinedText => string.Equals(justJoinedText, "true", StringComparison.OrdinalIgnoreCase)
-                                      || string.Equals(justJoinedText, "1", StringComparison.OrdinalIgnoreCase),
+                string joinedText => string.Equals(joinedText, "true", StringComparison.OrdinalIgnoreCase)
+                                  || string.Equals(joinedText, "1", StringComparison.OrdinalIgnoreCase),
                 _ => false
             };
         }
 
-        _viewModel.SetJoinedStatus(justJoined);
+        if (!appliedBusinessContext && TryApplyNavigationContextFallback(out var fallbackJoined))
+        {
+            joined = fallbackJoined;
+        }
+
+        _viewModel.SetJoinedStatus(joined);
 
         // Trigger immediate first-load session creation after navigation parameters are applied.
         // This prevents a blank QR state when navigation timing causes OnAppearing to run earlier.
@@ -76,6 +96,7 @@ public partial class QrPage : IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        _ = TryApplyNavigationContextFallback(out _);
         await RunAppearingSafelyAsync();
     }
 
@@ -102,12 +123,18 @@ public partial class QrPage : IQueryAttributable
     {
         if (Interlocked.Exchange(ref _appearanceRefreshInProgress, 1) == 1)
         {
+            Interlocked.Exchange(ref _pendingAppearanceRefresh, 1);
             return;
         }
 
         try
         {
-            await _viewModel.OnAppearingAsync();
+            do
+            {
+                Interlocked.Exchange(ref _pendingAppearanceRefresh, 0);
+                await _viewModel.OnAppearingAsync();
+            }
+            while (Interlocked.Exchange(ref _pendingAppearanceRefresh, 0) == 1);
         }
         catch
         {
@@ -116,7 +143,31 @@ public partial class QrPage : IQueryAttributable
         finally
         {
             Interlocked.Exchange(ref _appearanceRefreshInProgress, 0);
+
+            if (Interlocked.Exchange(ref _pendingAppearanceRefresh, 0) == 1)
+            {
+                _ = RunAppearingSafelyAsync();
+            }
         }
+    }
+
+    /// <summary>
+    /// Applies the last explicit QR navigation context when Shell query parameters were not delivered.
+    /// </summary>
+    private bool TryApplyNavigationContextFallback(out bool joined)
+    {
+        joined = false;
+
+        if (!_navigationContext.TryConsume(out var context))
+        {
+            return false;
+        }
+
+        _viewModel.SetBusiness(context.BusinessId);
+        _viewModel.SetBusinessDisplayName(context.BusinessName);
+        joined = context.Joined;
+        _viewModel.SetJoinedStatus(joined);
+        return true;
     }
 
     /// <summary>

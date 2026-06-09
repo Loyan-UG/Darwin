@@ -7,7 +7,9 @@
     xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:views="clr-namespace:Darwin.Mobile.Consumer.Views"
     x:Class="Darwin.Mobile.Consumer.Views.MemberAddressesPage"
+    x:Name="PageRoot"
     x:DataType="vm:MemberAddressesViewModel"
     Title="{x:Static res:AppResources.MemberAddressesTitle}">
 
@@ -46,10 +48,10 @@
                                             <Label Text="{x:Static res:AppResources.MemberAddressesDefaultShippingBadge}" Style="{StaticResource CaptionLabelStyle}" IsVisible="{Binding IsDefaultShipping}" />
                                         </HorizontalStackLayout>
                                         <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
-                                            <buttons:SfButton Grid.Row="0" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesEditButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}" CommandParameter="{Binding .}" />
-                                            <buttons:SfButton Grid.Row="0" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesDeleteButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}" CommandParameter="{Binding .}" />
-                                            <buttons:SfButton Grid.Row="1" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesSetBillingButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultBillingCommand}" CommandParameter="{Binding .}" />
-                                            <buttons:SfButton Grid.Row="1" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesSetShippingButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultShippingCommand}" CommandParameter="{Binding .}" />
+                                            <buttons:SfButton Grid.Row="0" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesEditButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={x:Reference PageRoot}, Path=EditCommand, x:DataType=views:MemberAddressesPage}" CommandParameter="{Binding .}" />
+                                            <buttons:SfButton Grid.Row="0" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesDeleteButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={x:Reference PageRoot}, Path=DeleteCommand, x:DataType=views:MemberAddressesPage}" CommandParameter="{Binding .}" />
+                                            <buttons:SfButton Grid.Row="1" Grid.Column="0" Text="{x:Static res:AppResources.MemberAddressesSetBillingButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={x:Reference PageRoot}, Path=SetDefaultBillingCommand, x:DataType=views:MemberAddressesPage}" CommandParameter="{Binding .}" />
+                                            <buttons:SfButton Grid.Row="1" Grid.Column="1" Text="{x:Static res:AppResources.MemberAddressesSetShippingButton}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" Command="{Binding Source={x:Reference PageRoot}, Path=SetDefaultShippingCommand, x:DataType=views:MemberAddressesPage}" CommandParameter="{Binding .}" />
                                         </Grid>
                                     </VerticalStackLayout>
                                 </Border>

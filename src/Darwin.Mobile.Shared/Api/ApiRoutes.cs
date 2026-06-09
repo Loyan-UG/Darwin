@@ -39,6 +39,7 @@ namespace Darwin.Mobile.Shared.Api
         public static class Auth
         {
             public const string Login = "api/v1/member/auth/login";
+            public const string ExternalLogin = "api/v1/member/auth/external-login";
             public const string Refresh = "api/v1/member/auth/refresh";
             public const string Logout = "api/v1/member/auth/logout";
             public const string LogoutAll = "api/v1/member/auth/logout-all";

@@ -183,6 +183,10 @@ namespace Darwin.WebAdmin.Services.Settings
                 WebAuthnRelyingPartyName = string.IsNullOrWhiteSpace(s.WebAuthnRelyingPartyName) ? "Darwin" : s.WebAuthnRelyingPartyName,
                 WebAuthnAllowedOriginsCsv = string.IsNullOrWhiteSpace(s.WebAuthnAllowedOriginsCsv) ? "https://admin.loyan.de,https://web.loyan.de" : s.WebAuthnAllowedOriginsCsv,
                 WebAuthnRequireUserVerification = s.WebAuthnRequireUserVerification,
+                GoogleExternalLoginEnabled = s.GoogleExternalLoginEnabled,
+                GoogleExternalLoginAndroidClientId = s.GoogleExternalLoginAndroidClientId,
+                GoogleExternalLoginIosClientId = s.GoogleExternalLoginIosClientId,
+                GoogleExternalLoginWebClientId = s.GoogleExternalLoginWebClientId,
 
                 // SMTP
                 SmtpEnabled = s.SmtpEnabled,

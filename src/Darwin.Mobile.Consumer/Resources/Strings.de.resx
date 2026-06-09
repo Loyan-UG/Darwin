@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:schema id="root">
     <xs:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -1709,4 +1709,12 @@ oder Einlösen</value>
   <data name="ScannerManualTokenPlaceholder" xml:space="preserve">
     <value>Token hier einfügen</value>
   </data>
-</root>
+  <data name="ExternalLoginDivider" xml:space="preserve">
+    <value>oder weiter mit</value>
+  </data>
+  <data name="ExternalLoginGoogleComingSoon" xml:space="preserve">
+    <value>Google folgt</value>
+  </data>
+  <data name="ExternalLoginMicrosoftComingSoon" xml:space="preserve">
+    <value>Microsoft folgt</value>
+  </data></root>

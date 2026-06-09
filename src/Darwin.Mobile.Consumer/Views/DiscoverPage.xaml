@@ -257,7 +257,7 @@
                                         Margin="1,3"
                                         Padding="0"
                                         IsVisible="{Binding IsJoinedAccount}">
-                                    <Grid ColumnDefinitions="0.95*,2*" ColumnSpacing="10" MinHeightRequest="126">
+                                    <Grid ColumnDefinitions="0.95*,2*" ColumnSpacing="10" MinimumHeightRequest="126">
                                         <Border Grid.Column="0" Padding="0" Background="{StaticResource BrushMuted}" StrokeThickness="0">
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="10" />
@@ -295,7 +295,7 @@
                                         Margin="1,3"
                                         Padding="0"
                                         IsVisible="{Binding IsExploreBusiness}">
-                                    <Grid ColumnDefinitions="0.95*,2*" ColumnSpacing="10" MinHeightRequest="126">
+                                    <Grid ColumnDefinitions="0.95*,2*" ColumnSpacing="10" MinimumHeightRequest="126">
                                         <Border Grid.Column="0" Padding="0" Background="{StaticResource BrushMuted}" StrokeThickness="0">
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="10" />

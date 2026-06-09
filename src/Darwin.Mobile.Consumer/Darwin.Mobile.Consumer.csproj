@@ -13,6 +13,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Darwin.Mobile.Consumer</RootNamespace>
     <UseMaui>true</UseMaui>
+    <MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
     <UseMauiMaps>true</UseMauiMaps>
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>

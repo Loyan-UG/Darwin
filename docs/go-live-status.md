@@ -1,6 +1,6 @@
 # Darwin Go-Live Status
 
-Last reviewed: 2026-05-27
+Last reviewed: 2026-06-08
 
 This document records code-backed readiness. It is not a product overview or marketing status page; use [README.md](../README.md) for the platform summary. This document deliberately separates implemented plumbing from production-complete provider behavior. External smoke inputs and command shapes are documented in [docs/external-smoke-inputs.md](external-smoke-inputs.md).
 
@@ -19,7 +19,8 @@ This document records code-backed readiness. It is not a product overview or mar
 | VIES | `Manual Review + Scheduled Retry` policy exists. Controlled valid/invalid/provider-failure live smoke passed on 2026-05-27. | Production monitoring ownership and periodic smoke after provider or policy changes. |
 | Object storage | Reusable abstraction and providers are implemented; local MinIO smoke passed again on 2026-05-27 against the S3-compatible provider path. Production-like provider smoke execution is guarded behind explicit operator confirmation for profiles, disposable prefix, retention/delete behavior, and operator runbook readiness. | Production Object Lock/retention/legal-hold, backup/restore, monitoring, and selected-provider smoke. |
 | E-invoice | Generation boundary, external-command adapter, local Mustangproject wrapper, storage boundary, WebAdmin download guard, validation-report enforcement option, and local adapter smoke for XRechnung XML plus ZUGFeRD/Factur-X PDF exist. | Legal validation fixtures, production artifact smoke, and sign-off. |
-| Mobile | Implemented Consumer and Business workflows are guarded and usable. | Signed release artifacts, production mobile config, device/camera smoke, and broader UI coverage. |
+| Mobile | Implemented Consumer and Business workflows are guarded and usable. Google external-login backend/service support exists. | Signed release artifacts, production mobile config, native Google sign-in UI/device smoke, device/camera smoke, and broader UI coverage. |
+| Web external identity | Google Identity Services handoff to WebApi external-login is implemented and keeps Darwin session cookies authoritative. | Web OAuth client ID configuration and browser smoke. |
 
 ## Implemented Baseline
 
@@ -36,6 +37,7 @@ This document records code-backed readiness. It is not a product overview or mar
 - Local MinIO smoke validates the development S3-compatible path, Object Lock-enabled bucket creation, versioning, metadata/hash behavior, temporary URL support, and retained-object cleanup boundaries. It does not prove production immutability.
 - E-invoice generated artifacts route through the invoice archive storage boundary when a generator is configured. Current JSON/HTML/source-model outputs are operational artifacts, not compliant e-invoices.
 - Mobile apps reject broad Android cleartext traffic, avoid Release unsafe certificate trust, and keep mobile-used API routes under source-contract guard.
+- Google external-login support is provider-neutral at the API, Web, and mobile-service boundary. WebApi validates Google identity tokens server-side against Site Settings OAuth client IDs and issues Darwin tokens; provider tokens are not stored or logged.
 
 ## Provider Readiness
 
@@ -134,6 +136,8 @@ Not production-complete until:
 - Business subscription purchase, cancellation, SEPA mandate setup, and manual payment registration stay in web/back-office workflows for first launch.
 - Business app shows read-only subscription/contract status and a management handoff.
 - Store launch still requires signed release packages, production Google Maps/Firebase/APNS configuration, push/device smoke, physical QR camera validation, and broader UI/E2E coverage.
+- Google sign-in still requires deployment OAuth client IDs, native mobile UI integration, and device smoke before it is a launch-ready mobile feature.
+- Web Google sign-in still requires a Web OAuth client ID and browser smoke before it is launch-ready.
 - Tizen is out of launch scope.
 
 ## Testing And CI Status

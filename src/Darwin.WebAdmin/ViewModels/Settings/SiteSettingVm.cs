@@ -299,6 +299,18 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "SiteSettingWebAuthnRequireUserVerification")]
         public bool WebAuthnRequireUserVerification { get; set; } = false;
 
+        [Display(Name = "Google external login enabled")]
+        public bool GoogleExternalLoginEnabled { get; set; }
+
+        [Display(Name = "Google Android client ID")]
+        public string? GoogleExternalLoginAndroidClientId { get; set; }
+
+        [Display(Name = "Google iOS client ID")]
+        public string? GoogleExternalLoginIosClientId { get; set; }
+
+        [Display(Name = "Google Web client ID")]
+        public string? GoogleExternalLoginWebClientId { get; set; }
+
         // ---------- SMTP ----------
         [Display(Name = "SiteSettingSmtpEnabled")]
         public bool SmtpEnabled { get; set; }

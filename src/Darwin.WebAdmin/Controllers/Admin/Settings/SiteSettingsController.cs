@@ -348,6 +348,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             WebAuthnRelyingPartyName = dto.WebAuthnRelyingPartyName,
             WebAuthnAllowedOriginsCsv = dto.WebAuthnAllowedOriginsCsv,
             WebAuthnRequireUserVerification = dto.WebAuthnRequireUserVerification,
+            GoogleExternalLoginEnabled = dto.GoogleExternalLoginEnabled,
+            GoogleExternalLoginAndroidClientId = dto.GoogleExternalLoginAndroidClientId,
+            GoogleExternalLoginIosClientId = dto.GoogleExternalLoginIosClientId,
+            GoogleExternalLoginWebClientId = dto.GoogleExternalLoginWebClientId,
 
             // SMTP
             SmtpEnabled = dto.SmtpEnabled,
@@ -519,6 +523,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             WebAuthnRelyingPartyName = vm.WebAuthnRelyingPartyName,
             WebAuthnAllowedOriginsCsv = vm.WebAuthnAllowedOriginsCsv,
             WebAuthnRequireUserVerification = vm.WebAuthnRequireUserVerification,
+            GoogleExternalLoginEnabled = vm.GoogleExternalLoginEnabled,
+            GoogleExternalLoginAndroidClientId = vm.GoogleExternalLoginAndroidClientId,
+            GoogleExternalLoginIosClientId = vm.GoogleExternalLoginIosClientId,
+            GoogleExternalLoginWebClientId = vm.GoogleExternalLoginWebClientId,
 
             // SMTP
             SmtpEnabled = vm.SmtpEnabled,

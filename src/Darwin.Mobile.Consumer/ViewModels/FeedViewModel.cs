@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Services.Caching;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
@@ -43,6 +44,7 @@ public sealed class FeedViewModel : BaseViewModel
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
     private readonly TimeProvider _timeProvider;
+    private readonly IQrNavigationContext _qrNavigationContext;
     private CancellationTokenSource? _operationCancellation;
 
     private bool _hasLoaded;
@@ -69,12 +71,14 @@ public sealed class FeedViewModel : BaseViewModel
         ILoyaltyService loyaltyService,
         IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
         INavigationService navigationService,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IQrNavigationContext qrNavigationContext)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        _qrNavigationContext = qrNavigationContext ?? throw new ArgumentNullException(nameof(qrNavigationContext));
 
         Items = new RangeObservableCollection<LoyaltyTimelineEntry>();
         PromotionItems = new RangeObservableCollection<PromotionFeedItem>();
@@ -887,6 +891,7 @@ public sealed class FeedViewModel : BaseViewModel
         try
         {
             var parameters = BuildContextParameters();
+            _qrNavigationContext.Set(SelectedAccount.BusinessId, SelectedAccount.BusinessName, joined: true);
             await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
         }
         catch (OperationCanceledException)
@@ -967,6 +972,7 @@ public sealed class FeedViewModel : BaseViewModel
 
             if (string.Equals(item.CtaKind, "OpenQr", StringComparison.OrdinalIgnoreCase))
             {
+                _qrNavigationContext.Set(item.BusinessId, item.BusinessName, joined: true);
                 await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
                 return;
             }

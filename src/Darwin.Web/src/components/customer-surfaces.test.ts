@@ -424,6 +424,11 @@ test("Account entry and auth recovery pages stay focused on account actions", ()
     email: "ada@example.com",
     returnPath: "/checkout",
     storefrontCart,
+    externalLogin: {
+      googleEnabled: false,
+      googleWebClientId: null,
+      microsoftEnabled: false,
+    },
   });
   const registerHtml = render(RegisterPage, {
     culture: "en-US",
@@ -447,6 +452,8 @@ test("Account entry and auth recovery pages stay focused on account actions", ()
   assert.match(accountHtml, /Sign in/);
   assert.match(accountHtml, /Register/);
   assert.match(signInHtml, /Sign in/);
+  assert.match(signInHtml, /Google sign-in is not configured yet/);
+  assert.match(signInHtml, /Microsoft sign-in coming soon/);
   assert.match(registerHtml, /Create account/);
   assert.match(activationHtml, /Request or complete email confirmation/);
   assert.match(passwordHtml, /Request or complete a password reset/);
@@ -455,6 +462,25 @@ test("Account entry and auth recovery pages stay focused on account actions", ()
   assertNoBackOfficeCustomerUi(registerHtml);
   assertNoBackOfficeCustomerUi(activationHtml);
   assertNoBackOfficeCustomerUi(passwordHtml);
+});
+
+test("Sign-in page exposes Google only when a web client id is configured", () => {
+  const html = render(SignInPage, {
+    culture: "en-US",
+    email: "ada@example.com",
+    returnPath: "/checkout",
+    storefrontCart,
+    externalLogin: {
+      googleEnabled: true,
+      googleWebClientId: "288248823864-web.apps.googleusercontent.com",
+      microsoftEnabled: false,
+    },
+  });
+
+  assert.match(html, /or continue with/);
+  assert.match(html, /Microsoft sign-in coming soon/);
+  assert.doesNotMatch(html, /Google sign-in is not configured yet/);
+  assertNoBackOfficeCustomerUi(html);
 });
 
 test("Account self-service pages render member forms without storefront rails", () => {

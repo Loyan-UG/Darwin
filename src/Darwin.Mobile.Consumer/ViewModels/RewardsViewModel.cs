@@ -8,6 +8,7 @@ using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Caching;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
@@ -45,6 +46,7 @@ public sealed class RewardsViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
+    private readonly IQrNavigationContext _qrNavigationContext;
     private CancellationTokenSource? _operationCancellation;
 
     private Guid _businessId;
@@ -65,11 +67,13 @@ public sealed class RewardsViewModel : BaseViewModel
     public RewardsViewModel(
         ILoyaltyService loyaltyService,
         IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IQrNavigationContext qrNavigationContext)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _qrNavigationContext = qrNavigationContext ?? throw new ArgumentNullException(nameof(qrNavigationContext));
 
         AvailableRewards = new RangeObservableCollection<LoyaltyRewardSummary>();
         RewardHistory = new RangeObservableCollection<PointsTransaction>();
@@ -659,9 +663,11 @@ public sealed class RewardsViewModel : BaseViewModel
         {
             IDictionary<string, object?> parameters = new Dictionary<string, object?>
             {
-                ["businessId"] = SelectedAccount.BusinessId
+                ["businessId"] = SelectedAccount.BusinessId,
+                ["businessName"] = SelectedAccount.BusinessName
             };
 
+            _qrNavigationContext.Set(SelectedAccount.BusinessId, SelectedAccount.BusinessName, joined: true);
             await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
         }
         catch (OperationCanceledException)

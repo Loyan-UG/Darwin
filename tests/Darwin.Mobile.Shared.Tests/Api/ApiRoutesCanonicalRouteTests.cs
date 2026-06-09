@@ -36,6 +36,7 @@ public sealed class ApiRoutesCanonicalRouteTests
     public void MemberRoutes_Should_UseAudienceFirstCanonicalPrefixes()
     {
         ApiRoutes.Auth.Login.Should().StartWith("api/v1/member/auth/");
+        ApiRoutes.Auth.ExternalLogin.Should().Be("api/v1/member/auth/external-login");
         ApiRoutes.Auth.RequestEmailConfirmation.Should().Be("api/v1/member/auth/email/request-confirmation");
         ApiRoutes.Profile.GetMe.Should().Be("api/v1/member/profile/me");
         ApiRoutes.Profile.GetAddresses.Should().Be("api/v1/member/profile/addresses");

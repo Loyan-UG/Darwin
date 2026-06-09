@@ -60,6 +60,32 @@ namespace Darwin.Application.Identity.DTOs
     }
 
     /// <summary>
+    /// Request for exchanging a third-party identity token for a Darwin token pair.
+    /// The provider token is verified server-side before any local account is linked or created.
+    /// </summary>
+    public sealed class ExternalLoginRequestDto
+    {
+        public string Provider { get; set; } = string.Empty;
+        public string IdToken { get; set; } = string.Empty;
+        public string? DeviceId { get; set; }
+        public Guid? BusinessId { get; set; }
+    }
+
+    /// <summary>
+    /// Normalized identity returned after provider-specific validation succeeds.
+    /// </summary>
+    public sealed class ExternalIdentityDto
+    {
+        public string Provider { get; set; } = string.Empty;
+        public string ProviderKey { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public bool EmailVerified { get; set; }
+        public string? DisplayName { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+    }
+
+    /// <summary>
     /// Response carrying short-lived JWT access token and opaque refresh token.
     /// </summary>
     public sealed class AuthResultDto

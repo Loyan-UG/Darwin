@@ -21,6 +21,9 @@ public interface IAuthService
     /// <summary>Logs in with email/password and returns a bootstrap payload for the app.</summary>
     Task<AppBootstrapResponse> LoginAsync(string email, string password, string? deviceId, CancellationToken ct);
 
+    /// <summary>Logs in with a verified external identity token and returns a bootstrap payload for the app.</summary>
+    Task<AppBootstrapResponse> LoginWithExternalProviderAsync(ExternalLoginRequest request, CancellationToken ct);
+
     /// <summary>Attempts a token refresh using the stored refresh token, if still valid.</summary>
     Task<bool> TryRefreshAsync(CancellationToken ct);
 
@@ -128,6 +131,36 @@ public sealed class AuthService : IAuthService, IDisposable
         {
             var message = string.IsNullOrWhiteSpace(tokenResult.Error)
                 ? "Login failed."
+                : tokenResult.Error;
+
+            throw new InvalidOperationException(message);
+        }
+
+        return await CompleteAuthenticatedBootstrapAsync(tokenResult.Value, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<AppBootstrapResponse> LoginWithExternalProviderAsync(ExternalLoginRequest request, CancellationToken ct)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+        ct.ThrowIfCancellationRequested();
+
+        var effectiveDeviceId = await ResolveEffectiveDeviceIdAsync(request.DeviceId).ConfigureAwait(false);
+        var tokenResult = await _api.PostResultAsync<ExternalLoginRequest, TokenResponse>(
+            ApiRoutes.Auth.ExternalLogin,
+            new ExternalLoginRequest
+            {
+                Provider = request.Provider,
+                IdToken = request.IdToken,
+                DeviceId = effectiveDeviceId,
+                BusinessId = request.BusinessId
+            },
+            ct).ConfigureAwait(false);
+
+        if (!tokenResult.Succeeded || tokenResult.Value is null)
+        {
+            var message = string.IsNullOrWhiteSpace(tokenResult.Error)
+                ? "External login failed."
                 : tokenResult.Error;
 
             throw new InvalidOperationException(message);

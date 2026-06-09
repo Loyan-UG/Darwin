@@ -302,9 +302,9 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         memberCommercePage.Should().Contain("Text=\"{x:Static res:AppResources.MemberCommerceViewOrderButton}\"");
         memberCommercePage.Should().Contain("Text=\"{x:Static res:AppResources.MemberCommerceViewInvoiceButton}\"");
         memberCommercePage.Should().Contain("Text=\"{x:Static res:AppResources.MemberCommerceOpenTrackingButton}\"");
-        memberCommercePage.Should().Contain("Command=\"{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewOrderCommand}\"");
-        memberCommercePage.Should().Contain("Command=\"{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewInvoiceCommand}\"");
-        memberCommercePage.Should().Contain("Command=\"{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenOrderShipmentTrackingCommand}\"");
+        memberCommercePage.Should().Contain("Command=\"{Binding Source={x:Reference PageRoot}, Path=ViewOrderCommand, x:DataType=views:MemberCommercePage}\"");
+        memberCommercePage.Should().Contain("Command=\"{Binding Source={x:Reference PageRoot}, Path=ViewInvoiceCommand, x:DataType=views:MemberCommercePage}\"");
+        memberCommercePage.Should().Contain("Command=\"{Binding Source={x:Reference PageRoot}, Path=OpenOrderShipmentTrackingCommand, x:DataType=views:MemberCommercePage}\"");
         memberCommercePage.Should().Contain("Command=\"{Binding RetryOrderPaymentCommand}\"");
         memberCommercePage.Should().Contain("Command=\"{Binding CopyOrderDocumentCommand}\"");
     }
@@ -328,7 +328,10 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
 
         qrPage.Should().Contain("if (query.TryGetValue(\"businessId\", out var rawBusinessId))");
         qrPage.Should().Contain("if (rawBusinessId is Guid businessId)");
-        qrPage.Should().Contain("else if (rawBusinessId is string businessIdText && Guid.TryParse(businessIdText, out var parsedBusinessId)");
+        qrPage.Should().Contain("else if (rawBusinessId is string businessIdText && Guid.TryParse(SafeUnescape(businessIdText), out var parsedBusinessId)");
+        qrPage.Should().Contain("_navigationContext.Clear();");
+        qrPage.Should().Contain("TryApplyNavigationContextFallback(out var fallbackJoined)");
+        qrPage.Should().Contain("_navigationContext.TryConsume(out var context)");
         qrPage.Should().Contain("if (query.TryGetValue(\"businessName\", out var rawBusinessName))");
         qrPage.Should().Contain("_viewModel.SetBusinessDisplayName(SafeUnescape(businessName));");
         qrPage.Should().Contain("query.TryGetValue(\"joined\", out var rawJoined)");
@@ -580,7 +583,8 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         viewModel.Should().Contain("SyncPushRegistrationCommand = new AsyncCommand(SyncPushRegistrationAsync, () => !IsPushSyncBusy);");
         viewModel.Should().Contain("OpenNotificationSettingsCommand = new AsyncCommand(OpenNotificationSettingsAsync, () => !_isOpeningNotificationSettings);");
         viewModel.Should().Contain("public override async Task OnAppearingAsync()");
-        viewModel.Should().Contain("await RefreshPushRuntimeStateAsync();");
+        viewModel.Should().Contain("SchedulePushRuntimeStateRefresh();");
+        viewModel.Should().Contain("await RefreshPushRuntimeStateAsync().ConfigureAwait(false);");
         viewModel.Should().Contain("if (_isLoaded)");
         viewModel.Should().Contain("await RefreshAsync();");
         viewModel.Should().Contain("public override Task OnDisappearingAsync()");
@@ -606,10 +610,10 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         page.Should().Contain("Command=\"{Binding StartCreateCommand}\"");
         page.Should().Contain("Command=\"{Binding SaveCommand}\"");
         page.Should().Contain("Command=\"{Binding CancelEditCommand}\"");
-        page.Should().Contain("Command=\"{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}\"");
-        page.Should().Contain("Command=\"{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}\"");
-        page.Should().Contain("Command=\"{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultBillingCommand}\"");
-        page.Should().Contain("Command=\"{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultShippingCommand}\"");
+        page.Should().Contain("Command=\"{Binding Source={x:Reference PageRoot}, Path=EditCommand, x:DataType=views:MemberAddressesPage}\"");
+        page.Should().Contain("Command=\"{Binding Source={x:Reference PageRoot}, Path=DeleteCommand, x:DataType=views:MemberAddressesPage}\"");
+        page.Should().Contain("Command=\"{Binding Source={x:Reference PageRoot}, Path=SetDefaultBillingCommand, x:DataType=views:MemberAddressesPage}\"");
+        page.Should().Contain("Command=\"{Binding Source={x:Reference PageRoot}, Path=SetDefaultShippingCommand, x:DataType=views:MemberAddressesPage}\"");
         page.Should().Contain("IsVisible=\"{Binding HasAddresses, Converter={StaticResource InverseBoolConverter}}\"");
         page.Should().Contain("ItemsSource=\"{Binding Addresses}\"");
         page.Should().Contain("IsVisible=\"{Binding IsBusy}\"");
@@ -2280,6 +2284,9 @@ public sealed class MemberCommerceCommandGatingTests
         public bool ConfirmEmailResult { get; set; } = true;
 
         public Task<AppBootstrapResponse> LoginAsync(string email, string password, string? deviceId, CancellationToken ct)
+            => Task.FromException<AppBootstrapResponse>(new InvalidOperationException("Not configured in this test."));
+
+        public Task<AppBootstrapResponse> LoginWithExternalProviderAsync(ExternalLoginRequest request, CancellationToken ct)
             => Task.FromException<AppBootstrapResponse>(new InvalidOperationException("Not configured in this test."));
 
         public Task<bool> TryRefreshAsync(CancellationToken ct)

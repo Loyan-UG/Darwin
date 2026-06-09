@@ -4,6 +4,7 @@
              xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
              xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
              xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:controls="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
              xmlns:inputLayout="clr-namespace:Syncfusion.Maui.Toolkit.TextInputLayout;assembly=Syncfusion.Maui.Toolkit"
              xmlns:chips="clr-namespace:Syncfusion.Maui.Toolkit.Chips;assembly=Syncfusion.Maui.Toolkit"
              xmlns:pullToRefresh="clr-namespace:Syncfusion.Maui.Toolkit.PullToRefresh;assembly=Syncfusion.Maui.Toolkit"
@@ -105,7 +106,7 @@
                             <DataTemplate x:DataType="vm:RewardTierEditorItem">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.SelectRewardTierCommand}"
+                                        <TapGestureRecognizer Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.SelectRewardTierCommand, x:DataType=controls:ContentPage}"
                                                               CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
                                     <VerticalStackLayout Spacing="6">
@@ -366,7 +367,7 @@
                             <DataTemplate x:DataType="vm:BusinessCampaignEditorItem">
                                 <Border Style="{StaticResource MutedCardBorderStyle}">
                                     <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.SelectCampaignCommand}"
+                                        <TapGestureRecognizer Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.SelectCampaignCommand, x:DataType=controls:ContentPage}"
                                                               CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
                                     <VerticalStackLayout Spacing="6">
@@ -379,7 +380,7 @@
                                         <Label Text="{Binding ChannelSummary}" Style="{StaticResource CaptionLabelStyle}" />
                                         <Label Text="{Binding StartsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignStartAtFormat}'}" Style="{StaticResource CaptionLabelStyle}" IsVisible="{Binding StartsAtUtc, Converter={StaticResource NullCheckConverter}}" />
                                         <Label Text="{Binding EndsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignEndAtFormat}'}" Style="{StaticResource CaptionLabelStyle}" IsVisible="{Binding EndsAtUtc, Converter={StaticResource NullCheckConverter}}" />
-                                        <buttons:SfButton Text="{Binding ActivationButtonText}" Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.ToggleCampaignActivationCommand}" CommandParameter="{Binding .}" IsEnabled="{Binding Source={x:Reference PageRoot}, Path=BindingContext.CanManageRewards}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+                                        <buttons:SfButton Text="{Binding ActivationButtonText}" Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.ToggleCampaignActivationCommand, x:DataType=controls:ContentPage}" CommandParameter="{Binding .}" IsEnabled="{Binding Source={x:Reference PageRoot}, Path=BindingContext.CanManageRewards, x:DataType=controls:ContentPage}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
                                     </VerticalStackLayout>
                                 </Border>
                             </DataTemplate>

@@ -33,6 +33,7 @@ namespace Darwin.WebApi.Controllers
         private const int MaxTokenRequestBytes = 32 * 1024;
 
         private readonly LoginWithPasswordHandler _loginWithPassword;
+        private readonly LoginWithExternalProviderHandler _loginWithExternalProvider;
         private readonly RefreshTokenHandler _refresh;
         private readonly RevokeRefreshTokensHandler _revoke;
         private readonly RegisterUserHandler _registerUser;
@@ -54,6 +55,7 @@ namespace Darwin.WebApi.Controllers
         /// <param name="logger">Logger used to audit authentication-related events.</param>
         public AuthController(
             LoginWithPasswordHandler loginWithPassword,
+            LoginWithExternalProviderHandler loginWithExternalProvider,
             RefreshTokenHandler refresh,
             RevokeRefreshTokensHandler revoke,
             RegisterUserHandler registerUser,
@@ -67,6 +69,7 @@ namespace Darwin.WebApi.Controllers
             ILogger<AuthController> logger)
         {
             _loginWithPassword = loginWithPassword ?? throw new ArgumentNullException(nameof(loginWithPassword));
+            _loginWithExternalProvider = loginWithExternalProvider ?? throw new ArgumentNullException(nameof(loginWithExternalProvider));
             _refresh = refresh ?? throw new ArgumentNullException(nameof(refresh));
             _revoke = revoke ?? throw new ArgumentNullException(nameof(revoke));
             _registerUser = registerUser ?? throw new ArgumentNullException(nameof(registerUser));
@@ -130,6 +133,53 @@ namespace Darwin.WebApi.Controllers
             _logger.LogWarning(
                 "Login failed. EmailFingerprint={EmailFingerprint}, Ip={Ip}, Error={Error}",
                 Fingerprint(dto.Email),
+                GetClientIp(),
+                result.Error ?? "Unknown error");
+
+            return ProblemFromResult(result, exposeDetail: false);
+        }
+
+        /// <summary>
+        /// Authenticates a user with a verified external provider token and returns Darwin tokens.
+        /// </summary>
+        [HttpPost("external-login")]
+        [AllowAnonymous]
+        [EnableRateLimiting("auth-login")]
+        [RequestSizeLimit(MaxTokenRequestBytes)]
+        public async Task<IActionResult> ExternalLoginAsync(
+            [FromBody] ExternalLoginRequest? request,
+            CancellationToken ct)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem(_validationLocalizer["RequestPayloadRequired"]);
+            }
+
+            var dto = new ExternalLoginRequestDto
+            {
+                Provider = NormalizeText(request.Provider) ?? string.Empty,
+                IdToken = NormalizeText(request.IdToken) ?? string.Empty,
+                DeviceId = NormalizeText(request.DeviceId),
+                BusinessId = request.BusinessId
+            };
+
+            var result = await _loginWithExternalProvider.HandleAsync(dto, ct).ConfigureAwait(false);
+            if (result.Succeeded && result.Value is not null)
+            {
+                var authResult = result.Value;
+                _logger.LogInformation(
+                    "External login succeeded. Provider={Provider}, UserId={UserId}, EmailFingerprint={EmailFingerprint}, Ip={Ip}",
+                    dto.Provider,
+                    authResult.UserId,
+                    Fingerprint(authResult.Email),
+                    GetClientIp());
+
+                return Ok(MapToTokenResponse(authResult));
+            }
+
+            _logger.LogWarning(
+                "External login failed. Provider={Provider}, Ip={Ip}, Error={Error}",
+                dto.Provider,
                 GetClientIp(),
                 result.Error ?? "Unknown error");
 

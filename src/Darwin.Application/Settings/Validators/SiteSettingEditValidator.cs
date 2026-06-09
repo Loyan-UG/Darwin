@@ -425,6 +425,25 @@ namespace Darwin.Application.Settings.Validators
                 .NotEmpty()
                 .MaximumLength(2000);
 
+            RuleFor(x => x.GoogleExternalLoginAndroidClientId)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.GoogleExternalLoginAndroidClientId));
+
+            RuleFor(x => x.GoogleExternalLoginIosClientId)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.GoogleExternalLoginIosClientId));
+
+            RuleFor(x => x.GoogleExternalLoginWebClientId)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.GoogleExternalLoginWebClientId));
+
+            RuleFor(x => x)
+                .Must(x => !x.GoogleExternalLoginEnabled ||
+                           !string.IsNullOrWhiteSpace(x.GoogleExternalLoginAndroidClientId) ||
+                           !string.IsNullOrWhiteSpace(x.GoogleExternalLoginIosClientId) ||
+                           !string.IsNullOrWhiteSpace(x.GoogleExternalLoginWebClientId))
+                .WithMessage("At least one Google OAuth client ID is required when Google external login is enabled.");
+
             // -------- SMTP --------
             RuleFor(x => x.SmtpHost)
                 .MaximumLength(255)

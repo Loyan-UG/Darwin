@@ -145,6 +145,10 @@ namespace Darwin.Application.Settings.Queries
                 WebAuthnRelyingPartyName = s.WebAuthnRelyingPartyName ?? "Darwin",
                 WebAuthnAllowedOriginsCsv = s.WebAuthnAllowedOriginsCsv ?? "https://admin.loyan.de,https://web.loyan.de",
                 WebAuthnRequireUserVerification = s.WebAuthnRequireUserVerification,
+                GoogleExternalLoginEnabled = s.GoogleExternalLoginEnabled,
+                GoogleExternalLoginAndroidClientId = s.GoogleExternalLoginAndroidClientId,
+                GoogleExternalLoginIosClientId = s.GoogleExternalLoginIosClientId,
+                GoogleExternalLoginWebClientId = s.GoogleExternalLoginWebClientId,
 
                 // SMTP
                 SmtpEnabled = s.SmtpEnabled,

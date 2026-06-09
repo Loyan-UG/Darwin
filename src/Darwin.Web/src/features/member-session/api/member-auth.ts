@@ -118,6 +118,18 @@ export async function loginMember(input: {
   });
 }
 
+export async function loginMemberWithExternalProvider(input: {
+  provider: "Google";
+  identityToken: string;
+  deviceId?: string;
+}) {
+  return postAuthJson<TokenResponse>("/api/v1/member/auth/external-login", {
+    provider: input.provider,
+    identityToken: input.identityToken,
+    deviceId: input.deviceId,
+  });
+}
+
 export async function refreshMember(input: {
   refreshToken: string;
 }) {

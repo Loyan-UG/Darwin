@@ -1,5 +1,6 @@
 using System;
 using Darwin.Mobile.Consumer.ViewModels;
+using Darwin.Mobile.Shared.Commands;
 
 namespace Darwin.Mobile.Consumer.Views;
 
@@ -19,6 +20,14 @@ public partial class MemberAddressesPage : ContentPage
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = _viewModel;
     }
+
+    public AsyncCommand<MemberAddressItemViewModel> EditCommand => _viewModel.EditCommand;
+
+    public AsyncCommand<MemberAddressItemViewModel> DeleteCommand => _viewModel.DeleteCommand;
+
+    public AsyncCommand<MemberAddressItemViewModel> SetDefaultBillingCommand => _viewModel.SetDefaultBillingCommand;
+
+    public AsyncCommand<MemberAddressItemViewModel> SetDefaultShippingCommand => _viewModel.SetDefaultShippingCommand;
 
     /// <inheritdoc />
     protected override async void OnAppearing()

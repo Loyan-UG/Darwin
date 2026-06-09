@@ -25,6 +25,7 @@ using Darwin.Application.Meta.Queries;                 // marker for Application
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Infrastructure.Health;
+using Darwin.Infrastructure.Identity;
 using Darwin.Infrastructure.Media;
 using Darwin.WebApi.Auth;
 using Darwin.WebApi.Security;
@@ -105,6 +106,7 @@ namespace Darwin.WebApi.Extensions
             // ------------------------------------------------------------
             // Register password hashing, security stamp service, WebAuthn/TOTP, secret protection, permission service.
             services.AddIdentityInfrastructure();
+            services.AddScoped<IExternalIdentityVerifier, GoogleExternalIdentityVerifier>();
 
             // Register JWT issuance and login limiter.
             services.AddJwtAuthCore();

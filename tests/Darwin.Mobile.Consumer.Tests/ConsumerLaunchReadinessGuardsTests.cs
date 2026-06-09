@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using System.Text.RegularExpressions;
 using FluentAssertions;
 
 namespace Darwin.Mobile.Consumer.Tests;
@@ -75,6 +76,36 @@ public sealed class ConsumerLaunchReadinessGuardsTests
     }
 
     [Fact]
+    public void ConsumerXamlStaticResources_Should_Be_Defined_In_AppResources()
+    {
+        var root = FindRepositoryRoot();
+        var consumerRoot = root.Combine("src", "Darwin.Mobile.Consumer");
+        var xamlFiles = Directory.EnumerateFiles(consumerRoot, "*.xaml", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        var definedKeys = xamlFiles
+            .SelectMany(path => Regex.Matches(File.ReadAllText(path), "x:Key=\"(?<key>[^\"]+)\"")
+                .Select(match => match.Groups["key"].Value))
+            .ToHashSet(StringComparer.Ordinal);
+
+        var referencedKeys = xamlFiles
+            .SelectMany(path => Regex.Matches(File.ReadAllText(path), "\\{StaticResource\\s+(?<key>[^\\s,}\\\"]+)")
+                .Select(match => new
+                {
+                    File = Path.GetRelativePath(root.FullName, path),
+                    Key = match.Groups["key"].Value
+                }))
+            .Where(reference => !definedKeys.Contains(reference.Key))
+            .Select(reference => $"{reference.File}: {reference.Key}")
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        referencedKeys.Should().BeEmpty("missing MAUI StaticResource keys crash lazily rendered Release XAML templates");
+    }
+
+    [Fact]
     public void FeedPage_Should_Not_RenderCustomerFacingPromotionDiagnostics()
     {
         var root = FindRepositoryRoot();
@@ -103,7 +134,11 @@ public sealed class ConsumerLaunchReadinessGuardsTests
         var settingsPage = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Consumer", "Views", "SettingsPage.xaml.cs"));
         var serviceRegistration = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Consumer", "Extensions", "ServiceCollectionExtensions.cs"));
 
-        settingsPage.Should().Contain("SettingsPage(SettingsViewModel viewModel)");
+        settingsPage.Should().Contain("SettingsPage(");
+        settingsPage.Should().Contain("SettingsViewModel viewModel");
+        settingsPage.Should().Contain("IAuthService authService");
+        settingsPage.Should().Contain("IAppRootNavigator appRootNavigator");
+        settingsPage.Should().Contain("IConsumerPushRegistrationCoordinator pushRegistrationCoordinator");
         settingsPage.Should().Contain("BindingContext = _viewModel;");
         serviceRegistration.Should().Contain("services.AddTransient<SettingsViewModel>();");
     }

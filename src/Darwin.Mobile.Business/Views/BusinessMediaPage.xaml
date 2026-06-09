@@ -3,6 +3,8 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:buttons="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+    xmlns:businesses="clr-namespace:Darwin.Contracts.Businesses;assembly=Darwin.Contracts"
+    xmlns:controls="clr-namespace:Microsoft.Maui.Controls;assembly=Microsoft.Maui.Controls"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     x:Class="Darwin.Mobile.Business.Views.BusinessMediaPage"
     x:Name="Root"
@@ -45,7 +47,7 @@
                     <buttons:SfButton Text="Add gallery image" Style="{StaticResource SyncfusionPrimaryButtonStyle}" Command="{Binding AddGalleryImageCommand}" IsEnabled="{Binding CanAddGalleryImage}" />
                     <CollectionView ItemsSource="{Binding Gallery}" SelectionMode="None">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="businesses:BusinessMediaItem" xmlns:businesses="clr-namespace:Darwin.Contracts.Businesses;assembly=Darwin.Contracts">
+                            <DataTemplate x:DataType="businesses:BusinessMediaItem">
                                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,6">
                                     <Grid ColumnDefinitions="96,*" ColumnSpacing="12">
                                         <Image Source="{Binding Url}" Aspect="AspectFill" HeightRequest="86" WidthRequest="96" />
@@ -53,8 +55,8 @@
                                             <Label Text="{Binding Caption}" Style="{StaticResource BodyLabelStyle}" />
                                             <Label Text="{Binding IsPrimary, StringFormat='Main image: {0}'}" Style="{StaticResource BodyLabelStyle}" />
                                             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                                                <buttons:SfButton Text="Set main" Command="{Binding Source={x:Reference Root}, Path=BindingContext.SetPrimaryCommand}" CommandParameter="{Binding .}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
-                                                <buttons:SfButton Grid.Column="1" Text="Delete" Command="{Binding Source={x:Reference Root}, Path=BindingContext.DeleteImageCommand}" CommandParameter="{Binding .}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+                                                <buttons:SfButton Text="Set main" Command="{Binding Source={x:Reference Root}, Path=BindingContext.SetPrimaryCommand, x:DataType=controls:ContentPage}" CommandParameter="{Binding .}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
+                                                <buttons:SfButton Grid.Column="1" Text="Delete" Command="{Binding Source={x:Reference Root}, Path=BindingContext.DeleteImageCommand, x:DataType=controls:ContentPage}" CommandParameter="{Binding .}" Style="{StaticResource SyncfusionOutlinedButtonStyle}" />
                                             </Grid>
                                         </VerticalStackLayout>
                                     </Grid>

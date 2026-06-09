@@ -1,4 +1,6 @@
 using Darwin.Mobile.Consumer.ViewModels;
+using Darwin.Contracts.Loyalty;
+using Darwin.Mobile.Shared.Commands;
 
 namespace Darwin.Mobile.Consumer.Views;
 
@@ -15,6 +17,8 @@ public partial class FeedPage
         _viewModel = viewModel ?? throw new System.ArgumentNullException(nameof(viewModel));
         BindingContext = _viewModel;
     }
+
+    public AsyncCommand<PromotionFeedItem> OpenPromotionCommand => _viewModel.OpenPromotionCommand;
 
     protected override async void OnAppearing()
     {

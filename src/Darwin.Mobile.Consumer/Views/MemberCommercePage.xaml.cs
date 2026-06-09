@@ -1,5 +1,6 @@
 using System;
 using Darwin.Mobile.Consumer.ViewModels;
+using Darwin.Mobile.Shared.Commands;
 
 namespace Darwin.Mobile.Consumer.Views;
 
@@ -19,6 +20,12 @@ public partial class MemberCommercePage : ContentPage
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = _viewModel;
     }
+
+    public AsyncCommand<MemberCommerceOrderItemViewModel> ViewOrderCommand => _viewModel.ViewOrderCommand;
+
+    public AsyncCommand<MemberCommerceShipmentSummaryViewModel> OpenOrderShipmentTrackingCommand => _viewModel.OpenOrderShipmentTrackingCommand;
+
+    public AsyncCommand<MemberCommerceInvoiceItemViewModel> ViewInvoiceCommand => _viewModel.ViewInvoiceCommand;
 
     /// <inheritdoc />
     protected override async void OnAppearing()

@@ -1,6 +1,7 @@
 import { SignInPage } from "@/components/account/sign-in-page";
 import { getPublicSignInPageContext } from "@/features/account/server/get-public-auth-page-context";
 import { getPublicSignInSeoMetadata } from "@/features/account/server/get-public-auth-seo-metadata";
+import { getExternalLoginConfig } from "@/features/member-session/external-login";
 import { sanitizeAppPath } from "@/lib/locale-routing";
 import { getRequestCulture } from "@/lib/request-culture";
 
@@ -21,7 +22,10 @@ function readSearchParam(value: string | string[] | undefined) {
 export default async function SignInRoute({ searchParams }: SignInRouteProps) {
   const culture = await getRequestCulture();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const { storefrontProps } = await getPublicSignInPageContext(culture);
+  const [{ storefrontProps }, externalLogin] = await Promise.all([
+    getPublicSignInPageContext(culture),
+    getExternalLoginConfig(),
+  ]);
 
   return (
     <SignInPage
@@ -29,6 +33,7 @@ export default async function SignInRoute({ searchParams }: SignInRouteProps) {
       email={readSearchParam(resolvedSearchParams?.email)}
       signInError={readSearchParam(resolvedSearchParams?.signInError)}
       returnPath={sanitizeAppPath(readSearchParam(resolvedSearchParams?.returnPath), "/account")}
+      externalLogin={externalLogin}
       {...storefrontProps}
     />
   );

@@ -7442,6 +7442,21 @@ namespace Darwin.Infrastructure.PostgreSql.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("GoogleExternalLoginAndroidClientId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("GoogleExternalLoginEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("GoogleExternalLoginIosClientId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("GoogleExternalLoginWebClientId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("GoogleSearchConsoleVerification")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");

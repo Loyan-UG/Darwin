@@ -22,4 +22,14 @@ namespace Darwin.Application.Identity.Validators
             RuleFor(x => x.ProviderKey).NotEmpty();
         }
     }
+
+    public sealed class ExternalLoginRequestValidator : AbstractValidator<ExternalLoginRequestDto>
+    {
+        public ExternalLoginRequestValidator()
+        {
+            RuleFor(x => x.Provider).NotEmpty().MaximumLength(100);
+            RuleFor(x => x.IdToken).NotEmpty().MaximumLength(16384);
+            RuleFor(x => x.DeviceId).MaximumLength(256);
+        }
+    }
 }

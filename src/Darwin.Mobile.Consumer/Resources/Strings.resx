@@ -1709,4 +1709,13 @@ or redeem</value>
   <data name="ScannerManualTokenPlaceholder" xml:space="preserve">
     <value>Paste token here</value>
   </data>
+  <data name="ExternalLoginDivider" xml:space="preserve">
+    <value>or continue with</value>
+  </data>
+  <data name="ExternalLoginGoogleComingSoon" xml:space="preserve">
+    <value>Google soon</value>
+  </data>
+  <data name="ExternalLoginMicrosoftComingSoon" xml:space="preserve">
+    <value>Microsoft soon</value>
+  </data>
 </root>

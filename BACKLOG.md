@@ -1,6 +1,6 @@
 # Darwin Backlog
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-08
 
 This is the active roadmap. Historical implementation notes belong in [docs/implementation-ledger.md](docs/implementation-ledger.md). Code-backed readiness belongs in [docs/go-live-status.md](docs/go-live-status.md) and [docs/module-audit.md](docs/module-audit.md).
 
@@ -15,6 +15,7 @@ These items require external credentials, deployment configuration, provider acc
 - `Production object storage`: MinIO is the recommended self-hosted target through the S3-compatible provider; AWS S3 and Azure Blob are alternatives. Local MinIO smoke passed again on 2026-05-27 and production-like provider smoke now requires explicit operator confirmation for profiles, disposable prefix, retention/delete behavior, and runbook ownership, but production archive immutability is blocked until the real provider has TLS, dedicated least-privilege keys, versioning, Object Lock or equivalent retention/legal hold, backup, restore testing, monitoring, and selected-provider smoke.
 - `E-invoice compliance`: structured invoice source-model JSON, minimum source-readiness validation, and a provider-neutral `IEInvoiceGenerationService` boundary now exist. The first tooling path is selected as Mustangproject CLI through the external-command adapter, and local adapter smoke passed for XRechnung XML plus ZUGFeRD/Factur-X PDF artifact shape with required validation reports on 2026-05-27. German acceptance and customer rollout checklists are documented, but full ZUGFeRD/Factur-X compliance is blocked until deterministic/legal validation fixtures, production artifact download/storage smoke, and operator/legal sign-off are complete. XRechnung remains secondary unless a deployment requires it earlier.
 - `Mobile store launch`: implemented Consumer and Business workflows are guarded and usable, but signed Android/iOS/MacCatalyst release artifacts, production Google Maps/Firebase/APNS configuration, push/device smoke, physical camera QR validation, and broader device UI coverage remain required.
+- `External identity`: Google external-login backend, Site Settings configuration, WebApi endpoint, Web Google Identity Services handoff, and shared mobile service route are implemented. Web OAuth client ID, native mobile Google UI, iOS client ID, and device/browser smoke remain required before this is a launch feature.
 
 ## Completed Internal Baseline
 
@@ -36,6 +37,8 @@ These items require external credentials, deployment configuration, provider acc
 - Keep local MinIO smoke in the release checklist; run production MinIO readiness and selected-provider smoke only against the final target bucket.
 - Complete e-invoice deterministic fixtures, legal validation evidence, and production artifact smoke before exposing compliant artifacts.
 - Add deeper Consumer and Business ViewModel/UI coverage for auth, profile, business access-state gates, rewards/campaigns, member-commerce invoice artifacts, push registration, and account deletion.
+- Add native Consumer Google sign-in after Android/iOS OAuth client IDs are configured, then validate account linking, new-user registration, logout, and failure states on a physical device/emulator.
+- Configure the Web OAuth client ID, then run browser smoke for Web Google sign-in and session-cookie handoff.
 - Validate signed mobile release artifacts and production push/maps configuration outside the repository.
 - Keep business subscription and customer checkout in web/back-office workflows for first mobile launch; mobile apps show status and handoff only.
 - Decide whether to activate mobile SQLite outbox beyond inactive scaffolding. Do not enable offline mutations without processor, idempotency, cleanup, and support visibility.

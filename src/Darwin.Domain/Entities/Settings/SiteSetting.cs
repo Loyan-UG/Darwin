@@ -290,6 +290,27 @@ namespace Darwin.Domain.Entities.Settings
         /// </summary>
         public bool WebAuthnRequireUserVerification { get; set; } = false;
 
+        /// <summary>
+        /// Enables Google as an external identity provider for member-facing sign-in.
+        /// Provider tokens are validated server-side before Darwin issues its own JWTs.
+        /// </summary>
+        public bool GoogleExternalLoginEnabled { get; set; }
+
+        /// <summary>
+        /// Google OAuth client id used by Android apps. This value is not a secret.
+        /// </summary>
+        public string? GoogleExternalLoginAndroidClientId { get; set; }
+
+        /// <summary>
+        /// Google OAuth client id used by iOS/MacCatalyst apps. This value is not a secret.
+        /// </summary>
+        public string? GoogleExternalLoginIosClientId { get; set; }
+
+        /// <summary>
+        /// Google OAuth client id used by Web/front-office clients. This value is not a secret.
+        /// </summary>
+        public string? GoogleExternalLoginWebClientId { get; set; }
+
 
         // ---- Add to Darwin.Domain.Entities.Settings.SiteSetting (new fields) ----
 

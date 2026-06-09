@@ -7,7 +7,7 @@
 
 ## Current Route and Provider Callback Status
 
-Reviewed: 2026-05-09. See `docs/go-live-status.md` for implementation/gap detail.
+Reviewed: 2026-06-08. See `docs/go-live-status.md` for implementation/gap detail.
 
 Canonical route roots:
 
@@ -243,6 +243,13 @@ Current member commerce ownership:
 - mobile shared profile services now also cover the canonical member address-book endpoints, so MAUI self-service address flows can move to the audience-first route surface without adding app-local route logic
 - legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain only for compatibility and should not be used for new development
 - mobile shared route constants should prefer the canonical audience-first roots (`public`, `member`, `business`) even when the legacy aliases still exist server-side
+
+Current member authentication ownership:
+
+- `POST /api/v1/member/auth/external-login` accepts provider-neutral external-login requests for supported identity providers.
+- Google external login is the first provider path. Web and mobile clients obtain the Google identity token, WebApi validates it server-side against deployment-configured OAuth client IDs, and Darwin issues its own JWT/refresh token pair.
+- Provider access or identity tokens must not be persisted, returned, or logged. Existing local accounts are linked only when the provider email is verified and the local email is already confirmed.
+- Microsoft and Apple should use the same provider-neutral boundary when added; Domain, Application contracts, and mobile services must stay provider-agnostic.
 
 Current business-mobile access-state ownership:
 

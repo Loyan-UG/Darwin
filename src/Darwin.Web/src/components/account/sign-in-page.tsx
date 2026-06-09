@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
+import { ExternalSignInPanel } from "@/components/account/external-sign-in-panel";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import { StatusBanner } from "@/components/feedback/status-banner";
+import type { ExternalLoginConfig } from "@/features/member-session/external-login";
 import type { PublicCartSummary } from "@/features/cart/types";
 import { signInMemberAction } from "@/features/member-session/actions";
 import { getMemberResource, resolveLocalizedQueryMessage } from "@/localization";
@@ -13,6 +15,7 @@ type SignInPageProps = {
   signInError?: string;
   returnPath?: string;
   storefrontCart: PublicCartSummary | null;
+  externalLogin?: ExternalLoginConfig;
 };
 
 export function SignInPage({
@@ -21,6 +24,7 @@ export function SignInPage({
   signInError,
   returnPath,
   storefrontCart,
+  externalLogin,
 }: SignInPageProps) {
   const copy = getMemberResource(culture);
   const resolvedSignInError = resolveLocalizedQueryMessage(signInError, copy);
@@ -99,6 +103,20 @@ export function SignInPage({
               {copy.cardPasswordCta}
             </Link>
           </div>
+
+          <ExternalSignInPanel
+            googleClientId={externalLogin?.googleWebClientId ?? null}
+            googleEnabled={externalLogin?.googleEnabled ?? false}
+            microsoftEnabled={externalLogin?.microsoftEnabled ?? false}
+            returnPath={returnPath}
+            labels={{
+              title: copy.externalLoginTitle,
+              divider: copy.externalLoginDivider,
+              googleUnavailable: copy.externalLoginGoogleUnavailable,
+              googleFailed: copy.externalLoginGoogleFailedMessage,
+              microsoftComingSoon: copy.externalLoginMicrosoftComingSoon,
+            }}
+          />
         </form>
 
         <aside className="flex flex-col gap-6">

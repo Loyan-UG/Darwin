@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
         services.AddDarwinMobileShared(apiOptions, legalLinksOptions);
 
         services.AddSingleton<IAppRootNavigator, AppRootNavigator>();
+        services.AddSingleton<IQrNavigationContext, QrNavigationContext>();
         services.AddSingleton<IConsumerLoyaltySnapshotCache, ConsumerLoyaltySnapshotCache>();
         services.AddSingleton<IConsumerStartupWarmupCoordinator, ConsumerStartupWarmupCoordinator>();
         services.AddSingleton<IConsumerPushTokenProvider, ConsumerPlatformPushTokenProvider>();

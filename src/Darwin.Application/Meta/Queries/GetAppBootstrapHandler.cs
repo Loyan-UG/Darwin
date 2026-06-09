@@ -77,7 +77,11 @@ namespace Darwin.Application.Meta.Queries
             var dto = new AppBootstrapDto(
                 JwtAudience: audience,
                 QrTokenRefreshSeconds: settings.MobileQrTokenRefreshSeconds,
-                MaxOutboxItems: settings.MobileMaxOutboxItems);
+                MaxOutboxItems: settings.MobileMaxOutboxItems,
+                GoogleExternalLoginEnabled: settings.GoogleExternalLoginEnabled,
+                GoogleExternalLoginAndroidClientId: settings.GoogleExternalLoginAndroidClientId,
+                GoogleExternalLoginIosClientId: settings.GoogleExternalLoginIosClientId,
+                GoogleExternalLoginWebClientId: settings.GoogleExternalLoginWebClientId);
 
             return Result<AppBootstrapDto>.Ok(dto);
         }

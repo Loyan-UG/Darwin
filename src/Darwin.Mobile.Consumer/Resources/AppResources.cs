@@ -37,6 +37,12 @@ public static class AppResources
         ResourceManager.GetString(nameof(PasswordLabel), Culture) ?? "Password";
     public static string LoginButton =>
         ResourceManager.GetString(nameof(LoginButton), Culture) ?? "Login";
+    public static string ExternalLoginDivider =>
+        ResourceManager.GetString(nameof(ExternalLoginDivider), Culture) ?? "or continue with";
+    public static string ExternalLoginGoogleComingSoon =>
+        ResourceManager.GetString(nameof(ExternalLoginGoogleComingSoon), Culture) ?? "Google soon";
+    public static string ExternalLoginMicrosoftComingSoon =>
+        ResourceManager.GetString(nameof(ExternalLoginMicrosoftComingSoon), Culture) ?? "Microsoft soon";
     public static string LoginEmailPlaceholder =>
         ResourceManager.GetString(nameof(LoginEmailPlaceholder), Culture) ?? "user@example.com";
     public static string LoginPasswordPlaceholder =>

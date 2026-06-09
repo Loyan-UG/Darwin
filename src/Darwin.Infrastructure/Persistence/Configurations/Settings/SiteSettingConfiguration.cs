@@ -67,6 +67,10 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.WebAuthnRelyingPartyName).IsRequired().HasMaxLength(255);
             builder.Property(x => x.WebAuthnAllowedOriginsCsv).IsRequired().HasMaxLength(2000);
             builder.Property(x => x.WebAuthnRequireUserVerification).IsRequired();
+            builder.Property(x => x.GoogleExternalLoginEnabled).IsRequired();
+            builder.Property(x => x.GoogleExternalLoginAndroidClientId).HasMaxLength(256);
+            builder.Property(x => x.GoogleExternalLoginIosClientId).HasMaxLength(256);
+            builder.Property(x => x.GoogleExternalLoginWebClientId).HasMaxLength(256);
 
             // --- Mobile app bootstrap (single source of truth for WebApi "bootstrap") ---
             builder.Property(x => x.MobileQrTokenRefreshSeconds).IsRequired();

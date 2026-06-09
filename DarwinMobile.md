@@ -1,6 +1,6 @@
 # Darwin Mobile Guide
 
-Reviewed: 2026-05-26
+Reviewed: 2026-06-08
 
 Darwin includes two MAUI applications:
 
@@ -20,6 +20,7 @@ Tizen is out of current launch scope.
 Consumer app responsibilities:
 
 - Authentication and account lifecycle.
+- Google external login service/route support after deployment OAuth client IDs are configured. Native mobile UI remains disabled until the device flow is wired and smoke-tested.
 - Profile, preferences, phone verification, addresses, and account deletion request flow.
 - Business discovery/detail and member engagement.
 - Loyalty overview, account, rewards, history, join, promotions/timeline where exposed, and QR preparation.
@@ -69,6 +70,7 @@ Business app live operations must respect access state:
 - Unsafe certificate trust must be debug-only and fail-fast outside debug.
 - Android app backup is disabled for both mobile apps.
 - Google Maps, Firebase, APNS, signing profiles, and store credentials are supplied through secure local/CI/provider configuration.
+- Google external login client IDs are deployment configuration, not source code constants. Provider tokens must be validated by WebApi and must not be stored or logged by mobile clients.
 - Tokens must be stored through secure storage on supported MAUI targets.
 - Logout/account switch must clear sensitive local state.
 - No secrets or PII should be logged.
@@ -110,6 +112,7 @@ Required guard coverage:
 
 Remaining device validation:
 
+- Native Google sign-in UI and device smoke after Android/iOS OAuth client IDs are configured.
 - Signed Android/iOS/MacCatalyst artifacts.
 - Production push registration and notification smoke.
 - Physical camera QR scan end-to-end.

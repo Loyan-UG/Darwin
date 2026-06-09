@@ -121,7 +121,7 @@
                                   IndicatorView="GalleryIndicators"
                                   PeekAreaInsets="0">
                         <CarouselView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="x:String">
                                 <Grid Padding="16,0,16,14">
                                     <Border Padding="0">
                                         <Border.StrokeShape>

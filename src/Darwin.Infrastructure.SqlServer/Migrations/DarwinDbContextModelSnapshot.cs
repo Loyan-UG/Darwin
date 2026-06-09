@@ -7550,6 +7550,21 @@ namespace Darwin.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("GoogleExternalLoginAndroidClientId")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("GoogleExternalLoginEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("GoogleExternalLoginIosClientId")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("GoogleExternalLoginWebClientId")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<string>("GoogleSearchConsoleVerification")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");

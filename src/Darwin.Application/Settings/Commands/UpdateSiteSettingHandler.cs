@@ -170,6 +170,10 @@ namespace Darwin.Application.Settings.Commands
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Distinct());
             s.WebAuthnRequireUserVerification = dto.WebAuthnRequireUserVerification;
+            s.GoogleExternalLoginEnabled = dto.GoogleExternalLoginEnabled;
+            s.GoogleExternalLoginAndroidClientId = NormalizeOptional(dto.GoogleExternalLoginAndroidClientId);
+            s.GoogleExternalLoginIosClientId = NormalizeOptional(dto.GoogleExternalLoginIosClientId);
+            s.GoogleExternalLoginWebClientId = NormalizeOptional(dto.GoogleExternalLoginWebClientId);
 
             // -------- Email (SMTP) --------
             s.SmtpEnabled = dto.SmtpEnabled;
@@ -244,6 +248,9 @@ namespace Darwin.Application.Settings.Commands
 
         private static bool IsSecretPlaceholder(string value)
             => string.Equals(value.Trim(), "********", StringComparison.Ordinal);
+
+        private static string? NormalizeOptional(string? value)
+            => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
         private static void ResolvePostedSecrets(SiteSettingDto dto, SiteSetting current)
         {

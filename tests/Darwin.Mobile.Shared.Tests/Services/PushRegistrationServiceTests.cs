@@ -135,6 +135,15 @@ public sealed class PushRegistrationServiceTests
         public Task<Result<TResponse>> GetEnvelopeResultAsync<TResponse>(string route, CancellationToken ct)
             => throw new NotSupportedException();
 
+        public Task<Result<TResponse>> PostFileResultAsync<TResponse>(
+            string route,
+            Stream fileStream,
+            string formFieldName,
+            string fileName,
+            string contentType,
+            CancellationToken ct)
+            => throw new NotSupportedException();
+
         public Task<Result<TResponse>> PostEnvelopeResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct)
             => throw new NotSupportedException();
 

@@ -215,6 +215,10 @@ namespace Darwin.Application.Settings.DTOs
         public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
         public string WebAuthnAllowedOriginsCsv { get; set; } = WebAuthnAllowedOriginsCsvDefault;
         public bool WebAuthnRequireUserVerification { get; set; } = false;
+        public bool GoogleExternalLoginEnabled { get; set; }
+        public string? GoogleExternalLoginAndroidClientId { get; set; }
+        public string? GoogleExternalLoginIosClientId { get; set; }
+        public string? GoogleExternalLoginWebClientId { get; set; }
 
         // -------- Email (SMTP) --------
         public bool SmtpEnabled { get; set; } = false;

@@ -5,6 +5,7 @@ using System.Threading;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
@@ -138,6 +139,10 @@ public partial class DiscoverPage : ContentPage
 
         try
         {
+            _serviceProvider
+                .GetRequiredService<IQrNavigationContext>()
+                .Set(businessId, joined: true);
+
             await NavigateSafelyAsync(() => Shell.Current.GoToAsync($"//{Routes.Qr}", new Dictionary<string, object?>
             {
                 ["businessId"] = businessId,

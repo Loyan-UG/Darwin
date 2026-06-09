@@ -35,6 +35,7 @@
     <SolidColorBrush x:Key="BrushBackground" Color="{StaticResource Neutral50}" />
     <SolidColorBrush x:Key="BrushSurface" Color="{StaticResource Neutral0}" />
     <SolidColorBrush x:Key="BrushSurfaceMuted" Color="{StaticResource Neutral100}" />
+    <SolidColorBrush x:Key="BrushMuted" Color="{StaticResource Neutral100}" />
     <SolidColorBrush x:Key="BrushButtonSecondary" Color="{StaticResource NeutralButtonSecondary}" />
     <SolidColorBrush x:Key="BrushDarkAction" Color="{StaticResource DarkAction}" />
     <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource InternalPrimaryButton}" />

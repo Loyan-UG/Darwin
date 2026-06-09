@@ -1,6 +1,6 @@
 # Darwin Testing Guide
 
-Reviewed: 2026-05-27
+Reviewed: 2026-06-08
 
 This document defines the active testing strategy. Historical test-run logs belong in [docs/implementation-ledger.md](docs/implementation-ledger.md). Code-backed readiness status belongs in [docs/go-live-status.md](docs/go-live-status.md).
 
@@ -29,6 +29,7 @@ Focused examples:
 dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~Storage|FullyQualifiedName~Archive|FullyQualifiedName~Invoice|FullyQualifiedName~SourceContract" --no-restore /p:UseSharedCompilation=false
 dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~Brevo|FullyQualifiedName~Communication|FullyQualifiedName~EmailDispatch|FullyQualifiedName~ProviderCallbackInbox" --no-restore /p:UseSharedCompilation=false
 dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~Billing|FullyQualifiedName~Stripe|FullyQualifiedName~Subscription|FullyQualifiedName~Refund|FullyQualifiedName~Dispute" --no-restore /p:UseSharedCompilation=false
+dotnet test tests\Darwin.Tests.Unit\Darwin.Tests.Unit.csproj --filter "FullyQualifiedName~LoginWithExternalProviderHandlerTests" --no-restore /p:UseSharedCompilation=false
 ```
 
 ### Infrastructure
@@ -113,6 +114,8 @@ dotnet test tests\Darwin.Mobile.Consumer.Tests\Darwin.Mobile.Consumer.Tests.cspr
 dotnet test tests\Darwin.Mobile.Business.Tests\Darwin.Mobile.Business.Tests.csproj --no-restore /p:UseSharedCompilation=false
 ```
 
+External-login route guards belong in `Darwin.Mobile.Shared.Tests`. Google provider verification is covered server-side through the Application handler tests and should not require real Google calls in normal CI. `Darwin.Web` covers the Google Identity Services sign-in surface with source-contract rendering tests; real Google browser smoke remains deployment-configured.
+
 Build validation examples:
 
 ```powershell
@@ -167,6 +170,8 @@ Keep these areas green before adding lower-risk coverage:
 - Production object-storage validation against the final provider.
 - E-invoice legal validation fixtures and production artifact smoke.
 - Signed Android/iOS/MacCatalyst release artifacts and device/provider smoke.
+- Native Google sign-in UI/device smoke after deployment OAuth client IDs are configured.
+- Web Google Identity Services smoke after a Web OAuth client ID is configured.
 - Physical camera QR end-to-end validation.
 - Broader Consumer and Business ViewModel/UI coverage.
 - Mobile SQLite outbox activation policy and processor tests if offline mutations are enabled later.

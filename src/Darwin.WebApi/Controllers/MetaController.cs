@@ -199,7 +199,11 @@ namespace Darwin.WebApi.Controllers
             {
                 JwtAudience = dto.JwtAudience,
                 QrTokenRefreshSeconds = dto.QrTokenRefreshSeconds,
-                MaxOutboxItems = dto.MaxOutboxItems
+                MaxOutboxItems = dto.MaxOutboxItems,
+                GoogleExternalLoginEnabled = dto.GoogleExternalLoginEnabled,
+                GoogleExternalLoginAndroidClientId = dto.GoogleExternalLoginAndroidClientId,
+                GoogleExternalLoginIosClientId = dto.GoogleExternalLoginIosClientId,
+                GoogleExternalLoginWebClientId = dto.GoogleExternalLoginWebClientId
             };
 
             return Ok(response);

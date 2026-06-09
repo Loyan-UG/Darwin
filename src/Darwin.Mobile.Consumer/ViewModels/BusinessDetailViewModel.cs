@@ -8,6 +8,7 @@ using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Services.Caching;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Shared.Collections;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services;
@@ -27,6 +28,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
+    private readonly IQrNavigationContext _qrNavigationContext;
     private CancellationTokenSource? _operationCancellation;
 
     private BusinessDetail? _business;
@@ -46,12 +48,14 @@ public sealed class BusinessDetailViewModel : BaseViewModel
         IBusinessService businessService,
         ILoyaltyService loyaltyService,
         IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IQrNavigationContext qrNavigationContext)
     {
         _businessService = businessService ?? throw new ArgumentNullException(nameof(businessService));
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _qrNavigationContext = qrNavigationContext ?? throw new ArgumentNullException(nameof(qrNavigationContext));
 
         Reviews = new RangeObservableCollection<BusinessReviewItem>();
         BusinessGalleryImages = new RangeObservableCollection<string>();
@@ -510,6 +514,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
                 ["justJoined"] = true
             };
 
+            _qrNavigationContext.Set(BusinessId, Business?.Name, joined: true);
             await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
         }
         catch (OperationCanceledException)

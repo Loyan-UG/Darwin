@@ -1898,6 +1898,33 @@ bool communicationRuntimeExecutionReady = communicationExecutionReadiness
                 <label class="form-check-label" asp-for="WebAuthnRequireUserVerification"></label>
                 <field-help title="@T.T("SiteSettingsWebAuthnUserVerificationTitle")" content="@T.T("SiteSettingsWebAuthnUserVerificationHelp")" placement="right"></field-help>
             </div>
+
+            <hr />
+            <h3 class="h6 mb-3">External identity providers</h3>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" asp-for="GoogleExternalLoginEnabled" />
+                <label class="form-check-label" asp-for="GoogleExternalLoginEnabled"></label>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="GoogleExternalLoginAndroidClientId" class="form-label"></label>
+                    <input asp-for="GoogleExternalLoginAndroidClientId" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="GoogleExternalLoginAndroidClientId" class="text-danger"></span>
+                    <div class="form-text">Google OAuth client ID for the Android app. This is not a secret.</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="GoogleExternalLoginIosClientId" class="form-label"></label>
+                    <input asp-for="GoogleExternalLoginIosClientId" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="GoogleExternalLoginIosClientId" class="text-danger"></span>
+                    <div class="form-text">Google OAuth client ID for iOS/MacCatalyst clients. This is not a secret.</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="GoogleExternalLoginWebClientId" class="form-label"></label>
+                    <input asp-for="GoogleExternalLoginWebClientId" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="GoogleExternalLoginWebClientId" class="text-danger"></span>
+                    <div class="form-text">Google OAuth client ID for Web/front-office clients. This is not a secret.</div>
+                </div>
+            </div>
         </div>
     </div>
 
