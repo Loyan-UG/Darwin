@@ -92,6 +92,11 @@ public sealed class LoginWithExternalProviderHandler
 
             if (user is null)
             {
+                if (!dto.AllowAccountCreation)
+                {
+                    return Result<AuthResultDto>.Fail(_localizer["ExternalLoginAccountNotFound"]);
+                }
+
                 user = CreateExternalUser(identity);
                 _db.Set<User>().Add(user);
                 await AttachDefaultMemberRoleAsync(user, ct).ConfigureAwait(false);

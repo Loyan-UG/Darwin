@@ -1,4 +1,5 @@
 using Darwin.Mobile.Consumer.Services.Caching;
+using Darwin.Mobile.Consumer.Services.Authentication;
 using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Consumer.Services.Startup;
@@ -56,6 +57,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IConsumerPushRegistrationStateStore, ConsumerPushRegistrationCoordinator.PreferencesConsumerPushRegistrationStateStore>();
         services.AddSingleton<IConsumerPushRegistrationCoordinator, ConsumerPushRegistrationCoordinator>();
         services.AddSingleton<IConsumerNotificationPermissionService, ConsumerNotificationPermissionService>();
+#if ANDROID
+        services.AddSingleton<IConsumerExternalAuthService, Darwin.Mobile.Consumer.AndroidGoogleExternalAuthService>();
+#else
+        services.AddSingleton<IConsumerExternalAuthService, UnavailableConsumerExternalAuthService>();
+#endif
 
         services.AddSingleton<IScanner, Services.Platform.ScannerPlatformService>();
         services.AddSingleton<ILocation, Services.Platform.LocationPlatformService>();

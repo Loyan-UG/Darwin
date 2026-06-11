@@ -200,6 +200,50 @@
                               Command="{Binding RegisterCommand}"
                               IsEnabled="{Binding IsRegistrationReady}" />
 
+            <Grid ColumnDefinitions="*,Auto,*"
+                  Margin="0,2,0,0"
+                  VerticalOptions="Center">
+                <BoxView Grid.Column="0"
+                         HeightRequest="1"
+                         Color="{StaticResource Neutral900}"
+                         Opacity="0.24"
+                         VerticalOptions="Center" />
+                <Label Grid.Column="1"
+                       Text="{x:Static res:AppResources.ExternalRegisterDivider}"
+                       TextColor="{StaticResource Neutral900}"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       Margin="10,0" />
+                <BoxView Grid.Column="2"
+                         HeightRequest="1"
+                         Color="{StaticResource Neutral900}"
+                         Opacity="0.24"
+                         VerticalOptions="Center" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*"
+                  ColumnSpacing="8">
+                <Button Grid.Column="0"
+                        Text="{x:Static res:AppResources.ExternalRegisterGoogleButton}"
+                        Command="{Binding RegisterWithGoogleCommand}"
+                        IsEnabled="{Binding IsExternalRegistrationReady}"
+                        BackgroundColor="{StaticResource LoginFieldYellow}"
+                        TextColor="{StaticResource Neutral900}"
+                        CornerRadius="18"
+                        HeightRequest="42"
+                        FontAttributes="Bold"
+                        FontSize="12" />
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.ExternalLoginMicrosoftComingSoon}"
+                        IsEnabled="False"
+                        BackgroundColor="{StaticResource LoginFieldYellow}"
+                        TextColor="{StaticResource Neutral900}"
+                        CornerRadius="18"
+                        HeightRequest="42"
+                        FontAttributes="Bold"
+                        FontSize="12" />
+            </Grid>
+
             <Button Text="{x:Static res:AppResources.RegisterReturnToLoginButton}"
                     Style="{StaticResource AuthSecondaryButtonStyle}"
                     HorizontalOptions="Center"

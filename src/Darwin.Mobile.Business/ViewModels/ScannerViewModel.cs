@@ -40,6 +40,7 @@ public sealed class ScannerViewModel : BaseViewModel
     private string? _warningMessage;
     private CancellationTokenSource? _scanCts;
     private CancellationTokenSource? _refreshCts;
+    private bool _isScannerInteractionActive;
 
     /// <summary>
     /// Requests page to reveal feedback area when an error/warning/success is set.
@@ -238,7 +239,11 @@ public sealed class ScannerViewModel : BaseViewModel
     public override Task OnDisappearingAsync()
     {
         CancelActiveRefresh();
-        CancelActiveScan();
+        if (!Volatile.Read(ref _isScannerInteractionActive))
+        {
+            CancelActiveScan();
+        }
+
         return Task.CompletedTask;
     }
 
@@ -265,7 +270,9 @@ public sealed class ScannerViewModel : BaseViewModel
                 return;
             }
 
+            Volatile.Write(ref _isScannerInteractionActive, true);
             var token = await _scanner.ScanAsync(scanCts.Token);
+            Volatile.Write(ref _isScannerInteractionActive, false);
 
             if (string.IsNullOrWhiteSpace(token))
             {
@@ -293,6 +300,7 @@ public sealed class ScannerViewModel : BaseViewModel
         }
         finally
         {
+            Volatile.Write(ref _isScannerInteractionActive, false);
             CompleteScanScope(scanCts);
             RunOnMain(() =>
             {

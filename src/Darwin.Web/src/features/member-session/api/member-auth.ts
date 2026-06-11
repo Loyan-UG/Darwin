@@ -22,6 +22,30 @@ type TokenResponse = {
   email: string;
 };
 
+function resolveExternalLoginProblemMessage(message: string | undefined) {
+  if (!message) {
+    return undefined;
+  }
+
+  if (
+    message.includes("ExternalLoginAccountNotFound") ||
+    message.includes("No Darwin account is connected") ||
+    message.includes("noch kein Darwin-Konto verbunden")
+  ) {
+    return toLocalizedQueryMessage("externalLoginAccountNotFoundMessage");
+  }
+
+  if (
+    message.includes("ExternalLoginRequiresVerifiedEmail") ||
+    message.includes("verified email") ||
+    message.includes("bestaetigte E-Mail")
+  ) {
+    return toLocalizedQueryMessage("externalLoginVerifiedEmailRequiredMessage");
+  }
+
+  return message;
+}
+
 async function postAuthJson<T>(
   path: string,
   body: unknown,
@@ -48,7 +72,10 @@ async function postAuthJson<T>(
       let detail = toLocalizedQueryMessage("memberAuthHttpErrorMessage");
       try {
         const problem = (await response.json()) as { detail?: string; title?: string };
-        detail = resolveProblemQueryMessage(problem, "memberAuthHttpErrorMessage");
+        detail = path.endsWith("/external-login")
+          ? resolveExternalLoginProblemMessage(problem.detail ?? problem.title) ??
+            resolveProblemQueryMessage(problem, "memberAuthHttpErrorMessage")
+          : resolveProblemQueryMessage(problem, "memberAuthHttpErrorMessage");
       } catch {
         // Keep status detail.
       }
@@ -120,14 +147,25 @@ export async function loginMember(input: {
 
 export async function loginMemberWithExternalProvider(input: {
   provider: "Google";
-  identityToken: string;
+  idToken: string;
+  allowAccountCreation?: boolean;
   deviceId?: string;
 }) {
-  return postAuthJson<TokenResponse>("/api/v1/member/auth/external-login", {
+  const result = await postAuthJson<TokenResponse>("/api/v1/member/auth/external-login", {
     provider: input.provider,
-    identityToken: input.identityToken,
+    idToken: input.idToken,
+    allowAccountCreation: input.allowAccountCreation === true,
     deviceId: input.deviceId,
   });
+
+  if (!result.data) {
+    return {
+      ...result,
+      message: resolveExternalLoginProblemMessage(result.message),
+    };
+  }
+
+  return result;
 }
 
 export async function refreshMember(input: {

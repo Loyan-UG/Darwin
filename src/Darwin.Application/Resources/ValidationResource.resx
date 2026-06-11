@@ -1190,6 +1190,15 @@
   <data name="EmailAddressNotConfirmed" xml:space="preserve">
     <value>Email address is not confirmed.</value>
   </data>
+  <data name="ExternalLoginAccountNotFound" xml:space="preserve">
+    <value>No Darwin account is connected to this external account yet. Please create an account first.</value>
+  </data>
+  <data name="ExternalLoginRequiresVerifiedEmail" xml:space="preserve">
+    <value>The external provider did not return a verified email address.</value>
+  </data>
+  <data name="InvalidExternalLogin" xml:space="preserve">
+    <value>External login could not be verified.</value>
+  </data>
   <data name="LoginRequestCancelledOrTimedOut" xml:space="preserve">
     <value>Request cancelled by client or timed out during login.</value>
   </data>

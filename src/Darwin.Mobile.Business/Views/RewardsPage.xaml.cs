@@ -1,4 +1,5 @@
 using Darwin.Mobile.Business.ViewModels;
+using System.Windows.Input;
 
 namespace Darwin.Mobile.Business.Views;
 
@@ -16,11 +17,17 @@ public partial class RewardsPage : ContentPage
 
     public RewardsPage(RewardsViewModel viewModel)
     {
-        InitializeComponent();
-
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+
+        InitializeComponent();
         BindingContext = _viewModel;
     }
+
+    public ICommand SelectRewardTierCommand => _viewModel.SelectRewardTierCommand;
+
+    public ICommand SelectCampaignCommand => _viewModel.SelectCampaignCommand;
+
+    public ICommand ToggleCampaignActivationCommand => _viewModel.ToggleCampaignActivationCommand;
 
     protected override async void OnAppearing()
     {

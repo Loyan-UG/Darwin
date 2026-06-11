@@ -153,7 +153,8 @@ public sealed class AuthService : IAuthService, IDisposable
                 Provider = request.Provider,
                 IdToken = request.IdToken,
                 DeviceId = effectiveDeviceId,
-                BusinessId = request.BusinessId
+                BusinessId = request.BusinessId,
+                AllowAccountCreation = request.AllowAccountCreation
             },
             ct).ConfigureAwait(false);
 

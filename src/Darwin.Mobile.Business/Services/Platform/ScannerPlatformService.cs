@@ -42,7 +42,8 @@ public sealed class ScannerPlatformService : IScanner
     {
         try
         {
-            var current = await Permissions.CheckStatusAsync<Permissions.Camera>().ConfigureAwait(false);
+            var current = await MainThread.InvokeOnMainThreadAsync(Permissions.CheckStatusAsync<Permissions.Camera>)
+                .ConfigureAwait(false);
 
             if (current == PermissionStatus.Granted)
             {
@@ -67,7 +68,8 @@ public sealed class ScannerPlatformService : IScanner
                 return await PromptForManualTokenAsync(ct).ConfigureAwait(false);
             }
 
-            var status = await Permissions.RequestAsync<Permissions.Camera>().ConfigureAwait(false);
+            var status = await MainThread.InvokeOnMainThreadAsync(Permissions.RequestAsync<Permissions.Camera>)
+                .ConfigureAwait(false);
 
             if (status == PermissionStatus.Granted)
             {

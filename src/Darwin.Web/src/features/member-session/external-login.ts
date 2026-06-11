@@ -1,10 +1,5 @@
 import "server-only";
-import { fetchPublicJson } from "@/lib/api/fetch-public-json";
-
-type AppBootstrapResponse = {
-  googleExternalLoginEnabled?: boolean;
-  googleExternalLoginWebClientId?: string | null;
-};
+import { getPublicSiteRuntimeConfig } from "@/lib/public-site-runtime-config";
 
 function normalizeClientId(value: string | null | undefined) {
   const trimmed = value?.trim();
@@ -24,22 +19,17 @@ export async function getExternalLoginConfig(): Promise<ExternalLoginConfig> {
     process.env.DARWIN_WEB_GOOGLE_EXTERNAL_LOGIN_CLIENT_ID,
   );
 
-  const bootstrap = await fetchPublicJson<AppBootstrapResponse>(
-    "/api/v1/meta/bootstrap",
-    "app-bootstrap",
-  );
+  const runtimeConfig = await getPublicSiteRuntimeConfig();
 
-  const bootstrapGoogleClientId = normalizeClientId(
-    bootstrap.status === "ok" ? bootstrap.data?.googleExternalLoginWebClientId : null,
+  const runtimeGoogleClientId = normalizeClientId(
+    runtimeConfig.googleExternalLoginWebClientId,
   );
-  const googleWebClientId = bootstrapGoogleClientId ?? envGoogleClientId;
+  const googleWebClientId = runtimeGoogleClientId ?? envGoogleClientId;
 
   return {
     googleEnabled:
       Boolean(googleWebClientId) &&
-      (bootstrap.status !== "ok" ||
-        bootstrap.data?.googleExternalLoginEnabled === true ||
-        Boolean(envGoogleClientId)),
+      (runtimeConfig.googleExternalLoginEnabled === true || Boolean(envGoogleClientId)),
     googleWebClientId,
     microsoftEnabled: false,
   };

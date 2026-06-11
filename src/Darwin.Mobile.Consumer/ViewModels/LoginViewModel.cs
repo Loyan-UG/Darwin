@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
+using Darwin.Contracts.Identity;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Consumer.Services.Authentication;
 using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Services;
@@ -18,6 +20,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed partial class LoginViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+    private readonly IConsumerExternalAuthService _externalAuthService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
     private readonly ILegalLinkService _legalLinkService;
@@ -43,11 +46,13 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// <param name="legalLinkService">Service used to open configured legal links from the pre-login area.</param>
     public LoginViewModel(
         IAuthService authService,
+        IConsumerExternalAuthService externalAuthService,
         IAppRootNavigator appRootNavigator,
         IConsumerPushRegistrationCoordinator pushRegistrationCoordinator,
         ILegalLinkService legalLinkService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _externalAuthService = externalAuthService ?? throw new ArgumentNullException(nameof(externalAuthService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
         _legalLinkService = legalLinkService ?? throw new ArgumentNullException(nameof(legalLinkService));
@@ -95,6 +100,11 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// Gets whether the login form contains the minimum data required to continue.
     /// </summary>
     public bool IsLoginReady => !IsBusy && !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Password);
+
+    /// <summary>
+    /// Gets whether external sign-in actions can start.
+    /// </summary>
+    public bool IsExternalLoginReady => !IsBusy;
 
     /// <summary>
     /// Gets contextual guidance that explains the next step in the sign-in flow.
@@ -234,6 +244,69 @@ public sealed partial class LoginViewModel : BaseViewModel
             {
                 ErrorMessage = errorMessage;
                 ShowActivationEmailAction = string.Equals(errorMessage, AppResources.LoginEmailConfirmationRequired, StringComparison.Ordinal);
+                ErrorBecameVisibleRequested?.Invoke();
+            });
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseReadinessChanged();
+            });
+            EndCurrentOperation(operationCancellation);
+        }
+    }
+
+    /// <summary>
+    /// Signs in or creates a consumer account using a verified Google identity.
+    /// </summary>
+    [RelayCommand]
+    private async Task LoginWithGoogleAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            InfoMessage = null;
+            ShowActivationEmailAction = false;
+            RaiseReadinessChanged();
+        });
+
+        var operationCancellation = BeginCurrentOperation();
+        try
+        {
+            var credential = await _externalAuthService
+                .SignInWithGoogleAsync(operationCancellation.Token)
+                .ConfigureAwait(false);
+
+            _ = await _authService.LoginWithExternalProviderAsync(
+                new ExternalLoginRequest
+                {
+                    Provider = credential.Provider,
+                    IdToken = credential.IdToken,
+                    AllowAccountCreation = false
+                },
+                operationCancellation.Token).ConfigureAwait(false);
+
+            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(operationCancellation.Token);
+
+            await _appRootNavigator.NavigateToAuthenticatedShellAsync().ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // The user cancelled Google sign-in or navigated away.
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() =>
+            {
+                ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ExternalLoginGoogleFailed);
                 ErrorBecameVisibleRequested?.Invoke();
             });
         }
@@ -407,6 +480,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private void RaiseReadinessChanged()
     {
         OnPropertyChanged(nameof(IsLoginReady));
+        OnPropertyChanged(nameof(IsExternalLoginReady));
         OnPropertyChanged(nameof(LoginReadinessMessage));
     }
 

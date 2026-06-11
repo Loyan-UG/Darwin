@@ -149,8 +149,9 @@
                           ColumnSpacing="8"
                           Margin="0,0,0,0">
                         <Button Grid.Column="0"
-                                Text="{x:Static res:AppResources.ExternalLoginGoogleComingSoon}"
-                                IsEnabled="False"
+                                Text="{x:Static res:AppResources.ExternalLoginGoogleButton}"
+                                Command="{Binding LoginWithGoogleCommand}"
+                                IsEnabled="{Binding IsExternalLoginReady}"
                                 BackgroundColor="{StaticResource LoginFieldYellow}"
                                 TextColor="{StaticResource Neutral900}"
                                 CornerRadius="18"

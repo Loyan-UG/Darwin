@@ -20,6 +20,13 @@ internal static class ViewModelErrorMapper
         var raw = ex.Message ?? string.Empty;
         var typeName = ex.GetType().FullName ?? string.Empty;
 
+#if DEBUG
+        if (raw.Contains("Debug details:", StringComparison.OrdinalIgnoreCase))
+        {
+            return raw;
+        }
+#endif
+
         if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("Unable to connect", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("Could not resolve host", StringComparison.OrdinalIgnoreCase) ||
@@ -48,6 +55,23 @@ internal static class ViewModelErrorMapper
         if (raw.Contains("Email address is not confirmed", StringComparison.OrdinalIgnoreCase))
         {
             return AppResources.LoginEmailConfirmationRequired;
+        }
+
+        if (raw.Contains("ExternalLoginAccountNotFound", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("No Darwin account is connected", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.ExternalLoginAccountNotFound;
+        }
+
+        if (raw.Contains("ExternalLoginRequiresVerifiedEmail", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("verified email", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.ExternalLoginRequiresVerifiedEmail;
+        }
+
+        if (raw.Contains("InvalidExternalLogin", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.ExternalLoginGoogleFailed;
         }
 
         if (raw.Contains("Account is locked", StringComparison.OrdinalIgnoreCase))

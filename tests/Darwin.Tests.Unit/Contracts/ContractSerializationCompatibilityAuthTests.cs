@@ -77,6 +77,30 @@ public sealed class ContractSerializationCompatibilityAuthTests : ContractSerial
     }
 
 /// <summary>
+    ///     Verifies that external-login request contract keeps the Google ID token field
+    ///     and explicit account-creation flag stable for Web and mobile clients.
+    /// </summary>
+    [Fact]
+    public void ExternalLoginRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new ExternalLoginRequest
+        {
+            Provider = "Google",
+            IdToken = "id-token-value",
+            DeviceId = "device-1",
+            AllowAccountCreation = true
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"provider\"");
+        json.Should().Contain("\"idToken\"");
+        json.Should().Contain("\"deviceId\"");
+        json.Should().Contain("\"allowAccountCreation\"");
+        json.Should().NotContain("\"identityToken\"");
+    }
+
+/// <summary>
     ///     Verifies that refresh request contract preserves device binding and preferred business
     ///     context field names for business-app token refresh.
     /// </summary>

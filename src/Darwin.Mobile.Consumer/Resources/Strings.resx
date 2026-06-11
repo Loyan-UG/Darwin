@@ -1712,8 +1712,35 @@ or redeem</value>
   <data name="ExternalLoginDivider" xml:space="preserve">
     <value>or continue with</value>
   </data>
-  <data name="ExternalLoginGoogleComingSoon" xml:space="preserve">
-    <value>Google soon</value>
+  <data name="ExternalRegisterDivider" xml:space="preserve">
+    <value>or sign up with</value>
+  </data>
+  <data name="ExternalLoginGoogleButton" xml:space="preserve">
+    <value>Continue with Google</value>
+  </data>
+  <data name="ExternalRegisterGoogleButton" xml:space="preserve">
+    <value>Sign up with Google</value>
+  </data>
+  <data name="ExternalLoginGoogleUnavailable" xml:space="preserve">
+    <value>Google sign-in is not configured yet.</value>
+  </data>
+  <data name="ExternalLoginGoogleFailed" xml:space="preserve">
+    <value>Google sign-in could not be completed.</value>
+  </data>
+  <data name="ExternalLoginAccountNotFound" xml:space="preserve">
+    <value>No Darwin account is connected to this Google account yet. Please create an account first.</value>
+  </data>
+  <data name="ExternalLoginRequiresVerifiedEmail" xml:space="preserve">
+    <value>Google did not return a verified email address for this account.</value>
+  </data>
+  <data name="ExternalLoginGoogleConfigurationFailed" xml:space="preserve">
+    <value>Google sign-in is not configured correctly on this device.</value>
+  </data>
+  <data name="ExternalLoginGoogleTokenMissing" xml:space="preserve">
+    <value>Google did not return a usable sign-in token.</value>
+  </data>
+  <data name="ExternalLoginGoogleCancelled" xml:space="preserve">
+    <value>Google sign-in was cancelled.</value>
   </data>
   <data name="ExternalLoginMicrosoftComingSoon" xml:space="preserve">
     <value>Microsoft soon</value>

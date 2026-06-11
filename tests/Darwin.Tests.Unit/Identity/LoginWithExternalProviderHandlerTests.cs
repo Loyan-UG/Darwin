@@ -45,7 +45,8 @@ public sealed class LoginWithExternalProviderHandlerTests
         {
             Provider = "Google",
             IdToken = "valid-id-token",
-            DeviceId = "device-1"
+            DeviceId = "device-1",
+            AllowAccountCreation = true
         }, TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
@@ -62,6 +63,35 @@ public sealed class LoginWithExternalProviderHandlerTests
         login.ProviderKey.Should().Be("google-sub-1");
 
         (await db.Set<UserRole>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_RejectNewExternalUser_WhenAccountCreationIsNotAllowed()
+    {
+        await using var db = ExternalLoginTestDbContext.Create();
+
+        var jwt = new FakeJwtTokenService();
+        var handler = CreateHandler(db, jwt, new ExternalIdentityDto
+        {
+            Provider = "Google",
+            ProviderKey = "google-sub-login-only",
+            Email = "login-only@darwin.test",
+            EmailVerified = true,
+            DisplayName = "Login Only"
+        });
+
+        var result = await handler.HandleAsync(new ExternalLoginRequestDto
+        {
+            Provider = "Google",
+            IdToken = "valid-id-token",
+            AllowAccountCreation = false
+        }, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("ExternalLoginAccountNotFound");
+        jwt.IssueTokensCalls.Should().Be(0);
+        (await db.Set<User>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
+        (await db.Set<UserLogin>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
     }
 
     [Fact]

@@ -27,4 +27,11 @@ public sealed class ExternalLoginRequest
     /// Optional preferred business context for business-facing clients.
     /// </summary>
     public Guid? BusinessId { get; set; }
+
+    /// <summary>
+    /// Allows the provider-verified identity to create a new local member account
+    /// when no matching Darwin account exists. Login screens should keep this
+    /// disabled; registration screens may enable it explicitly.
+    /// </summary>
+    public bool AllowAccountCreation { get; set; }
 }

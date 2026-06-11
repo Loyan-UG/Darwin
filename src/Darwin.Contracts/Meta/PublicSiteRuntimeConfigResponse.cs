@@ -13,4 +13,10 @@ public sealed class PublicSiteRuntimeConfigResponse
 
     /// <summary>True when more than one supported culture is active.</summary>
     public bool MultilingualEnabled { get; init; }
+
+    /// <summary>Whether Google external login is enabled for public member sign-in surfaces.</summary>
+    public bool GoogleExternalLoginEnabled { get; init; }
+
+    /// <summary>Google OAuth client id for Web/front-office clients. This value is not a secret.</summary>
+    public string? GoogleExternalLoginWebClientId { get; init; }
 }

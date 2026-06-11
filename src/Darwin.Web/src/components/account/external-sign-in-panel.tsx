@@ -41,6 +41,8 @@ type ExternalSignInPanelProps = {
   googleClientId: string | null;
   googleEnabled: boolean;
   microsoftEnabled: boolean;
+  allowAccountCreation?: boolean;
+  googleButtonText?: "signin_with" | "signup_with" | "continue_with" | "signin";
   returnPath?: string;
   labels: {
     title: string;
@@ -55,6 +57,8 @@ export function ExternalSignInPanel({
   googleClientId,
   googleEnabled,
   microsoftEnabled,
+  allowAccountCreation = false,
+  googleButtonText = "continue_with",
   returnPath,
   labels,
 }: ExternalSignInPanelProps) {
@@ -82,6 +86,7 @@ export function ExternalSignInPanel({
           },
           body: JSON.stringify({
             credential: response.credential,
+            allowAccountCreation,
             returnPath: returnPath || "/account",
           }),
         });
@@ -104,7 +109,7 @@ export function ExternalSignInPanel({
         setIsSubmitting(false);
       }
     },
-    [isSubmitting, labels.googleFailed, returnPath],
+    [allowAccountCreation, isSubmitting, labels.googleFailed, returnPath],
   );
 
   useEffect(() => {
@@ -130,12 +135,13 @@ export function ExternalSignInPanel({
       theme: "outline",
       size: "large",
       shape: "pill",
-      text: "continue_with",
+      text: googleButtonText,
       width: 260,
     });
   }, [
     googleClientId,
     googleEnabled,
+    googleButtonText,
     handleCredential,
     labels.googleUnavailable,
     scriptReady,

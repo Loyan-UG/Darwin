@@ -160,7 +160,8 @@ namespace Darwin.WebApi.Controllers
                 Provider = NormalizeText(request.Provider) ?? string.Empty,
                 IdToken = NormalizeText(request.IdToken) ?? string.Empty,
                 DeviceId = NormalizeText(request.DeviceId),
-                BusinessId = request.BusinessId
+                BusinessId = request.BusinessId,
+                AllowAccountCreation = request.AllowAccountCreation
             };
 
             var result = await _loginWithExternalProvider.HandleAsync(dto, ct).ConfigureAwait(false);
@@ -183,7 +184,7 @@ namespace Darwin.WebApi.Controllers
                 GetClientIp(),
                 result.Error ?? "Unknown error");
 
-            return ProblemFromResult(result, exposeDetail: false);
+            return ProblemFromResult(result, exposeDetail: true);
         }
 
 

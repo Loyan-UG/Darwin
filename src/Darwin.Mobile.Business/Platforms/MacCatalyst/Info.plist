@@ -34,5 +34,7 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Loyan Business uses the camera to scan customer loyalty QR codes and open the correct scan session.</string>
 </dict>
 </plist>

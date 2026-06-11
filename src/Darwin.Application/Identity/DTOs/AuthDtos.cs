@@ -69,6 +69,7 @@ namespace Darwin.Application.Identity.DTOs
         public string IdToken { get; set; } = string.Empty;
         public string? DeviceId { get; set; }
         public Guid? BusinessId { get; set; }
+        public bool AllowAccountCreation { get; set; }
     }
 
     /// <summary>

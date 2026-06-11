@@ -39,8 +39,26 @@ public static class AppResources
         ResourceManager.GetString(nameof(LoginButton), Culture) ?? "Login";
     public static string ExternalLoginDivider =>
         ResourceManager.GetString(nameof(ExternalLoginDivider), Culture) ?? "or continue with";
-    public static string ExternalLoginGoogleComingSoon =>
-        ResourceManager.GetString(nameof(ExternalLoginGoogleComingSoon), Culture) ?? "Google soon";
+    public static string ExternalRegisterDivider =>
+        ResourceManager.GetString(nameof(ExternalRegisterDivider), Culture) ?? "or sign up with";
+    public static string ExternalLoginGoogleButton =>
+        ResourceManager.GetString(nameof(ExternalLoginGoogleButton), Culture) ?? "Google";
+    public static string ExternalRegisterGoogleButton =>
+        ResourceManager.GetString(nameof(ExternalRegisterGoogleButton), Culture) ?? "Sign up with Google";
+    public static string ExternalLoginGoogleUnavailable =>
+        ResourceManager.GetString(nameof(ExternalLoginGoogleUnavailable), Culture) ?? "Google sign-in is not configured yet.";
+    public static string ExternalLoginGoogleFailed =>
+        ResourceManager.GetString(nameof(ExternalLoginGoogleFailed), Culture) ?? "Google sign-in could not be completed.";
+    public static string ExternalLoginAccountNotFound =>
+        ResourceManager.GetString(nameof(ExternalLoginAccountNotFound), Culture) ?? "No Darwin account is connected to this Google account yet. Please create an account first.";
+    public static string ExternalLoginRequiresVerifiedEmail =>
+        ResourceManager.GetString(nameof(ExternalLoginRequiresVerifiedEmail), Culture) ?? "Google did not return a verified email address for this account.";
+    public static string ExternalLoginGoogleConfigurationFailed =>
+        ResourceManager.GetString(nameof(ExternalLoginGoogleConfigurationFailed), Culture) ?? "Google sign-in is not configured correctly on this device.";
+    public static string ExternalLoginGoogleTokenMissing =>
+        ResourceManager.GetString(nameof(ExternalLoginGoogleTokenMissing), Culture) ?? "Google did not return a usable sign-in token.";
+    public static string ExternalLoginGoogleCancelled =>
+        ResourceManager.GetString(nameof(ExternalLoginGoogleCancelled), Culture) ?? "Google sign-in was cancelled.";
     public static string ExternalLoginMicrosoftComingSoon =>
         ResourceManager.GetString(nameof(ExternalLoginMicrosoftComingSoon), Culture) ?? "Microsoft soon";
     public static string LoginEmailPlaceholder =>

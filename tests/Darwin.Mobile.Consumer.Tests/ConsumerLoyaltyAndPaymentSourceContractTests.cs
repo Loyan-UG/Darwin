@@ -41,6 +41,11 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         page.Should().Contain("x:DataType=\"vm:LoginViewModel\"");
         page.Should().Contain("Command=\"{Binding LoginCommand}\"");
         page.Should().Contain("IsEnabled=\"{Binding IsLoginReady}\"");
+        page.Should().Contain("Text=\"{x:Static res:AppResources.ExternalLoginGoogleButton}\"");
+        page.Should().Contain("Command=\"{Binding LoginWithGoogleCommand}\"");
+        page.Should().Contain("IsEnabled=\"{Binding IsExternalLoginReady}\"");
+        page.Should().Contain("Text=\"{x:Static res:AppResources.ExternalLoginMicrosoftComingSoon}\"");
+        page.Should().Contain("IsEnabled=\"False\"");
         page.Should().Contain("TapGestureRecognizer Tapped=\"OnRegisterTapped\"");
         page.Should().Contain("TapGestureRecognizer Tapped=\"OnForgotPasswordTapped\"");
         page.Should().Contain("IsVisible=\"{Binding ShowActivationEmailAction}\"");
@@ -78,6 +83,13 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         viewModel.Should().Contain("Password = string.Empty;");
         viewModel.Should().Contain("ShowActivationEmailAction = showActivationEmailAction;");
         viewModel.Should().Contain("private async Task LoginAsync()");
+        viewModel.Should().Contain("private async Task LoginWithGoogleAsync()");
+        viewModel.Should().Contain("_externalAuthService");
+        viewModel.Should().Contain(".SignInWithGoogleAsync");
+        viewModel.Should().Contain("_authService.LoginWithExternalProviderAsync");
+        viewModel.Should().Contain("Provider = credential.Provider");
+        viewModel.Should().Contain("IdToken = credential.IdToken");
+        viewModel.Should().Contain("AllowAccountCreation = false");
         viewModel.Should().Contain("ShowActivationEmailAction = string.Equals(errorMessage, AppResources.LoginEmailConfirmationRequired, StringComparison.Ordinal);");
         viewModel.Should().Contain("private async Task OpenImpressumAsync()");
         viewModel.Should().Contain("private async Task OpenPrivacyPolicyAsync()");
@@ -100,6 +112,43 @@ public sealed class ConsumerLoyaltyAndPaymentSourceContractTests
         registerPage.Should().Contain("await Navigation.PushAsync(loginPage);");
         registerPage.Should().Contain("var loginPage = _serviceProvider.GetRequiredService<LoginPage>();");
         registerPage.Should().Contain("await Navigation.PopAsync();");
+    }
+
+    [Fact]
+    public void RegisterPage_SourceContract_Should_Expose_Google_Registration_And_Disabled_Microsoft()
+    {
+        var page = ReadSourceFile("src/Darwin.Mobile.Consumer/Views/RegisterPage.xaml");
+        var viewModel = ReadSourceFile("src/Darwin.Mobile.Consumer/ViewModels/RegisterViewModel.cs");
+
+        page.Should().Contain("Text=\"{x:Static res:AppResources.ExternalRegisterDivider}\"");
+        page.Should().Contain("Text=\"{x:Static res:AppResources.ExternalRegisterGoogleButton}\"");
+        page.Should().Contain("Command=\"{Binding RegisterWithGoogleCommand}\"");
+        page.Should().Contain("IsEnabled=\"{Binding IsExternalRegistrationReady}\"");
+        page.Should().Contain("Text=\"{x:Static res:AppResources.ExternalLoginMicrosoftComingSoon}\"");
+        page.Should().Contain("IsEnabled=\"False\"");
+
+        viewModel.Should().Contain("public AsyncCommand RegisterWithGoogleCommand { get; }");
+        viewModel.Should().Contain("RegisterWithGoogleCommand = new AsyncCommand(RegisterWithGoogleAsync, () => !IsBusy);");
+        viewModel.Should().Contain("private async Task RegisterWithGoogleAsync()");
+        viewModel.Should().Contain("_externalAuthService");
+        viewModel.Should().Contain(".SignInWithGoogleAsync");
+        viewModel.Should().Contain("_authService.LoginWithExternalProviderAsync");
+        viewModel.Should().Contain("Provider = credential.Provider");
+        viewModel.Should().Contain("IdToken = credential.IdToken");
+        viewModel.Should().Contain("AllowAccountCreation = true");
+    }
+
+    [Fact]
+    public void AndroidGoogleExternalAuthService_SourceContract_Should_Use_CredentialManager_With_WebClientId()
+    {
+        var source = ReadSourceFile("src/Darwin.Mobile.Consumer/Platforms/Android/AndroidGoogleExternalAuthService.cs");
+
+        source.Should().Contain("bootstrap.GoogleExternalLoginWebClientId");
+        source.Should().Contain(".SetServerClientId(bootstrap.GoogleExternalLoginWebClientId.Trim())");
+        source.Should().Contain("CredentialManager.Create(activity)");
+        source.Should().Contain("GoogleIdTokenCredential.CreateFrom");
+        source.Should().NotContain("GoogleSignIn.GetClient");
+        source.Should().NotContain(".RequestIdToken(bootstrap.GoogleExternalLoginAndroidClientId.Trim())");
     }
 
     [Fact]

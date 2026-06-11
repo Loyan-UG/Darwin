@@ -1712,9 +1712,37 @@ oder Einlösen</value>
   <data name="ExternalLoginDivider" xml:space="preserve">
     <value>oder weiter mit</value>
   </data>
-  <data name="ExternalLoginGoogleComingSoon" xml:space="preserve">
-    <value>Google folgt</value>
+  <data name="ExternalRegisterDivider" xml:space="preserve">
+    <value>oder registrieren mit</value>
+  </data>
+  <data name="ExternalLoginGoogleButton" xml:space="preserve">
+    <value>Weiter mit Google</value>
+  </data>
+  <data name="ExternalRegisterGoogleButton" xml:space="preserve">
+    <value>Mit Google registrieren</value>
+  </data>
+  <data name="ExternalLoginGoogleUnavailable" xml:space="preserve">
+    <value>Google-Anmeldung ist noch nicht konfiguriert.</value>
+  </data>
+  <data name="ExternalLoginGoogleFailed" xml:space="preserve">
+    <value>Die Google-Anmeldung konnte nicht abgeschlossen werden.</value>
+  </data>
+  <data name="ExternalLoginAccountNotFound" xml:space="preserve">
+    <value>Mit diesem Google-Konto ist noch kein Darwin-Konto verbunden. Bitte zuerst ein Konto erstellen.</value>
+  </data>
+  <data name="ExternalLoginRequiresVerifiedEmail" xml:space="preserve">
+    <value>Google hat fuer dieses Konto keine bestaetigte E-Mail-Adresse zurueckgegeben.</value>
+  </data>
+  <data name="ExternalLoginGoogleConfigurationFailed" xml:space="preserve">
+    <value>Die Google-Anmeldung ist auf diesem Geraet nicht korrekt konfiguriert.</value>
+  </data>
+  <data name="ExternalLoginGoogleTokenMissing" xml:space="preserve">
+    <value>Google hat kein verwendbares Anmelde-Token zurueckgegeben.</value>
+  </data>
+  <data name="ExternalLoginGoogleCancelled" xml:space="preserve">
+    <value>Die Google-Anmeldung wurde abgebrochen.</value>
   </data>
   <data name="ExternalLoginMicrosoftComingSoon" xml:space="preserve">
     <value>Microsoft folgt</value>
-  </data></root>
+  </data>
+</root>

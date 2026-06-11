@@ -18,10 +18,14 @@ namespace Darwin.WebApi.Controllers.Public;
 public sealed class PublicSiteController : ApiControllerBase
 {
     private readonly GetCulturesHandler _getCulturesHandler;
+    private readonly GetSiteSettingHandler _getSiteSettingHandler;
 
-    public PublicSiteController(GetCulturesHandler getCulturesHandler)
+    public PublicSiteController(
+        GetCulturesHandler getCulturesHandler,
+        GetSiteSettingHandler getSiteSettingHandler)
     {
         _getCulturesHandler = getCulturesHandler ?? throw new ArgumentNullException(nameof(getCulturesHandler));
+        _getSiteSettingHandler = getSiteSettingHandler ?? throw new ArgumentNullException(nameof(getSiteSettingHandler));
     }
 
     /// <summary>
@@ -32,6 +36,10 @@ public sealed class PublicSiteController : ApiControllerBase
     public async Task<IActionResult> GetRuntimeConfigAsync(CancellationToken ct = default)
     {
         var (defaultCulture, cultures) = await _getCulturesHandler
+            .HandleAsync(ct)
+            .ConfigureAwait(false);
+
+        var settings = await _getSiteSettingHandler
             .HandleAsync(ct)
             .ConfigureAwait(false);
 
@@ -50,7 +58,9 @@ public sealed class PublicSiteController : ApiControllerBase
         {
             DefaultCulture = defaultCulture,
             SupportedCultures = supportedCultures,
-            MultilingualEnabled = supportedCultures.Length > 1
+            MultilingualEnabled = supportedCultures.Length > 1,
+            GoogleExternalLoginEnabled = settings?.GoogleExternalLoginEnabled == true,
+            GoogleExternalLoginWebClientId = settings?.GoogleExternalLoginWebClientId
         });
     }
 }

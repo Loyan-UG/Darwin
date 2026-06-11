@@ -4,6 +4,8 @@ export type PublicSiteRuntimeConfig = {
   defaultCulture: string;
   supportedCultures: string[];
   multilingualEnabled: boolean;
+  googleExternalLoginEnabled?: boolean;
+  googleExternalLoginWebClientId?: string | null;
 };
 
 export function normalizeSupportedCultures(
@@ -35,6 +37,8 @@ export function getFallbackPublicSiteRuntimeConfig(): PublicSiteRuntimeConfig {
       : supportedCultures[0]!,
     supportedCultures,
     multilingualEnabled: supportedCultures.length > 1,
+    googleExternalLoginEnabled: false,
+    googleExternalLoginWebClientId: null,
   };
 }
 
@@ -56,6 +60,11 @@ export function normalizePublicSiteRuntimeConfig(
     defaultCulture,
     supportedCultures,
     multilingualEnabled: supportedCultures.length > 1,
+    googleExternalLoginEnabled: value.googleExternalLoginEnabled === true,
+    googleExternalLoginWebClientId:
+      typeof value.googleExternalLoginWebClientId === "string"
+        ? value.googleExternalLoginWebClientId
+        : null,
   };
 }
 

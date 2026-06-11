@@ -6,6 +6,7 @@ import { toLocalizedQueryMessage } from "@/localization";
 
 type GoogleExternalLoginPayload = {
   credential?: unknown;
+  allowAccountCreation?: unknown;
   returnPath?: unknown;
 };
 
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
   }
 
   const credential = getString(payload.credential);
+  const allowAccountCreation = payload.allowAccountCreation === true;
   const returnPath = sanitizeAppPath(getString(payload.returnPath), "/account");
 
   if (!credential) {
@@ -43,7 +45,8 @@ export async function POST(request: NextRequest) {
 
   const result = await loginMemberWithExternalProvider({
     provider: "Google",
-    identityToken: credential,
+    idToken: credential,
+    allowAccountCreation,
     deviceId: request.headers.get("user-agent")?.slice(0, 128) || undefined,
   });
 

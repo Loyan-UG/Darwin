@@ -3,7 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Identity;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Consumer.Services.Authentication;
 using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Legal;
@@ -23,8 +25,10 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class RegisterViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+    private readonly IConsumerExternalAuthService _externalAuthService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly ILegalLinkService _legalLinkService;
+    private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
     private CancellationTokenSource? _operationCancellation;
 
     private string _firstName = string.Empty;
@@ -39,14 +43,19 @@ public sealed class RegisterViewModel : BaseViewModel
 
     public RegisterViewModel(
         IAuthService authService,
+        IConsumerExternalAuthService externalAuthService,
         IAppRootNavigator appRootNavigator,
-        ILegalLinkService legalLinkService)
+        ILegalLinkService legalLinkService,
+        IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _externalAuthService = externalAuthService ?? throw new ArgumentNullException(nameof(externalAuthService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
         _legalLinkService = legalLinkService ?? throw new ArgumentNullException(nameof(legalLinkService));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         RegisterCommand = new AsyncCommand(RegisterAsync, CanRegister);
+        RegisterWithGoogleCommand = new AsyncCommand(RegisterWithGoogleAsync, () => !IsBusy);
         OpenTermsCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.ConsumerTerms), () => !IsBusy);
         OpenPrivacyPolicyCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.PrivacyPolicy), () => !IsBusy);
     }
@@ -55,6 +64,11 @@ public sealed class RegisterViewModel : BaseViewModel
     /// Gets the registration action command.
     /// </summary>
     public AsyncCommand RegisterCommand { get; }
+
+    /// <summary>
+    /// Gets the command that creates or signs into an account using a verified Google identity.
+    /// </summary>
+    public AsyncCommand RegisterWithGoogleCommand { get; }
 
     /// <summary>
     /// Gets the command that opens the consumer terms page.
@@ -198,6 +212,11 @@ public sealed class RegisterViewModel : BaseViewModel
         string.Equals(Password, ConfirmPassword, StringComparison.Ordinal) &&
         AcceptConsumerTerms &&
         AcknowledgePrivacyNotice;
+
+    /// <summary>
+    /// Gets whether external registration actions can start.
+    /// </summary>
+    public bool IsExternalRegistrationReady => !IsBusy;
 
     /// <summary>
     /// Gets a contextual status message that explains what still blocks registration.
@@ -353,6 +372,71 @@ public sealed class RegisterViewModel : BaseViewModel
                 RaiseRegistrationStateChanged();
                 OpenTermsCommand.RaiseCanExecuteChanged();
                 OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
+                RegisterWithGoogleCommand.RaiseCanExecuteChanged();
+            });
+            EndCurrentOperation(operationCancellation);
+        }
+    }
+
+    /// <summary>
+    /// Uses Google external identity to create or sign into the account through the shared WebApi endpoint.
+    /// </summary>
+    private async Task RegisterWithGoogleAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            InfoMessage = null;
+            HasPendingEmailConfirmation = false;
+            RaiseRegistrationStateChanged();
+        });
+
+        var operationCancellation = BeginCurrentOperation();
+        try
+        {
+            var credential = await _externalAuthService
+                .SignInWithGoogleAsync(operationCancellation.Token)
+                .ConfigureAwait(false);
+
+            _ = await _authService.LoginWithExternalProviderAsync(
+                new ExternalLoginRequest
+                {
+                    Provider = credential.Provider,
+                    IdToken = credential.IdToken,
+                    AllowAccountCreation = true
+                },
+                operationCancellation.Token).ConfigureAwait(false);
+
+            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(operationCancellation.Token);
+
+            await _appRootNavigator.NavigateToAuthenticatedShellAsync().ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // The user cancelled Google registration or navigated away.
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() =>
+            {
+                HasPendingEmailConfirmation = false;
+                InfoMessage = null;
+                ErrorMessage = ResolveFriendlyError(ex, AppResources.ExternalLoginGoogleFailed);
+            });
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseRegistrationStateChanged();
+                RaiseLegalCommandStates();
             });
             EndCurrentOperation(operationCancellation);
         }
@@ -364,8 +448,10 @@ public sealed class RegisterViewModel : BaseViewModel
     private void RaiseRegistrationStateChanged()
     {
         OnPropertyChanged(nameof(IsRegistrationReady));
+        OnPropertyChanged(nameof(IsExternalRegistrationReady));
         OnPropertyChanged(nameof(RegistrationReadinessMessage));
         RegisterCommand.RaiseCanExecuteChanged();
+        RegisterWithGoogleCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -506,6 +592,7 @@ public sealed class RegisterViewModel : BaseViewModel
     {
         OpenTermsCommand.RaiseCanExecuteChanged();
         OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
+        RegisterWithGoogleCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>

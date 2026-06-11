@@ -13,7 +13,7 @@ Shared API client, route, storage, resilience, and service logic lives in `Darwi
 
 The mobile apps are conditionally usable for implemented workflows. They are not fully store-launch ready until signed release artifacts, production mobile configuration, physical device smoke, push smoke, and camera-based QR validation are complete.
 
-Tizen is out of current launch scope.
+Tizen is out-of-scope for the current launch scope.
 
 ## Consumer App Scope
 
@@ -73,6 +73,7 @@ Business app live operations must respect access state:
 - Google external login client IDs are deployment configuration, not source code constants. Provider tokens must be validated by WebApi and must not be stored or logged by mobile clients.
 - Tokens must be stored through secure storage on supported MAUI targets.
 - Logout/account switch must clear sensitive local state.
+- The SQLite outbox repository remains inactive scaffolding until an offline mutation processor, idempotency, cleanup, and support visibility are implemented.
 - No secrets or PII should be logged.
 
 ## WebApi Dependencies

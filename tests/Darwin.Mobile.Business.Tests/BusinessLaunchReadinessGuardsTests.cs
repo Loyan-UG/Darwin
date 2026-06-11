@@ -30,6 +30,49 @@ public sealed class BusinessLaunchReadinessGuardsTests
     }
 
     [Fact]
+    public void BusinessAndroidManifest_Should_DeclareCameraWithoutMakingHardwareRequired()
+    {
+        var root = FindRepositoryRoot();
+        var manifest = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "Platforms", "Android", "AndroidManifest.xml"));
+
+        manifest.Should().Contain("<uses-permission android:name=\"android.permission.CAMERA\" />");
+        manifest.Should().Contain("<uses-feature android:name=\"android.hardware.camera\" android:required=\"false\" />");
+        manifest.Should().Contain("<uses-feature android:name=\"android.hardware.camera.autofocus\" android:required=\"false\" />");
+    }
+
+    [Fact]
+    public void BusinessApplePlatformFiles_Should_DeclareCameraUsageDescription()
+    {
+        var root = FindRepositoryRoot();
+        var iosInfo = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "Platforms", "iOS", "Info.plist"));
+        var macInfo = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "Platforms", "MacCatalyst", "Info.plist"));
+
+        iosInfo.Should().Contain("NSCameraUsageDescription");
+        iosInfo.Should().Contain("scan customer loyalty QR codes");
+        macInfo.Should().Contain("NSCameraUsageDescription");
+        macInfo.Should().Contain("scan customer loyalty QR codes");
+    }
+
+    [Fact]
+    public void BusinessBrandAssets_Should_Not_Use_DefaultDotNetTemplateArt()
+    {
+        var root = FindRepositoryRoot();
+        var businessRoot = root.Combine("src", "Darwin.Mobile.Business");
+        var project = File.ReadAllText(Path.Combine(businessRoot, "Darwin.Mobile.Business.csproj"));
+        var appIcon = File.ReadAllText(Path.Combine(businessRoot, "Resources", "AppIcon", "appicon.svg"));
+        var splash = File.ReadAllText(Path.Combine(businessRoot, "Resources", "Splash", "splash.svg"));
+
+        project.Should().NotContain("ForegroundFile=\"Resources\\AppIcon\\appiconfg.svg\"");
+        project.Should().NotContain("dotnet_bot.png");
+        File.Exists(Path.Combine(businessRoot, "Resources", "Images", "dotnet_bot.png")).Should().BeFalse();
+        File.Exists(Path.Combine(businessRoot, "Resources", "AppIcon", "appiconfg.svg")).Should().BeFalse();
+        appIcon.Should().Contain("radial-gradient");
+        appIcon.Should().NotContain(">NET<");
+        splash.Should().Contain("radial-gradient");
+        splash.Should().NotContain(">NET<");
+    }
+
+    [Fact]
     public void BusinessSource_Should_Not_Contain_HardcodedGoogleOrFirebaseSecretPatterns()
     {
         var root = FindRepositoryRoot();
@@ -156,6 +199,29 @@ public sealed class BusinessLaunchReadinessGuardsTests
             source.Should().Contain(guardMarker, because: $"{fileName} must enforce Business access-state before live operations");
             source.Should().Contain("GetCurrentAccessStateAsync", because: $"{fileName} must refresh server-backed access-state instead of trusting stale UI state");
         }
+    }
+
+    [Fact]
+    public void BusinessScanner_Should_Not_CancelActiveScan_WhenModalScannerTemporarilyHidesParentPage()
+    {
+        var root = FindRepositoryRoot();
+        var viewModel = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "ViewModels", "ScannerViewModel.cs"));
+
+        viewModel.Should().Contain("Volatile.Write(ref _isScannerInteractionActive, true)");
+        viewModel.Should().Contain("if (!Volatile.Read(ref _isScannerInteractionActive))");
+        viewModel.Should().Contain("CancelActiveScan();");
+    }
+
+    [Fact]
+    public void BusinessScannerPermissionFlow_Should_RequestCameraOnMainThreadWithFallback()
+    {
+        var root = FindRepositoryRoot();
+        var service = File.ReadAllText(root.Combine("src", "Darwin.Mobile.Business", "Services", "Platform", "ScannerPlatformService.cs"));
+
+        service.Should().Contain("MainThread.InvokeOnMainThreadAsync(Permissions.CheckStatusAsync<Permissions.Camera>)");
+        service.Should().Contain("MainThread.InvokeOnMainThreadAsync(Permissions.RequestAsync<Permissions.Camera>)");
+        service.Should().Contain("AppInfo.ShowSettingsUI()");
+        service.Should().Contain("PromptForManualTokenAsync");
     }
 
     [Fact]

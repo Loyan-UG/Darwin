@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ActivationRecoveryPanel } from "@/components/account/activation-recovery-panel";
+import { ExternalSignInPanel } from "@/components/account/external-sign-in-panel";
 import { PublicAuthReturnSummary } from "@/components/account/public-auth-return-summary";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import type { PublicCartSummary } from "@/features/cart/types";
 import { registerMemberAction } from "@/features/account/actions";
+import type { ExternalLoginConfig } from "@/features/member-session/external-login";
 import {
   getMemberResource,
   matchesLocalizedQueryMessageKey,
@@ -18,6 +20,7 @@ type RegisterPageProps = {
   registerError?: string;
   returnPath?: string;
   storefrontCart: PublicCartSummary | null;
+  externalLogin?: ExternalLoginConfig;
 };
 
 export function RegisterPage({
@@ -27,6 +30,7 @@ export function RegisterPage({
   registerError,
   returnPath,
   storefrontCart,
+  externalLogin,
 }: RegisterPageProps) {
   const copy = getMemberResource(culture);
   const resolvedRegisterError = resolveLocalizedQueryMessage(registerError, copy);
@@ -104,6 +108,22 @@ export function RegisterPage({
               {copy.signIn}
             </Link>
           </div>
+
+          <ExternalSignInPanel
+            googleClientId={externalLogin?.googleWebClientId ?? null}
+            googleEnabled={externalLogin?.googleEnabled ?? false}
+            microsoftEnabled={externalLogin?.microsoftEnabled ?? false}
+            allowAccountCreation={true}
+            googleButtonText="signup_with"
+            returnPath={returnPath}
+            labels={{
+              title: copy.externalRegisterTitle,
+              divider: copy.externalRegisterDivider,
+              googleUnavailable: copy.externalLoginGoogleUnavailable,
+              googleFailed: copy.externalLoginGoogleFailedMessage,
+              microsoftComingSoon: copy.externalLoginMicrosoftComingSoon,
+            }}
+          />
         </form>
 
         <aside className="flex flex-col gap-6">

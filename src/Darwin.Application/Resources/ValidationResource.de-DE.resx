@@ -1190,6 +1190,15 @@
   <data name="EmailAddressNotConfirmed" xml:space="preserve">
     <value>Die E-Mail-Adresse ist nicht bestaetigt.</value>
   </data>
+  <data name="ExternalLoginAccountNotFound" xml:space="preserve">
+    <value>Mit diesem externen Konto ist noch kein Darwin-Konto verbunden. Bitte zuerst ein Konto erstellen.</value>
+  </data>
+  <data name="ExternalLoginRequiresVerifiedEmail" xml:space="preserve">
+    <value>Der externe Anbieter hat keine bestaetigte E-Mail-Adresse zurueckgegeben.</value>
+  </data>
+  <data name="InvalidExternalLogin" xml:space="preserve">
+    <value>Die externe Anmeldung konnte nicht verifiziert werden.</value>
+  </data>
   <data name="LoginRequestCancelledOrTimedOut" xml:space="preserve">
     <value>Die Anfrage wurde vom Client abgebrochen oder ist waehrend der Anmeldung abgelaufen.</value>
   </data>
