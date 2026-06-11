@@ -2,6 +2,8 @@
 using Darwin.Application.Abstractions.Invoicing;
 using Darwin.Application.Catalog.Services;
 using Darwin.Application.CRM.Services;
+using Darwin.Application.Foundation;
+using Darwin.Application.Integration;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -67,6 +69,13 @@ namespace Darwin.Application.Extensions
             }
 
             services.AddScoped<IInvoiceArchiveStorage, InvoiceArchiveStorageRouter>();
+            services.AddScoped<CustomFieldService>();
+            services.AddScoped<EntityTimelineService>();
+            services.AddScoped<DocumentRecordService>();
+            services.AddScoped<NumberSequenceService>();
+            services.AddScoped<BusinessEventService>();
+            services.AddScoped<FeatureAreaService>();
+            services.AddScoped<ExternalSystemReferenceService>();
             services.AddSingleton<EInvoiceSourceReadinessValidator>();
             // Default fallback contract: services.AddScoped<IEInvoiceGenerationService, NotConfiguredEInvoiceGenerationService>();
             services.TryAddScoped<IEInvoiceGenerationService, NotConfiguredEInvoiceGenerationService>();

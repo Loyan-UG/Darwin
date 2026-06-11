@@ -1,6 +1,6 @@
 # Darwin Backlog
 
-Reviewed: 2026-06-08
+Reviewed: 2026-06-11
 
 This is the active roadmap. Historical implementation notes belong in [docs/implementation-ledger.md](docs/implementation-ledger.md). Code-backed readiness belongs in [docs/go-live-status.md](docs/go-live-status.md) and [docs/module-audit.md](docs/module-audit.md).
 
@@ -42,6 +42,33 @@ These items require external credentials, deployment configuration, provider acc
 - Validate signed mobile release artifacts and production push/maps configuration outside the repository.
 - Keep business subscription and customer checkout in web/back-office workflows for first mobile launch; mobile apps show status and handoff only.
 - Decide whether to activate mobile SQLite outbox beyond inactive scaffolding. Do not enable offline mutations without processor, idempotency, cleanup, and support visibility.
+
+## ERP Domain Expansion Roadmap
+
+This roadmap captures the first planning track for making Darwin a complete independent ERP while keeping it integration-ready for customers that already use an external ERP, CRM, accounting, warehouse, payroll, or time-tracking system. Darwin must keep English names, its current architecture, and its own canonical model. Do not import legacy framework concepts, customer-specific names, vendor-specific naming, or non-English entity names into Darwin.
+
+The first implementation step is documentation-only: maintain the capability decisions in [docs/domain-expansion/domain-capability-catalog.md](docs/domain-expansion/domain-capability-catalog.md) before changing entities, migrations, API contracts, mobile contracts, or tests.
+
+Execution order:
+
+1. `Mobile and loyalty-safe foundation review`: identify all future domain changes that touch loyalty/mobile launch dependencies first, including `User`, `Business`, `BusinessMember`, `Customer`, `Address`, order/invoice snapshots, WebApi contracts, and mobile contracts. Make required foundation changes before mobile release rather than shipping a contract that will need disruptive redesign.
+2. `Domain capability catalog from product requirements, external-system readiness, and Darwin current model`: classify candidate capabilities as canonical, optional, extension/custom, industry-specific, customer-specific, legacy technical, or deferred.
+3. `Canonical English domain design`: translate accepted capabilities into Darwin-owned English concepts and lifecycle rules. CMS and loyalty core stay outside the general ERP redesign unless a shared foundation or mobile-release change is required; required loyalty/mobile changes must be completed before release, not deferred until after launch.
+4. `Foundation primitives`: add shared primitives such as external-system references, source-of-truth markers, activity/note, attachment, custom-field metadata, number sequences, and feature-area visibility only after catalog decisions are approved.
+5. `CRM expansion`: strengthen account, contact, customer, lead, opportunity, activity, consent, segmentation, and support lifecycle modeling without reintroducing a CRM-owned loyalty ledger.
+6. `Sales and order document model`: define quote, order, delivery, invoice, credit, return, pricing, discount, tax, and status-history concepts with immutable snapshots where required.
+7. `Purchasing and supplier lifecycle`: define supplier, supplier contact, purchase request, purchase order, goods receipt, supplier invoice, supplier pricing, and purchase terms.
+8. `Inventory ledger, warehouse tasks, and mobile/PWA planning`: define warehouse locations, bins, stock items, stock balances, stock ledger entries, reservations, transfers, adjustments, stock counts, lots, serials, handling units, and mobile-first warehouse task workflows. Treat a mobile-first PWA as the default warehouse surface unless device/offline requirements prove a native app is necessary.
+9. `Finance and accounting`: define chart of accounts, accounts, journal entries, tax codes, payment terms, receivables, payables, bank transactions, reconciliation, cost centers, and audit-safe financial state transitions.
+10. `HR and time tracking`: define employee, department, position, employment contract, personnel file, work schedule, attendance event, time entry, absence, leave request, timesheet, and payroll-period concepts. Payroll implementation remains later-phase unless a deployment requires it.
+11. `AI-readiness and automation governance`: prepare audit trails, business events, scoped data access, sensitive-field classification, recommendation records, action drafts, and approval-required AI execution paths. AI must propose or draft operational actions before normal application commands execute them.
+
+Storage rules:
+
+- Use real columns for common, reportable, filterable, compliance-relevant, accounting-relevant, inventory-relevant, integration-key, or cross-module fields.
+- Use custom fields or JSON for customer-specific, uncertain, low-frequency, provider-specific payload, industry-specific, or unstructured metadata.
+- Keep `ExternalSystem`, `ExternalReference`, `SourceOfTruth`, `SyncState`, and `SyncConflict` visible in the design for integration with external ERP/CRM/accounting systems even when Darwin is the primary ERP.
+- Keep module separation logical through UI navigation, permissions, feature visibility, and clear ownership rules. Do not split projects or databases solely to model modules.
 
 ## Later-Phase Tasks
 

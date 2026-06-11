@@ -5,6 +5,7 @@ using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
+using Darwin.Domain.Entities.Foundation;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Marketing;
@@ -113,6 +114,8 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
         public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
         public DbSet<EventLog> EventLogs => Set<EventLog>();
+        public DbSet<ExternalSystem> ExternalSystems => Set<ExternalSystem>();
+        public DbSet<ExternalReference> ExternalReferences => Set<ExternalReference>();
         public DbSet<EmailDispatchOperation> EmailDispatchOperations => Set<EmailDispatchOperation>();
         public DbSet<ChannelDispatchOperation> ChannelDispatchOperations => Set<ChannelDispatchOperation>();
         public DbSet<ProviderCallbackInboxMessage> ProviderCallbackInboxMessages => Set<ProviderCallbackInboxMessage>();
@@ -121,6 +124,18 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<ChannelDispatchAudit> ChannelDispatchAudits => Set<ChannelDispatchAudit>();
         public DbSet<RedirectRule> RedirectRules => Set<RedirectRule>();
         public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
+
+        // Foundation
+        public DbSet<CustomFieldDefinition> CustomFieldDefinitions => Set<CustomFieldDefinition>();
+        public DbSet<CustomFieldValue> CustomFieldValues => Set<CustomFieldValue>();
+        public DbSet<Activity> Activities => Set<Activity>();
+        public DbSet<Note> Notes => Set<Note>();
+        public DbSet<DocumentRecord> DocumentRecords => Set<DocumentRecord>();
+        public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
+        public DbSet<BusinessEvent> BusinessEvents => Set<BusinessEvent>();
+        public DbSet<AuditTrail> AuditTrails => Set<AuditTrail>();
+        public DbSet<FeatureArea> FeatureAreas => Set<FeatureArea>();
+        public DbSet<BusinessFeatureOverride> BusinessFeatureOverrides => Set<BusinessFeatureOverride>();
 
         /// <summary>
         /// Export jobs requested by business users.
@@ -411,6 +426,54 @@ namespace Darwin.Infrastructure.Persistence.Db
                 b.Property(x => x.LastTouchUtmJson).HasColumnType("jsonb");
                 b.Property(x => x.ExternalIdsJson).HasColumnType("jsonb");
             });
+
+            modelBuilder.Entity<ExternalSystem>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<ExternalReference>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<CustomFieldDefinition>(b =>
+            {
+                b.Property(x => x.ValidationJson).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<CustomFieldValue>(b =>
+            {
+                b.Property(x => x.JsonValue).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<Activity>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<Note>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<DocumentRecord>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<NumberSequence>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<BusinessEvent>(b =>
+            {
+                b.Property(x => x.PayloadJson).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<AuditTrail>(b =>
+            {
+                b.Property(x => x.ChangeSetJson).HasColumnType("jsonb");
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb");
+            });
+
+            modelBuilder.Entity<FeatureArea>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
+
+            modelBuilder.Entity<BusinessFeatureOverride>(b =>
+                b.Property(x => x.MetadataJson).HasColumnType("jsonb"));
         }
     }
 }

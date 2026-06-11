@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Common;
+using Darwin.Application.Common.Addresses;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
@@ -134,48 +135,26 @@ namespace Darwin.Application.CRM.Queries
 
                 if (user?.DefaultBillingAddressId is Guid billingAddressId)
                 {
-                    billingAddress = await _db.Set<Address>()
+                    var billingAddressEntity = await _db.Set<Address>()
                         .AsNoTracking()
                         .Where(x => x.Id == billingAddressId)
-                        .Select(x => new IdentityAddressSummaryDto
-                        {
-                            Id = x.Id,
-                            FullName = x.FullName,
-                            Street1 = x.Street1,
-                            Street2 = x.Street2,
-                            PostalCode = x.PostalCode,
-                            City = x.City,
-                            State = x.State,
-                            CountryCode = x.CountryCode,
-                            PhoneE164 = x.PhoneE164,
-                            IsDefaultBilling = x.IsDefaultBilling,
-                            IsDefaultShipping = x.IsDefaultShipping
-                        })
                         .FirstOrDefaultAsync(ct)
                         .ConfigureAwait(false);
+                    billingAddress = billingAddressEntity is null
+                        ? null
+                        : CanonicalAddressMapper.ToIdentityAddressSummaryDto(billingAddressEntity);
                 }
 
                 if (user?.DefaultShippingAddressId is Guid shippingAddressId)
                 {
-                    shippingAddress = await _db.Set<Address>()
+                    var shippingAddressEntity = await _db.Set<Address>()
                         .AsNoTracking()
                         .Where(x => x.Id == shippingAddressId)
-                        .Select(x => new IdentityAddressSummaryDto
-                        {
-                            Id = x.Id,
-                            FullName = x.FullName,
-                            Street1 = x.Street1,
-                            Street2 = x.Street2,
-                            PostalCode = x.PostalCode,
-                            City = x.City,
-                            State = x.State,
-                            CountryCode = x.CountryCode,
-                            PhoneE164 = x.PhoneE164,
-                            IsDefaultBilling = x.IsDefaultBilling,
-                            IsDefaultShipping = x.IsDefaultShipping
-                        })
                         .FirstOrDefaultAsync(ct)
                         .ConfigureAwait(false);
+                    shippingAddress = shippingAddressEntity is null
+                        ? null
+                        : CanonicalAddressMapper.ToIdentityAddressSummaryDto(shippingAddressEntity);
                 }
             }
 
@@ -220,19 +199,7 @@ namespace Darwin.Application.CRM.Queries
                     .OrderByDescending(x => x.IsDefaultBilling)
                     .ThenByDescending(x => x.IsDefaultShipping)
                     .ThenBy(x => x.City)
-                    .Select(x => new CustomerAddressDto
-                    {
-                        Id = x.Id,
-                        AddressId = x.AddressId,
-                        Line1 = x.Line1,
-                        Line2 = x.Line2,
-                        City = x.City,
-                        State = x.State,
-                        PostalCode = x.PostalCode,
-                        Country = x.Country,
-                        IsDefaultBilling = x.IsDefaultBilling,
-                        IsDefaultShipping = x.IsDefaultShipping
-                    })
+                    .Select(CanonicalAddressMapper.ToCustomerAddressDto)
                     .ToList()
             };
         }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common.Addresses;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
@@ -43,16 +44,7 @@ namespace Darwin.Application.Identity.Commands
             if (rowVersion.Length == 0 || !currentVersion.SequenceEqual(rowVersion))
                 return Result.Fail(_localizer["ConcurrencyConflict"]);
 
-            // Update fields
-            address.FullName = dto.FullName;
-            address.Company = dto.Company;
-            address.Street1 = dto.Street1;
-            address.Street2 = dto.Street2;
-            address.PostalCode = dto.PostalCode;
-            address.City = dto.City;
-            address.State = dto.State;
-            address.CountryCode = dto.CountryCode;
-            address.PhoneE164 = dto.PhoneE164;
+            CanonicalAddressMapper.ApplyToAddress(address, CanonicalAddressMapper.FromAddressDto(dto));
 
             // Handle default flags uniqueness per user
             if (address.UserId is not null)

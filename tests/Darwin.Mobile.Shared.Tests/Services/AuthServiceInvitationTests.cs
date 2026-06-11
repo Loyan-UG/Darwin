@@ -53,6 +53,36 @@ public sealed class AuthServiceInvitationTests
     }
 
     [Fact]
+    public async Task GetBusinessInvitationPreviewAsync_Should_TrimAndEscapeInvitationToken()
+    {
+        var api = new FakeApiClient
+        {
+            OnGetResultAsync = route =>
+            {
+                route.Should().Be($"{ApiRoutes.BusinessAuth.PreviewInvitation}?token=invite%20token%2Fplus%2Bvalue");
+                return Result<BusinessInvitationPreviewResponse>.Ok(new BusinessInvitationPreviewResponse
+                {
+                    InvitationId = Guid.NewGuid(),
+                    BusinessId = Guid.NewGuid(),
+                    BusinessName = "Cafe Morgenrot",
+                    Email = "operator@morgenrot.de",
+                    Role = "Owner",
+                    Status = "Pending",
+                    ExpiresAtUtc = new DateTime(2030, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                    HasExistingUser = false
+                });
+            }
+        };
+
+        var service = CreateService(api);
+
+        var preview = await service.GetBusinessInvitationPreviewAsync("  invite token/plus+value  ", TestContext.Current.CancellationToken);
+
+        preview.Should().NotBeNull();
+        preview!.BusinessName.Should().Be("Cafe Morgenrot");
+    }
+
+    [Fact]
     public async Task AcceptBusinessInvitationAsync_Should_SaveTokens_AndLoadBootstrap()
     {
         var accessToken = CreateBusinessJwt(Guid.Parse("11111111-2222-3333-4444-555555555555"));
@@ -307,6 +337,120 @@ public sealed class AuthServiceInvitationTests
             "member@darwin.de",
             "S3cret!",
             deviceId: null,
+            TestContext.Current.CancellationToken);
+
+        bootstrap.JwtAudience.Should().Be("Darwin.PublicApi");
+        tokenStore.AccessToken.Should().Be(accessToken);
+        api.LastBearerToken.Should().Be(accessToken);
+    }
+
+    [Fact]
+    public async Task AcceptBusinessInvitationAsync_Should_TrimToken_AndPreferExplicitDeviceId()
+    {
+        var accessToken = CreateBusinessJwt(Guid.Parse("22222222-3333-4444-5555-666666666666"));
+        var tokenStore = new FakeTokenStore();
+        var api = new FakeApiClient
+        {
+            OnPostResultAsync = (route, request) =>
+            {
+                route.Should().Be(ApiRoutes.BusinessAuth.AcceptInvitation);
+                request.Should().BeOfType<AcceptBusinessInvitationRequest>();
+
+                var payload = (AcceptBusinessInvitationRequest)request;
+                payload.Token.Should().Be("invite-token");
+                payload.DeviceId.Should().Be("explicit-device");
+
+                return Result<TokenResponse>.Ok(new TokenResponse
+                {
+                    AccessToken = accessToken,
+                    AccessTokenExpiresAtUtc = new DateTime(2030, 1, 1, 12, 0, 0, DateTimeKind.Utc),
+                    RefreshToken = "refresh-token",
+                    RefreshTokenExpiresAtUtc = new DateTime(2030, 1, 8, 12, 0, 0, DateTimeKind.Utc),
+                    UserId = Guid.NewGuid(),
+                    Email = "operator@morgenrot.de"
+                });
+            },
+            OnGetAsync = route =>
+            {
+                route.Should().Be(ApiRoutes.Meta.Bootstrap);
+                return new AppBootstrapResponse
+                {
+                    JwtAudience = "Darwin.PublicApi",
+                    MaxOutboxItems = 77,
+                    QrTokenRefreshSeconds = 33
+                };
+            }
+        };
+
+        var service = CreateService(api, tokenStore);
+
+        var bootstrap = await service.AcceptBusinessInvitationAsync(
+            new AcceptBusinessInvitationRequest
+            {
+                Token = " invite-token ",
+                DeviceId = "ignored-request-device",
+                FirstName = "Greta",
+                LastName = "Sommer",
+                Password = "Business123!"
+            },
+            deviceId: " explicit-device ",
+            TestContext.Current.CancellationToken);
+
+        bootstrap.JwtAudience.Should().Be("Darwin.PublicApi");
+        tokenStore.AccessToken.Should().Be(accessToken);
+        api.LastBearerToken.Should().Be(accessToken);
+    }
+
+    [Fact]
+    public async Task LoginWithExternalProviderAsync_Should_UseCanonicalMemberRoute_And_ResolveDeviceId()
+    {
+        var accessToken = CreateBusinessJwt(Guid.Parse("22222222-3333-4444-5555-666666666666"));
+        var api = new FakeApiClient
+        {
+            OnPostResultAsync = (route, request) =>
+            {
+                route.Should().Be(ApiRoutes.Auth.ExternalLogin);
+                request.Should().BeOfType<ExternalLoginRequest>();
+
+                var payload = (ExternalLoginRequest)request;
+                payload.Provider.Should().Be("Google");
+                payload.IdToken.Should().Be("id-token");
+                payload.DeviceId.Should().Be("device-42");
+                payload.BusinessId.Should().Be(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
+                payload.AllowAccountCreation.Should().BeTrue();
+
+                return Result<TokenResponse>.Ok(new TokenResponse
+                {
+                    AccessToken = accessToken,
+                    AccessTokenExpiresAtUtc = new DateTime(2030, 1, 1, 12, 0, 0, DateTimeKind.Utc),
+                    RefreshToken = "external-refresh-token",
+                    RefreshTokenExpiresAtUtc = new DateTime(2030, 1, 8, 12, 0, 0, DateTimeKind.Utc),
+                    UserId = Guid.NewGuid(),
+                    Email = "member@darwin.de"
+                });
+            },
+            OnGetAsync = _ =>
+            {
+                return new AppBootstrapResponse
+                {
+                    JwtAudience = "Darwin.PublicApi",
+                    MaxOutboxItems = 9,
+                    QrTokenRefreshSeconds = 77
+                };
+            }
+        };
+        var tokenStore = new FakeTokenStore();
+        var service = CreateService(api, tokenStore);
+
+        var bootstrap = await service.LoginWithExternalProviderAsync(
+            new ExternalLoginRequest
+            {
+                Provider = "Google",
+                IdToken = "id-token",
+                DeviceId = " ",
+                BusinessId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                AllowAccountCreation = true
+            },
             TestContext.Current.CancellationToken);
 
         bootstrap.JwtAudience.Should().Be("Darwin.PublicApi");

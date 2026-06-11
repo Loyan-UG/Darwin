@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application;
+using Darwin.Application.Common.Addresses;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
@@ -38,29 +39,16 @@ namespace Darwin.Application.Identity.Queries
             if (user is null)
                 return Result<UserWithAddressesEditDto>.Fail(_localizer["UserNotFound"]);
 
-            var addresses = await _db.Set<Address>()
+            var addressEntities = await _db.Set<Address>()
                 .AsNoTracking()
                 .Where(a => a.UserId == userId && !a.IsDeleted)
                 .OrderByDescending(a => a.IsDefaultShipping)
                 .ThenByDescending(a => a.IsDefaultBilling)
                 .ThenBy(a => a.City)
-                .Select(a => new AddressListItemDto
-                {
-                    Id = a.Id,
-                    RowVersion = a.RowVersion,
-                    FullName = a.FullName,
-                    Company = a.Company,
-                    Street1 = a.Street1,
-                    Street2 = a.Street2,
-                    PostalCode = a.PostalCode,
-                    City = a.City,
-                    State = a.State,
-                    CountryCode = a.CountryCode,
-                    PhoneE164 = a.PhoneE164,
-                    IsDefaultBilling = a.IsDefaultBilling,
-                    IsDefaultShipping = a.IsDefaultShipping
-                })
                 .ToArrayAsync(ct);
+            var addresses = addressEntities
+                .Select(CanonicalAddressMapper.ToAddressListItemDto)
+                .ToArray();
 
             var dto = new UserWithAddressesEditDto
             {

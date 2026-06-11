@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Common.Addresses;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
@@ -41,18 +42,10 @@ namespace Darwin.Application.Identity.Commands
             var address = new Address
             {
                 UserId = dto.UserId,
-                FullName = dto.FullName,
-                Company = dto.Company,
-                Street1 = dto.Street1,
-                Street2 = dto.Street2,
-                PostalCode = dto.PostalCode,
-                City = dto.City,
-                State = dto.State,
-                CountryCode = dto.CountryCode,
-                PhoneE164 = dto.PhoneE164,
                 IsDefaultBilling = dto.IsDefaultBilling,
                 IsDefaultShipping = dto.IsDefaultShipping
             };
+            CanonicalAddressMapper.ApplyToAddress(address, CanonicalAddressMapper.FromAddressDto(dto));
 
             _db.Set<Address>().Add(address);
 

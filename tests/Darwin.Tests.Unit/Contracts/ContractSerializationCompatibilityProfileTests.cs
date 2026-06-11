@@ -257,4 +257,38 @@ public sealed class ContractSerializationCompatibilityProfileTests : ContractSer
         json.Should().Contain("\"currency\"");
         json.Should().Contain("\"rowVersion\"");
     }
+
+    [Fact]
+    public void PhoneVerificationContracts_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var request = new RequestPhoneVerificationRequest
+        {
+            Channel = "sms"
+        };
+
+        var confirm = new ConfirmPhoneVerificationRequest
+        {
+            Code = "123456"
+        };
+
+        var requestJson = JsonSerializer.Serialize(request, JsonOptions);
+        var confirmJson = JsonSerializer.Serialize(confirm, JsonOptions);
+
+        requestJson.Should().Contain("\"channel\"");
+        confirmJson.Should().Contain("\"code\"");
+        requestJson.Should().NotContain("\"phone\"");
+        confirmJson.Should().NotContain("\"token\"");
+    }
+
+    [Fact]
+    public void RequestAccountDeletionRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var request = new RequestAccountDeletionRequest(ConfirmIrreversibleDeletion: true);
+
+        var json = JsonSerializer.Serialize(request, JsonOptions);
+
+        json.Should().Contain("\"confirmIrreversibleDeletion\"");
+        json.Should().NotContain("\"hardDelete\"");
+        json.Should().NotContain("\"deleteNow\"");
+    }
 }

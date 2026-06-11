@@ -96,6 +96,7 @@ public sealed class ContractSerializationCompatibilityLoyaltyAndBusinessTests : 
         json.Should().Contain("\"expiresAtUtc\"");
         json.Should().Contain("\"currentPointsBalance\"");
         json.Should().Contain("\"selectedRewards\"");
+        AssertDoesNotExposeInternalScanIdentifiers(json);
     }
 
 /// <summary>
@@ -133,6 +134,7 @@ public sealed class ContractSerializationCompatibilityLoyaltyAndBusinessTests : 
         json.Should().Contain("\"customerDisplayName\"");
         json.Should().Contain("\"selectedRewards\"");
         json.Should().Contain("\"allowedActions\"");
+        AssertDoesNotExposeInternalScanIdentifiers(json);
     }
 
 /// <summary>
@@ -375,6 +377,49 @@ public sealed class ContractSerializationCompatibilityLoyaltyAndBusinessTests : 
         json.Should().Contain("\"pointsDelta\"");
         json.Should().Contain("\"pointsSpent\"");
         json.Should().Contain("\"reference\"");
+        AssertDoesNotExposeInternalScanIdentifiers(json);
+    }
+
+    [Fact]
+    public void LoyaltyMobileScanContracts_Should_Not_ExposeInternalScanIdentifiers()
+    {
+        var prepare = new PrepareScanSessionResponse
+        {
+            ScanSessionToken = "opaque-session-token",
+            Mode = LoyaltyScanMode.Accrual,
+            ExpiresAtUtc = new DateTime(2030, 1, 1, 12, 0, 0, DateTimeKind.Utc),
+            CurrentPointsBalance = 50
+        };
+
+        var process = new ProcessScanSessionForBusinessResponse
+        {
+            Mode = LoyaltyScanMode.Accrual,
+            BusinessId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            BusinessLocationId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            CustomerDisplayName = "Member #104",
+            AccountSummary = new BusinessLoyaltyAccountSummary
+            {
+                LoyaltyAccountId = Guid.Parse("22222222-3333-4444-5555-666666666666"),
+                PointsBalance = 50,
+                CustomerDisplayName = "Member #104"
+            },
+            AllowedActions = LoyaltyScanAllowedActions.CanConfirmAccrual
+        };
+
+        var timelineEntry = new LoyaltyTimelineEntry
+        {
+            Id = Guid.Parse("33333333-4444-5555-6666-777777777777"),
+            Kind = LoyaltyTimelineEntryKind.PointsTransaction,
+            LoyaltyAccountId = Guid.Parse("44444444-5555-6666-7777-888888888888"),
+            BusinessId = Guid.Parse("55555555-6666-7777-8888-999999999999"),
+            OccurredAtUtc = new DateTime(2030, 1, 1, 13, 0, 0, DateTimeKind.Utc),
+            PointsDelta = 10,
+            Reference = "Accrual"
+        };
+
+        AssertDoesNotExposeInternalScanIdentifiers(JsonSerializer.Serialize(prepare, JsonOptions));
+        AssertDoesNotExposeInternalScanIdentifiers(JsonSerializer.Serialize(process, JsonOptions));
+        AssertDoesNotExposeInternalScanIdentifiers(JsonSerializer.Serialize(timelineEntry, JsonOptions));
     }
 
 /// <summary>
@@ -1103,5 +1148,12 @@ public sealed class ContractSerializationCompatibilityLoyaltyAndBusinessTests : 
     {
         Enum.IsDefined(eventType).Should().BeTrue(
             "valid PromotionInteractionEventType values must pass the Enum.IsDefined guard in the WebApi controller");
+    }
+
+    private static void AssertDoesNotExposeInternalScanIdentifiers(string json)
+    {
+        json.Should().NotContain("\"scanSessionId\"");
+        json.Should().NotContain("\"qrCodeTokenId\"");
+        json.Should().NotContain("\"userId\"");
     }
 }

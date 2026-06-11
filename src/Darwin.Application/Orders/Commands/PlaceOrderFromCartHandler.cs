@@ -3,6 +3,8 @@ using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CartCheckout.Queries;
+using Darwin.Application.Common.Addresses;
+using Darwin.Application.Foundation;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
@@ -24,6 +26,7 @@ public sealed class PlaceOrderFromCartHandler
     private readonly ComputeCartSummaryHandler _computeCartSummaryHandler;
     private readonly Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler _createStorefrontCheckoutIntentHandler;
     private readonly IStringLocalizer<ValidationResource> _localizer;
+    private readonly NumberSequenceService? _numberSequenceService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlaceOrderFromCartHandler"/> class.
@@ -32,13 +35,16 @@ public sealed class PlaceOrderFromCartHandler
         IAppDbContext db,
         ComputeCartSummaryHandler computeCartSummaryHandler,
         Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler createStorefrontCheckoutIntentHandler,
-        IStringLocalizer<ValidationResource>? localizer = null, IClock? clock = null)
+        IStringLocalizer<ValidationResource>? localizer = null,
+        IClock? clock = null,
+        NumberSequenceService? numberSequenceService = null)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _clock = clock ?? DefaultHandlerDependencies.DefaultClock;
         _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
         _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
         _localizer = localizer ?? DefaultHandlerDependencies.DefaultLocalizer;
+        _numberSequenceService = numberSequenceService;
     }
 
     /// <summary>
@@ -59,9 +65,14 @@ public sealed class PlaceOrderFromCartHandler
 
         var cart = await _db.Set<Cart>()
             .Include(x => x.Items)
-            .FirstOrDefaultAsync(x => x.Id == dto.CartId && !x.IsDeleted, ct)
+            .FirstOrDefaultAsync(x => x.Id == dto.CartId, ct)
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException(_localizer["CartNotFound"]);
+
+        if (cart.IsDeleted)
+        {
+            throw new InvalidOperationException(_localizer["CartAlreadyCheckedOut"]);
+        }
 
         if (cart.UserId.HasValue && dto.UserId != cart.UserId)
         {
@@ -249,18 +260,8 @@ public sealed class PlaceOrderFromCartHandler
                 throw new InvalidOperationException(_localizer["SavedAddressNotFound", role]);
             }
 
-            return JsonSerializer.Serialize(new CheckoutAddressDto
-            {
-                FullName = address.FullName,
-                Company = address.Company,
-                Street1 = address.Street1,
-                Street2 = address.Street2,
-                PostalCode = address.PostalCode,
-                City = address.City,
-                State = address.State,
-                CountryCode = address.CountryCode,
-                PhoneE164 = address.PhoneE164
-            });
+            return JsonSerializer.Serialize(
+                CanonicalAddressMapper.ToCheckoutAddressDto(CanonicalAddressMapper.FromAddress(address)));
         }
 
         if (inlineAddress is null)
@@ -269,7 +270,8 @@ public sealed class PlaceOrderFromCartHandler
         }
 
         ValidateInlineAddress(inlineAddress, role);
-        return JsonSerializer.Serialize(inlineAddress);
+        return JsonSerializer.Serialize(
+            CanonicalAddressMapper.ToCheckoutAddressDto(CanonicalAddressMapper.FromCheckoutAddress(inlineAddress)));
     }
 
     private void ValidateInlineAddress(CheckoutAddressDto address, string role)
@@ -286,12 +288,24 @@ public sealed class PlaceOrderFromCartHandler
 
     private async Task<string> NextOrderNumberAsync(CancellationToken ct)
     {
+        if (_numberSequenceService is not null)
+        {
+            var reserved = await _numberSequenceService.ReserveNextAsync(
+                new NumberSequenceRequest(null, NumberSequenceDocumentType.Order, NumberSequenceService.GlobalScopeKey),
+                ct)
+                .ConfigureAwait(false);
+            if (reserved.Succeeded && !string.IsNullOrWhiteSpace(reserved.Value))
+            {
+                return reserved.Value;
+            }
+        }
+
         var nowUtc = _clock.UtcNow;
 
         for (var attempt = 0; attempt < 5; attempt++)
         {
             var suffix = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)[..6].ToUpperInvariant();
-            var candidate = $"D-{nowUtc:yyyyMMdd-HHmmssfff}-{suffix}";
+            var candidate = $"D-{nowUtc:yyyyMMdd}-{suffix}";
             var exists = await _db.Set<Order>()
                 .AsNoTracking()
                 .AnyAsync(x => !x.IsDeleted && x.OrderNumber == candidate, ct)
@@ -303,7 +317,7 @@ public sealed class PlaceOrderFromCartHandler
             }
         }
 
-        return $"D-{nowUtc:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}"[..50].ToUpperInvariant();
+        return $"D-{nowUtc:yyyyMMdd}-{Guid.NewGuid():N}"[..50].ToUpperInvariant();
     }
 
     private static string BuildSummaryKey(Guid variantId, string? selectedAddOnValueIdsJson)

@@ -64,6 +64,48 @@ public sealed class LoyaltyServiceTests
     }
 
     [Fact]
+    public async Task PrepareScanSessionAsync_Should_SendSelectedRewardTierIds_WithoutChangingRoute()
+    {
+        var rewardIds = new[]
+        {
+            Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            Guid.Parse("66666666-7777-8888-9999-aaaaaaaaaaaa")
+        };
+
+        var apiClient = new FakeApiClient
+        {
+            OnPostResultAsync = (route, request, _) =>
+            {
+                route.Should().Be(ApiRoutes.Loyalty.PrepareScanSession);
+                request.Should().BeOfType<PrepareScanSessionRequest>();
+
+                var payload = (PrepareScanSessionRequest)request;
+                payload.Mode.Should().Be(LoyaltyScanMode.Redemption);
+                payload.SelectedRewardTierIds.Should().Equal(rewardIds);
+
+                return Task.FromResult<object?>(Result<PrepareScanSessionResponse>.Ok(new PrepareScanSessionResponse
+                {
+                    ScanSessionToken = "token_123",
+                    ExpiresAtUtc = new DateTime(2030, 1, 1, 12, 0, 0, DateTimeKind.Utc),
+                    Mode = LoyaltyScanMode.Redemption,
+                    CurrentPointsBalance = 250
+                }));
+            }
+        };
+
+        var service = CreateService(apiClient, TimeProvider.System);
+
+        var result = await service.PrepareScanSessionAsync(
+            Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            LoyaltyScanMode.Redemption,
+            rewardIds,
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.Mode.Should().Be(LoyaltyScanMode.Redemption);
+    }
+
+    [Fact]
     public async Task PrepareScanSessionAsync_Should_Fail_WhenTokenIsMissing()
     {
         var apiClient = new FakeApiClient
@@ -351,6 +393,35 @@ public sealed class LoyaltyServiceTests
     }
 
     [Fact]
+    public async Task ConfirmAccrualAsync_Should_ReturnFailure_WhenServerReturnsFailurePayload()
+    {
+        var apiClient = new FakeApiClient
+        {
+            OnPostResultAsync = (route, request, _) =>
+            {
+                route.Should().Be(ApiRoutes.Loyalty.ConfirmAccrual);
+                request.Should().BeOfType<ConfirmAccrualRequest>();
+
+                return Task.FromResult<object?>(Result<ConfirmAccrualResponse>.Ok(new ConfirmAccrualResponse
+                {
+                    Success = false,
+                    ErrorCode = "SESSION_EXPIRED",
+                    ErrorMessage = "Session has expired.",
+                    NewBalance = 999
+                }));
+            }
+        };
+
+        var service = CreateService(apiClient, TimeProvider.System);
+
+        var result = await service.ConfirmAccrualAsync("token", 12, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("Session has expired. (code: SESSION_EXPIRED)");
+        result.Value.Should().BeNull();
+    }
+
+    [Fact]
     public async Task ConfirmRedemptionAsync_Should_Fail_WhenSessionTokenIsMissing()
     {
         var service = CreateService(new FakeApiClient(), TimeProvider.System);
@@ -390,6 +461,35 @@ public sealed class LoyaltyServiceTests
     }
 
     [Fact]
+    public async Task ConfirmRedemptionAsync_Should_ReturnFailure_WhenServerReturnsFailurePayload()
+    {
+        var apiClient = new FakeApiClient
+        {
+            OnPostResultAsync = (route, request, _) =>
+            {
+                route.Should().Be(ApiRoutes.Loyalty.ConfirmRedemption);
+                request.Should().BeOfType<ConfirmRedemptionRequest>();
+
+                return Task.FromResult<object?>(Result<ConfirmRedemptionResponse>.Ok(new ConfirmRedemptionResponse
+                {
+                    Success = false,
+                    ErrorCode = "INSUFFICIENT_POINTS",
+                    ErrorMessage = "Insufficient points.",
+                    NewBalance = 999
+                }));
+            }
+        };
+
+        var service = CreateService(apiClient, TimeProvider.System);
+
+        var result = await service.ConfirmRedemptionAsync("token", TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("Insufficient points. (code: INSUFFICIENT_POINTS)");
+        result.Value.Should().BeNull();
+    }
+
+    [Fact]
     public async Task ConfirmRedemptionAsync_Should_ReturnNetworkFailure_OnException()
     {
         var apiClient = new FakeApiClient
@@ -420,9 +520,14 @@ public sealed class LoyaltyServiceTests
     {
         var apiClient = new FakeApiClient
         {
-            OnPostResultAsync = (route, _, _) =>
+            OnPostResultAsync = (route, request, _) =>
             {
                 route.Should().Be("api/v1/business/loyalty/scan/process");
+                request.Should().BeOfType<ProcessScanSessionForBusinessRequest>();
+
+                var payload = (ProcessScanSessionForBusinessRequest)request;
+                payload.ScanSessionToken.Should().Be("token_123");
+
                 return Task.FromResult<object?>(Result<ProcessScanSessionForBusinessResponse>.Ok(new ProcessScanSessionForBusinessResponse
                 {
                     Mode = LoyaltyScanMode.Accrual,
@@ -437,10 +542,11 @@ public sealed class LoyaltyServiceTests
 
         var service = CreateService(apiClient, TimeProvider.System);
 
-        var result = await service.ProcessScanSessionForBusinessAsync("token_123", TestContext.Current.CancellationToken);
+        var result = await service.ProcessScanSessionForBusinessAsync("  token_123  ", TestContext.Current.CancellationToken);
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
+        result.Value!.Token.Should().Be("token_123");
         result.Value!.CanConfirmAccrual.Should().BeTrue();
         result.Value.CanConfirmRedemption.Should().BeFalse();
     }

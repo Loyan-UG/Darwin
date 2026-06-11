@@ -2,6 +2,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Abstractions.Compliance;
 using Darwin.Application;
+using Darwin.Application.Common.Addresses;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
@@ -53,28 +54,12 @@ namespace Darwin.Application.CRM.Commands
                 TaxProfileType = dto.TaxProfileType,
                 VatId = NormalizeOptional(dto.VatId),
                 Notes = NormalizeOptional(dto.Notes),
-                Addresses = dto.Addresses.Select(MapAddress).ToList()
+                Addresses = dto.Addresses.Select(CanonicalAddressMapper.ToCustomerAddress).ToList()
             };
 
             _db.Set<Customer>().Add(customer);
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
             return customer.Id;
-        }
-
-        private static CustomerAddress MapAddress(CustomerAddressDto dto)
-        {
-            return new CustomerAddress
-            {
-                AddressId = dto.AddressId,
-                Line1 = dto.Line1.Trim(),
-                Line2 = NormalizeOptional(dto.Line2),
-                City = dto.City.Trim(),
-                State = NormalizeOptional(dto.State),
-                PostalCode = dto.PostalCode.Trim(),
-                Country = dto.Country.Trim(),
-                IsDefaultBilling = dto.IsDefaultBilling,
-                IsDefaultShipping = dto.IsDefaultShipping
-            };
         }
 
         private static string? NormalizeOptional(string? value) =>
@@ -169,19 +154,11 @@ namespace Darwin.Application.CRM.Commands
 
                 if (existingAddress is null)
                 {
-                    customer.Addresses.Add(MapAddress(addressDto));
+                    customer.Addresses.Add(CanonicalAddressMapper.ToCustomerAddress(addressDto));
                     continue;
                 }
 
-                existingAddress.AddressId = addressDto.AddressId;
-                existingAddress.Line1 = addressDto.Line1.Trim();
-                existingAddress.Line2 = NormalizeOptional(addressDto.Line2);
-                existingAddress.City = addressDto.City.Trim();
-                existingAddress.State = NormalizeOptional(addressDto.State);
-                existingAddress.PostalCode = addressDto.PostalCode.Trim();
-                existingAddress.Country = addressDto.Country.Trim();
-                existingAddress.IsDefaultBilling = addressDto.IsDefaultBilling;
-                existingAddress.IsDefaultShipping = addressDto.IsDefaultShipping;
+                CanonicalAddressMapper.ApplyToCustomerAddress(existingAddress, addressDto);
             }
 
             try
@@ -192,22 +169,6 @@ namespace Darwin.Application.CRM.Commands
             {
                 throw new DbUpdateConcurrencyException(_localizer["ConcurrencyConflictDetected"]);
             }
-        }
-
-        private static CustomerAddress MapAddress(CustomerAddressDto dto)
-        {
-            return new CustomerAddress
-            {
-                AddressId = dto.AddressId,
-                Line1 = dto.Line1.Trim(),
-                Line2 = NormalizeOptional(dto.Line2),
-                City = dto.City.Trim(),
-                State = NormalizeOptional(dto.State),
-                PostalCode = dto.PostalCode.Trim(),
-                Country = dto.Country.Trim(),
-                IsDefaultBilling = dto.IsDefaultBilling,
-                IsDefaultShipping = dto.IsDefaultShipping
-            };
         }
 
         private static string? NormalizeOptional(string? value) =>

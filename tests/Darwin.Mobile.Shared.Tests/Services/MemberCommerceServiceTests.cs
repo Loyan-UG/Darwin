@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Common;
@@ -179,6 +181,47 @@ public sealed class MemberCommerceServiceTests
         result.Succeeded.Should().BeTrue();
         result.Value.Should().BeSameAs(usableOrders);
         apiClient.GetResultAsyncCallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetMyOrdersAsync_Should_UseMemberScopedCacheKey_WhenTokenSubjectExists()
+    {
+        var cache = new FakeMobileCacheService();
+        var cachedOrders = new PagedResponse<MemberOrderSummary>
+        {
+            Total = 1,
+            Items =
+            [
+                new MemberOrderSummary
+                {
+                    Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                    OrderNumber = "ORD-1001",
+                    Status = "Completed"
+                }
+            ],
+            Request = new PagedRequest
+            {
+                Page = 1,
+                PageSize = 20
+            }
+        };
+
+        cache.SetFresh("commerce.orders:1:20:member-subject-1", cachedOrders);
+        var apiClient = new FakeApiClient
+        {
+            OnGetResultAsync = (_, _) => throw new InvalidOperationException("API should not be called.")
+        };
+        var tokenStore = new FakeTokenStore
+        {
+            AccessToken = CreateJwtWithSubject("member-subject-1")
+        };
+        var service = CreateService(apiClient, cache, tokenStore);
+
+        var result = await service.GetMyOrdersAsync(1, 20, TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value.Should().BeSameAs(cachedOrders);
+        apiClient.GetResultAsyncCallCount.Should().Be(0);
     }
 
     [Fact]
@@ -666,6 +709,46 @@ public sealed class MemberCommerceServiceTests
     }
 
     [Fact]
+    public async Task CreateOrderPaymentIntentAsync_Should_UseCanonicalMemberRoute()
+    {
+        var apiClient = new FakeApiClient
+        {
+            OnPostResultAsync = (route, request, _) =>
+            {
+                route.Should().Be("api/v1/member/orders/11111111-2222-3333-4444-555555555555/payment-intent");
+                request.Should().BeOfType<CreateStorefrontPaymentIntentRequest>();
+                return Task.FromResult<object?>(Result<CreateStorefrontPaymentIntentResponse>.Ok(new CreateStorefrontPaymentIntentResponse
+                {
+                    OrderId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                    PaymentId = Guid.Parse("12121212-3434-5656-7878-909090909090"),
+                    Provider = "Stripe",
+                    ProviderReference = "pi_123",
+                    Currency = "EUR",
+                    AmountMinor = 2599,
+                    Status = "Pending",
+                    CheckoutUrl = "https://checkout.example/intent",
+                    ReturnUrl = "https://app.example/return",
+                    CancelUrl = "https://app.example/cancel",
+                    ExpiresAtUtc = new DateTime(2030, 1, 1, 12, 0, 0, DateTimeKind.Utc)
+                }));
+            }
+        };
+        var service = CreateService(apiClient);
+
+        var result = await service.CreateOrderPaymentIntentAsync(
+            Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            new CreateStorefrontPaymentIntentRequest
+            {
+                Provider = "Stripe"
+            },
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.PaymentId.Should().Be(Guid.Parse("12121212-3434-5656-7878-909090909090"));
+    }
+
+    [Fact]
     public async Task GetInvoiceAsync_Should_UseCanonicalMemberRoute()
     {
         var apiClient = new FakeApiClient
@@ -810,6 +893,13 @@ public sealed class MemberCommerceServiceTests
         FakeTokenStore? tokenStore = null)
         => new(apiClient, cacheService ?? new FakeMobileCacheService(), tokenStore ?? new FakeTokenStore());
 
+    private static string CreateJwtWithSubject(string subject)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var token = new JwtSecurityToken(claims: [new Claim(JwtRegisteredClaimNames.Sub, subject)]);
+        return handler.WriteToken(token);
+    }
+
     private sealed class FakeMobileCacheService : IMobileCacheService
     {
         private readonly Dictionary<string, object?> _fresh = [];
@@ -853,11 +943,13 @@ public sealed class MemberCommerceServiceTests
 
     private sealed class FakeTokenStore : ITokenStore
     {
+        public string? AccessToken { get; init; }
+
         public Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc)
             => Task.CompletedTask;
 
         public Task<(string? AccessToken, DateTime? AccessExpiresUtc)> GetAccessAsync()
-            => Task.FromResult<(string?, DateTime?)>((null, null));
+            => Task.FromResult<(string?, DateTime?)>((AccessToken, null));
 
         public Task<(string? RefreshToken, DateTime? RefreshExpiresUtc)> GetRefreshAsync()
             => Task.FromResult<(string?, DateTime?)>((null, null));

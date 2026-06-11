@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Foundation;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
 using Darwin.Domain.Entities.Orders;
@@ -22,12 +23,18 @@ namespace Darwin.Application.Orders.Commands
         private readonly IAppDbContext _db;
         private readonly IClock _clock;
         private readonly IValidator<OrderCreateDto> _validator;
+        private readonly NumberSequenceService? _numberSequenceService;
 
-        public CreateOrderHandler(IAppDbContext db, IClock clock, IValidator<OrderCreateDto> validator)
+        public CreateOrderHandler(
+            IAppDbContext db,
+            IClock clock,
+            IValidator<OrderCreateDto> validator,
+            NumberSequenceService? numberSequenceService = null)
         {
             _db = db;
             _clock = clock;
             _validator = validator;
+            _numberSequenceService = numberSequenceService;
         }
 
         public async Task<Guid> HandleAsync(OrderCreateDto dto, CancellationToken ct = default)
@@ -93,6 +100,18 @@ namespace Darwin.Application.Orders.Commands
         /// </summary>
         private async Task<string> NextOrderNumberAsync(CancellationToken ct)
         {
+            if (_numberSequenceService is not null)
+            {
+                var reserved = await _numberSequenceService.ReserveNextAsync(
+                    new NumberSequenceRequest(null, NumberSequenceDocumentType.Order, NumberSequenceService.GlobalScopeKey),
+                    ct)
+                    .ConfigureAwait(false);
+                if (reserved.Succeeded && !string.IsNullOrWhiteSpace(reserved.Value))
+                {
+                    return reserved.Value;
+                }
+            }
+
             // Simple approach: use count+1. Replace with a dedicated sequence table in the future to avoid race conditions.
             var nowUtc = _clock.UtcNow;
             var lastCount = await _db.Set<Order>().AsNoTracking().CountAsync(ct);

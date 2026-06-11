@@ -48,6 +48,8 @@ public sealed class ContractSerializationCompatibilityAuthTests : ContractSerial
         json.Should().Contain("\"userId\"");
         json.Should().Contain("\"email\"");
         json.Should().Contain("\"scopes\"");
+        json.Should().NotContain("\"token\"");
+        json.Should().NotContain("\"refresh\"");
     }
 
 /// <summary>
@@ -98,6 +100,7 @@ public sealed class ContractSerializationCompatibilityAuthTests : ContractSerial
         json.Should().Contain("\"deviceId\"");
         json.Should().Contain("\"allowAccountCreation\"");
         json.Should().NotContain("\"identityToken\"");
+        json.Should().NotContain("\"providerToken\"");
     }
 
 /// <summary>
@@ -119,6 +122,61 @@ public sealed class ContractSerializationCompatibilityAuthTests : ContractSerial
         json.Should().Contain("\"refreshToken\"");
         json.Should().Contain("\"deviceId\"");
         json.Should().Contain("\"businessId\"");
+        json.Should().NotContain("\"token\"");
+    }
+
+    [Fact]
+    public void AuthMobileContracts_Should_KeepRawTokenFieldNamesStable()
+    {
+        var login = new PasswordLoginRequest
+        {
+            Email = "member@example.test",
+            Password = "SecurePassword123!",
+            DeviceId = "device-1",
+            BusinessId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        };
+
+        var refresh = new RefreshTokenRequest
+        {
+            RefreshToken = "refresh-token-value",
+            DeviceId = "device-1",
+            BusinessId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff")
+        };
+
+        var external = new ExternalLoginRequest
+        {
+            Provider = "Google",
+            IdToken = "id-token-value",
+            DeviceId = "device-1",
+            BusinessId = Guid.Parse("cccccccc-dddd-eeee-ffff-000000000000"),
+            AllowAccountCreation = true
+        };
+
+        var token = new TokenResponse
+        {
+            AccessToken = "access-token-value",
+            AccessTokenExpiresAtUtc = new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            RefreshToken = "refresh-token-value",
+            RefreshTokenExpiresAtUtc = new DateTime(2030, 1, 8, 0, 0, 0, DateTimeKind.Utc),
+            UserId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Email = "member@example.test"
+        };
+
+        var loginJson = JsonSerializer.Serialize(login, JsonOptions);
+        var refreshJson = JsonSerializer.Serialize(refresh, JsonOptions);
+        var externalJson = JsonSerializer.Serialize(external, JsonOptions);
+        var tokenJson = JsonSerializer.Serialize(token, JsonOptions);
+
+        loginJson.Should().Contain("\"password\"");
+        loginJson.Should().Contain("\"deviceId\"");
+        refreshJson.Should().Contain("\"refreshToken\"");
+        externalJson.Should().Contain("\"idToken\"");
+        tokenJson.Should().Contain("\"accessToken\"");
+        tokenJson.Should().Contain("\"refreshToken\"");
+
+        refreshJson.Should().NotContain("\"token\"");
+        externalJson.Should().NotContain("\"providerToken\"");
+        tokenJson.Should().NotContain("\"providerToken\"");
     }
 
 /// <summary>
@@ -176,6 +234,11 @@ public sealed class ContractSerializationCompatibilityAuthTests : ContractSerial
         json.Should().Contain("\"status\"");
         json.Should().Contain("\"expiresAtUtc\"");
         json.Should().Contain("\"hasExistingUser\"");
+        json.Should().NotContain("\"accessToken\"");
+        json.Should().NotContain("\"refreshToken\"");
+        json.Should().NotContain("\"providerToken\"");
+        json.Should().NotContain("\"authSecret\"");
+        json.Should().NotContain("\"businessMemberId\"");
     }
 
 /// <summary>
@@ -201,6 +264,76 @@ public sealed class ContractSerializationCompatibilityAuthTests : ContractSerial
         json.Should().Contain("\"firstName\"");
         json.Should().Contain("\"lastName\"");
         json.Should().Contain("\"password\"");
+        json.Should().NotContain("\"accessToken\"");
+        json.Should().NotContain("\"refreshToken\"");
+        json.Should().NotContain("\"providerToken\"");
+        json.Should().NotContain("\"authSecret\"");
+        json.Should().NotContain("\"businessMemberId\"");
+    }
+
+/// <summary>
+    ///     Verifies that business access-state payloads keep the release-sensitive
+    ///     field names used by the business mobile app for operation soft-gates.
+    /// </summary>
+    [Fact]
+    public void BusinessAccessStateResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new BusinessAccessStateResponse
+        {
+            UserId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            BusinessId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            BusinessName = "Cafe Morgenrot",
+            OperationalStatus = "Approved",
+            IsActive = true,
+            ApprovedAtUtc = new DateTime(2030, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+            SuspendedAtUtc = null,
+            SuspensionReason = null,
+            HasActiveOwner = true,
+            HasPrimaryLocation = true,
+            HasContactEmail = true,
+            HasLegalName = true,
+            HasActiveMembership = true,
+            IsUserActive = true,
+            IsUserEmailConfirmed = true,
+            IsUserLockedOut = false,
+            IsApprovalPending = false,
+            IsSuspended = false,
+            IsBusinessClientAccessAllowed = true,
+            IsOperationsAllowed = true,
+            IsSetupComplete = true,
+            HasActivationBlockingIssues = false,
+            SetupIncompleteItemCount = 0,
+            PrimaryBlockingCode = null,
+            BlockingReason = null
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"userId\"");
+        json.Should().Contain("\"businessId\"");
+        json.Should().Contain("\"businessName\"");
+        json.Should().Contain("\"operationalStatus\"");
+        json.Should().Contain("\"isActive\"");
+        json.Should().Contain("\"approvedAtUtc\"");
+        json.Should().Contain("\"suspendedAtUtc\"");
+        json.Should().Contain("\"suspensionReason\"");
+        json.Should().Contain("\"hasActiveOwner\"");
+        json.Should().Contain("\"hasPrimaryLocation\"");
+        json.Should().Contain("\"hasContactEmail\"");
+        json.Should().Contain("\"hasLegalName\"");
+        json.Should().Contain("\"hasActiveMembership\"");
+        json.Should().Contain("\"isUserActive\"");
+        json.Should().Contain("\"isUserEmailConfirmed\"");
+        json.Should().Contain("\"isUserLockedOut\"");
+        json.Should().Contain("\"isApprovalPending\"");
+        json.Should().Contain("\"isSuspended\"");
+        json.Should().Contain("\"isBusinessClientAccessAllowed\"");
+        json.Should().Contain("\"isOperationsAllowed\"");
+        json.Should().Contain("\"isSetupComplete\"");
+        json.Should().Contain("\"hasActivationBlockingIssues\"");
+        json.Should().Contain("\"setupIncompleteItemCount\"");
+        json.Should().Contain("\"primaryBlockingCode\"");
+        json.Should().Contain("\"blockingReason\"");
     }
 
 /// <summary>
